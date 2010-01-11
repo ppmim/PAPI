@@ -1,0 +1,83 @@
+\section{reduce::cal\-Super\-Flat::Master\-Super\-Flat Class Reference}
+\label{classreduce_1_1calSuperFlat_1_1MasterSuperFlat}\index{reduce::calSuperFlat::MasterSuperFlat@{reduce::calSuperFlat::MasterSuperFlat}}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+def {\bf\_\-\_\-init\_\-\_\-}
+\item 
+def {\bfcreate\-Master}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\footnotesize\begin{verbatim}
+\brief Class used to build and manage a master calibration super flat from a list of night SCIENCE frames
+\par Class:
+    MasterSuperFlat
+\par Purpose:
+    Create a master normalized night Super Flat Field
+\par Description:
+    
+    1. Check the TYPE(science) and FILTER and EXPTIME of each frame
+       If any frame on list missmatch the FILTER,TYPE,EXPTIME,NCOADDS then the master super-flat will be aborted
+    
+    2. Make the combine of Flat frames scaling by 'mode'
+    
+    3. If required, we subtract a proper MASTER_DARK using the provided master_dark file (optional)
+
+    4. If required, normalize the super-flat dividing by the mean value (default True)
+    
+\par Language:
+    PyRaf
+\param data
+    A list of science frames
+\param bpm
+    Input bad pixel mask or NULL
+\param mdark
+    Master dark to subtract (optional)
+\retval median
+    When all goes well
+\retval 0
+    If no error
+\author
+    JMIbannez, IAA-CSIC
+\end{verbatim}
+\normalsize
+ 
+
+
+
+\subsection{Member Function Documentation}
+\index{reduce::calSuperFlat::MasterSuperFlat@{reduce::cal\-Super\-Flat::Master\-Super\-Flat}!__init__@{\_\-\_\-init\_\-\_\-}}
+\index{__init__@{\_\-\_\-init\_\-\_\-}!reduce::calSuperFlat::MasterSuperFlat@{reduce::cal\-Super\-Flat::Master\-Super\-Flat}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::cal\-Super\-Flat::Master\-Super\-Flat::\_\-\_\-init\_\-\_\- ( {\em self},  {\em input\_\-files},  {\em output\_\-filaname} = {\tt \char`\"{}/tmp/msflat.fits\char`\"{}},  {\em master\_\-dark} = {\tt None},  {\em output\_\-dir} = {\tt \char`\"{}/tmp\char`\"{}},  {\em normal} = {\tt True},  {\em force} = {\tt False})}\label{classreduce_1_1calSuperFlat_1_1MasterSuperFlat_37a01235bdf44faf9dae9e995a83bfb8}
+
+
+
+
+\footnotesize\begin{verbatim}
+\brief Init the object
+\param input_file - data science files, non dark subtracted
+\param output_filename - output master super flat produced 
+\param master_dark - master dark to be subtracted to each science frame
+\param working_dir - dir used for computations and intermediate files
+\end{verbatim}
+\normalsize
+ \index{reduce::calSuperFlat::MasterSuperFlat@{reduce::cal\-Super\-Flat::Master\-Super\-Flat}!createMaster@{createMaster}}
+\index{createMaster@{createMaster}!reduce::calSuperFlat::MasterSuperFlat@{reduce::cal\-Super\-Flat::Master\-Super\-Flat}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::cal\-Super\-Flat::Master\-Super\-Flat::create\-Master ( {\em self})}\label{classreduce_1_1calSuperFlat_1_1MasterSuperFlat_b04bacd62ca9d794c172cc7ea9b09027}
+
+
+
+
+\footnotesize\begin{verbatim}
+\brief Create a master SUPER FLAT from a list for science files
+\end{verbatim}
+\normalsize
+ 
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+reduce/cal\-Super\-Flat.py\end{CompactItemize}

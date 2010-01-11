@@ -1,0 +1,15 @@
+#!IRAFBIN/cl.e -f
+
+set imextn = "oif:imh fxf:fits,fit,fts plf:pl qpf:qp stf:hhh,??h"
+logver = "IRAF V2.11 May 1997"
+images 
+imutil
+
+real aver,sig,th
+imstat (args//"[200:800,200:800]", fields="midpt,stddev", format-) | scan (aver,sig)
+th=aver-4*sig
+
+imreplace (args, aver, lower=INDEF, upper=th)
+
+logout
+

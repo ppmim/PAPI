@@ -1,0 +1,88 @@
+\section{reduce::cal\-BPM::Bad\-Pixel\-Mask Class Reference}
+\label{classreduce_1_1calBPM_1_1BadPixelMask}\index{reduce::calBPM::BadPixelMask@{reduce::calBPM::BadPixelMask}}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+def \textbf{\_\-\_\-init\_\-\_\-}\label{classreduce_1_1calBPM_1_1BadPixelMask_b7185255dd70531237de52bb55bfcc3d}
+
+\item 
+def {\bfcreate}
+\end{CompactItemize}
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+\textbf{input\_\-file}\label{classreduce_1_1calBPM_1_1BadPixelMask_6e2f4b0dcb52bc509362b0463f3e365c}
+
+\item 
+\textbf{lthr}\label{classreduce_1_1calBPM_1_1BadPixelMask_af5d8d61a4b3d668a6f5e0179cdc799f}
+
+\item 
+\textbf{hthr}\label{classreduce_1_1calBPM_1_1BadPixelMask_8d3b15c0996ad6a527efca5e1d6cc2e8}
+
+\item 
+\textbf{output}\label{classreduce_1_1calBPM_1_1BadPixelMask_246cdf1e061d8448b51d8ef1cac949b5}
+
+\item 
+\textbf{verbose}\label{classreduce_1_1calBPM_1_1BadPixelMask_c06c21611a01e52381caeaec7b9d7c84}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\footnotesize\begin{verbatim}
+\brief 
+    Generate a bad pixel mask from a list of dark corrected dome flat images
+    (extracted from VIRCAM pipeline, vircam_genbpm)
+
+\par Class:
+     BadPixelMask   
+\par Purpose:
+    Work out the BPM
+\par Description:
+        
+\par Language:
+    Python
+\param data
+    A input image
+\retval 0
+    If no error, the number of bad pixels
+\author
+    JMIbannez, IAA-CSIC
+    
+\end{verbatim}
+\normalsize
+ 
+
+
+
+\subsection{Member Function Documentation}
+\index{reduce::calBPM::BadPixelMask@{reduce::cal\-BPM::Bad\-Pixel\-Mask}!create@{create}}
+\index{create@{create}!reduce::calBPM::BadPixelMask@{reduce::cal\-BPM::Bad\-Pixel\-Mask}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::cal\-BPM::Bad\-Pixel\-Mask::create ( {\em self})}\label{classreduce_1_1calBPM_1_1BadPixelMask_f34d31f02e27e7957a0cec70c9bb7c08}
+
+
+
+
+\footnotesize\begin{verbatim}
+ Algorith to create the BPM
+ -------------------------- 
+ 1. Combine all of the dome flats into a master
+ 2. Divide the resulting image by its median
+ 3. Create and zero the rejection mask
+ 4. Loop for all input images and divide each by the master flat
+    
+    4.1 Divide the resulting image by its median
+    4.2 Get the standard deviation of the image
+    4.3 Define the bad pixels
+    
+ 5. Go through the rejection mask and if a pixel has been marked bad 
+    more than a set number of times, then it is defined as bad
+\end{verbatim}
+\normalsize
+ 
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+reduce/cal\-BPM.py\end{CompactItemize}

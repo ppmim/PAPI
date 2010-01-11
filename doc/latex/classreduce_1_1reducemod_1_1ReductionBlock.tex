@@ -1,0 +1,440 @@
+\section{reduce::reducemod::Reduction\-Block Class Reference}
+\label{classreduce_1_1reducemod_1_1ReductionBlock}\index{reduce::reducemod::ReductionBlock@{reduce::reducemod::ReductionBlock}}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+def {\bf\_\-\_\-init\_\-\_\-}
+\item 
+def \textbf{get\-List}\label{classreduce_1_1reducemod_1_1ReductionBlock_710292c17b35fc3b2976eee612b3766a}
+
+\item 
+def \textbf{get\-Proc\-List}\label{classreduce_1_1reducemod_1_1ReductionBlock_4e829b0ed694c57ea4e2d15ef49f8380}
+
+\item 
+def \textbf{set\-New\-List}\label{classreduce_1_1reducemod_1_1ReductionBlock_031484ac36e826be69646f61fcdfc5ce}
+
+\item 
+def {\bfcheck\-Filter}
+\item 
+def {\bfcheck\-Exp\-Time}
+\item 
+def {\bfcheck\-Type}
+\item 
+def {\bfcreate\-Super\-Flat}
+\item 
+def {\bfcompute\-Sky\-Bkg}
+\item 
+def {\bfI\_\-create\-Super\-Flat}
+\item 
+def {\bfMI\_\-sky\-Filter}
+\item 
+def {\bfM\_\-create\-Super\-Flat}
+\item 
+def {\bfsubtract\-Dark}
+\item 
+def {\bfM\_\-subtrac\-Dark}
+\item 
+def {\bfM\_\-app\-Flat\-Field}
+\item 
+def {\bfcompute\-Sky\-Background\_\-i}
+\item 
+def {\bfsimple\-Reduce}
+\item 
+def {\bfcreate\-Obj\-Masks}
+\item 
+def {\bfapply\-Flat}
+\item 
+def {\bfcombine\-Frames}
+\item 
+def {\bfcreate\-Bad\-Pixel\-Mask}
+\item 
+def {\bfapply\-Bad\-Pixel\-Mask}
+\item 
+def {\bfmath\-Op}
+\item 
+def {\bfSNAP\_\-like\_\-reduction}
+\item 
+def {\bfsort\-By\-Date\-Obs}
+\item 
+def {\bfcomp\-Date\-Obs}
+\end{CompactItemize}
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+\textbf{m\_\-file\_\-list}\label{classreduce_1_1reducemod_1_1ReductionBlock_e55eba7175a3628b7de1aa352dbb44bb}
+
+\end{CompactItemize}
+\subsection*{Static Public Attributes}
+\begin{CompactItemize}
+\item 
+list \textbf{m\_\-file\_\-list} = [$\,$]\label{classreduce_1_1reducemod_1_1ReductionBlock_f20fac47a6ced7cbd5632b70076eb305}
+
+\item 
+list \textbf{m\_\-file\_\-list\_\-p} = [$\,$]\label{classreduce_1_1reducemod_1_1ReductionBlock_1d8ed6e7bb8884f083e20445eaab62cf}
+
+\item 
+string \textbf{m\_\-last\_\-output\_\-file} = ''\label{classreduce_1_1reducemod_1_1ReductionBlock_ed0da4ea5b5255885f42c2127d66464a}
+
+\item 
+list \textbf{m\_\-cl\_\-file\_\-list} = [$\,$]\label{classreduce_1_1reducemod_1_1ReductionBlock_b93a4404ad3ce840610812ec936d8a67}
+
+\item 
+list \textbf{m\_\-history} = [$\,$]\label{classreduce_1_1reducemod_1_1ReductionBlock_2b137de06cfc3491b9b33564c492161c}
+
+\item 
+\textbf{m\_\-output\_\-dir} = None\label{classreduce_1_1reducemod_1_1ReductionBlock_197916b78e796237f05a649e742be169}
+
+\item 
+\textbf{m\_\-images\_\-in} = None\label{classreduce_1_1reducemod_1_1ReductionBlock_45833fe798e694b12b5bd21e4167b81f}
+
+\item 
+int \textbf{m\_\-chipcode} = 1\label{classreduce_1_1reducemod_1_1ReductionBlock_24117f50da2dc3805311927199f38bfc}
+
+\item 
+list \textbf{m\_\-chip\_\-offsets} = [1.0, 1.0, 1.0, 1.0]\label{classreduce_1_1reducemod_1_1ReductionBlock_432465cc0a7462b4f8a72e08477fb9e1}
+
+\item 
+\textbf{m\_\-filter} = None\label{classreduce_1_1reducemod_1_1ReductionBlock_814114705a81132a5a0930d7e66c80f0}
+
+\item 
+int \textbf{m\_\-naxis1} = 0\label{classreduce_1_1reducemod_1_1ReductionBlock_ea68eefa3733fb8a412899c67d981b82}
+
+\item 
+int \textbf{m\_\-naxis2} = 0\label{classreduce_1_1reducemod_1_1ReductionBlock_f94fa3364600476fe0463e60e9da879f}
+
+\item 
+\textbf{m\_\-memory} = False\label{classreduce_1_1reducemod_1_1ReductionBlock_c592dfa09d60506ec9b6d4afbb9fac77}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\footnotesize\begin{verbatim}
+\brief A class that contain a set of files with the same type, filter, mode, texp,... to reduce (science or calib)
+\end{verbatim}
+\normalsize
+ 
+
+
+
+\subsection{Member Function Documentation}
+\index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!__init__@{\_\-\_\-init\_\-\_\-}}
+\index{__init__@{\_\-\_\-init\_\-\_\-}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::\_\-\_\-init\_\-\_\- ( {\em self},  {\em file\_\-list},  {\em output\_\-dir} = {\tt \char`\"{}/tmp/\char`\"{}},  {\em memory} = {\tt False})}\label{classreduce_1_1reducemod_1_1ReductionBlock_6f64e1fd3151d34a57f1c4138c8a7c9d}
+
+
+
+
+\footnotesize\begin{verbatim}\param file_list : a python list of pathnames
+   \param output_dir :
+   \param memory : if True, the images from the file list will be stored into memory 
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!checkFilter@{checkFilter}}
+\index{checkFilter@{checkFilter}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::check\-Filter ( {\em self})}\label{classreduce_1_1reducemod_1_1ReductionBlock_47ee720852bff59774e2afa327763d70}
+
+
+
+
+\footnotesize\begin{verbatim}Return true is all files in file have the same filter type, false otherwise
+
+\return True or False
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!checkExpTime@{checkExpTime}}
+\index{checkExpTime@{checkExpTime}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::check\-Exp\-Time ( {\em self})}\label{classreduce_1_1reducemod_1_1ReductionBlock_2c4edab90430d24a93f7e7fb9059019a}
+
+
+
+
+\footnotesize\begin{verbatim}Return true is all files in file have the same Exposition Time, false otherwise
+
+\return True or False
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!checkType@{checkType}}
+\index{checkType@{checkType}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::check\-Type ( {\em self},  {\em type\_\-to\_\-check} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_77b103bc9634e74234fe5d41a07f00dd}
+
+
+
+
+\footnotesize\begin{verbatim}
+Return true is all files in file have the same type(science, dark, flat, ...), false otherwise
+
+\param type_to_check (\c string) type to check to
+\return True or False
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!createSuperFlat@{createSuperFlat}}
+\index{createSuperFlat@{createSuperFlat}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::create\-Super\-Flat ( {\em self},  {\em master\_\-dark},  {\em output\_\-file})}\label{classreduce_1_1reducemod_1_1ReductionBlock_91f269f292d6724b0f585cf7ed4026cb}
+
+
+
+
+\footnotesize\begin{verbatim}
+Create a master super flat file from the reduction block files (science type)
+
+\param outputfile (\c string) Name of the outputfile name for the master to be created
+\return Return True master file was created, False otherwise
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!computeSkyBkg@{computeSkyBkg}}
+\index{computeSkyBkg@{computeSkyBkg}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::compute\-Sky\-Bkg ( {\em self},  {\em image\_\-in},  {\em image\_\-out},  {\em output\_\-type} = {\tt '-BACKGROUND'},  {\em params} = {\tt None},  {\em sconfig} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_e16b6cd5402975065b0b87b04a12786d}
+
+
+
+
+\footnotesize\begin{verbatim}
+\brief Set SExtractor parameters and configuration and run.
+
+\param image_in: Detection (and measurement) image
+\param image_out:  Measurement image
+\param output_type: (optional) background |-background | objects | -objects (see SExtractor doc)
+\param params: (optional) extra output parameters (Parameters object)
+\param config: (optional) configuration options (Config object)
+
+NOTE: If either params or config is not specified, the defaults will be
+used
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!I_createSuperFlat@{I\_\-createSuperFlat}}
+\index{I_createSuperFlat@{I\_\-createSuperFlat}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::I\_\-create\-Super\-Flat ( {\em self},  {\em images\_\-in} = {\tt None},  {\em output\_\-file} = {\tt '/tmp/gain.fits'},  {\em bad\_\-pixel\_\-mask} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_4223863cbab649689bd06bb37a41cdcb}
+
+
+
+
+\footnotesize\begin{verbatim}
+    Create a super flat and gain map using the dithered images. (IRAF)
+         
+    This function is a wrapper for mksuperflat.py that uses imcombine(IRAF) and gainmap(IRDR)              
+
+    VERSION
+1.0, 20090909 by jmiguel@iaa.es
+
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!MI_skyFilter@{MI\_\-skyFilter}}
+\index{MI_skyFilter@{MI\_\-skyFilter}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::MI\_\-sky\-Filter ( {\em self},  {\em images\_\-in} = {\tt None},  {\em source} = {\tt 'mem'},  {\em gainfile} = {\tt None},  {\em mask} = {\tt 'nomask'})}\label{classreduce_1_1reducemod_1_1ReductionBlock_ea81d03bad84ab72df77142ee66977ba}
+
+
+
+
+\footnotesize\begin{verbatim}
+    For each input image, a sky frame is computed by combining a certain number of  the closest images, 
+    then this sky frame is subtracted by the image and the result is divided by the master flat; 
+         
+    This function is a wrapper for skyfilter.c (IRDR)              
+
+    VERSION
+1.0, 20090909 by jmiguel@iaa.es
+
+    TODO: extended objects !!!!
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!M_createSuperFlat@{M\_\-createSuperFlat}}
+\index{M_createSuperFlat@{M\_\-createSuperFlat}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::M\_\-create\-Super\-Flat ( {\em self},  {\em images\_\-in} = {\tt None},  {\em output\_\-file} = {\tt None},  {\em mask} = {\tt None},  {\em fast} = {\tt 1})}\label{classreduce_1_1reducemod_1_1ReductionBlock_0a6384ee4efdba8ab2f2bbfc32395b8d}
+
+
+
+
+\footnotesize\begin{verbatim}
+;
+; NAME
+;   M_createSuperFlat
+;
+; PURPOSE
+;   Derive super sky flat from the image cube
+;
+; INPUT
+;   images_in - image cube that contains the unflattened raw data.
+;       The format should be nframes * nx * ny 
+;       If None, then class member m_images_in is used
+;
+; OPTIONAL INPUT
+;   mask - integer cube with dimensions identical to the data cube.
+;       1 in the mask represent good data, 0 represent bad data.
+;       Useful to prevent bias caused by stars in the fast mode.
+;
+;   output_file - if provided, a fits file with super flat is created
+;
+; KEYWORD
+;   fast - set to 1 for fast flatfield (default).  In this way,
+;       the cube will be averaged along its 0th dimenssion to
+;       form a flat.  Set to 0 to use median instead of average.
+;       This is slower but should be used if there is not a good
+;       object mask.
+;
+; VERSION
+;   1.0, 20090723 by jmiguel@iaa.es
+;
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!subtractDark@{subtractDark}}
+\index{subtractDark@{subtractDark}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::subtract\-Dark ( {\em self},  {\em master\_\-dark})}\label{classreduce_1_1reducemod_1_1ReductionBlock_6bdf1a09ece607fdf29bff30358fcb7c}
+
+
+
+
+\footnotesize\begin{verbatim}Subtract a master dark to each file of the reduction block
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!M_subtracDark@{M\_\-subtracDark}}
+\index{M_subtracDark@{M\_\-subtracDark}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::M\_\-subtrac\-Dark ( {\em self},  {\em master\_\-dark})}\label{classreduce_1_1reducemod_1_1ReductionBlock_91fb83e2fff50de11038efeab1e0a366}
+
+
+
+
+\footnotesize\begin{verbatim}Subtract a master dark to each file of the reduction block
+   The master dark is properly scaled before subtraction
+   
+   TODO: apply dark model !!!!!!!
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!M_appFlatField@{M\_\-appFlatField}}
+\index{M_appFlatField@{M\_\-appFlatField}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::M\_\-app\-Flat\-Field ( {\em self},  {\em master\_\-flat},  {\em images\_\-in} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_7733e44b77109db7f06baae1838c04c7}
+
+
+
+
+\footnotesize\begin{verbatim}apply a master flat field to each file of the images_in data cube
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!computeSkyBackground_i@{computeSkyBackground\_\-i}}
+\index{computeSkyBackground_i@{computeSkyBackground\_\-i}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::compute\-Sky\-Background\_\-i ( {\em self},  {\em i\_\-frame},  {\em n\_\-frames},  {\em output\_\-type} = {\tt 'BACKGROUND'},  {\em output\_\-file} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_a02cee4de81a204bbb46612453874abe}
+
+
+
+
+\footnotesize\begin{verbatim}\brief Compute the sky background for the frame 'i_frame', using the nearest 2*n_frames
+   \param i_frame index referenced frame to compute the related sky-background
+   \param n_frames number of nearest 2*frames to use for the sky backgorund
+   \param output_type: background | sub_background | objects
+   \param ouput_sky sky background returned
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!simpleReduce@{simpleReduce}}
+\index{simpleReduce@{simpleReduce}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::simple\-Reduce ( {\em self},  {\em i\_\-frame},  {\em n\_\-frames},  {\em output\_\-file},  {\em master\_\-flat} = {\tt None},  {\em bpmask\_\-file} = {\tt None},  {\em do\_\-astrometry} = {\tt False})}\label{classreduce_1_1reducemod_1_1ReductionBlock_8e631c3c833a8bc388684a971275185b}
+
+
+
+
+\footnotesize\begin{verbatim}
+    TODO
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!createObjMasks@{createObjMasks}}
+\index{createObjMasks@{createObjMasks}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::create\-Obj\-Masks ( {\em self})}\label{classreduce_1_1reducemod_1_1ReductionBlock_5f93b067cc7f57f00dcf91a5059b9c26}
+
+
+
+
+\footnotesize\begin{verbatim}Find objects into the frames and create an object masks for each file; 
+    write the mask file into the object frame.
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!applyFlat@{applyFlat}}
+\index{applyFlat@{applyFlat}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::apply\-Flat ( {\em self},  {\em master\_\-flat})}\label{classreduce_1_1reducemod_1_1ReductionBlock_3036aebfd2b6ee94aa035e8005e2e7e8}
+
+
+
+
+\footnotesize\begin{verbatim}Divide all the frames into the Reduction Block by a given master (normalized) flat field
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!combineFrames@{combineFrames}}
+\index{combineFrames@{combineFrames}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::combine\-Frames ( {\em self},  {\em output\_\-file},  {\em type} = {\tt 'median'},  {\em mask} = {\tt None},  {\em params} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_11a1aaa23780a9017f9739d331d4e8ff}
+
+
+
+
+\footnotesize\begin{verbatim}Combine all the frames into the Reduction Block using 'type' operation (median, mean=average)
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!createBadPixelMask@{createBadPixelMask}}
+\index{createBadPixelMask@{createBadPixelMask}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::create\-Bad\-Pixel\-Mask ( {\em self},  {\em show} = {\tt False},  {\em output\_\-file} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_68262e703addcaa662878441bd9d4f50}
+
+
+
+
+\footnotesize\begin{verbatim}Make a bad pixel mask (hot and cold pixels) from a set of images ( lamp_on and lamp_off frames and darks)
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!applyBadPixelMask@{applyBadPixelMask}}
+\index{applyBadPixelMask@{applyBadPixelMask}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::apply\-Bad\-Pixel\-Mask ( {\em self},  {\em i\_\-frames},  {\em mask})}\label{classreduce_1_1reducemod_1_1ReductionBlock_021bede3a6e946e92589e213de0a9cf7}
+
+
+
+
+\footnotesize\begin{verbatim}
+\brief Apply a previously created pixel mask to frame elements indexed by 'i_frames' list in the list of frames
+\param i_frames list of indexes
+\param mask badpixel mask file to apply
+\return True or False
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!mathOp@{mathOp}}
+\index{mathOp@{mathOp}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::math\-Op ( {\em self},  {\em operator},  {\em output\-File} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_a12dc11d8ca1f5e7142ff512d09bada2}
+
+
+
+
+\footnotesize\begin{verbatim}
+\brief Apply a math operation to the selected files
+\param operator (-, +, /)
+\param outputFile (by default /tmp/op.fits)
+\return True or False
+\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!SNAP_like_reduction@{SNAP\_\-like\_\-reduction}}
+\index{SNAP_like_reduction@{SNAP\_\-like\_\-reduction}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::SNAP\_\-like\_\-reduction ( {\em self},  {\em master\_\-flat} = {\tt None})}\label{classreduce_1_1reducemod_1_1ReductionBlock_863f04bf4f5f5bc3e972f8fde15501df}
+
+
+
+
+\footnotesize\begin{verbatim}Make a reduction block procedure based on the SNAP pipeline\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!sortByDateObs@{sortByDateObs}}
+\index{sortByDateObs@{sortByDateObs}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::sort\-By\-Date\-Obs ( {\em self})}\label{classreduce_1_1reducemod_1_1ReductionBlock_539f6a93f5d51874af9c2a822d6c2dae}
+
+
+
+
+\footnotesize\begin{verbatim}Sort the object frame list by DATE-OBS keyword\end{verbatim}
+\normalsize
+ \index{reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}!compDateObs@{compDateObs}}
+\index{compDateObs@{compDateObs}!reduce::reducemod::ReductionBlock@{reduce::reducemod::Reduction\-Block}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::reducemod::Reduction\-Block::comp\-Date\-Obs ( {\em self},  {\em e1},  {\em e2})}\label{classreduce_1_1reducemod_1_1ReductionBlock_4e1f5ca524fe7ce52264d1f1424dd121}
+
+
+
+
+\footnotesize\begin{verbatim}Compare routine used to sort the frame classified list\end{verbatim}
+\normalsize
+ 
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+reduce/reducemod.py\end{CompactItemize}

@@ -1,0 +1,8 @@
+inlist,s,a,,,,"Input file list in sequence"
+outlist,s,a,,,,"Output file list"
+start,i,a,,1,,"Number of first file to use in list"
+finish,i,a,,1,,"Number of last file to use in list"
+exclude,i,a,,0,,"Number of file to be excluded from list"
+suffix,s,h,"",,,"Suffix to append to file names in output list"
+inlst,*s,h,"",,,
+mode,s,h,"ql",,,

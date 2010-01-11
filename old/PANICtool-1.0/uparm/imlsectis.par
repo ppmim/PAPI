@@ -1,0 +1,4 @@
+images,s,a,,,,"Image template"
+option,s,h,"fullname",,,"Option (nolist, fullname, root, section)"
+nimages,i,h,14,,,"Number of images in template"
+mode,s,h,"ql",,,

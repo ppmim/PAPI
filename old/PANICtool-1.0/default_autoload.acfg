@@ -1,0 +1,25 @@
+(dp1
+S'autoloadrules'
+p2
+(iconfig
+Setting
+p3
+(dp4
+S'indir'
+p5
+NsS'type'
+p6
+S'other'
+p7
+sS'name'
+p8
+S'Autoloading rules'
+p9
+sS'value'
+p10
+(lp11
+sS'desc'
+p12
+S'Internal variable used to hold the definition of the AutoLoading rules.\n                                  '
+p13
+sbs.

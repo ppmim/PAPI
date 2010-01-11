@@ -1,0 +1,108 @@
+\section{reduce::check\-Quality::Check\-Quality Class Reference}
+\label{classreduce_1_1checkQuality_1_1CheckQuality}\index{reduce::checkQuality::CheckQuality@{reduce::checkQuality::CheckQuality}}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+def \textbf{\_\-\_\-init\_\-\_\-}\label{classreduce_1_1checkQuality_1_1CheckQuality_f08b48db393ac7339afaba76f40d3598}
+
+\item 
+def {\bfestimate\-FWHM}
+\item 
+def {\bfestimate\-Background}
+\end{CompactItemize}
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+\textbf{input\_\-file}\label{classreduce_1_1checkQuality_1_1CheckQuality_8474c9a2e7fa79bbe687ea047b039602}
+
+\item 
+\textbf{bpm}\label{classreduce_1_1checkQuality_1_1CheckQuality_07e029405fbdd619aea7f644b64f96fc}
+
+\item 
+\textbf{isomin}\label{classreduce_1_1checkQuality_1_1CheckQuality_56d3fd8126f5e91a24fe19971de4a11a}
+
+\item 
+\textbf{ellipmax}\label{classreduce_1_1checkQuality_1_1CheckQuality_8791045b1921dca037b1f3d045c2a068}
+
+\item 
+\textbf{edge}\label{classreduce_1_1checkQuality_1_1CheckQuality_4c1f10350c348dd6309515a43e368ddc}
+
+\item 
+\textbf{pixsize}\label{classreduce_1_1checkQuality_1_1CheckQuality_df2edc72f71628f48c2d69a1dc1c0119}
+
+\item 
+\textbf{write}\label{classreduce_1_1checkQuality_1_1CheckQuality_6bb17eaf3177308b800d21ddb3c06b56}
+
+\item 
+\textbf{verbose}\label{classreduce_1_1checkQuality_1_1CheckQuality_27aa27cb1c78fa2349dabb224cdb932a}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\footnotesize\begin{verbatim}
+\brief 
+    Class used to estimate the image quality values using SExtractor 
+
+\par Class:
+     CheckQuailty   
+\par Purpose:
+    Calculate some initial image quality estimations using SExtractor
+\par Description:
+        
+\par Language:
+    Python
+\param data
+    A input image
+\retval 0
+    If no error, a seeing estimation value
+\author
+    JMIbannez, IAA-CSIC
+    
+\end{verbatim}
+\normalsize
+ 
+
+
+
+\subsection{Member Function Documentation}
+\index{reduce::checkQuality::CheckQuality@{reduce::check\-Quality::Check\-Quality}!estimateFWHM@{estimateFWHM}}
+\index{estimateFWHM@{estimateFWHM}!reduce::checkQuality::CheckQuality@{reduce::check\-Quality::Check\-Quality}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::check\-Quality::Check\-Quality::estimate\-FWHM ( {\em self})}\label{classreduce_1_1checkQuality_1_1CheckQuality_28bbc21856676dc01daa97c267c39a9d}
+
+
+
+
+\footnotesize\begin{verbatim}
+ FWHM estimation
+ --------------- 
+ Generating a ascii text catalog with Sextractor, we can read the FWHM values 
+ and give an estimation of the FWHM computing the median of all the values
+
+ It is very important that sextractor config file has the SATUR_LEVEL parameter
+ with a suitable value. In other case, we won't get any value for FWHM. 
+
+ SNR estimation as FLUX_AUTO/FLUXERR_AUTO or FLUX_APER/FLUXERR_APER
+\end{verbatim}
+\normalsize
+ \index{reduce::checkQuality::CheckQuality@{reduce::check\-Quality::Check\-Quality}!estimateBackground@{estimateBackground}}
+\index{estimateBackground@{estimateBackground}!reduce::checkQuality::CheckQuality@{reduce::check\-Quality::Check\-Quality}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::check\-Quality::Check\-Quality::estimate\-Background ( {\em self},  {\em output\_\-file})}\label{classreduce_1_1checkQuality_1_1CheckQuality_bd560e96e77abc3799b5e86b8f63a9ae}
+
+
+
+
+\footnotesize\begin{verbatim}
+ Background estimation
+ ---------------------- 
+ Run SExtractor to esimte the image background
+ 
+\end{verbatim}
+\normalsize
+ 
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+reduce/check\-Quality.py\end{CompactItemize}

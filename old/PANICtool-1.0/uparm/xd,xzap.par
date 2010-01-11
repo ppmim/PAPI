@@ -1,0 +1,27 @@
+inlist,s,a,,,,"List of input images to be cosmic ray cleaned"
+omasks,s,a,"",,,"The input object mask keyword or list"
+outlist,s,a,,,,"List of output cosmic ray cleaned images"
+crmasks,s,a,".crm",,,"The output cosmic ray masks or suffix"
+statsec,s,h,"",,,"Image section to use for computing sky sigma"
+nsigrej,r,h,3.,,,"The n-sigma sky rejection parameter"
+maxiter,i,h,20,,,"The maximum number of iterations"
+checklimits,b,h,yes,,,"Check min and max pix values before filtering?"
+zboxsz,i,h,5,3,,"Box size for fmedian filter"
+zmin,r,h,-32768.,,,"Minimum data value for fmedian filter"
+zmax,r,h,32767.,,,"Maximum data value for fmedian filter"
+nsigzap,r,h,5.,0.,,"Zapping threshold in number of sky sigma"
+nsigobj,r,h,2.,0.,,"Number of sky sigma for object identification"
+subsample,i,h,1,0,,"Block averaging factor before median filtering"
+skyfiltsize,i,h,15,0,,"Median filter size for local sky evaluation"
+ngrowobj,i,h,0,0,,"Number of pixels to flag as buffer around objects"
+nrings,i,h,0,0,,"Number of pixels to flag around CRs"
+nsigneg,r,h,0.,0.,,"Number of sky sigma for negative zapping"
+del_crmask,b,h,no,,,"Delete cosmic ray mask after execution?"
+del_wimages,b,h,yes,,,"Delete working images after execution?"
+del_wmasks,b,h,yes,,,"Delete working .pl masks after execution?"
+verbose,b,h,yes,,,"Verbose output?"
+imglist,*struct,h,"",,,
+outimglist,*struct,h,"",,,
+omskimglist,*struct,h,"",,,
+crmskimglist,*struct,h,"",,,
+mode,s,h,"ql",,,

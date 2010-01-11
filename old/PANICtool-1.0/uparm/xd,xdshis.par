@@ -1,0 +1,13 @@
+inlist,s,a,,,,"List of input sky subtracted images"
+refim,s,a,,,,"Reference image  in image list"
+shiftlist,s,a,,,,"The output shifts list"
+cradius,r,a,5.,,,"The centering radius in pixels"
+datamin,r,h,INDEF,,,"Lower good data limit"
+datamax,r,h,INDEF,,,"Upper good data limit"
+background,r,h,INDEF,,,"Mean background level for centroiding"
+niterate,i,h,3,,,"The maximum number of centering iterations"
+maxshift,r,h,5.,,,"The maximum X and Y shift in pixels"
+chkshifts,b,h,no,,,"Check new shifts interactively ?"
+nframes,i,h,4,,,"Number of frames for imexamine"
+imglist,*struct,h,"",,,
+mode,s,h,"ql",,,

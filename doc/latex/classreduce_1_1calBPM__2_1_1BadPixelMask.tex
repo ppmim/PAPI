@@ -1,0 +1,86 @@
+\section{reduce::cal\-BPM\_\-2::Bad\-Pixel\-Mask Class Reference}
+\label{classreduce_1_1calBPM__2_1_1BadPixelMask}\index{reduce::calBPM_2::BadPixelMask@{reduce::calBPM\_\-2::BadPixelMask}}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+def \textbf{\_\-\_\-init\_\-\_\-}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_74812920485d6252aef87e07a3adf6ae}
+
+\item 
+def \textbf{create}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_ee5db4b16eb5b1a56944fc4e828178da}
+
+\item 
+def \textbf{create\_\-IRAF}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_37292979133280b7d9cb99f580c161f7}
+
+\item 
+def \textbf{create\_\-simple}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_a68a07eccd5c112703966fd2c09af0b5}
+
+\end{CompactItemize}
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+\textbf{i\_\-file\_\-list}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_55311dcf5e1817b91d83279352f2cb16}
+
+\item 
+\textbf{master\_\-dark}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_0f35b5fd077797712561f22a3960f263}
+
+\item 
+\textbf{lsigma}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_076dcf83c89649038b41482c04867c24}
+
+\item 
+\textbf{hsigma}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_4096cde3808b15beb2e1c27009b65208}
+
+\item 
+\textbf{output\_\-file}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_428c0437f3b4c8e028f0c2a30f97e59f}
+
+\item 
+\textbf{verbose}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_203afe8b079e29df2ce8c1ada9984977}
+
+\item 
+\textbf{outputdir}\label{classreduce_1_1calBPM__2_1_1BadPixelMask_aba02ca18b18dfda3290ec37bd2dc401}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\footnotesize\begin{verbatim}
+\brief
+    Make a bad pixel mask (hot and cold pixels) from a set of images ( lamp_on and lamp_off frames and darks)
+    using iraf.ccdmask task 
+        
+\par Class:
+     BadPixelMask   
+\par Purpose:
+    Work out the BPM
+\par Description:
+     
+     Algorith to create the BPM
+     -------------------------- 
+     1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
+        and and check whether there are enought calib frames
+     2: Check the master dark (Texp)
+     3: Subtrac the master dark to each dome flat
+     4: Combine dome dark subtracted flats (on/off)
+     5: Compute flat_low/flat_high
+     6: Create BPM (iraf.ccdmask)
+
+        
+\par Language:
+    Python
+\param data
+    A list of dome flat and a master dark
+\retval 0
+    If no error, the bad pixel mask (fits file)
+\author
+    JMIbannez, IAA-CSIC
+    
+\end{verbatim}
+\normalsize
+ 
+
+
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+reduce/cal\-BPM\_\-2.py\end{CompactItemize}

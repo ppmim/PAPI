@@ -1,0 +1,95 @@
+\section{reduce::cal\-Tw\-Flat::Master\-Twilight\-Flat Class Reference}
+\label{classreduce_1_1calTwFlat_1_1MasterTwilightFlat}\index{reduce::calTwFlat::MasterTwilightFlat@{reduce::calTwFlat::MasterTwilightFlat}}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+def \textbf{\_\-\_\-init\_\-\_\-}\label{classreduce_1_1calTwFlat_1_1MasterTwilightFlat_6670264eea31c5a4a4312c339047304d}
+
+\item 
+def {\bfcreate\-Master}
+\end{CompactItemize}
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+\textbf{m\_\-MIN\_\-N\_\-GOOD}\label{classreduce_1_1calTwFlat_1_1MasterTwilightFlat_f896a5ed8401e47f70837c8a88bb3512}
+
+\item 
+\textbf{m\_\-lthr}\label{classreduce_1_1calTwFlat_1_1MasterTwilightFlat_71bef7f41622c6803b20b57c5dcc5009}
+
+\item 
+\textbf{m\_\-hthr}\label{classreduce_1_1calTwFlat_1_1MasterTwilightFlat_47a4e6579060bfbe8b39f6687dcfd0f0}
+
+\item 
+\textbf{m\_\-min\_\-flats}\label{classreduce_1_1calTwFlat_1_1MasterTwilightFlat_a207ba003e7e51d493d431b4bcb48339}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\footnotesize\begin{verbatim}
+\brief Class used to build and manage a master calibration twilight flat
+\par Class:
+    MasterTwilightFlat
+\par Purpose:
+    Create a master Twilight flat field
+\par Description:
+    
+    1. Check the  TYPE(twilight) and FILTER of each Flat frame
+       If any frame on list missmatch the FILTER, then the master twflat will skip this frame and contiune with then next ones
+       EXPTIME do not need be the same, so EXPTIME scaling with 'mode' will be done
+       
+       1.1: Check either over or under exposed frames
+    
+    2. We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS because they might have diff EXPTIMEs
+    
+    3. Make the combine (with sigclip rejection) of dark subtracted Flat frames scaling by 'mode'
+    
+    4. Normalize the tw-flat dividing by the mean value
+    
+\par Language:
+    PyRaf
+\param data
+    A list file of twilight flat fields filenames
+    Input bad pixel mask or NULL
+\param mdark
+    Master current dark model to dark subtraction (required)
+\param output_filename  
+    Master Tw Flat created 
+\param lthr
+    Low threshold to identify good twilight flats (default 100)
+\param hthr
+    High threshold to identify good twilight flats (default 100000)
+\param bpm
+    Bad Pixel mask to use (optional)
+\retval median
+    When all goes well
+\retval 0
+    If no error
+\author
+    JMIbannez, IAA-CSIC
+  
+\end{verbatim}
+\normalsize
+ 
+
+
+
+\subsection{Member Function Documentation}
+\index{reduce::calTwFlat::MasterTwilightFlat@{reduce::cal\-Tw\-Flat::Master\-Twilight\-Flat}!createMaster@{createMaster}}
+\index{createMaster@{createMaster}!reduce::calTwFlat::MasterTwilightFlat@{reduce::cal\-Tw\-Flat::Master\-Twilight\-Flat}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::cal\-Tw\-Flat::Master\-Twilight\-Flat::create\-Master ( {\em self})}\label{classreduce_1_1calTwFlat_1_1MasterTwilightFlat_6443da04cd094b3067fceb0b5b503595}
+
+
+
+
+\footnotesize\begin{verbatim}
+\brief Create a master Tw FLAT from the flat file list
+\end{verbatim}
+\normalsize
+ 
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+reduce/cal\-Tw\-Flat.py\end{CompactItemize}

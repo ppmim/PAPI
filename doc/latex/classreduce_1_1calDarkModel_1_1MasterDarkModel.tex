@@ -1,0 +1,63 @@
+\section{reduce::cal\-Dark\-Model::Master\-Dark\-Model Class Reference}
+\label{classreduce_1_1calDarkModel_1_1MasterDarkModel}\index{reduce::calDarkModel::MasterDarkModel@{reduce::calDarkModel::MasterDarkModel}}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+def \textbf{\_\-\_\-init\_\-\_\-}\label{classreduce_1_1calDarkModel_1_1MasterDarkModel_9e585748f3d00aa3327862e127f24aed}
+
+\item 
+def {\bfcreate\-Dark\-Model}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+\footnotesize\begin{verbatim}
+\brief Class used to build and manage a master calibration dark model
+
+\par Class:
+    MasterDarkModel
+\par Purpose:
+    Create a master Dark Model from a list for dark files
+    
+\par Description:
+     An input series dark exposures with a range of exposure times is given. A linear fit is done at each pixel position of data number versus exposure time. A each pixel position in the output map represents the slope of the fit done at that position and is thus the dark current expressed in units of data numbers per second.   
+\par Language:
+    PyRaf
+\param input_data
+    A list of dark files
+\param bpm
+    Input bad pixel mask or NULL
+\retval 0
+    If no error, a fits file (nx*ny) with 2 planes (extensions)
+    plane 0 = bias
+    plane 1 = dark current in DN/sec
+    
+    DARKCURRENT The median dark current in data numbers per second found from the median value of the output dark current map.
+\author
+    JMIbannez, IAA-CSIC
+    
+\end{verbatim}
+\normalsize
+ 
+
+
+
+\subsection{Member Function Documentation}
+\index{reduce::calDarkModel::MasterDarkModel@{reduce::cal\-Dark\-Model::Master\-Dark\-Model}!createDarkModel@{createDarkModel}}
+\index{createDarkModel@{createDarkModel}!reduce::calDarkModel::MasterDarkModel@{reduce::cal\-Dark\-Model::Master\-Dark\-Model}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}def reduce::cal\-Dark\-Model::Master\-Dark\-Model::create\-Dark\-Model ( {\em self})}\label{classreduce_1_1calDarkModel_1_1MasterDarkModel_5a2ceae6f7aca46c1a7eac48eab2ccea}
+
+
+
+
+\footnotesize\begin{verbatim}
+\brief Create a master DARK model from the dark file list
+\end{verbatim}
+\normalsize
+ 
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+reduce/cal\-Dark\-Model.py\end{CompactItemize}

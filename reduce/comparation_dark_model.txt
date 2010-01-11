@@ -1,0 +1,9 @@
+Polyfit clasico (17 min aprox)
+===============
+MEDIAN_DARK_CURRENT= 0.293142186344
+MEDIAN BIAS= 50.0606441726
+
+Ajuste a una recta usando solo dos puntos (primero y ultimo) (1.5 min aprox) 
+========================================
+MEDIAN_DARK_CURRENT= 0.306966321294
+MEDIAN BIAS= 40.0361405312

@@ -1,0 +1,50 @@
+inlist,s,a,"",,,"The list of input images"
+reference,s,a,"",,,"The reference image in input image list"
+output,s,a,"",,,"The output combined image"
+expmap,s,a,".exp",,,"The output exposure map or suffix
+"
+statsec,s,h,"",,,"The image section for computing image stats"
+nsigrej,r,h,3.,,,"The nsigma rejection for computing image stats"
+maxiter,i,h,20,,,"The maximum number of iterations for image stats
+"
+xslm,b,h,yes,,,"Do the sky subtraction step?"
+sslist,s,h,".sub",,,"The output sky subtracted image list or suffix"
+newxslm,b,h,no,,,"Use new version of xslm ?"
+forcescale,b,h,yes,,,"Force recalculation of image medians in xslm ?"
+nmean,i,h,6,1,,"Number of images to use for sky image in xslm"
+nskymin,i,h,3,0,,"Minimum number of frames to use for sky image in xslm"
+nreject,i,h,1,0,,"Number of pixels for xslm minmax reject"
+cache,b,h,yes,,,"Enable cacheing in new version of xslm ?
+"
+maskfix,b,h,yes,,,"Do the bad pixel correction step ?"
+bpmask,s,h,"",,,"The input bad pixel mask"
+forcefix,b,h,yes,,,"Force bad pixel fixing in maskfix ?
+"
+xzap,b,h,yes,,,"Do the cosmic ray correction step ?"
+crmasks,s,h,".crm",,,"The output cosmic ray mask list or suffix"
+newxzap,b,h,no,,,"Use new version of xzap ?"
+badpixupdate,b,h,yes,,,"Update bad pixel mask ?"
+nrepeats,i,h,3,,,"Number of repeats for bad status ?
+"
+mkshifts,b,h,no,,,"Determine the shiftlist interactively ?"
+chkshifts,b,h,yes,,,"Check the new shifts ?"
+cradius,r,h,5.,,,"Centroiding radius in pixels for mkshifts"
+maxshift,r,h,5.,,,"Maximum centroiding shift in pixels for mkshifts
+"
+xnregistar,b,h,yes,,,"Do the image combining step ?"
+shiftlist,s,h,"",,,"The input / output shift file"
+sections,s,h,".corners",,,"The output sections list file or suffix"
+fractional,b,h,no,,,"Do fractional shifts in xnregistar step ?"
+pixin,b,h,yes,,,"Are input coords in reference object pixels ?"
+ab_sense,b,h,yes,,,"Is A through B axis rotation counterclockwise ?"
+xscale,r,h,1.,,,"X pixels per A coordinate unit"
+yscale,r,h,1.,,,"Y pixels per B coordinate unit"
+a2x_angle,r,h,0.,,,"Angle in degrees from A CCW to X"
+ncoavg,i,h,1,1,,"Number of internal coaverages per frame"
+secpexp,r,h,1.,,,"Seconds per unit exposure time"
+y2n_angle,r,h,0.,,,"Angle in degrees from Y to N N through E"
+rotation,b,h,yes,,,"Is N through E CCW ?
+"
+imglist,*struct,h,"tmp$xfirstpass5417h",,,
+shlist,*struct,h,"",,,
+mode,s,h,"ql",,,

@@ -1,0 +1,6 @@
+filename,s,a,,,,"File name"
+validim,b,h,no,,,"Parse only if extension represents valid image datatype?"
+root,s,h,"_objfmedtemp",,,"Returned filename root"
+extension,s,h,"pl",,,"Returned filename extension"
+defextn,s,h,".fits",,,"Returned default filename extension"
+mode,s,h,"ql",,,

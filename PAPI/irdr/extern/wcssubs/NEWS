@@ -1,0 +1,104 @@
+May 1, 2000 - Release 2.7.3 (Doug Mink, SAO)
+Bug in hadd() fixed so new line is not overwritten.
+Pixel files whcih are in subdirectories of files where IRAF .imh header
+files reside are now dealt with correctly.
+All dates in the old FITS format (dd/mm/yy) where the year ranges from
+0 to 999 have 1900 added to them:  01/05/100 becomes 2000-05-01.
+
+------------------------
+
+March 27, 2000 - Release 2.7.2 (Doug Mink, SAO)
+In hputs(), do not add quotes if writing COMMENT or HISTORY
+In fits2iraf(), in imhfile.c, minimize length of path in pixel file name
+Fix code to deal with .imh file paths longer than 67 characters.
+In platepix(), use inverse CD matrix to get better initial x,y value
+Change the maximum header string length in the hget header reading
+  subroutines from 57600 to 256000
+Replace oldsys with wcsproj  in the WCS data structure so that more options
+  are available, such as forcing use of AIPS or WCSLIB projection subroutines
+Add setdatedec() to set the number of decimal places in FITS date strings
+  returned by dateutil subroutines 
+Fix precession code to deal correctly with equinoxes other than J2000 and
+  B1950.
+Move all date operations to dateutil.c, including current time used in imhfile.c
+
+------------------------
+
+February 23, 2000 - Release 2.7.0 (Doug Mink, SAO)
+Upgrade WCSLIB subroutines to WCSLIB 2.5 from 2.4
+Add MJD and Besselian and Julian epoch conversion to dateutil.c
+Use WCSLIB CAR, COE, NCP projections if oldsys is 1, else use worldpos()
+Set CD matrix when using DSS projection
+Change oldwcs in wcs.h from switch to multi-value flag wcsproj, default is same
+Fix minor bug in fitsfile.c fitscimage error returns.
+
+------------------------
+
+January 11, 2000 - Release 2.6.12 (Doug Mink, SAO)
+Fix bug in dateutil() to get fractional year to date conversion right
+
+December 20, 1999 - Release 2.6.11 (Doug Mink, SAO)
+Fix bug in hgetdate() to get ISO minutes and seconds right
+Upgrade dateutil() to do many date conversions
+
+December 10, 1999 - Release 2.6.10 (Doug Mink, SAO)
+Fix bug which caused strings starting with d and e followed by numbers
+to be declared numeric even though they're not really numbers
+Fix bug in dateutil.c ts2jd() which does not affect SAOimage
+Fix bugs dealing with NOAO TNX projection
+
+November 17, 1999 - Release 2.6.9 (Doug Mink, SAO)
+Fix bug which caused loss of NCP projection
+
+November 5, 1999 - Release 2.6.8 (Doug Mink, SAO)
+Change release number to match WCSTools
+Clean up code in all subroutines using lint
+Add DATE-MOD to FITS header in iraf2fits()
+Added dateutil.c file for conversions between date formats (used by iraf2fits())
+Return error code from hput*() subroutines if header buffer length exceeded.
+
+------------------------
+
+May 5, 1999 - Release 1.26 (Doug Mink, SAO
+hget.c, iget.c Use POSIX-compliant limits.h instead of values.h
+
+April 7, 1999 - Release 1.26 (Doug Mink, SAO)
+wcs.c	    Fix bug in dealing with EPOCHless non-equatorial coordinates
+wcsinit.c   Add optional filename to printed error messages
+
+April 5, 1999 - Release 1.26 (Doug Mink, SAO)
+hget.c      Check all string lengths before copying; ignore ^M at 80th character
+
+February 22, 1999 - Release 1.26 (Doug Mink, SAO)
+wcs.c       Fix bug dealing with SPA and NPA coordinates
+            Use faaces 0-5, not 1-6 for quad cube projections
+wcsinit.c   Fix computed rotation angle for DSS projection
+
+February 9, 1999 - Release 1.26 (Doug Mink, SAO)
+fitsfile.c: Allow BITPIX=0 dataless images
+wcsinit.c:  Fix bug initializing DSS image rotation
+wcs.c:      Free lin.imgpix and lin.piximg in wcsfree()
+hput.c:     Fix bug to avoid writing HISTORY or COMMENT lines past 80 chars
+
+December 8, 1998 - Release 1.25 (Doug Mink, SAO)
+------------------------
+fitsfile.c: Fix bug in fitsrhead() reading FITS table files caused by fix below
+
+November 30, 1998 - Release 1.25 (Doug Mink, SAO)
+fitsfile.c: Fix bug dealing with very large headers in fitsrhead()
+
+November 12, 1998 - Release 1.25 (Doug Mink, SAO)
+------------------------
+dsspos.c:   Fix possible divide by zero problems
+fitsfile.c: Add isfits() which checks filename or first line of header
+imhfile.c:  Add isiraf() which checks filename for .imh
+hget.c:     Assume 2-digit year in hyphen-separated date means FITS, not ISO
+tnxpos.c:   Fix multiple bugs
+wcscon.c:   Add wcscstr() to get coordinate system as a character string
+wcscon.c:   Add subroutine wcsconp() to convert coordinates + proper motions
+wcs.c:      Add North and South Polar Angle coordinate systems
+wcs.c:      Build WCS command initialization by getenv() into wcs*init()
+wcs.c:      Fix bug in wcssize(); fix bug with rotated mirrored images
+wcslib.h:   Add cel.h, lin.h, proj.h, and wcstrig.h to wcslib.h
+worldpos.c: Fix bug in inverse (sky to pixel) COE projection
+cel.c, lin.c, proj.c, sph.c, wcstrig.c: Include only wcslib.h

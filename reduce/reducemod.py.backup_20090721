@@ -1,0 +1,1086 @@
+#!/usr/bin/env python
+
+################################################################################
+#
+# simple_reduce class 
+#
+# reducemod.py
+#
+# Last update 30/04/2008
+#
+################################################################################
+
+
+"""
+   Main routines for the simple automatic data reduction
+"""
+
+_version     = "1.0.0"
+_date        = "30-04-2008"
+_author      = "Jose M. Ibanez (jmiguel@iaa.es)"
+
+
+_minversion_numpy   = "1.0.1"
+_minversion_pyfits  = "1.1"
+_minversion_pyraf   = "1.4"
+_minversion_biggles = "1.6.4"
+
+
+################################################################################
+# Import necessary modules
+
+import getopt
+import sys
+import os
+import shutil
+import datetime
+
+import misc.fileUtils
+import misc.utils as utils
+import datahandler
+
+# From reduce...
+import calDark
+import calDomeFlat
+
+
+
+# Pyraf modules
+from pyraf import iraf
+from iraf import noao
+from iraf import imred
+from iraf import ccdred
+from iraf import images
+from iraf import tv
+#from iraf import mscred OJO !!!! puede hacer que no funcione el ccdred normal (combine, ...)
+
+# Interact with FITS files
+import pyfits
+
+# Import Pyro core
+import Pyro.core
+import Pyro.naming
+
+# Logging
+import misc.paLog
+from misc.paLog import log
+
+
+################################################################################
+class SimpleReduce:
+ """
+ \brief Do a simple data reduction to a single frame
+        Subtract sky from an image using only its own background for sky computing
+ """
+ def __init__(self):
+     log.debug("simple_reduce Object created !!")
+     run_status=0
+     pass
+     
+ def run (self, frame_in, master_dark, master_flat, result_frame="/tmp/result.fits", out_tmp_dir='/tmp/', appPixMask=False):
+
+     run_status = 0
+     frame_out = ''
+     
+     if  frame_in=="" or master_dark=="" or master_flat=="" or result_frame=="":
+         return -1
+     
+       
+     t=misc.utils.clock()
+     t.tic()
+
+     log.debug("[SimpleReduce]:Running simple reduce proceduce...")
+     
+     frameoutD = frame_in.replace(".fits","_D.fits")
+     frameoutD = frameoutD.replace(os.path.dirname(frameoutD), out_tmp_dir)
+     frameoutD = frameoutD.replace("//","/")
+     
+     fc=datahandler.ClFits(frame_in)
+     ff=datahandler.ClFits(master_flat)
+     if ( fc.filter!=ff.filter ):
+         log.error("Error reducing frame %s. Filter missmatch with calibration frames" %frame_in)
+         return -1
+
+
+     print "TEMP_DIR ======================>", frameoutD
+     #Change to the source directory
+     iraf.chdir(os.path.dirname(out_tmp_dir))
+
+     # Remove an old output file
+     #misc.fileUtils.removefiles(frameoutD)
+
+     # Check if master dark exp_time is compliance with science file
+     
+     # STEP 1: Subtract masterdark
+     iraf.imarith(operand1=frame_in,
+                  operand2=master_dark,
+                  op='-',
+                  result=frameoutD,
+                  verbose='yes'
+                  )
+     log.debug( "SUBTRACT DARK FINISHED ---> %s", t.tac())
+     
+     # STEP 2: Divide by normalized master FlatField (OK !!)
+     ##frameoutF=frameoutD.replace("_D.fits","_D_F.fits")
+     ##frameoutF = frameoutF.replace(os.path.dirname(frameoutF), out_tmp_dir)
+     ##frameoutF = frameoutF.replace("//","/")
+
+     #misc.fileUtils.removefiles(frameoutF)
+     ##iraf.imarith(operand1=frameoutD,
+     ##             operand2=master_flat,
+     ##             op='/',
+     ##             result=frameoutF,
+     ##             verbose='yes'
+     ##             )
+     ##log.debug("DIVIDE BY FLAT FINISHED ---> %s",t.tac())
+      
+     # STEP 3: Compute sky background with only one frame (itself)
+     frame_out = frameoutD.replace("_D.fits","_D_S.fits")
+     frame_out = frame_out.replace(os.path.dirname(frame_out), out_tmp_dir)
+     frame_out = frame_out.replace("//","/")
+
+     log.debug("OUTPUT_FRAME ----> %s", frame_out)
+     sex( frameoutD, frame_out )
+     
+     log.debug("SEXTRACTOR FINISHED ---> %s", t.tac())
+     
+     
+     # STEP 3-2: Divide by normalized master FlatField (OK !!)
+     frameoutF = frame_out.replace("_D_S.fits","_D_S_F.fits")
+     frameoutF = frameoutF.replace(os.path.dirname(frameoutF), out_tmp_dir)
+     frameoutF = frameoutF.replace("//","/")
+
+     #misc.fileUtils.removefiles(frameoutF)
+     iraf.imarith(operand1=frame_out,
+                  operand2=master_flat,
+                  op='/',
+                  result=frameoutF,
+                  verbose='yes'
+                  )
+     log.debug("DIVIDE BY FLAT FINISHED ---> %s",t.tac())
+      
+     # STEP 4: Apply pixel mask
+     #if appPixMask:
+     #    applyPixelMask( frame_out, "/disk-a/caha/panic/DATA/data_alh/output/BadPixMask-20080409192131.pl")
+         
+         
+     # STEP 5: Cleanup & rename output frame
+     print "Files to remove : ", frameoutD + " " +  frame_out
+     misc.fileUtils.removefiles(frameoutD, frame_out)
+     shutil.move(frameoutF, result_frame)
+
+     log.debug("Simple reduce finished. %s" , t.tac() )
+     run_status=1 # Sucessfull finished
+     
+     return result_frame
+
+################################################################################
+class ReductionBlock:
+    """
+    \brief A class that contain a set of files with the same type, filter, mode, texp,... to reduce (science or calib)
+    """
+    
+    m_file_list = []         # original file list
+    m_file_list_p = []       # last processed file list
+    m_last_output_file = ''  # last output file generated
+    m_cl_file_list = []      # original classified (CFits) file list
+    m_history = []           # history of operations done to the file list (darked, flattened, avg_combined, med_combined, ...)
+    
+    def __init__(self, file_list, output_dir="/tmp/", type='unknown'):
+        
+        """\param file_list : a python list of pathnames
+           \param output_dir : 
+           \param type :
+        """
+        log.debug("New Reduction block")
+        if file_list==[]:
+            log.error("Empty file list, cannot create Reduction Block")
+            raise ExError,"Empty file list"
+        
+        self.m_file_list = file_list
+        self.m_file_list_p = self.m_file_list # initially, are the same  
+        self.m_nfiles = len(file_list)
+        self.m_type = type
+        self.m_output_dir = output_dir # it will be used for output files and as a working dir (temp, ...)
+        
+        log.debug("File_list = %s", file_list)
+        self.m_cl_file_list = []
+        
+        for file in self.m_file_list:
+            try:
+                log.debug("RB-FILE = %s", file)
+                f = datahandler.ClFits(file)
+                f.printClass()
+            except:
+                log.error("Found not well formed FITS file: %s", file)
+                raise
+            else:
+                self.m_cl_file_list.append(f)
+         
+        # checkFilter
+        #if not self.checkFilter():
+        #    log.error("Frames dataset does not have all the same filter")
+        #    raise ExError, "Filter matching error"
+         
+        # checkType
+        #if not self.checkType():
+        #    log.error("Frames dataset does not have all the same type")
+        #    raise ExError, "Type matching error"
+           
+     
+    def getList(self):
+        return self.m_file_list
+    
+    def getProcList(self):
+        return self.m_file_list_p
+    
+    def setNewList(self, new_file_list):
+        self.m_file_list = new_file_list
+        
+    def checkFilter(self):
+        """Return true is all files in file have the same filter type, false otherwise
+        
+        \return True or False
+        """
+        filter_0 = self.m_cl_file_list[0].filter
+        for file in self.m_cl_file_list:
+            if file.filter != filter_0:
+                log.debug("File %s does not match file filter", file)
+                return False
+        
+        log.debug("All files match same file filter")
+        return True
+        
+    def checkExpTime(self):
+        """Return true is all files in file have the same Exposition Time, false otherwise
+        
+        \return True or False
+        """
+        exptime_0 = self.m_cl_file_list[0].exptime
+        for file in self.m_cl_file_list:
+            if file.exptime != exptime_0:
+                log.debug("File %s does not match file exptime", file)
+                return False
+        
+        log.debug("All files match same file exptime")
+        return True
+      
+    def checkType(self, type_to_check=None):
+        """
+        Return true is all files in file have the same type(science, dark, flat, ...), false otherwise
+        
+        \param type_to_check (\c string) type to check to
+        \return True or False
+        """
+        if type_to_check==None:
+            type_0 = self.m_cl_file_list[0].type
+        else:
+            type_0 = type_to_check
+             
+        for file in self.m_cl_file_list:
+            if file.type != type_0:
+                log.debug("File %s does not match file type %s", file.pathname, type_0)
+                return False
+        
+        log.debug("All files match same file type")
+        return True
+                
+        
+    def createMasterDark(self, outputfile):
+        """
+        Create a master dark file from the reduction block files
+        
+        \param outputfile (\c string) Name of the outputfile name for the master dark to be created
+        \return Return True master dark file was created, False otherwise
+        """
+        
+        if (self.checkExpTime() and self.checkType("DARK") and self.checkFilter() ):
+            try:
+                md = calDark.MasterDark (self.m_file_list_p, os.path.dirname(outputfile), outputfile)
+                md.createMaster()
+                self.m_last_output_file = outputfile
+            except:
+                log.error("Error creating master DARK file")
+                raise
+            else:
+                return
+        else:
+            log.error("Cannot create master dark. Files not same type")
+            raise ExError, "File mismatch"
+        
+    def createMasterDFlat(self, outputfile):
+        """
+        Create a master dome flat file from the reduction block files
+        
+        \param outputfile (\c string) Name of the outputfile name for the master to be created
+        \return Return True master file was created, False otherwise
+        """
+        
+        # TODO : search for dome flats (on and off)
+        if True:
+            try:
+                md = calDomeFlat.MasterDomeFlat (self.m_file_list_p, os.path.dirname(outputfile), outputfile)
+                md.createMaster()
+                self.m_last_output_file = outputfile
+            except:
+                log.error("Error creating master Dome Flat file")
+                raise
+            else:
+                return True
+        else:
+            log.error("Cannot create master frame. Files not same type")
+            raise ExError, "Frames mismatch"
+            return False
+                
+    def createSuperFlat(self, master_dark, output_file):
+        """
+        Create a master super flat file from the reduction block files (science type)
+        
+        \param outputfile (\c string) Name of the outputfile name for the master to be created
+        \return Return True master file was created, False otherwise
+        """
+        # Step 0: Check master dark is appropiate
+        # @TODO
+        
+        log.debug("Start createSuperFlat")
+        # Remove an old files
+        misc.fileUtils.removefiles(output_file)
+        
+        # Step 1: Check file group is valid
+        if (self.checkExpTime() and self.checkType("SCIENCE") and self.checkFilter() ):
+            try:
+                out_1 = self.subtractDark(master_dark)
+                rb_1 = ReductionBlock(out_1)   
+                superFlat_1 = self.m_output_dir + 'superF1.fits'
+                rb_1.combineFrames(superFlat_1)
+                out_2 = rb_1.applyFlat(superFlat_1)              
+                rb_2 = ReductionBlock(out_2)
+                masks = rb_2.createObjMasks()
+                rb_2.combineFrames(output_file)
+                
+                self.m_last_output_file = output_file
+            except:
+                log.error("Error creating SuperFlat file")
+                raise
+            else:
+                log.info("Superflat %s created successfully !!!", output_file)
+        else:
+            log.error("Cannot create Super Flat. Files not same type")
+            raise ExError, "Not right frames types"
+                   
+                   
+    def subtractDark(self, master_dark):
+        """Subtract a master dark to each file of the reduction block
+        """
+        
+        t=misc.utils.clock()
+        t.tic()
+        
+        log.debug("Start subtractDark")
+        if not os.path.exists(master_dark):
+            raise ExError, 'Master frame does not exist'
+        
+        framelist = ''
+        framelist_out = ''
+        framelist = listToString(self.m_file_list_p)
+        #for iframe in self.m_file_list_p:
+        #    framelist += iframe + ' , '
+            
+        base, infile   = os.path.split(self.m_file_list_p[0])    
+        framelist_out = framelist.replace(".fits","_D.fits")
+        framelist_out = framelist_out.replace(base, self.m_output_dir).replace('//','/')  # IRAF interpreta '//' como ''
+        log.debug("FrameList_Out = %s", framelist_out)
+        # Remove an old files ( we need to conver to python list)
+        ret_list = []
+        ret_list = [i.replace(".fits","_D.fits").replace(base, self.m_output_dir).replace('//','/') for i in self.m_file_list_p]
+        for f in ret_list:
+            misc.fileUtils.removefiles(f)
+
+        # STEP 1: Subtract masterdark
+        iraf.imarith(operand1=framelist,
+                  operand2=master_dark,
+                  op='-',
+                  result=framelist_out,
+                  verbose='yes'
+                  )
+        # STEP 2: Check dark EXPTIME is complaint with files EXPTIME
+        fdark = datahandler.ClFits(master_dark)
+        if (not fdark.exptime == self.m_cl_file_list[0].exptime):
+            log.debug("Adjusting EXPTIME factor ---> %s", float(fdark.exptime/self.m_cl_file_list[0].exptime))
+            iraf.imarith(operand1=framelist_out,
+                  operand2=float(fdark.exptime/self.m_cl_file_list[0].exptime), #ESTO ESTA MAAAALLLL !!!!!!!!!!!!!!!!!!!!!!
+                  op='*',
+                  result=framelist_out,
+                  verbose='yes'
+                  )
+        log.debug("SUBTRACT DARK FINISHED ---> %s", t.tac())
+        
+        self.m_file_list_p = ret_list
+        self.m_history.append("DARK")
+        return ret_list
+    
+    def computeSkyBackground_i(self, i_frame, n_frames, output_type='BACKGROUND', output_file=None ):
+        """\brief Compute the sky background for the frame 'i_frame', using the nearest 2*n_frames
+           \param i_frame index referenced frame to compute the related sky-background
+           \param n_frames number of nearest 2*frames to use for the sky backgorund
+           \param output_type: background | sub_background | objects
+           \param ouput_sky sky background returned
+        """
+         
+        
+            
+        # First, some checks
+        # Check data type is SCIENCE or SKY (TODO)
+        if not self.checkType('SCIENCE') and not self.checkType('DOME_FLAT_LAMP_OFF'):
+            log.error("Error, Type mismatching")
+            raise ExError,"Type mismatching"
+            
+         
+        # Check 'i_frame' is in m_file_list
+        if i_frame < 0 or i_frame>len(self.m_file_list):
+            log.error("Not provided suitable parameters")
+            raise ExError,"Bad parameters"
+        
+        # ******************************************************************* 
+        # SINGLE : Compute the own background, not using anyother near frame
+        # *******************************************************************
+        if n_frames==0:
+            sex ( self.m_file_list[i_frame], output_file, output_type)
+            return    
+
+        # ******************************************************************* 
+        # MULTI 
+        # *******************************************************************
+        # adjust and check there are enought frames 
+        m_n_frames = 0 
+        if 2*n_frames>len(self.m_file_list)-1:
+            m_n_frames = len(self.m_file_list)-1
+        else: m_n_frames = n_frames
+                
+        log.debug("M_N_FRAMES=%d",m_n_frames)        
+        # Sort the framelist
+        self.sortByDateObs()
+            
+            
+        # Compound sky list (PRE+POST frames)
+        # *** Init some counts
+        sky_list = []
+        pre_pend  = m_n_frames - i_frame # pending pre-frames to add (from the post-i)
+        if pre_pend<0: 
+            print "PR_P=%d" %pre_pend
+            pre_pend=0
+        post_pend = m_n_frames - (len(self.m_file_list)-1- i_frame) # pending post-frames to add (from the pre-i)
+        if post_pend<0:
+            print "PS_P=%d" %post_pend 
+            post_pend=0
+        # En teoria, no puedo tener pre_pend!=0 y post_pend!=0
+        
+        log.debug("PRE_PEND=%d",pre_pend)
+        log.debug("POST_PEND=%d",post_pend)
+        
+        # *** PRE-frames 
+        if (i_frame-(m_n_frames + post_pend))>=0:
+            sky_list = self.m_cl_file_list[(i_frame-(m_n_frames+post_pend)):i_frame]
+        else: # not enought pre-frames
+            sky_list = self.m_cl_file_list[0:i_frame]
+        
+        log.debug("SKY_LIST(pre)=%s",sky_list)
+        
+        # *** POST-frames 
+        if (i_frame+(m_n_frames+pre_pend))<=len(self.m_file_list)-1:
+            sky_list += self.m_cl_file_list[i_frame+1:i_frame+(m_n_frames+pre_pend+1)]
+        else: # not enought post-frames
+            sky_list += self.m_cl_file_list[i_frame+1:]
+            
+        log.debug("SKY_LIST(post)=%s",sky_list)
+        sl = []
+        for k in sky_list:
+            sl.append(k.pathname) 
+        # Now, create a temp reduction block
+        tmp_rb = ReductionBlock(sl)
+        if output_file==None:
+            output_file = '/tmp/sky_i_%i_n_%i.fits' %(i_frame, m_n_frames)
+        tmp_rb.combineFrames(output_file)
+        
+        # Check output_type 
+        if output_type=='-BACKGROUND':
+            l_output_file = output_file.replace('.fits','_S.fits')
+            misc.fileUtils.removefiles(l_output_file)
+            # Subtract background
+            iraf.imarith(operand1=self.m_file_list[i_frame],
+                  operand2=output_file,
+                  op='-',
+                  result=l_output_file,
+                  verbose='yes'
+                  )
+        log.debug("BACKGROUND SUBTRACTED ---> %s", l_output_file)
+        #Rename the output file according our input parameters
+        shutil.copy(l_output_file, output_file)
+        
+        self.m_last_output_file  = l_output_file 
+            
+            
+        
+    def simpleReduce(self, i_frame, n_frames,  output_file, master_flat=None, bpmask_file=None, do_astrometry=False):
+        """
+            TODO
+        """
+        otemp_1 = '/tmp/temp1.fits'
+        otemp_2 = '/tmp/temp2.fits'
+        
+        #Clean up
+        misc.fileUtils.removefiles(otemp_1, otemp_2, output_file)
+        
+        #**************************************        
+        #*** Reduction with a single frame
+        #**************************************        
+        if n_frames==0: 
+            # STEP 1: Divide by master flat
+            if master_flat!=None:
+                iraf.imarith(operand1=self.m_file_list[i_frame],
+                    operand2=master_flat,
+                    op='/',
+                    result=otemp_1,
+                    verbose='yes'
+                    )
+                log.debug("Flat fielding FINISHED")
+            else:
+                otemp_1 = self.m_file_list[i_frame]
+                
+            # STEP 2:Compute sky background with N-nearest and subtract (dark subtraction implicit)
+            tl=[]
+            tl.append(otemp_1)
+            tmp_rb = ReductionBlock(tl)
+            tmp_rb.computeSkyBackground_i(0, 0, '-BACKGROUND', otemp_2)
+                
+            # STEP 3: Apply Bad Pixel Mask
+            if bpmask_file!=None:
+                tl=[]
+                tl.append(otemp_2)     
+                tmp_rb = ReductionBlock(tl)
+                tmp_rb.applyBadPixelMask([0], bpmask_file)
+        
+        #**************************************        
+        #**** Reduction with N-nearest frames
+        #**************************************
+        elif n_frames>0:
+            # STEP 1:Compute sky background with N-nearest and subtract (dark subtraction implicit)
+            self.computeSkyBackground_i(i_frame, n_frames, '-BACKGROUND', otemp_1 )
+            # STEP 2: Divide by master flat
+            if master_flat!=None:
+                iraf.imarith(operand1=otemp_1,
+                    operand2=master_flat,
+                    op='/',
+                    result=otemp_2,
+                    verbose='yes'
+                    )
+                log.debug("Flat fielding FINISHED")
+            else:
+                otemp_2 = otemp_1
+                
+            # STEP 3: Apply Bad Pixel Mask
+            if bpmask_file!=None:
+                tl=[]
+                tl.append(otemp_2)      
+                tmp_rb = ReductionBlock(tl)
+                tmp_rb.applyBadPixelMask([0], bpmask_file)
+                
+        # Last, rename output file
+        shutil.move(otemp_2, output_file)
+        self.m_last_output_file  = output_file
+        
+    ################################################################################## 
+    def createObjMasks(self):
+        """Find objects into the frames and create an object masks for each file; 
+            write the mask file into the object frame.
+        """
+        log.debug("TODO")
+        
+    ##################################################################################
+    def applyFlat(self, master_flat):
+        """Divide all the frames into the Reduction Block by a given master (normalized) flat field
+        """
+                 
+        t=misc.utils.clock()
+        t.tic()
+        
+        if not os.path.exists(master_flat):
+            raise ExError, 'Master frame does not exist'
+        
+        # Check filter
+        df = datahandler.ClFits(master_flat)
+        if self.m_cl_file_list[0].filter!= df.filter:
+            raise ExError, 'Master frame does not match frame dataset filter'
+        
+        framelist = ''
+        framelist_out = ''
+        framelist = listToString(self.m_file_list_p)
+        #for iframe in self.m_file_list_p:
+        #    framelist += iframe + ' , '
+            
+        base, infile = os.path.split(self.m_file_list_p[0])    
+        framelist_out = framelist.replace(".fits","_DF.fits")
+        framelist_out = framelist_out.replace(base, self.m_output_dir).replace('//','/')
+        # Remove an old files ( we need to conver to python list)
+        ret_list = []
+        ret_list = [i.replace(".fits","_DF.fits").replace(base, self.m_output_dir).replace('//','/') for i in self.m_file_list_p]
+        for f in ret_list:
+            misc.fileUtils.removefiles(f)
+        # STEP 1: Divide master flat
+        iraf.imarith(operand1=framelist,
+                  operand2=master_flat,
+                  op='/',
+                  result=framelist_out,
+                  verbose='yes'
+                  )
+        log.debug("Flat fielding FINISHED ---> %s", t.tac())
+        
+        self.m_file_list_p = ret_list
+        self.m_history.append("FLAT")
+        return ret_list
+
+    ################################################################################## 
+    def combineFrames(self, output_file, type='median', mask=None, params=None):
+        """Combine all the frames into the Reduction Block using 'type' operation (median, mean=average)
+        """
+        # TODO -->masks !!!
+                 
+        t=misc.utils.clock()
+        t.tic()
+        
+        # Some checks
+        # Type operation
+        if type!='median'and type!='mean':
+            raise ExError, 'Combine operation type not supported'
+        
+        # Filter and Type checking 
+        if not self.checkFilter() or not self.checkExpTime():
+            log.error("Frames dataset does not have all the same filter or ExpTime")
+            raise ExError, "Filter matching error"
+         
+        # checkType
+        if not self.checkType():
+            log.error("Frames dataset does not have all the same type")
+            raise ExError, "Type matching error"
+        
+        framelist = ''
+        framelist = listToString(self.m_file_list_p)
+        log.debug("Frame list to combine = [%s]", framelist)
+        #for iframe in self.m_file_list:
+        #    framelist += iframe + ' , '
+        
+        # Set iraf working directory    
+        base, infile   = os.path.split(self.m_file_list_p[0])    
+        iraf.chdir(base)
+        # Remove an old file
+        misc.fileUtils.removefiles(output_file)
+        # STEP 1: Combine data files
+        iraf.combine(input=framelist,
+                     output=output_file,
+                     combine=type,
+                     ccdtype='none',
+                     reject='sigclip',
+                     lsigma=3,
+                     hsigma=3,
+                     subset='yes',
+                     scale='mode'
+                     #masktype='none'
+                     #verbose='yes'
+                     #scale='exposure',
+                     #expname='EXPTIME'
+                     #ParList = _getparlistname ('flatcombine')
+                     )
+
+        log.debug("Frame combining  FINISHED ---> %s", t.tac())
+        
+        self.m_last_output_file = output_file
+        self.m_history.append("COMBINE")
+        return True
+    
+    ##################################################################################
+    def createBadPixelMask(self, show=False, output_file=None, mask_frame=None, threshold_low=5000, threshold_high=20000):
+        """Make a bad pixel mask (hot and cold pixels) from a set of images ( lamp_on and lamp_off frames and darks)
+        """
+        
+        log.debug('createBadPixelMask started')
+        t=misc.utils.clock()
+        t.tic()
+        
+        darks_frames=[]
+        flats_off_frames=[]
+        flats_on_frames=[]
+    
+        
+        #Change to the source directory
+        base, infile   = os.path.split(self.m_file_list_p[0])    
+        iraf.chdir(self.m_output_dir)
+        
+        #STEP 1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
+        #        and create string list for IRAF tasks
+        for iframe in self.m_cl_file_list:
+            if iframe.getType()=='DOME_FLAT_LAMP_OFF':
+                flats_off_frames.append(iframe.pathname)
+            elif iframe.getType()=='DOME_FLAT_LAMP_ON':
+                flats_on_frames.append(iframe.pathname)
+            elif iframe.getType()=='DARK':
+                darks_frames.append(iframe.pathname)
+            else:
+                # reject the frame
+                log.error("DISCARTING: Frame %s is neither dome_flat nor a dark frame", iframe.pathname)
+                
+        #Check whether there are enought calib frames
+        if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10 
+            or len(darks_frames)<3):
+            log.error("There are not enought calib frames for create BPM !!")
+            raise ExError, "Not enought calib frames"
+        
+        #STEP 2: Create the master dark
+        try:
+            rb_dark = ReductionBlock(darks_frames)
+            master_dark = '/tmp/master_dark.fits'
+            rb_dark.createMasterDark(master_dark)
+        except:
+            log.error("Error building master dark")
+            raise
+            
+        
+        #STEP 3: Subtrac the master dark to each dome flat
+        try:       
+            rb_flats_off = ReductionBlock(flats_off_frames)
+            rb_flats_off.subtractDark(master_dark)
+            rb_flats_on = ReductionBlock(flats_on_frames)
+            rb_flats_on.subtractDark(master_dark)
+        except:
+            log.error("Error subtracting master dark")
+            raise 
+        
+        #STEP 4: Combine dome dark subtracted flats (on/off)
+        try:
+            flat_off_comb = self.m_output_dir + 'flat_off_comb.fits'
+            rb_flats_off.combineFrames(flat_off_comb, 'median')
+            flat_on_comb = self.m_output_dir + 'flat_on_comb.fits'
+            rb_flats_on.combineFrames(flat_on_comb, 'median')
+        except:
+            log.error("Error while combining flats frames")
+            raise 
+        
+        #STEP 5: Compute flat_low/flat_high
+        flat_ratio = self.m_output_dir + 'flat_ratio.fits'
+        misc.fileUtils.removefiles(flat_ratio)
+        log.debug( 'Computing FlatRatio')
+        iraf.imarith(operand1=flat_off_comb,
+                 operand2=flat_on_comb,
+                 op='/',
+                 result=flat_ratio,
+                 )
+        log.debug("Flat Ratio built")
+                     
+        #STEP 6: Create BPM
+        log.debug( 'Now, computing bad pixel mask')
+        dt = datetime.datetime.now()
+        if output_file==None:
+            outF = self.m_output_dir + 'BadPixMask'+dt.strftime("-%Y%m%d%H%M%S")
+        else:
+            outF = output_file
+        misc.fileUtils.removefiles(outF + ".pl")
+        iraf.ccdmask(image=flat_ratio,
+                 mask=outF,
+                 lsigma=4,
+                 hsigma=4,
+                 )
+        
+        # Clean up tmp files
+        misc.fileUtils.removefiles(flat_off_comb, flat_on_comb, flat_ratio)
+        # Change back to the original working directory
+        iraf.chdir()
+        
+        if show:
+            iraf.display(image=outF, frame=1)
+                        
+        
+        log.info('Bad pixel mask created')
+        log.debug("Time elapsed : [%s]" , t.tac() )
+
+        return True
+
+    ##################################################################################
+    def applyBadPixelMask( self, i_frames, mask ):
+        """
+        \brief Apply a previously created pixel mask to frame elements indexed by 'i_frames' list in the list of frames
+        \param i_frames list of indexes
+        \param mask badpixel mask file to apply
+        \return True or False
+        """
+        
+        t=misc.utils.clock()
+        t.tic()
+     
+        base=os.path.dirname(self.m_file_list[i_frames[0]])
+        iraf.chdir(base)
+        
+        for i in i_frames:
+            if i>=0 and i<len(self.m_file_list):
+                log.debug ('Start applyPixelMask; applying mask %s to frame %s', mask, self.m_file_list[i])
+                iraf.fixpix(images=self.m_file_list[i],
+                     masks=mask,
+                     verbose='yes'
+                     )
+            else:
+                log.error("Index error, pixel mask to applied to frame")
+                     
+                     
+        log.debug( "applyPixelMask finished. %s", t.tac() )
+
+    ##################################################################################
+    def mathOp( self, operator, outputFile=None ):
+        """
+        \brief Apply a math operation to the selected files
+        \param operator (-, +, /)
+        \param outputFile (by default /tmp/op.fits)
+        \return True or False
+        """
+        t=misc.utils.clock()
+        t.tic()
+
+        log.debug("Start mathOp")
+        if outputFile==None:
+            outputFile = '/tmp/op.fits'
+
+        if operator!='+' and operator!='-' and operator!='/':
+            return
+
+        # Remove an old output file
+        misc.fileUtils.removefiles(outputFile)
+        if (operator=='+' and len(self.m_file_list_p)>2):
+            framelist = ''
+            framelist = listToString(self.m_file_list_p)
+            log.debug("Frame list to combine = [%s]", framelist)
+            iraf.combine(input=framelist,
+                     output=outputFile,
+                     combine='average',
+                     ccdtype='none',
+                     reject='sigclip',
+                     lsigma=3,
+                     hsigma=3,
+                     subset='yes',
+                     scale='mode'
+                     #masktype='none'
+                     #verbose='yes'
+                     #scale='exposure',
+                     #expname='EXPTIME'
+                     #ParList = _getparlistname ('flatcombine')
+                     )
+        else:
+            """iraf.mscarith(operand1=self.m_file_list_p[0],
+                      operand2=self.m_file_list_p[1],
+                      op=operator,
+                      result=outputFile,
+                      extname="",
+                      verbose='yes'
+                      )
+            """
+            iraf.imarith(operand1=self.m_file_list_p[0],
+                      operand2=self.m_file_list_p[1],
+                      op=operator,
+                      result=outputFile,
+                      verbose='yes'
+                      )
+        log.debug("Operation FINISHED ---> %s", t.tac())
+        return
+
+    ################################################################################## 
+    def SNAP_like_reduction(self, master_flat=None):
+       """ Make a reduction block procedure based on the SNAP pipeline"""
+
+        ### TODO ###
+        
+        
+    ############### Private functions ################################################ 
+    def sortByDateObs(self):
+        """ Sort the object frame list by DATE-OBS keyword"""
+        
+        self.m_cl_file_list.sort(self.compDateObs)
+        log.debug("List sorted...")
+        for f in self.m_cl_file_list:
+            print "File: %s  DateObs: %s" %(f.filename,f.datetime_obs)
+        
+    def compDateObs(self, e1, e2):
+        """ Compare routine used to sort the frame classified list"""
+        
+        if e1.datetime_obs < e2.datetime_obs:
+            return -1
+        elif e1.datetime_obs > e2.datetime_obs:
+            return +1
+        else:
+            return 0
+        
+     
+################################################################################
+def applyPixelMask(  frame_in, mask ):
+    """
+    Apply a previously created pixel mask to a frame
+    """
+
+    log.debug ('Start applyPixelMask; applying mask %s to frame %s', mask, frame_in)
+    t=misc.utils.clock()
+    t.tic()
+    
+    base=os.path.dirname(frame_in)
+    iraf.chdir(base)
+    
+    iraf.fixpix(images=frame_in,
+                masks=mask,
+                verbose='yes'
+                )
+    
+    log.debug( "applyPixelMask finished. %s", t.tac() )
+     
+################################################################################
+     
+def sex ( image_in, image_out, output_type='-BACKGROUND', params=None, sconfig=None):
+     
+     """
+     \brief Set SExtractor parameters and configuration and run.
+     
+     \param image_in: Detection (and measurement) image
+     \param image_out:  Measurement image
+     \param output_type: (optional) background |-background | objects | -objects (see SExtractor doc)
+     \param params: (optional) extra output parameters (Parameters object)
+     \param config: (optional) configuration options (Config object)
+     
+     NOTE: If either params or config is not specified, the defaults will be
+     used
+     """
+     
+     sextractor_dir="/disk-a/caha/panic/DATA/test1/bin/"
+     
+     params= "-PARAMETERS_NAME " + sextractor_dir + "/default.param" + \
+             " -FILTER Y " + \
+             " -FILTER_NAME " + sextractor_dir + "filter.conv" + \
+             " -FITS_UNSIGNED Y " + \
+             " -CATALOG_NAME catalog.cat " + \
+             " -DETECT_MINAREA  15" + \
+             " -DETECT_THRESH 5.0 " + \
+             " -CHECKIMAGE_TYPE  " + output_type + \
+             " -CHECKIMAGE_NAME " +  image_out
+     
+     command = sextractor_dir + "/sex -c /disk-a/caha/panic/DATA/test1/bin/sex.conf1 " + image_in +" "+ params
+     log.debug("SEX COMMAND = %s" , command )
+     
+     (child_stding, child_stdout, child_stderr ) = os.popen3( command )
+     output = child_stdout.readline()
+     while output!="":
+         print output
+         output = child_stdout.readline()
+
+     print "SALE DEL WHILEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE!!!"
+     rv=os.wait()[0]
+
+     print "VALUE RETURNEDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=", rv
+     return rv
+         
+################################################################################
+         
+class ExAbort(Exception): 
+  """Module-specific error, to be raised when an the reduction is to be aborted
+     in a friendly way. This error should be caught by the task manager, who
+     then stops the processing.
+  """
+  def __init__(self, *args):
+    self.args = args
+
+
+class ExError(Exception): 
+  """Module-specific error, to be raised when an 'expected' exception occurs
+     during the processing of a task. This error should then be caught by the
+     task manager, avoiding nasty error output.
+  """
+  def __init__(self, *args):
+    self.args = args
+
+################################################################################
+# Some useful functions
+################################################################################
+def stringToList( a_string_list ):
+    """ This function converts string list from IRAF format to python
+        list format, using as separator ','
+    """
+    ret=[]
+    # Split into a list
+    ret = a_string_list.split(',')
+    #Then, strip blanks from begining and end
+    ret = [elem.strip() for elem in ret]
+    if ret.count('')>0:
+        ret.remove('')
+    
+    return ret
+    
+def listToString( a_list ):
+    """ This function convert a list of string into a single string separating
+        each list element with a ',' (IRAF file input format)
+    """
+    a_string=''
+    n_tot = len(a_list)
+    n=0
+    for elem in a_list:
+        n=n+1
+        if n!=n_tot:
+            a_string += elem + ' , '
+        else:
+            a_string += elem
+    
+    return a_string
+        
+#################################################################################
+### MAIN
+#################################################################################        
+if __name__ == "__main__":
+    print 'main: reduce module ....'
+    # Get and check command-line options
+    args = sys.argv[1:]
+    st ='/tmp/f1.fits , /tmp/f2.fits , /tmp/f3.fits , /tmp/f4.fits , '
+    lis = ['/tmp/f5.fits','/tmp/f4.fits', '/tmp/f1.fits','/tmp/f2.fits', '/tmp/f3.fits', '/tmp/f6.fits', '/tmp/f7.fits']
+    lis2 = ['/disk-a/caha/panic/DATA/prueba1/orion0020.fits', '/disk-a/caha/panic/DATA/prueba1/orion0021.fits', '/disk-a/caha/panic/DATA/prueba1/orion0022.fits']
+    lis2 = ['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160047.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160048.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160049.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160050.fits', 
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160051.fits', 
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160052.fits', 
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160053.fits', 
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160054.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160055.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160056.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160057.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160058.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160059.fits',
+    '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408160060.fits']
+    #lis2 = ['/disk-a/caha/panic/DATA/prueba1/orion0020.fits']   
+    #ret1 = stringToList(st)
+    #ret2 = listToString(lis)
+    
+    # Tests for Reduction Block
+    rb = ReductionBlock (lis2)
+    rb.simpleReduce(6, 4,  '/tmp/p1.fits', '/tmp/master_dflat.fits', '/tmp/BadPixMask-20081127181927.pl') #, '/tmp/bpm.pl', do_astrometry=False)
+    
+    #rb.createBadPixelMask()
+    #rb.sortByDateObs()
+    #rb.computeSkyBackground_i(3, 0,'-BACKGROUND')
+    """
+    for i in range(len(lis)):
+        for w in range(3):
+            print "*******  I=%d W=%d  ***************" %(i,w+1)
+            rb.computeSkyBackground_i(i,w+1)
+       """     
+    """rb.computeSkyBackground_i(0,3)
+    rb.computeSkyBackground_i(1,3)
+    rb.computeSkyBackground_i(2,3)
+    rb.computeSkyBackground_i(3,3)
+    rb.computeSkyBackground_i(4,3)
+    rb.computeSkyBackground_i(5,3)
+    """
+    
+    
+    
+    
+    

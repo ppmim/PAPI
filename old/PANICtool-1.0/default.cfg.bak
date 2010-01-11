@@ -1,0 +1,202 @@
+################################################################################
+#
+#                      FIEStool configuration file
+#
+################################################################################
+#
+# This first section ('main') contains all configurable options of FIEStool
+#
+[main]
+	#
+	# Directory settings
+	#
+	# 'inpath'  is the directory from where the observed data is read
+	# 'outpath' is the directory where processed data will be written
+	# 'refpath' is the directory where calibration data is stored
+	#
+	inpath = /disk-a/caha/panic/TMP/data
+	outpath = /disk-a/caha/panic/TMP/data/output
+	refpath = /disk-a/caha/panic/TMP/data/output
+	
+	#
+	# The initial reduction mode to use when loading this config
+	# (for available modes, see below)
+	#
+	#       currentmode = QuickLook
+	#       currentmode = Advanced
+	#       currentmode = DoubleSpec
+	#
+	currentmode = Advanced
+	
+	#
+	# Default filename pattern used for autochecking, browsing and
+	# selecting files.
+	#
+	filename_filter = *.fit*
+	
+	#
+	# Names of files used for calculating combined FLATS and BIASES
+	# NB... lists of files MUST be on a single line (no linebreaks!)
+	# This list can easily be manipulated from within FIEStool
+	#
+	biaslist = A0408060036.fits, A0408060037.fits, A0408160001.fits, A0408160002.fits, A0408160003.fits
+	flatlist = /tmp/indata/FIqf220070.fits, /tmp/indata/FIqf220071.fits, /tmp/indata/FIqf220072.fits, /tmp/indata/FIqf220073.fits, /tmp/indata/FIqf220074.fits, /tmp/indata/FIqf220075.fits
+	
+	#
+	# The names of the *input* files used for determining the location of
+	# the spectral orders and the wavelength solution (taken from 'inpath')
+	#
+	orderdef = /tmp/indata/FIqf220070.fits
+	wavedef = /tmp/indata/FIqf220119.fits
+	
+	#
+	# Idem, but for the interlaced orders (only used when running
+	# the DoubleSpec reduction mode, files taken from 'inpath')
+	#
+	interlacedorderdef = ""
+	interlacedwavedef = ""
+	
+	#
+	# The name of the combined master BIAS, master FLAT and the normalized
+	# master FLAT frames (will be stored in 'refpath')
+	#
+	masterbias = master_bias.fits
+	masterflat = /tmp/refdata/master_flat.fits
+	masternormflat = /tmp/refdata/master_normflat.fits
+	
+	#
+	# The name of the frame that will contain the determined order
+	# locations and the extracted blaze shape (will be stored in 'refpath')
+	#
+	blazeshape = /tmp/refdata/blazeshape.fits
+	masterorderdef = /tmp/refdata/orderdef.fits
+	
+	#
+	# The name of the frame that will contain the determined wavelength
+	# solution
+	#
+	waveref = /tmp/refdata/wavedef.fits
+	
+	#
+	# The name of the frame that will contain the master wavelength
+	# solution, used as a initial guess when determining the 'waveref'
+	# frame above
+	#
+	masterwaveref = /tmp/refdata/master_wavedef.fits
+	
+	#
+	# The order definition and wavelength definition frames for the
+	# interlaced orders
+	#
+	masterinterlacedorderdef = ""
+	interlacedwaveref = ""
+	
+	#
+	# The name of a 1/0-type pixel mask (optional). The observations
+	# will be multiplied by this mask.
+	#
+	pixelmask = ""
+	
+	#
+	# Other settings :
+	#
+	# The name of the FITS headers listed in the directory display
+	#
+	fitsheaders = object exptime
+	
+	#
+	# The FITS extension and orientation of the observed data
+	#
+	mef_dataext = 0
+	frameorientation = 7
+	
+	#
+	# The data area used in the data reduction
+	#
+	x_start = 51
+	x_end = 2098
+	y_start = 3
+	y_end = 2046
+	
+	#
+	# The directory where user configuration files will be stored
+	# Indicate the full path
+	#
+	config_dir = /disk-a/caha/panic/Desktop/TMP/FIEStool-1.2.10
+	
+	#
+	# The directory where the IRAF task parameter files are stored
+	# Normally, this is the 'taskconf' directory under the root directory
+	# of FIEStool
+	# Indicate the full path
+	#
+	iraf_taskconfig_dir = /disk-a/caha/panic/Desktop/TMP/FIEStool-1.2.10/taskconf
+	
+	#
+	# The name of the default autoloader configuration loaded upon startup
+	# No need to change
+	#
+	default_autoload_savefile = default_autoload.acfg
+		
+	darkslist = A0408060036.fits,A0408060037.fits,A0408160001.fits,A0408160002.fits,A0408160003.fits,A0408160004.fits,A0408160005.fits,A0408160006.fits,A0408160007.fits,A0408160008.fits,A0408160009.fits,A0408160010.fits,A0408160011.fits,A0408160012.fits,A0408160013.fits,A0408160014.fits,A0408160015.fits,A0408160016.fits,A0408160017.fits,A0408160018.fits,A0408160019.fits,A0408160020.fits
+	masterdarks = master_darks.fits
+	
+
+#
+#
+# The following sections contain the names of the tasks performed in each
+# reduction mode. The boolean values of each task determines the initial state
+# of the checkbutton next to the task, and thus if the task is active upon
+# loading this configuration.
+#
+# Don't change the names or order of the tasks unless you know what your
+# are doing!
+#
+
+#
+# Tasks and selections for the QuickLook reduction mode
+#
+[QuickLook]
+	autoload = True
+	preproc = True
+	subtractbias = True
+	flatfield = True
+	plotcross = True
+	extspec = True
+	blazecorr = True
+	addwave = True
+	plotspec = True
+
+#
+# Tasks and selections for the Advanced reduction mode
+#
+[Advanced]
+	autoload = True
+	preproc = True
+	subtractbias = True
+	scattering = True
+	flatfield = True
+	plotcross = True
+	extspec = True
+	blazecorr = True
+	addwave = True
+	ordermerge = True
+	plotspec = True
+#
+# Tasks and selections for the DoubleSpec reduction mode
+#
+[DoubleSpec]
+	autoload = True
+	preproc = True
+	subtractbias = True
+	scattering = True
+	flatfield = True
+	plotcross = True
+	getspecshift = True
+	extspec = True
+	blazecorr = True
+	addwave = True
+	adjustwave = True
+	plotspec = True
+
+

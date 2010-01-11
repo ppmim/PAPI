@@ -1,0 +1,25 @@
+Beta version programs to make the APM catalog available to ESO SkyCat
+CNS, 27 Jan 1999
+
+apmcat.c -- downloads the APM catalog for selected sky region
+            see apmcat.notes for credits and compilation instructions
+
+apm.pl -- runs apmcat.c to obtain catalog data for input sky region,
+          uses readcat.pl to convert and output object list in
+          format required by ESO SkyCat
+
+skycat.cfg -- SkyCat configuration file, put in ~/.skycat.cfg
+              Modified to include APM catalog, which will be accesible from 
+              the skycatgaia pull down menu Data-Servers -> Catalogs
+
+Directions:
+  1) compile apmcat.c 
+       see apmcat.notes
+
+  2) copy skycat.cfg to ~/.skycat 
+       check that the path to apm.pl in the APM entry is correct
+
+  3) setenv APM_BASEDIR /home/sabbey/apmdist 
+       should be the directory where you untar these files
+
+  4) readcat.pl assumes perl is in /usr/bin/perl, modify if necessary

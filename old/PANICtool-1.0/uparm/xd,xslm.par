@@ -1,0 +1,21 @@
+inlist,s,a,,,,"List of input images to be sky subtracted"
+omasks,s,a,"",,,"The input object mask keyword or list"
+nmean,i,a,,1,,"Number of images to use to make sky frame"
+outlist,s,a,".sub",,,"The output sky subtracted images or suffix"
+ssmasks,s,h,".ssm",,,"The output sky subtraction masks or suffix"
+hmasks,s,h,".hom",,,"The output holes masks or suffix"
+forcescale,b,h,no,,,"Force recalculation of input image medians ?"
+useomask,b,h,no,,,"Use object masks to compute sky statistics ?"
+statsec,s,h,"",,,"The sky statistics image section"
+nsigrej,r,h,3.,,,"The nsigma sky statistics rejection limit"
+maxiter,i,h,20,,,"The maximum number of sky statistics iterations"
+nskymin,i,h,3,0,,"The minimum number of frames to use for sky"
+nreject,i,h,1,0,,"The number of high and low side pixels to reject"
+del_ssmasks,b,h,yes,,,"Delete sky substraction masks on task termination ?"
+del_hmasks,b,h,no,,,"Delete holes masks on task termination ?"
+imglist,*struct,h,"",,,
+omskimglist,*struct,h,"",,,
+outimglist,*struct,h,"",,,
+ssmskimglist,*struct,h,"",,,
+hmskimglist,*struct,h,"",,,
+mode,s,h,"ql",,,

@@ -1,0 +1,15 @@
+#!/bin/csh
+
+\rm c_* >& /dev/null
+\rm dc_* >& /dev/null
+\rm *.nip >& /dev/null
+\rm gain.fits >& /dev/null
+\rm flat.fits >& /dev/null
+\rm coadd1* >& /dev/null
+\rm *.objs >& /dev/null
+\rm test* >& /dev/null
+\rm uparm* >& /dev/null
+\rm *.skysub >& /dev/null
+\rm *.skysub.fits >& /dev/null
+\rm *.weight.fits >& /dev/null
+\rm *.objs.fits >& /dev/null

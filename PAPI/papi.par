@@ -1,0 +1,30 @@
+#
+# Deafult PAPI parameters
+#
+# format: set parameter = value   
+#
+
+# Parameters for the bad pixel mask
+set nsig=5            # number of stddev from local bkg to be bad pixel
+set nxblock=16        # X dimen. (pixels) to compute local bkg (even)
+set nyblock=16        # Y dimen. (pixels) to compute local bkg (even)
+#set mingain=0.70      # pixel below this gain are considered bad
+#set maxgain=1.40      # pixel above this gain are considered bad
+set mingain=0.45      # pixel below this gain are considered bad
+set maxgain=1.55      # pixel above this gain are considered bad
+
+
+# Running sky subtraction
+set halfnsky=4        # half-width for running sky subtraction
+set destripe=none     # destripe image (none|row|col|colrow|rowcol)
+
+# Offsets computation
+set off_minarea=15    # SExtractor DETECT_MINAREA used for offsets
+set off_thresh=7.5    # SExtractor DETECT_THRESH used for offsets
+set off_err=4         # offset precision [arcsec]
+
+# Object mask
+set mask_minarea=25   # DETECT_MINAREA used for object masking
+set mask_thresh=0.4   # DETECT_THRESH used for object masking
+set expand_mask=0.5   # amount to expand the object mask regions
+

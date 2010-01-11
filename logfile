@@ -1,0 +1,42 @@
+
+Mar 11 14:03: IMCOMBINE
+  combine = median, scale = none, zero = none, weight = none
+  reject = sigclip, mclip = yes, nkeep = 1
+  lsigma = 3., hsigma = 3.
+  blank = 0.
+                Images 
+  /disk-a/caha/panic/DATA/data_mat/dark0001.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0002.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0003.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0004.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0005.fits
+
+  Output image = suma.fits, ncombine = 5
+
+Mar 11 14:03: IMCOMBINE
+  combine = median, scale = none, zero = none, weight = none
+  reject = sigclip, mclip = yes, nkeep = 1
+  lsigma = 3., hsigma = 3.
+  blank = 0.
+                Images 
+  /disk-a/caha/panic/DATA/data_mat/dark0001.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0002.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0003.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0004.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0005.fits
+
+  Output image = suma.fits, ncombine = 5
+
+Mar 11 14:09: IMCOMBINE
+  combine = median, scale = none, zero = none, weight = none
+  reject = sigclip, mclip = yes, nkeep = 1
+  lsigma = 3., hsigma = 3.
+  blank = 0.
+                Images 
+  /disk-a/caha/panic/DATA/data_mat/dark0001.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0002.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0003.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0004.fits
+  /disk-a/caha/panic/DATA/data_mat/dark0005.fits
+
+  Output image = suma.fits, ncombine = 5

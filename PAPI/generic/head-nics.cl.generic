@@ -1,0 +1,15 @@
+#!IRAFBIN/cl.e -f
+
+
+set imextn = "oif:imh fxf:fits,fit,fts plf:pl qpf:qp stf:hhh,??h"
+logver = "IRAF V2.11 May 1997"
+language
+images 
+imutil
+
+  hedit @files.nip ra      '(15*@"ra-hours")' verif- show- add+ upd+
+  hedit @files.nip dec     '(@"dec-deg")'     verif- show- add+ upd+
+  hedit @files.nip exptime '(@"time-int")'    verif- show- add+ upd+
+
+logout
+

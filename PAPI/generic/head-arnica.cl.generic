@@ -1,0 +1,12 @@
+#!/usr/local/astro/irafbin/bin.redhat/cl.e -f
+
+set imextn = "oif:imh fxf:fits,fit,fts plf:pl qpf:qp stf:hhh,??h"
+logver = "IRAF V2.11 May 1997"
+language
+images 
+imutil
+
+  hedit @files.nip exptime '(@"time-int")'    verif- show- add+ upd+
+
+logout
+

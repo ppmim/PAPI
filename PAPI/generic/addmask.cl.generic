@@ -1,0 +1,21 @@
+#!IRAFBIN/cl.e -f
+
+
+set imextn = "oif:imh fxf:fits,fit,fts plf:pl qpf:qp stf:hhh,??h"
+logver = "IRAF V2.11 May 1997"
+images 
+imutil
+
+
+if (access("badmask.pl")) {
+	imarith ("gain.fits", "*", "badmask.pl", "gain.fits")
+	print ("External bad pixel mask badmask.pl used.")
+} else if (access("SNAPDIR/badmask.pl")) {
+	imarith ("gain.fits", "*", "SNAPDIR/badmask.pl", "gain.fits")
+	print ("External bad pixel mask badmask.pl used.")
+} else {
+	print ("No external bad pixel mask found")
+}
+
+logout
+
