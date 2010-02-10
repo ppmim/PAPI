@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ################################################################################
 #
 # PANICtool
@@ -437,8 +438,8 @@ if __name__ == "__main__":
     inputfile=''
     dark=''
     outputfile='/tmp/bpm.fits'
-    lsig=15
-    hsig=15
+    lsig=20
+    hsig=20
     
             
     for option, par in opts:

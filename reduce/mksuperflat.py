@@ -59,7 +59,7 @@ def makesuperflat(filelist, output_file):
                )
     
     median = float(iraf.imstat (
-            images=("'"+output_file+"[100:1900,100:1900]'").replace('//','/'),
+            images=("'"+output_file+"[100:900,100:900]'").replace('//','/'),
             fields='midpt',format='no',Stdout=1)[0])
                                               
     """iraf.imarith(operand1 = 'sflat.fits',

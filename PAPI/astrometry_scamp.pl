@@ -9,7 +9,7 @@
 # keywords refer to the chip/image center and not telescope pointing position.
 #
 # Created: 24-March 2009
-# Last Update: 30-Nov-2009
+# Last Update: 09-Feb-2010
 
 die "Usage: astrometry_scamp.pl apm|usno|2mass file*.fits [-u]\n" 
     unless ($#ARGV >= 1);
@@ -20,8 +20,8 @@ $tol = 2.5;                              # offset tolerance in arcsec
 
 $cattype = shift;
 
-die "Catalog type should be `apm' or `usno' or `2mass'\n"
-    unless ($cattype eq "apm" or $cattype eq "usno" or $cattype eq "2mass");
+die "Catalog type should be `usno' or `2mass' or `ucac' or `sdss'\n"
+    unless ($cattype eq "usno" or $cattype eq "ucac" or $cattype eq "2mass" or $cattype eq "sdss");
 
 sub decdeg;
 
@@ -107,8 +107,21 @@ for ($i = 0; $i <= $#ARGV; $i++) {       # loop over files on command line
 #    $nref = ($nobjs2 > 100) ? 100 : $nobjs2;
     
 
-    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -SOLVE_PHOTOM N -CHECKPLOT_TYPE NONE";
-    
+
+    if ($cattype eq "2mass"){ 
+        $CAT="2MASS";
+    }elsif ($cattype eq "usno"){
+        $CAT="USNO-B1";
+    }elsif ($cattype eq "ucac"){
+        $CAT="UCAC-2";
+    }elsif ($cattype eq "sdss"){
+        $CAT="SDSS-R5";
+    } else {
+        $CAT="2MASS";
+    }
+
+#    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT -SOLVE_PHOTOM N -CHECKPLOT_TYPE NONE";
+    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT";    
     if (system($matchcmd) != 0) {
         print "Warning: Command failed: $matchcmd\n";
         next;

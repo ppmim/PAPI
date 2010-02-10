@@ -181,11 +181,11 @@ class CheckQuality:
         
         # Sextractor config
 
-        sex_exe= "/usr/local/Terapix/bin/sex "
-        sex_cnf= "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/irdr/src/config/default.sex"
+        sex_exe= os.environ['TERAPIX']+"/sex "
+        sex_cnf= os.environ['IRDR_BASEDIR']+"/src/config/default.sex"
         background_image = output_file
         
-        sex_cmd = sex_exe + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
+        sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
         " -CHECKIMAGE_TYPE  BACKGROUND -CHECKIMAGE_NAME  " + background_image
         
         # SExtractor execution

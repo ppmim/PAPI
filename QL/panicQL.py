@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Thu Jan 7 19:09:28 2010
-#      by: The PyQt User Interface Compiler (pyuic) 3.17.4
+# Created: Wed Feb 10 12:20:00 2010
+#      by: The PyQt User Interface Compiler (pyuic) 3.14.1
 #
 # WARNING! All changes made in this file will be lost!
 

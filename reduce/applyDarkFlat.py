@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ################################################################################
 #
 # PANICtool
@@ -140,7 +141,7 @@ class ApplyDarkFlat:
                 # STEP 2.1: Check EXPTIME and apply master DARK and master FLAT
                 if s_time!=dark_time:
                     log.debug("Scaling master dark ...")
-                    f[0].data = (f[0].data - dark[0].data*float(f[0].header['EXPTIME']/dark[0].header['EXPTIME']) )/ flat[0].data
+                    f[0].data = (f[0].data - dark[0].data*float(f[0].header['EXPTIME']/dark[0].header['EXPTIME']) )/flat[0].data
                     f[0].header.add_history('Dark subtracted (scaled) %s' %self.__mdark)
                     f[0].header.add_history('Flat divided %s' %self.__mflat)
                 else:

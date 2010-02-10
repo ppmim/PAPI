@@ -328,8 +328,8 @@ class MainGUI(panicQL):
                 self._task_info=self._task_info_list.pop()
                 if self._task_info._exit_status == 0: # EXIT_SUCCESS, all was OK
                     if self._task_info._return!=None:
-                        display.showFrame(self._task_info._return)
                         QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
+                        display.showFrame(self._task_info._return)
                 else:
                     QMessageBox.critical(self, "Error", "Error while running task.  "+str(self._task_info._exc))
                 #Anyway, restore cursor
@@ -607,15 +607,21 @@ class MainGUI(panicQL):
         os.system("cd $HOME/iraf;/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 100x30 -bg grey -fg black -e cl &")
         
     def start_ds9_slot(self):
-        """Start DS9 display """
-        os.system("/usr/local/bin/ds9 &")
+        """Start DS9 display, and if exixts, open the currect selected file in the list view"""
+        
+        if self.m_listView_item_selected!="":
+            display.showFrame(self.m_listView_item_selected)
+        else:
+            display.startDisplay()
+            
+        #os.system("/usr/local/bin/ds9 %s &" %((self.m_listView_item_selected)))
         self.textEdit_log.append("<info_tag> DS9 launched !!! </info_tag>")
         
     def start_aladin_slot(self):
         """Start Aladin tool"""
         
         
-        os.system("/usr/local/bin/aladin " + self.m_listView_item_selected +" &")
+        os.system('echo "load %s ;sync; get vizier(2mass)" |/usr/local/bin/aladin -nobanner &' %(self.m_listView_item_selected))
         self.textEdit_log.append("<info_tag> Aladin launched !!! </info_tag>")
         
         # utils.runCmd does not allow launch in background !!
@@ -886,8 +892,12 @@ class MainGUI(panicQL):
                 return 
       
             # Call external apps skyfilter
-            gain=self.m_papi_dir+"/gain.fits"
+            #gain=self.m_papi_dir+"/gain.fits"
             gain=self.m_masterFlat
+            if not os.path.exists( gain ):
+                QMessageBox.information(self, "Info", QString("No gain map %1 found. Please, select one on 'Calibrations' tab").arg(gain))
+                return
+                    
             #filen=near_list.index(self.m_listView_item_selected)
             hwidth=2
             cmd=self.m_papi_dir+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(filename, gain, hwidth,filen)
@@ -934,20 +944,22 @@ class MainGUI(panicQL):
             self.textEdit_log.append(QString(str(line)))
         
     def background_estimation_slot(self):
-        
         """ Give an background estimation of the current selected image"""
+        
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
         try:     
-            img=cq.estimateBackground("/tmp/bckg.fits")
+            img=cq.estimateBackground(self.m_outputdir+"bckg.fits")
+            
             values = (iraf.imstat (images=img,
             fields="image,mean,mode,stddev,min,max",format='no',Stdout=1))
             file,mean,mode,stddev,min,max=values[0].split()
+            
             self.textEdit_log.append(QString("<info_tag> Background estimation MEAN= %1    MODE=%2    STDDEV=%3    MIN=%4         MAX=%5</info_tag>").arg(mean).arg(mode)
             .arg(stddev).arg(min).arg(max))
             
             display.showFrame(img)
         except:
-            self.textEdit_log.append("<error_tag> ERROR: Cannot estimage background of selected image  </error_tag>")
+            self.textEdit_log.append("<error_tag> ERROR: something wrong while computing background </error_tag>")
             raise
           
     def fwhm_estimation_slot (self):
@@ -1034,7 +1046,7 @@ class MainGUI(panicQL):
         #Change to working directory
         cwd=os.getcwd()
         os.chdir(self.m_papi_dir)
-        cmd=self.m_papi_dir+"/papi_v1 %s single dither" %(filename)
+        cmd=self.m_papi_dir+"/papi_v1 %s single dither %s" %(filename,self.m_outputdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         
@@ -1099,11 +1111,10 @@ class MainGUI(panicQL):
         
         if len(self.m_popup_l_sel)==1:
             fits = datahandler.ClFits(self.m_listView_item_selected)
-            print "Astrometry !!!"
             if fits.getType()=='SCIENCE':
                 # Call external script (papi)
                 os.chdir(self.m_papi_dir)
-                cmd=self.m_papi_dir+"/astrometry_scamp.pl usno %s" %(self.m_listView_item_selected)
+                cmd=self.m_papi_dir+"/astrometry_scamp.pl 2mass %s" %(self.m_listView_item_selected)
                 
                 #Change to working directory
                 os.chdir(self.m_papi_dir)
@@ -1121,8 +1132,8 @@ class MainGUI(panicQL):
     def testSlot(self):
 
         rb = reduce.ReductionBlock (self.m_popup_l_sel)
-        if rb.createBadPixelMask("/tmp/badPixelMask"):
-            QMessageBox.information(self,"Info",QString("BPM file %1 created").arg("/tmp/badPixelMask.pl"))
+        if rb.createBadPixelMask(self.m_outputdir+"/badPixelMask"):
+            QMessageBox.information(self,"Info",QString("BPM file %1 created").arg(self.m_outputdir+"/badPixelMask.pl"))
         else:
             QMessageBox.information(self,"Info","Error, building Bad Pixel Mask (BPM) !")
         
@@ -1197,7 +1208,7 @@ class MainGUI(panicQL):
                     
                     appMask = False
                     try:
-                        frame_out = r.run( frame_to_reduce, self.m_masterDark, self.m_masterFlat, '/tmp/result.fits', self.m_tempdir, appPixMask=False )
+                        frame_out = r.run( frame_to_reduce, self.m_masterDark, self.m_masterFlat, self.m_outputdir+'/result.fits', self.m_tempdir, appPixMask=False )
                         #Finaly, display the frame
                         display.showFrame (frame_out)
                     except:
@@ -1238,7 +1249,7 @@ class MainGUI(panicQL):
 
       for i in range(1, len(filenames)+1):
         result_frames.append( filenames[i-1].replace(".fits", "_out.fit"))
-        threads.append( reduce.ReduceThread(i, filenames[i-1], self.m_masterDark, self.m_masterFlat, result_frames[i-1],'/tmp/') )
+        threads.append( reduce.ReduceThread(i, filenames[i-1], self.m_masterDark, self.m_masterFlat, result_frames[i-1], self.m_outputdir) )
         threads[i-1].start()
 
       for t in threads:
@@ -1264,7 +1275,7 @@ class MainGUI(panicQL):
       
       for i in range(1, len(filenames)+1):
         result_frames.append( filenames[i-1].replace(".fits", "_out.fit"))
-        t=reduce.ReduceThread(i, filenames[i-1], self.m_masterDark, self.m_masterFlat, result_frames[i-1], '/tmp/')
+        t=reduce.ReduceThread(i, filenames[i-1], self.m_masterDark, self.m_masterFlat, result_frames[i-1], self.m_outputdir)
         t.start()
         t.join()
 

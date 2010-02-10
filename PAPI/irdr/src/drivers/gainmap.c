@@ -115,8 +115,8 @@ static void usage(void)
     "where flatfn  - filename of input flatfield FITS image\n"
     "      gainfn  - filename of output gainmap FITS image\n"
     "      nsig    - # of stddev from local bkg to be bad pixel (default 5.0)\n"
-    "      nxblock - local bkg blocks of nxblock pixels across (def. 16)\n"
-    "      nyblock - local bkg blocks of nyblock pixels down (def. 16)\n"
+    "      nxblock - local bkg blocks of nxblock pixels across (def. 16) *img size should be multiple\n"
+    "      nyblock - local bkg blocks of nyblock pixels down (def. 16)   *img size should be multiple\n"
     "      mingain - pixels with gain < mingain are assumed bad (def. 0.7)\n"
     "      maxgain - pixels with gain > maxgain are assumed bad (def. 1.3)\n\n"
     "example: gainmap flat.fits gain.fits\n\n";

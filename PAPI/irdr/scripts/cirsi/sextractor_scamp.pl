@@ -36,11 +36,13 @@ for $fn (@ARGV) {
               " -FILTER N " .
               " -FITS_UNSIGNED Y " .
               " -CATALOG_TYPE FITS_LDAC ".
+	      #" -CATALOG_TYPE ASCII_HEAD ".	
               " -CATALOG_NAME $fn.ldac " .
               " -DETECT_MINAREA $area " .
               " -DETECT_THRESH $thresh " .
               " -SATUR_LEVEL 300000.0".
-              " -CHECKIMAGE_TYPE NONE " ;
+              #" -CHECKIMAGE_TYPE NONE " ;
+		" -CHECKIMAGE_TYPE OBJECTS ";
 
     die "Sorry, command failed: $cmd\n"              # run SExtractor
         unless (system($cmd) == 0);

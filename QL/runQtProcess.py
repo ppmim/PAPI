@@ -64,7 +64,9 @@ class RunQtProcess(QWidget):
           or err.count("No such file or directory") or err.count('No match') or err.count("Failed") or err.count("fail")):
             log.error( "An error happened while running command --> %s \n", err)
             self.exit = 1
-        else: log.info("readOutput: any error detected!")
+        else:
+          pass 
+          #log.info("readOutput: no error detected!")
             
         self._outWindow.append(QString("STDOUT>>> %1").arg(err))
     
@@ -78,7 +80,9 @@ class RunQtProcess(QWidget):
           or err.count("No such file or directory") or err.count('No match') or err.count("Failed") or err.count("fail") or err.count("cannot")):
             log.error( "An error happened while running command --> %s \n", err)
             self.exit = 1
-        else: log.info("readErrors: any error detected!")
+        else:
+          pass 
+          #log.info("readErrors: NO error detected!")
         
         self._outWindow.append( QString("STDERROR>>> %1").arg(err) )
     

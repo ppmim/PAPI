@@ -97,6 +97,8 @@ int main(int argc, char *argv[])
 
         fk5prec(epoch0, 2000.0, &ra, &dec);
 
+	printf("\n-->newRA=%f, newDEC=%f", ra, dec);
+
         put_wcs(argv[i], ra, dec, scale, nx, ny);
 
         put_key_double(argv[i], "EQUINOX", 2000.0);

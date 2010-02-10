@@ -37,6 +37,7 @@ ds9_path="/usr/local/bin/"
 ################################################################################
 # Launch the DS9 display
 def startDisplay():
+  """ funtion to launch the DS9 display, checking previusly if it is already started"""
 
   #First all, check if already is running
   stdout_handle=os.popen("/sbin/pidofproc ds9","r")
@@ -61,7 +62,7 @@ def startDisplay():
       
 def startDisplay2():
    
-  """ Esta funcion da muchos problemas cuando se llama desde el QL, por eso no la usamos"""
+  """ NOT USED, because Esta funcion da muchos problemas cuando se llama desde el QL, por eso no la usamos"""
 
   #messageLog.put('Starting DS9 display...')
   # First all, check if already is running
@@ -137,6 +138,9 @@ def showSingleFrames(framelist):
   
   global next_frameno
 
+  #Check display
+  startDisplay()
+  
   nframes=len(framelist)
   for i in range(nframes):
       #os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
@@ -164,6 +168,6 @@ def stopDisplay():
 ################################################################################
 #
 if __name__ == "__main__":
-   startDisplay2()
+   startDisplay()
    
    
