@@ -1,4 +1,4 @@
-#Some examples for doing some common tests about PAPI
+#Some examples for doing some common tests 
 dfits *.fits |fitsort OBJECT
 ./calDark.py -s /disk-a/caha/panic/DATA/SIMU_PANIC_3/darks50.txt -o /tmp/mdark.fits
 ./calDomeFlat.py -s /disk-a/caha/panic/DATA/SIMU_PANIC_3/dflats.txt -o /tmp/dflats.fits
