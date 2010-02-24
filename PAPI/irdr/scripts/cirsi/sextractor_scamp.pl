@@ -11,6 +11,8 @@ die "Usage: sextractor_scamp.pl detect_minarea detect_thresh *.fits\n"
     unless ($#ARGV >= 2);
 
 $basedir = $ENV{'IRDR_BASEDIR'};
+$papi_home = $ENV{'PAPI_HOME'};
+$basedir = $papi_home . "/irdr/";
 
 die "Please setenv IRDR_BASEDIR /path/irdr\n"
     unless ($basedir);
@@ -41,8 +43,8 @@ for $fn (@ARGV) {
               " -DETECT_MINAREA $area " .
               " -DETECT_THRESH $thresh " .
               " -SATUR_LEVEL 300000.0".
-              #" -CHECKIMAGE_TYPE NONE " ;
-		" -CHECKIMAGE_TYPE OBJECTS ";
+              " -CHECKIMAGE_TYPE NONE " ;
+		#" -CHECKIMAGE_TYPE OBJECTS ";
 
     die "Sorry, command failed: $cmd\n"              # run SExtractor
         unless (system($cmd) == 0);

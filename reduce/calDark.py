@@ -97,7 +97,7 @@ class MasterDark:
         
         if nframes<self.m_min_ndarks:
             log.error("Not enought number of dark frames (>%s) to compute master dark",self.m_min_ndarks)
-            raise Exception("Not enought number of dark frames")
+            raise Exception("Not enought number of dark frames (>=%s) to compute master dark" %(self.m_min_ndarks))
             
             
         if not os.path.exists(os.path.dirname(self.__output_filename)):
@@ -122,13 +122,14 @@ class MasterDark:
             log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, f.expTime(), f.getType())) 
             if f.getType()!="DARK":
                 log.error("Error: Task 'createMasterDark' finished. Frame type is not 'DARK'.")
-                continue
+                raise Exception("Found a DARK frame with different EXPTIME or NCOADDS") 
+                #continue
             else:        
                 # Check EXPTIME, TYPE (dark)
                 if ( not self.m_texp_scale and f_expt!=-1 and (int(f.expTime()) != int(f_expt) or  f.getType()!=f_type or f.getNcoadds()!=f_ncoadds)  ):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different EXPTIME and/or NCOADDS")
-                    continue
-                    #raise Exception("Found a DARK frame with different EXPTIME or NCOADDS") 
+                    #continue
+                    raise Exception("Found a DARK frame with different EXPTIME or NCOADDS") 
                 else: 
                     f_expt  =f.expTime()
                     f_ncoadds=f.getNcoadds()

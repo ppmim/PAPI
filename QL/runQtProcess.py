@@ -84,7 +84,7 @@ class RunQtProcess(QWidget):
           pass 
           #log.info("readErrors: NO error detected!")
         
-        self._outWindow.append( QString("STDERROR>>> %1").arg(err) )
+        self._outWindow.append( QString("STDE>>> %1").arg(err) )
     
     def exitFunc(self):
         

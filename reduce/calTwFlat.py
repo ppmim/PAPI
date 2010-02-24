@@ -187,7 +187,7 @@ class MasterTwilightFlat:
                 log.info("--->%s",e)            
         else:
             log.error("Error, not enought good frames, exiting....")
-            raise "Error, not enought good flat frames"
+            raise Exception("Error, not enought good flat frames")
                 
         #Clobber existing output images
         iraf.clobber='yes'

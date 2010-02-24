@@ -9,9 +9,9 @@
 # keywords refer to the chip/image center and not telescope pointing position.
 #
 # Created: 24-March 2009
-# Last Update: 09-Feb-2010
+# Last Update: 12-Feb-2010
 
-die "Usage: astrometry_scamp.pl apm|usno|2mass file*.fits [-u]\n" 
+die "Usage: astrometry_scamp.pl apm|usno|2mass regrid|noregrid file*.fits [-u]\n" 
     unless ($#ARGV >= 1);
 
 $area = 10.0;                            # SExtractor DETECT_MINAREA
@@ -22,6 +22,12 @@ $cattype = shift;
 
 die "Catalog type should be `usno' or `2mass' or `ucac' or `sdss'\n"
     unless ($cattype eq "usno" or $cattype eq "ucac" or $cattype eq "2mass" or $cattype eq "sdss");
+
+$regridtype = shift;
+
+die "Regrid type should be `regrid' or `noregrid' \n"
+    unless ($regridtype eq "regrid" or $regridtype eq "noregrid" );
+
 
 sub decdeg;
 
@@ -39,6 +45,7 @@ $matchprog = "$terapix_home/scamp";
 $printprog = "$papi_home/irdr/bin/printwcs";
 $fitskeyprog = "$papi_home/irdr/extern/wcstools/bin/gethead";
 $updateheaderprog = "$terapix_home/missfits ";
+$regridprog = "$terapix_home/swarp ";
 
 die "Expected executables: $initprog, $sexprog, $matchprog, $printprog, $fitskeyprog\n"
  unless (-x $initprog and -x $matchprog and -x $printprog and -x $fitskeyprog and -x $sexprog);
@@ -121,12 +128,13 @@ for ($i = 0; $i <= $#ARGV; $i++) {       # loop over files on command line
     }
 
 #    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT -SOLVE_PHOTOM N -CHECKPLOT_TYPE NONE";
-    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT";    
+    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT -WRITE_XML N";    
     if (system($matchcmd) != 0) {
         print "Warning: Command failed: $matchcmd\n";
         next;
     }
     
+
     # Save backup copy and Update header with new WCS parameters
     print `cp $fn $fn.orig`;             # save backup copy
     $fn_= $fn;
@@ -134,6 +142,10 @@ for ($i = 0; $i <= $#ARGV; $i++) {       # loop over files on command line
     print `cp $fn.head $fn_`;
     print `$updateheaderprog $fn -WRITE_XML N`;
     
+    # Re-grid the image with the new WCS
+    if ($regridtype eq "regrid"){ 
+        print `$regridprog $fn -WRITE_XML N`;
+    }
 
 }
 

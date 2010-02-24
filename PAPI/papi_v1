@@ -58,7 +58,7 @@ endif
 
 # Clean old files and copy new directories  ------------------------------
 #\rm *.fits
-$PAPI_HOME/clearpapi
+$PAPI_HOME/cleanpapi
 $PAPI_HOME/copySource.py $1
 
 
@@ -457,7 +457,7 @@ if ( $astrometry == "YES" ) then
 	echo -------------------------------------------------------------------
 	echo " "
 
-    $PAPI_HOME/astrometry_scamp.pl usno double.fits
+    $PAPI_HOME/astrometry_scamp.pl 2mass noregrid double.fits
 
 endif
 
@@ -468,7 +468,7 @@ if ( $regrid == "YES" ) then
     echo --------------------------------------------------------------------
     echo " "
     #swarp double.fits -COPY_KEYWORDS RA,DEC,OBJECT,PIXSCALE,ROT-RTA,INSTRUME,TELESCOPE -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_IMAGE -COMBINE_TYPE CHI2
-    swarp double.fits  -COPY_KEYWORDS OBJECT,PIXSCALE,INSTRUME,TELESCOPE,FILTER -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_IMAGE double.weight.fits -COMBINE_TYPE AVERAGE
+    swarp double.fits  -COPY_KEYWORDS OBJECT,PIXSCALE,INSTRUME,TELESCOPE,FILTER -WEIGHT_TYPE MAP_WEIGHT -WEIGHT_IMAGE double.weight.fits -COMBINE_TYPE AVERAGE -WRITE_XML N
     
 endif
 

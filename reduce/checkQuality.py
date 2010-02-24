@@ -80,8 +80,9 @@ class CheckQuality:
         
         # Sextractor config
 
-        sex_exe= "/usr/local/Terapix/bin/sex "
-        sex_cnf= "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/irdr/src/config/default.sex"
+        
+        sex_exe= os.environ['TERAPIX']+"/sex"
+        sex_cnf= os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
         
         ## Sextractor Catalog columns
         #0  NUMBER
@@ -102,11 +103,10 @@ class CheckQuality:
         
         catalog_file="test.cat"
         
-        sex_cmd = sex_exe + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
+        sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
         " -CATALOG_TYPE ASCII -CATALOG_NAME  " + catalog_file
         
         # SExtractor execution
-        #os.chdir("/disk-a/caha/panic/DEVELOP/PIPELINE/PAPI/")
         
         if utils.runCmd( sex_cmd )==0:
             raise Exception("Some error happended while running SExtractor")
@@ -141,7 +141,7 @@ class CheckQuality:
             snr=flux/flux_err
             if x>self.edge and x<naxis1-self.edge and y>self.edge and y<naxis2-self.edge and ellipticity<self.ellipmax and fwhm>0.1 and fwhm<20 and flags==0  and isoarea>float(self.isomin) and fwhm<2*std and snr>20.0:
                 good_stars.append(a[i,:])
-                #print "%s SNR_APER= %s " %(i, snr)
+                print "%s SNR_APER= %s " %(i, snr)
         
         m_good_stars=numpy.array(good_stars)
         
@@ -182,7 +182,7 @@ class CheckQuality:
         # Sextractor config
 
         sex_exe= os.environ['TERAPIX']+"/sex "
-        sex_cnf= os.environ['IRDR_BASEDIR']+"/src/config/default.sex"
+        sex_cnf= os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
         background_image = output_file
         
         sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\

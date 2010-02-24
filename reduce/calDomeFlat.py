@@ -9,6 +9,7 @@
 # Last update: 29/09/2009    jmiguel@iaa.es
 #              11/12/2009    jmiguel@iaa.es - Include the use of ClFits class, and add filter name to the output filename
 #              14/12/2009    jmiguel@iaa.es - Skip non DOME flats and cotinue working with the good ones
+#              12/02/2010    jmiguel@iaa.es - check min number of dome flats 
 # TODO:
 #    - include BPM creation
 ################################################################################
@@ -71,6 +72,7 @@ class MasterDomeFlat:
         self.__output_file_dir = output_dir
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__config_par = config_par
+        self.MIN_FLATS = 4
         
     
     def createMaster(self):
@@ -151,6 +153,13 @@ class MasterDomeFlat:
         log.info('DOME FLATS LAMP ON  (#%d) %s: ' , len(domelist_lampoff), domelist_lampoff )
         log.info('Filter=%s , TEXP=%f ' , f_filter, f_expt)
         
+        if len(domelist_lampon) < self.MIN_FLATS:
+            log.error("Error, not enought lamp_on flats. At least %s are requered" %(self.MIN_FLATS))
+            raise Exception("Error, not enought lamp_on flats. At least %s are requered" %(self.MIN_FLATS))
+        
+        if len(domelist_lampoff) < self.MIN_FLATS:
+            log.error("Error, not enought lamp_on flats. At least %s are requered"%(self.MIN_FLATS))
+            raise Exception("Error, not enought lamp_off flats. At least %s are requered" %(self.MIN_FLATS))
     
         #Clobber existing output images
         iraf.clobber='yes'

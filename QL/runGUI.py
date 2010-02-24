@@ -1,4 +1,3 @@
-
 ################################################################################
 #
 # runGUI (run main GUI for PANIC pipeline)
@@ -1113,11 +1112,10 @@ class MainGUI(panicQL):
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
                 # Call external script (papi)
-                os.chdir(self.m_papi_dir)
-                cmd=self.m_papi_dir+"/astrometry_scamp.pl 2mass %s" %(self.m_listView_item_selected)
+                cmd=self.m_papi_dir+"/astrometry_scamp.pl 2mass regrid %s" %(self.m_listView_item_selected)
                 
                 #Change to working directory
-                os.chdir(self.m_papi_dir)
+                os.chdir(self.m_outputdir)
                 #Change cursor
                 self.setCursor(Qt.waitCursor)
                 # Call external script (papi)

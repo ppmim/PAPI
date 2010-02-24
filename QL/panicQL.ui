@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>912</width>
-            <height>679</height>
+            <width>983</width>
+            <height>695</height>
         </rect>
     </property>
     <property name="caption">
@@ -23,7 +23,7 @@
             <rect>
                 <x>10</x>
                 <y>471</y>
-                <width>890</width>
+                <width>940</width>
                 <height>130</height>
             </rect>
         </property>
@@ -45,7 +45,7 @@
             <rect>
                 <x>10</x>
                 <y>0</y>
-                <width>890</width>
+                <width>940</width>
                 <height>460</height>
             </rect>
         </property>
@@ -80,22 +80,6 @@
                 </property>
                 <property name="alignment">
                     <set>AlignRight</set>
-                </property>
-            </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel1_3</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>430</x>
-                        <y>10</y>
-                        <width>40</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Check</string>
                 </property>
             </widget>
             <widget class="QLineEdit">
@@ -144,52 +128,6 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QComboBox">
-                <item>
-                    <property name="text">
-                        <string>None</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Lazy</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Pre-reduction</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_1</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_2</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_3</string>
-                    </property>
-                </item>
-                <property name="name">
-                    <cstring>comboBox_QL_Mode</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>600</x>
-                        <y>160</y>
-                        <width>110</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Filter data sources list using its class/type</string>
-                </property>
-            </widget>
             <widget class="QCheckBox">
                 <property name="name">
                     <cstring>checkBox_autocheck</cstring>
@@ -233,52 +171,6 @@
                 </property>
                 <property name="readOnly">
                     <bool>true</bool>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_remove</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>711</x>
-                        <y>390</y>
-                        <width>70</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Remove</string>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Remove data file from the list view, but keeping on disk</string>
-                    <comment>Remove data file from the list view, but keeping on disk</comment>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_add</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>618</x>
-                        <y>390</y>
-                        <width>70</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Add...</string>
                 </property>
             </widget>
             <widget class="QLineEdit">
@@ -327,159 +219,6 @@
                 </property>
                 <property name="toolTip" stdset="0">
                     <string>Autocheck for new incoming images</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_clear</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>805</x>
-                        <y>390</y>
-                        <width>70</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Clear All</string>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Clear list view panel, but not files on disk</string>
-                </property>
-            </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>pixmapLabel1_2</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>720</x>
-                        <y>5</y>
-                        <width>141</width>
-                        <height>100</height>
-                    </rect>
-                </property>
-                <property name="pixmap">
-                    <pixmap>image0</pixmap>
-                </property>
-                <property name="scaledContents">
-                    <bool>true</bool>
-                </property>
-            </widget>
-            <widget class="QListView">
-                <column>
-                    <property name="text">
-                        <string>File                                                        </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Class                            </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Filter     </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>TExp</string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Date-Obs                     </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Object         </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>RA                       </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Dec                     </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <property name="name">
-                    <cstring>listView_dataS</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>0</x>
-                        <y>200</y>
-                        <width>880</width>
-                        <height>185</height>
-                    </rect>
-                </property>
-                <property name="selectionMode">
-                    <enum>Extended</enum>
-                </property>
-                <property name="allColumnsShowFocus">
-                    <bool>true</bool>
-                </property>
-                <property name="rootIsDecorated">
-                    <bool>true</bool>
                 </property>
             </widget>
             <widget class="QComboBox">
@@ -602,80 +341,6 @@
                     <string>Output Dir</string>
                 </property>
             </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_dataSourceD</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>19</x>
-                        <y>27</y>
-                        <width>110</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Data source</string>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Select a directory or log file as the input source</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_file_filter</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>572</x>
-                        <y>30</y>
-                        <width>120</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Filename Filter</string>
-                </property>
-            </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel4</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>565</x>
-                        <y>60</y>
-                        <width>101</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Files in queue</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_start_proc</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>720</x>
-                        <y>160</y>
-                        <width>140</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>244</red>
-                        <green>156</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="text">
-                    <string>START processing</string>
-                </property>
-            </widget>
             <widget class="QLabel">
                 <property name="name">
                     <cstring>textLabel2_3</cstring>
@@ -715,20 +380,219 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QCheckBox">
+            <widget class="QLabel">
                 <property name="name">
-                    <cstring>checkBox_process</cstring>
+                    <cstring>textLabel1_3</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>590</x>
-                        <y>110</y>
-                        <width>290</width>
+                        <x>430</x>
+                        <y>10</y>
+                        <width>50</width>
                         <height>20</height>
                     </rect>
                 </property>
                 <property name="text">
-                    <string>Process raw images when detected</string>
+                    <string>Check</string>
+                </property>
+            </widget>
+            <widget class="QListView">
+                <column>
+                    <property name="text">
+                        <string>File                                                        </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Class                            </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Filter     </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>TExp</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Date-Obs                     </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Object         </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>RA                       </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Dec                     </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <property name="name">
+                    <cstring>listView_dataS</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>0</x>
+                        <y>200</y>
+                        <width>920</width>
+                        <height>185</height>
+                    </rect>
+                </property>
+                <property name="selectionMode">
+                    <enum>Extended</enum>
+                </property>
+                <property name="allColumnsShowFocus">
+                    <bool>true</bool>
+                </property>
+                <property name="rootIsDecorated">
+                    <bool>true</bool>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_clear</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>848</x>
+                        <y>390</y>
+                        <width>70</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Clear All</string>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Clear list view panel, but not files on disk</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_remove</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>755</x>
+                        <y>390</y>
+                        <width>70</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Remove</string>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Remove data file from the list view, but keeping on disk</string>
+                    <comment>Remove data file from the list view, but keeping on disk</comment>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_add</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>663</x>
+                        <y>390</y>
+                        <width>70</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Add...</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>pixmapLabel1_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>767</x>
+                        <y>5</y>
+                        <width>141</width>
+                        <height>100</height>
+                    </rect>
+                </property>
+                <property name="pixmap">
+                    <pixmap>image0</pixmap>
+                </property>
+                <property name="scaledContents">
+                    <bool>true</bool>
                 </property>
             </widget>
             <widget class="QLabel">
@@ -737,7 +601,7 @@
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>606</x>
+                        <x>647</x>
                         <y>136</y>
                         <width>80</width>
                         <height>20</height>
@@ -750,6 +614,142 @@
                 </property>
                 <property name="text">
                     <string>QL Mode</string>
+                </property>
+            </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>None</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Lazy</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Pre-reduction</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_1</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_2</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_3</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox_QL_Mode</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>641</x>
+                        <y>160</y>
+                        <width>110</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Filter data sources list using its class/type</string>
+                </property>
+            </widget>
+            <widget class="QCheckBox">
+                <property name="name">
+                    <cstring>checkBox_process</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>631</x>
+                        <y>110</y>
+                        <width>290</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Process raw images when detected</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_start_proc</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>777</x>
+                        <y>160</y>
+                        <width>140</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>244</red>
+                        <green>156</green>
+                        <blue>137</blue>
+                    </color>
+                </property>
+                <property name="text">
+                    <string>START processing</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_file_filter</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>566</x>
+                        <y>30</y>
+                        <width>120</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Filename Filter</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>565</x>
+                        <y>60</y>
+                        <width>101</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Files in queue</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_dataSourceD</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>19</x>
+                        <y>27</y>
+                        <width>110</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Input Dir</string>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Select a directory or log file as the input source</string>
                 </property>
             </widget>
         </widget>
@@ -777,29 +777,13 @@
                 </property>
                 <widget class="QLabel">
                     <property name="name">
-                        <cstring>textLabel4_3_2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>40</x>
-                            <y>54</y>
-                            <width>80</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Time offsets</string>
-                    </property>
-                </widget>
-                <widget class="QLabel">
-                    <property name="name">
                         <cstring>textLabel4_3</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>40</x>
+                            <x>20</x>
                             <y>30</y>
-                            <width>90</width>
+                            <width>110</width>
                             <height>20</height>
                         </rect>
                     </property>
@@ -809,21 +793,41 @@
                 </widget>
                 <widget class="QLabel">
                     <property name="name">
-                        <cstring>textLabel5_2</cstring>
+                        <cstring>textLabel4_3_2</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>187</x>
-                            <y>56</y>
-                            <width>58</width>
+                            <x>20</x>
+                            <y>54</y>
+                            <width>100</width>
                             <height>20</height>
                         </rect>
                     </property>
-                    <property name="midLineWidth">
-                        <number>1</number>
+                    <property name="text">
+                        <string>Time offsets</string>
+                    </property>
+                </widget>
+                <widget class="QLineEdit">
+                    <property name="name">
+                        <cstring>lineEdit_ra_dec_near_offset</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>137</x>
+                            <y>30</y>
+                            <width>50</width>
+                            <height>21</height>
+                        </rect>
+                    </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>255</red>
+                            <green>255</green>
+                            <blue>137</blue>
+                        </color>
                     </property>
                     <property name="text">
-                        <string>secs</string>
+                        <string>150</string>
                     </property>
                 </widget>
                 <widget class="QLabel">
@@ -832,7 +836,7 @@
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>186</x>
+                            <x>190</x>
                             <y>33</y>
                             <width>58</width>
                             <height>20</height>
@@ -842,35 +846,13 @@
                         <string>arcsecs</string>
                     </property>
                 </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox_data_grouping</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>29</x>
-                            <y>80</y>
-                            <width>260</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Header (POINT_NO, DITH_NO, EXPO_NO)</string>
-                    </property>
-                    <property name="checked">
-                        <bool>false</bool>
-                    </property>
-                    <property name="toolTip" stdset="0">
-                        <string>Use header keywords POINT_NO, DITH_NO, EXPO_NO for data grouping</string>
-                    </property>
-                </widget>
                 <widget class="QLineEdit">
                     <property name="name">
                         <cstring>lineEdit_time_near_offset</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>132</x>
+                            <x>137</x>
                             <y>54</y>
                             <width>50</width>
                             <height>21</height>
@@ -887,27 +869,99 @@
                         <string>900</string>
                     </property>
                 </widget>
-                <widget class="QLineEdit">
+                <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>lineEdit_ra_dec_near_offset</cstring>
+                        <cstring>checkBox_data_grouping</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>132</x>
-                            <y>30</y>
-                            <width>50</width>
-                            <height>21</height>
+                            <x>18</x>
+                            <y>80</y>
+                            <width>270</width>
+                            <height>19</height>
                         </rect>
                     </property>
-                    <property name="paletteBackgroundColor">
-                        <color>
-                            <red>255</red>
-                            <green>255</green>
-                            <blue>137</blue>
-                        </color>
+                    <property name="text">
+                        <string>Header (POINT_NO, DITH_NO, EXPO_NO)</string>
+                    </property>
+                    <property name="checked">
+                        <bool>false</bool>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Use header keywords POINT_NO, DITH_NO, EXPO_NO for data grouping</string>
+                    </property>
+                </widget>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>textLabel5_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>191</x>
+                            <y>56</y>
+                            <width>58</width>
+                            <height>20</height>
+                        </rect>
+                    </property>
+                    <property name="midLineWidth">
+                        <number>1</number>
                     </property>
                     <property name="text">
-                        <string>150</string>
+                        <string>secs</string>
+                    </property>
+                </widget>
+            </widget>
+            <widget class="QGroupBox">
+                <property name="name">
+                    <cstring>groupBox4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>16</x>
+                        <y>10</y>
+                        <width>200</width>
+                        <height>111</height>
+                    </rect>
+                </property>
+                <property name="title">
+                    <string>Common settings</string>
+                </property>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox7_2_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>20</x>
+                            <y>25</y>
+                            <width>120</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Check header</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox7_2_2_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>20</x>
+                            <y>47</y>
+                            <width>130</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Create Log file</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
                     </property>
                 </widget>
             </widget>
@@ -926,38 +980,6 @@
                 <property name="title">
                     <string>Lazy Mode</string>
                 </property>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox10_2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>32</x>
-                            <y>210</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Apply 'static' Astrometry</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox7</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>61</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Substract dark</string>
-                    </property>
-                </widget>
                 <widget class="QCheckBox">
                     <property name="name">
                         <cstring>checkBox8_3</cstring>
@@ -1041,58 +1063,127 @@
                         <bool>true</bool>
                     </property>
                 </widget>
-            </widget>
-            <widget class="QGroupBox">
-                <property name="name">
-                    <cstring>groupBox4</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>14</x>
-                        <y>9</y>
-                        <width>200</width>
-                        <height>111</height>
-                    </rect>
-                </property>
-                <property name="title">
-                    <string>Common settings</string>
-                </property>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox7_2_2_2</cstring>
+                        <cstring>checkBox10_2</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>20</x>
-                            <y>47</y>
-                            <width>110</width>
+                            <x>32</x>
+                            <y>210</y>
+                            <width>200</width>
                             <height>19</height>
                         </rect>
                     </property>
                     <property name="text">
-                        <string>Create Log file</string>
-                    </property>
-                    <property name="checked">
-                        <bool>true</bool>
+                        <string>Apply 'static' Astrometry</string>
                     </property>
                 </widget>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox7_2_2</cstring>
+                        <cstring>checkBox7</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>20</x>
-                            <y>25</y>
-                            <width>120</width>
+                            <x>31</x>
+                            <y>61</y>
+                            <width>180</width>
                             <height>19</height>
                         </rect>
                     </property>
                     <property name="text">
-                        <string>Check header</string>
+                        <string>Substract dark</string>
                     </property>
-                    <property name="checked">
-                        <bool>true</bool>
+                </widget>
+            </widget>
+            <widget class="QButtonGroup">
+                <property name="name">
+                    <cstring>buttonGroup3</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>550</x>
+                        <y>10</y>
+                        <width>350</width>
+                        <height>110</height>
+                    </rect>
+                </property>
+                <property name="title">
+                    <string>Astrometry</string>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>textLabel1_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>10</x>
+                            <y>30</y>
+                            <width>58</width>
+                            <height>20</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Catalog</string>
+                    </property>
+                </widget>
+                <widget class="QComboBox">
+                    <item>
+                        <property name="text">
+                            <string>2MASS</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>USNO-B1</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>GSC2.2</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>SDSS-R5</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>UCAC-2</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>FILE</string>
+                        </property>
+                    </item>
+                    <property name="name">
+                        <cstring>comboBox4</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>15</x>
+                            <y>50</y>
+                            <width>90</width>
+                            <height>21</height>
+                        </rect>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox7_3</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>18</x>
+                            <y>80</y>
+                            <width>140</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Apply (re-grid)</string>
                     </property>
                 </widget>
             </widget>
@@ -1104,7 +1195,7 @@
                     <rect>
                         <x>352</x>
                         <y>132</y>
-                        <width>520</width>
+                        <width>560</width>
                         <height>280</height>
                     </rect>
                 </property>
@@ -1200,89 +1291,6 @@
                         <string># sky nearest frames</string>
                     </property>
                 </widget>
-                <widget class="QButtonGroup">
-                    <property name="name">
-                        <cstring>buttonGroup2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>190</x>
-                            <y>110</y>
-                            <width>310</width>
-                            <height>120</height>
-                        </rect>
-                    </property>
-                    <property name="title">
-                        <string>Build Stacked Image</string>
-                    </property>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>radioButton25_2</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>63</y>
-                                <width>200</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Grouping using OT keywords</string>
-                        </property>
-                    </widget>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>radioButton25</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>41</y>
-                                <width>250</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Automatic grouping (ra,dec,mjd, filter, ...)</string>
-                        </property>
-                    </widget>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>radioButton26</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>11</x>
-                                <y>20</y>
-                                <width>60</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>No</string>
-                        </property>
-                        <property name="checked">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>pushButton22</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>230</y>
-                            <width>108</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>More Settings...</string>
-                    </property>
-                </widget>
                 <widget class="QCheckBox">
                     <property name="name">
                         <cstring>checkBox7_2</cstring>
@@ -1375,80 +1383,88 @@
                         <bool>true</bool>
                     </property>
                 </widget>
-            </widget>
-            <widget class="QButtonGroup">
-                <property name="name">
-                    <cstring>buttonGroup3</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>540</x>
-                        <y>10</y>
-                        <width>150</width>
-                        <height>110</height>
-                    </rect>
-                </property>
-                <property name="title">
-                    <string>Astrometry</string>
-                </property>
-                <widget class="QLabel">
+                <widget class="QPushButton">
                     <property name="name">
-                        <cstring>textLabel1_2</cstring>
+                        <cstring>pushButton22</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>10</x>
-                            <y>30</y>
-                            <width>58</width>
+                            <x>20</x>
+                            <y>230</y>
+                            <width>130</width>
                             <height>20</height>
                         </rect>
                     </property>
                     <property name="text">
-                        <string>Catalog</string>
+                        <string>More Settings...</string>
                     </property>
                 </widget>
-                <widget class="QComboBox">
-                    <item>
-                        <property name="text">
-                            <string>USNO-B1</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>2MASS</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>GSC2.2</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>SDSS-R5</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>UCAC-2</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>FILE</string>
-                        </property>
-                    </item>
+                <widget class="QButtonGroup">
                     <property name="name">
-                        <cstring>comboBox4</cstring>
+                        <cstring>buttonGroup2</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>15</x>
-                            <y>50</y>
-                            <width>90</width>
-                            <height>21</height>
+                            <x>200</x>
+                            <y>140</y>
+                            <width>310</width>
+                            <height>120</height>
                         </rect>
                     </property>
+                    <property name="title">
+                        <string>Build Stacked Image</string>
+                    </property>
+                    <widget class="QRadioButton">
+                        <property name="name">
+                            <cstring>radioButton25_2</cstring>
+                        </property>
+                        <property name="geometry">
+                            <rect>
+                                <x>10</x>
+                                <y>63</y>
+                                <width>200</width>
+                                <height>20</height>
+                            </rect>
+                        </property>
+                        <property name="text">
+                            <string>Grouping using OT keywords</string>
+                        </property>
+                    </widget>
+                    <widget class="QRadioButton">
+                        <property name="name">
+                            <cstring>radioButton25</cstring>
+                        </property>
+                        <property name="geometry">
+                            <rect>
+                                <x>10</x>
+                                <y>41</y>
+                                <width>250</width>
+                                <height>20</height>
+                            </rect>
+                        </property>
+                        <property name="text">
+                            <string>Automatic grouping (ra,dec,mjd, filter, ...)</string>
+                        </property>
+                    </widget>
+                    <widget class="QRadioButton">
+                        <property name="name">
+                            <cstring>radioButton26</cstring>
+                        </property>
+                        <property name="geometry">
+                            <rect>
+                                <x>11</x>
+                                <y>20</y>
+                                <width>60</width>
+                                <height>20</height>
+                            </rect>
+                        </property>
+                        <property name="text">
+                            <string>No</string>
+                        </property>
+                        <property name="checked">
+                            <bool>true</bool>
+                        </property>
+                    </widget>
                 </widget>
             </widget>
         </widget>
@@ -1485,15 +1501,70 @@
                     </rect>
                 </property>
             </widget>
+            <widget class="QListBox">
+                <property name="name">
+                    <cstring>listBox_domeF</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>178</x>
+                        <y>74</y>
+                        <width>140</width>
+                        <height>190</height>
+                    </rect>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_Darks_add</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>19</x>
+                        <y>40</y>
+                        <width>50</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Add...</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_DomeF_add</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>180</x>
+                        <y>40</y>
+                        <width>50</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Add...</string>
+                </property>
+            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_SkyF_add</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>370</x>
+                        <x>360</x>
                         <y>40</y>
-                        <width>40</width>
+                        <width>50</width>
                         <height>23</height>
                     </rect>
                 </property>
@@ -1514,7 +1585,7 @@
                     <rect>
                         <x>88</x>
                         <y>40</y>
-                        <width>40</width>
+                        <width>50</width>
                         <height>23</height>
                     </rect>
                 </property>
@@ -1535,7 +1606,7 @@
                     <rect>
                         <x>254</x>
                         <y>41</y>
-                        <width>40</width>
+                        <width>50</width>
                         <height>23</height>
                     </rect>
                 </property>
@@ -1556,7 +1627,7 @@
                     <rect>
                         <x>430</x>
                         <y>40</y>
-                        <width>40</width>
+                        <width>50</width>
                         <height>23</height>
                     </rect>
                 </property>
@@ -1569,107 +1640,46 @@
                     <string>Del</string>
                 </property>
             </widget>
-            <widget class="QPushButton">
+            <widget class="QLabel">
                 <property name="name">
-                    <cstring>pushButton_DomeF_add</cstring>
+                    <cstring>textLabel3_2</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>190</x>
-                        <y>40</y>
-                        <width>40</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Add...</string>
-                </property>
-            </widget>
-            <widget class="QListBox">
-                <property name="name">
-                    <cstring>listBox_domeF</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>178</x>
-                        <y>74</y>
-                        <width>140</width>
-                        <height>190</height>
-                    </rect>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_createMDark</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>26</x>
-                        <y>266</y>
-                        <width>110</width>
-                        <height>16</height>
+                        <x>510</x>
+                        <y>340</y>
+                        <width>51</width>
+                        <height>22</height>
                     </rect>
                 </property>
                 <property name="text">
-                    <string>Create Master Dark</string>
+                    <string>&lt;b&gt;Filter&lt;/b&gt;</string>
                 </property>
             </widget>
-            <widget class="QPushButton">
+            <widget class="QLineEdit">
                 <property name="name">
-                    <cstring>pushButton_createMDF</cstring>
+                    <cstring>lineEdit_masterFlat_Filter</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>190</x>
-                        <y>270</y>
-                        <width>120</width>
-                        <height>16</height>
+                        <x>557</x>
+                        <y>340</y>
+                        <width>70</width>
+                        <height>21</height>
                     </rect>
                 </property>
-                <property name="text">
-                    <string>Create Master DFlat</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_createMSF</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>359</x>
-                        <y>269</y>
-                        <width>130</width>
-                        <height>16</height>
-                    </rect>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>255</red>
+                        <green>255</green>
+                        <blue>137</blue>
+                    </color>
                 </property>
                 <property name="text">
-                    <string>Create Master SkyFlat</string>
+                    <string></string>
                 </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_Darks_add</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>29</x>
-                        <y>40</y>
-                        <width>40</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Add...</string>
+                <property name="readOnly">
+                    <bool>true</bool>
                 </property>
             </widget>
             <widget class="QPushButton">
@@ -1680,7 +1690,7 @@
                     <rect>
                         <x>12</x>
                         <y>368</y>
-                        <width>101</width>
+                        <width>120</width>
                         <height>23</height>
                     </rect>
                 </property>
@@ -1694,70 +1704,8 @@
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>125</x>
+                        <x>138</x>
                         <y>370</y>
-                        <width>360</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>255</red>
-                        <green>255</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="readOnly">
-                    <bool>true</bool>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_master_dark</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>12</x>
-                        <y>309</y>
-                        <width>101</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Master Dark...</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_test1</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>530</x>
-                        <y>260</y>
-                        <width>108</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>244</red>
-                        <green>94</green>
-                        <blue>25</blue>
-                    </color>
-                </property>
-                <property name="text">
-                    <string>Test1</string>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_masterDark</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>125</x>
-                        <y>311</y>
                         <width>360</width>
                         <height>21</height>
                     </rect>
@@ -1779,7 +1727,7 @@
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>125</x>
+                        <x>139</x>
                         <y>340</y>
                         <width>360</width>
                         <height>21</height>
@@ -1796,47 +1744,15 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel3_2</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>500</x>
-                        <y>340</y>
-                        <width>40</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>&lt;b&gt;Filter&lt;/b&gt;</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_master_flat</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>11</x>
-                        <y>338</y>
-                        <width>101</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Master Flat...</string>
-                </property>
-            </widget>
             <widget class="QLineEdit">
                 <property name="name">
-                    <cstring>lineEdit_masterFlat_Filter</cstring>
+                    <cstring>lineEdit_masterDark</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>534</x>
-                        <y>340</y>
-                        <width>70</width>
+                        <x>141</x>
+                        <y>311</y>
+                        <width>360</width>
                         <height>21</height>
                     </rect>
                 </property>
@@ -1847,11 +1763,159 @@
                         <blue>137</blue>
                     </color>
                 </property>
-                <property name="text">
-                    <string></string>
-                </property>
                 <property name="readOnly">
                     <bool>true</bool>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_master_flat</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>11</x>
+                        <y>338</y>
+                        <width>120</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Master Flat...</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_master_dark</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>12</x>
+                        <y>309</y>
+                        <width>120</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Master Dark...</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_createMDark</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>16</x>
+                        <y>266</y>
+                        <width>120</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Create</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel1_4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>55</x>
+                        <y>15</y>
+                        <width>48</width>
+                        <height>22</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>&lt;b&gt;Dark&lt;/b&gt;</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_createMDF</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>190</x>
+                        <y>270</y>
+                        <width>120</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Create</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_createMSF</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>359</x>
+                        <y>269</y>
+                        <width>130</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Create</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel1_4_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>209</x>
+                        <y>17</y>
+                        <width>110</width>
+                        <height>22</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>&lt;b&gt;Dome Flat&lt;/b&gt;</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel1_4_2_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>383</x>
+                        <y>16</y>
+                        <width>80</width>
+                        <height>22</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>&lt;b&gt;Sky Flat&lt;/b&gt;</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_test1</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>800</x>
+                        <y>40</y>
+                        <width>108</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>244</red>
+                        <green>94</green>
+                        <blue>25</blue>
+                    </color>
+                </property>
+                <property name="text">
+                    <string>Test1</string>
                 </property>
             </widget>
         </widget>
@@ -1862,27 +1926,6 @@
             <attribute name="title">
                 <string>Pipeline</string>
             </attribute>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_Darks_4</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>12</x>
-                        <y>40</y>
-                        <width>101</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Science Files...</string>
-                </property>
-            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton10_4</cstring>
@@ -1995,14 +2038,35 @@
                     </rect>
                 </property>
             </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_Darks_4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>12</x>
+                        <y>40</y>
+                        <width>160</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Science Files...</string>
+                </property>
+            </widget>
             <widget class="QLabel">
                 <property name="name">
                     <cstring>pixmapLabel1</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>710</x>
-                        <y>10</y>
+                        <x>760</x>
+                        <y>20</y>
                         <width>151</width>
                         <height>110</height>
                     </rect>

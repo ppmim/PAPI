@@ -69,7 +69,7 @@ class ReduceThread(threading.Thread):
         
 class ExecTaskThread(threading.Thread):
     """ 
-    Thread to execture a task and then signal with a event to a waiting thread about the result of the task
+    Thread to execute a task and then signal with a event to a waiting thread about the result of the task
     """
     def __init__(self, task, task_info_list):
     
