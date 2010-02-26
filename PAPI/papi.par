@@ -19,7 +19,7 @@ set halfnsky=4        # half-width for running sky subtraction
 set destripe=none     # destripe image (none|row|col|colrow|rowcol)
 
 # Offsets computation
-set off_minarea=15    # SExtractor DETECT_MINAREA used for offsets
+set off_minarea=16    # SExtractor DETECT_MINAREA used for offsets
 set off_thresh=10.5    # SExtractor DETECT_THRESH used for offsets
 set off_err=4         # offset precision [arcsec]
 
