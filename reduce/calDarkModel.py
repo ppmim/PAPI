@@ -7,6 +7,7 @@
 #
 # Created    : 17/06/2009    jmiguel@iaa.es
 # Last update: 22/06/2009    jmiguel@iaa.es
+#              03/03/2010    jmiguel@iaa.es Added READMODE checking 
 #
 ################################################################################
 # TODO: increase running speed !!!
@@ -95,18 +96,28 @@ class MasterDarkModel:
         
         darks=numpy.zeros(nframes,dtype=numpy.int)
          
-        # STEP 1: Check TYPE(dark) and read the EXPTIME of each frame
+        # STEP 1: Check TYPE(dark),READMODE and read the EXPTIME of each frame
         #print "FRAMELIST= %s" %framelist
         i=0
+        f_readmode=-1
         for iframe in framelist:
             fits=datahandler.ClFits(iframe)
             log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
-            # Check EXPTIME, TYPE (dark) and FILTER
+            # Check TYPE (dark)
             if  not fits.isDark():
                 log.warning("Warning: Task 'createDarkModel' found a non dark frame. Skipping %s", iframe)
                 darks[i]=0
             else:
-                darks[i]=1
+                # Check READMODE
+                if ( f_readmode!=-1 and (f_readmode!= f.getReadMode() ):
+                    log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different  READMODE")
+                    darks[i]=0  
+                    #continue
+                    raise Exception("Found a DARK frame with different  READMODE") 
+                else: 
+                    f_readmode  =f.getReadMode()
+                    darks[i]=1
+                
             i=i+1
         log.debug('All frames checked')   
         
@@ -166,12 +177,12 @@ class MasterDarkModel:
         hdulist.writeto(self.__output_filename)
         hdulist.close(output_verify='ignore')
         #--
-        hdu.data=out[0,:,:]
-        f_dark=pyfits.HDUList([hdu])
-        f_dark.writeto("/tmp/darkc.fits")
-        hdu.data=out[1,:,:]
-        f_bias=pyfits.HDUList([hdu])
-        f_bias.writeto("/tmp/bias.fits")
+        #hdu.data=out[0,:,:]
+        #f_dark=pyfits.HDUList([hdu])
+        #f_dark.writeto("/tmp/darkc.fits")
+        #hdu.data=out[1,:,:]
+        #f_bias=pyfits.HDUList([hdu])
+        #f_bias.writeto("/tmp/bias.fits")
         #--
         log.debug('Saved DARK Model to %s' , self.__output_filename)
         log.debug("createDarkModel' finished %s", t.tac() )
