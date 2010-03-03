@@ -9,6 +9,7 @@
 # Last update: 29/09/2009    jmiguel@iaa.es - Scale by EXPTIME
 #              11/12/2009    jmiguel@iaa.es - Rename output filename to include EXPTIME and NCOADDS and use ClFits class
 #              14/12/2009    jmiguel@iaa.es - Skip non DARK frames and cotinue working with the good ones (good_frames)
+#              02/03/2010    jmiguel@iaa.es - added READEMODE checking
 #
 # TODO
 #  - checking of ITIME ( and not only EXPTIME, NCOADDS )
@@ -115,29 +116,27 @@ class MasterDark:
         f_expt=-1.0
         f_type=''
         f_ncoadds=-1
+        f_readmode=-1
         good_frames=[]
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
             #f=pyfits.open(iframe)
             log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, f.expTime(), f.getType())) 
-            if f.getType()!="DARK":
+            if not f.isDark():
                 log.error("Error: Task 'createMasterDark' finished. Frame type is not 'DARK'.")
-                raise Exception("Found a DARK frame with different EXPTIME or NCOADDS") 
+                raise Exception("Found a non DARK frame") 
                 #continue
             else:        
-                # Check EXPTIME, TYPE (dark)
-                if ( not self.m_texp_scale and f_expt!=-1 and (int(f.expTime()) != int(f_expt) or  f.getType()!=f_type or f.getNcoadds()!=f_ncoadds)  ):
-                    log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different EXPTIME and/or NCOADDS")
+                # Check EXPTIME, TYPE(dark) and READMODE
+                if ( not self.m_texp_scale and f_expt!=-1 and (int(f.expTime()) != int(f_expt) or  f.getType()!=f_type or f.getNcoadds()!=f_ncoadds or f.getReadMode()!=f_readmode)  ):
+                    log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different EXPTIME, NCOADDS or READMODE")
                     #continue
-                    raise Exception("Found a DARK frame with different EXPTIME or NCOADDS") 
+                    raise Exception("Found a DARK frame with different EXPTIME or NCOADDS or READMODE") 
                 else: 
                     f_expt  =f.expTime()
                     f_ncoadds=f.getNcoadds()
-                    if f.isDark():
-                        f_type  =f.getType()
-                        good_frames.append(iframe)
-                    else:
-                        log.error("Error: Task 'createMasterDark'. Frame type is not 'DARK'. Skipping frame...")
+                    f_type  =f.getType()
+                    good_frames.append(iframe)
                                         
         log.debug('Right, dark frames with same type are: %s', good_frames)   
     
@@ -151,8 +150,8 @@ class MasterDark:
             scale_str='exposure'
         else:
             scale_str='none'
+            self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
         
-        self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
         # Call the noao.imred.ccdred task through PyRAF
         iraf.darkcombine(input=m_framelist,
                         output=self.__output_filename,
@@ -167,8 +166,7 @@ class MasterDark:
                         #expname='EXPTIME'
                         #ParList = _getparlistname('darkcombine')
                         )
-        
-        
+
         #outdata[0].header.add_history('Averaged %i frames to obtain combined DARK' % nframes)
         
         darkframe = pyfits.open(self.__output_filename,'update')
