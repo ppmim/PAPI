@@ -109,13 +109,13 @@ class MasterDarkModel:
                 darks[i]=0
             else:
                 # Check READMODE
-                if ( f_readmode!=-1 and (f_readmode!= f.getReadMode() ):
+                if ( f_readmode!=-1 and (f_readmode!= fits.getReadMode() )):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different  READMODE")
                     darks[i]=0  
                     #continue
                     raise Exception("Found a DARK frame with different  READMODE") 
                 else: 
-                    f_readmode  =f.getReadMode()
+                    f_readmode  =fits.getReadMode()
                     darks[i]=1
                 
             i=i+1
