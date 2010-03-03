@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ################################################################################
 #
-# PANICtool
+# PANICtool Pepe2
 #
 # calDarkModel.py
 #
