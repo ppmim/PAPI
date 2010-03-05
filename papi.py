@@ -1,11 +1,8 @@
 #!/usr/bin/env python
-__date__ = "$Date$"
-__author__ = "$Author$"
-__revision__ = "$Rev$"
 
 ################################################################################
 #
-# papi (PAnic PIpeline)
+# PAPI (PAnic PIpeline)
 #
 # papi.py
 #
@@ -20,6 +17,12 @@ __revision__ = "$Rev$"
     #         The body of this program is at the end of this file      #
     #                                                                  #
     ####################################################################
+
+__date__ = "$Date: 2010-03-05 11:48:08 +0100 (Fri, 05 Mar 2010) $"
+__author__ = "$Author: panic $"
+__revision__ = "$Rev: 21 $"
+__log__ = "$Log"
+
     
 from qt import *
 
