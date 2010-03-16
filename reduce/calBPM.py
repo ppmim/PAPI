@@ -7,6 +7,7 @@
 #
 # Created    : 25/06/2009    jmiguel@iaa.es
 # Last update: 25/06/2009    jmiguel@iaa.es
+#              03/03/2010    jmiguel@iaa.es Added READMODE checking 
 # 
 # TODO:
 # - include master dark subtraction !!!
@@ -100,6 +101,7 @@ class BadPixelMask:
         
         # Here we could check if each frame is a good dome flat !!!
         good_flats=[]
+        f_readmode=-1
         for iframe in filelist:
             fits=datahandler.ClFits(iframe)
             log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
@@ -107,7 +109,13 @@ class BadPixelMask:
             if not fits.isDomeFlat():
                 log.warning("Warning: Task 'create BPM' found a non dome flat frame")
             else:
-                good_flats.append(iframe)
+                # Check READMODE
+                if ( f_readmode!=-1 and (f_readmode!= fits.getReadMode() )):
+                    log.error("Error: Task 'calBPM' finished. Found a FLAT frame with different  READMODE")
+                    raise Exception("Found a FLAT frame with different  READMODE") 
+                else: 
+                    f_readmode  =fits.getReadMode()
+                    good_flats.append(iframe)
                 
             
         if len(good_flats)<2:

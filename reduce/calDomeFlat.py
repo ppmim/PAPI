@@ -9,7 +9,9 @@
 # Last update: 29/09/2009    jmiguel@iaa.es
 #              11/12/2009    jmiguel@iaa.es - Include the use of ClFits class, and add filter name to the output filename
 #              14/12/2009    jmiguel@iaa.es - Skip non DOME flats and cotinue working with the good ones
-#              12/02/2010    jmiguel@iaa.es - check min number of dome flats 
+#              12/02/2010    jmiguel@iaa.es - Check min number of dome flats
+#              03/03/2010    jmiguel@iaa.es - Added READMODE checking 
+# 
 # TODO:
 #    - include BPM creation
 ################################################################################
@@ -124,17 +126,19 @@ class MasterDomeFlat:
         f_expt=-1
         f_type=''
         f_filter=''
+        f_readmode=''
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
             # Check EXPTIME
-            if ( f_expt!=-1 and ( int(f.expTime()) != int(f_expt) or f.getFilter()!=f_filter )) :
-                log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with \n different FILTER or EXPTIME. Skipped.")
+            if ( f_expt!=-1 and ( int(f.expTime()) != int(f_expt) or f.getFilter()!=f_filter or f.getReadMode()!=f_readmode)) :
+                log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with \n different FILTER or EXPTIME or READMODE. Skipped.")
                 continue
             else: 
                 f_expt=f.expTime()
                 if f.isDomeFlat():
                     f_filter=f.getFilter()
+                    f_readmode=f.getReadMode()
                 else:
                     log.error("Error,  frame %s does not look a Dome Flat field" %(iframe))
                     raise Exception("Error, frame %s does not look a Dome Flat field" %(iframe))

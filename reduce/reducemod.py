@@ -615,8 +615,8 @@ class ReductionBlock:
                    
     def MI_skyFilter (self, images_in=None, source='mem', gainfile=None, mask='nomask'):
         """
-            For each input image, a sky frame is computed by combining a certain number of  the closest images, 
-            then this sky frame is subtracted by the image and the result is divided by the master flat; 
+            For each input image, a sky frame is computed by combining a certain number of the closest images, 
+            then this sky frame is subtracted to the image and the result is divided by the master flat; 
                          
             This function is a wrapper for skyfilter.c (IRDR)              
         
@@ -1857,7 +1857,7 @@ class ReductionBlock:
         if e==0:
             log.debug("Some error while running command %s", cmd)
         else:
-            log.debug("Succesful ending of makeObjMask")
+            log.debug("Succesful ending of M_coaddCubeImages")
                                                       
     def I_coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits'):
         """  Coadd the stack of dithered FITS images listed in 'input_file' using dithercubemean from IRDR"""

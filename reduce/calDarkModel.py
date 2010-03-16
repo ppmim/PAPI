@@ -115,7 +115,7 @@ class MasterDarkModel:
                     #continue
                     raise Exception("Found a DARK frame with different  READMODE") 
                 else: 
-                    f_readmode  =fits.getReadMode()
+                    f_readmode=fits.getReadMode()
                     darks[i]=1
                 
             i=i+1

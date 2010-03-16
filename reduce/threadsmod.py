@@ -19,7 +19,7 @@ import time
 
 from qt import QMessageBox
 
-import display
+import misc.display as display
 
 #######################################
 

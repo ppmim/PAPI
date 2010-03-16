@@ -22,6 +22,7 @@ import getopt
 import sys
 import os
 import glob
+import fileinput
 
 import misc.utils as utils
 from misc.paLog import log
@@ -71,7 +72,8 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, outputfile="/tmp/out.txt"
            OUTPUTS
                 masks           Objects mask files ending with '.objs' suffix
               
-        """ 
+      """
+         
     # Some other settings
     irdr_basedir=''
     try:
@@ -88,9 +90,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, outputfile="/tmp/out.txt"
     files = []       
     # Check if inputfile is a filename of a file list OR a regular expresion        
     if os.path.isfile(inputfile):
-        f_in = open(inputfile)
-        for line in f_in:
-            files.append(line)
+        files=[line.replace( "\n", "") for line in fileinput.input(inputfile)]
     else:
         files = glob.glob(inputfile)
         files.sort()

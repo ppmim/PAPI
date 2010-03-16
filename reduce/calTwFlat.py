@@ -8,6 +8,7 @@
 # Created    : 19/05/2009    jmiguel@iaa.es
 # Last update: 29/09/2009    jmiguel@iaa.es
 #              14/12/2009    jmiguel@iaa.es  - Check NCOADDS; use ClFits class; Skip non TW flats and cotinue working with the good ones
+#              03/03/2010    jmiguel@iaa.es Added READMODE checking 
 #
 # TODO:
 #   - use of dark model to subtract right dark current
@@ -146,24 +147,27 @@ class MasterTwilightFlat:
         iraf.chdir(base)
     
         
-        # STEP 1: Check the  TYPE(twilight) and FILTER of each Flat frame
+        # STEP 1: Check the  TYPE(twilight) and FILTER,READEMODE of each Flat frame
         # If any frame on list missmatch the FILTER, then the master twflat will be aborted
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
         f_expt=-1
         f_type=''
         f_filter=''
         f_ncoadds=-1
+        f_readmode=''
         good_frames=[]
         
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
-            if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type) ):
-                log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE. Skipping frame ...")
-                continue
+            if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type or f.getReadMode()!=f_readmode)) :
+                log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE.")
+                raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
+                #continue
             else: 
                 f_expt=f.expTime()
                 f_filter=f.getFilter()
+                f_readmode=f.getReadMode()
                 if f.isTwFlat():
                     f_type=f.getType()
                 else:

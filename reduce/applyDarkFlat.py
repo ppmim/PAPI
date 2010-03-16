@@ -7,6 +7,7 @@
 #
 # Created    : 05/06/2009    jmiguel@iaa.es
 # Last update: 05/06/2009    jmiguel@iaa.es
+#              11/03/2010    jmiguel@iaa.es - Added out_dir for output files 
 #
 ################################################################################
 
@@ -61,17 +62,18 @@ class ApplyDarkFlat:
         Master dark to subtract
     \param mflat
         Master flat to divide by
-    \retval 0
-        If no error
+    \retval file_list
+        If no error, return the list of files generated as result of the current processing
     \author
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, sci_files, mdark, mflat, bpm=None):
+    def __init__(self, sci_files, mdark, mflat, out_dir, bpm=None):
         self.__sci_files = sci_files
         self.__mdark = mdark
         self.__mflat = mflat
         self.__bpm = bpm
+        self.__out_dir = out_dir
       
     
     def apply(self):
@@ -107,25 +109,19 @@ class ApplyDarkFlat:
         # Get the user-defined list of flat frames
         framelist = self.__sci_files
        
-        # Determine the number of Flats frames to combine
-        try:
-            nframes = len(framelist[0])
-        except IndExError:
-            log.error("No science files listed")
-            raise ExError('No science files listed')
-        
         
         # STEP 2: Check the  TYPE and FILTER of each science file
         # If any frame on list missmatch the FILTER, then the procedure will be aborted
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
         n_removed=0
-        ds_framelist=[]
-        
+        result_file_list = [] # List of files generared as result of this procedure and that will be returned
+            
         for iframe in framelist:
             if not os.path.exists(iframe):
                 log.error("File '%s' does not exist", iframe)
                 continue  
             f = pyfits.open(iframe)
+            debug=False
             if (debug):
               print "Science frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f[0].header['EXPTIME'],f[0].header['OBJECT'], f[0].header['FILTER'])
             # Check FILTER
@@ -134,9 +130,10 @@ class ApplyDarkFlat:
                 f.close()
                 n_removed=n_removed+1
             else:
-                ds_framelist.append(iframe.replace(".fits","_DF.fits"))
                 # Remove an old dark subtracted flat frame
-                misc.fileUtils.removefiles(iframe.replace(".fits","_DF.fits"))
+                (path,name)=os.path.split(iframe)
+                newpathname=self.__out_dir+"/"+name.replace(".fits","_DF.fits")
+                misc.fileUtils.removefiles(newpathname)
                 s_time=float(f[0].header['EXPTIME'])
                 # STEP 2.1: Check EXPTIME and apply master DARK and master FLAT
                 if s_time!=dark_time:
@@ -153,17 +150,19 @@ class ApplyDarkFlat:
                 # Write output to outframe (data object actually still points to input data)
                 try:
                     f[0].scale('float32')
-                    f.writeto(iframe.replace(".fits","_DF.fits"), output_verify='ignore')
+                    
+                    f.writeto(newpathname, output_verify='ignore')
                 except IOError:
-                    raise ExError('Cannot write output to %s' % iframe.replace(".fits", "_DF.fits"))
+                    raise ExError('Cannot write output to %s' % newpathname)
                      
-                f.close()            
-                log.debug('Saved  new dark subtracted and flattened file  %s' ,  iframe.replace(".fits", "_DF.fits") )
+                f.close()
+                result_file_list.append(newpathname)            
+                log.debug('Saved  new dark subtracted and flattened file  %s' ,  newpathname )
         
         log.debug(t.tac() )
         log.info("Successful end of applyDarkFlat !")
                 
-        return 0
+        return result_file_list
         
         
         
@@ -198,10 +197,11 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     source_file_list = ""
     dark_file =""
+    out_dir="/tmp/"
     debug=False
     
     try:
-        opts, args = getopt.getopt(args, "s:d:f:v", ['source=','dark=', 'flat='])
+        opts, args = getopt.getopt(args, "s:d:f:o:v", ['source=','dark=', 'flat=', 'out_dir='])
     except getopt.GetoptError:
         # print help information and exit:
         usage()
@@ -221,6 +221,11 @@ if __name__ == "__main__":
         if option in ("-f", "--flat"):
             flat_file = parameter
             print "Flat file =", flat_file
+            
+        if option in ("-o", "--out_dir"):
+            out_dir = parameter
+            print "Out dir =", out_dir
+                
         if option in ("-v"):
             debug=True
             
@@ -231,6 +236,6 @@ if __name__ == "__main__":
     filelist=[line.replace( "\n", "") for line in fileinput.input(source_file_list)]
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
     print "Files:",filelist
-    res = ApplyDarkFlat(filelist,dark_file, flat_file)
+    res = ApplyDarkFlat(filelist, dark_file, flat_file, out_dir)
     res.apply()
     
