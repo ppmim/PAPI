@@ -39,7 +39,7 @@ import reduce.checkQuality
 import misc.fileUtils
 import misc.utils as utils
 import datahandler
-import display
+import misc.display as display
 from runQtProcess import *
 
 

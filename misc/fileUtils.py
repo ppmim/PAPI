@@ -39,7 +39,7 @@ def removefiles(*patterns):
     for pattern in patterns:
         # Split off the directory path
         (dirname, filepattern) = os.path.split(pattern)
-        #print "dirname= %(dirname)s, file= %(filepattern)s" %vars()
+        print "dirname= %(dirname)s, file= %(filepattern)s" %vars()
         
         # Get a list of all files in the directory
         try:
@@ -47,7 +47,7 @@ def removefiles(*patterns):
         except OSError, errstr:
             # Succeed even if the directory was not there (and put warning in log)
             log.warning(errstr)
-            raise
+            raise Exception('Cannot list dir %s' % dirname)
         
         # Check each file in the directory list
         for file in filelist:
@@ -56,6 +56,7 @@ def removefiles(*patterns):
                 # If yes, (try to) remove it from the system
                 log.info('Removing file : "%s"' % file)
                 try:
+                    #print "not removing...debug...."
                     os.remove(os.path.join(dirname, file))
                 except OSError, errstr:
                     # Succeed even if there were no files (and put warning in log)

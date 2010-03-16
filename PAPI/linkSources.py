@@ -9,30 +9,33 @@ __author__="panic"
 __date__ ="$Apr 27, 2009 06:00:23 PM$"
 
 
-def linkSourceFiles( source ):
-"""Create a symbolic link to all the sources specified in 'source', which can be a file a dir"""
+def linkSourceFiles( source, dest ):
+    """Create a symbolic link to all the sources specified in 'source', which can be a file a dir"""
   
     if (os.path.isfile(source)):
         #We have a source-file with absolute path for the data files
         file=open(source, 'r')
         for line in file:
-            print "FILE=", line
+            #print "FILE=", line
             if line.endswith('\n'):
                 line=line.replace('\n','')
-            os.symlink(line, os.path.basename(line))
+            print 
+            #print "DEST=", dest+"/"+os.path.basename(line)
+            os.symlink(line, dest+"/"+os.path.basename(line))
     else:
         #We have a source-directory as input data
         for file in glob.glob(source+"*.fits"):
             print "FILE=", file
-            os.symlink(file, os.path.basename(file))
+            os.symlink(file, dest+"/"+os.path.basename(file))
 
 #################################################################
 
 if __name__ == "__main__":
     
-    if len(sys.argv)>1:
+    if len(sys.argv)>2:
         source = sys.argv[1]
-        linkSourceFiles(source)
+        dest = sys.argv[2]
+        linkSourceFiles(source, dest)
     else:
-        print "Wrong number of arguments"
+        print "Wrong number of arguments (=2)"
         sys.exit(0)      

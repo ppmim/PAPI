@@ -59,9 +59,10 @@ endif
 # Clean old files and copy new directories  ------------------------------
 #\rm *.fits
 $PAPI_HOME/cleanpapi
-$PAPI_HOME/copySource.py $1
+$PAPI_HOME/linkSources.py $1 $PWD
 
-
+exit
+  
 # input parameters  ------------------------------------------------------
 
 if      ( "$2" == "" ) then
@@ -109,14 +110,8 @@ echo OUTPUT_DIR = $outdir
 
 if  ("$convert" == "YES" ) then
 
-
-\rm *.nip >& /dev/null
-
 # make list of input FITS images -------------------------------------------
-\rm c_*.fits single*.fits double*.fits coadd*.fits flat*.fits gain*.fits imc*.fits
 \ls -1 *.fits > rawlist.nip
-    
-
 
 #########################################
 #Convert from bitpix 32 to bitpix -32

@@ -8,6 +8,7 @@
 # Update     : 25/05/2009    jmiguel@iaa.es   Added object field
 #              14/12/2009    jmiguel@iaa.es   Renamed SKY_FLAT by TW_FLAT
 #                                             Reanamed isSkyFlat()  by isTwFlat()
+#              02/03/2010    jmiguel@iaa.es   Added READMODE checking
 # 
 ################################################################################
 
@@ -87,6 +88,7 @@ class ClFits:
         self.chipcode  = 1
         self.ncoadds   = 0
         self.itime     = 0.0
+        self.readmode  = ""
         self.data      = None
         self.my_header = None
         
@@ -149,6 +151,9 @@ class ClFits:
     
     def getItime(self):
         return self.itime
+    
+    def getReadMode(self):
+        return self.readmode
     
     def getDateTimeObs(self):
         return self.datetime_obs
@@ -257,7 +262,14 @@ class ClFits:
         except KeyError:
             log.error('Error, NCOADDS keyword not found')
             self.ncoadda  = -1
-                
+                 
+        #Read-Mode
+        try:
+            self.readmode=indata[0].header['READMODE']
+        except KeyError:
+            log.error('Error, READMODE keyword not found')
+            self.readmode  = ""
+                     
         #UT-date of observation
         try:
             self.datetime_obs = indata[0].header['DATE-OBS']
@@ -358,9 +370,40 @@ class ClFits:
 		
         
       
+################################################################################            
+#  Useful function to check data integrity
+################################################################################
+def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, c_ncoadds=True, c_readmode=True):
+    """This function will check all the files in the file_list have the same properties required as True in the parameters"""
+    
+    m_type=''
+    m_filter=''
+    m_texp=''
+    m_ncoadds=''
+    m_readmode=''
+    
+    # First file as reference
+    if file_list[0]:
+            f=ClFits ( file_list[0] )
+            m_type=f.getType()
+            m_filter=f.getFilter()
+            m_texp=f.expTime()
+            m_ncoadds=f.getNcoadds()
+            m_readmode=f.getReadMode()
+    
+    # Check all files        
+    for file in file_list:
+            f=ClFits ( file )
+            if (  (c_type and m_type!=f.getType()) or (c_filter and m_filter!=f.getFilter()) or (c_texp and m_texp!=f.expTime()) or (c_ncoadds and m_ncoadds!=f.getNcoadds()) or (c_readmode and m_readmode!=f.getReadMode())):
+                log.debug("Missmath on some property")
+                return False
+        
+    log.debug("Successful properties checking")
+    return True      
+      
 		
 ################################################################################            
-#  Testing
+#  Main for Testing
 ################################################################################
 def usage():
     """Print help """
