@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
 
         for (j = 0; j < nsky; j++){
             scale[j] = avgscale - scale[j];
+            printf("\nSCALE[%d]=%f", j, scale[j]);
         }
         
         if (usemask) {

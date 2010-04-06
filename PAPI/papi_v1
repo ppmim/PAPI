@@ -18,7 +18,7 @@ setenv source_dir "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/source/"
 setenv comp_master_calib "NO"
 setenv darkflatten "NO"
 setenv astrometry "YES"
-setenv regrid "YES"
+setenv regrid "NO"
 
 
 
@@ -34,7 +34,7 @@ endif
 
 if ( -f $PAR_FILE ) then
  	source $PAR_FILE
-	echo Using local parameters
+# 	echo Using local parameters
 else
  	source $PAR_FILE
 	echo Using default parameters
@@ -61,7 +61,6 @@ endif
 $PAPI_HOME/cleanpapi
 $PAPI_HOME/linkSources.py $1 $PWD
 
-exit
   
 # input parameters  ------------------------------------------------------
 
@@ -243,7 +242,7 @@ endif
 \rm flat.fits >& /dev/null
 \rm med.nip >& /dev/null
 echo "Calling mksuperflat.py ..."
-mksuperflat.py mkflat.nip sflat.fits
+mksuperflat.py -s mkflat.nip -o sflat.fits
 
 echo "Computing gain-map ....."
 
@@ -372,7 +371,7 @@ echo Dilate master object mask ...
 echo ---------------------------------------------------------------------
 echo " "
  \cp single.fits.objs single_sin_dilatar.fits
-  #dilate single.fits.objs
+#dilate single.fits.objs
   ## Ojo, el dilate creo un FITS header erroneo !!!!!
  \mv single.fits.objs coadd.objs.fits
  
@@ -383,8 +382,8 @@ echo ---------------------------------------------------------------------
 echo " "
 
   awk '{print "coadd.objs.fits", $2,$3}' single.nip > offsets3.nip
-  paste files.nip offsets3.nip > skylist.nip
-
+  #paste files.nip offsets3.nip > skylist.nip
+makeMaskedSkyList.py -f files.nip -o offsets3.nip -t onoff -O skylist.nip
 
 if ( $mos == "dither" || $mos == "ext_dither" ) then
         skyfilter skylist.nip gain.fits $halfnsky mask $destripe
@@ -427,7 +426,7 @@ if ( $type == "double" ) then
   	#imtrim.py -i double.fits
     
     #Copy output files to specified OUTDIR
-    \cp double.fits double.fits.weight.fits  $outdir
+    \cp double.fits double.weight.fits  $outdir
     
 	echo " "
 	echo -------------------------------------------------------------------
@@ -448,7 +447,7 @@ if ( $astrometry == "YES" ) then
 
 	echo " "
 	echo -------------------------------------------------------------------
-	echo Astrometry computations ....
+	echo Astrometry computations ....and regriding
 	echo -------------------------------------------------------------------
 	echo " "
 

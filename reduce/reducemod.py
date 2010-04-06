@@ -1996,7 +1996,7 @@ class ReductionBlock:
                 # STEP 6: For each image, a new sky image is computed and subtracted by taking into account the new master object mask
                 # 6.1: create the 
                 f_temp=open('/tmp/offsets1.pap')
-                f_out_skf=open('/tmp/skyfilter_2.pap','w')
+                f_out_skf=open('/tmp/skyfilter_2.pap','w+')
                 for line in f_temp:
                     n_line = line.split()[0].replace(".skysub.fits.objs", ".fits") + " "+ "/tmp/masterObjMask.fits" + " " + line.split()[1] + " " + line.split()[2] +"\n"
                     #print "LINE=",n_line

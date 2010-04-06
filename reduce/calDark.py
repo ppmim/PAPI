@@ -120,7 +120,7 @@ class MasterDark:
         good_frames=[]
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
-            log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, f.expTime(), f.getType())) 
+            log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" %(iframe, f.expTime(), f.getType(), f.getNcoadds(), f.getReadMode() )) 
             if not f.isDark():
                 log.error("Error: Task 'createMasterDark' finished. Frame type is not 'DARK'.")
                 raise Exception("Found a non DARK frame") 
@@ -135,6 +135,7 @@ class MasterDark:
                     f_expt  = f.expTime()
                     f_ncoadds= f.getNcoadds()
                     f_type  = f.getType()
+                    f_readmode = f.getReadMode()
                     good_frames.append(iframe)
                                         
         log.debug('Right, dark frames with same type are: %s', good_frames)   

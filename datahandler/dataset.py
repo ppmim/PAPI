@@ -11,6 +11,7 @@
 # 15/05/2008  : created  
 # 14/04/2009  : added ra,dec fields 
 # 25/05/2009  : added object field to DB
+# 31/03/2010  : added source as a file_list containing the list files
 ################################################################################
 
 # Import requered modules
@@ -41,7 +42,7 @@ class DataSet:
         """
         \brief The constructor
         
-        \param source : can be a 'directory' name or a 'db_address'
+        \param source : can be a 'directory' name, a 'filename' containing the list file or a 'db_address'
         """
         self.con=None #connection
         self.source=_source
@@ -60,21 +61,23 @@ class DataSet:
         self.id = 0
 
     ############################################################    
-    def  load( self , source_directory ):
+    def  load( self , source ):
 
         """
         \brief Load the source for files and insert them into the dataset DB
 
         """
 
-        log.debug("Loadding directory %s" %source_directory)
-        
         # 1. Load the source
-        if os.path.isdir(source_directory):
-            contents = [os.path.join(source_directory, file) for file in os.listdir(source_directory)]
-
+        if os.path.isdir(source):
+            log.debug("Loadding Source Directory %s" %source)
+            contents = [os.path.join(source, file) for file in os.listdir(source)]
+        elif os.path.isfile(source):
+            log.debug("Loadding Source File %s" %source)
+            contents = [line.replace( "\n", "") for line in fileinput.input(source)]
         else:
             #TODO
+            log.error("Error, source not supported !!")
             pass
 
         # 2. Insert loaded data into in memory DB
@@ -308,7 +311,7 @@ class DataSet:
             raise
             return None
 
-
+    
     ############################################################    
     def GetFileInfo( self, filename ):
         """
@@ -343,6 +346,7 @@ class DataSet:
      ############################################################    
     def GetMasterDark( self, detectorId, texp, date, create=False, runId=None):
         """
+          \brief TBC
           \brief Return the filename (with path) of a master dark with the specified features.
 
           \param detectorId
@@ -389,6 +393,8 @@ class DataSet:
      ############################################################    
     def GetMasterFlat( self, detectorId, type, filter, date, create=False, runId=None):
         """
+          \brief TBC
+          
           \brief Return the filename (with path) of a master FLAT with the specified features.
 
           \param detectorId

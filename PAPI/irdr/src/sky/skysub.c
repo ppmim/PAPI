@@ -23,19 +23,20 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
 
     skybkg = histcalcf(sky, nx, ny, -1, -1, NULL);
     
-    printf ("\nSKYSUB ---skybkg== %f", skybkg);
+    printf ("\nSKYSUB ---skybkg== %f\n", skybkg);
 
     /* subtract out sky structure where sky image is valid (weight > 0) */
 
     for (i = 0; i < nx * ny; i++){
         if (skyw[i] > 0)
-            imgout[i] = img[i] + (skybkg - sky[i]);  /* subt. sky structure */
+             imgout[i] = img[i] + (skybkg - sky[i]);  /* subt. sky structure */
+	    /*imgout[i] = img[i] - sky[i]; jmiguel-tests */
         else
             imgout[i] = img[i];
-         /*if (imgout[i]<0)   
-            printf("\nDEBUG> i=%d, img[i]=%f, skybkg=%f , sky[i]=%f \n\n\n", i, img[i], skybkg, sky[i]);
-            exit(0);*/
-        }
+        /*if (img[i]>220000)   
+            printf("\nDEBUG> i=%d, img[i]=%f, skybkg=%f , sky[i]=%f IMGOUT=%f\n\n\n", i, img[i], skybkg, sky[i], imgout[i]);
+        */   
+	}
     /* do image destriping, mask indicates bad pix and object pix */
 
     destripe(imgout, mask, nx, ny, bkg, type);
@@ -60,6 +61,7 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
 
     for (i = 0; i < nx * ny; i++)
         imgout[i] = img[i] + (skybkg - sky[i]);
+	/* imgout[i] = img[i] - sky[i]; jmiguel-test */
 
     destripe(imgout, bpm, nx, ny, bkg, type);
 
@@ -69,3 +71,4 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
 
     return imgout;
 }
+

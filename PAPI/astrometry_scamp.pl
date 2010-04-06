@@ -128,13 +128,14 @@ for ($i = 0; $i <= $#ARGV; $i++) {       # loop over files on command line
     }
 
 #    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT -SOLVE_PHOTOM N -CHECKPLOT_TYPE NONE";
-    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT -WRITE_XML N";    
+    $matchcmd = "$matchprog $fn.ldac -c $scamp_cfg -POSANGLE_MAXERR $rotation -ASTREF_CATALOG $CAT -SOLVE_PHOTOM Y -WRITE_XML N";    
     if (system($matchcmd) != 0) {
         print "Warning: Command failed: $matchcmd\n";
         next;
     }
     
-
+    
+    
     # Save backup copy and Update header with new WCS parameters
     print `cp $fn $fn.orig`;             # save backup copy
     $fn_= $fn;

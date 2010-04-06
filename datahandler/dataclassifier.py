@@ -49,6 +49,7 @@ class ClFits:
          DOME_FLAT_LAMP_OFF,
          DOME_FLAT_LAMP_ON,
          FOCUS,
+         SKY_FOR,              # Sky for extended objects during dither sequence
          SCIENCE, (RAW)
          MASTER_DARK,
          MASTER_SKY_FLAT,
@@ -137,6 +138,12 @@ class ClFits:
     def isMasterDark(self):
         return (self.type=="MASTER_DARK")
     
+    def isSky(self):
+        return (self.type=="SKY_FOR")
+    
+    def isObject(self):
+        return (self.isScience())
+    
     def expTime(self):
         return (self.exptime)
     
@@ -157,6 +164,9 @@ class ClFits:
     
     def getDateTimeObs(self):
         return self.datetime_obs
+    
+    def getMJD(self):
+        return self.mjd
     
     def getData(self):
         """No tested, to check !!!"""
@@ -210,6 +220,8 @@ class ClFits:
                 self.type="TW_FLAT_DAWN"
             elif indata[0].header['OBJECT'].count('skyflat'):
                 self.type="TW_FLAT"
+            elif indata[0].header['OBJECT'].count('sky for'):
+                self.type="SKY_FOR"
             elif indata[0].header['OBJECT'].count('MASTER'):
                 self.type=indata[0].header['PAPI.TYPE']
             elif indata[0].header['OBJECT'].count('focus'):
@@ -394,6 +406,14 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, c_n
     # Check all files        
     for file in file_list:
             f=ClFits ( file )
+            print 'FILE=',file
+            print '------------------------'
+            print 'TYPE=',f.getType()
+            print 'FILTER=',f.getFilter()
+            print 'TEXP=',f.expTime()
+            print 'NCOADDS=',f.getNcoadds()
+            print 'READMODE=',f.getReadMode()
+            
             if (  (c_type and m_type!=f.getType()) or (c_filter and m_filter!=f.getFilter()) or (c_texp and m_texp!=f.expTime()) or (c_ncoadds and m_ncoadds!=f.getNcoadds()) or (c_readmode and m_readmode!=f.getReadMode())):
                 log.debug("Missmath on some property")
                 return False

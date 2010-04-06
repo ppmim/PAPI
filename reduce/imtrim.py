@@ -8,12 +8,10 @@
 # Created    : 21/01/2009    jmiguel@iaa.es
 # Last update: 10/09/2009    jmiguel@iaa.es
 #
+# TODO : 
+#    - update AR,DEC after image trimming !!!!
 ################################################################################
-#
-# 
-#
-#
-################################################################################
+
 # Import necessary modules
 import os
 import sys
@@ -27,7 +25,7 @@ from iraf import ccdred
 
 # Interact with FITS files
 import pyfits
-
+from misc.paLog import log
 
 
 
@@ -68,6 +66,8 @@ def imgTrim (inputfile):
         """ 
         ### Start the script #####
         file=inputfile
+        
+        log.debug("Start imgTrim ....")
         
         try:
             indata = pyfits.open(file)
@@ -241,7 +241,7 @@ def imgTrim (inputfile):
                     output=ima_objs)
                 
         
-        
+        log.debug("....End of  imgTrim ....")
         #### End of the function #######
         
 ################################################################################

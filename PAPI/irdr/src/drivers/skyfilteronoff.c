@@ -125,11 +125,13 @@ int main(int argc, char *argv[])
                                    argv[5]);
         }
 
-        skysubimg = shortint(fimg, nx, ny);
+        /*skysubimg = shortint(fimg, nx, ny);*/
 
-        writefits(outfn(fn[i]), fn[i], (char*)skysubimg, 16, nx, ny);
+        /* For PANIC, we need 32 bits images, so we write  -32 (float) FITS*/
+        writefits(outfn(fn[i]), fn[i], (char*)fimg, -32, nx, ny);
+        /*writefits(outfn(fn[i]), fn[i], (char*)skysubimg, 16, nx, ny);*/
 
-        free(sky);  free(skysubimg);  free(fimg);
+        free(sky);  /*free(skysubimg);  */ free(fimg);
 
         if (skyw != NULL)
             free(skyw);

@@ -57,16 +57,18 @@ import misc.fileUtils
 import PAPI.linkSources as papi
 import misc.utils
 from reduce.makeobjmask import *
+import reduce.imtrim
 
 
 class ReductionSet:
-    def __init__(self, list_file, out_dir, out_file, dark=None, flat=None, bpm=None):
+    def __init__(self, list_file, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None):
         """ Init function """
         
         # Input values
         self.list_file = list_file # a file containing a list of data filenames 
         self.out_dir = out_dir     # directory where all output will be written
         self.out_file = out_file   # final reduced data file (out)
+        self.obs_mode = obs_mode   # observing mode (dither, dither_on_off, dither_off_on....)
         self.master_dark = dark    # master dark to use (input)
         self.master_flat = flat    # master flat to use (input)
         self.bpm = bpm             # master Bad Pixel Mask to use (input)
@@ -77,10 +79,9 @@ class ReductionSet:
         
         
         self.m_LAST_FILES = []   # Contain the files as result of the last processing step
+        self.m_rawFiles = []     # Raw files (originals in the working directory)
         self.m_filter = ""
         self.m_n_files = ""
-        self.m_dither_mode = ""
-        
         
         
         
@@ -88,9 +89,13 @@ class ReductionSet:
         """ This function makes some test with the data, previusly to start the reduction"""
                 
         # check files currently in self.m_LAST_FILES
-        if not self.checkFilter() or not self.checkType():
+        if not self.checkFilter():
             raise Exception("Error while checking data")
         
+        # check type (does not work with dither_on_off/dither_off_on)
+        #if not self.checkType():
+        #    raise Exception("Error while checking data")
+          
         
     def checkFilter(self):
         """Return true is all files in file have the same filter type, false otherwise
@@ -133,12 +138,109 @@ class ReductionSet:
         log.debug("All files match same file type")
         return True
                  
-    def skyFilter( self, list_file, gain_file, mask='nomask'):
+    def sortOutData(self, list=None):
+        """
+        Sort out input data files by MJD
+        """
+        
+        dataset=[]
+        if list==None:
+            m_list=self.m_LAST_FILES
+        else:
+            m_list=list
+            
+        for file in m_list:
+            fits=datahandler.ClFits(file) 
+            dataset.append((file, fits.getMJD()))
+            
+        dataset=sorted(dataset, key=lambda data_file: data_file[1])          
+        sorted_files=[]
+        for tuple in dataset:
+            sorted_files.append(tuple[0])
+        
+        return sorted_files                                
+                     
+    def getObsMode(self):
+        """
+        Return the type of dither sequece followed in the currect  'm_LAST_FILES' list. It could be:
+            - dither (T-T-T-T-T- ....)
+            - dither_on_off (T-S-T-S-T-S-T-S-T-....)
+            - dither_off_on (S-T-S-T-S-T-S-T-S-....)
+            - other
+        """
+                   
+        mode='other' # default
+                   
+        #Step 1: we suppose list file is sorted out  by MJD
+        #Step 2: get the data type of the first file and check sequence starting from this file
+        fits_0=datahandler.ClFits(self.m_LAST_FILES[0])
+        fits_1=datahandler.ClFits(self.m_LAST_FILES[1])
+        i=0
+        if fits_0.isSky() and fits_1.isObject():
+            mode='dither_off_on'
+            # Then, we are going to suppose the sequence S-T-S-T-S- .... (dither_off_on)
+            for file in self.m_LAST_FILES:
+                if not i%2: #even
+                    fits=datahandler.ClFits(file)
+                    if not fits.isSky():
+                        return 'other'
+                elif i%2: #odd
+                    fits=datahandler.ClFits(file)
+                    if not fits.isObject():
+                        return 'other'
+                i=i+1         
+        elif fits_0.isObject() and fits_1.isSky():
+            # Then, we are going to suppose the sequence T-S-T-S-T- .... (dither_on_off)
+            mode='dither_on_off'
+            for file in self.m_LAST_FILES:
+                if not i%2: #even
+                    fits=datahandler.ClFits(file)
+                    if not fits.isObject():
+                        return 'other'
+                elif i%2: #odd
+                    fits=datahandler.ClFits(file)
+                    if not fits.isSky():
+                        return 'other'
+                i=i+1                 
+        elif fits_0.isObject() and fits_1.isObject():
+            # Then, we are going to suppose the sequence T-T-T-T-T- .... (dither)
+            mode='dither'
+            for file in self.m_LAST_FILES:
+                fits=datahandler.ClFits(file)
+                if not fits.isObject():
+                    return 'other'
+        else:
+            mode='other'
+                        
+        return mode
+                        
+    def getSkyFrames(self, list=None):
+        """
+        Return the files identified as 'sky' frames in the m_LAST_FILES
+        """
+       
+        sky_list=[]
+        if list==None:
+            m_list=self.m_LAST_FILES
+        else:
+            m_list=list
+            
+        for file in m_list:
+            fits=datahandler.ClFits(file)
+            if fits.isSky():
+                sky_list.append(file)
+                
+        return sky_list         
+                         
+    def skyFilter( self, list_file, gain_file, mask='nomask', obs_mode='dither' ):
         """
             For each input image, a sky frame is computed by combining a certain number of the closest images, 
             then this sky frame is subtracted to the image and the result is divided by the master flat; 
                          
             This function is a wrapper for skyfilter.c (IRDR)              
+            
+            INPUT
+                list_file : a text file containing the suited structure in function of the observing_mode 
             
             OUTPUT
                 The function generate a set of sky subtrated images (*.skysub.fits)             
@@ -152,14 +254,30 @@ class ReductionSet:
         # Skyfilter parameters
         halfnsky=4
         destripe='none'
-        
+        out_files=[]
             
-        skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilter '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe 
+        if obs_mode=='dither':
+            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilter '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe 
+        elif obs_mode=='dither_on_off':
+            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteronoff '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+        elif obs_mode=='dither_off_on':
+            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteroffon '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+        else:
+            log.error("Observing mode not supported")
+            raise
+                  
         if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
-            # Rename output files
+            # Rename output sky-subtracted files
             for file in glob.glob(self.out_dir+'/*.fits.skysub'):
                 shutil.move(file, file.replace('.fits.skysub', '.skysub.fits'))
-                            
+                #out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
+            out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
+            if (obs_mode=='dither_on_off' or obs_mode=='dither_off_on'):
+                out_files=glob.glob(self.out_dir+'/*.skysub.fits')
+                out_files=self.sortOutData(out_files) 
+            return out_files
+        else: return []
+                                  
     def getPointingOffsets (self, images_in=None,  p_min_area=5, p_mask_thresh=2, p_offsets_file='/tmp/offsets.pap'):
         """DESCRIPTION
                 Derive pointing offsets between each image using SExtractor OBJECTS (makeObjMask) and offsets (IRDR)
@@ -179,7 +297,8 @@ class ReductionSet:
         """
             
         log.info("Starting getPointingOffsets....")
-            
+        offsets_mat=None
+           
         # STEP 1: Create SExtractor OBJECTS images
         suffix='_'+self.m_filter+'.skysub.fits'
         #p_min_area - SExtractor DETECT_MINAREA
@@ -194,17 +313,22 @@ class ReductionSet:
             makeObjMask( images_in , p_min_area, p_mask_thresh, output_list_file)
         else:
             log.error("Option not recognized !!!")    
-                            
+                           
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
         search_box=10 # half_width of search box in arcsec (default 10)
         offsets_cmd=self.m_papi_path+'/irdr/bin/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
             log.error ("Some error while computing dither offsets")
-            return
+            return 0
+        else:
+            try:
+                offsets_mat = numpy.loadtxt(p_offsets_file, usecols = (1,2,3)) # columns => (xoffset, yoffset, match fraction) in PIXELS  
+            except IOError:
+                log.debug("Any offsets read. Check images ....")   
         
-    
         log.debug("END of getPointingOffsets")                        
+        return offsets_mat
                             
     def coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits'):
         """  Coadd the stack of dithered FITS images listed in 'input_file' using dithercubemean from IRDR"""
@@ -252,7 +376,10 @@ class ReductionSet:
         log.info("Dilating image ....(NOT DONE by the moment)")
         prog = self.m_papi_path+"/irdr/bin/dilate "
         scale = 0.5 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
-        cmd  = prog + " " + input_file + " " + str(scale)  
+        cmd  = prog + " " + input_file + " " + str(scale)
+          
+        return output_master_obj_mask
+        
         """e=utils.runCmd( cmd )
         if e==0:
             log.debug("Some error while running command %s", cmd)
@@ -260,13 +387,27 @@ class ReductionSet:
             log.debug("Succesful ending of createMasterObjMask")
         """        
                                         
-                                        
+    def makeAstrometry( self, input_file, catalog='2mass', re_grid=False):
+        """Compute the initial astrometry of the given input_file"""
+                                            
+        if re_grid: regrid_str='regrid'
+        else: regrid_str='noregrid'
+                                            
+        astrometry_cmd=self.m_papi_path+'/astrometry_scamp.pl '+ catalog + '  ' + regrid_str + ' ' + input_file
+        if misc.utils.runCmd( astrometry_cmd )==0:
+            log.error ("Some error while computing Astrometry")
+            return 0
+        else:
+            return 1                                    
+                                            
     def reduce(self):
         """ Main procedure for data reduction """
         
         log.info("###############################")
         log.info("#### Start data reduction #####")
         log.info("###############################")
+        
+        dark_flat = False
         
         # Clean old files 
         self.cleanUpFiles()
@@ -275,20 +416,43 @@ class ReductionSet:
         papi.linkSourceFiles(self.list_file, self.out_dir)
         files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
         self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in files1]
-    
-        ######################################
-        # 0 - Some checks (filter, ....)
-        ######################################
+        
+        ######################################################
+        # 0 - Some checks (filter, ....) 
+        ######################################################
         try:
             self.checkData()
         except:
+            raise 
+        ######################################################
+        # 00 - Sort out data by MJD (self.m_LAST_FILES)
+        ######################################################
+        try:
+            self.m_LAST_FILES=self.sortOutData()
+        except:
             raise
+        
+        ######################################################
+        # 000 - Find out dither mode
+        ######################################################
+        try:
+            self.obs_mode=self.getObsMode()  # overwrite initial given observing mode
+        except:
+            raise
+        
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        print "OBS_MODE=", self.obs_mode
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        
+        # keep a copy of the original file names
+        self.m_rawFiles = self.m_LAST_FILES        
         
         ######################################
         # 1 - Apply dark, flat
         ######################################
         if self.master_dark!=None and self.master_flat!=None:
             log.debug("---> Applying dark and Flat")
+            dark_flat=True
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, self.master_dark, self.master_flat, self.out_dir)
             self.m_LAST_FILES = res.apply()
             
@@ -297,15 +461,24 @@ class ReductionSet:
         ######################################
         # - Find out what kind of observing mode we have (dither, ext_dither, ...)
         log.debug('---> Now, compute Super-Sky Flat-Field ...')
-        self.m_dither_mode="dither" #only for testing
-        if self.m_dither_mode=="dither":
+        if self.obs_mode=="dither":
             misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
             superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits")
             superflat.create()
-        
-        # ####################################    
-        # 3 - Compute Gain map 
-        # ####################################
+        elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on":
+            log.info("EXTENDED SOURCE !!!")
+            sky_list=self.getSkyFrames()
+            misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
+            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits")
+            superflat.create()                            
+        else:
+            log.error("Dither mode not supported")
+            raise ("Error, dither mode not supported") 
+              
+              
+        ######################################    
+        # 3 - Compute Gain map and apply BPM
+        ######################################
         log.debug("Computing gain-map .....")
         nxblock=16
         nyblock=16
@@ -320,7 +493,10 @@ class ReductionSet:
         if misc.utils.runCmd( gain_cmd )==0:
             log.error("Some error while creating gainmap ....")
             return
-        
+            
+        ########################################
+        # Add external Bad Pixel Map to gainmap
+        ########################################     
         if self.bpm !=None:
             if not os.path.exists( self.bpm ):
                 print('No external Bad Pixel Mask found. Cannot find file : "%s"' %sef.bpm)
@@ -335,29 +511,24 @@ class ReductionSet:
                 os.rename(gainfile.replace(".fits","_bpm.fits"), gainfile)
                         
         #########################################
-        # 4 - First Sky subtraction (IRDR) ojo, genera imagenes con BITPIX=16 y bzero=32768
+        # 4 - First Sky subtraction (IRDR) 
         #########################################
-        misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
-        if self.m_dither_mode=="dither":
-            self.skyFilter( self.out_dir+"/files.list", gainfile, 'nomask')      
-        else:
-            log.error("Dither mode not supported")
-            raise ("Error, dither mode not supported")                 
+        misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/skylist1.list")
+        self.m_LAST_FILES=self.skyFilter(self.out_dir+"/skylist1.list", gainfile, 'nomask', self.obs_mode)      
                         
         #########################################
         # 4b -Divide by a normalised flat field image 
         #########################################
         # solo para probar a ver como sale (la condicion del IF no es importante)
-        if self.master_dark==None and self.master_flat!=None:
-                        
+        #if self.master_dark==None and self.master_flat!=None :
+        #    res = reduce.ApplyDarkFlat(self.m_LAST_FILES, None, self.master_flat, self.out_dir)
+        #    self.m_LAST_FILES = res.apply()                    
                               
         #########################################
         # 5 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation
         #########################################
-        filelist=[elem.replace(".fits",".skysub.fits") for elem in self.m_LAST_FILES]
-        self.m_LAST_FILES=filelist
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
-        self.getPointingOffsets (self.out_dir+"/files_skysub.list", 5, 2, self.out_dir+'/offsets1.pap')                
+        offset_mat=self.getPointingOffsets (self.out_dir+"/files_skysub.list", 5, 2, self.out_dir+'/offsets1.pap')                
                         
         
         #########################################
@@ -372,12 +543,56 @@ class ReductionSet:
         fs.close()    
         self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd1.fits')
     
+        ## END OF SINGLE REDUCTION  ##
         
         #########################################
         # 7 - Create master object mask
         #########################################
-        self.createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')
+        obj_mask=self.createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')
     
+        #########################################
+        # 8 - Second Sky subtraction (IRDR) 
+        #########################################
+        #Compound masked sky list
+        fs=open(self.out_dir+"/skylist2.pap","w+")
+        i=0
+        j=0
+        for file in self.m_rawFiles:
+            if dark_flat: 
+                line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " " + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+            else:
+                line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+            fs.write(line+"\n")
+            if (self.obs_mode=='dither_on_off' or self.obs_mode=='dither_off_on') and i%2:
+                j=j+1
+            elif self.obs_mode=='dither':
+                j=j+1
+            i=i+1
+                
+        fs.close()
+        self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainfile, 'mask', self.obs_mode)      
+    
+        #########################################
+        # 9 - Create second coadded image of the dithered stack using new sky subtracted frames
+        #########################################
+        self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd2.fits')
+        reduce.imtrim.imgTrim(self.out_dir+'/coadd2.fits')
+        
+        #########################################
+        # 10 - Make Astrometry
+        #########################################
+        self.makeAstrometry(self.out_dir+'/coadd2.fits', '2mass', 'noregrid') 
+        
+        
+        
+        #########################################
+        # 11 - SWARP ???
+        #########################################
+        
+        #Rename to named output file
+        shutil.move(self.out_dir+'/coadd2.fits', self.out_file)
+        log.info("Generated output file ==>%s", self.out_file)
+        
         log.info("##################################")
         log.info("##### End of data reduction ######")
         log.info("##################################")
@@ -439,7 +654,6 @@ if __name__ == "__main__":
                   
                   
     (options, args) = parser.parse_args()
-    print "DIR=", options.out_dir
     
     if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
@@ -448,7 +662,7 @@ if __name__ == "__main__":
         print "reading %s ..." % options.source_file_list
     
     
-    redSet = ReductionSet(options.source_file_list, options.out_dir, options.output_filename, options.dark, options.flat, "/tmp/test1/superFlat.fits")
+    redSet = ReductionSet(options.source_file_list, options.out_dir, options.output_filename, options.obs_mode, options.dark, options.flat)
     redSet.reduce()
     
     if options.show==True:
