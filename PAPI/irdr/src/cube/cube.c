@@ -10,6 +10,9 @@
 
 #define NSIG 5.0                       /* clipping threshold */
 
+/* influye bastante en el modo skyfilter_on_off/off_on 
+#define NSIG 2.0
+*/
 
 /* 
  * cube_median: find median image plane of image cube 

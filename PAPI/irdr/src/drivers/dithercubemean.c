@@ -93,12 +93,17 @@ int main(int argc, char *argv[])
     */
 
     meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1);
-
+    
+    /* 0:jmim */
+    /*meanplane = cube_median(data, nplanes, nx, ny, scale, 1);*/
+    /* 1:jmim */
+    
     writefits(argv[3], fn[0], (char*)meanplane, -32, nx, ny);
     
     put_key_int(argv[3], "NCOMBINE", nplanes);          /* update FITS hdr */
     put_key_float(argv[3], "DATAMODE", avgscale);
 
+    /* write weight map */
     writefits(argv[4], argv[3], (char*)sumwplanes, -32, nx, ny);
     
     return 0;

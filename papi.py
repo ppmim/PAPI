@@ -1,4 +1,22 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
+
+# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
+# Institute of Astrophysics of Andalusia, IAA-CSIC
+#
+# This file is part of PAPI (PANIC Pipeline)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ################################################################################
 #
@@ -252,7 +270,7 @@ class ReductionSet:
         """               
         
         # Skyfilter parameters
-        halfnsky=4
+        halfnsky=3
         destripe='none'
         out_files=[]
             
@@ -440,9 +458,9 @@ class ReductionSet:
         except:
             raise
         
-        print "!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        print "OBS_MODE=", self.obs_mode
-        print "!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!" )
+        log.info( "OBS_MODE=%s", self.obs_mode )
+        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!" )
         
         # keep a copy of the original file names
         self.m_rawFiles = self.m_LAST_FILES        
@@ -544,7 +562,7 @@ class ReductionSet:
         self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd1.fits')
     
         ## END OF SINGLE REDUCTION  ##
-        
+        #return
         #########################################
         # 7 - Create master object mask
         #########################################
@@ -581,7 +599,7 @@ class ReductionSet:
         #########################################
         # 10 - Make Astrometry
         #########################################
-        self.makeAstrometry(self.out_dir+'/coadd2.fits', '2mass', 'noregrid') 
+        #self.makeAstrometry(self.out_dir+'/coadd2.fits', '2mass', 'noregrid') 
         
         
         

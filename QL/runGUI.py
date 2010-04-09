@@ -1,3 +1,23 @@
+#! /usr/bin/env python
+
+# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
+# Institute of Astrophysics of Andalusia, IAA-CSIC
+#
+# This file is part of PAPI (PANIC Pipeline)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ################################################################################
 #
 # runGUI (run main GUI for PANIC pipeline)
@@ -526,18 +546,19 @@ class MainGUI(panicQL):
         popUpMenu.insertItem("Create Bad Pixel Mask", self.createBPM_slot, 0, 6 )
         popUpMenu.insertSeparator()
         popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Subtract nearest sky", self.subtract_nearSky_slot, 0, 7 )
-        popUpMenu.insertItem("Quick single Pre-Reduction", self.do_quick_reduction_slot, 0, 8 )
-        popUpMenu.insertItem("Stack-Shift and Align", self.createStackedFrame_slot, 0, 9 )
-        popUpMenu.insertItem("Build super-Mosaic", self.createSuperMosaic_slot, 0, 10)
-        popUpMenu.setItemEnabled(10, False)
+        popUpMenu.insertItem("Subtract (own) sky", self.subtract_sky_slot, 0, 7 )
+        popUpMenu.insertItem("Subtract nearest sky", self.subtract_nearSky_slot, 0, 8 )
+        popUpMenu.insertItem("Quick single Pre-Reduction", self.do_quick_reduction_slot, 0, 9 )
+        popUpMenu.insertItem("Stack-Shift and Align", self.createStackedFrame_slot, 0, 10 )
+        popUpMenu.insertItem("Build super-Mosaic", self.createSuperMosaic_slot, 0, 11)
+        popUpMenu.setItemEnabled(12, False)
         popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Raw astrometry", self.do_raw_astrometry, 0, 11)
+        popUpMenu.insertItem("Raw astrometry", self.do_raw_astrometry, 0, 13)
         popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 12 )
-        popUpMenu.insertItem("FWHM estimation", self.fwhm_estimation_slot, 0, 13 )
-        popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 14 )
-        popUpMenu.insertItem("Test", self.testSlot, 0, 15 )
+        popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 14 )
+        popUpMenu.insertItem("FWHM estimation", self.fwhm_estimation_slot, 0, 15 )
+        popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 16 )
+        popUpMenu.insertItem("Test", self.testSlot, 0, 17 )
         popUpMenu.insertSeparator()
         subPopUpMenu = QPopupMenu()
         subPopUpMenu.insertItem("Substract Frames", self.subtractFrames_slot, 0, 1 )
@@ -840,6 +861,31 @@ class MainGUI(panicQL):
             log.error("Error creating master Super Flat file")
             QMessageBox.critical(self, "Error", "Error while creating Super Flat")            
                 
+    def subtract_sky_slot(self):
+        """ Subtract own image sky using SExtrator tool"""
+        
+        
+        fits = datahandler.ClFits(self.m_listView_item_selected)
+        if fits.getType()=='SCIENCE':
+            sex_config = os.environ['IRDR_BASEDIR']+"/src/config/default.sex"
+            minarea =  5
+            threshold = 2.0
+            input_file = self.m_listView_item_selected
+            out_file = self.m_listView_item_selected.replace(".fits",".skysub.fits")
+            cmd="sex %s -c %s -FITS_UNSIGNED Y -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
+            
+            #Change to working directory
+            os.chdir(self.m_papi_dir)
+            #Change cursor
+            self.setCursor(Qt.waitCursor)
+            # Call external script (papi)
+            self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, out_file)      
+            self._proc.startCommand()
+        
+        else:
+            log.error("Sorry, selected file does not look a science file  ")
+            QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             
+                         
     def subtract_nearSky_slot(self):
         """ Subtract nearest sky using skyfiler from IRDR package"""
       
@@ -856,7 +902,6 @@ class MainGUI(panicQL):
         
         # Look for near science files
         if self.m_listView_item_selected:
-            print "SELECTED=", self.m_listView_item_selected
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
                 near_list = datahandler.dataset.filesDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)

@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
         int j, nsky = 0, skyend = skybeg + 4 * hwid - 1;
         float avgscale = 0.0;
 
-	if (skyend>=nplanes) skyend=nplanes-1;
-	printf("Image: %d   Sky: ", i);
+	    if (skyend>=nplanes) skyend=nplanes-1;
+	    printf("Image: %d   Sky: ", i);
 
         for (j = skybeg; j <= skyend; j+=2) {  /* collect adjacent frame ptrs */
             if (j != i) {                             /* skip current frame */
@@ -103,17 +103,17 @@ int main(int argc, char *argv[])
                     wbuf[nsky] = wdata[j];
 
                 avgscale += (scale[nsky] = bkgs[j]);
-		printf (" %d ", j);
+		        printf (" %d ", j);
                 nsky++;
             }
         }
-	printf (" \n");
+	    printf (" \n");
 
         avgscale /= (float) nsky;
 
         for (j = 0; j < nsky; j++) {
             scale[j] = avgscale - scale[j];
-	}
+	    }
 
         if (usemask) {
             sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
@@ -121,6 +121,7 @@ int main(int argc, char *argv[])
                             wdata[i], argv[5]);
         } else {
             sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
+            /*DEBUG writefits("/tmp/sky_1st.fits", fn[i], (char*)sky, -32, nx, ny); */
             fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
                                    argv[5]);
         }
@@ -146,7 +147,7 @@ int main(int argc, char *argv[])
 
         if (i == (nplanes-3))   {
             readdata(i+2, usemask);
-	}
+	    }
     }
 
     return 0;
