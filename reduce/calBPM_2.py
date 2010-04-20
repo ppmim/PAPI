@@ -25,6 +25,7 @@
 #
 # Created    : 25/09/2009    jmiguel@iaa.es
 # Last update: 25/09/2009    jmiguel@iaa.es
+#              19/04/2010    jmiguel@iaa.es - added master dark checking
 #
 # TODO:
 #  - escalar el master dark a restar !!!!
@@ -117,10 +118,20 @@ class BadPixelMask:
         flats_on_frames=[]
     
         
+        #Check Master_Dark
+        if os.path.exists(self.master_dark):
+            f = datahandler.ClFits(self.master_dark)
+            if not f.getType()=='MASTER_DARK':
+                log.error("File %s does not look a MASTER_DARK! Check your data.", self.master_dark)
+                raise ExError, "File does not look a MASTER_DARK! Check your data."              
+        else:
+            log.error("File %s does not exist", self.master_dark)
+            raise ExError, "File does not exist"    
+        
         # Read the file list
         filelist=[line.replace( "\n", "") for line in fileinput.input(self.i_file_list)]
         
-        #STEP 1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
+        #STEP 1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF)
         #        and create string list for IRAF tasks
         #Also subtract master DARK
         for file in filelist:
@@ -131,12 +142,11 @@ class BadPixelMask:
                 flats_on_frames.append(f.pathname)
             else:
                 # reject the frame
-                log.error("DISCARTING: Frame %s is neither dome_flat nor a dark frame", f.pathname)
+                log.error("DISCARTING: Frame %s is not dome_flat", f.pathname)
                 
         #Check whether there are enought calib frames
-        if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10 
-            or self.master_dark==None):
-            log.error("There are not enought calib frames for create BPM !!")
+        if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10):
+            log.error("There are not enought calib frames to create BPM !!")
             raise ExError, "Not enought calib frames"
         
         
@@ -158,6 +168,7 @@ class BadPixelMask:
                         result=file.replace(".fits","_D.fits"),
                         )
             flats_on_frames[flats_on_frames.index(file)]=file.replace(".fits","_D.fits")                                                
+        
         print "OFF=", flats_off_frames
         print "ON=", flats_on_frames
         
@@ -241,7 +252,7 @@ class BadPixelMask:
         # Save the BPM
         #misc.fileUtils.removefiles( self.output )               
         #hdu = pyfits.PrimaryHDU()
-        #hdu.scale('int16') # importat to set first data type
+        #hdu.scale('int16') # important to set first data type
         #hdu.data=bpm     
         #hdulist = pyfits.HDUList([hdu])
         #hdu.header.update('OBJECT','MASTER_PIXEL_MASK')
@@ -269,6 +280,17 @@ class BadPixelMask:
         flats_off_frames=[]
         flats_on_frames=[]
     
+    
+        #Check Master_Dark
+        if os.path.exists(self.master_dark):
+            f = datahandler.ClFits(self.master_dark)
+            if not f.getType()=='MASTER_DARK':
+                log.error("File %s does not look a MASTER_DARK! Check your data.", self.master_dark)
+                raise ExError, "File does not look a MASTER_DARK! Check your data."              
+        else:
+            log.error("File %s does not exist", self.master_dark)
+            raise ExError, "File does not exist"    
+        
         
         # Read the file list
         filelist=[line.replace( "\n", "") for line in fileinput.input(self.i_file_list)]
@@ -385,7 +407,7 @@ class BadPixelMask:
         misc.fileUtils.removefiles(outF)
         
         fr=pyfits.open(flat_ratio)
-        bpm=numpy.where (fr[0].data<0.45, 1, numpy.where(fr[0].data>1.55, 1, 0))
+        bpm=numpy.where (fr[0].data<0.9, 1, numpy.where(fr[0].data>1.0, 1, 0))
         fr.close()
          
         # Save the BPM

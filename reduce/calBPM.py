@@ -262,7 +262,7 @@ def usage():
     print '       Compute a BPM from a give dome-flat frames list'
     print ' '
     print 'OPTIONS'
-    print '       -f --file          The list of input (dark corrected) dome flat images)'
+    print '       -f --file          The list of input (dark corrected) dome flat images'
     print '       -d --dark          The master dark to subtract to dome flats'
     print '       -o --out bmp.fits  The output bad pixel mask'
     print '       -l --lthr 3        The low rejection threshold in units of sigma'

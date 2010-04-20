@@ -171,6 +171,15 @@ class MainGUI(panicQL):
         self.lineEdit_masterFlat.setText(QString(self.m_masterFlat))
         self.lineEdit_masterMask.setText(QString(self.m_masterMask))
         
+        
+        ## PRUEBAS !!!! #####
+        #self.listView_config.setItem(1,1, QComboBox())
+        elem = QCheckListItem( self.listView_config, "check1" )
+        elem.setRenameEnabled(0,1)
+        elem.setText (0, "test")
+        #self.listView_config.setRenameEnabled(1,0)
+        self.listView_config.setSorting(-1)
+        ### FIN DE PRUEBAS #####
     
     def new_file_func(self, filename, process=True):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""

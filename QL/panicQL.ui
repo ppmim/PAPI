@@ -396,116 +396,6 @@
                     <string>Check</string>
                 </property>
             </widget>
-            <widget class="QListView">
-                <column>
-                    <property name="text">
-                        <string>File                                                        </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Class                            </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Filter     </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>TExp</string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Date-Obs                     </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Object         </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>RA                       </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Dec                     </string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <property name="name">
-                    <cstring>listView_dataS</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>0</x>
-                        <y>200</y>
-                        <width>920</width>
-                        <height>185</height>
-                    </rect>
-                </property>
-                <property name="selectionMode">
-                    <enum>Extended</enum>
-                </property>
-                <property name="allColumnsShowFocus">
-                    <bool>true</bool>
-                </property>
-                <property name="rootIsDecorated">
-                    <bool>true</bool>
-                </property>
-            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_clear</cstring>
@@ -616,52 +506,6 @@
                     <string>QL Mode</string>
                 </property>
             </widget>
-            <widget class="QComboBox">
-                <item>
-                    <property name="text">
-                        <string>None</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Lazy</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Pre-reduction</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_1</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_2</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_3</string>
-                    </property>
-                </item>
-                <property name="name">
-                    <cstring>comboBox_QL_Mode</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>641</x>
-                        <y>160</y>
-                        <width>110</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Filter data sources list using its class/type</string>
-                </property>
-            </widget>
             <widget class="QCheckBox">
                 <property name="name">
                     <cstring>checkBox_process</cstring>
@@ -750,6 +594,162 @@
                 </property>
                 <property name="toolTip" stdset="0">
                     <string>Select a directory or log file as the input source</string>
+                </property>
+            </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>None</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Lazy</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Pre-reduction</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_1</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_2</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_3</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox_QL_Mode</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>641</x>
+                        <y>160</y>
+                        <width>110</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Filter data sources list using its class/type</string>
+                </property>
+            </widget>
+            <widget class="QListView">
+                <column>
+                    <property name="text">
+                        <string>File                                                        </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Class                            </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Filter     </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>TExp</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Date-Obs                     </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Object         </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>RA                       </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Dec                     </string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <property name="name">
+                    <cstring>listView_dataS</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>0</x>
+                        <y>200</y>
+                        <width>920</width>
+                        <height>185</height>
+                    </rect>
+                </property>
+                <property name="selectionMode">
+                    <enum>Extended</enum>
+                </property>
+                <property name="allColumnsShowFocus">
+                    <bool>true</bool>
+                </property>
+                <property name="rootIsDecorated">
+                    <bool>true</bool>
                 </property>
             </widget>
         </widget>
@@ -962,137 +962,6 @@
                     </property>
                     <property name="checked">
                         <bool>true</bool>
-                    </property>
-                </widget>
-            </widget>
-            <widget class="QGroupBox">
-                <property name="name">
-                    <cstring>groupBox3</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>11</x>
-                        <y>130</y>
-                        <width>330</width>
-                        <height>280</height>
-                    </rect>
-                </property>
-                <property name="title">
-                    <string>Lazy Mode</string>
-                </property>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox8_3</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>86</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Apply Bad Pixel Mask (BPM)</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox8</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>111</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Flat-Field</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox9</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>136</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Subtract consecutive frames</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox10</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>161</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Subtract nearest sky</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox_show_imgs</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>26</y>
-                            <width>240</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Only show new images when detected</string>
-                    </property>
-                    <property name="checked">
-                        <bool>true</bool>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox10_2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>32</x>
-                            <y>210</y>
-                            <width>200</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Apply 'static' Astrometry</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox7</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>61</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Substract dark</string>
                     </property>
                 </widget>
             </widget>
@@ -1465,6 +1334,137 @@
                             <bool>true</bool>
                         </property>
                     </widget>
+                </widget>
+            </widget>
+            <widget class="QGroupBox">
+                <property name="name">
+                    <cstring>groupBox3</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>11</x>
+                        <y>130</y>
+                        <width>330</width>
+                        <height>280</height>
+                    </rect>
+                </property>
+                <property name="title">
+                    <string>Lazy Mode</string>
+                </property>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox10</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>31</x>
+                            <y>161</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Subtract nearest sky</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox_show_imgs</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>31</x>
+                            <y>26</y>
+                            <width>240</width>
+                            <height>20</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Only show new images when detected</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox10_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>32</x>
+                            <y>210</y>
+                            <width>200</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Apply 'static' Astrometry</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox7</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>31</x>
+                            <y>61</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Substract dark</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8_3</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>31</x>
+                            <y>86</y>
+                            <width>200</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Apply Bad Pixel Mask (BPM)</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>31</x>
+                            <y>111</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Flat-Field</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox9</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>31</x>
+                            <y>136</y>
+                            <width>190</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Subtract consecutive frames</string>
+                    </property>
                 </widget>
             </widget>
         </widget>
@@ -1926,24 +1926,36 @@
             <attribute name="title">
                 <string>Pipeline</string>
             </attribute>
-            <widget class="QPushButton">
+            <widget class="QLabel">
                 <property name="name">
-                    <cstring>pushButton10_4</cstring>
+                    <cstring>pixmapLabel1</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>540</x>
-                        <y>220</y>
-                        <width>108</width>
-                        <height>30</height>
+                        <x>760</x>
+                        <y>20</y>
+                        <width>151</width>
+                        <height>110</height>
                     </rect>
                 </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>244</red>
-                        <green>159</green>
-                        <blue>110</blue>
-                    </color>
+                <property name="pixmap">
+                    <pixmap>image0</pixmap>
+                </property>
+                <property name="scaledContents">
+                    <bool>true</bool>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_Darks_4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>13</x>
+                        <y>20</y>
+                        <width>160</width>
+                        <height>23</height>
+                    </rect>
                 </property>
                 <property name="font">
                     <font>
@@ -1951,23 +1963,23 @@
                     </font>
                 </property>
                 <property name="text">
-                    <string>Reduce</string>
+                    <string>Science Files...</string>
                 </property>
             </widget>
-            <widget class="QPushButton">
+            <widget class="QLabel">
                 <property name="name">
-                    <cstring>pushButton21</cstring>
+                    <cstring>textLabel1_5</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>540</x>
-                        <y>190</y>
-                        <width>108</width>
-                        <height>23</height>
+                        <x>13</x>
+                        <y>267</y>
+                        <width>70</width>
+                        <height>20</height>
                     </rect>
                 </property>
                 <property name="text">
-                    <string>Settings...</string>
+                    <string>&lt;b&gt;Data Type&lt;/b&gt;</string>
                 </property>
             </widget>
             <widget class="QListView">
@@ -2032,23 +2044,74 @@
                 <property name="geometry">
                     <rect>
                         <x>10</x>
-                        <y>70</y>
+                        <y>57</y>
                         <width>480</width>
                         <height>180</height>
                     </rect>
                 </property>
             </widget>
-            <widget class="QPushButton">
+            <widget class="QLabel">
                 <property name="name">
-                    <cstring>pushButton_Darks_4</cstring>
+                    <cstring>textLabel2</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>12</x>
-                        <y>40</y>
-                        <width>160</width>
-                        <height>23</height>
+                        <x>13</x>
+                        <y>297</y>
+                        <width>130</width>
+                        <height>20</height>
                     </rect>
+                </property>
+                <property name="text">
+                    <string>&lt;b&gt;Reduction Schema&lt;/b&gt;</string>
+                </property>
+            </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>Basic</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Pre-advanced</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Advanced</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox5</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>150</x>
+                        <y>298</y>
+                        <width>92</width>
+                        <height>22</height>
+                    </rect>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton10_4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>10</x>
+                        <y>380</y>
+                        <width>108</width>
+                        <height>30</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>244</red>
+                        <green>159</green>
+                        <blue>110</blue>
+                    </color>
                 </property>
                 <property name="font">
                     <font>
@@ -2056,26 +2119,321 @@
                     </font>
                 </property>
                 <property name="text">
-                    <string>Science Files...</string>
+                    <string>Reduce</string>
                 </property>
             </widget>
-            <widget class="QLabel">
+            <widget class="QPushButton">
                 <property name="name">
-                    <cstring>pixmapLabel1</cstring>
+                    <cstring>pushButton26</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>760</x>
-                        <y>20</y>
-                        <width>151</width>
-                        <height>110</height>
+                        <x>10</x>
+                        <y>344</y>
+                        <width>111</width>
+                        <height>30</height>
                     </rect>
                 </property>
-                <property name="pixmap">
-                    <pixmap>image0</pixmap>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>244</red>
+                        <green>205</green>
+                        <blue>98</blue>
+                    </color>
                 </property>
-                <property name="scaledContents">
-                    <bool>true</bool>
+                <property name="text">
+                    <string>Create DR-File</string>
+                </property>
+            </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>Sparse Field</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Crowded Field</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Extended Object (T-S)</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Extended Object (S-T-S-S-T)</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox6</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>150</x>
+                        <y>267</y>
+                        <width>120</width>
+                        <height>22</height>
+                    </rect>
+                </property>
+            </widget>
+            <widget class="QListView">
+                <column>
+                    <property name="text">
+                        <string>Task</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Skip</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Find_File</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Resolved Filename</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+            <item>
+                <property name="text">
+                    <string>Dark subtraction</string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Flat-Field (dome)</string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Flat-Field (twilight)</string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>BPM</string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Distortion correction</string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Astrometry (relative)</string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Photometry (global estimation)</string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+                <property name="pixmap">
+                    <pixmap></pixmap>
+                </property>
+            </item>
+                <property name="name">
+                    <cstring>listView_config</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>300</x>
+                        <y>270</y>
+                        <width>610</width>
+                        <height>150</height>
+                    </rect>
+                </property>
+                <property name="defaultRenameAction">
+                    <enum>Accept</enum>
+                </property>
+            </widget>
+            <widget class="QCheckBox">
+                <property name="name">
+                    <cstring>checkBox22</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>503</x>
+                        <y>219</y>
+                        <width>280</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Automatically create dataset from headers</string>
                 </property>
             </widget>
         </widget>
@@ -2482,6 +2840,14 @@
         </property>
         <property name="toolTip">
             <string>Open an IRAF console</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>Action</cstring>
+        </property>
+        <property name="text">
+            <string>Unnamed</string>
         </property>
     </action>
 </actions>
