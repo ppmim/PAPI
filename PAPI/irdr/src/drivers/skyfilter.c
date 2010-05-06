@@ -45,7 +45,8 @@ int main(int argc, char *argv[])
     int hwid, skybeg, usemask = 0;
     unsigned int *skysubimg = NULL;
     float *sky = NULL, *skyw = NULL, *fimg;
-
+    char aux[256];
+    
     if (argc != 6)
         usage();
 
@@ -124,7 +125,11 @@ int main(int argc, char *argv[])
                             wdata[i], argv[5]);
         } else {
             sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
-            /*DEBUG writefits("/tmp/sky_1st.fits", fn[i], (char*)sky, -32, nx, ny); */
+            /*DEBUG*/
+            strcpy(aux,"/tmp/sky_");
+            strcat(aux, basename(fn[i]));
+            writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
+            /* END_DEBUG */
             fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
                                    argv[5]);
         }

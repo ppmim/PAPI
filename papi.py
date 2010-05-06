@@ -83,7 +83,7 @@ class ReductionSet:
         """ Init function """
         
         # Input values
-        self.list_file = list_file # a file containing a list of data filenames 
+        self.list_file = list_file # a file containing a list of data filenames to reduce (DataSet)
         self.out_dir = out_dir     # directory where all output will be written
         self.out_file = out_file   # final reduced data file (out)
         self.obs_mode = obs_mode   # observing mode (dither, dither_on_off, dither_off_on....)
@@ -96,25 +96,83 @@ class ReductionSet:
         self.m_papi_path = os.environ['PAPI_HOME']
         
         
-        self.m_LAST_FILES = []   # Contain the files as result of the last processing step
+        self.m_LAST_FILES = []   # Contain the files as result of the last processing step (DataSet)
         self.m_rawFiles = []     # Raw files (originals in the working directory)
-        self.m_filter = ""
-        self.m_n_files = ""
+        self.m_filter = ""       # Filter of the current DataSet (m_LAST_FILES)
+        self.m_type = ""         # Type (dark, flat, object, ...) of the current DataSet; should be always object !
+        self.m_expt = 0.0        # Exposition Time of the current DataSet files
+        self.m_ncoadd = 0        # Number of coadds of the current DataSet files
+        self.m_itime  = 0.0      # Integration Time of the currenct DataSet files
+        self.m_n_files = ""      # Number of file in the DataSet
+        self.MAX_MJD_DIFF = 6.95e-3  # Maximun seconds (600secs aprox) of temporal distant allowed between two consecutive frames 
         
-        
-        
-    def checkData(self):
-        """ This function makes some test with the data, previusly to start the reduction"""
-                
-        # check files currently in self.m_LAST_FILES
-        if not self.checkFilter():
-            raise Exception("Error while checking data")
-        
-        # check type (does not work with dither_on_off/dither_off_on)
-        #if not self.checkType():
-        #    raise Exception("Error while checking data")
           
+    def checkData(self, chk_filter=True, chk_type=True, chk_expt=True, chk_itime=True, chk_ncoadd=True, chk_cont=True):
+        """Return true is all files in file have the same filter and/or type and/or expt; false otherwise
+        Also check the temporal continuity (distant between two consecutive frames), if exceeded return False 
         
+        \return True or False
+        """
+        
+        f = datahandler.ClFits(self.m_LAST_FILES[0])
+        
+        filter_0 = f.getFilter()
+        type_0 = f.getType()
+        expt_0 = f.expTime()
+        itime_0 = f.getItime()
+        ncoadd_0 = f.getNcoadds()
+        
+        self.m_filter = filter_0
+        self.m_type = type_0
+        self.m_expt = expt_0
+        self.m_itime = itime_0
+        self.m_ncoadd = ncoadd_0
+        
+        mismatch_filter=False
+        mismatch_type=False
+        mismatch_expt=False
+        mismatch_itime=False
+        mismatch_ncoadd=False
+        mismatch_cont=False
+        
+        prev_MJD=-1
+        for file in self.m_LAST_FILES:
+            fi=datahandler.ClFits( file )
+            if chk_filter and not mismatch_filter: 
+                if fi.getFilter() != filter_0:
+                    log.debug("File %s does not match file FILTER", file)
+                    mismatch_filter=True
+            if chk_type and not mismatch_type: 
+                if fi.getType() != type_0:
+                    log.debug("File %s does not match file TYPE", file)
+                    mismatch_type=True
+            if chk_expt and not mismatch_expt: 
+                if fi.expTime() != expt_0:
+                    log.debug("File %s does not match file EXPTIME", file)
+                    mismatch_expt=True
+            if chk_itime and not mismatch_itime: 
+                if fi.getItime() != itime_0:
+                    log.debug("File %s does not match file ITIME", file)
+                    mismatch_itime=True
+            if chk_ncoadd and not mismatch_ncoadd: 
+                if fi.getNcoadds() != ncoadd_0:
+                    log.debug("File %s does not match file NCOADD", file)
+                    mismatch_ncoadd=True
+            if chk_cont and not mismatch_cont:
+                if prev_MJD!=-1 and (fi.getMJD()-prev_MJD)>self.MAX_MJD_DIFF:
+                    log.error("Maximmun time distant between two consecutives frames exceeded !!")
+                    mismatch_cont=True
+                else:
+                    prev_MJD=fi.getMJD()
+                    
+        if mismatch_filter or mismatch_type or mismatch_expt or  mismatch_itime or mismatch_ncoadd or mismatch_cont:
+            log.error("Data checking found a mismatch ....check your data files....")
+            raise Exception("Error while checking data")
+            #return False             
+        else:    
+            log.debug("All files match same file filter")
+            return True
+            
     def checkFilter(self):
         """Return true is all files in file have the same filter type, false otherwise
         
@@ -184,7 +242,9 @@ class ReductionSet:
             - dither (T-T-T-T-T- ....)
             - dither_on_off (T-S-T-S-T-S-T-S-T-....)
             - dither_off_on (S-T-S-T-S-T-S-T-S-....)
-            - other
+            - other  (non defined sequence,unknown)
+            
+            NOTE: To find out the dither/observing sequence then OBJECT keyword will be checked (see ClFits class)
         """
                    
         mode='other' # default
@@ -234,7 +294,7 @@ class ReductionSet:
                         
     def getSkyFrames(self, list=None):
         """
-        Return the files identified as 'sky' frames in the m_LAST_FILES
+        Given a list of files(DataSet), return the files identified as 'sky' frames in the m_LAST_FILES
         """
        
         sky_list=[]
@@ -258,10 +318,12 @@ class ReductionSet:
             This function is a wrapper for skyfilter.c (IRDR)              
             
             INPUT
-                list_file : a text file containing the suited structure in function of the observing_mode 
+                list_file : a text file containing the suited structure in function of the observing_mode (the list shall be sorted by obs-date)
             
             OUTPUT
-                The function generate a set of sky subtrated images (*.skysub.fits)             
+                The function generate a set of sky subtrated images (*.skysub.fits) and
+                Return ONLY filtered images, when extended-source-mode sky frames are not included in the returned file list. 
+                The out-file-list is previously ordered by obs-data.             
             
             VERSION
                 1.0, 20090909 by jmiguel@iaa.es
@@ -278,8 +340,12 @@ class ReductionSet:
             skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilter '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe 
         elif obs_mode=='dither_on_off':
             skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteronoff '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+        #elif obs_mode=='dither_on_off':
+        #    skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteronoff '+ '/tmp/skylist_prueba.list' + '  ' + gain_file +' '+ str(halfnsky)+' '+ 'mask' + '  ' + destripe
         elif obs_mode=='dither_off_on':
             skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteroffon '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+        elif obs_mode=='other':
+            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilter_general '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
         else:
             log.error("Observing mode not supported")
             raise
@@ -289,12 +355,17 @@ class ReductionSet:
             for file in glob.glob(self.out_dir+'/*.fits.skysub'):
                 shutil.move(file, file.replace('.fits.skysub', '.skysub.fits'))
                 #out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
-            out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
-            if (obs_mode=='dither_on_off' or obs_mode=='dither_off_on'):
+            # Compose the output file list
+            if obs_mode=='dither':
+               out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
+            elif (obs_mode=='dither_on_off' or obs_mode=='dither_off_on' or obs_mode=='other'):
                 out_files=glob.glob(self.out_dir+'/*.skysub.fits')
-                out_files=self.sortOutData(out_files) 
+            # Sort-out data files by obs-data (actually not required when obs_mode='dither')
+            out_files=self.sortOutData(out_files) 
             return out_files
-        else: return []
+        else:
+            log.error("Some problem while running command %s", skyfilter_cmd) 
+            return []
                                   
     def getPointingOffsets (self, images_in=None,  p_min_area=5, p_mask_thresh=2, p_offsets_file='/tmp/offsets.pap'):
         """DESCRIPTION
@@ -348,12 +419,11 @@ class ReductionSet:
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
                             
-    def coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits'):
-        """  Coadd the stack of dithered FITS images listed in 'input_file' using dithercubemean from IRDR"""
+    def coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits',type_comb='average'):
+        """  Coadd the stack of dithered FITS images listed in 'input_file' using average, median or sum of pixel_frames"""
                                                   
         log.info("Start coaddStackImages ...")                                          
         # STEP 1: Define parameters                                          
-        prog = self.m_papi_path+"/irdr/bin/dithercubemean "
         input_file=input
         if input_file==None:
             log.error("Bad input file provided !")
@@ -363,6 +433,7 @@ class ReductionSet:
             gain_file=self.out_dir+"/gain_"+self.m_filter+".fits"
         else:
             gain_file=gain
+        
         if output==None:
             output_file=self.out_dir+"/coadd_"+self.m_filter+".fits"     
         else:
@@ -370,14 +441,19 @@ class ReductionSet:
             
         weight_file=output_file.replace(".fits",".weight.fits")
         
-        # STEP 2: Run the coadd (dithercubemean)                                          
-        cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
-        e=utils.runCmd( cmd )
-        if e==0:
-            log.debug("Some error while running command %s", cmd)
-        else:
-            log.debug("Succesful ending of coaddStackImages")
-                                    
+        # STEP 2: Run the coadd                                           
+        if type_comb=='average': # (use IRDR::dithercubemean)
+            prog = self.m_papi_path+"/irdr/bin/dithercubemean "
+            cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
+            e=utils.runCmd( cmd )
+            if e==0:
+                log.debug("Some error while running command %s", cmd)
+            else:
+                log.debug("Succesful ending of coaddStackImages")
+        #elif type_comb=='median': # (use IRAF::imcombine)
+                
+                
+                                              
     def createMasterObjMask( self, input_file, output_master_obj_mask ):
         """ Create a master object mask from a input file using SExtractor and then dilate the object file by a certain factor to remove also the  undetected object tails (dilate.c)"""
                                                              
@@ -439,7 +515,7 @@ class ReductionSet:
         # 0 - Some checks (filter, ....) 
         ######################################################
         try:
-            self.checkData()
+            self.checkData(chk_filter=True, chk_type=False, chk_expt=True, chk_itime=True, chk_ncoadd=True)
         except:
             raise 
         ######################################################
@@ -458,15 +534,15 @@ class ReductionSet:
         except:
             raise
         
-        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!" )
-        log.info( "OBS_MODE=%s", self.obs_mode )
-        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!" )
+        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" )
+        log.info( "OBSERVING SEQUENCE DETECTED = %s", self.obs_mode)
+        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" )
         
         # keep a copy of the original file names
         self.m_rawFiles = self.m_LAST_FILES        
         
         ######################################
-        # 1 - Apply dark, flat
+        # 1 - Apply dark, flat to ALL files 
         ######################################
         if self.master_dark!=None and self.master_flat!=None:
             log.debug("---> Applying dark and Flat")
@@ -483,7 +559,7 @@ class ReductionSet:
             misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
             superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits")
             superflat.create()
-        elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on":
+        elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
             log.info("EXTENDED SOURCE !!!")
             sky_list=self.getSkyFrames()
             misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
@@ -529,15 +605,16 @@ class ReductionSet:
                 os.rename(gainfile.replace(".fits","_bpm.fits"), gainfile)
                         
         #########################################
-        # 4 - First Sky subtraction (IRDR) 
+        # 4 - First Sky subtraction (IRDR) - sliding window technique
         #########################################
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/skylist1.list")
+        # return only filtered images; in exteded-sources, sky frames  are not included 
         self.m_LAST_FILES=self.skyFilter(self.out_dir+"/skylist1.list", gainfile, 'nomask', self.obs_mode)      
                         
         #########################################
         # 4b -Divide by a normalised flat field image 
         #########################################
-        # solo para probar a ver como sale (la condicion del IF no es importante)
+        # solo para probar a ver como sale (la condicion del IF no es importante); en todo caso, deberia hacerse en el PASO 1
         #if self.master_dark==None and self.master_flat!=None :
         #    res = reduce.ApplyDarkFlat(self.m_LAST_FILES, None, self.master_flat, self.out_dir)
         #    self.m_LAST_FILES = res.apply()                    
@@ -546,7 +623,7 @@ class ReductionSet:
         # 5 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation
         #########################################
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
-        offset_mat=self.getPointingOffsets (self.out_dir+"/files_skysub.list", 5, 2, self.out_dir+'/offsets1.pap')                
+        offset_mat=self.getPointingOffsets (self.out_dir+"/files_skysub.list", 5, 3, self.out_dir+'/offsets1.pap')                
                         
         
         #########################################
@@ -559,18 +636,24 @@ class ReductionSet:
           fs.write( n_line )
         fo.close()
         fs.close()    
-        self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd1.fits')
+        self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd1.fits','average')
     
         ## END OF SINGLE REDUCTION  ##
-        #return
+        if self.obs_mode!='dither':
+            return
+        
+        log.info("************************")
+        log.info(" START SECOND PASS      ")
+        log.info("************************")
+        
         #########################################
         # 7 - Create master object mask
         #########################################
         obj_mask=self.createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')
     
-        #########################################
-        # 8 - Second Sky subtraction (IRDR) 
-        #########################################
+        ###########################################################
+        # 8 - Second Sky subtraction (IRDR) using then OBJECT MASK
+        ###########################################################
         #Compound masked sky list
         fs=open(self.out_dir+"/skylist2.pap","w+")
         i=0
@@ -590,9 +673,9 @@ class ReductionSet:
         fs.close()
         self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainfile, 'mask', self.obs_mode)      
     
-        #########################################
-        # 9 - Create second coadded image of the dithered stack using new sky subtracted frames
-        #########################################
+        #########################################################################################
+        # 9 - Create second coadded image of the dithered stack using new sky subtracted frames (using the same offsets)
+        #########################################################################################
         self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd2.fits')
         reduce.imtrim.imgTrim(self.out_dir+'/coadd2.fits')
         

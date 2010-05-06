@@ -15,6 +15,51 @@
 */
 
 /* 
+ * cube_median_cl: find clipped median image plane of image cube 
+ */
+
+extern float *
+cube_median_cl(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale, 
+            int offset)
+{
+    int i, j, is_even = !(np & 1);
+    static float buf[MAXNPLANES];      /* values of a pixel in all planes */
+    float *medplane;
+    float med, sig, lcut, hcut,a=0;
+    int k,p,nsig = 5;
+    static float buf2[MAXNPLANES];
+
+    medplane = (float *) emalloc(nx * ny * sizeof(float));
+
+    if (offset) {                          /* zero offset to normalize */
+        for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
+            for (j = 0; j < np; j++)
+                buf[j] = *(planes[j] + i) + scale[j];
+                
+            med = median(buf, np);                              /* clipping */
+            sig = median_absdev(buf, med, np) / 0.6745;
+
+            lcut = med - nsig * sig;
+            hcut = med + nsig * sig;
+            p=0;
+            for (k=0;k<np; k++)
+                if ((a = buf[k]) >= lcut && a <= hcut) buf2[p++]= a;
+                    
+            medplane[i] = kselect(buf2, p, p/2 - (!(p & 1)));
+        }
+    } else {
+        for (i = 0; i < nx * ny; i++) {   /* mult. scale to normalize */
+            for (j = 0; j < np; j++)
+                buf[j] = *(planes[j] + i) * scale[j];
+
+            medplane[i] = kselect(buf, np, np/2 - is_even);
+        }
+    }
+
+    return medplane;
+}
+
+/* 
  * cube_median: find median image plane of image cube 
  */
 

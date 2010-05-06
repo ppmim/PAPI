@@ -2,6 +2,9 @@
 
 #define MAXNPLANES 999         /* maximum number of images planes in cube */
 
+extern float * cube_median_cl(float *planes[MAXNPLANES], int np, int nx, int ny,
+                           float *scale, int offset);
+
 extern float * cube_median(float *planes[MAXNPLANES], int np, int nx, int ny,
                            float *scale, int offset);
 

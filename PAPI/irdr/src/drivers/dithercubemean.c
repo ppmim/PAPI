@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
     ny = ny + yabove - ybelow;      * image size of coadded dither set *
     */
 
-    meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1);
-    
+    /*meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1); ORIGINAL */
+    meanplane = cube_median(data, nplanes, nx, ny, scale, 1); /* prueba */
     /* 0:jmim */
     /*meanplane = cube_median(data, nplanes, nx, ny, scale, 1);*/
     /* 1:jmim */
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     put_key_float(argv[3], "DATAMODE", avgscale);
 
     /* write weight map */
-    writefits(argv[4], argv[3], (char*)sumwplanes, -32, nx, ny);
+    /*writefits(argv[4], argv[3], (char*)sumwplanes, -32, nx, ny);*/
     
     return 0;
 }

@@ -317,6 +317,7 @@ class BadPixelMask:
         
         #STEP 3: Subtrac the master dark to each dome flat
         for file in flats_off_frames:
+            misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
             iraf.imarith(operand1=file,
                         operand2=self.master_dark,
                         op='-',
@@ -325,6 +326,7 @@ class BadPixelMask:
             flats_off_frames[flats_off_frames.index(file)]=file.replace(".fits","_D.fits")
         
         for file in flats_on_frames:
+            misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
             iraf.imarith(operand1=file,
                         operand2=self.master_dark,
                         op='-',
@@ -407,7 +409,8 @@ class BadPixelMask:
         misc.fileUtils.removefiles(outF)
         
         fr=pyfits.open(flat_ratio)
-        bpm=numpy.where (fr[0].data<0.9, 1, numpy.where(fr[0].data>1.0, 1, 0))
+        bpm=numpy.where (fr[0].data<0.95, 1, numpy.where(fr[0].data>1.09, 1, 0))
+        bpm=numpy.where (bpm.isfinite(
         fr.close()
          
         # Save the BPM
@@ -511,7 +514,7 @@ if __name__ == "__main__":
     print '...reading', inputfile
     
     bpm = BadPixelMask(inputfile, dark, outputfile, lsig, hsig)
-    bpm.create()
-    #bpm.create_simple()
+    #bpm.create()
+    bpm.create_simple()
     
     print 'ending BPM....'

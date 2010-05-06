@@ -39,7 +39,7 @@ irdr: cleanirdr irdrlib ./bin/statsmask ./bin/dithers \
 	./bin/destripe ./bin/dilate ./bin/sky ./bin/parab \
 	./bin/printwcs ./bin/avgkey ./bin/stats ./bin/avgoffsets \
 	./bin/skyfilter ./bin/deshadow ./bin/imagegrid ./bin/defringe \
-	./bin/skyfilteronoff ./bin/skyfilteroffon \
+	./bin/skyfilteronoff ./bin/skyfilteroffon ./bin/skyfilter_general \
 	./bin/linflat ./bin/lindarkflat ./bin/dark ./bin/skyfilter_single ./bin/my_mode ./bin/nlinmap
 
 OBJ_FITSIO = src/fitsIO/fitsIO.o
@@ -244,6 +244,10 @@ irdrlib: ./lib/libirdr.a
 ./bin/skyfilter_single: src/drivers/skyfilter_single.c
 	$(CC) $(COMPFLAGS) src/drivers/skyfilter_single.c \
 		-o bin/skyfilter_single $(LINKFLAGS)
+
+./bin/skyfilter_general: src/drivers/skyfilter_general.c
+	$(CC) $(COMPFLAGS) src/drivers/skyfilter_general.c \
+		-o bin/skyfilter_general $(LINKFLAGS)
 		
 ./bin/my_mode: src/drivers/my_mode.c
 	$(CC) $(COMPFLAGS) src/drivers/my_mode.c \

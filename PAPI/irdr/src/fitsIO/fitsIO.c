@@ -470,7 +470,8 @@ extern int put_wcs(char *fn, double ra, double dec, double scale,
         eprintf("put_wcs: fitsrhead failed\n");
 
     if (hputr8(hdr, "RA", ra) < 0) {
-        fprintf(stderr, "put_wcs: failed writing RA\n");
+        
+	fprintf(stderr, "put_wcs: failed writing RA\n");
         exit(1);
     }
 
@@ -525,3 +526,5 @@ extern int put_wcs(char *fn, double ra, double dec, double scale,
 
     return 0;
 }
+
+
