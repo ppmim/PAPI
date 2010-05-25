@@ -8,7 +8,7 @@
 #include "irdr.h"
 
 #define MAXNITER  5
-#define MAXNBINS  400000
+#define MAXNBINS  400000         /* modified by jmiguel ~April-2009 to manage to works with O2000 data files */
 #define NSIG      5.0
 #define TOL       0.01           /* convergence criterion to stop iteration */
 #define BLOCKSIZE 256           /* default image block size for processing */

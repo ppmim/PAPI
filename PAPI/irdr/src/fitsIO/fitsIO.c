@@ -388,10 +388,28 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 		  printf ("RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang);
 	  }
       
-    /* ---------------- OTHER INSTRUMENT ----------------- */
+    /* ---------------- WIRCAM ----------------- */
+      else if (strncmp(instrument,"WIRCam",6)==0)  { 
 
-      else {
-	/* Modificado para pruebas con O2000 */
+        /*printf ("WIRCam\n");*/
+
+        *scale = 0.3;
+        *posang = 0.0;       
+
+        if (! hgetra(hdr, "CRVAL1", ra)) {
+            fprintf(stderr, "get_wcs: unable to read RA in: %s\n", fn);
+            return -1;
+        }
+    
+        if (! hgetdec(hdr, "CRVAL2", dec)) {
+            fprintf(stderr, "get_wcs: unable to read DEC in: %s\n", fn);
+            return -1;
+        }
+        /*printf ("RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang);*/
+      }
+      /* ---------------- OMEGA2000 ----------------- */
+      else if (strncmp(instrument,"Omega2000",9)==0){
+	
 	    fprintf(stderr, "I don't know %s\n", instrument);
 	      
 	    if (! hgetra(hdr, "RA", ra)) {
@@ -421,12 +439,11 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 
 	 return 0;
 	}
-
-    /* }
+    /* ---------------- OTHER INSTRUMENT ----------------- */
     else {
 	 fprintf(stderr, "UNKNOWN INSTRUMENT in %s\n", fn);
 	 return -1;
-    } */
+    } 
 /*
     if (hgetr8(hdr, "CDELT", scale) || hgetr8(hdr, "CDELT1", scale)) {
         *scale = *scale * ARCSECPERDEG;
