@@ -36,8 +36,8 @@ from misc.paLog import log
 class ClFits:
 
     """
-      Classified FITS
-      A class for PANIC FITS file classification and recognition. Really it is a
+      Represents a Classified FITS of PANIC
+      A class for PANIC FITS file classification and recognition. Actually it is a
       wrapper for pyfits.
 
       TYPE of files to be considered :

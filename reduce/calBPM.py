@@ -98,7 +98,7 @@ class BadPixelMask:
          Algorith to create the BPM
          -------------------------- 
          1. Combine all of the dome flats into a master
-         2. Divide the resulting image by its median
+         2. Divide the resulting image by its median -->normalized MASTER_FLAT
          3. Create and zero the rejection mask
          4. Loop for all input images and divide each by the master flat
             

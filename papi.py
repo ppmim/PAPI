@@ -79,7 +79,7 @@ import reduce.imtrim
 
 
 class ReductionSet:
-    def __init__(self, list_file, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None):
+    def __init__(self, list_file, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, single=False):
         """ Init function """
         
         # Input values
@@ -90,6 +90,7 @@ class ReductionSet:
         self.master_dark = dark    # master dark to use (input)
         self.master_flat = flat    # master flat to use (input)
         self.bpm = bpm             # master Bad Pixel Mask to use (input)
+        self.single = single       # single reduction mode 
         
         # Environment variables
         self.m_terapix_path = os.environ['TERAPIX']
@@ -612,22 +613,20 @@ class ReductionSet:
         self.m_LAST_FILES=self.skyFilter(self.out_dir+"/skylist1.list", gainfile, 'nomask', self.obs_mode)      
                         
         #########################################
-        # 4b -Divide by a normalised flat field image 
+        # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
         #########################################
-        # solo para probar a ver como sale (la condicion del IF no es importante); en todo caso, deberia hacerse en el PASO 1
-        #if self.master_dark==None and self.master_flat!=None :
-        #    res = reduce.ApplyDarkFlat(self.m_LAST_FILES, None, self.master_flat, self.out_dir)
-        #    self.m_LAST_FILES = res.apply()                    
-                              
+                            
+        log.info("Quality Assessment: TODO")                   
+                                                  
         #########################################
-        # 5 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation
+        # 6 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation
         #########################################
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
         offset_mat=self.getPointingOffsets (self.out_dir+"/files_skysub.list", 5, 3, self.out_dir+'/offsets1.pap')                
                         
         
         #########################################
-        # 6 - First pass coaddition using offsets
+        # 7 - First pass coaddition using offsets
         #########################################
         fo=open(self.out_dir+'/offsets1.pap',"r")
         fs=open(self.out_dir+'/stack1.pap','w+')
@@ -639,7 +638,7 @@ class ReductionSet:
         self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd1.fits','average')
     
         ## END OF SINGLE REDUCTION  ##
-        if self.obs_mode!='dither':
+        if self.obs_mode!='dither' or self.single==True:
             return
         
         log.info("************************")
@@ -647,7 +646,7 @@ class ReductionSet:
         log.info("************************")
         
         #########################################
-        # 7 - Create master object mask
+        # 8 - Create master object mask
         #########################################
         obj_mask=self.createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')
     
@@ -672,6 +671,18 @@ class ReductionSet:
                 
         fs.close()
         self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainfile, 'mask', self.obs_mode)      
+    
+        #########################################
+        # X1 - Compute field distortion (SCAMP internal stats)
+        #########################################
+    
+        #########################################
+        # X2 - Coaddition of field distortion removed images (SWARP) 
+        #########################################
+    
+        #########################################
+        # X3 - Final Astrometric calibration (SCAMP) of the coadded image 
+        #########################################
     
         #########################################################################################
         # 9 - Create second coadded image of the dithered stack using new sky subtracted frames (using the same offsets)
@@ -753,7 +764,12 @@ if __name__ == "__main__":
     parser.add_option("-S", "--show",
                   action="store_true", dest="show", default=False, help="show final reduced image")
                   
+    parser.add_option("-1", "--single",
+                  action="store_true", dest="single", default=False, help="make a single reduction")              
                   
+    parser.add_option("-b", "--bpm",
+                  action="store_true", action="store", dest="bpm", help="bad pixel mask")
+                                
     (options, args) = parser.parse_args()
     
     if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
@@ -762,8 +778,8 @@ if __name__ == "__main__":
     if options.verbose:
         print "reading %s ..." % options.source_file_list
     
-    
-    redSet = ReductionSet(options.source_file_list, options.out_dir, options.output_filename, options.obs_mode, options.dark, options.flat)
+    print "SINGLE=", options.single
+    redSet = ReductionSet(options.source_file_list, options.out_dir, options.output_filename, options.obs_mode, options.dark, options.flat, bpm=options.bpm, single=options.single)
     redSet.reduce()
     
     if options.show==True:

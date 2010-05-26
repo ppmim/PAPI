@@ -41,6 +41,7 @@ import os
 import sys
 import fileinput
 
+from scipy import signal
 
 
 # Pyraf modules
@@ -316,6 +317,7 @@ class BadPixelMask:
         
         
         #STEP 3: Subtrac the master dark to each dome flat
+        #NOTE: all dome flats (on and off) should have the same EXPTIME 
         for file in flats_off_frames:
             misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
             iraf.imarith(operand1=file,
@@ -337,7 +339,7 @@ class BadPixelMask:
         print "ON=", flats_on_frames
         
         
-        #STEP 4: Combine dome dark subtracted flats (off)
+        #STEP 4: Combine dome dark subtracted flats (off & on)
         
         flat_off_comb=self.outputdir+"flats_comb_off.fits"
         misc.fileUtils.removefiles(flat_off_comb)
@@ -409,13 +411,20 @@ class BadPixelMask:
         misc.fileUtils.removefiles(outF)
         
         fr=pyfits.open(flat_ratio)
-        bpm=numpy.where (fr[0].data<0.95, 1, numpy.where(fr[0].data>1.09, 1, 0))
-        bpm=numpy.where (bpm.isfinite(
+        
+        bpm=numpy.where (fr[0].data<0.95, 0, numpy.where(fr[0].data>1.09, 0, 1))
+        #bpm=numpy.where (bpm.isfinite(), 1, 0)
+        # -- a test 
+        g = gauss_kern(5, sizey=2048)
+        log.debug( 'Gauss kernel done !')
+        improc = signal.convolve(bpm, g, mode='full')
+        log.debug( 'Convolution done !')
+        bpm2=numpy.where (improc<0.55, 0, 1)
         fr.close()
          
         # Save the BPM
         hdu = pyfits.PrimaryHDU()
-        hdu.data=bpm     
+        hdu.data=bpm2     
         hdu.scale('int16') # importat to set first data type
         hdulist = pyfits.HDUList([hdu])
         hdu.header.update('OBJECT','MASTER_PIXEL_MASK')
@@ -456,7 +465,25 @@ def usage():
 
 #-----------------------------------------------------------------------
 
+def gauss_kern(size, sizey=None):
+    """ Returns a normalized 2D gauss kernel array for convolutions """
+    size = int(size)
+    if not sizey:
+        sizey = size
+    else:
+        sizey = int(sizey)
+    x, y = numpy.mgrid[-size:size+1, -sizey:sizey+1]
+    g = numpy.exp(-(x**2/float(size) + y**2/float(sizey)))
+    return g / g.sum()
 
+def blur_image(im, n, ny=None) :
+    """ blurs the image by convolving with a gaussian kernel of typical
+        size n. The optional keyword argument ny allows for a different
+        size in the y direction.
+    """
+    g = gauss_kern(n, sizey=ny)
+    improc = signal.convolve(im, g, mode='valid')
+    return(improc)
 
 
 ################################################################################
