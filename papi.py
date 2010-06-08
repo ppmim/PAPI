@@ -483,7 +483,7 @@ class ReductionSet:
         """        
                                         
     def makeAstrometry( self, input_file, catalog='2mass', re_grid=False):
-        """Compute the initial astrometry of the given input_file"""
+        """Compute the astrometry of the given input_file"""
                                             
         if re_grid: regrid_str='regrid'
         else: regrid_str='noregrid'
@@ -493,8 +493,21 @@ class ReductionSet:
             log.error ("Some error while computing Astrometry")
             return 0
         else:
-            return 1                                    
+            return 1
                                             
+    def makeAstroWarp( self, input_files, catalog='2mass' ):
+        """
+        Give a input file list of overlaped frames, compute the astrometry with SCAMP and then coadd them with SWARP taking into account the former astrometry (.head files). Thus, the coaddition is done removing the optical distortion. 
+        Point out that the input frames need to be reduced, i.e., dark, flat and sky subtraction done.
+        """
+                                            
+        astrometry_cmd=+'scamp '+  '  ' + regrid_str + ' ' + input_file
+        if misc.utils.runCmd( astrometry_cmd )==0:
+            log.error ("Some error while computing Astrometry")
+            return 0
+        else:
+            return 1
+                                                
     def reduce(self):
         """ Main procedure for data reduction """
         
@@ -675,13 +688,17 @@ class ReductionSet:
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)
         #########################################
+        
+        #########################################
+        # X2 - Remove field distortion from individual images (SWARP)-regriding 
+        #########################################
+        
+        #########################################
+        # X3 - Coaddition of field distortion removed images (SWARP) 
+        #########################################
     
         #########################################
-        # X2 - Coaddition of field distortion removed images (SWARP) 
-        #########################################
-    
-        #########################################
-        # X3 - Final Astrometric calibration (SCAMP) of the coadded image 
+        # X4 - Final Astrometric calibration (SCAMP) of the coadded image 
         #########################################
     
         #########################################################################################
