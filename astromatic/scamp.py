@@ -184,54 +184,59 @@ class SCAMP:
          "value": 2.0},
 
 #---------------------------- Astrometric solution ----------------------------
+        
+        "SOLVE_ASTROM":
+        {"comment": "Compute astrometric solution (Y/N) ?",
+         "value": "Y"},
+        
+        "ASTRINSTRU_KEY":
+        {"comment": "FITS keyword(s) defining the astrom",
+         "value": "INSTRID, INSFLNAM"},
+        
+        "STABILITY_TYPE":
+        {"comment": "EXPOSURE, GROUP, INSTRUMENT or FILE",
+         "value": "INSTRUMENT"},
+        
+        "CENTROID_KEYS":
+        {"comment": "Cat. parameters for centroiding",
+         "value": "XWIN_IMAGE,YWIN_IMAGE"},
+        
+        "CENTROIDERR_KEYS":
+        {"comment": 'Cat. params for centroid err ellipse',
+         "value": "ERRAWIN_IMAGE,ERRBWIN_IMAGE,ERRTHETAWIN_IMAGE"},
+        
+        "DISTORT_KEYS":
+        {"comment": 'Cat. parameters or FITS keywords',
+         "value": "XWIN_IMAGE,YWIN_IMAGE"},
+        
+        "DISTORT_GROUPS":
+        {"comment": "Filename for the check-image",
+         "value": "1,1"},
+        
+        "DISTORT_DEGREES":
+        {"comment": "Polynom degree for each group",
+         "value": 3},
+        
+        "ASTREF_WEIGHT":
+        {"comment": "Relative weight of ref.astrom.cat.",
+         "value": 1.0},
+        
+        "ASTRCLIP_NSIGMA":
+        {"comment": "Astrom. clipping threshold in sigmas",
+         "value": 3.0},
+        
+        "CORRECT_COLOURSHIFTS":
+        {"comment": 'Correct for colour shifts (Y/N)?',
+         "value": "N"},
+
 #---------------------------- Photometric solution ----------------------------
+        "SOLVE_PHOTOM":
+        {"comment": 'Compute photometric solution (Y/N) ?',
+         "value": "N"},
 #------------------------------- Check-plots ----------------------------------
 #------------------------------- Check-images ---------------------------------
 #------------------------------ Miscellaneous ---------------------------------
-        
-        "SEEING_FWHM":
-        {"comment": "stellar FWHM in arcsec",
-         "value": 1.2},
-        
-        "STARNNW_NAME":
-        {"comment": "Neural-Network_Weight table filename",
-         "value": "py-sextractor.nnw"},
-        
-        "BACK_SIZE":
-        {"comment": "Background mesh: <size> or <width>,<height>",
-         "value": 64},
-        
-        "BACK_FILTERSIZE":
-        {"comment": "Background filter: <size> or <width>,<height>",
-         "value": 3},
-        
-        "BACKPHOTO_TYPE":
-        {"comment": 'can be "GLOBAL" or "LOCAL"',
-         "value": "GLOBAL"},
-        
-        "CHECKIMAGE_TYPE":
-        {"comment": 'can be one of "NONE", "BACKGROUND", "MINIBACKGROUND", "-BACKGROUND", "OBJECTS", "-OBJECTS", "SEGMENTATION", "APERTURES", or "FILTERED"',
-         "value": "NONE"},
-        
-        "CHECKIMAGE_NAME":
-        {"comment": "Filename for the check-image",
-         "value": "check.fits"},
-        
-        "MEMORY_OBJSTACK":
-        {"comment": "number of objects in stack",
-         "value": 3000},
-        
-        "MEMORY_PIXSTACK":
-        {"comment": "number of pixels in stack",
-         "value": 300000},
-        
-        "MEMORY_BUFSIZE":
-        {"comment": "number of lines in buffer",
-         "value": 1024},
-        
-        "VERBOSE_TYPE":
-        {"comment": 'can be "QUIET", "NORMAL" or "FULL"',
-         "value": "QUIET"},
+
 
         # -- Extra-keys (will not be saved in the main configuration file
 
@@ -250,6 +255,7 @@ class SCAMP:
     def __init__(self):
         """
         SCAMP class constructor.
+        If a specific config_file is provided, it is used 
         """
 
         self.config = (
@@ -298,7 +304,7 @@ class SCAMP:
 
         _program = selected
 
-        # print versionline
+        #print versionline
         _version_match = re.search("[Vv]ersion ([0-9\.])+", versionline)
         if not _version_match:
             raise SCAMPException, \
@@ -343,7 +349,7 @@ class SCAMP:
 
     def run(self, catalog_list, updateconfig=True, clean=False, path=None):
         """
-        Run SCAMP for a given list of catalog (.ldac files)
+        Run SCAMP for a given list of catalog (.ldac files), and it can be one single catalog list
 
         If updateconfig is True (default), the configuration
         files will be updated before running SCAMP.
@@ -367,10 +373,10 @@ class SCAMP:
             
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + my_catalogs)
-        print commandline
+        #print commandline
 
         rcode = os.system(commandline)
-
+        
         if (rcode):
             raise SCAMPException, \
                   "SCAMP command [%s] failed." % commandline
@@ -404,6 +410,16 @@ if __name__ == "__main__":
 
 
     scamp = SCAMP()
+    # Using a specific config file (updateconfig=False)
+    scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+    scamp.config['ASTREF_CATALOG']="2MASS"
     cat_files = [line.replace( "\n", "") for line in fileinput.input(sys.argv[1])]
-    scamp.run(cat_files)
+    scamp.run(cat_files, updateconfig=False, clean=False)
+    
+    # Using and creating internal default config file (updateconfig=True)
+    #scamp2 = SCAMP()
+    #scamp2.config['ASTREF_CATALOG']="2MASS"
+    #cat_files = [line.replace( "\n", "") for line in fileinput.input(sys.argv[1])]
+    #scamp2.run(cat_files, updateconfig=True, clean=False)
+    
     sys.exit()

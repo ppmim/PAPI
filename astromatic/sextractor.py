@@ -182,7 +182,7 @@ class SExtractor:
         
         "ANALYSIS_THRESH":
         {"comment": "<sigmas> or <threshold>,<ZP> in mag.arcsec-2",
-         "value": 1.5},
+         "value": 100.0},
         
         "FILTER":
         {"comment": 'apply filter for detection ("Y" or "N")',
@@ -222,11 +222,11 @@ class SExtractor:
         
         "SATUR_LEVEL":
         {"comment": "level (in ADUs) at which arises saturation",
-         "value": 50000.0},
+         "value": 300000.0},
         
         "MAG_ZEROPOINT":
         {"comment": "magnitude zero-point",
-         "value": 0.0},
+         "value": 30.0},
         
         "MAG_GAMMA":
         {"comment": "gamma of emulsion (for photographic scans)",
@@ -234,15 +234,15 @@ class SExtractor:
         
         "GAIN":
         {"comment": "detector gain in e-/ADU",
-         "value": 0.0},
+         "value": 8.0},
         
         "PIXEL_SCALE":
         {"comment": "size of pixel in arcsec (0=use FITS WCS info)",
-         "value": 1.0},
+         "value": 0.45},
         
         "SEEING_FWHM":
         {"comment": "stellar FWHM in arcsec",
-         "value": 1.2},
+         "value": 1.0},
         
         "STARNNW_NAME":
         {"comment": "Neural-Network_Weight table filename",
@@ -288,8 +288,7 @@ class SExtractor:
 
         "PARAMETERS_LIST":
         {"comment": '[Extra key] catalog contents (to put in PARAMETERS_NAME)',
-         "value": ["NUMBER", "FLUX_BEST", "FLUXERR_BEST", 
-                   "X_IMAGE", "Y_IMAGE", "FLAGS", "FWHM_IMAGE"]},
+         "value": ["NUMBER", "XWIN_IMAGE", "YWIN_IMAGE","ERRAWIN_IMAGE","ERRBWIN_IMAGE", "FLUX_BEST", "FLUXERR_BEST", "X_IMAGE", "Y_IMAGE", "FLAGS", "FWHM_IMAGE","FLUX_RADIUS","FLUX_AUTO", "FLUXERR_AUTO"]},
 
         "CONFIG_FILE":
         {"comment": '[Extra key] name of the main configuration file',
@@ -462,7 +461,7 @@ class SExtractor:
 
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + file)
-        # print commandline
+        print commandline
 
         rcode = os.system(commandline)
 
