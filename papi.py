@@ -76,6 +76,7 @@ import PAPI.linkSources as papi
 import misc.utils
 from reduce.makeobjmask import *
 import reduce.imtrim
+import astrowarp
 
 
 class ReductionSet:
@@ -688,7 +689,14 @@ class ReductionSet:
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)
         #########################################
-        
+        aw = astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
+        try:
+            aw.run()
+        except:
+            log.error("Some error while running Astrowarp....")
+            raise
+        sys.exit()
+            
         #########################################
         # X2 - Remove field distortion from individual images (SWARP)-regriding 
         #########################################

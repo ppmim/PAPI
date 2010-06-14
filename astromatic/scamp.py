@@ -233,9 +233,149 @@ class SCAMP:
         "SOLVE_PHOTOM":
         {"comment": 'Compute photometric solution (Y/N) ?',
          "value": "N"},
+         
+        "MAGZERO_OUT":
+        {"comment": 'Magnitude zero-point(s) in output',
+         "value": 0.0},
+ 
+        "MAGZERO_INTERR":
+        {"comment": 'Internal mag.zero-point accuracy',
+         "value": 0.01},
+         
+        "MAGZERO_REFERR":
+        {"comment": 'Photom.field mag.zero-point accuracy',
+         "value": 0.03},
+
+        "PHOTINSTRU_KEY":
+        {"comment": 'FITS keyword(s) defining the photom.',
+         "value": "INSFLNAM"},
+
+        "MAGZERO_KEY":
+        {"comment": 'FITS keyword for the mag zero-point',
+         "value": "PHOT_C"},
+
+        "EXPOTIME_KEY":
+        {"comment": 'FITS keyword for the exposure time (s)',
+         "value": "EXPTIME"},
+
+        "AIRMASS_KEY":
+        {"comment": 'FITS keyword for the airmass',
+         "value": "AIRMASS"},
+
+        "EXTINCT_KEY":
+        {"comment": 'FITS keyword for the extinction coeff',
+         "value": "PHOT_K"},
+
+        "PHOTOMFLAG_KEY":
+        {"comment": 'FITS keyword for the photometry flag',
+         "value": "PHOTFLAG"},
+         
+        "PHOTFLUX_KEY":
+        {"comment": 'Catalog param. for the flux measurement',
+         "value": "FLUX_AUTO"},         
+
+        "PHOTFLUXERR_KEY":
+        {"comment": 'Catalog parameter for the flux error',
+         "value": "FLUXERR_AUTO"},
+         
+         "PHOTCLIP_NSIGMA":
+        {"comment": 'Photom.clipping threshold in sigmas',
+         "value": 3.0},
+         
 #------------------------------- Check-plots ----------------------------------
+         
+         "CHECKPLOT_CKEY":
+        {"comment": 'FITS keyword for PLPLOT field colour',
+         "value": "NULL"},
+         
+         "CHECKPLOT_DEV":
+        {"comment": 'NULL, XWIN, TK, PS, PSC, XFIG, PNG, JPEG, AQT, PDF or SVG',
+         "value": "PNG"},
+         
+         "CHECKPLOT_RES":
+        {"comment": 'Check-plot resolution (0 = default)',
+         "value": 0},
+         
+         "CHECKPLOT_ANTIALIAS":
+        {"comment": 'Anti-aliasing using convert (Y/N) ?',
+         "value": "Y"},
+         
+         "CHECKPLOT_TYPE":
+        {"comment": 'Check-plots to perform',
+         "value": "FGROUPS,DISTORTION,ASTR_INTERROR2D,ASTR_INTERROR1D,ASTR_REFERROR2D,ASTR_REFERROR1D,ASTR_CHI2,PHOT_ERROR"},
+         
+         "CHECKPLOT_NAME":
+        {"comment": 'Check-plot filename(s)',
+         "value": "fgroups,distort,astr_interror2d,astr_interror1d,astr_referror2d,astr_referror1d,astr_chi2,psphot_error"},
+         
 #------------------------------- Check-images ---------------------------------
+         "CHECKIMAGE_TYPE":
+        {"comment": 'NONE, AS_PAIR, AS_REFPAIR, or AS_XCORR',
+         "value": "NONE"},
+         
+         "CHECKIMAGE_NAME":
+        {"comment": 'Check-image filename(s)',
+         "value": "check.fits"},
+         
+
 #------------------------------ Miscellaneous ---------------------------------
+
+         "SN_THRESHOLDS":
+        {"comment": 'S/N thresholds (in sigmas) for all and high-SN sample',
+         "value": 10.0,100.0 },
+         
+         "FWHM_THRESHOLDS":
+        {"comment": 'FWHM thresholds (in pixels) for sources',
+         "value": 0.0,100.0},
+         
+         "FLAGS_MASK":
+        {"comment": 'Rejection mask on SEx FLAGS',
+         "value": "0x00f0"},
+         
+         "WEIGHTFLAGS_MASK":
+        {"comment": 'Rejection mask on SEx FLAGS_WEIGHT',
+         "value": "0x00ff"},
+         
+         "IMAFLAGS_MASK":
+        {"comment": 'Rejection mask on SEx IMAFLAGS_ISO',
+         "value": "0x0"},
+         
+         "AHEADER_GLOBAL":
+        {"comment": 'Filename of the global INPUT header',
+         "value": "scamp.ahead"},
+         
+         "AHEADER_SUFFIX":
+        {"comment": 'Filename extension for additional INPUT headers',
+         "value": ".ahead"},
+         
+         "HEADER_SUFFIX":
+        {"comment": 'Filename extension for OUTPUT headers',
+         "value": ".head"},
+         
+         "HEADER_TYPE":
+        {"comment": 'NORMAL or FOCAL_PLANE',
+         "value": "NORMAL"},
+         
+         "VERBOSE_TYPE":
+        {"comment": 'QUIET, NORMAL, LOG or FULL',
+         "value": "NORMAL"},
+         
+         "WRITE_XML":
+        {"comment": 'Write XML file (Y/N)?',
+         "value": "N"},
+         
+         "XML_NAME":
+        {"comment": 'Filename for XML output',
+         "value": "scamp.xml"},
+         
+         "XSL_URL":
+        {"comment": 'Filename for XSL style-sheet',
+         "value": "file:///usr/share/scamp/scamp.xsl"},
+         
+         "NTHREADS":
+        {"comment": 'umber of simultaneous threads for the SMP version of SCAMP (0=automatic)',
+         "value": 0},
+         
 
 
         # -- Extra-keys (will not be saved in the main configuration file

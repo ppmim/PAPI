@@ -101,135 +101,214 @@ class SWARP:
         
         "HEADER_SUFFIX":
         {"comment": 'Filename extension for additional headers',
-         "value": ".head"},
+         "value": ".fits.head"},
          
 #------------------------------- Input Weights --------------------------------        
         
-        "ASTREF_CATALOG":
-        {"comment": "NONE, FILE, USNO-A1, USNO-A2, USNO-B1, GSC-1.3, GSC-2.2, UCAC-1, UCAC-2,NOMAD-1, 2MASS, DENIS-3, SDSS-R3, SDSS-R5 or SDSS-R6 ",
-         "value": "2MASS"},
+        "WEIGHT_TYPE":
+        {"comment": "BACKGROUND,MAP_RMS,MAP_VARIANCE or MAP_WEIGHT",
+         "value": "NONE"},
         
-        "ASTREF_BAND":
-        {"comment": "Photom. band for astr.ref.magnitudes or DEFAULT, BLUEST, or REDDEST",
-         "value": "DEFAULT"},
+        "WEIGHT_SUFFIX":
+        {"comment": "Suffix to use for weight-maps",
+         "value": ".weight.fits"},
         
-        "ASTREFCAT_NAME":
-        {"comment": "Local astrometric reference catalogs",
-         "value": "astrefcat.cat"},
+        "WEIGHT_IMAGE":
+        {"comment": "Weightmap filename if suffix not used (all or for each weight-map)",
+         "value": ""},
         
-        "ASTREFCENT_KEYS":
-        {"comment": "Local ref.cat.centroid parameters",
-         "value": "X_WORLD,Y_WORLD"},
+        "WEIGHT_THRESH":
+        {"comment": "Bad pixel weight-threshold",
+         "value": ""},
+
+#------------------------------- Co-addition ----------------------------------
         
-        "ASTREFERR_KEYS":
-        {"comment": 'Local ref.cat.error ellipse parameters',
-         "value": 'ERRA_WORLD, ERRB_WORLD, ERRTHETA_WORLD'},
+        "COMBINE":
+        {"comment": 'Combine resampled images (Y/N)?',
+         "value": 'Y'},
         
-        "ASTREFMAG_KEY":
-        {"comment": "Local ref.cat.magnitude parameter",
-         "value": "MAG"},
+        "COMBINE_TYPE":
+        {"comment": "MEDIAN,AVERAGE,MIN,MAX,WEIGHTED,CHI2 or SUM",
+         "value": "MEDIAN"},
         
-        "SAVE_REFCATALOG":
-        {"comment": "Save ref catalogs in FITS-LDAC format?",
+        "BLANK_BADPIXELS":
+        {"comment": "Set to 0 pixels having a weight of 0",
          "value": "N"},
 
-#--------------------------- Merged output catalogs ---------------------------
+#-------------------------------- Astrometry ----------------------------------
+
+        "CELESTIAL_TYPE":
+        {"comment": "NATIVE, PIXEL, EQUATORIAL,GALACTIC,ECLIPTIC, or SUPERGALACTIC",
+         "value": "NATIVE"},
+
+        "PROJECTION_TYPE":
+        {"comment": "Any WCS projection code or NONE",
+         "value": "TAN"},
+
+        "PROJECTION_ERR":
+        {"comment": "Maximum projection error (in output pixels), or 0 for no approximation",
+         "value": 0.001 },
+
+        "CENTER_TYPE":
+        {"comment": "MANUAL, ALL or MOST",
+         "value": "ALL"},
+
+        "CENTER":
+        {"comment": "Coordinates of the image center",
+         "value": "00:00:00.0, +00:00:00.0"},
+
+        "PIXELSCALE_TYPE":
+        {"comment": "MANUAL,FIT,MIN,MAX or MEDIAN",
+         "value": "MEDIAN"},
+        
+        "PIXEL_SCALE":
+        {"comment": "Pixel scale",
+         "value": 0},
+
+        "IMAGE_SIZE":
+        {"comment": "Image size (0 = AUTOMATIC)",
+         "value": "N"},
+
+#-------------------------------- Resampling ----------------------------------
        
-        "MERGEDOUTCAT_NAME":
-        {"comment": "Merged output catalog filename",
-         "value": "SWARP.cat"},
-        
-        "MERGEDOUTCAT_TYPE":
-        {"comment": "NONE, ASCII_HEAD, ASCII, FITS_LDAC",
-         "value": 'NONE'},
-        
-#----------------------------- Pattern matching -------------------------------
-        
-        "MATCH":
-        {"comment": "Do pattern-matching (Y/N) ?",
+        "RESAMPLE":
+        {"comment": "Resample input images (Y/N)?",
          "value": "Y"},
-        
-        "MATCH_NMAX":
-        {"comment": 'Max.number of detections for MATCHing(0=auto)',
+
+        "RESAMPLE_DIR":
+        {"comment": "Directory path for resampled images",
+         "value": "."},
+
+        "RESAMPLE_SUFFIX":
+        {"comment": "filename extension for resampled images",
+         "value": ".resamp.fits"},
+
+        "RESAMPLING_TYPE":
+        {"comment": "NEAREST,BILINEAR,LANCZOS2,LANCZOS3or LANCZOS4 (1 per axis)",
+         "value": "LANCZOS3"},
+
+        "OVERSAMPLING":
+        {"comment": "Oversampling in each dimension 0 = automatic)",
          "value": 0},
-        
-        "PIXSCALE_MAXERR":
-        {"comment": "Max scale-factor uncertainty",
-         "value": 1.2},
-        
-        "POSANGLE_MAXERR":
-        {"comment": 'Max position-angle uncertainty (deg)',
-         "value": 5.0},
-        
-        "POSITION_MAXERR":
-        {"comment": "Max positional uncertainty (arcmin)",
-         "value": 1.0},
-        
-        "MATCH_RESOL":
-        {"comment": "Matching resolution (arcsec); 0=auto",
-         "value": 0},
-        
-        "MATCH_FLIPPED":
-        {"comment": "Allow matching with flipped axes?",
+
+        "INTERPOLATE":
+        {"comment": "Interpolate bad input pixels (Y/N)? (all or for each image)",
          "value": "N"},
-        
-        "FIXFOCALPLANE_NMIN":
-        {"comment": "Min number of dets for FIX_FOCALPLANE",
-         "value": 1},
 
-#---------------------------- Cross-identification ----------------------------
-        
-        "CROSSID_RADIUS":
-        {"comment": "Cross-id initial radius (arcsec)",
-         "value": 2.0},
+        "FSCALASTRO_TYPE":
+        {"comment": "NONE,FIXED, or VARIABLE",
+         "value": "FIXED"},
 
-#---------------------------- Astrometric solution ----------------------------
-        
-        "SOLVE_ASTROM":
-        {"comment": "Compute astrometric solution (Y/N) ?",
+        "FSCALE_KEYWORD":
+        {"comment": "FITS keyword for the multiplicative factor applied to each input image",
+         "value": "FLXSCALE"},
+
+        "FSCALE_DEFAULT":
+        {"comment": "Default FSCALE value if not in header",
+         "value": 1.0},
+
+        "GAIN_KEYWORD":
+        {"comment": "FITS keyword for effect. gain (e-/ADU)",
+         "value": "GAIN"},
+
+        "GAIN_DEFAULT":
+        {"comment": "Default gain if no FITS keyword found 0 = infinity (all or for each image)",
+         "value": 0.0},
+
+        "SATLEV_KEYWORD":
+        {"comment": "FITS keyword for saturation level (ADU)",
+         "value": "SATURATE"},
+
+        "SATLEV_DEFAULT":
+        {"comment": "Default saturation if no FITS keyword",
+         "value": 50000.0},
+
+#--------------------------- Background subtraction ---------------------------
+
+        "SUBTRACT_BACK":
+        {"comment": "Subtraction sky background (Y/N)? (all or for each image)",
          "value": "Y"},
-        
-        "ASTRINSTRU_KEY":
-        {"comment": "FITS keyword(s) defining the astrom",
-         "value": "INSTRID, INSFLNAM"},
-        
-        "STABILITY_TYPE":
-        {"comment": "EXPOSURE, GROUP, INSTRUMENT or FILE",
-         "value": "INSTRUMENT"},
-        
-        "CENTROID_KEYS":
-        {"comment": "Cat. parameters for centroiding",
-         "value": "XWIN_IMAGE,YWIN_IMAGE"},
-        
-        "CENTROIDERR_KEYS":
-        {"comment": 'Cat. params for centroid err ellipse',
-         "value": "ERRAWIN_IMAGE,ERRBWIN_IMAGE,ERRTHETAWIN_IMAGE"},
-        
-        "DISTORT_KEYS":
-        {"comment": 'Cat. parameters or FITS keywords',
-         "value": "XWIN_IMAGE,YWIN_IMAGE"},
-        
-        "DISTORT_GROUPS":
-        {"comment": "Filename for the check-image",
-         "value": "1,1"},
-        
-        "DISTORT_DEGREES":
-        {"comment": "Polynom degree for each group",
+
+        "BACK_TYPE":
+        {"comment": "AUTO or MANUAL (all or for each image)",
+         "value": "AUTO"},
+
+        "BACK_DEFAULT":
+        {"comment": "Default background value in MANUAL (all or for each image)",
+         "value": 0.0},
+
+        "BACK_SIZE":
+        {"comment": "Background mesh size (pixels) all or for each image)",
+         "value": 128},
+         
+        "BACK_FILTERSIZE":
+        {"comment": "Background map filter range (meshes) (all or for each image)",
          "value": 3},
+
+        "BACK_FILTTHRESH":
+        {"comment": "Threshold above which the background-map filter operates",
+         "value": 0.0},
+         
+#------------------------------ Memory management -----------------------------
+
+        "VMEM_DIR":
+        {"comment": "Directory path for swap files",
+         "value": .},
+
+        "VMEM_MAX":
+        {"comment": "Maximum amount of virtual memory (MB)",
+         "value": 2047},
+         
+        "MEM_MAX":
+        {"comment": "Maximum amount of usable RAM (MB)",
+         "value": 128},
+
+        "COMBINE_BUFSIZE":
+        {"comment": "RAM dedicated to co-addition(MB)",
+         "value": 64},
         
-        "ASTREF_WEIGHT":
-        {"comment": "Relative weight of ref.astrom.cat.",
-         "value": 1.0},
+#------------------------------ Miscellaneous ---------------------------------
         
-        "ASTRCLIP_NSIGMA":
-        {"comment": "Astrom. clipping threshold in sigmas",
-         "value": 3.0},
+        "DELETE_TMPFILES":
+        {"comment": "Delete temporary resampled FITS files (Y/N)?",
+         "value": "Y"},
         
-        "CORRECT_COLOURSHIFTS":
-        {"comment": 'Correct for colour shifts (Y/N)?',
+        "COPY_KEYWORDS":
+        {"comment": 'List of FITS keywords to propagate from the input to the output headers',
+         "value": "OBJECT,RA,DEC,OBJECT,PIXSCALE,ROT-RTA,INSTRUME,TELESCOPE"},
+        
+        "WRITE_FILEINFO":
+        {"comment": "Write information about each input file in the output image header?",
          "value": "N"},
+        
+        "WRITE_XML":
+        {"comment": 'Write XML file (Y/N)?',
+         "value": "N"},
+        
+        "XML_NAME":
+        {"comment": "Filename for XML output",
+         "value": "swarp.xml"},
+        
+        "XSL_URL":
+        {"comment": "Filename for XSL style-sheet",
+         "value": "file:///usr/local/Terapix//share/swarp/swarp.xsl"},
+        
+        "VERBOSE_TYPE":
+        {"comment": "QUIET,NORMAL or FULL",
+         "value": "NORMAL"},
+        
+        "NNODES":
+        {"comment": "Number of nodes (for clusters)",
+         "value": 1},
+        
+        "NODE_INDEX":
+        {"comment": "Node index (for clusters)",
+         "value": 0},
 
-
+        "NTHREADS":
+        {"comment": "1 single thread",
+         "value": 1},
+        
 
         # -- Extra-keys (will not be saved in the main configuration file
 
