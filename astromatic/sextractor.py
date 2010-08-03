@@ -322,8 +322,9 @@ class SExtractor:
             dict([(k, copy.deepcopy(SExtractor._SE_config[k]["value"]))\
                   for k in SExtractor._SE_config.keys()]))
 
-        # print self.config
-
+        # Extra config parameters that will be added/updated to the current values of the config file (high priority)
+        self.ext_config = {}
+              
         self.program = None
         self.version = None
 
@@ -459,8 +460,13 @@ class SExtractor:
 
         self.program, self.version = self.setup(path)
 
+        # Compound extra config command line args
+        ext_args=""
+        for key in self.ext_config.keys():
+            ext_args=ext_args + " -" + key+ " " + str(self.ext_config[key])
+
         commandline = (
-            self.program + " -c " + self.config['CONFIG_FILE'] + " " + file)
+            self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + file)
         print commandline
 
         rcode = os.system(commandline)

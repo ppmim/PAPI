@@ -253,7 +253,7 @@ class SWARP:
 
         "VMEM_DIR":
         {"comment": "Directory path for swap files",
-         "value": .},
+         "value": "."},
 
         "VMEM_MAX":
         {"comment": "Maximum amount of virtual memory (MB)",
@@ -334,7 +334,8 @@ class SWARP:
             dict([(k, copy.deepcopy(SWARP._SW_config[k]["value"]))\
                   for k in SWARP._SW_config.keys()]))
 
-        # print self.config
+        # Extra config parameters that will be added/updated to the current values of the config file
+        self.ext_config = {}       
 
         self.program = None
         self.version = None
@@ -443,8 +444,14 @@ class SWARP:
         for file in file_list:
            my_files = my_files + " " + file
             
+        # Compound extra config command line args
+        ext_args=""
+        for key in self.ext_config.keys():
+            ext_args=ext_args + " -" + key+ " " + str(self.ext_config[key])
+               
         commandline = (
-            self.program + " -c " + self.config['CONFIG_FILE'] + " " + my_files)
+            self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + my_files)
+        
         print commandline
 
         rcode = os.system(commandline)

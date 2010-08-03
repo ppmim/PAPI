@@ -211,7 +211,7 @@ class SCAMP:
         
         "DISTORT_GROUPS":
         {"comment": "Filename for the check-image",
-         "value": "1,1"},
+         "value": [1,1]},
         
         "DISTORT_DEGREES":
         {"comment": "Polynom degree for each group",
@@ -322,11 +322,11 @@ class SCAMP:
 
          "SN_THRESHOLDS":
         {"comment": 'S/N thresholds (in sigmas) for all and high-SN sample',
-         "value": 10.0,100.0 },
+         "value": [10.0, 100.0] },
          
          "FWHM_THRESHOLDS":
         {"comment": 'FWHM thresholds (in pixels) for sources',
-         "value": 0.0,100.0},
+         "value": [0.0, 100.0]},
          
          "FLAGS_MASK":
         {"comment": 'Rejection mask on SEx FLAGS',
@@ -402,8 +402,9 @@ class SCAMP:
             dict([(k, copy.deepcopy(SCAMP._SC_config[k]["value"]))\
                   for k in SCAMP._SC_config.keys()]))
 
-        # print self.config
-
+        # Extra config parameters that will be added/updated to the current values of the config file
+        self.ext_config = {}
+              
         self.program = None
         self.version = None
 
@@ -511,8 +512,13 @@ class SCAMP:
         for cat in catalog_list:
            my_catalogs = my_catalogs + " " + cat
             
+        # Compound extra config command line args
+        ext_args=""
+        for key in self.ext_config.keys():
+            ext_args=ext_args + " -" + key+ " " + str(self.ext_config[key])     
+            
         commandline = (
-            self.program + " -c " + self.config['CONFIG_FILE'] + " " + my_catalogs)
+            self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + my_catalogs)
         #print commandline
 
         rcode = os.system(commandline)

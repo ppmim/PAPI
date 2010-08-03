@@ -529,6 +529,7 @@ class ReductionSet:
         ######################################################
         # 0 - Some checks (filter, ....) 
         ######################################################
+        log.info("**** Data ckecking ****")
         try:
             self.checkData(chk_filter=True, chk_type=False, chk_expt=True, chk_itime=True, chk_ncoadd=True)
         except:
@@ -560,7 +561,7 @@ class ReductionSet:
         # 1 - Apply dark, flat to ALL files 
         ######################################
         if self.master_dark!=None and self.master_flat!=None:
-            log.debug("---> Applying dark and Flat")
+            log.info("**** Applying dark and Flat ****")
             dark_flat=True
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, self.master_dark, self.master_flat, self.out_dir)
             self.m_LAST_FILES = res.apply()
@@ -569,13 +570,14 @@ class ReductionSet:
         # 2 - Compute Super Sky Flat-Field 
         ######################################
         # - Find out what kind of observing mode we have (dither, ext_dither, ...)
-        log.debug('---> Now, compute Super-Sky Flat-Field ...')
+        log.info('**** Computing Super-Sky Flat-Field ****')
         if self.obs_mode=="dither":
+            log.debug("---> dither sequece <----")
             misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
             superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits")
             superflat.create()
         elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
-            log.info("EXTENDED SOURCE !!!")
+            log.debug("----> EXTENDED SOURCE !!! <----")
             sky_list=self.getSkyFrames()
             misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
             superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits")
@@ -588,7 +590,7 @@ class ReductionSet:
         ######################################    
         # 3 - Compute Gain map and apply BPM
         ######################################
-        log.debug("Computing gain-map .....")
+        log.info("**** Computing gain-map ****")
         nxblock=16
         nyblock=16
         #The next values are to find out bad pixels 
@@ -622,6 +624,7 @@ class ReductionSet:
         #########################################
         # 4 - First Sky subtraction (IRDR) - sliding window technique
         #########################################
+        log.info("**** 1st Sky subtraction (without object mask) ****")
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/skylist1.list")
         # return only filtered images; in exteded-sources, sky frames  are not included 
         self.m_LAST_FILES=self.skyFilter(self.out_dir+"/skylist1.list", gainfile, 'nomask', self.obs_mode)      
@@ -630,7 +633,7 @@ class ReductionSet:
         # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
         #########################################
                             
-        log.info("Quality Assessment: TODO")                   
+        log.info("**** Quality Assessment: TODO ****")                   
                                                   
         #########################################
         # 6 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation
@@ -642,6 +645,7 @@ class ReductionSet:
         #########################################
         # 7 - First pass coaddition using offsets
         #########################################
+        log.info("**** Initial coaddition of sky subtracted frames ****")
         fo=open(self.out_dir+'/offsets1.pap',"r")
         fs=open(self.out_dir+'/stack1.pap','w+')
         for line in fo:
@@ -662,11 +666,13 @@ class ReductionSet:
         #########################################
         # 8 - Create master object mask
         #########################################
-        obj_mask=self.createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')
-    
+        log.info("**** Master object mask creation ****")
+        obj_mask=self.createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')  
+        
         ###########################################################
-        # 8 - Second Sky subtraction (IRDR) using then OBJECT MASK
+        # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK
         ###########################################################
+        log.info("**** Sky subtraction with 2nd object mask ****")
         #Compound masked sky list
         fs=open(self.out_dir+"/skylist2.pap","w+")
         i=0
@@ -686,16 +692,21 @@ class ReductionSet:
         fs.close()
         self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainfile, 'mask', self.obs_mode)      
     
+        
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)
         #########################################
+        log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
         aw = astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
         try:
             aw.run()
         except:
             log.error("Some error while running Astrowarp....")
             raise
+        
+        #### EXIT ########
         sys.exit()
+        ##################
             
         #########################################
         # X2 - Remove field distortion from individual images (SWARP)-regriding 
@@ -712,6 +723,7 @@ class ReductionSet:
         #########################################################################################
         # 9 - Create second coadded image of the dithered stack using new sky subtracted frames (using the same offsets)
         #########################################################################################
+        log.info("**** Coadding image free distorion frames ****")
         self.coaddStackImages(self.out_dir+'/stack1.pap', None, self.out_dir+'/coadd2.fits')
         reduce.imtrim.imgTrim(self.out_dir+'/coadd2.fits')
         
@@ -719,7 +731,7 @@ class ReductionSet:
         # 10 - Make Astrometry
         #########################################
         #self.makeAstrometry(self.out_dir+'/coadd2.fits', '2mass', 'noregrid') 
-        
+        log.info("**** Astrometric calibration of coadded result frame ****")
         
         
         #########################################

@@ -11,6 +11,9 @@
  *   For each additional frame in filelist:
  *     Guess the pixel offsets verse the reference frame using header RA,DEC
  *     Correlate with reference frame pixel list to measure precise offset
+ *
+ * IMPORTANT: The output of this program is dumped to an output file used as input for the PAPI,
+ *            thus any 'printf' could cause malfunction on the next PAPI step.
  */
 
 #include <stdio.h>
@@ -49,7 +52,7 @@ int main(int argc, char *argv[])
 
     scale = readwcs(fn[0], NULL, NULL);              /* arcsec per pixel */
   
-    /*fprintf(stderr, "\n->offsets_SCALE=%f", scale);*/
+    /*fprintf(stderr, "\nDEBUGGIN ....\n->offsets_SCALE=%f", scale);*/
 
     hwid = (argc == 3) ? (atof(argv[2]) / scale + 0.5) : (HWID / scale + 0.5);
 
@@ -121,7 +124,7 @@ static float readwcs(char *fn, int *ixoff, int *iyoff)
         if (get_wcs(fn, &ra0, &dec0, &scale0, &posang0) < 0)
             eprintf("offsets: RA/DEC/SCALE missing from %s\n", fn);
         posang0 = posang0/57.2958;
-       /* printf("RA=%f  DEC=%f  SCL=%f  ANG=%f\n", ra0, dec0, scale0, posang0); */
+        /*printf("RA=%f  DEC=%f  SCL=%f  ANG=%f\n", ra0, dec0, scale0, posang0);*/ 
         return (float)scale0;
     }
 

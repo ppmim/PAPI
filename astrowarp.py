@@ -62,7 +62,7 @@ class AstroWarp(object):
             
         """
         
-        # STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
+        ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
         # initwcs also converts to J2000.0 EQUINOX
         initwcs_path=os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
         #initwcs_path=os.environ['PAPI_HOME']+'/astrometry_scamp.pl'
@@ -74,32 +74,53 @@ class AstroWarp(object):
             if ret_code!=0:
                 raise RuntimeError("There was an error while running 'initwcs'")
                
-        # STEP 1: Create SExtractor catalogs (.ldac)
+        ## STEP 1: Create SExtractor catalogs (.ldac)
         for file in self.input_files:
             sex = astromatic.SExtractor()
             #sex.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
-            sex.config['CHECKIMAGE_TYPE'] = "NONE"
+            #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
             sex.config['CATALOG_TYPE'] = "FITS_LDAC"
-            sex.config['CATALOG_NAME'] = file+".ldac"
-            # Lauch SExtractor on a FITS file
+            sex.config['CATALOG_NAME'] = file + ".ldac"
             sex.run(file, updateconfig=True, clean=False)
                         
-        # STEP 2: Make astrometric calibration (all overlapped-files together)
+        ## STEP 2: Make astrometric calibration for each file (all overlapped-files together)
         scamp = astromatic.SCAMP()
         scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
-        scamp.config['ASTREF_CATALOG']="2MASS"
+        scamp.ext_config['ASTREF_CATALOG']="2MASS"
+        scamp.ext_config['SOLVE_PHOTOM']="N"
         cat_files = [f.replace( ".fits", ".fits.ldac") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         scamp.run(cat_files, updateconfig=False, clean=False)
         
-        # STEP 3: Make the coadding with SWARP, and using .head files created by SCAMP
+        #sys.exit(1)
+        
+        ## STEP 3: Make the coadding with SWARP, and using .head files created by SCAMP
         # It requires the files are overlapped, i.e., have an common sky-area
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
-        swarp.config['IMAGEOUT_NAME']=self.coadded_file
-        swarp.config['HEADER_SUFFIX']='.fits.head'
+        swarp.ext_config['IMAGEOUT_NAME']=os.getcwd() + "/coadd_tmp.fits"
         swarp.run(self.input_files, updateconfig=False, clean=False)
         
+        ## STEP 4: Make again the final astrometric calibration to the final coadd
+        # STEP 4.1: Create SExtractor catalog (.ldac)
+        sex = astromatic.SExtractor()
+        #sex.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
+        sex.config['CATALOG_TYPE'] = "FITS_LDAC"
+        sex.config['CATALOG_NAME'] = os.getcwd() + "/coadd_tmp.fits" + ".ldac"
+        sex.run(os.getcwd() + "/coadd_tmp.fits", updateconfig=True, clean=False)
+        # STEP 4.2: Do the astrometric calibration with SCAMP
+        scamp = astromatic.SCAMP()
+        scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+        scamp.ext_config['ASTREF_CATALOG']="2MASS"
+        scamp.ext_config['SOLVE_PHOTOM']="N"
+        cat_files = [(os.getcwd() + "/coadd_tmp.fits.ldac")]
+        #updateconfig=False means scamp will use the specified config file instead of the single config parameters
+        scamp.run(cat_files, updateconfig=False, clean=False)
+        # STEP 4.3: Apply astrometry
+        swarp = astromatic.SWARP()
+        swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+        swarp.ext_config['IMAGEOUT_NAME']=self.coadded_file
+        swarp.run([os.getcwd() + "/coadd_tmp.fits"], updateconfig=False, clean=False)
         
 ################################################################################
 # main

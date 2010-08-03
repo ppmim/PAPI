@@ -389,7 +389,7 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 	  }
       
     /* ---------------- WIRCAM ----------------- */
-      else if (strncmp(instrument,"WIRCam",6)==0)  { 
+      else if (strncmp(instrument,"WIRCam",6)==0 || strncmp(instrument,"HAWKI",5)==0 )  { 
 
         /*printf ("WIRCam\n");*/
 
