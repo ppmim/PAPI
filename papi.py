@@ -692,6 +692,9 @@ class ReductionSet:
         fs.close()
         self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainfile, 'mask', self.obs_mode)      
     
+        #### EXIT ########
+        sys.exit()
+        ##################
         
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)

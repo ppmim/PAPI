@@ -8,6 +8,11 @@
 #include "eprintf.h"
 #include "hist.h"
 
+#include "libwcs/wcs.h"
+extern struct WorldCoor *GetWCSFITS();  /* Read WCS from FITS or IRAF header */
+extern void setsys(),setcenter(),setsecpix(),setnpix(),setrefpix(),setdateobs();
+
+
 #define ARCSECPERDEG 3600.0
 
 /* writefits: write a FITS file, copy the header from file fnhdr */
@@ -297,18 +302,22 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
     float LFscale = 0.25, SFscale=0.13, ARNscale=1.0;
 /*  char *hdr, *tel, *cam, *objectiv;   */
     char *hdr, *objectiv; 
-    char *instrument="0000000000000000000";
+    char *instrument=NULL;
+    
+    struct WorldCoor *wcs;
 
 
     if ((hdr = fitsrhead(fn, &lhead, &nbhead)) == NULL)
-        eprintf("get_wcs: fitsrhead failed\n");
+        eprintf("[ERROR] get_wcs: fitsrhead failed\n");
 
 
     /* -------------- Chech instrument ------------------- */
 
     /* if (hgets(hdr,"INSTRUME",20,instrument)==1) {	*/
 
-    instrument = hgetc(hdr,"INSTRUME");
+    if ((instrument = get_key_str(fn,"INSTRUME"))==NULL)
+        eprintf("[ERROR] get_wcs: failed reading INSTRUME keyword. Check your FITS header");
+        
 
     /* --------------------  NICS  ---------------------- */
 
@@ -371,7 +380,7 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 
       else if (strncmp(instrument,"2MAS",4)==0)  { 
 
-		  printf ("2MASS\n");
+		printf ("2MASS\n");
 
 	    *scale = 1.0;
 	    *posang = 0.0;       
@@ -385,32 +394,57 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 	        fprintf(stderr, "get_wcs: unable to read DEC in: %s\n", fn);
 	        return -1;
 	    }
-		  printf ("RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang);
+		printf ("RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang);
 	  }
       
     /* ---------------- WIRCAM ----------------- */
-      else if (strncmp(instrument,"WIRCam",6)==0 || strncmp(instrument,"HAWKI",5)==0 )  { 
-
-        /*printf ("WIRCam\n");*/
-
+      else if (strncmp(instrument,"WIRCam",6)==0  )  { 
+    
+        fprintf (stderr, "\nWIRCam\n");
+        /* Use WCSTool subroutines to get RA,Dec coordinates of the center of the image */
+        
+        wcs = GetWCSFITS (fn, 0/*verbose*/);
+        if (nowcs (wcs)) {
+            printf ("%s: No WCS for file, cannot read image WCS\n", fn);
+            wcsfree (wcs);
+            return -1;
+        }
+        double xcen = 0.5 + (wcs->nxpix * 0.5);
+        double ycen = 0.5 + (wcs->nypix * 0.5);
+        
+        pix2wcs(wcs, xcen, ycen, ra, dec);
         *scale = 0.3;
         *posang = 0.0;       
+        
+        fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g xcen=%f  ycen=%f \n", *ra, *dec, *scale, *posang, xcen, ycen); 
+        
+      }
+     /* ---------------- HAWKI ----------------- */
+      else if (strncmp(instrument,"HAWKI",5)==0 )  { 
 
-        if (! hgetra(hdr, "CRVAL1", ra)) {
-            fprintf(stderr, "get_wcs: unable to read RA in: %s\n", fn);
+        fprintf (stderr, "\nHAWKI\n");
+        /* Use WCSTool subroutines to get RA,Dec coordinates of the center of the image */
+        
+        wcs = GetWCSFITS (fn, 0/*verbose*/);
+        if (nowcs (wcs)) {
+            printf ("%s: No WCS for file, cannot read image WCS\n", fn);
+            wcsfree (wcs);
             return -1;
         }
-    
-        if (! hgetdec(hdr, "CRVAL2", dec)) {
-            fprintf(stderr, "get_wcs: unable to read DEC in: %s\n", fn);
-            return -1;
-        }
-        /*printf ("RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang);*/
+        double xcen = 0.5 + (wcs->nxpix * 0.5);
+        double ycen = 0.5 + (wcs->nypix * 0.5);
+        
+        pix2wcs(wcs, xcen, ycen, ra, dec);
+        *scale = 0.1064;
+        *posang = 0.0;       
+        
+        fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g xcen=%f  ycen=%f \n", *ra, *dec, *scale, *posang, xcen, ycen);        
+        
       }
       /* ---------------- OMEGA2000 ----------------- */
       else if (strncmp(instrument,"Omega2000",9)==0){
 	
-	    fprintf(stderr, "I don't know %s\n", instrument);
+	    fprintf(stderr, "\nOMEGA2000\n");
 	      
 	    if (! hgetra(hdr, "RA", ra)) {
 	        fprintf(stderr, "get_wcs: unable to read RA in: %s\n", fn);
@@ -435,9 +469,8 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 	        return -1; 
 	    }  
 
-	  /*fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang);*/ 
+	    fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang); 
 
-	 return 0;
 	}
     /* ---------------- OTHER INSTRUMENT ----------------- */
     else {
@@ -475,7 +508,7 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
     return 0;
 }
 
-/* put_wcs: write rough WCS to FITS header (for CIRSI) */
+/* put_wcs: write rough WCS to FITS header (for O2000 basically) */
 extern int put_wcs(char *fn, double ra, double dec, double scale, 
                    int nx, int ny)
 {
@@ -484,7 +517,7 @@ extern int put_wcs(char *fn, double ra, double dec, double scale,
     char *hdr, *img, str[81], comment[81];
 
     if ((hdr = fitsrhead(fn, &lhead, &nbhead)) == NULL)
-        eprintf("put_wcs: fitsrhead failed\n");
+        eprintf("[ERROR] put_wcs: fitsrhead failed\n");
 
     if (hputr8(hdr, "RA", ra) < 0) {
         
@@ -531,13 +564,13 @@ extern int put_wcs(char *fn, double ra, double dec, double scale,
         hputr8(hdr, "CD1_2", 0.0) < 0 ||
         hputr8(hdr, "CD2_1", 0.0) < 0 ||
         hputr8(hdr, "CD2_2", degscale) < 0 )
-        eprintf("put_wcs: failed writing WCS keys\n");
+        eprintf("[ERROR] put_wcs: failed writing WCS keys\n");
 
     if ((img = fitsrimage(fn, nbhead, hdr)) == NULL)
-        eprintf("put_wcs: fitsrimage failed\n");
+        eprintf("[ERROR] put_wcs: fitsrimage failed\n");
 
     if (!fitswimage(fn, hdr, img))
-        eprintf("put_wcs: fitswimage failed\n");
+        eprintf("[ERROR] put_wcs: fitswimage failed\n");
 
     free(hdr);
 

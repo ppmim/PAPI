@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
   
     /*fprintf(stderr, "\nDEBUGGIN ....\n->offsets_SCALE=%f", scale);*/
 
+    /* Initial half-width of cross-corr search box, in pixels, but the argv value is given in arcsec*/
     hwid = (argc == 3) ? (atof(argv[2]) / scale + 0.5) : (HWID / scale + 0.5);
 
     for (i = 0, n = 0; i < nx * ny; i++) {    /* make pixel list from refimg */
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
     free(img0);
 
     if (n >= MAXNLIST)
-        eprintf("%s: n >= MAXNLIST, increase detection threshold\n", argv[0]);
+        eprintf("%s: n >= MAXNLIST, too much object pixel found. Please, increase detection threshold\n", argv[0]);
 
     if (n < 1)
         eprintf("%s: found no object pixels in %s\n", argv[0], fn[0]);
@@ -77,42 +78,46 @@ int main(int argc, char *argv[])
     corrx = 0.;
     corry = 0.;
 
-    for (i = 1; i < nfiles; i++) {                        /* other frames... */
+    for (i = 1; i < nfiles; i++) 
+    {   
+        /* other frames... */
         img = readfits(fn[i], &nx, &ny, NULL, NULL);
 
-        (void) readwcs(fn[i], &ixoff, &iyoff);           /* get offset guess */
-
-	ixoff = ixoff+corrx;	/* use the previous corrections */
-	iyoff = iyoff+corry;
-
+        (void) readwcs(fn[i], &ixoff, &iyoff);           /* get offset guess (in pixels)*/
+    
+        /* ixoff,iyoff --> estimated offset */
+	    ixoff = ixoff+corrx;	/* use the previous corrections */
+	    iyoff = iyoff+corry;
+    
         frac = correlate(x, y, p, n, img, nx, ny, ixoff, iyoff, 
-                         &xoff, &yoff, hwid);
-
-	/*fprintf(stderr, "x = %d, y=%d, p=%f, n=%d, nx=%d, ny=%d, ixoff=%f, iyoff=%f, xoff=%f, yoff=%f, hwid=%d",
-	x,y, p, n, nx, ny, ixoff, iyoff, xoff, yoff, hwid);*/
-
+                            &xoff, &yoff, hwid);
+    
+	    /*fprintf(stderr, "x = %d, y=%d, p=%f, n=%d, nx=%d, ny=%d, ixoff=%f, iyoff=%f, xoff=%f, yoff=%f, hwid=%d",
+	    x,y, p, n, nx, ny, ixoff, iyoff, xoff, yoff, hwid);*/
+    
         if (frac < MINFRAC) {                          /* cross-corr failed? */
             int maxhwid = MAXNCC / 2 - 1;
-
-            fprintf(stderr, "-> increase search radius to %d pix\n", maxhwid);
-
+    
+            fprintf(stderr, "-> Bad correlation overlap, increasing search radius to %d pix\n", maxhwid);
+    
             frac = correlate(x, y, p, n, img, nx, ny, 0, 0, 
-                             &xoff, &yoff, maxhwid);
+                                &xoff, &yoff, maxhwid);
         }
-
-	corrx = corrx + xoff - ixoff ;	/* cumulate the corrections */
-	corry = corry + yoff - iyoff ;
-
+    
+	    corrx = corrx + xoff - ixoff ;	/* cumulate the corrections , to take into account with the next frame */
+	    corry = corry + yoff - iyoff ;
+    
         /*printf("%s %f %f %f (%d %d) \n", chomp(fn[i]), xoff, yoff, frac, ixoff, iyoff);*/
+        /* print out the results (in pixels) to the std output, which will be dumped with ">" to a text file used in the next step in the pipeline */
         printf("%s %f %f %f (%d %d) \n", fn[i], xoff, yoff, frac, ixoff, iyoff);
-
+    
         free(img);  img = NULL;
     }
 
     return 0;
 }
 
-/* use WCS information from FITS header to guess image offset */
+/* use WCS information from FITS header to guess image offset (in pixels) */
 static float readwcs(char *fn, int *ixoff, int *iyoff)
 {
     static int init = 0;
@@ -136,7 +141,7 @@ static float readwcs(char *fn, int *ixoff, int *iyoff)
     if (scale1 / scale0 > 1.01 || scale1 / scale0 < 0.99)
         eprintf("offsets: pixel scale changed: %s %f %f\n", fn, scale0, scale1);
 
-    if (scale1 <= 0.1 || scale1 > 10)
+    if (scale1 < 0.1 || scale1 > 10)
         eprintf("offsets: image scale [arcsec/pix] seems wrong %f\n", scale1);
 
     ax = arcsecperdeg * (ra1 - ra0) * cos(dec0/57.296)/ scale0 + 0.5;

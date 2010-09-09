@@ -50,7 +50,8 @@ int main(int argc, char *argv[])
 {
     int i, nx, ny, chip = -1;
     double ra, dec, scale, posang, epoch0 = 0.0;
-    char *tel;
+    char *tel=NULL;
+    char *inst=NULL;
 
     if (argc < 2)
         eprintf("Usage: %s *.fits\n", argv[0]);
@@ -69,8 +70,9 @@ int main(int argc, char *argv[])
 
         if (get_key_int(argv[i], "NAXIS2", &ny) < 0)
             eprintf("%s: failed reading NAXIS2\n", argv[0]);
+        
 
-        if (get_wcs(argv[i], &ra, &dec, &scale, &posang))
+        if (get_wcs(argv[i], &ra, &dec, &scale, &posang)==-1)
             eprintf("%s: get_wcs failed\n", argv[0]);
   
         if (get_key_double(argv[i], "EQUINOX", &epoch0) < 0 || epoch0 < 1990) {
@@ -79,31 +81,37 @@ int main(int argc, char *argv[])
         }
 
         if ((tel = get_key_str(argv[i], "TELESCOP")) == NULL)
-            eprintf("%s: failed reading TELESCOP keyword\n", argv[0]);
-
-        if (strncmp("CA 3.5m", tel, 7) == 0) {                            /* CAHA 3.5 */
-            ra  += CA35_ra_chip_offset[chip-1] / cos(DEGRAD * fabs(dec));
-            dec += CA35_dec_chip_offset[chip-1];
-            put_key_double(argv[i], "CHIPROT", CA35_chip_rotation[chip-1]);
-
-        } else if (strncmp("CA 2.2m", tel, 7) == 0) {                     /* CAHA 2.2 */
-            ra  += CA22_ra_chip_offset[chip-1] / cos(DEGRAD * fabs(dec));
-            dec += CA22_dec_chip_offset[chip-1];
-            put_key_double(argv[i], "CHIPROT", CA22_chip_rotation[chip-1]);
-
-        } else {
-            eprintf("FITS key TELESCOP should be CA 3.5m or CA 2.2m");
+            fprintf(stderr, "WARN: %s: failed reading TELESCOP keyword\n", argv[0]);
+        else
+        {
+            if (strncmp("CA 3.5m", tel, 7) == 0) {                            /* CAHA 3.5 */
+                ra  += CA35_ra_chip_offset[chip-1] / cos(DEGRAD * fabs(dec));
+                dec += CA35_dec_chip_offset[chip-1];
+                put_key_double(argv[i], "CHIPROT", CA35_chip_rotation[chip-1]);
+    
+            } else if (strncmp("CA 2.2m", tel, 7) == 0) {                     /* CAHA 2.2 */
+                ra  += CA22_ra_chip_offset[chip-1] / cos(DEGRAD * fabs(dec));
+                dec += CA22_dec_chip_offset[chip-1];
+                put_key_double(argv[i], "CHIPROT", CA22_chip_rotation[chip-1]);
+    
+            } 
         }
+        /* Init WCS for the instrument O2000 */
+        
+        if ((inst=get_key_str(argv[i], "INSTRUME")) ==  NULL)
+            eprintf("[ERROR] %s: failed reading INSTRUME keyword\n", argv[0]);
+            
+        if (strncmp(inst,"Omega2000",9)==0) 
+        {
+            fk5prec(epoch0, 2000.0, &ra, &dec);
 
-        fk5prec(epoch0, 2000.0, &ra, &dec);
+	        fprintf(stderr,"\n-->new  RA=%f, newDEC=%f\n", ra, dec);
 
-	printf("\n-->new  RA=%f, newDEC=%f", ra, dec);
+            put_wcs(argv[i], ra, dec, scale, nx, ny);
 
-        put_wcs(argv[i], ra, dec, scale, nx, ny);
-
-        put_key_double(argv[i], "EQUINOX", 2000.0);
+            put_key_double(argv[i], "EQUINOX", 2000.0);
+        }
     }
-
     return 0;
 }
 

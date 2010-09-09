@@ -4,15 +4,15 @@
 
 CC        = gcc
 OUTPUT    = -o $@
-IFLAGS    = -I./src/include -I./extern/wcssubs
+IFLAGS    = -I./src/include  -I./extern/wcstools -I./extern/wcstools/libwcs
 CFLAGS    = -O3 -Wall -ansi -pedantic
 # CFLAGS    = -g 
 RM        = rm -f
 RANLIB    = true
 AR        = ar
 ARFLAGS   = rcv
-LDFLAGS   = -L./lib -L./extern/wcssubs
-LDLIBS    = -lirdr -lc -lm -lwcs
+LDFLAGS   = -L./lib   -L./extern/wcstools/libwcs
+LDLIBS    = -lirdr -lc -lm -lwcs 
 COMPFLAGS = $(CFLAGS) $(IFLAGS)
 LINKFLAGS = $(LDFLAGS) $(LDLIBS)
 COMPILE.c = $(CC) $(CFLAGS) $(IFLAGS) -c
