@@ -14,8 +14,18 @@
 # 
 # TODO:
 #    - include BPM creation
+# NOTE:
+#    - A Bug in pyraf.mscred.mscarith required to modify src/mscarith.cl 
+#      line# 25 in msarith.cl should be changed from 
+#
+#      int nop1, nop2, nresults, next1, next2, nexts, n 
+#
+#      to 
+#
+#      int nop1, nop2, nresult, next1, next2, nexts, n
+#   More info: http://iraf.net/phpBB2/viewtopic.php?t=85010&sid=e2404ee77fcef3b0d8a744c47f853705
 ################################################################################
-
+#
 ################################################################################
 # Import necessary modules
 
@@ -35,6 +45,7 @@ from pyraf import iraf
 from iraf import noao
 from iraf import imred
 from iraf import ccdred
+from iraf import mscred
 
 # Interact with FITS files
 import pyfits
@@ -129,7 +140,7 @@ class MasterDomeFlat:
         f_readmode=''
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
-            print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
+            log.debug("Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter()))
             # Check EXPTIME
             if ( f_expt!=-1 and ( int(f.expTime()) != int(f_expt) or f.getFilter()!=f_filter or f.getReadMode()!=f_readmode)) :
                 log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with \n different FILTER or EXPTIME or READMODE. Skipped.")
@@ -173,20 +184,18 @@ class MasterDomeFlat:
         # STEP 2: Make the combine of Flat LAMP-ON frames
         # - Build the frame list for IRAF
         log.debug("Combining Flat LAMP-ON frames...")
-        m_framelist=''
-        for iframe in domelist_lampon:
-            m_framelist+=iframe+ ' , '
         flat_lampon=self.__output_file_dir + "/flat_lampON.fits"
         misc.fileUtils.removefiles(flat_lampon)
+        misc.utils.listToFile(domelist_lampon, self.__output_file_dir+"/files_on.list") 
         # - Call IRAF task
-        iraf.flatcombine(input=m_framelist,
+        iraf.mscred.flatcombine(input="@"+self.__output_file_dir+"/files_on.list",
                         output=flat_lampon,
                         combine='median',
-                        ccdtype='none',
+                        ccdtype='',
                         process='no',
                         reject='sigclip',
-                        subset='yes',
-                        scale='mode'
+                        subset='no',
+                        scale='mode',
                         #verbose='yes'
                         #scale='exposure',
                         #expname='EXPTIME'
@@ -196,19 +205,17 @@ class MasterDomeFlat:
         # STEP 3: Make the combine of Flat LAMP-OFF frames
         # - Build the frame list for IRAF
         log.debug("Combining Flat LAMP-OFF frames...")    
-        m_framelist=''
-        for iframe in domelist_lampoff:
-            m_framelist+=iframe+ ' , '
         flat_lampoff=self.__output_file_dir + "/flat_lampOFF.fits"
         misc.fileUtils.removefiles(flat_lampoff)
+        misc.utils.listToFile(domelist_lampoff, self.__output_file_dir+"/files_off.list") 
         # - Call IRAF task
-        iraf.flatcombine(input=m_framelist,
+        iraf.mscred.flatcombine(input="@"+self.__output_file_dir+"/files_off.list",
                         output=flat_lampoff,
                         combine='median',
-                        ccdtype='none',
+                        ccdtype='',
                         process='no',
                         reject='sigclip',
-                        subset='yes',
+                        subset='no',
                         scale='mode',
                         #verbose='yes'
                         #scale='exposure',
@@ -218,34 +225,64 @@ class MasterDomeFlat:
     
         # STEP 4 : Subtract lampON-lampOFF (implicit dark subtraction)
         flat_diff=self.__output_file_dir+"/flat_lampON_OFF.fits"
-        log.debug("Subtractic Flat ON-OFF frames...") 
+        log.debug("Subtracting Flat ON-OFF frames...%s", flat_diff) 
         # Remove an old masternormflat
         misc.fileUtils.removefiles(flat_diff)
-        iraf.imarith(operand1 = flat_lampon,
+        
+        # Handling of single FITS is not supported by mscred.mscarith
+        if f.mef:
+            iraf.mscred.mscarith(operand1 = flat_lampon,
                     operand2 = flat_lampoff,
                     op = '-',
-                    result =flat_diff,
-                    verbose = 'yes'
+                    result = flat_diff
                     )
             
-        # STEP 5: Normalize the flat-field
-        # Compute the mean of the image
-        log.debug("Normalizing master flat frame...")
-        mean = float(iraf.imstat (
-            images=flat_diff,
-            fields='mean',Stdout=1)[1])
-        
-        # Cleanup: Remove temporary files
-        misc.fileUtils.removefiles(flat_lampoff, flat_lampon)
-        # Compute normalized flat
-        self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
-        misc.fileUtils.removefiles(self.__output_filename)
-        iraf.imarith(operand1=flat_diff,
-                    operand2=mean,
-                    op='/',
-                    result=self.__output_filename,
+            # STEP 5: Normalize the flat-field
+            # Compute the mean of the image
+            log.debug("Normalizing master flat frame...")
+            # mean has the array of mean values for each extension
+            mean_values = iraf.mscred.mscstat (
+                images=flat_diff,
+                fields='mean', Stdout=1)
+            
+            #take the mean of all chips/extensions
+            mean=0
+            for i in range(1,len(mean_values)):
+                mean+=float(mean_values[i])
+            mean=mean/i
+            
+            # Compute normalized flat
+            self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
+            misc.fileUtils.removefiles(self.__output_filename)
+            iraf.mscred.mscarith(operand1=flat_diff,
+                        operand2=mean,
+                        op='/',
+                        result=self.__output_filename,
+                        )
+        else:
+            iraf.imarith(operand1 = flat_lampon,
+                    operand2 = flat_lampoff,
+                    op = '-',
+                    result = flat_diff
                     )
-    
+            
+            # STEP 5: Normalize the flat-field
+            # Compute the mean of the image
+            log.debug("Normalizing master flat frame...")
+            # mean has the array of mean values for each extension
+            mean = float(iraf.imstat (
+                images=flat_diff,
+                fields='mean', Stdout=1)[1])
+                
+            
+            # Compute normalized flat
+            self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
+            misc.fileUtils.removefiles(self.__output_filename)
+            iraf.imarith(operand1=flat_diff,
+                        operand2=mean,
+                        op='/',
+                        result=self.__output_filename,
+                        )                  
         
         # Change back to the original working directory
         iraf.chdir()
@@ -259,9 +296,15 @@ class MasterDomeFlat:
         flatframe[0].header.update('OBJECT','MASTER_DOME_FLAT')
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         
+        
+        # Cleanup: Remove temporary files
+        misc.fileUtils.removefiles(flat_lampoff, flat_lampon)
+        #Remove temp list files
+        #todo
+            
         log.debug(t.tac() )
         log.debug('Saved master FLAT to %s' ,  self.__output_filename )
-    
+        
         return self.__output_filename
         
 ################################################################################

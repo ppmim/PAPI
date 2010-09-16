@@ -111,6 +111,19 @@ int main(int argc, char *argv[])
 
             put_key_double(argv[i], "EQUINOX", 2000.0);
         }
+        else 
+        /* in any case, we try ...*/
+        {
+            fprintf(stderr, "WARN: initwcs found a non O2000 instrument ...\n");
+            fk5prec(epoch0, 2000.0, &ra, &dec);
+
+            fprintf(stderr,"\n-->new  RA=%f, newDEC=%f\n", ra, dec);
+
+            put_wcs(argv[i], ra, dec, scale, nx, ny);
+
+            put_key_double(argv[i], "EQUINOX", 2000.0);
+        
+        }
     }
     return 0;
 }

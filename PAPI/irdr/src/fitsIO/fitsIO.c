@@ -423,20 +423,32 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
       else if (strncmp(instrument,"HAWKI",5)==0 )  { 
 
         fprintf (stderr, "\nHAWKI\n");
+        *scale = 0.1064;
+        *posang = 0.0; 
         /* Use WCSTool subroutines to get RA,Dec coordinates of the center of the image */
         
         wcs = GetWCSFITS (fn, 0/*verbose*/);
         if (nowcs (wcs)) {
-            printf ("%s: No WCS for file, cannot read image WCS\n", fn);
+            fprintf ("%s: No WCS for file, cannot read image WCS\n", fn);
             wcsfree (wcs);
-            return -1;
+            
+            /* In no WCS, try to find out RA, DEC keys*/
+            if (! hgetra(hdr, "RA", ra)) {
+                fprintf(stderr, "get_wcs: unable to read RA in: %s\n", fn);
+                return -1; 
+            }
+    
+            if (! hgetdec(hdr, "DEC", dec)) {
+                fprintf(stderr, "get_wcs: unable to read DEC in: %s\n", fn);
+                return -1; 
+            }
+            fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g \n", *ra, *dec, *scale, *posang);
+            return 0;
         }
+        
         double xcen = 0.5 + (wcs->nxpix * 0.5);
         double ycen = 0.5 + (wcs->nypix * 0.5);
-        
         pix2wcs(wcs, xcen, ycen, ra, dec);
-        *scale = 0.1064;
-        *posang = 0.0;       
         
         fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g xcen=%f  ycen=%f \n", *ra, *dec, *scale, *posang, xcen, ycen);        
         

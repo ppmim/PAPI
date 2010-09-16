@@ -29,6 +29,7 @@
 #              11/12/2009    jmiguel@iaa.es - Rename output filename to include EXPTIME and NCOADDS and use ClFits class
 #              14/12/2009    jmiguel@iaa.es - Skip non DARK frames and cotinue working with the good ones (good_frames)
 #              02/03/2010    jmiguel@iaa.es - added READEMODE checking
+#              14/09/2010    jmiguel@iaa.es - added support to MEF files, calling mscred.darkcombine subrutine instead of imred.darkcombine
 #
 # TODO
 #  - checking of ITIME ( and not only EXPTIME, NCOADDS )
@@ -53,6 +54,7 @@ from pyraf import iraf
 from iraf import noao
 from iraf import imred
 from iraf import ccdred
+from iraf import mscred
 
 # Interact with FITS files
 import pyfits
@@ -71,7 +73,7 @@ class MasterDark:
     \par Class:
         MasterDark
     \par Purpose:
-        Create a master Dark from a list for dark files
+        Create a master Dark from a list for dark files (single or MEF files)
     \par Description:
             
     \par Language:
@@ -159,23 +161,21 @@ class MasterDark:
                                         
         log.debug('Right, dark frames with same type are: %s', good_frames)   
     
-        m_framelist=""
-        for iframe in good_frames:
-            m_framelist+=iframe+ ' , '
-            
-        # Cleanup : Remove an old masterdark
+        # Cleanup : Remove old masterdark
         misc.fileUtils.removefiles(self.__output_filename)
         if self.m_texp_scale:
             scale_str='exposure'
         else:
             scale_str='none'
-            self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
         
+        self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
         # Call the noao.imred.ccdred task through PyRAF
-        iraf.darkcombine(input=m_framelist,
+        
+        misc.utils.listToFile(good_frames, self.__output_file_dir+"/files.list") 
+        iraf.mscred.darkcombine(input="@"+self.__output_file_dir+"/files.list",
                         output=self.__output_filename,
                         combine='average',
-                        ccdtype='none',
+                        ccdtype='',
                         process='no',
                         reject='minmax',
                         nlow='0',
@@ -185,11 +185,11 @@ class MasterDark:
                         #expname='EXPTIME'
                         #ParList = _getparlistname('darkcombine')
                         )
-
+                        
         #outdata[0].header.add_history('Averaged %i frames to obtain combined DARK' % nframes)
         
         darkframe = pyfits.open(self.__output_filename,'update')
-        darkframe[0].header.add_history('Combined images by averaging (%s files) ' % m_framelist)
+        #darkframe[0].header.add_history('Combined images by averaging (%s files) ' % good_frames)
         #Add a new keyword-->PIP_TYPE
         darkframe[0].header.update('hierarch PAPI.TYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         darkframe[0].header.update('OBJECT','MASTER_DARK')

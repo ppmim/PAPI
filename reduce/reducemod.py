@@ -64,7 +64,7 @@ import datahandler
 import calDark
 import calDomeFlat
 from makeobjmask import *
-from mksuperflat import *
+from calSuperFlat import *
 from imtrim import *
 
 import numpy

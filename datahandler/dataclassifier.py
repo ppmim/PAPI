@@ -87,7 +87,7 @@ class ClFits:
         self.mdj       = "" # modified julian date of observation
         self.object    = ""
         self.chipcode  = 1
-        self.ncoadds   = 0
+        self.ncoadds   = -1
         self.itime     = 0.0
         self.readmode  = ""
         self.data      = None
@@ -171,9 +171,9 @@ class ClFits:
     def getData(self):
         """No tested, to check !!!"""
         try:
-            indata = pyfits.open(self.pathname)
-            temp=indata[0].data
-            indata.close()
+            myfits = pyfits.open(self.pathname)
+            temp=myfits[0].data
+            myfits.close()
             return temp
         except:
             log.error('Could not open frame - something wrong with input data')
@@ -182,52 +182,74 @@ class ClFits:
 
     def recognize(self):
      
-        log.debug("Recognizing file %s" %self.filename)
+        log.info("Recognizing file %s" %self.filename)
 
         # Check the file exists
         if not os.path.exists( self.pathname ):
             log.error('Cannot find frame : "%s"' % self.pathname)
             raise "File not found"
-        
-        # Verify fits file
-        #if not self.pathname.endswith(".fits") or not self.pathname.endswith("*.fit"):
-        #    log.('File %s does not seem FITS file'  %self.pathname)
-        #    raise NameError, 'NotAFitsFile'
-        
+                    
+        # Open the file            
         try:
-            indata = pyfits.open(self.pathname)                                 
-            #indata = pyfits.open(self.pathname, 'update')
-            #indata[0].verify()
+            myfits = pyfits.open(self.pathname)                                 
+            #myfits = pyfits.open(self.pathname, 'update')
+            #myfits[0].verify()
         except:
             log.error('Could not open frame - something wrong with input data')
             raise
         
-        self.naxis1=indata[0].header['NAXIS1']
-        self.naxis2=indata[0].header['NAXIS2']
-        self.my_header = indata[0].header
+        #Check if is a MEF file 
+        try:    
+            if myfits[0].header['EXTEND']==True:
+                self.mef=True
+                #Count the number of extensions
+                try:
+                    self.next=myfits[0].header['NEXTEND']
+                except KeyError:
+                    log.warn('Warning, card NEXTEND not found. Counting number of extensions...')
+                    self.next=0
+                    while (1):
+                        try:
+                            if (myfits[self.next+1].header['XTENSION'] == 'IMAGE'): self.next += 1
+                        except:
+                            break
+                    log.debug("Found %d extensions", self.next)
+            else:
+                self.mef=False
+        except KeyError:
+            self.mef=False
+        
+        # If file is a MEF, some values will be read from the header extensions      
+        if self.mef:
+            # we suppose all extension have the same dimensions
+            self.naxis1=myfits[1].header['NAXIS1']
+            self.naxis2=myfits[1].header['NAXIS2']
+            # pointer to the primary-main header
+            self.my_header = myfits[0].header
         
         # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , UNKNOW)  
         try:
-            if indata[0].header['OBJECT'].count('dark'):
+            if myfits[0].header['OBJECT'].lower().count('dark') :
                 self.type="DARK"
-            elif indata[0].header['OBJECT'].count('lamp off'):
+            elif myfits[0].header['OBJECT'].lower().count('lamp off'):
                 self.type="DOME_FLAT_LAMP_OFF"
-            elif indata[0].header['OBJECT'].count('lamp on'):
+            elif myfits[0].header['OBJECT'].lower().count('lamp on'):
                 self.type="DOME_FLAT_LAMP_ON"
-            elif indata[0].header['OBJECT'].count('dusk'):
+            elif myfits[0].header['OBJECT'].lower().count('dusk'):
                 self.type="TW_FLAT_DUSK"
-            elif indata[0].header['OBJECT'].count('dawn'):
+            elif myfits[0].header['OBJECT'].lower().count('dawn'):
                 self.type="TW_FLAT_DAWN"
-            elif indata[0].header['OBJECT'].count('skyflat'):
+            elif myfits[0].header['OBJECT'].lower().count('skyflat') or myfits[0].header['OBJECT'].lower().count('flat'):
                 self.type="TW_FLAT"
-            elif indata[0].header['OBJECT'].count('sky for'):
+            elif myfits[0].header['OBJECT'].lower().count('sky for'):
                 self.type="SKY_FOR"
-            elif indata[0].header['OBJECT'].count('MASTER'):
-                self.type=indata[0].header['PAPI.TYPE']
-            elif indata[0].header['OBJECT'].count('focus'):
+            elif myfits[0].header['OBJECT'].lower().count('MASTER'):
+                self.type=myfits[0].header['PAPI.TYPE']
+            elif myfits[0].header['OBJECT'].lower().count('focus'):
                 self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' !!!
             else:
                 self.type="SCIENCE"
+            log.debug("Image type: %s", self.type)
         except KeyError:
             log.error('Error, keyword not found')
             self.type='UNKNOW'
@@ -235,56 +257,46 @@ class ClFits:
         #Is pre-reduced the image ? by default, no
         self.processed=False
         
-        #EXTEND
-        try:    
-            if indata[0].header['EXTEND']==True:
-                self.mef=True
-                next=indata[0].header['NEXTEND']
-            else:
-                self.mef=False
-        except KeyError:
-            #print 'Error, EXTEND keyword not found'
-            self.mef=False
 
         #print "File :"+ self.pathname
         #Filter
         try:
-            self.filter  = indata[0].header['FILTER']
+            self.filter  = myfits[0].header['FILTER']
         except KeyError:
             log.error('Error, FILTER keyword not found')
             self.filter  = 'UNKNOWN'
         
         #Exposition Time
         try:
-            self.exptime=indata[0].header['EXPTIME']
+            self.exptime=myfits[0].header['EXPTIME']
         except KeyError:
             log.error('Error, EXPTIME keyword not found')
             self.exptime  = -1
 
         #Integration Time
         try:
-            self.itime=indata[0].header['ITIME']
+            self.itime=myfits[0].header['ITIME']
         except KeyError:
             log.error('Error,  ITIME keyword not found')
             self.itime  = -1
             
         #Number of coadds
         try:
-            self.ncoadds=indata[0].header['NCOADDS']
+            self.ncoadds=myfits[0].header['NCOADDS']
         except KeyError:
             log.error('Error, NCOADDS keyword not found')
             self.ncoadda  = -1
                  
         #Read-Mode
         try:
-            self.readmode=indata[0].header['READMODE']
+            self.readmode=myfits[0].header['READMODE']
         except KeyError:
             log.error('Error, READMODE keyword not found')
             self.readmode  = ""
                      
         #UT-date of observation
         try:
-            self.datetime_obs = indata[0].header['DATE-OBS']
+            self.datetime_obs = myfits[0].header['DATE-OBS']
             if self.datetime_obs.count('T'):
                 self.date_obs, self.time_obs = self.datetime_obs.split('T')
             else:
@@ -298,35 +310,35 @@ class ClFits:
         
         #RA-coordinate (in degrees)
         try:
-            self.ra = indata[0].header['RA']
+            self.ra = myfits[0].header['RA']
         except KeyError:
             log.error('Error, RA keyword not found')
             self.ra  = ''
         
         #Dec-coordinate (in degrees)
         try:
-            self.dec = indata[0].header['DEC']
+            self.dec = myfits[0].header['DEC']
         except KeyError:
             log.error('Error, DEC keyword not found')
             self.dec  = ''
 
         #MJD-Modified julian date 'days' of observation
         try:
-            self.mjd = indata[0].header['MJD-OBS']
+            self.mjd = myfits[0].header['MJD-OBS']
         except KeyError:
             log.error('Error, MJD-OBS keyword not found')
             self.mjd  = ''
            
         #OBJECT
         try:
-            self.object = indata[0].header['OBJECT']
+            self.object = myfits[0].header['OBJECT']
         except KeyError:
             log.error('Error, OBJECT keyword not found')
             self.object  = ''   
         
         #CHIPCODE
         try:
-            self.chipcode = indata[0].header['CHIPCODE']
+            self.chipcode = myfits[0].header['CHIPCODE']
         except KeyError:
             log.warning('Warning, CHIPCODE keyword not found, setting default (1)')
             self.chipcode  = 1  # default
@@ -339,13 +351,13 @@ class ClFits:
         
         # PRESS1 and PRESS2 wrong keyword values
         try:
-            if indata[0].header['INSTRUME']=='Omega2000':
-                indata[0].header.update('PRESS1', 0.0)
-                indata[0].header.update('PRESS2', 0.0)
+            if myfits[0].header['INSTRUME']=='Omega2000':
+                myfits[0].header.update('PRESS1', 0.0)
+                myfits[0].header.update('PRESS2', 0.0)
         except KeyError:
             log.error('Warning,no INSTRUME keyword not found')
         
-        indata.close()
+        myfits.close()
 			
     def addHistory(self, string_history):
         """ Add a history keyword to the header
@@ -406,13 +418,15 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, c_n
     # Check all files        
     for file in file_list:
             f=ClFits ( file )
-            print 'FILE=',file
-            print '------------------------'
-            print 'TYPE=',f.getType()
-            print 'FILTER=',f.getFilter()
-            print 'TEXP=',f.expTime()
-            print 'NCOADDS=',f.getNcoadds()
-            print 'READMODE=',f.getReadMode()
+            debug=0
+            if debug:
+                print 'FILE=',file
+                print '------------------------'
+                print 'TYPE=',f.getType()
+                print 'FILTER=',f.getFilter()
+                print 'TEXP=',f.expTime()
+                print 'NCOADDS=',f.getNcoadds()
+                print 'READMODE=',f.getReadMode()
             
             if (  (c_type and m_type!=f.getType()) or (c_filter and m_filter!=f.getFilter()) or (c_texp and m_texp!=f.expTime()) or (c_ncoadds and m_ncoadds!=f.getNcoadds()) or (c_readmode and m_readmode!=f.getReadMode())):
                 log.debug("Missmath on some property")

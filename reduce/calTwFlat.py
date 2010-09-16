@@ -233,7 +233,7 @@ class MasterTwilightFlat:
         # - Build the frame list for IRAF
         log.debug("Combining Twilight Flat frames...")
         comb_flat_frame=(self.__output_file_dir+"/comb_tw_flats.fits").replace("//","/")
-        print "COMB=", comb_flat_frame
+        #print "COMB=", comb_flat_frame
         misc.fileUtils.removefiles(comb_flat_frame)
         # - Call IRAF task
         iraf.flatcombine(input=m_darksublist,

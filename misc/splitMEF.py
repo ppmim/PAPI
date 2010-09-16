@@ -4,14 +4,14 @@
 #
 # PAPI (PANIC PIpeline)
 #
-# mksuperflat.py
+# splitMEF.py
 #
 # Split a Multi Extension FITS file into N single FITS frames
 #
 # Created    : 10/09/2010    jmiguel@iaa.es -
 # Last update: 
 # TODO
-#  
+#      An alternative way is to use iraf.imcopy !
 ################################################################################
 
 ################################################################################
@@ -96,11 +96,15 @@ class SplitMEF:
             try:
                 next=hdulist[0].header['NEXTEND']
             except KeyError:
-                print 'Warning, card NEXTEND not found. Checking instrument name'
-                if hdulist[0].header['INSTRUME']=='HAWKI':
-                    next=4
-                else:
-                    return 0
+                print 'Warning, card NEXTEND not found. Counting number of extensions...'
+                next=0
+                while (1):
+                    try:
+                        if (hdulist[next+1].header['XTENSION'] == 'IMAGE'): next += 1
+                    except:
+                        break
+                print "->Found %d extensions" %(next)
+                         
             out_filenames=[]
             for i in range(1,next+1):
                 suffix=self.out_filename_suffix %i
@@ -116,14 +120,13 @@ class SplitMEF:
                     except KeyError:
                         print 'Warning, key %s cannot not be copied, is not in the header' %(key)
                                 
-                out_hdulist[0].header.update
                 out_hdulist.writeto(out_filenames[i-1], output_verify='ignore', clobber=True)
                 out_hdulist.close(output_verify='ignore')
                 del out_hdulist
                 print "File %s created " %(out_filenames[i-1])
             
-            log.info("End of SplitMEF. %d files created", next)
-            return next 
+        log.info("End of SplitMEF. %d files created", next)
+        return next 
             
                            
                       
@@ -153,6 +156,8 @@ if __name__ == "__main__":
         filelist=[options.file]
     elif options.input_file_list:
         filelist=[line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
+        print filelist
+        print "vayaaaa"
     else:
         parser.print_help()
         parser.error("incorrect number of arguments " )

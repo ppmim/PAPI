@@ -92,8 +92,10 @@ int main(int argc, char *argv[])
     ny = ny + yabove - ybelow;      * image size of coadded dither set *
     */
 
-    /*meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1); ORIGINAL */
-    meanplane = cube_median(data, nplanes, nx, ny, scale, 1); /* prueba */
+    meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1); /*ORIGINAL */
+    /* prueba
+    meanplane = cube_median(data, nplanes, nx, ny, scale, 1); 
+    */
     /* 0:jmim */
     /*meanplane = cube_median(data, nplanes, nx, ny, scale, 1);*/
     /* 1:jmim */

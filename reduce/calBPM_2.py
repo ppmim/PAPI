@@ -343,7 +343,7 @@ class BadPixelMask:
         
         flat_off_comb=self.outputdir+"flats_comb_off.fits"
         misc.fileUtils.removefiles(flat_off_comb)
-        # Due a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument
+        # Due to a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument
         # we need to build again a text file with the files
         flats="/tmp/flats_off.txt"
         ftemp=open(flats,"w")

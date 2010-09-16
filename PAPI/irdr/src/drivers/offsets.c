@@ -26,7 +26,7 @@
 
 #define HWID 10.0     /* default half-width of cross-corr search box, arcsec */
 #define MAXNFILES 399
-#define MAXNLIST 99999L
+#define MAXNLIST 999999L
 #define MINFRAC  0.1      /* 0.15; correlation failed if overlap < MINFRAC */
 
 static char *fn[MAXNFILES];              /* FITS OBJECTS frames filenames */

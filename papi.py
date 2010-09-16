@@ -693,22 +693,26 @@ class ReductionSet:
         self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainfile, 'mask', self.obs_mode)      
     
         #### EXIT ########
-        sys.exit()
+        #log.info("Sucessful end of Pipeline (I hope!)")
+        #sys.exit()
         ##################
         
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)
         #########################################
-        log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
-        aw = astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
-        try:
-            aw.run()
-        except:
-            log.error("Some error while running Astrowarp....")
-            raise
+        astrowarp=False
+        if astrowarp:
+            log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
+            aw = astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
+            try:
+                aw.run()
+            except:
+                log.error("Some error while running Astrowarp....")
+                raise
         
         #### EXIT ########
-        sys.exit()
+        #log.info("Sucessful end of Pipeline (I hope!)")
+        #sys.exit()
         ##################
             
         #########################################
@@ -733,7 +737,7 @@ class ReductionSet:
         #########################################
         # 10 - Make Astrometry
         #########################################
-        #self.makeAstrometry(self.out_dir+'/coadd2.fits', '2mass', 'noregrid') 
+        self.makeAstrometry(self.out_dir+'/coadd2.fits', '2mass', 'noregrid') 
         log.info("**** Astrometric calibration of coadded result frame ****")
         
         

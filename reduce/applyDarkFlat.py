@@ -192,7 +192,7 @@ class ApplyDarkFlat:
                      
                 f.close()
                 result_file_list.append(newpathname)            
-                log.debug('Saved  new dark subtracted or/and flattened file  %s' ,  newpathname )
+                log.debug('Saved new dark subtracted or/and flattened file  %s' ,  newpathname )
         
         log.debug(t.tac() )
         log.info("Successful end of applyDarkFlat !")
