@@ -81,6 +81,7 @@ from iraf import imred
 from iraf import ccdred
 from iraf import images
 from iraf import tv
+from iraf import mscred
 #from iraf import mscred OJO !!!! puede hacer que no funcione el ccdred normal (combine, ...)
 
 # Interact with FITS files
@@ -1298,25 +1299,25 @@ class ReductionBlock:
 
         log.debug("Start mathOp")
         if outputFile==None:
-            outputFile = '/tmp/op.fits'
+            outputFile = self.m_output_dir+'/op.fits'
 
         if operator!='+' and operator!='-' and operator!='/':
+            log.error("Math operation not allowed")
             return
 
         # Remove an old output file
         misc.fileUtils.removefiles(outputFile)
         if (operator=='+' and len(self.m_file_list_p)>2):
-            framelist = ''
-            framelist = utils.listToString(self.m_file_list_p)
-            log.debug("Frame list to combine = [%s]", framelist)
-            iraf.combine(input=framelist,
+            log.debug("Frame list to combine = [%s]", self.m_file_list_p )
+            misc.utils.listToFile(self.m_file_list_p, self.m_output_dir+"/files.tmp") 
+            iraf.mscred.combine(input=("@"+(self.m_output_dir+"/files.tmp").replace('//','/')),
                      output=outputFile,
                      combine='average',
-                     ccdtype='none',
+                     ccdtype='',
                      reject='sigclip',
                      lsigma=3,
                      hsigma=3,
-                     subset='yes',
+                     subset='no',
                      scale='mode'
                      #masktype='none'
                      #verbose='yes'
@@ -1333,7 +1334,7 @@ class ReductionBlock:
                       verbose='yes'
                       )
             """
-            iraf.imarith(operand1=self.m_file_list_p[0],
+            iraf.mscarith(operand1=self.m_file_list_p[0],
                       operand2=self.m_file_list_p[1],
                       op=operator,
                       result=outputFile,

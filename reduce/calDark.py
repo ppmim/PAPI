@@ -172,7 +172,7 @@ class MasterDark:
         # Call the noao.imred.ccdred task through PyRAF
         
         misc.utils.listToFile(good_frames, self.__output_file_dir+"/files.list") 
-        iraf.mscred.darkcombine(input="@"+self.__output_file_dir+"/files.list",
+        iraf.mscred.darkcombine(input="@"+(self.__output_file_dir+"/files.list").replace('//','/'),
                         output=self.__output_filename,
                         combine='average',
                         ccdtype='',

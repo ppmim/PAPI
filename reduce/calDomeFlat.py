@@ -188,7 +188,7 @@ class MasterDomeFlat:
         misc.fileUtils.removefiles(flat_lampon)
         misc.utils.listToFile(domelist_lampon, self.__output_file_dir+"/files_on.list") 
         # - Call IRAF task
-        iraf.mscred.flatcombine(input="@"+self.__output_file_dir+"/files_on.list",
+        iraf.mscred.flatcombine(input="@"+(self.__output_file_dir+"/files_on.list").replace('//','/'),
                         output=flat_lampon,
                         combine='median',
                         ccdtype='',
@@ -209,7 +209,7 @@ class MasterDomeFlat:
         misc.fileUtils.removefiles(flat_lampoff)
         misc.utils.listToFile(domelist_lampoff, self.__output_file_dir+"/files_off.list") 
         # - Call IRAF task
-        iraf.mscred.flatcombine(input="@"+self.__output_file_dir+"/files_off.list",
+        iraf.mscred.flatcombine(input="@"+(self.__output_file_dir+"/files_off.list").replace('//','/'),
                         output=flat_lampoff,
                         combine='median',
                         ccdtype='',
@@ -298,8 +298,10 @@ class MasterDomeFlat:
         
         
         # Cleanup: Remove temporary files
-        misc.fileUtils.removefiles(flat_lampoff, flat_lampon)
+        misc.fileUtils.removefiles(flat_lampoff, flat_lampon, flat_diff)
         #Remove temp list files
+        misc.fileUtils.removefiles(self.__output_file_dir+"/files_off.list")
+        misc.fileUtils.removefiles(self.__output_file_dir+"/files_on.list")
         #todo
             
         log.debug(t.tac() )

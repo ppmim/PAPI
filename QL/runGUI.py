@@ -50,6 +50,7 @@ import os.path
 import fnmatch
 import shutil
 import time
+from optparse import OptionParser
 
 
 import reduce
@@ -58,6 +59,8 @@ import reduce.calBPM_2
 import reduce.checkQuality
 import misc.fileUtils
 import misc.utils as utils
+import misc.splitMEF
+import misc.joinMEF
 import datahandler
 import misc.display as display
 from runQtProcess import *
@@ -71,6 +74,7 @@ from pyraf import iraf
 from iraf import noao
 from iraf import imred
 from iraf import ccdred
+from iraf import mscred
 
 # Math module for efficient array processing
 import numpy
@@ -83,12 +87,26 @@ from misc.paLog import log
 class MainGUI(panicQL):
 
             
-    def __init__(self):               
+    def __init__(self, source_dir=None, output_dir='/tmp/out/', temp_dir='/tmp/', config_file=None):               
         
         log.debug("Here start Quick-Look tool !!!")
         panicQL.__init__(self)
+        
         ## Init member variables
-        self.m_default_data_dir = os.environ['PANIC_DATA']
+        # Init main directories
+        if source_dir!= None:
+            self.m_default_data_dir = source_dir
+        else:      
+            self.m_default_data_dir = os.environ['PANIC_DATA']
+            
+        self.m_sourcedir =  self.m_default_data_dir 
+        self.m_outputdir = output_dir 
+        self.m_tempdir = temp_dir
+        #self.m_panic_dir = '/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/'       # PANIC SW directory
+        self.m_papi_dir  = os.environ['PAPI_HOME']  # PAnic PIpeline directory
+        self._ini_cwd = os.getcwd()
+    
+    
         self.m_frameList_dark = ''
         self.m_frameList_dflat = ''
         self.m_frameList_sflat = ''
@@ -97,12 +115,6 @@ class MainGUI(panicQL):
         self.m_masterMask = '/tmp/master_mask.fits'
 
 
-        self.m_sourcedir = ''
-        self.m_outputdir = '/tmp/out/'
-        self.m_tempdir = '/tmp/'
-        #self.m_panic_dir = '/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/'       # PANIC SW directory
-        self.m_papi_dir  = os.environ['PAPI_HOME']  # PAnic PIpeline directory
-        self._ini_cwd = os.getcwd()
         self._last_cmd=None             # Last external shell command executed or started
         self._last_cmd_output=None      # Output (file) that last shell command should generate
 
@@ -569,11 +581,20 @@ class MainGUI(panicQL):
         popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 16 )
         popUpMenu.insertItem("Test", self.testSlot, 0, 17 )
         popUpMenu.insertSeparator()
+        # Math sub-menu
         subPopUpMenu = QPopupMenu()
         subPopUpMenu.insertItem("Substract Frames", self.subtractFrames_slot, 0, 1 )
         subPopUpMenu.insertItem("Sum Frames", self.sumFrames_slot, 0, 2 )
         subPopUpMenu.insertItem("Divide Frames", self.divideFrames_slot, 0, 3 )
-        popUpMenu.insertItem("Math", subPopUpMenu, 0, 20 )
+        popUpMenu.insertItem("Math", subPopUpMenu, 0, 18 )
+        # Fits sub-menu
+        subPopUpMenu2 = QPopupMenu()
+        subPopUpMenu2.insertItem("Split MEF file", self.splitMEF_slot, 0, 1 )
+        subPopUpMenu2.insertItem("Join MEF file", self.joinMEF_slot, 0, 2 )
+        subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
+        subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
+        popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 19 )
+        
         
 
         ## Disable some menu items depeding of the number of item selected in the list view
@@ -599,7 +620,29 @@ class MainGUI(panicQL):
         ## Finally, execute the popup
         popUpMenu.exec_loop(QCursor.pos())   
 
-
+    def splitMEF_slot(self):
+        """Split each MEF selected file from the list view into NEXT separate single FITS file, where NEXT is number of extensions.
+           As result, NEXT files should be created
+        """
+        for file in self.m_popup_l_sel:
+            split = misc.splitMEF.SplitMEF([file])
+            split.run()
+            #self.textEdit_log.append(QString(str(line)))
+    
+    def joinMEF_slot(self):
+        """Join a MEF file to stitch them together
+           As result, one single FITS file with the stitched image should be created
+        """
+        for file in self.m_popup_l_sel:
+            join = misc.joinMEF.JoinMEF([file])
+            join.run()
+    
+    def sliceCube_slot(self):
+        pass
+    
+    def coaddCube_slot(self):
+        pass
+        
 
     def selected_file_slot(self, listItem):
         """To know which item is selected """
@@ -851,7 +894,7 @@ class MainGUI(panicQL):
             file_lst.write( file +"\n")
         file_lst.close()
         # Call external apps
-        cmd=self.m_papi_dir + "/mksuperflat.py" + " " + filename + " /tmp/skyFlat.fits"
+        cmd=self.m_papi_dir + "/mksuperflat.py" + " -s " + filename + " -o /tmp/skyFlat.fits"
         e=utils.runCmd(cmd)
         
         if e==1: # No error
@@ -881,7 +924,8 @@ class MainGUI(panicQL):
             threshold = 2.0
             input_file = self.m_listView_item_selected
             out_file = self.m_listView_item_selected.replace(".fits",".skysub.fits")
-            cmd="sex %s -c %s -FITS_UNSIGNED Y -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
+            #cmd="sex %s -c %s -FITS_UNSIGNED Y -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
+            cmd="sex %s -c %s  -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
             
             #Change to working directory
             os.chdir(self.m_papi_dir)
@@ -989,12 +1033,13 @@ class MainGUI(panicQL):
     def show_stats_slot(self):
         """Show image statistics in the log console of the files selected"""
         
-        self.textEdit_log.append("<info_tag>FILE                     MEAN         MODE       STDDEV       MIN       MAX  </info_tag>")
+        self.textEdit_log.append("<info_tag>FILE                            MEAN         MODE       STDDEV       MIN       MAX  </info_tag>")
         for item in self.m_popup_l_sel:
-            values = (iraf.imstat (images=item,
+            values = (iraf.mscstat (images=item,
             fields="image,mean,mode,stddev,min,max",format='no',Stdout=1))
-            line=os.path.basename(values[0])
-            self.textEdit_log.append(QString(str(line)))
+            for line in values:
+                #line=os.path.basename(values[0])
+                self.textEdit_log.append(QString(str(line)))
         
     def background_estimation_slot(self):
         """ Give an background estimation of the current selected image"""
@@ -1003,12 +1048,13 @@ class MainGUI(panicQL):
         try:     
             img=cq.estimateBackground(self.m_outputdir+"bckg.fits")
             
-            values = (iraf.imstat (images=img,
-            fields="image,mean,mode,stddev,min,max",format='no',Stdout=1))
-            file,mean,mode,stddev,min,max=values[0].split()
-            
-            self.textEdit_log.append(QString("<info_tag> Background estimation MEAN= %1    MODE=%2    STDDEV=%3    MIN=%4         MAX=%5</info_tag>").arg(mean).arg(mode)
-            .arg(stddev).arg(min).arg(max))
+            values = (iraf.mscstat (images=img,
+            fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
+            #file,mean,mode,stddev,min,max=values[0].split()
+            self.textEdit_log.append(QString("<info_tag> Background estimation :</info_tag>"))
+            for line in values:
+                self.textEdit_log.append(str(line))
+                #self.textEdit_log.append(QString("<info_tag> Background estimation MEAN= %1    MODE=%2    STDDEV=%3    MIN=%4         MAX=%5</info_tag>").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
             
             display.showFrame(img)
         except:
@@ -1394,8 +1440,40 @@ class MainGUI(panicQL):
 ################################################################################
 
 if __name__ == "__main__":
+    
+    # Get command line args
+    usage = "usage: %prog [options] arg1 arg2"
+    
+    parser = OptionParser(usage)
+    
+    parser.add_option("-v", "--verbose",
+                  action="store_true", dest="verbose", default=True,
+                  help="verbose mode [default]")
+    
+    parser.add_option("-s", "--source",
+                  action="store", dest="source_dir",
+                  help="Source directory of data frames. It has to be a fullpath file name")
+    
+    parser.add_option("-o", "--output",
+                  action="store", dest="output_dir", help="output directory to write products")
+    
+    parser.add_option("-t", "--temp",
+                  action="store", dest="temp_dir", help="temporary directory to write")
+    
+    parser.add_option("-c", "--config",
+                  action="store", dest="config_file", help="Quick Look config file")
+              
+        
+
+
+    (options, args) = parser.parse_args()
+    if not options.source_dir or not options.output_dir or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+        parser.print_help()
+        parser.error("incorrect number of arguments " )
+    
+    
     app = QApplication(sys.argv)
-    f = MainGUI()
+    f = MainGUI(options.source_dir, options.output_dir, options.temp_dir, options.config_file)
     f.show()
     app.setMainWidget(f)
     app.exec_loop()

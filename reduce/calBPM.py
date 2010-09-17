@@ -156,7 +156,7 @@ class BadPixelMask:
         flat_comb='/tmp/flatcomb.fits'
         misc.fileUtils.removefiles(flat_comb)
         # Call IRAF task
-        iraf.flatcombine(input='@'+flats, 
+        iraf.flatcombine(input='@'+flats.replace('//','/'), 
                         output=flat_comb, 
                         combine='median', 
                         ccdtype='none', 

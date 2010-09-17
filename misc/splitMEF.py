@@ -11,7 +11,8 @@
 # Created    : 10/09/2010    jmiguel@iaa.es -
 # Last update: 
 # TODO
-#      An alternative way is to use iraf.imcopy !
+#       - An alternative way is to use iraf.imcopy !
+#       - Other alternative is iraf.mscsplit
 ################################################################################
 
 ################################################################################
@@ -65,7 +66,7 @@ class SplitMEF:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self,  input_files,  output_filename_suffix=".%02d.fits", copy_keyword=['EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']):
+    def __init__(self,  input_files,  output_filename_suffix=".%02d.fits", copy_keyword=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']):
          
         self.input_files = input_files
         self.out_filename_suffix = output_filename_suffix  # suffix 
@@ -119,7 +120,8 @@ class SplitMEF:
                         out_hdulist[0].header.update(key,value,comment)
                     except KeyError:
                         print 'Warning, key %s cannot not be copied, is not in the header' %(key)
-                                
+                # delete some keywords not required anymore
+                del out_hdulist[0].header['EXTNAME']                
                 out_hdulist.writeto(out_filenames[i-1], output_verify='ignore', clobber=True)
                 out_hdulist.close(output_verify='ignore')
                 del out_hdulist
@@ -164,7 +166,7 @@ if __name__ == "__main__":
     if not options.out_suffix:
         options.out_suffix=".%02d.fits"
         
-    copy_keyword=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2',]    
+    copy_keyword=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']    
     split = SplitMEF(filelist, options.out_suffix,copy_keyword)
     split.run()
           

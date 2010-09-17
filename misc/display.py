@@ -27,7 +27,6 @@ import datetime
 import sys
 import time
 
-next_frameno=1
 #Log
 from misc.paLog import log
 import datahandler
@@ -49,11 +48,6 @@ def startDisplay():
     stdout_handle=os.popen("/sbin/pidofproc ds9","r")
     if stdout_handle.read() =='':
         time.sleep(1)
-    # Now, we create 4 new frames and enable #1  
-    os.system(("%s/xpaset -p ds9 frame new" % ds9_path)) #2
-    os.system(("%s/xpaset -p ds9 frame new " % ds9_path)) #3
-    os.system(("%s/xpaset -p ds9 frame new" % ds9_path)) #4
-    os.system(("%s/xpaset -p ds9 frame frameno 1" % (ds9_path)))
     time.sleep(1)
   else:
     # DS9 is already running...
@@ -99,36 +93,36 @@ def startDisplay2():
 
 def showFrame(frame):
 
-  global next_frameno
-
   f=datahandler.ClFits(frame)
 
   #Check display
   startDisplay()
   
   if (f.mef==True):
-    # 4 extension image is supposed
-    for i in range(1,5):
-        os.system(("%s/xpaset -p ds9 frame frameno %d" % (ds9_path, i)))
-        os.system(("%s/xpaset -p ds9 frame reset" % ds9_path))
-        os.system(("%s/xpaset -p ds9 tile" % ds9_path))
+        # Multi-Extension FITS files
+        if (f.isDark()):
+            # (Hawki) Dark files don't have WCS information required by ds9 mosaicimage
+            os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
+            os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
+            os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
+            os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
+            os.system(("%s/xpaset -p ds9 file multiframe %s" % (ds9_path, frame)))
+        else:
+            # Beware, 'mosaicimage' ds9 facility require WCS information 
+            os.system(("%s/xpaset -p ds9 file mosaicimage %s" % (ds9_path, frame)))
+            os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
+            os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
+            os.system(("%s/xpaset -p ds9 zoom to fit" % ds9_path))
+  else:
+        # Single FITS files
+        os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
+        os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
+        os.system(("%s/xpaset -p ds9 single" % ds9_path))
         os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
-        os.system(("%s/xpaset -p ds9 file %s[%d]" %(ds9_path, frame, i)))
+        os.system(("%s/xpaset -p ds9 file %s" %(ds9_path, frame)))
         os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
         os.system(("%s/xpaset -p ds9 zoom to fit" % ds9_path))
-  else:
-    os.system(("%s/xpaset -p ds9 frame frameno %d" % (ds9_path, next_frameno)))
-    os.system(("%s/xpaset -p ds9 frame reset" % ds9_path))
-    os.system(("%s/xpaset -p ds9 single" % ds9_path))
-    os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
-    os.system(("%s/xpaset -p ds9 file %s" %(ds9_path, frame)))
-    os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
-    os.system(("%s/xpaset -p ds9 zoom to fit" % ds9_path))
 
-  if next_frameno == 4:
-    next_frameno=1
-  else:
-    next_frameno=next_frameno+1
 
 ################################################################################
 # Show the current frame into DS9 display

@@ -1,1 +1,1 @@
-../reduce/mksuperflat.py
+../reduce/calSuperFlat.py

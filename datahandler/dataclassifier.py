@@ -206,7 +206,7 @@ class ClFits:
                 try:
                     self.next=myfits[0].header['NEXTEND']
                 except KeyError:
-                    log.warn('Warning, card NEXTEND not found. Counting number of extensions...')
+                    log.warn('NEXTEND keyword not found. Counting number of extensions...')
                     self.next=0
                     while (1):
                         try:
@@ -216,7 +216,8 @@ class ClFits:
                     log.debug("Found %d extensions", self.next)
             else:
                 self.mef=False
-        except KeyError:
+        except KeyError,IndexError:
+            log.debug("Not a MEF file")
             self.mef=False
         
         # If file is a MEF, some values will be read from the header extensions      
@@ -251,7 +252,7 @@ class ClFits:
                 self.type="SCIENCE"
             log.debug("Image type: %s", self.type)
         except KeyError:
-            log.error('Error, keyword not found')
+            log.warning('OBJECT keyword not found')
             self.type='UNKNOW'
         
         #Is pre-reduced the image ? by default, no
@@ -263,35 +264,35 @@ class ClFits:
         try:
             self.filter  = myfits[0].header['FILTER']
         except KeyError:
-            log.error('Error, FILTER keyword not found')
+            log.warning('FILTER keyword not found')
             self.filter  = 'UNKNOWN'
         
         #Exposition Time
         try:
             self.exptime=myfits[0].header['EXPTIME']
         except KeyError:
-            log.error('Error, EXPTIME keyword not found')
+            log.warning('EXPTIME keyword not found')
             self.exptime  = -1
 
         #Integration Time
         try:
             self.itime=myfits[0].header['ITIME']
         except KeyError:
-            log.error('Error,  ITIME keyword not found')
+            log.warning('ITIME keyword not found')
             self.itime  = -1
             
         #Number of coadds
         try:
             self.ncoadds=myfits[0].header['NCOADDS']
         except KeyError:
-            log.error('Error, NCOADDS keyword not found')
+            log.warning('NCOADDS keyword not found')
             self.ncoadda  = -1
                  
         #Read-Mode
         try:
             self.readmode=myfits[0].header['READMODE']
         except KeyError:
-            log.error('Error, READMODE keyword not found')
+            log.warning('READMODE keyword not found')
             self.readmode  = ""
                      
         #UT-date of observation
@@ -303,7 +304,7 @@ class ClFits:
                 self.date_obs = self.datetime_obs
                 self.time_obs = ''
         except KeyError:
-            log.error('Error, DATE-OBS keyword not found')
+            log.warning('DATE-OBS keyword not found')
             self.date_obs  = ''
             self.time_obs  = ''
             self.datetime_obs = ''
@@ -312,35 +313,35 @@ class ClFits:
         try:
             self.ra = myfits[0].header['RA']
         except KeyError:
-            log.error('Error, RA keyword not found')
+            log.warning('RA keyword not found')
             self.ra  = ''
         
         #Dec-coordinate (in degrees)
         try:
             self.dec = myfits[0].header['DEC']
         except KeyError:
-            log.error('Error, DEC keyword not found')
+            log.warning('DEC keyword not found')
             self.dec  = ''
 
         #MJD-Modified julian date 'days' of observation
         try:
             self.mjd = myfits[0].header['MJD-OBS']
         except KeyError:
-            log.error('Error, MJD-OBS keyword not found')
+            log.warning('MJD-OBS keyword not found')
             self.mjd  = ''
            
         #OBJECT
         try:
             self.object = myfits[0].header['OBJECT']
         except KeyError:
-            log.error('Error, OBJECT keyword not found')
+            log.warning('OBJECT keyword not found')
             self.object  = ''   
         
         #CHIPCODE
         try:
             self.chipcode = myfits[0].header['CHIPCODE']
         except KeyError:
-            log.warning('Warning, CHIPCODE keyword not found, setting default (1)')
+            log.warning('CHIPCODE keyword not found, setting default (1)')
             self.chipcode  = 1  # default
         
         #DetectorID
@@ -355,7 +356,7 @@ class ClFits:
                 myfits[0].header.update('PRESS1', 0.0)
                 myfits[0].header.update('PRESS2', 0.0)
         except KeyError:
-            log.error('Warning,no INSTRUME keyword not found')
+            log.warning('INSTRUME keyword not found')
         
         myfits.close()
 			

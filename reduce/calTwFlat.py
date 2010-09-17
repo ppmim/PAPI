@@ -33,8 +33,9 @@ import datahandler
 # Pyraf modules
 from pyraf import iraf
 from iraf import noao
-from iraf import imred
-from iraf import ccdred
+#from iraf import imred
+#from iraf import ccdred
+from iraf import mscred
 
 import numpy
 
@@ -75,7 +76,7 @@ class MasterTwilightFlat:
         A list file of twilight flat fields filenames
         Input bad pixel mask or NULL
     \param mdark
-        Master current dark model to dark subtraction (required)
+        Master dark to subtract (required) - (a better approch should use a dark model)
     \param output_filename  
         Master Tw Flat created 
     \param lthr

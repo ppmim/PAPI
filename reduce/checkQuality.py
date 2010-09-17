@@ -7,7 +7,7 @@
 #
 # Created    : 07/11/2008    jmiguel@iaa.es
 # Last update: 23/06/2009    jmiguel@iaa.es
-#
+#              17/09/2010    jmiguel@iaa.es - Added support to MEF files
 ################################################################################
 
 
@@ -114,9 +114,17 @@ class CheckQuality:
         source_file=catalog_file
         
         fits_file=pyfits.open(self.input_file, 'update')
-        naxis1=fits_file[0].header['NAXIS1']
-        naxis2=fits_file[0].header['NAXIS2']
-        
+        try:
+            if fits_file[0].header['EXTEND']==True:
+                naxis1=fits_file[1].header['NAXIS1']
+                naxis2=fits_file[1].header['NAXIS2']
+            else:      
+                naxis1=fits_file[0].header['NAXIS1']
+                naxis2=fits_file[0].header['NAXIS2']
+        except KeyError:
+            naxis1=fits_file[0].header['NAXIS1']
+            naxis2=fits_file[0].header['NAXIS2']    
+            
         
         #fwhm_world=[float(line.split()[7]) for line in fileinput.input(source_file)]
         #matrix=[line.split() for line in fileinput.input(source_file)]
@@ -145,7 +153,6 @@ class CheckQuality:
         
         m_good_stars=numpy.array(good_stars)
         
-        print "\n----------"
         
         if len(m_good_stars)>20:
             std=numpy.std(m_good_stars[:,8])

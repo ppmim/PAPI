@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon Apr 19 13:47:03 2010
+# Created: Thu Sep 16 17:09:54 2010
 #      by: The PyQt User Interface Compiler (pyuic) 3.14.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -11133,6 +11133,9 @@ class panicQL(QMainWindow):
         self.listView_config.addColumn(self.__tr("Resolved Filename"))
         self.listView_config.setGeometry(QRect(300,270,610,150))
         self.listView_config.setDefaultRenameAction(QListView.Accept)
+
+        self.checkBox22 = QCheckBox(self.TabPage_2,"checkBox22")
+        self.checkBox22.setGeometry(QRect(503,219,280,20))
         self.tabWidget3.insertTab(self.TabPage_2,QString.fromLatin1(""))
 
         self.fileOpenAction = QAction(self,"fileOpenAction")
@@ -11170,6 +11173,7 @@ class panicQL(QMainWindow):
         self.quitAction.setIconSet(QIconSet(self.image12))
         self.irafConsoleAction = QAction(self,"irafConsoleAction")
         self.irafConsoleAction.setIconSet(QIconSet(self.image13))
+        self.Action = QAction(self,"Action")
 
 
         self.toolBar = QToolBar(QString(""),self,Qt.DockTop)
@@ -11451,6 +11455,7 @@ class panicQL(QMainWindow):
         item = QListViewItem(self.listView_config,item)
         item.setText(0,self.__tr("Photometry (global estimation)"))
 
+        self.checkBox22.setText(self.__tr("Automatically create dataset from headers"))
         self.tabWidget3.changeTab(self.TabPage_2,self.__tr("Pipeline"))
         self.fileOpenAction.setText(self.__tr("Open"))
         self.fileOpenAction.setMenuText(self.__tr("&Open"))
@@ -11512,6 +11517,7 @@ class panicQL(QMainWindow):
         self.quitAction.setToolTip(self.__tr("Quit Quick-Look"))
         self.irafConsoleAction.setText(self.__tr("Action"))
         self.irafConsoleAction.setToolTip(self.__tr("Open an IRAF console"))
+        self.Action.setText(self.__tr("Unnamed"))
         self.toolBar.setLabel(self.__tr("Tools"))
         self.Toolbar.setLabel(self.__tr("Toolbar"))
         self.Toolbar_2.setLabel(self.__tr("Toolbar_2"))
