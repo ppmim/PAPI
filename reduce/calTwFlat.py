@@ -9,6 +9,7 @@
 # Last update: 29/09/2009    jmiguel@iaa.es
 #              14/12/2009    jmiguel@iaa.es  - Check NCOADDS; use ClFits class; Skip non TW flats and cotinue working with the good ones
 #              03/03/2010    jmiguel@iaa.es Added READMODE checking 
+#              20/09/2010    jmiguel@iaa.es Addedd support of MEF files
 #
 # TODO:
 #   - use of dark model to subtract right dark current
@@ -93,7 +94,7 @@ class MasterTwilightFlat:
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, flat_files, dark_model, output_filename="/tmp/mtwflat.fits", lthr=100, hthr=100000, bpm=None):
+    def __init__(self, flat_files, dark_model, output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000, bpm=None):
         self.__input_files = flat_files
         self.__master_dark = dark_model
         self.__output_file_dir = os.path.dirname(output_filename)
@@ -123,6 +124,10 @@ class MasterTwilightFlat:
         # Get the user-defined list of flat frames
         framelist = self.__input_files
         
+        # Check exist master DARK
+        if not os.path.exists( self.__master_dark  ):
+            log.error('Cannot find frame : "%s"' % self.__master_dark)
+            raise "Master Dark not found"
         
         # Determine the number of Flats frames to combine
         try:
@@ -161,6 +166,20 @@ class MasterTwilightFlat:
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
+            if f.mef==True:
+                log.debug("Found a MEF file")
+                #log.error("Sorry, MEF files are not supported yet !")
+                #raise Exception('Sorry, MEF files are not supported yet !')
+                try:
+                    myfits = pyfits.open(iframe)
+                    mean=0
+                    for i in range(1,f.next+1):
+                        mean+=numpy.mean(myfits[i].data)
+                    mean/=f.next
+                    log.debug("MEAN value of MEF = %d", mean)
+                except:
+                    raise
+            
             if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type or f.getReadMode()!=f_readmode)) :
                 log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE.")
                 raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
@@ -176,9 +195,6 @@ class MasterTwilightFlat:
                     raise Exception("Error, frame %s does not look a TwiLight Flat field" %(iframe))
             
             # STEP 1.1: Check either over or under exposed frames
-            mean = float(iraf.imstat (
-                            images=iframe+"[300:700,300:700]",
-                            fields='mean',Stdout=1)[1])
             print "File %s filter[ %s ]  EXTP=%f TYPE=%s mean_window=%f" %(iframe, f_filter, f_expt, f_type, mean)
             if mean>self.m_lthr and mean<self.m_hthr:
                 good_frames.append(iframe)
@@ -199,24 +215,40 @@ class MasterTwilightFlat:
         
         # STEP 2: We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS because they might have diff EXPTIMEs
         # Prepare input list on IRAF string format
-        m_framelist=utils.listToString(good_frames)
             
-        # Prepare dark subtracted flat list
-        m_darksublist=m_framelist.replace(".fits", "_D.fits")
-         
+        #Open DARK
+        try:
+            cdark = datahandler.ClFits ( self.__master_dark )
+            mdark = pyfits.open(self.__master_dark)
+        except:
+            mdark.close()
+            raise
         
-        mdark = pyfits.open(self.__master_dark)
-        t_dark=datahandler.ClFits ( self.__master_dark ).expTime()
+        #Check MEF compatibility
+        if (f.mef and not cdark.mef) or (not f.mef and cdark.mef):
+            log.error("Type mismatch with MEF files")
+            mdark.close()
+            raise Exception("Type mismatch with MEF files")
+        if f.mef:
+            next=f.next
+            
+        t_dark=cdark.expTime()
         for iframe in good_frames:
             # Remove an old dark subtracted flat frames
             misc.fileUtils.removefiles(iframe.replace(".fits","_D.fits"))
             
-            # Build master dark with proper EXPTIME and subtract (???? I don't know how good is this method !!!)
+            # Build master dark with proper (scaled) EXPTIME and subtract (???? I don't know how good is this method of scaling !!!)
             f = pyfits.open(iframe)
             t_flat=datahandler.ClFits ( iframe ).expTime()
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
-            f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
-            f[0].header.add_history('Dark subtracted %s (interpolated)' %self.__master_dark)
+            if next>0:
+                for i in range(1,next+1):
+                    f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
+                    f[i].header.add_history('Dark subtracted %s (interpolated)' %self.__master_dark)
+            else:
+                f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
+                f[0].header.add_history('Dark subtracted %s (interpolated)' %self.__master_dark)    
+            
             #a=numpy.reshape(f[0].data, (2048*2048,))
             #print "MODE=", 3*numpy.median(a)-2*numpy.mean(a)
             #print "MEAN=" , numpy.mean(a)
@@ -229,21 +261,25 @@ class MasterTwilightFlat:
                      
             f.close()
                     
-        
+        mdark
         # STEP 3: Make the combine of dark subtracted Flat frames scaling by 'mode'
         # - Build the frame list for IRAF
         log.debug("Combining Twilight Flat frames...")
         comb_flat_frame=(self.__output_file_dir+"/comb_tw_flats.fits").replace("//","/")
         #print "COMB=", comb_flat_frame
         misc.fileUtils.removefiles(comb_flat_frame)
+        m_framesStr=utils.listToString(good_frames)
+        m_darksubStr=m_framesStr.replace(".fits", "_D.fits")
+        fileList=utils.stringToList(m_darksubStr)
         # - Call IRAF task
-        iraf.flatcombine(input=m_darksublist,
+        misc.utils.listToFile(fileList, self.__output_file_dir+"/twflat_d.list") 
+        iraf.mscred.flatcombine(input="@"+self.__output_file_dir+"/twflat_d.list",
                         output=comb_flat_frame,
                         combine='median',
-                        ccdtype='none',
+                        ccdtype='',
                         process='no',
                         reject='sigclip',
-                        subset='yes',
+                        subset='no',
                         scale='mode',
                         #verbose='yes'
                         #scale='exposure',
@@ -251,18 +287,23 @@ class MasterTwilightFlat:
                         #ParList = _getparlistname ('flatcombine')
                         )
         
-        # STEP 4: Normalize the flat-field
+        # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
         # Compute the mean of the image
         log.debug("Normalizing master flat frame...")
-        median = float(iraf.imstat (
-            images=comb_flat_frame,
-            fields='midpt',Stdout=1)[1])
+        if next>0:
+            chip=1 # normalize wrt to mode of chip 1
+        else:
+            chip=0
+        f=pyfits.open(comb_flat_frame)
+        mode=3*numpy.median(f[chip].data)-2*numpy.mean(f[chip].data)
+        f.close()        
+            
         
         # Cleanup: Remove temporary files
         misc.fileUtils.removefiles(self.__output_filename)
         # Compute normalized flat
-        iraf.imarith(operand1=comb_flat_frame,
-                    operand2=median,
+        iraf.mscred.mscarith(operand1=comb_flat_frame,
+                    operand2=mode,
                     op='/',
                     pixtype='real',
                     result=self.__output_filename,
@@ -335,7 +376,12 @@ if __name__ == "__main__":
     filelist=[line.replace( "\n", "") for line in fileinput.input(source_file_list)]
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
     print "Files:",filelist
-    mTwFlat = MasterTwilightFlat(filelist,dark_file, output_filename)
-    mTwFlat.createMaster()
+    try:
+        mTwFlat = MasterTwilightFlat(filelist,dark_file, output_filename)
+        mTwFlat.createMaster()
+    except:
+        log.error("Unexpected error: %s", sys.exc_info()[0])
+        raise
+        sys.exit(1)
     
         

@@ -32,7 +32,7 @@ import reduce # for TaskInfo
 class RunQtProcess(QWidget):
 
 
-    def __init__(self, commandToRun, guiOutWindow, taskInfoList , output=None):
+    def __init__(self, commandToRun, guiOutWindow, taskInfoList , output):
     
         QWidget.__init__(self)
         
@@ -58,7 +58,9 @@ class RunQtProcess(QWidget):
         
         self.process.setArguments(QStringList.split(" ", self._command))
         self.process.closeStdin()
-
+        
+        self._m_proc_status = True
+        
         if not self.process.start():
             self._outWindow.setText(
                 QString("*** Failed to run %1 ***").arg(self._command)
@@ -108,13 +110,16 @@ class RunQtProcess(QWidget):
     
     def exitFunc(self):
         
-        self.taskInfo._name =  "RunQtProcess : " + self._command             
+        # Firstly, remove previus task-status (when initiated)
+        self.taskInfo._name =  "RunQtProcess : " + self._command
+        self.taskInfo._curr_status = "FINISHED"             
         self.taskInfo._exit_status =  self.exit      
         self.taskInfo._return = self._cmd_output           
         self.taskInfo._exc = None
         
+        # Add new task-status
         self._task_info_list.append(self.taskInfo)
-        
+                
     def normalEnd(self):
               
         return self._exit

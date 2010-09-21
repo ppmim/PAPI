@@ -83,13 +83,14 @@ class ExecTaskThread(threading.Thread):
         
         try:
             try:
+                self._task_info._curr_status = "INITIATED"
                 self._task_info._return      = self._task()  # Execute the task
                 self._task_info._exit_status = 0             # EXIT_SUCCESS, all was OK
             except Exception, e:
+                self._task_info._curr_status = "FINISHED"
                 self._task_info._return      = None
                 self._task_info._exit_status = 1 # EXIT_FAILURE, some error happened
                 self._task_info._exc = e
-                print 'Some error while running Task thread'
                 raise e
         finally:
             self._task_info_list.append(self._task_info)
@@ -138,6 +139,7 @@ class TaskInfo ():
     def __init__(self):
     
         self._name = None              # Name of the task executed
+        self._curr_status = None       # Current status (INITIATED, FINISHED)
         self._exit_status = None       # 0 if all was OK or 1 if some error happened
         self._return = None            # Returned value from the task
         self._exc = None               # Exception launched when error happen

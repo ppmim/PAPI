@@ -260,7 +260,8 @@ class MainGUI(panicQL):
         self.textEdit_log.append("++Processing file : " + filename)
         self.QL2(filename, self.textEdit_log)
 
-
+    
+    
     #####################################################
     ### SLOTS ###########################################
     #####################################################
@@ -283,7 +284,6 @@ class MainGUI(panicQL):
                 self.m_sourcedir = str(dir)
                 ##Create DataCollector for a path     
                 self.file_pattern = str(self.lineEdit_filename_filter.text())
-                #print "FIL_PATTERN = ", fil_pat
                 if os.path.isfile(dir):
                     self.dc = datahandler.DataCollector("geirs-file", str(dir), self.file_pattern , self.new_file_func)  
                 elif os.path.isdir(dir):
@@ -374,6 +374,7 @@ class MainGUI(panicQL):
                     QMessageBox.critical(self, "Error", "Error while running task.  "+str(self._task_info._exc))
                 #Anyway, restore cursor
                 self.setCursor(Qt.arrowCursor)
+                self.m_processing=False
                 # Return to the previus working directory
                 os.chdir(self._ini_cwd)
             except:
@@ -914,9 +915,10 @@ class MainGUI(panicQL):
             QMessageBox.critical(self, "Error", "Error while creating Super Flat")            
                 
     def subtract_sky_slot(self):
-        """ Subtract own image sky using SExtrator tool"""
+        """ Subtract own image sky background using SExtrator tool"""
         
-        
+        if not self.m_listView_item_selected:
+            return
         fits = datahandler.ClFits(self.m_listView_item_selected)
         if fits.getType()=='SCIENCE':
             sex_config = os.environ['IRDR_BASEDIR']+"/src/config/default.sex"
@@ -924,6 +926,7 @@ class MainGUI(panicQL):
             threshold = 2.0
             input_file = self.m_listView_item_selected
             out_file = self.m_listView_item_selected.replace(".fits",".skysub.fits")
+            #out_file = "/tmp/skysub.fits"
             #cmd="sex %s -c %s -FITS_UNSIGNED Y -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
             cmd="sex %s -c %s  -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
             
@@ -931,10 +934,10 @@ class MainGUI(panicQL):
             os.chdir(self.m_papi_dir)
             #Change cursor
             self.setCursor(Qt.waitCursor)
-            # Call external script (papi)
+            #Call external script (papi)
+            self.m_processing = True
             self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, out_file)      
             self._proc.startCommand()
-        
         else:
             log.error("Sorry, selected file does not look a science file  ")
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             

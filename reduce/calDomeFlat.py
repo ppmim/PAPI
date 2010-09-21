@@ -129,9 +129,6 @@ class MasterDomeFlat:
         base, infile   = os.path.split(self.__output_filename)
         iraf.chdir(base)
     
-        m_framelist=""
-        for iframe in framelist:
-            m_framelist+=iframe+ ' , '
     
         # STEP 1: Check the EXPTIME , TYPE(dome) and FILTER of each Flat frame
         f_expt=-1

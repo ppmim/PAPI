@@ -90,7 +90,6 @@ class ClFits:
         self.ncoadds   = -1
         self.itime     = 0.0
         self.readmode  = ""
-        self.data      = None
         self.my_header = None
         
         
@@ -168,16 +167,19 @@ class ClFits:
     def getMJD(self):
         return self.mjd
     
-    def getData(self):
+    def getData(self,ext=0):
         """No tested, to check !!!"""
-        try:
-            myfits = pyfits.open(self.pathname)
-            temp=myfits[0].data
-            myfits.close()
-            return temp
-        except:
-            log.error('Could not open frame - something wrong with input data')
-            raise
+        if ext!=0 and not f.mef:
+            log.error("Wrong extension number especified. Not a MEF file.")
+        else:
+            try:
+                myfits = pyfits.open(self.pathname)
+                temp=myfits[0].data
+                myfits.close()
+                return temp
+            except:
+                log.error('Could not open frame - something wrong with input data')
+                raise
     
 
     def recognize(self):
