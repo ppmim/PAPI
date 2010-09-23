@@ -39,7 +39,7 @@ def removefiles(*patterns):
     for pattern in patterns:
         # Split off the directory path
         (dirname, filepattern) = os.path.split(pattern)
-        print "dirname= %(dirname)s, file= %(filepattern)s" %vars()
+        #print "dirname= %(dirname)s, file= %(filepattern)s" %vars()
         
         # Get a list of all files in the directory
         try:
@@ -54,7 +54,7 @@ def removefiles(*patterns):
             # And see if it's name matches the pattern
             if fnmatch.fnmatch(file, filepattern):
                 # If yes, (try to) remove it from the system
-                log.info('Removing file : "%s"' % file)
+                #log.debug('Removing file : "%s"' % file)
                 try:
                     #print "not removing...debug...."
                     os.remove(os.path.join(dirname, file))

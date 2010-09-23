@@ -565,6 +565,7 @@ class MainGUI(panicQL):
         popUpMenu.insertItem("Create Master Dome-Flat", self.createMasterDFlat_slot, 0, 3)
         popUpMenu.insertItem("Create Master Twilight-Flat", self.createMasterTwFlat_slot, 0, 4 )
         popUpMenu.insertItem("Create SuperSky-Flat", self.createSkyFlat_slot_2, 0, 5 )
+        popUpMenu.insertItem("Create Gain Map", self.createGainMap_slot, 0, 51 )
         popUpMenu.insertItem("Create Bad Pixel Mask", self.createBPM_slot, 0, 6 )
         popUpMenu.insertSeparator()
         popUpMenu.insertSeparator()
@@ -912,7 +913,34 @@ class MainGUI(panicQL):
                 QMessageBox.critical(self, "Error", "Error while creating Gain Map")
         else:
             log.error("Error creating master Super Flat file")
-            QMessageBox.critical(self, "Error", "Error while creating Super Flat")            
+            QMessageBox.critical(self, "Error", "Error while creating Super Flat")
+    
+    def createGainMap_slot(self):
+
+        """ 
+        Create a gain map  using the own science files selected on the main list view
+        
+        TODO: Check the selected images are SCIENCE frames with same filter !!! and expTime, .....
+        
+        """
+        
+        if len(self.m_popup_l_sel)<=1:
+            QMessageBox.information(self,"Info","Not enought frames !")
+            return
+
+        outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/gainmap.fits", "*.fits", self, "Save File dialog")
+        if not outfileName.isEmpty():
+            try:
+                self.setCursor(Qt.waitCursor)
+                self._task=reduce.calSuperFlat.SuperSkyFlat(self.m_popup_l_sel, str(outfileName), None, False, True)
+                thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
+                thread.start()
+            except Exception, e:
+                self.setCursor(Qt.arrowCursor)
+                QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
+                raise e
+        else:
+            pass                     
                 
     def subtract_sky_slot(self):
         """ Subtract own image sky background using SExtrator tool"""
@@ -1005,7 +1033,7 @@ class MainGUI(panicQL):
             os.chdir(self.m_papi_dir)
             #Change cursor
             self.setCursor(Qt.waitCursor)
-            # Call external script (papi)
+            #Call external script (papi)
             self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_listView_item_selected+".skysub")      
             self._proc.startCommand()
             

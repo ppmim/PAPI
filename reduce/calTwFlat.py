@@ -165,21 +165,28 @@ class MasterTwilightFlat:
         
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
+            log.debug("Checking data compatibility (filter, texp, type)")
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
+            #Compute the mean count value in chip to find out good frames (enought check ??)
+            mean=0
+            myfits = pyfits.open(iframe)
             if f.mef==True:
                 log.debug("Found a MEF file")
                 #log.error("Sorry, MEF files are not supported yet !")
                 #raise Exception('Sorry, MEF files are not supported yet !')
                 try:
-                    myfits = pyfits.open(iframe)
-                    mean=0
                     for i in range(1,f.next+1):
                         mean+=numpy.mean(myfits[i].data)
                     mean/=f.next
                     log.debug("MEAN value of MEF = %d", mean)
                 except:
                     raise
-            
+            else:
+                myfits=pyfits.open(iframe)
+                mean=numpy.mean(myfits[0].data)
+                log.debug("MEAN value of MEF = %d", mean)
+                
+            myfits.close()            
             if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type or f.getReadMode()!=f_readmode)) :
                 log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE.")
                 raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
@@ -216,6 +223,7 @@ class MasterTwilightFlat:
         # STEP 2: We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS because they might have diff EXPTIMEs
         # Prepare input list on IRAF string format
             
+        log.debug("Start Dark subtraction")    
         #Open DARK
         try:
             cdark = datahandler.ClFits ( self.__master_dark )
@@ -230,8 +238,10 @@ class MasterTwilightFlat:
             mdark.close()
             raise Exception("Type mismatch with MEF files")
         if f.mef:
-            next=f.next
-            
+            next=f.next # number of extension
+        else:
+            next=0
+                
         t_dark=cdark.expTime()
         for iframe in good_frames:
             # Remove an old dark subtracted flat frames
@@ -261,10 +271,9 @@ class MasterTwilightFlat:
                      
             f.close()
                     
-        mdark
         # STEP 3: Make the combine of dark subtracted Flat frames scaling by 'mode'
         # - Build the frame list for IRAF
-        log.debug("Combining Twilight Flat frames...")
+        log.debug("Combining dark subtracted Twilight flat frames...")
         comb_flat_frame=(self.__output_file_dir+"/comb_tw_flats.fits").replace("//","/")
         #print "COMB=", comb_flat_frame
         misc.fileUtils.removefiles(comb_flat_frame)

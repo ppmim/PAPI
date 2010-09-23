@@ -227,9 +227,12 @@ class ClFits:
             # we suppose all extension have the same dimensions
             self.naxis1=myfits[1].header['NAXIS1']
             self.naxis2=myfits[1].header['NAXIS2']
-            # pointer to the primary-main header
-            self.my_header = myfits[0].header
-        
+        else:
+            self.naxis1=myfits[0].header['NAXIS1']
+            self.naxis2=myfits[0].header['NAXIS2']
+        # pointer to the primary-main header
+        self.my_header = myfits[0].header
+          
         # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , UNKNOW)  
         try:
             if myfits[0].header['OBJECT'].lower().count('dark') :

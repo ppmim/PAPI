@@ -167,7 +167,9 @@ class MasterDarkModel:
         median_bias=numpy.mean(bias)
         print "MEDIAN_DARK_CURRENT=", median_dark_current
         print "MEDIAN BIAS=", median_bias    
+        
         misc.fileUtils.removefiles( self.__output_filename )               
+        # Write result in a FITS
         hdu = pyfits.PrimaryHDU()
         hdu.scale('float32') # importat to set first data type
         hdu.data=out     

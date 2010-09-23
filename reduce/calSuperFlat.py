@@ -12,6 +12,7 @@
 # Last update: 15/04/2009    jmiguel@iaa.es - Created function and modified to accept command line arguments
 #              03/03/2010    jmiguel@iaa.es - Big modification to convert to a class and make more checkings
 #              16/09/2010    jmiguel@iaa.es - Renamed to calSuperFlat and added support to MEF files
+#              23/09/2010    jmiguel@iaa.es - Added (optional) gain map creation and/or normaliced flat field
 #
 # TODO
 #  
@@ -25,21 +26,18 @@ import sys
 import os
 import logging
 import fileinput
-import time
-from datetime import datetime
+import shutil
 from optparse import OptionParser
 
 import misc.fileUtils
 import misc.utils as utils
-
+import calGainMap 
 
 # Interact with FITS files
 import pyfits
+import numpy as np
 import datahandler
 
-# Import Pyro core
-import Pyro.core
-import Pyro.naming
 
 # Logging
 from misc.paLog import log
@@ -73,15 +71,24 @@ class SuperSkyFlat:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self,  objects_file,  output_filename="/tmp/superFlat.fits",  bpm=None):
+    def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  bpm=None, norm=False, gainmap=False):
          
-        self.objects_file = objects_file
+        self.filelist = filelist
         self.output_file_dir = os.path.dirname(output_filename)
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
+        self.norm = norm # if true, the flat field will be normalized
+        self.gainmap = gainmap
         
+        # Some default parameter values
         self.m_MIN_N_GOOD=2
         self.m_min_flats=5
+        self.m_MINGAIN=0.5   #pixels with sensitivity < MINGAIN are assumed bad 
+        self.m_MAXGAIN=1.5   #pixels with sensitivity > MAXGAIN are assumed bad 
+        self.m_NXBLOCK=16     #image size should be multiple of block size 
+        self.m_NYBLOCK=16
+        self.m_NSIG=5.0       #badpix if sensitivity > NSIG sigma from local bkg
+
             
     def create(self):
       
@@ -92,18 +99,19 @@ class SuperSkyFlat:
         if os.path.exists(self.output_filename): os.remove(self.output_filename)
         
         # Check data integrity (all have the same properties)
-        if os.path.exists( self.objects_file ):
-            m_filelist=[line.replace( "\n", "") for line in fileinput.input(self.objects_file)]
-        else:
-            m_filelist=self.objects_file
+        m_filelist=self.filelist
             
         if not datahandler.checkDataProperties( m_filelist ):
             log.error("Data integrity ERROR, some files not having same properties")
-            raise Exception("Found a data integrity error")  
-        
+            raise Exception("Found a data integrity error")
+          
+        tmp1=(self.output_file_dir+"/tmp_sf.fits").replace('//','/')
+        misc.fileUtils.removefiles(tmp1)
+        log.info("Combining images...")
+        misc.utils.listToFile(m_filelist, "/tmp/files.txt") 
         # Combine the images to find out the super Flat
-        iraf.mscred.combine(input=("'"+"@"+self.objects_file+"'").replace('//','/'),
-                    output=self.output_filename,
+        iraf.mscred.combine(input=("'"+"@"+"/tmp/files.txt"+"'").replace('//','/'),
+                    output=tmp1,
                     combine='median',
                     offset='none',
                     reject='sigclip',
@@ -117,13 +125,6 @@ class SuperSkyFlat:
                     #ParList = _getparlistname ('flatcombine')
                 )
         
-        #median = float(iraf.imstat (
-        #        images=("'"+self.output_filename+"[100:900,100:900]'").replace('//','/'),
-        #        fields='midpt',format='no',Stdout=1)[0])
-        median = float(iraf.mscstat(
-                images=(self.output_filename).replace('//','/'),
-                fields='midpt',format='no',gmode='yes', Stdout=1)[0].split()[1])
-        #print "MEDIAN =", median
         
         #Lightly smooth the superFlat
         #iraf.mscmedian(
@@ -134,25 +135,36 @@ class SuperSkyFlat:
         #        outtype="median"
         #        )
                 
-                                                        
-        """iraf.imarith(operand1 = 'sflat.fits',
-                        operand2 = median,
-                        op = '/',
-                        result ='sflatn.fits',
-                        verbose = 'yes'
-                        )                                              
-        """
-        flatframe = pyfits.open(self.output_filename,'update')
-        #Add a new keyword-->DATAMODE
-        flatframe[0].header.update('DATAMODE',median,'Data mode of the frame')
-        flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
-                
-                           
-                      
+        if (self.norm):        
+            log.info("Normalizing flat field ...")
+            f=pyfits.open(tmp1)
+            median=np.median(f[0].data[100:1900,100:1900])
+            f.close()
+            misc.fileUtils.removefiles(tmp1.replace(".fits","_n.fits"))                                                 
+            out=tmp1.replace(".fits","_n.fits")
+            iraf.mscred.mscarith(operand1 = tmp1,
+                            operand2 = median,
+                            op = '/',
+                            result =out,
+                            verbose = 'yes'
+                            )
+        else: out=tmp1
+                        
+                                                           
+        misc.fileUtils.removefiles(self.output_filename)
+        if (self.gainmap):
+            log.info("Creating gain map ...")                                                 
+            g=calGainMap.GainMap(out, self.output_filename )
+            g.create() 
+        else:
+            shutil.move(out, self.output_filename)
+            
+        log.debug("Image created : %s", self.output_filename)
+        return self.output_filename
+                                    
 ################################################################################
 # main
 if __name__ == "__main__":
-    print 'Start SuperSkyFlat....'
     # Get and check command-line options
     
     
@@ -164,10 +176,20 @@ if __name__ == "__main__":
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
                   help="Source file list of data frames. It has to be a fullpath file name")
+                  
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", help="output file to write SuperFlat")
     
+    parser.add_option("-b", "--bpm",
+                  action="store", dest="bpm", help="bad pixel map file (optional)", default=None)
 
+    
+    parser.add_option("-N", "--norm",
+                  action="store_true", dest="norm", help="normalize output SuperFlat (optional)", default=False)
+        
+    parser.add_option("-G", "--gain",
+                  action="store_true", dest="gainmap", help="create gainmap from SuperFlat (optional)", default=False)
+        
 
     (options, args) = parser.parse_args()
     if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
@@ -176,8 +198,8 @@ if __name__ == "__main__":
     if options.verbose:
         print "reading %s ..." % options.source_file_list
     
-    
-    superflat = SuperSkyFlat(options.source_file_list, options.output_filename)
+    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    superflat = SuperSkyFlat(filelist, options.output_filename, options.bpm, options.norm, options.gainmap)
     superflat.create()
           
         

@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
             nbad++;
         }
     }
-
+    
     dev = (float *) emalloc(nx * ny * sizeof(float));      /* local dev map */
     buf = (float *) emalloc(nxb * nyb * sizeof(float));
 
@@ -83,6 +83,8 @@ int main(int argc, char *argv[])
     sig = median_absdev(dev, med, nx * ny) / 0.6745;
     lo  = med - nsig * sig;
     hi  = med + nsig * sig;
+
+    /*printf("\nMED=%f SIG=%f LO=%f HI=%f", med, sig, lo, hi);*/
 
     for (i = 0; i < nx * ny; i++)           /* find more badpix by local dev */
         if (dev[i] < lo || dev[i] > hi) {

@@ -128,7 +128,7 @@ class SplitMEF:
                 print "File %s created " %(out_filenames[i-1])
             
         log.info("End of SplitMEF. %d files created", next)
-        return next 
+        return next , out_filenames
             
                            
                       
@@ -167,7 +167,7 @@ if __name__ == "__main__":
         options.out_suffix=".%02d.fits"
         
     copy_keyword=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']    
-    split = SplitMEF(filelist, options.out_suffix,copy_keyword)
+    split = SplitMEF(filelist, options.out_suffix, copy_keyword)
     split.run()
           
         
