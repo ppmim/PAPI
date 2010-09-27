@@ -59,8 +59,8 @@ import reduce.calBPM_2
 import reduce.checkQuality
 import misc.fileUtils
 import misc.utils as utils
-import misc.splitMEF
-import misc.joinMEF
+import misc.mef
+import misc.mef
 import datahandler
 import misc.display as display
 from runQtProcess import *
@@ -569,7 +569,7 @@ class MainGUI(panicQL):
         popUpMenu.insertItem("Create Bad Pixel Mask", self.createBPM_slot, 0, 6 )
         popUpMenu.insertSeparator()
         popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Subtract (own) sky", self.subtract_sky_slot, 0, 7 )
+        popUpMenu.insertItem("Subtract (own) sky", self.subtract_ownSky_slot, 0, 7 )
         popUpMenu.insertItem("Subtract nearest sky", self.subtract_nearSky_slot, 0, 8 )
         popUpMenu.insertItem("Quick single Pre-Reduction", self.do_quick_reduction_slot, 0, 9 )
         popUpMenu.insertItem("Stack-Shift and Align", self.createStackedFrame_slot, 0, 10 )
@@ -627,8 +627,8 @@ class MainGUI(panicQL):
            As result, NEXT files should be created
         """
         for file in self.m_popup_l_sel:
-            split = misc.splitMEF.SplitMEF([file])
-            split.run()
+            mef = misc.mef.MEF([file])
+            mef.doSplit(".%02d.fits")
             #self.textEdit_log.append(QString(str(line)))
     
     def joinMEF_slot(self):
@@ -636,8 +636,8 @@ class MainGUI(panicQL):
            As result, one single FITS file with the stitched image should be created
         """
         for file in self.m_popup_l_sel:
-            join = misc.joinMEF.JoinMEF([file])
-            join.run()
+            mef = misc.mef.MEF([file])
+            mef.doJoin(".join.fits")
     
     def sliceCube_slot(self):
         pass
@@ -942,8 +942,10 @@ class MainGUI(panicQL):
         else:
             pass                     
                 
-    def subtract_sky_slot(self):
-        """ Subtract own image sky background using SExtrator tool"""
+    def subtract_ownSky_slot(self):
+        """ Subtract OWN image sky background using SExtrator tool
+            NOTE: this operation support MEF files
+        """
         
         if not self.m_listView_item_selected:
             return
@@ -1002,12 +1004,13 @@ class MainGUI(panicQL):
             filename=self.m_tempdir+"/files.list"      
             file_lst= open( filename, "w" )
             i=1
+            file_n=-1
             my_list=""
             for f in near_list:
                 file=str(f[0])
                 my_list=my_list+file+"\n"
                 if (file==self.m_listView_item_selected):
-                    filen=i
+                    file_n=i
                 else:
                     i=i+1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
@@ -1025,10 +1028,10 @@ class MainGUI(panicQL):
             if not os.path.exists( gain ):
                 QMessageBox.information(self, "Info", QString("No gain map %1 found. Please, select one on 'Calibrations' tab").arg(gain))
                 return
-                    
-            #filen=near_list.index(self.m_listView_item_selected)
+                     
+            #file_n=near_list.index(self.m_listView_item_selected)
             hwidth=2
-            cmd=self.m_papi_dir+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(filename, gain, hwidth,filen)
+            cmd=self.m_papi_dir+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(filename, gain, hwidth, file_n)
             #Change to working directory
             os.chdir(self.m_papi_dir)
             #Change cursor
@@ -1105,7 +1108,7 @@ class MainGUI(panicQL):
     def createStackedFrame_slot(self):
         """ Compute a stacked frame (shift and aligned) from a set of nearest (ra,dec, mjd) frames, selected by user or automatic search"""
         
-        filen=0 # really, not used for the moment
+        file_n=0 # really, not used for the moment
         
         # Check list lenght
         if len(self.m_popup_l_sel)<1:
@@ -1146,7 +1149,7 @@ class MainGUI(panicQL):
                 file=str(f[0])
                 my_list=my_list+file+"\n"
                 if (file==self.m_listView_item_selected):
-                    filen=i
+                    file_n=i
                 else:
                     i=i+1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
@@ -1158,7 +1161,7 @@ class MainGUI(panicQL):
             if resp==QMessageBox.Cancel:
                 return
                     
-        # CASE 2: Stack frames  selected by user in the list_view
+        # CASE 2: Stack frames selected by user in the list_view
         elif len(self.m_popup_l_sel)>1:
             # Create file list from current selected science files
             filename=self.m_tempdir+"/files.list"      
@@ -1171,32 +1174,19 @@ class MainGUI(panicQL):
                 else:
                     file_lst.write( file +"\n")
             file_lst.close()
-            filen=0
+            file_n=0
             
         #Change to working directory
         cwd=os.getcwd()
         os.chdir(self.m_papi_dir)
-        cmd=self.m_papi_dir+"/papi_v1 %s single dither %s" %(filename,self.m_outputdir)
+        cmd=self.m_papi_dir+"/papi_v1 %s single dither %s" %(filename, self.m_outputdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         
-        #err=utils.runCmd ( cmd )
         # Call external script (papi)
         self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_outputdir+"/single.fits")      
         self._proc.startCommand() # asyncronous call than launch a subprocess to run the 'cmd' command
         
-        #if err==0:
-            #print "Some error while Stack generation (papi_v1) ..."
-            #print "OUT > ", err
-            #QMessageBox.critical(self,"Error", QString("Some error while sky subtraction : %1").arg(err))
-        #else:
-            ##Copy to output dir the stacked frame (output from PAPI)
-            #shutil.move(self.m_papi_dir+"/single.fits", self.m_outputdir)
-            #print "PASO move!!!"  
-            #display.showFrame(self.m_outputdir+"/single.fits")
-        
-        # Return to the previus working directory
-        #os.chdir(cwd)
         
     def createSuperMosaic_slot(self):
       

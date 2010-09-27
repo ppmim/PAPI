@@ -77,17 +77,78 @@ import misc.utils
 from reduce.makeobjmask import *
 import reduce.imtrim
 import astrowarp
+import misc.mef 
+import misc.mef
 
 
+class DataSet:
+    def __init__(self, list_file, out_dir, dark=None, flat=None, bpm=None):
+        """ Init function """
+        
+        # Data set definition values
+        self.list_file   = list_file # a file containing a list of data filenames to reduce (DataSet)
+        self.out_dir     = out_dir   # directory where all output will be written
+        self.master_dark = dark      # master dark to use (input)
+        self.master_flat = flat      # master flat to use (input)
+        self.bpm         = bpm       # master Bad Pixel Mask to use (input)
+    
+    def split(self):
+        """ Split the data into into N sub-dataset, where N is the number of extension of the Multi-Extension FITS"""
+          
+                       
+        #Source files 
+        #load file list
+        orig_files=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
+                  
+        # First, we need to check if we have MEF files
+        if datahandler.ClFits( orig_files[0] ).mef==False:          
+            return 0,orig_files,self.master_dark,self.master_flat,self.bpm
+        
+        #Suppose we have MEF files ...
+        if self.master_dark!=None:
+            orig_files.append(self.master_dark)
+        if self.master_flat!=None:
+            orig_files.append(self.master_flat)
+        if self.bpm!=None:
+            orig_files.append(self.bpm)
+                  
+        copy_keyword=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']    
+        try:
+            mef = misc.mef.MEF(orig_files)
+            (nExt,new_file_names)=mef.doSplit(".Q%02d.fits", copy_keyword)
+        except:
+            log.debug("Some error while splitting data set ...")
+            raise
+        
+        sources=[]
+        darks=[]
+        flats=[]
+        bpms=[]
+        # now, generate the new output filenames        
+        for n in range(1,nExt+1):
+            sources.append([file.replace(".fits",".Q%02d.fits"%n) for file in orig_files])
+            if self.master_dark: darks.append(self.master_dark.replace(".fits",".Q%02d.fits"%n))
+            else: darks.append(None)
+            if self.master_flat: flats.append(self.master_flat.replace(".fits",".Q%02d.fits"%n))
+            else: flats.append(None)
+            if self.bpm: bpms.append(self.bpm.replace(".fits",".Q%02d.fits"%n))
+            else: bpms.append(None)
+            """
+            for f in new_file_names:
+                #if re.search(".*(\.Q01)(.fits)$", f):
+                    sources.append(f)
+            """
+        return nExt,sources,darks,flats,bpms
+                
 class ReductionSet:
-    def __init__(self, list_file, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, single=False):
+    def __init__(self, sci_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, single=False):
         """ Init function """
         
         # Input values
-        self.list_file = list_file # a file containing a list of data filenames to reduce (DataSet)
-        self.out_dir = out_dir     # directory where all output will be written
-        self.out_file = out_file   # final reduced data file (out)
-        self.obs_mode = obs_mode   # observing mode (dither, dither_on_off, dither_off_on....)
+        self.sci_filelist = sci_filelist # list containing the science data filenames to reduce
+        self.out_dir   = out_dir   # directory where all output will be written
+        self.out_file  = out_file  # final reduced data file (out)
+        self.obs_mode  = obs_mode  # observing mode (dither, dither_on_off, dither_off_on....)
         self.master_dark = dark    # master dark to use (input)
         self.master_flat = flat    # master flat to use (input)
         self.bpm = bpm             # master Bad Pixel Mask to use (input)
@@ -421,8 +482,8 @@ class ReductionSet:
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
                             
-    def coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits',type_comb='average'):
-        """  Coadd the stack of dithered FITS images listed in 'input_file' using average, median or sum of pixel_frames"""
+    def coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits', type_comb='average'):
+        """register the stack of dithered FITS images listed in 'input' file using offset specified offsets and calculate the mean plane"""
                                                   
         log.info("Start coaddStackImages ...")                                          
         # STEP 1: Define parameters                                          
@@ -457,7 +518,7 @@ class ReductionSet:
                 
                                               
     def createMasterObjMask( self, input_file, output_master_obj_mask ):
-        """ Create a master object mask from a input file using SExtractor and then dilate the object file by a certain factor to remove also the  undetected object tails (dilate.c)"""
+        """ Create a master object mask from a input file using SExtractor and then dilate the object file by a certain factor to remove also the undetected object tails (dilate.c)"""
                                                              
                                                              
         log.info("Start createMasterObjMask....")
@@ -502,15 +563,14 @@ class ReductionSet:
         Point out that the input frames need to be reduced, i.e., dark, flat and sky subtraction done.
         """
                                             
-        astrometry_cmd=+'scamp '+  '  ' + regrid_str + ' ' + input_file
-        if misc.utils.runCmd( astrometry_cmd )==0:
-            log.error ("Some error while computing Astrometry")
-            return 0
-        else:
-            return 1
-                                                
+        
+    def singleSkyFilter( self, input_file, gainmap_file ):
+        """
+        Given a input file (science target) and a gainmap, make sky filter ...
+        """
+                                                              
     def reduce(self):
-        """ Main procedure for data reduction """
+        """ Main procedure for full(?) data reduction """
         
         log.info("###############################")
         log.info("#### Start data reduction #####")
@@ -522,9 +582,10 @@ class ReductionSet:
         self.cleanUpFiles()
         
         # Copy/link source files (file or directory) to reduce to the working directory
-        papi.linkSourceFiles(self.list_file, self.out_dir)
-        files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
-        self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in files1]
+        papi.linkSourceFiles(self.sci_filelist, self.out_dir)
+        #files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
+        self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in self.sci_filelist]
+        print "SOURCES=\n",self.m_LAST_FILES
         
         ######################################################
         # 0 - Some checks (filter, ....) 
@@ -574,13 +635,13 @@ class ReductionSet:
         if self.obs_mode=="dither":
             log.debug("---> dither sequece <----")
             misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
-            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits")
+            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", None, False, True)
             superflat.create()
         elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
             log.debug("----> EXTENDED SOURCE !!! <----")
             sky_list=self.getSkyFrames()
             misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
-            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits")
+            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", None, False, True)
             superflat.create()                            
         else:
             log.error("Dither mode not supported")
@@ -590,7 +651,9 @@ class ReductionSet:
         ######################################    
         # 3 - Compute Gain map and apply BPM
         ######################################
-        log.info("**** Computing gain-map ****")
+        gainfile = self.out_dir+'/gain_'+self.m_filter+'.fits'
+        shutil.move(self.out_dir+"/superFlat.fits",gainfile)
+        """log.info("**** Computing gain-map ****")
         nxblock=16
         nyblock=16
         #The next values are to find out bad pixels 
@@ -604,7 +667,8 @@ class ReductionSet:
         if misc.utils.runCmd( gain_cmd )==0:
             log.error("Some error while creating gainmap ....")
             return
-            
+        """
+           
         ########################################
         # Add external Bad Pixel Map to gainmap
         ########################################     
@@ -657,6 +721,11 @@ class ReductionSet:
     
         ## END OF SINGLE REDUCTION  ##
         if self.obs_mode!='dither' or self.single==True:
+            shutil.move(self.out_dir+'/coadd1.fits', self.out_file)
+            log.info("Generated output file ==>%s", self.out_file)
+            log.info("#########################################")
+            log.info("##### End of SINGLE data reduction ######")
+            log.info("#########################################")
             return
         
         log.info("************************")
@@ -756,11 +825,15 @@ class ReductionSet:
     def cleanUpFiles(self):
         """Clean up files from the working directory, probably from the last execution"""
         
-        misc.fileUtils.removefiles(self.out_dir+"/*.fits", self.out_dir+"/c_*", self.out_dir+"/dc_*", self.out_dir+"/*.nip" )
+        misc.fileUtils.removefiles(self.out_dir+"/*.fits", self.out_dir+"/c_*", self.out_dir+"/dc_*", self.out_dir+"/*.nip", self.out_dir+"/*.pap" )
         misc.fileUtils.removefiles(self.out_dir+"/coadd*", self.out_dir+"/*.objs", self.out_dir+"/uparm*", self.out_dir+"/*.skysub*" )
         misc.fileUtils.removefiles(self.out_dir+"/*.head", self.out_dir+"/*.list", self.out_dir+"/*.xml", self.out_dir+"/*.ldac", self.out_dir+"/*.png" )
 
-                    
+    def prepareData(self):
+        """Prepara input data files to be reduced, doing some FITS header modification and data """
+                                
+        
+                            
 ################################################################################
 # main
 ################################################################################
@@ -806,13 +879,13 @@ if __name__ == "__main__":
                   action="store_true", dest="config_file", help="config file for the data reduction process")
                   
     parser.add_option("-S", "--show",
-                  action="store_true", dest="show", default=False, help="show final reduced image")
+                  action="store_true", dest="show", help="show final reduced image", default=False)
                   
     parser.add_option("-1", "--single",
-                  action="store_true", dest="single", default=False, help="make a single reduction")              
+                  action="store_true", dest="single", help="make a single reduction", default=False)              
                   
     parser.add_option("-b", "--bpm",
-                  action="store_true", action="store", dest="bpm", help="bad pixel mask")
+                  action="store", dest="bpm", help="bad pixel mask")
                                 
     (options, args) = parser.parse_args()
     
@@ -822,9 +895,25 @@ if __name__ == "__main__":
     if options.verbose:
         print "reading %s ..." % options.source_file_list
     
-    print "SINGLE=", options.single
-    redSet = ReductionSet(options.source_file_list, options.out_dir, options.output_filename, options.obs_mode, options.dark, options.flat, bpm=options.bpm, single=options.single)
-    redSet.reduce()
     
+    # Split the data (in the own source directory)
+    dataset = DataSet(options.source_file_list, options.out_dir,  options.dark, options.flat, bpm=options.bpm)
+    (nExt,sources,darks,flats,bpms)=dataset.split()
+    
+    outs=[] # output files from each reduction
+    if nExt==0:
+        redSet = ReductionSet(sources, options.out_dir, options.output_filename, options.obs_mode, darks, flats, bpms, single=options.single)
+        redSet.reduce()
+    else:
+        # Reduce each subset    
+        #redSet = ReductionSet(options.source_file_list, options.out_dir, options.output_filename, options.obs_mode, options.dark, options.flat, bpm=options.bpm, single=options.single)
+        for n in range(nExt):
+            print "SOURCES= \n", sources[n]
+            temp_out=options.output_filename.replace(".fits","_Q%02d.fits"%(n+1))
+            temp_out_dir=options.out_dir+"_Q%02d"%(n+1)
+            redSet = ReductionSet(sources[n], options.out_dir, temp_out, options.obs_mode, darks[n], flats[n], bpms[n], single=options.single)
+            outs[n]=redSet.reduce()
+        JoinResult(outs)
+          
     if options.show==True:
         redSet.show()    

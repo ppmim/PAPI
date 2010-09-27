@@ -73,7 +73,12 @@ class SuperSkyFlat:
     """
     def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  bpm=None, norm=False, gainmap=False):
          
-        self.filelist = filelist
+        if type(filelist)==type(list()): 
+            self.filelist = filelist  # list of sources files to be used in sky-flat computation
+        elif os.path.isfile(filelist):
+            self.filelist= [line.replace( "\n", "") for line in fileinput.input(filelist)]
+        else:
+            raise Exception("Cannot read source files")   
         self.output_file_dir = os.path.dirname(output_filename)
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
@@ -83,8 +88,8 @@ class SuperSkyFlat:
         # Some default parameter values
         self.m_MIN_N_GOOD=2
         self.m_min_flats=5
-        self.m_MINGAIN=0.5   #pixels with sensitivity < MINGAIN are assumed bad 
-        self.m_MAXGAIN=1.5   #pixels with sensitivity > MAXGAIN are assumed bad 
+        self.m_MINGAIN=0.5    #pixels with sensitivity < MINGAIN are assumed bad 
+        self.m_MAXGAIN=1.5    #pixels with sensitivity > MAXGAIN are assumed bad 
         self.m_NXBLOCK=16     #image size should be multiple of block size 
         self.m_NYBLOCK=16
         self.m_NSIG=5.0       #badpix if sensitivity > NSIG sigma from local bkg

@@ -241,8 +241,8 @@ static void usage(void)
     "               rowcol for row offsets then column offsets,\n"
     "               colrow for column offsets then row offsets,\n"
     "               none for no correction\n\n"
-    "      filen|0  - file number (1-N) from the listfn to filter (0=, all will be filtered)"
-    "example: skyfilter filelist gain.fits 4 mask rowcol\n\n";
+    "      filen|0  - file number (1-N) from the listfn to filter (0=, all will be filtered)\n\n"
+    "example: skyfilter filelist gain.fits 4 mask rowcol 1\n\n";
 
     printf("%s", usage);
     exit(0);

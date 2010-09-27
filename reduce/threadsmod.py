@@ -89,7 +89,7 @@ class ExecTaskThread(threading.Thread):
             except Exception, e:
                 self._task_info._curr_status = "FINISHED"
                 self._task_info._return      = None
-                self._task_info._exit_status = 1 # EXIT_FAILURE, some error happened
+                self._task_info._exit_status = 1             # EXIT_FAILURE, some error happened
                 self._task_info._exc = e
                 raise e
         finally:

@@ -84,15 +84,14 @@ class SplitMEF:
                 hdulist = pyfits.open(file)
             except IOError:
                 print 'Error, can not open file %s' %(file)
-                return 0
+                raise Exception("Error, can not open file %s"%file)
             
             try:
                 if hdulist[0].header['EXTEND']!=True:
                     print 'Error, file %s is not a MEF file' %(file)
-                    return 0
+                    raise Exception("Error, file %s is not a MEF file"%(file))
             except KeyError:
-                print 'Error, file %s is not a MEF file' %(file)
-                return 0
+                raise Exception("Error, file %s is not a MEF file"%(file))
             
             try:
                 next=hdulist[0].header['NEXTEND']
@@ -158,8 +157,6 @@ if __name__ == "__main__":
         filelist=[options.file]
     elif options.input_file_list:
         filelist=[line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
-        print filelist
-        print "vayaaaa"
     else:
         parser.print_help()
         parser.error("incorrect number of arguments " )

@@ -72,7 +72,7 @@ class GainMap:
         self.m_MAXGAIN = 1.5   #pixels with sensitivity > MAXGAIN are assumed bad 
         self.m_NXBLOCK = 16    #image size should be multiple of block size 
         self.m_NYBLOCK = 16
-        self.m_NSI G   = 5.0   #badpix if sensitivity > NSIG sigma from local bkg
+        self.m_NSIG    = 5.0   #badpix if sensitivity > NSIG sigma from local bkg
         self.m_BPM     = bpm   #external BadPixelMap to take into account   
                 
                 
@@ -193,8 +193,8 @@ class GainMap:
             prihdu=pyfits.PrimaryHDU(gain[0],prihdr)
             fo.append(prihdu)
         
-        fo.writeto(output)
-        fo.close()
+        fo.writeto(output,output_verify='ignore')
+        fo.close(output_verify='ignore')
         del fo        
                                     
 ################################################################################
