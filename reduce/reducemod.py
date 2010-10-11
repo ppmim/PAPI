@@ -1289,7 +1289,7 @@ class ReductionBlock:
     ##################################################################################
     def mathOp( self, operator, outputFile=None ):
         """
-        \brief Apply a math operation to the selected files
+        \brief Apply a math operation to the selected files (support MEF files)
         \param operator (-, +, /)
         \param outputFile (by default /tmp/op.fits)
         \return True or False
@@ -1307,6 +1307,7 @@ class ReductionBlock:
 
         # Remove an old output file
         misc.fileUtils.removefiles(outputFile)
+        ## MATH operation '+'
         if (operator=='+' and len(self.m_file_list_p)>2):
             log.debug("Frame list to combine = [%s]", self.m_file_list_p )
             misc.utils.listToFile(self.m_file_list_p, self.m_output_dir+"/files.tmp") 
@@ -1325,6 +1326,7 @@ class ReductionBlock:
                      #expname='EXPTIME'
                      #ParList = _getparlistname ('flatcombine')
                      )
+        ## MATH operation '-,/,*'
         else:
             """iraf.mscarith(operand1=self.m_file_list_p[0],
                       operand2=self.m_file_list_p[1],

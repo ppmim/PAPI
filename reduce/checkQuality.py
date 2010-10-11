@@ -182,7 +182,7 @@ class CheckQuality:
         """ 
          Background estimation
          ---------------------- 
-         Run SExtractor to esimte the image background
+         Run SExtractor to esimte the image background 
          
         """
         

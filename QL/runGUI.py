@@ -51,6 +51,7 @@ import fnmatch
 import shutil
 import time
 from optparse import OptionParser
+import re
 
 
 import reduce
@@ -83,6 +84,66 @@ import numpy
 import misc.paLog
 from misc.paLog import log
   
+class pruebaSky:
+    """una prueba"""
+    
+    def __init__(self, near_list, file_p, isMEF, gain):
+        """class initialization"""
+        
+        self.near_list = near_list
+        self.file_p = file_p
+        self.isMEF = isMEF
+        self.m_tempdir="/tmp/test1"
+        self.m_masterFlat = gain
+        self.m_papi_dir  = os.environ['PAPI_HOME']  # PAnic PIpeline directory
+                 
+    def create(self):
+            
+        # Check if is a MEF    
+        if self.isMEF:
+            mef = misc.mef.MEF([item for item in self.near_list])
+            (nExt,out_filenames)=mef.doSplit(".Q%02d.fits", out_dir=self.m_tempdir)
+            #del mef
+            mef = misc.mef.MEF([self.m_masterFlat])
+            (nExt,split_gain)=mef.doSplit(".Q%02d.fits", out_dir=self.m_tempdir)
+        else:
+            nExt=1  # actually, is not a MEF, but a single FITS
+            out_filenames=self.near_list
+            split_gain=[self.m_masterFlat]
+            
+        out_files=[]
+        for i in range(1, nExt+1):
+            lista=[]
+            # Create list file of nearest (ar,dec,mjd) from current selected science file
+            if nExt>1:
+                for item in out_filenames:
+                    if re.search(".*(\.Q%02d)(.fits)$"%i, item): lista.append(item)
+                listfile=self.m_tempdir+("/nearfiles.Q%02d.list"%i)
+                #lista = [item.replace(".fits",".Q%02d.fits"%(i)) for item in self.near_list]
+                utils.listToFile(lista, listfile) 
+            elif nExt==1:
+                listfile=self.m_tempdir+"/nearfiles.list"
+                utils.listToFile(near_list, listfile) 
+    
+            # Get the gain map
+            gain=self.m_masterFlat
+            if not os.path.exists( gain ):
+                raise Exception("Error, no gain map %s found"%gain)
+                        
+            hwidth=2
+            cmd=self.m_papi_dir+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(listfile, split_gain[i-1], hwidth, self.file_p)
+            #Call external app skyfilter (papi)
+            e=utils.runCmd( cmd )
+            if e==1: # success
+                #out_files.append(self.near_list[self.file_p-1].replace(".fits", (".Q%02d.fits.skysub"%i)))
+                out_files.append(lista[self.file_p-1].replace(".fits", (".fits.skysub")))  
+        if nExt>1:
+            new_mef = misc.mef.MEF(out_files)
+            new_fn  = self.m_tempdir+lista[self.file_p-1].replace(".Q%02d.fits"%i, ".skysub.fits")
+            new_mef.createMEF(new_fn)
+            return new_fn
+        elif nExt==1:
+            return out_files[0]  
   
 class MainGUI(panicQL):
 
@@ -564,7 +625,7 @@ class MainGUI(panicQL):
         popUpMenu.insertItem("Create Master Dark",  self.createMasterDark_slot, 0, 2 )
         popUpMenu.insertItem("Create Master Dome-Flat", self.createMasterDFlat_slot, 0, 3)
         popUpMenu.insertItem("Create Master Twilight-Flat", self.createMasterTwFlat_slot, 0, 4 )
-        popUpMenu.insertItem("Create SuperSky-Flat", self.createSkyFlat_slot_2, 0, 5 )
+        popUpMenu.insertItem("Create SuperSky-Flat", self.createSkyFlat_slot_2, 0, 5 )  # not MEF
         popUpMenu.insertItem("Create Gain Map", self.createGainMap_slot, 0, 51 )
         popUpMenu.insertItem("Create Bad Pixel Mask", self.createBPM_slot, 0, 6 )
         popUpMenu.insertSeparator()
@@ -640,9 +701,11 @@ class MainGUI(panicQL):
             mef.doJoin(".join.fits")
     
     def sliceCube_slot(self):
+        """TBD"""
         pass
     
     def coaddCube_slot(self):
+        """TBD"""
         pass
         
 
@@ -918,7 +981,7 @@ class MainGUI(panicQL):
     def createGainMap_slot(self):
 
         """ 
-        Create a gain map  using the own science files selected on the main list view
+        Create a gain-map using the own science files selected on the main list view
         
         TODO: Check the selected images are SCIENCE frames with same filter !!! and expTime, .....
         
@@ -980,18 +1043,23 @@ class MainGUI(panicQL):
             QMessageBox.information(self, "Info", "Sorry, data grouping with POINT_NO, DITH_NO, EXPO_NO not yet implemented ")
             return
         
+        # ###################
+        # Search-radius mode
+        # ###################
+        # Compute search-radius of nearest frames
         ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
         time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
         print "RA_DEC_OFFSET", ra_dec_near_offset
         print "TIME_NEAR_OFFSET", time_near_offset
       
-        
+        # initialize variable
+        isMEF=False        
         # Look for near science files
         if self.m_listView_item_selected:
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
+                isMEF=fits.isMEF()
                 near_list = datahandler.dataset.filesDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
-                print "NEAR_LIST=", near_list
                 # For the moment, the minimun number of nearest is >0
                 if len(near_list)==0:
                     QMessageBox.information(self, "Info", "Not enought science frames found")  
@@ -999,48 +1067,35 @@ class MainGUI(panicQL):
             else:
                 QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
                 return
-            
-            # Create file list nearest (ar,dec,mjd) from current selected science file
-            filename=self.m_tempdir+"/files.list"      
-            file_lst= open( filename, "w" )
-            i=1
+                   
+            #Create master list of nearest frames (ar,dec,mjd) to the current selected science file
+            p=1
             file_n=-1
             my_list=""
             for f in near_list:
                 file=str(f[0])
-                my_list=my_list+file+"\n"
-                if (file==self.m_listView_item_selected):
-                    file_n=i
-                else:
-                    i=i+1
-                if (datahandler.ClFits(file).getType()!='SCIENCE'):
-                    QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg((file)))
-                else:
-                    file_lst.write( file +"\n")
-            file_lst.close()
+                my_list = my_list + file + "\n"
+                if (file==self.m_listView_item_selected): file_n=p
+                else: p+=1
+            
             res=QMessageBox.information(self, "Info", QString("Selected near frames are:\n %1").arg(my_list), QMessageBox.Ok, QMessageBox.Cancel)
             if res==QMessageBox.Cancel:
-                return 
-      
-            # Call external apps skyfilter
-            #gain=self.m_papi_dir+"/gain.fits"
-            gain=self.m_masterFlat
-            if not os.path.exists( gain ):
-                QMessageBox.information(self, "Info", QString("No gain map %1 found. Please, select one on 'Calibrations' tab").arg(gain))
-                return
-                     
-            #file_n=near_list.index(self.m_listView_item_selected)
-            hwidth=2
-            cmd=self.m_papi_dir+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(filename, gain, hwidth, file_n)
+                return     
+            
+            
             #Change to working directory
             os.chdir(self.m_papi_dir)
             #Change cursor
             self.setCursor(Qt.waitCursor)
-            #Call external script (papi)
-            self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_listView_item_selected+".skysub")      
-            self._proc.startCommand()
-            
-    
+            #Create working thread that compute sky-frame
+            try:
+                self._task = pruebaSky( [item[0] for item in near_list], file_n, isMEF, self.m_masterFlat)
+                thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
+                thread.start()
+            except:
+                QMessageBox.critical(self, "Error", "Error while creating master Dome Flat")
+                raise
+                
     def createBPM_slot(self):
         """ Create a Bad Pixel Mask from a set of selected files (flats)
         """
@@ -1141,8 +1196,8 @@ class MainGUI(panicQL):
                 return
             
            # Create nearest file list (ar,dec,mjd) from current selected science file
-            filename=self.m_tempdir+"/files.list"      
-            file_lst= open( filename, "w" )
+            listfile=self.m_tempdir+"/files.list"      
+            file_lst= open( listfile, "w" )
             i=1
             my_list=""
             for f in near_list:
@@ -1164,8 +1219,8 @@ class MainGUI(panicQL):
         # CASE 2: Stack frames selected by user in the list_view
         elif len(self.m_popup_l_sel)>1:
             # Create file list from current selected science files
-            filename=self.m_tempdir+"/files.list"      
-            file_lst= open( filename, "w" )
+            listfile=self.m_tempdir+"/files.list"      
+            file_lst= open( listfile, "w" )
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))
@@ -1179,7 +1234,7 @@ class MainGUI(panicQL):
         #Change to working directory
         cwd=os.getcwd()
         os.chdir(self.m_papi_dir)
-        cmd=self.m_papi_dir+"/papi_v1 %s single dither %s" %(filename, self.m_outputdir)
+        cmd=self.m_papi_dir+"/papi_v1 %s single dither %s" %(listfile, self.m_outputdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         
@@ -1189,7 +1244,11 @@ class MainGUI(panicQL):
         
         
     def createSuperMosaic_slot(self):
-      
+        """
+        TBD 
+        Create an stitched wide-mosaic of next frames
+        """
+        QMessageBox.information(self, "Info", "Sorry, funtion not yet implemented !")
         # Check list lenght
         if len(self.m_popup_l_sel)<1:
             QMessageBox.information(self, "Info", "Not enought science pre-reduced frames selected")
@@ -1202,8 +1261,8 @@ class MainGUI(panicQL):
         # Stack frame user selected  
         elif len(self.m_popup_l_sel)>1:
             # Create file list from current selected science files
-            filename=self.m_tempdir+"/mosaic_files.list"      
-            file_lst= open( filename, "w" )
+            listfile=self.m_tempdir+"/mosaic_files.list"      
+            file_lst= open( listfile, "w" )
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE_REDUCED'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science reduced frame").arg(file))
@@ -1216,7 +1275,7 @@ class MainGUI(panicQL):
         # Call external script (SWARP)
         cwd=os.getcwd()
         os.chdir(self.m_papi_dir)
-        cmd=self.m_papi_dir+"/build_mosaic %s" %(filename)
+        cmd=self.m_papi_dir+"/build_mosaic %s" %(listfile)
         #Change to working directory
         os.chdir(self.m_papi_dir)
         #Change cursor

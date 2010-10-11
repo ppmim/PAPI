@@ -98,8 +98,9 @@ class SuperSkyFlat:
     def create(self):
       
         """
-        \brief Create a log sheet text file from a set of FITS files
-        """   
+        \brief Create the super sky flat using sigma-clipping algorithm (and supporting MEF)
+        """
+        # del old files   
         log.debug("Start createSuperSkyFlat") 
         if os.path.exists(self.output_filename): os.remove(self.output_filename)
         
@@ -114,7 +115,7 @@ class SuperSkyFlat:
         misc.fileUtils.removefiles(tmp1)
         log.info("Combining images...")
         misc.utils.listToFile(m_filelist, "/tmp/files.txt") 
-        # Combine the images to find out the super Flat
+        # Combine the images to find out the super Flat using sigma-clip algorithm
         iraf.mscred.combine(input=("'"+"@"+"/tmp/files.txt"+"'").replace('//','/'),
                     output=tmp1,
                     combine='median',
@@ -141,9 +142,13 @@ class SuperSkyFlat:
         #        )
                 
         if (self.norm):        
-            log.info("Normalizing flat field ...")
+            log.info("Normalizing flat field (wrt extension 1 when applicable)...")
             f=pyfits.open(tmp1)
-            median=np.median(f[0].data[100:1900,100:1900])
+            if f[0].header['EXTEND']==True:
+                # normalize wrt extension 1 (chip 1?)
+                median=np.median(f[1].data[100:1900,100:1900])
+            else:
+                median=np.median(f[0].data[100:1900,100:1900])
             f.close()
             misc.fileUtils.removefiles(tmp1.replace(".fits","_n.fits"))                                                 
             out=tmp1.replace(".fits","_n.fits")
@@ -159,7 +164,7 @@ class SuperSkyFlat:
         misc.fileUtils.removefiles(self.output_filename)
         if (self.gainmap):
             log.info("Creating gain map ...")                                                 
-            g=calGainMap.GainMap(out, self.output_filename )
+            g=calGainMap.GainMap(out, self.output_filename)
             g.create() 
         else:
             shutil.move(out, self.output_filename)

@@ -143,6 +143,9 @@ class ClFits:
     def isObject(self):
         return (self.isScience())
     
+    def isMEF(self):
+        return (self.mef)
+    
     def expTime(self):
         return (self.exptime)
     
@@ -404,7 +407,10 @@ class ClFits:
 #  Useful function to check data integrity
 ################################################################################
 def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, c_ncoadds=True, c_readmode=True):
-    """This function will check all the files in the file_list have the same properties required as True in the parameters"""
+    """
+        This function will check all the files in the file_list have the same properties required as True in the parameters
+        Note that that properties should be available in the main header(0) in case of MEF files
+    """
     
     m_type=''
     m_filter=''

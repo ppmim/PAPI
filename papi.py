@@ -913,7 +913,10 @@ if __name__ == "__main__":
             temp_out_dir=options.out_dir+"_Q%02d"%(n+1)
             redSet = ReductionSet(sources[n], options.out_dir, temp_out, options.obs_mode, darks[n], flats[n], bpms[n], single=options.single)
             outs[n]=redSet.reduce()
-        JoinResult(outs)
-          
+        
+        #Join results
+        mef=misc.mef.MEF(outs)
+        mef.createMEF()
+        
     if options.show==True:
         redSet.show()    

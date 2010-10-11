@@ -147,12 +147,14 @@ class MEF:
         
         return next, out_filename
             
-    def doSplit( self , out_filename_suffix=".%02d.fits", copy_keyword=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']):
+    def doSplit( self , out_filename_suffix=".Q%02d.fits", out_dir=None, copy_keyword=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']):
         """ 
         Method used to split a MEF into single FITS frames, coping all the header information required                           
         """
         log.info("Starting SplitMEF")
-         
+        
+        out_filenames=[]
+        n=0 
         for file in self.input_files:        
             try:
                 hdulist = pyfits.open(file)
@@ -179,10 +181,12 @@ class MEF:
                         break
                 print "->Found %d extensions" %(next)
                          
-            out_filenames=[]
+            
             for i in range(1,next+1):
-                suffix=out_filename_suffix %i
-                out_filenames.append(file.replace('.fits', suffix))
+                suffix=out_filename_suffix%i
+                new_filename = file.replace(".fits", suffix)
+                if out_dir!=None: new_filename=new_filename.replace(os.path.dirname(new_filename), out_dir) 
+                out_filenames.append(new_filename)
                 out_hdulist = pyfits.HDUList([pyfits.PrimaryHDU(header=hdulist[i].header, data=hdulist[i].data)])
                 out_hdulist.verify('silentfix')
                 # now, copy extra keywords required
@@ -195,12 +199,14 @@ class MEF:
                         print 'Warning, key %s cannot not be copied, is not in the header' %(key)
                 # delete some keywords not required anymore
                 del out_hdulist[0].header['EXTNAME']                
-                out_hdulist.writeto(out_filenames[i-1], output_verify='ignore', clobber=True)
+                out_hdulist.writeto(out_filenames[n], output_verify='ignore', clobber=True)
                 out_hdulist.close(output_verify='ignore')
                 del out_hdulist
-                print "File %s created " %(out_filenames[i-1])
+                print "File %s created " %(out_filenames[n])
+                n+=1
+                
             
-        log.info("End of SplitMEF. %d files created", next)
+        log.info("End of SplitMEF. %d files created", n)
         return next , out_filenames
                     
     def createMEF( self, output_file=os.getcwd()+"/mef.fits" , primaryHeader=None):
@@ -247,7 +253,7 @@ class MEF:
             nExt+=1
        
         prihdu.header.update('NEXTEND',nExt)
-        os.remove(output_file) # remove any old file    
+        misc.fileUtils.removefiles(output_file)
         fo.writeto(output_file, output_verify='ignore')
         fo.close(output_verify='ignore')
         del fo            
