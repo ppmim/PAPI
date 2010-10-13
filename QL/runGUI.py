@@ -37,10 +37,8 @@
     ####################################################################
 
 
+# system modules
 from qt import *
-
-
-
 from panicQL import *
 import sys
 import os
@@ -53,7 +51,7 @@ import time
 from optparse import OptionParser
 import re
 
-
+# PAPI modules
 import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
@@ -66,9 +64,12 @@ import misc.mef
 import datahandler
 import misc.display as display
 from runQtProcess import *
+#Log
+import misc.paLog
+from misc.paLog import log
 
 
-# Interact with FITS files
+# Interaction with FITS files
 import pyfits
 
 # IRAF packages
@@ -81,10 +82,6 @@ from iraf import mscred
 # Math module for efficient array processing
 import numpy
 
-#Log
-import misc.paLog
-from misc.paLog import log
-  
 class pruebaSky:
     """una prueba"""
     
