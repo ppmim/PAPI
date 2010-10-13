@@ -58,6 +58,7 @@ import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
 import reduce.checkQuality
+import papi
 import misc.fileUtils
 import misc.utils as utils
 import misc.mef
@@ -101,9 +102,11 @@ class pruebaSky:
             
         # Check if is a MEF    
         if self.isMEF:
+            # split science frames
             mef = misc.mef.MEF([item for item in self.near_list])
             (nExt,out_filenames)=mef.doSplit(".Q%02d.fits", out_dir=self.m_tempdir)
             #del mef
+            # split gain-map frame
             mef = misc.mef.MEF([self.m_masterFlat])
             (nExt,split_gain)=mef.doSplit(".Q%02d.fits", out_dir=self.m_tempdir)
         else:
@@ -137,6 +140,8 @@ class pruebaSky:
             if e==1: # success
                 #out_files.append(self.near_list[self.file_p-1].replace(".fits", (".Q%02d.fits.skysub"%i)))
                 out_files.append(lista[self.file_p-1].replace(".fits", (".fits.skysub")))  
+        
+        # Compound-back the MEF with the sky-subtracted frame 
         if nExt>1:
             new_mef = misc.mef.MEF(out_files)
             new_fn  = self.m_tempdir+lista[self.file_p-1].replace(".Q%02d.fits"%i, ".skysub.fits")
@@ -625,8 +630,7 @@ class MainGUI(panicQL):
         popUpMenu.insertItem("Create Master Dark",  self.createMasterDark_slot, 0, 2 )
         popUpMenu.insertItem("Create Master Dome-Flat", self.createMasterDFlat_slot, 0, 3)
         popUpMenu.insertItem("Create Master Twilight-Flat", self.createMasterTwFlat_slot, 0, 4 )
-        popUpMenu.insertItem("Create SuperSky-Flat", self.createSkyFlat_slot_2, 0, 5 )  # not MEF
-        popUpMenu.insertItem("Create Gain Map", self.createGainMap_slot, 0, 51 )
+        popUpMenu.insertItem("Create Gain Map (SuperFlat)", self.createGainMap_slot, 0, 5 )
         popUpMenu.insertItem("Create Bad Pixel Mask", self.createBPM_slot, 0, 6 )
         popUpMenu.insertSeparator()
         popUpMenu.insertSeparator()
@@ -657,7 +661,6 @@ class MainGUI(panicQL):
         subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
         subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
         popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 19 )
-        
         
 
         ## Disable some menu items depeding of the number of item selected in the list view
@@ -943,40 +946,6 @@ class MainGUI(panicQL):
         else:
             QMessageBox.information(self,"Info","Error, not enought frames (>2) !")
     
-    def createSkyFlat_slot_2(self):
-
-        """ 
-        Create a sky flat using the own science files selected on the main list view
-        
-        TODO: Check the selected images are SCIENCE frames with same filter !!! and expTime, .....
-        
-        """
-        
-        # Create file list with current selected science files
-        filename=self.m_tempdir+"/files.list"      
-        file_lst= open( filename, "w" )
-        for file in self.m_popup_l_sel :
-            file_lst.write( file +"\n")
-        file_lst.close()
-        # Call external apps
-        cmd=self.m_papi_dir + "/mksuperflat.py" + " -s " + filename + " -o /tmp/skyFlat.fits"
-        e=utils.runCmd(cmd)
-        
-        if e==1: # No error
-            cmd2=self.m_papi_dir +"/irdr/bin/gainmap /tmp/skyFlat.fits /tmp/gain.fits 5 16 16 0.7 1.4"
-            e=utils.runCmd(cmd2)  
-            if e==1: # No error
-                misc.fileUtils.removefiles("/tmp/skyFlat.fits")
-                self.textEdit_log.append("<info_tag> Sky Super-flat /tmp/gain.fits created successful!!! </info_tag>")
-                QMessageBox.information(self,"Info", QString("Super-Flat created (%1) !").arg("/tmp/gain.fits"))
-                display.showFrame("/tmp/gain.fits")
-                
-            else:
-                log.error("Error creating master Super Flat file")
-                QMessageBox.critical(self, "Error", "Error while creating Gain Map")
-        else:
-            log.error("Error creating master Super Flat file")
-            QMessageBox.critical(self, "Error", "Error while creating Super Flat")
     
     def createGainMap_slot(self):
 
@@ -984,7 +953,7 @@ class MainGUI(panicQL):
         Create a gain-map using the own science files selected on the main list view
         
         TODO: Check the selected images are SCIENCE frames with same filter !!! and expTime, .....
-        
+         
         """
         
         if len(self.m_popup_l_sel)<=1:
@@ -1082,20 +1051,29 @@ class MainGUI(panicQL):
             if res==QMessageBox.Cancel:
                 return     
             
-            
             #Change to working directory
             os.chdir(self.m_papi_dir)
             #Change cursor
             self.setCursor(Qt.waitCursor)
             #Create working thread that compute sky-frame
             try:
+                self._task = papi.MEF_ReductionSet( [item[0] for item in near_list], self.m_outputdir, \
+                                                dark=None, flat=self.m_masterFlat, bpm=None, file_n=file_n)
+                thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list)
+                thread.start()
+            except:
+                QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                raise 
+            
+            """
+            try:
                 self._task = pruebaSky( [item[0] for item in near_list], file_n, isMEF, self.m_masterFlat)
                 thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
                 thread.start()
             except:
-                QMessageBox.critical(self, "Error", "Error while creating master Dome Flat")
+                QMessageBox.critical(self, "Error", "Error while subtracting near sky")
                 raise
-                
+            """    
     def createBPM_slot(self):
         """ Create a Bad Pixel Mask from a set of selected files (flats)
         """

@@ -92,14 +92,21 @@ def listToString( a_list ):
     
     return a_string
         
-def listToFile ( a_list, output_file ):
+def listToFile ( a_list, output_file=None ):
     """ This function write a list of filenames into a file """
     
-    file=open(output_file,"w+") # truncate the file if exists
+    if output_file==None:
+        temp_fd, temp_path = tempfile.mkstemp()
+    else:        
+        temp_fd=open(output_file,"w+") # truncate the file if exists
+    
     for filename in a_list:
-        file.write(filename+"\n")
-    file.close()
-    return output_file
+        temp_fd.write(filename+"\n")
+    
+    temp_fd.close()
+    
+    if output_file!=None: return output_file
+    else: return temp_path
               
 def fileToList ( input_file, out_filenames_list=None):
     """ This function dump the filenames from a input_file into a list"""
@@ -107,9 +114,8 @@ def fileToList ( input_file, out_filenames_list=None):
     filelist=[line.replace( "\n", "") for line in fileinput.input(input_file)]
     if out_filenames_list!=None:
         out_filenames_list=filelist              
+    
     return filelist
-           
-                 
      
 def runCmd( str_cmd, p_shell=True ):
     """ 

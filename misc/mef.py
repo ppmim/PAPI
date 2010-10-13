@@ -211,7 +211,7 @@ class MEF:
                     
     def createMEF( self, output_file=os.getcwd()+"/mef.fits" , primaryHeader=None):
         """ 
-        Method used to create a MEF from a set FITS frames                           
+        Method used to create a MEF from a set of n>0 FITS frames                           
         """
         
         log.info("Starting createMEF")
