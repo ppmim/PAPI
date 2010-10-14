@@ -11,7 +11,7 @@
 # Created: 24-March 2009
 # Last Update: 12-Feb-2010
 
-die "Usage: astrometry_scamp.pl apm|usno|2mass regrid|noregrid file*.fits [-u]\n" 
+die "Usage: astrometry_scamp.pl apm|usno|2mass regrid|noregrid file*.fits \n" 
     unless ($#ARGV >= 1);
 
 $area = 10.0;                            # SExtractor DETECT_MINAREA

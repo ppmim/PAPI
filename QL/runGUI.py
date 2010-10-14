@@ -82,70 +82,6 @@ from iraf import mscred
 # Math module for efficient array processing
 import numpy
 
-class pruebaSky:
-    """una prueba"""
-    
-    def __init__(self, near_list, file_p, isMEF, gain):
-        """class initialization"""
-        
-        self.near_list = near_list
-        self.file_p = file_p
-        self.isMEF = isMEF
-        self.m_tempdir="/tmp/test1"
-        self.m_masterFlat = gain
-        self.m_papi_dir  = os.environ['PAPI_HOME']  # PAnic PIpeline directory
-                 
-    def create(self):
-            
-        # Check if is a MEF    
-        if self.isMEF:
-            # split science frames
-            mef = misc.mef.MEF([item for item in self.near_list])
-            (nExt,out_filenames)=mef.doSplit(".Q%02d.fits", out_dir=self.m_tempdir)
-            #del mef
-            # split gain-map frame
-            mef = misc.mef.MEF([self.m_masterFlat])
-            (nExt,split_gain)=mef.doSplit(".Q%02d.fits", out_dir=self.m_tempdir)
-        else:
-            nExt=1  # actually, is not a MEF, but a single FITS
-            out_filenames=self.near_list
-            split_gain=[self.m_masterFlat]
-            
-        out_files=[]
-        for i in range(1, nExt+1):
-            lista=[]
-            # Create list file of nearest (ar,dec,mjd) from current selected science file
-            if nExt>1:
-                for item in out_filenames:
-                    if re.search(".*(\.Q%02d)(.fits)$"%i, item): lista.append(item)
-                listfile=self.m_tempdir+("/nearfiles.Q%02d.list"%i)
-                #lista = [item.replace(".fits",".Q%02d.fits"%(i)) for item in self.near_list]
-                utils.listToFile(lista, listfile) 
-            elif nExt==1:
-                listfile=self.m_tempdir+"/nearfiles.list"
-                utils.listToFile(near_list, listfile) 
-    
-            # Get the gain map
-            gain=self.m_masterFlat
-            if not os.path.exists( gain ):
-                raise Exception("Error, no gain map %s found"%gain)
-                        
-            hwidth=2
-            cmd=self.m_papi_dir+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(listfile, split_gain[i-1], hwidth, self.file_p)
-            #Call external app skyfilter (papi)
-            e=utils.runCmd( cmd )
-            if e==1: # success
-                #out_files.append(self.near_list[self.file_p-1].replace(".fits", (".Q%02d.fits.skysub"%i)))
-                out_files.append(lista[self.file_p-1].replace(".fits", (".fits.skysub")))  
-        
-        # Compound-back the MEF with the sky-subtracted frame 
-        if nExt>1:
-            new_mef = misc.mef.MEF(out_files)
-            new_fn  = self.m_tempdir+lista[self.file_p-1].replace(".Q%02d.fits"%i, ".skysub.fits")
-            new_mef.createMEF(new_fn)
-            return new_fn
-        elif nExt==1:
-            return out_files[0]  
   
 class MainGUI(panicQL):
 
@@ -885,9 +821,26 @@ class MainGUI(panicQL):
         else:
             pass
 
-    def do_quick_reduction_slot(self):
+    def do_quick_reduction_slot_V1(self):
         # Run quick-reduction mode with the
         self.QL2(self.m_listView_first_item_selected, self.textEdit_log)
+    
+    def do_quick_reduction_slot(self):
+        """ Do a quick reduction of the user selected files in the list view panel"""
+            
+        #Change to working directory
+        os.chdir(self.m_papi_dir)
+        #Change cursor
+        self.setCursor(Qt.waitCursor)
+        #Create working thread that compute sky-frame
+        try:
+            self._task = papi.MEF_ReductionSet( self.m_popup_l_sel, self.m_outputdir, \
+                                            dark=None, flat=None, bpm=None)
+            thread=reduce.ExecTaskThread(self._task.doQuickReduction, self._task_info_list)
+            thread.start()
+        except:
+            QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+            raise 
 
     def createMasterDFlat_slot(self):
         
@@ -1061,16 +1014,7 @@ class MainGUI(panicQL):
             except:
                 QMessageBox.critical(self, "Error", "Error while subtracting near sky")
                 raise 
-            
-            """
-            try:
-                self._task = pruebaSky( [item[0] for item in near_list], file_n, isMEF, self.m_masterFlat)
-                thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
-                thread.start()
-            except:
-                QMessageBox.critical(self, "Error", "Error while subtracting near sky")
-                raise
-            """    
+              
     def createBPM_slot(self):
         """ Create a Bad Pixel Mask from a set of selected files (flats)
         """
@@ -1106,7 +1050,7 @@ class MainGUI(panicQL):
                 self.textEdit_log.append(QString(str(line)))
         
     def background_estimation_slot(self):
-        """ Give an background estimation of the current selected image"""
+        """ Give an background estimation of the current selected image """
         
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
         try:     
@@ -1126,7 +1070,7 @@ class MainGUI(panicQL):
             raise
           
     def fwhm_estimation_slot (self):
-        """ Give an FWHM estimation of the current selected image"""
+        """ Give an FWHM estimation of the current selected image """
         
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
         fwhm,std=cq.estimateFWHM()
@@ -1136,7 +1080,11 @@ class MainGUI(panicQL):
             self.textEdit_log.append("<error_tag> ERROR: Cannot estimage FWHM with selected image  </error_tag>")           
             
     def createStackedFrame_slot(self):
-        """ Compute a stacked frame (shift and aligned) from a set of nearest (ra,dec, mjd) frames, selected by user or automatic search"""
+        """ 
+            Compute a stacked frame (subtract sky, shift and align) from a set of nearest (ra,dec, mjd) 
+            frames, selected by user or automatic search.
+            Actually, it is basically a quick-reduction !!! (see do_quick_reduction_slot)
+        """
         
         file_n=0 # really, not used for the moment
         
@@ -1149,7 +1097,6 @@ class MainGUI(panicQL):
         time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
         print "RA_DEC_OFFSET", ra_dec_near_offset
         print "TIME_NEAR_OFFSET", time_near_offset
-        
         
         # CASE 1: Automatic search for nearest frames (ra, dec, mjd) 
         if len(self.m_popup_l_sel)==1:
@@ -1170,52 +1117,51 @@ class MainGUI(panicQL):
                 QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
                 return
             
-           # Create nearest file list (ar,dec,mjd) from current selected science file
-            listfile=self.m_tempdir+"/files.list"      
-            file_lst= open( listfile, "w" )
+            # Create nearest file list (ar,dec,mjd) from current selected science file
+            file_lst=[]
+            view_list = ""
             i=1
-            my_list=""
             for f in near_list:
-                file=str(f[0])
-                my_list=my_list+file+"\n"
-                if (file==self.m_listView_item_selected):
-                    file_n=i
-                else:
-                    i=i+1
+                file = str(f[0])
+                if file==self.m_listView_item_selected: file_n=i
+                else: i=i+1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))
                 else:
-                    file_lst.write( file +"\n")
-            file_lst.close() 
-            resp=QMessageBox.information(self, "Info", QString("Selected near frames are:\n %1").arg(my_list), QMessageBox.Ok, QMessageBox.Cancel)
+                    file_list.append(file)
+                    view_list +=  file + "\n"
+            
+            resp=QMessageBox.information(self, "Info", QString("Selected near frames are:\n %1").arg(view_list), \
+                                            QMessageBox.Ok, QMessageBox.Cancel)
             if resp==QMessageBox.Cancel:
                 return
                     
         # CASE 2: Stack frames selected by user in the list_view
         elif len(self.m_popup_l_sel)>1:
             # Create file list from current selected science files
-            listfile=self.m_tempdir+"/files.list"      
-            file_lst= open( listfile, "w" )
+            file_lst=[]
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))
-                    file_lst.close()
                     return
                 else:
-                    file_lst.write( file +"\n")
-            file_lst.close()
-            file_n=0
+                    file_lst.append(file)
+            file_n=-1 # actually, not used
             
         #Change to working directory
-        cwd=os.getcwd()
         os.chdir(self.m_papi_dir)
-        cmd=self.m_papi_dir+"/papi_v1 %s single dither %s" %(listfile, self.m_outputdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
-        
-        # Call external script (papi)
-        self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_outputdir+"/single.fits")      
-        self._proc.startCommand() # asyncronous call than launch a subprocess to run the 'cmd' command
+        #Create working thread that compute sky-frame
+        if len(file_list)>1:
+            try:
+                self._task = papi.MEF_ReductionSet( file_list, self.m_outputdir, \
+                                            dark=None, flat=None, bpm=None)
+                thread=reduce.ExecTaskThread(self._task.doQuickReduction, self._task_info_list)
+                thread.start()
+            except:
+                QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                raise
         
         
     def createSuperMosaic_slot(self):
@@ -1224,6 +1170,8 @@ class MainGUI(panicQL):
         Create an stitched wide-mosaic of next frames
         """
         QMessageBox.information(self, "Info", "Sorry, funtion not yet implemented !")
+        
+        # Next code is only a raw template 
         # Check list lenght
         if len(self.m_popup_l_sel)<1:
             QMessageBox.information(self, "Info", "Not enought science pre-reduced frames selected")

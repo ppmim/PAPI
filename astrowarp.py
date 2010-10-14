@@ -43,7 +43,7 @@ class AstroWarp(object):
         """ Instantiation method for AstroWarp class
 
         Keyword arguments:
-        input_files - the set of overlapping reduced frames, i.e., dark, flat and sky subtracted 
+        input_files - the set of overlapping reduced frames, i.e., dark subtracted, flatted and sky subtracted 
         catalog     - the catalog to use for the astrometric calibration (by default, 2MASS)
         coadded_file - the output final coadded image
         
