@@ -64,6 +64,7 @@ import exceptions
 import re
 import copy
 import fileinput
+import types
 
 
 # ======================================================================
@@ -440,10 +441,14 @@ class SWARP:
 
         self.program, self.version = self.setup(path)
         
-        my_files=""
-        for file in file_list:
-           my_files = my_files + " " + file
-            
+        # check how many files in the input
+        if type(file_list) == types.ListType:
+            my_files=""
+            for file in file_list:
+               my_files = my_files + " " + file
+        else:
+            my_files=file_list # a single file
+                
         # Compound extra config command line args
         ext_args=""
         for key in self.ext_config.keys():

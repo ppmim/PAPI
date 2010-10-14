@@ -80,6 +80,7 @@ import astrowarp
 import misc.mef 
 import misc.mef
 
+
 class MEF_ReductionSet:
     """ 
     This class implement a reduction set of multi-extension-FITS and allow 
@@ -867,8 +868,9 @@ class ReductionSet:
         ## END OF SINGLE REDUCTION  ##
         if self.obs_mode!='dither' or self.red_mode=="single":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
-            self.makeAstrometry(self.out_dir+'/coadd1.fits', '2mass', re_grid=True) 
-            shutil.move(self.out_dir+'/coadd.fits', self.out_file)
+            #self.makeAstrometry(self.out_dir+'/coadd1.fits', '2mass', re_grid=True)
+            astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', self.out_file, "2MASS" ) 
+            #shutil.move(self.out_dir+'/coadd.fits', self.out_file)
             log.info("Generated output file ==>%s", self.out_file)
             log.info("#########################################")
             log.info("##### End of SINGLE data reduction ######")
@@ -916,8 +918,8 @@ class ReductionSet:
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)
         #########################################
-        astrowarp=False
-        if astrowarp:
+        _astrowarp=False
+        if _astrowarp:
             log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
             aw = astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
             try:

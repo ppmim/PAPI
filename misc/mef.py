@@ -81,6 +81,9 @@ class MEF:
          However, this alternative takes longer.
 
         -Other alternative is iraf.mscjoin 
+        
+        TODO:
+         - deduce the RA,DEC coordinates of the pointing !!
         """
            
         log.info("Starting JoinMEF")
@@ -135,6 +138,7 @@ class MEF:
                 hdu[0].header.update("BITPIX",-32)
                 hdu[0].header.update("NAXIS1",4096)
                 hdu[0].header.update("NAXIS2",4096)
+                # TODO: deduce RA,DEC pointing coordinates 
             except KeyError:
                 print 'Warning, some key cannot not be copied'
                             
@@ -195,6 +199,8 @@ class MEF:
                         value=hdulist[0].header.ascardlist()[key].value
                         comment=hdulist[0].header.ascardlist()[key].comment
                         out_hdulist[0].header.update(key,value,comment)
+                        # We DON'T need to update RA,DEC (pointing coordinates), because each 
+                        # extension should have CRVAL/CRPIX values!!
                     except KeyError:
                         print 'Warning, key %s cannot not be copied, is not in the header' %(key)
                 # delete some keywords not required anymore

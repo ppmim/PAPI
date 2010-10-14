@@ -64,7 +64,7 @@ import exceptions
 import re
 import copy
 import fileinput
-
+import types
 
 # ======================================================================
 
@@ -508,9 +508,14 @@ class SCAMP:
 
         self.program, self.version = self.setup(path)
         
+        # check how many files in the input
         my_catalogs=""
-        for cat in catalog_list:
-           my_catalogs = my_catalogs + " " + cat
+        if type(catalog_list) == types.ListType:
+            for file in catalog_list:
+               my_catalogs = my_catalogs + " " + file
+        else:
+            my_catalogs=catalog_list # a single file
+        
             
         # Compound extra config command line args
         ext_args=""
