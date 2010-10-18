@@ -1209,22 +1209,34 @@ class MainGUI(panicQL):
       
       
     def do_raw_astrometry(self):
-        """Compute an astrometric solution for the selected file in the main list view panel"""
+        """
+          Compute an astrometric solution for the selected file in the main list view panel
+          
+          TODO: We should check the image is pre-reduced or at least, with enought objects 
+        """
         
         if len(self.m_popup_l_sel)==1:
             fits = datahandler.ClFits(self.m_listView_item_selected)
-            if fits.getType()=='SCIENCE':
-                # Call external script (papi)
-                cmd=self.m_papi_dir+"/astrometry_scamp.pl 2mass regrid %s" %(self.m_listView_item_selected)
+            if fits.getType()=='SCIENCE': 
+                # Run astrometry
+                out_file = self.m_outputdir+"/"+os.path.basename(self.m_listView_item_selected.replace(".fits",".wcs.fits"))
+                catalog="2MASS"
                 
                 #Change to working directory
-                os.chdir(self.m_outputdir)
+                os.chdir(self.m_papi_dir)
                 #Change cursor
                 self.setCursor(Qt.waitCursor)
-                # Call external script (papi)
-                self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, None)      
-                self._proc.startCommand()
-                
+                #Create working thread that compute sky-frame
+                try:
+                    #astrowarp.doAstrometry(self.m_listView_item_selected, out_file, catalog)
+                    # TODO : to be completed with a thread
+                    #self._task = papi.MEF_ReductionSet( file_list, self.m_outputdir, \
+                    #                            dark=None, flat=None, bpm=None)
+                    thread=reduce.ExecTaskThread(astrowarp.doAstrometry, self._task_info_list, self.m_listView_item_selected, out_file, catalog)
+                    thread.start()
+                except:
+                    QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                    raise
             else:
                 QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
         

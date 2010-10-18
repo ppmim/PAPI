@@ -108,7 +108,7 @@ class SWARP:
         
         "WEIGHT_TYPE":
         {"comment": "BACKGROUND,MAP_RMS,MAP_VARIANCE or MAP_WEIGHT",
-         "value": "NONE"},
+         "value": "MAP_WEIGHT"},
         
         "WEIGHT_SUFFIX":
         {"comment": "Suffix to use for weight-maps",

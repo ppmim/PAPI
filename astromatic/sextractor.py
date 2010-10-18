@@ -238,7 +238,7 @@ class SExtractor:
         
         "PIXEL_SCALE":
         {"comment": "size of pixel in arcsec (0=use FITS WCS info)",
-         "value": 0.45},
+         "value": 0},
         
         "SEEING_FWHM":
         {"comment": "stellar FWHM in arcsec",

@@ -92,7 +92,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS'):
         sex.run(input_image, updateconfig=True, clean=False)
     except: 
         raise
-                    
+                
     ## STEP 2: Make astrometric calibration 
     log.debug("Doing astrometric calibration....")
     scamp = astromatic.SCAMP()
@@ -113,6 +113,10 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS'):
     swarp = astromatic.SWARP()
     swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME']=output_image
+    swarp.ext_config['WEIGHTOUT_NAME']=output_image.replace(".fits",".weight.fits")
+    swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
+    swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
+    swarp.ext_config['WEIGHT_IMAGE']=input_image.replace(".fits",".weight.fits")
     try:
         swarp.run(input_image, updateconfig=False, clean=False)
     except:
@@ -187,6 +191,9 @@ class AstroWarp(object):
         swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
         swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
         swarp.ext_config['IMAGEOUT_NAME']=os.getcwd() + "/coadd_tmp.fits"
+        swarp.ext_config['WEIGHTOUT_NAME']=os.getcwd() + "/coadd_tmp.weight.fits"
+        swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
+        swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
         swarp.run(self.input_files, updateconfig=False, clean=False)
         
         ## STEP 4: Make again the final astrometric calibration to the final coadd

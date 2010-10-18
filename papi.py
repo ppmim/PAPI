@@ -611,7 +611,15 @@ class ReductionSet:
         return offsets_mat
                             
     def coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits', type_comb='average'):
-        """register the aligned-stack of dithered FITS images listed in 'input' file using offset specified offsets and calculate the mean plane"""
+        """
+            Register the aligned-stack of dithered FITS images listed in 'input' file using offset specified 
+            offsets and calculate the mean plane.
+            
+            INPUTS:
+      
+            OUTPUTS:
+                output : coadded image (and the weight map .weight.fits)
+        """
                                                   
         log.info("Start coaddStackImages ...")                                          
         # STEP 1: Define parameters                                          
@@ -639,8 +647,10 @@ class ReductionSet:
             e=utils.runCmd( cmd )
             if e==0:
                 log.debug("Some error while running command %s", cmd)
+                return (None,None)
             else:
                 log.debug("Succesful ending of coaddStackImages")
+                return (output, weight_file)
         #elif type_comb=='median': # (use IRAF::imcombine)
                 
                 

@@ -244,11 +244,11 @@ class MEF:
             # Check if is a MEF, thus
             try:
                 if f[0].header['EXTEND']==True:
-                    print 'Error, file %s is already a MEF file. Only can create a MEF from single FITS' %(file)
-                    f.close()
-                    del prihdu
-                    del fo
-                    raise Exception("Error, file %s is already a MEF file"%(file))
+                    print 'Warning, file %s looks like a MEF file. Only can create a MEF from single FITS' %(file)
+                    #f.close()
+                    #del prihdu
+                    #del fo
+                    #raise Exception("Error, file %s is already a MEF file"%(file))
             except KeyError:
                 #ok, we suppose file is not a MEF
                 pass                        

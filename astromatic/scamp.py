@@ -524,7 +524,7 @@ class SCAMP:
             
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + my_catalogs)
-        #print commandline
+        print commandline
 
         rcode = os.system(commandline)
         

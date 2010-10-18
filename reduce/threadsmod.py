@@ -71,10 +71,11 @@ class ExecTaskThread(threading.Thread):
     """ 
     Thread to execute a task and then signal with a event to a waiting thread about the result of the task
     """
-    def __init__(self, task, task_info_list):
+    def __init__(self, task, task_info_list, *args):
     
         threading.Thread.__init__(self)
         self._task=task
+        self._args=args
         #self._event=event # not used
         self._task_info = TaskInfo()
         self._task_info_list = task_info_list
@@ -84,7 +85,7 @@ class ExecTaskThread(threading.Thread):
         try:
             try:
                 self._task_info._curr_status = "INITIATED"
-                self._task_info._return      = self._task()  # Execute the task
+                self._task_info._return      = self._task(*self._args)  # Execute the task
                 self._task_info._exit_status = 0             # EXIT_SUCCESS, all was OK
             except Exception, e:
                 self._task_info._curr_status = "FINISHED"

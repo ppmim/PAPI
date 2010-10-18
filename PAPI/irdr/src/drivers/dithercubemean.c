@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     put_key_float(argv[3], "DATAMODE", avgscale);
 
     /* write weight map */
-    /*writefits(argv[4], argv[3], (char*)sumwplanes, -32, nx, ny);*/
+    writefits(argv[4], argv[3], (char*)sumwplanes, -32, nx, ny);
     
     return 0;
 }

@@ -38,6 +38,8 @@ def checkAstrometry(image, catalog="2mass"):
     """ 
         Evaluate the astrometric accuracy of an image comparing with an reference catalog (using the results from wcstool::immatch)
         
+        TODO: Need review or use other method rather immatch, because it depend of the -i <min peak value>, now set to -1 ??? 
+        
         'image',   must have a good enought WCS header
         'catalog', must be 2mass, usnob, usnoa, gsc and conresponding environtment variable must to be exported accordingly
     """
@@ -58,7 +60,7 @@ def checkAstrometry(image, catalog="2mass"):
     # then be parsed in order to extract the stars that were returned and the position errors.
     temp_fd, temp_path = tempfile.mkstemp()
     max_stars = 9999999 # allow for lots of stars to be extracted
-    args = "/disk-a/caha/panic/SOFTWARE/wcstools-3.8.1/bin/immatch -c %s -h %d %s" \
+    args = "/disk-a/caha/panic/SOFTWARE/wcstools-3.8.1/bin/immatch -c %s -h %d %s -i -1" \
             %(my_cat, max_stars, image)
     retcode = subprocess.call(args, shell = True, stdout = temp_fd)
     os.close(temp_fd)
@@ -70,7 +72,11 @@ def checkAstrometry(image, catalog="2mass"):
                                "while querying the catalog server.")     
 
     # Now we load from the temp file the columns with needed data (7=x_err, 8=y_err, 9=radii_err)
-    m=np.loadtxt(temp_path, comments="#", usecols=(7,8,9))
+    try:
+        m=np.loadtxt(temp_path, comments="#", usecols=(7,8,9))
+    except:
+        # some error loading results, might be a empty file, thus no catalog matching
+        m=[]
     if len(m)==0:
         print "Error checking astormetry, any star matched with catalog"
         return -1,-1,-1
