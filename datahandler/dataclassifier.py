@@ -204,21 +204,24 @@ class ClFits:
             raise
         
         #Check if is a MEF file 
+        self.mef=False # by default
         try:    
             if myfits[0].header['EXTEND']==True:
-                self.mef=True
+                #self.mef=True # not sure, maybe !!!
                 #Count the number of extensions
                 try:
                     self.next=myfits[0].header['NEXTEND']
+                    if self.next>0: self.mef=True
                 except KeyError:
                     log.warn('NEXTEND keyword not found. Counting number of extensions...')
                     self.next=0
                     while (1):
                         try:
-                            if (myfits[self.next+1].header['XTENSION'] == 'IMAGE'): self.next += 1
+                            if (myfits[self.next+1].header['XTENSION'].count('IMAGE')): self.next += 1
                         except:
                             break
                     log.debug("Found %d extensions", self.next)
+                    if self.next>0: self.mef=True
             else:
                 self.mef=False
         except KeyError,IndexError:

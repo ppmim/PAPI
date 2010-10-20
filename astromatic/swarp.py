@@ -102,7 +102,7 @@ class SWARP:
         
         "HEADER_SUFFIX":
         {"comment": 'Filename extension for additional headers',
-         "value": ".fits.head"},
+         "value": ".head"},
          
 #------------------------------- Input Weights --------------------------------        
         

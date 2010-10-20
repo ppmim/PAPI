@@ -99,8 +99,9 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS'):
     scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
     scamp.ext_config['ASTREF_CATALOG']=catalog
     scamp.ext_config['SOLVE_PHOTOM']="N"
+    scamp.ext_config['CHECKPLOT_TYPE']="NONE"
     scamp.ext_config['WRITE_XML']="N"
-    cat_file = input_image.replace( ".fits", ".fits.ldac")
+    cat_file = input_image + ".ldac"   # xxxxx.fits.ldac
     #updateconfig=False means scamp will use the specified config file instead of the single config parameters
     #but, "ext_config" parameters will be used in any case
     try:
@@ -114,9 +115,16 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS'):
     swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME']=output_image
     swarp.ext_config['WEIGHTOUT_NAME']=output_image.replace(".fits",".weight.fits")
-    swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
-    swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
-    swarp.ext_config['WEIGHT_IMAGE']=input_image.replace(".fits",".weight.fits")
+    swarp.ext_config['HEADER_SUFFIX']=".head"
+    #Rename the external header produced by SCAMP (.head) to a filename to be looked for by SWARP 
+    #SWARP take into account for re-projection an externar header for file 'xxxxx.ext' if exists 
+    #an 'xxxx.head' header ('ext' can be any string, i.e. fits, skysub, ....)
+    shutil.move(input_image+".head", os.path.splitext(input_image)[0]+".head") # we use explitext() to remove the LAST suffix after, thus 'xxx.fits.skysub' ---> has as extension '.skysub'
+    if (os.path.exists(input_image.replace(".fits",".weight.fits"))):
+        swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
+        swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
+        swarp.ext_config['WEIGHT_IMAGE']=input_image.replace(".fits",".weight.fits")
+        
     try:
         swarp.run(input_image, updateconfig=False, clean=False)
     except:
@@ -179,7 +187,7 @@ class AstroWarp(object):
         scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
         scamp.ext_config['ASTREF_CATALOG']=self.catalog
         scamp.ext_config['SOLVE_PHOTOM']="N"
-        cat_files = [f.replace( ".fits", ".fits.ldac") for f in self.input_files]
+        cat_files = [(f + ".ldac.") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         scamp.run(cat_files, updateconfig=False, clean=False)
         

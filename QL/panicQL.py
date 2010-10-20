@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon Oct 11 11:39:28 2010
+# Created: Mon Oct 18 18:28:56 2010
 #      by: The PyQt User Interface Compiler (pyuic) 3.14.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -10756,9 +10756,6 @@ class panicQL(QMainWindow):
         self.checkBox_outDir_autocheck = QCheckBox(self.tab,"checkBox_outDir_autocheck")
         self.checkBox_outDir_autocheck.setGeometry(QRect(441,64,20,20))
 
-        self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
-        self.comboBox_classFilter.setGeometry(QRect(220,172,110,21))
-
         self.textLabel1 = QLabel(self.tab,"textLabel1")
         self.textLabel1.setGeometry(QRect(7,173,110,20))
         textLabel1_font = QFont(self.textLabel1.font())
@@ -10849,6 +10846,9 @@ class panicQL(QMainWindow):
         self.listView_dataS.setSelectionMode(QListView.Extended)
         self.listView_dataS.setAllColumnsShowFocus(1)
         self.listView_dataS.setRootIsDecorated(1)
+
+        self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
+        self.comboBox_classFilter.setGeometry(QRect(220,172,110,21))
         self.tabWidget3.insertTab(self.tab,QString.fromLatin1(""))
 
         self.TabPage = QWidget(self.tabWidget3,"TabPage")
@@ -10898,11 +10898,11 @@ class panicQL(QMainWindow):
         self.textLabel1_2 = QLabel(self.buttonGroup3,"textLabel1_2")
         self.textLabel1_2.setGeometry(QRect(10,30,58,20))
 
-        self.comboBox4 = QComboBox(0,self.buttonGroup3,"comboBox4")
-        self.comboBox4.setGeometry(QRect(15,50,90,21))
+        self.checkBox_doRegrig = QCheckBox(self.buttonGroup3,"checkBox_doRegrig")
+        self.checkBox_doRegrig.setGeometry(QRect(18,80,140,19))
 
-        self.checkBox7_3 = QCheckBox(self.buttonGroup3,"checkBox7_3")
-        self.checkBox7_3.setGeometry(QRect(18,80,140,19))
+        self.comboBox_AstromCatalog = QComboBox(0,self.buttonGroup3,"comboBox_AstromCatalog")
+        self.comboBox_AstromCatalog.setGeometry(QRect(10,50,90,21))
 
         self.groupBox1 = QGroupBox(self.TabPage,"groupBox1")
         self.groupBox1.setGeometry(QRect(352,132,560,280))
@@ -11296,14 +11296,6 @@ class panicQL(QMainWindow):
         self.lineEdit_filename_filter.setText(self.__tr("*.fits"))
         self.checkBox_outDir_autocheck.setText(QString.null)
         QToolTip.add(self.checkBox_outDir_autocheck,self.__tr("Autocheck for new incoming images"))
-        self.comboBox_classFilter.clear()
-        self.comboBox_classFilter.insertItem(self.__tr("ALL"))
-        self.comboBox_classFilter.insertItem(self.__tr("DARK"))
-        self.comboBox_classFilter.insertItem(self.__tr("DOME_FLAT"))
-        self.comboBox_classFilter.insertItem(self.__tr("TW_FLAT"))
-        self.comboBox_classFilter.insertItem(self.__tr("SCIENCE"))
-        self.comboBox_classFilter.insertItem(self.__tr("REDUCED"))
-        QToolTip.add(self.comboBox_classFilter,self.__tr("Filter data sources list using its class/type"))
         self.textLabel1.setText(self.__tr("<b>Data List  View</b>"))
         self.textLabel4_2.setText(self.__tr("Class Filter"))
         self.pushButton_tempD.setText(self.__tr("Temporary Dir"))
@@ -11338,6 +11330,14 @@ class panicQL(QMainWindow):
         self.listView_dataS.header().setLabel(5,self.__tr("Object         "))
         self.listView_dataS.header().setLabel(6,self.__tr("RA                       "))
         self.listView_dataS.header().setLabel(7,self.__tr("Dec                     "))
+        self.comboBox_classFilter.clear()
+        self.comboBox_classFilter.insertItem(self.__tr("ALL"))
+        self.comboBox_classFilter.insertItem(self.__tr("DARK"))
+        self.comboBox_classFilter.insertItem(self.__tr("DOME_FLAT"))
+        self.comboBox_classFilter.insertItem(self.__tr("TW_FLAT"))
+        self.comboBox_classFilter.insertItem(self.__tr("SCIENCE"))
+        self.comboBox_classFilter.insertItem(self.__tr("REDUCED"))
+        QToolTip.add(self.comboBox_classFilter,self.__tr("Filter data sources list using its class/type"))
         self.tabWidget3.changeTab(self.tab,self.__tr("Main"))
         self.buttonGroup2_2.setTitle(self.__tr("Data Grouping"))
         self.textLabel4_3.setText(self.__tr("RA,Dec offsets"))
@@ -11353,14 +11353,14 @@ class panicQL(QMainWindow):
         self.checkBox7_2_2_2.setText(self.__tr("Create Log file"))
         self.buttonGroup3.setTitle(self.__tr("Astrometry"))
         self.textLabel1_2.setText(self.__tr("Catalog"))
-        self.comboBox4.clear()
-        self.comboBox4.insertItem(self.__tr("2MASS"))
-        self.comboBox4.insertItem(self.__tr("USNO-B1"))
-        self.comboBox4.insertItem(self.__tr("GSC2.2"))
-        self.comboBox4.insertItem(self.__tr("SDSS-R5"))
-        self.comboBox4.insertItem(self.__tr("UCAC-2"))
-        self.comboBox4.insertItem(self.__tr("FILE"))
-        self.checkBox7_3.setText(self.__tr("Apply (re-grid)"))
+        self.checkBox_doRegrig.setText(self.__tr("Apply (re-grid)"))
+        self.comboBox_AstromCatalog.clear()
+        self.comboBox_AstromCatalog.insertItem(self.__tr("2MASS"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("USNO-B1"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("GSC 2.2"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("SDSS-R5"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("UCAC-2"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("FILE"))
         self.groupBox1.setTitle(self.__tr("Pre-reduction Mode"))
         self.comboBox1.clear()
         self.comboBox1.insertItem(self.__tr("1-Current frame"))

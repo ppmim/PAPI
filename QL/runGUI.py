@@ -56,6 +56,7 @@ import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
 import reduce.checkQuality
+import reduce.astrowarp
 import papi
 import misc.fileUtils
 import misc.utils as utils
@@ -603,7 +604,7 @@ class MainGUI(panicQL):
             popUpMenu.setItemEnabled(4, False)
             popUpMenu.setItemEnabled(5, False)
             popUpMenu.setItemEnabled(6, False)
-            popUpMenu.setItemEnabled(10, False)
+            #popUpMenu.setItemEnabled(10, False)
             subPopUpMenu.setItemEnabled(1,False)
             subPopUpMenu.setItemEnabled(2,False)
             subPopUpMenu.setItemEnabled(3,False)
@@ -828,13 +829,17 @@ class MainGUI(panicQL):
     def do_quick_reduction_slot(self):
         """ Do a quick reduction of the user selected files in the list view panel"""
             
+        if len(self.m_popup_l_sel)<5:
+            QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>4) !")
+            return
+              
         #Change to working directory
         os.chdir(self.m_papi_dir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         try:
-            self._task = papi.MEF_ReductionSet( self.m_popup_l_sel, self.m_outputdir, \
+            self._task = papi.MEF_ReductionSet( self.m_popup_l_sel, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
                                             dark=None, flat=None, bpm=None)
             thread=reduce.ExecTaskThread(self._task.doQuickReduction, self._task_info_list)
             thread.start()
@@ -1009,6 +1014,7 @@ class MainGUI(panicQL):
             try:
                 self._task = papi.MEF_ReductionSet( [item[0] for item in near_list], self.m_outputdir, \
                                                 dark=None, flat=self.m_masterFlat, bpm=None, file_n=file_n)
+                                                
                 thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list)
                 thread.start()
             except:
@@ -1118,7 +1124,7 @@ class MainGUI(panicQL):
                 return
             
             # Create nearest file list (ar,dec,mjd) from current selected science file
-            file_lst=[]
+            file_list=[]
             view_list = ""
             i=1
             for f in near_list:
@@ -1137,17 +1143,23 @@ class MainGUI(panicQL):
                 return
                     
         # CASE 2: Stack frames selected by user in the list_view
-        elif len(self.m_popup_l_sel)>1:
+        elif len(self.m_popup_l_sel)>1 and len(self.m_popup_l_sel)<4:
+            QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>4) !")
+            return    
+        elif len(self.m_popup_l_sel)>4:
             # Create file list from current selected science files
             file_lst=[]
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))
                     return
-                else:
-                    file_lst.append(file)
+                else: file_lst.append(file)
             file_n=-1 # actually, not used
             
+        # Select the name of the output result file
+        outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/red_result.fits", "*.fits", self, "Save File dialog")
+        if outfileName.isEmpty(): return # nothig to do !
+           
         #Change to working directory
         os.chdir(self.m_papi_dir)
         #Change cursor
@@ -1156,7 +1168,7 @@ class MainGUI(panicQL):
         if len(file_list)>1:
             try:
                 self._task = papi.MEF_ReductionSet( file_list, self.m_outputdir, \
-                                            dark=None, flat=None, bpm=None)
+                                                    out_file=self.m_outputdir+"/red_result.fits", dark=None, flat=None, bpm=None)
                 thread=reduce.ExecTaskThread(self._task.doQuickReduction, self._task_info_list)
                 thread.start()
             except:
@@ -1218,9 +1230,13 @@ class MainGUI(panicQL):
         if len(self.m_popup_l_sel)==1:
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE': 
-                # Run astrometry
+                ## Run astrometry parameters
                 out_file = self.m_outputdir+"/"+os.path.basename(self.m_listView_item_selected.replace(".fits",".wcs.fits"))
-                catalog="2MASS"
+                # Catalog
+                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): catalog="2MASS"
+                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): catalog="USNO-B1"
+                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): catalog="GSC-2.2"
+                else: catalog="2MASS"
                 
                 #Change to working directory
                 os.chdir(self.m_papi_dir)
@@ -1228,11 +1244,7 @@ class MainGUI(panicQL):
                 self.setCursor(Qt.waitCursor)
                 #Create working thread that compute sky-frame
                 try:
-                    #astrowarp.doAstrometry(self.m_listView_item_selected, out_file, catalog)
-                    # TODO : to be completed with a thread
-                    #self._task = papi.MEF_ReductionSet( file_list, self.m_outputdir, \
-                    #                            dark=None, flat=None, bpm=None)
-                    thread=reduce.ExecTaskThread(astrowarp.doAstrometry, self._task_info_list, self.m_listView_item_selected, out_file, catalog)
+                    thread=reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, self._task_info_list, self.m_listView_item_selected, out_file, catalog)
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while subtracting near sky")

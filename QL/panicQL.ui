@@ -221,52 +221,6 @@
                     <string>Autocheck for new incoming images</string>
                 </property>
             </widget>
-            <widget class="QComboBox">
-                <item>
-                    <property name="text">
-                        <string>ALL</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>DARK</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>DOME_FLAT</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>TW_FLAT</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>SCIENCE</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>REDUCED</string>
-                    </property>
-                </item>
-                <property name="name">
-                    <cstring>comboBox_classFilter</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>220</x>
-                        <y>172</y>
-                        <width>110</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Filter data sources list using its class/type</string>
-                </property>
-            </widget>
             <widget class="QLabel">
                 <property name="name">
                     <cstring>textLabel1</cstring>
@@ -752,6 +706,52 @@
                     <bool>true</bool>
                 </property>
             </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>ALL</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>DARK</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>DOME_FLAT</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>TW_FLAT</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>SCIENCE</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>REDUCED</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox_classFilter</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>220</x>
+                        <y>172</y>
+                        <width>110</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Filter data sources list using its class/type</string>
+                </property>
+            </widget>
         </widget>
         <widget class="QWidget">
             <property name="name">
@@ -996,6 +996,22 @@
                         <string>Catalog</string>
                     </property>
                 </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox_doRegrig</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>18</x>
+                            <y>80</y>
+                            <width>140</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Apply (re-grid)</string>
+                    </property>
+                </widget>
                 <widget class="QComboBox">
                     <item>
                         <property name="text">
@@ -1009,7 +1025,7 @@
                     </item>
                     <item>
                         <property name="text">
-                            <string>GSC2.2</string>
+                            <string>GSC 2.2</string>
                         </property>
                     </item>
                     <item>
@@ -1028,31 +1044,15 @@
                         </property>
                     </item>
                     <property name="name">
-                        <cstring>comboBox4</cstring>
+                        <cstring>comboBox_AstromCatalog</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>15</x>
+                            <x>10</x>
                             <y>50</y>
                             <width>90</width>
                             <height>21</height>
                         </rect>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox7_3</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>18</x>
-                            <y>80</y>
-                            <width>140</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Apply (re-grid)</string>
                     </property>
                 </widget>
             </widget>

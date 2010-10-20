@@ -76,7 +76,7 @@ import PAPI.linkSources as papi
 import misc.utils
 from reduce.makeobjmask import *
 import reduce.imtrim
-import astrowarp
+import reduce.astrowarp
 import misc.mef 
 import misc.mef
 
@@ -87,7 +87,7 @@ class MEF_ReductionSet:
     all the basic data reduction operations over them 
     """
     
-    def __init__(self, sci_list, out_dir, out_file="/tm/out.fits", dark=None, flat=None, bpm=None, file_n=0):
+    def __init__(self, sci_list, out_dir, out_file="/tmp/out.fits", dark=None, flat=None, bpm=None, file_n=0):
         """ Initialization """
         
         # Data set definition values
@@ -214,6 +214,7 @@ class MEF_ReductionSet:
         if len(self.l_red_set)>1:
             mef=misc.mef.MEF(outs)
             mef.createMEF(self.out_file)
+            # other option, do a SWARP to register the N-extension into one wide-single extension
         else:
             shutil.move(outs[0], self.out_file)
             
@@ -879,7 +880,7 @@ class ReductionSet:
         if self.obs_mode!='dither' or self.red_mode=="single":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
             #self.makeAstrometry(self.out_dir+'/coadd1.fits', '2mass', re_grid=True)
-            astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', self.out_file, "2MASS" ) 
+            reduce.astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', self.out_file, "2MASS" ) 
             #shutil.move(self.out_dir+'/coadd.fits', self.out_file)
             log.info("Generated output file ==>%s", self.out_file)
             log.info("#########################################")
@@ -931,7 +932,7 @@ class ReductionSet:
         _astrowarp=False
         if _astrowarp:
             log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
-            aw = astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
             try:
                 aw.run()
             except:

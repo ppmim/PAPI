@@ -32,7 +32,7 @@ A wrapper for SCAMP
 
 A wrapper for SCAMP, the Source Extractor.
 by Jose M. Ibanez Mengual
-version: 0.1 - last modified: 2010-06-08
+version: 0.1 - last modified: 2010-10-18
 
 This wrapper allows you to configure SCAMP, run it and get
 back its outputs without the need of editing SCAMP
@@ -65,6 +65,7 @@ import re
 import copy
 import fileinput
 import types
+import subprocess
 
 # ======================================================================
 
@@ -72,9 +73,10 @@ __version__ = "0.1 (2010-06-08)"
 
 # ======================================================================
 
-class SCAMPException(Exception):
+class SCAMP_Exception(Exception):
     pass
-
+class SCAMP_AccuracyException(Exception):
+    pass
 # ======================================================================
 
 class SCAMP:
@@ -286,7 +288,7 @@ class SCAMP:
          
          "CHECKPLOT_CKEY":
         {"comment": 'FITS keyword for PLPLOT field colour',
-         "value": "NULL"},
+         "value": "SCAMPCOL"},
          
          "CHECKPLOT_DEV":
         {"comment": 'NULL, XWIN, TK, PS, PSC, XFIG, PNG, JPEG, AQT, PDF or SVG',
@@ -526,11 +528,14 @@ class SCAMP:
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + my_catalogs)
         print commandline
 
-        rcode = os.system(commandline)
+        rcode = runCmd(commandline)
         
-        if (rcode):
-            raise SCAMPException, \
+        if (rcode==1):
+            raise SCAMP_Exception, \
                   "SCAMP command [%s] failed." % commandline
+        elif (rcode==2):
+            raise SCAMP_AccuracyException, \
+                  "SCAMP Warning/error: Significant inaccuracy likely to occur in projection."
             
         if clean:
             self.clean()
@@ -553,9 +558,48 @@ class SCAMP:
                 
         except OSError:
             pass
+# ======================================================================
+# A utility function
+# ======================================================================
+def runCmd( str_cmd, p_shell=True ):
+    """ 
+        DESCRIPTION
+                A wrapper to run system commands  
+        INPUTS
+                str_cmd      - Command string to be executed in the shell
+                p_shell      - if True (default), command will be executed through the shell, and all cout/cerr messages will be available
+                             - if False, exception is the only way to find out problems during the call
+        OUTPUT
+                Return 0 if some errors 
+                Retuen 1 if all was OK
+        TODO 
+                - allow to launch commands in background 
+                - best checking of error when shell=True        
+    """
+           
+    print "Running command : %s \n"%str_cmd
+    try:
+        p = subprocess.Popen(str_cmd, shell=p_shell, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+    except:
+        print "Some error while running command..."
+        raise
+        #return 1
+       
+    err=p.stderr.read()
+    out=p.stdout.read()
 
-
-
+    # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
+    if err.count('WARNING: Significant inaccuracy'):
+        print "Canno't get accuracy astrometric calibration"
+        return 2
+    elif (err.count('ERROR') or out.count('error') \
+      or err.count('Segmentation fault') or err.count("command not found")
+      or err.count("No such file or directory")):
+        print "An error happened while running command --> %s \n"%err
+        return 1
+    else:
+        return 0 # NO ERROR
+    
 # ======================================================================
 if __name__ == "__main__":
 

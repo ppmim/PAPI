@@ -111,7 +111,11 @@ int main(int argc, char *argv[])
 
             put_key_double(argv[i], "EQUINOX", 2000.0);
         }
-        else 
+        else if (strncmp(inst,"HAWKI",5)==0)
+        {
+            fprintf(stderr, "With HAWKI instrument no aditional WCS initilization required ...\n");
+        }
+        else
         /* in any case, we try ...*/
         {
             fprintf(stderr, "WARN: initwcs found a non O2000 instrument ...\n");
