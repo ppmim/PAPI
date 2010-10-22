@@ -64,11 +64,11 @@ int main (int argc, char **argv)
               kdat++;
               Fmem=0;
            }
-       }
-       else {
-           Fmem = F;
-           expTmem = expT;
-       }
+        }
+        else {
+            Fmem = F;
+            expTmem = expT;
+        }
    }
    if (Fmem!=0) {  /* last one to treat */
            fref = Fref2;

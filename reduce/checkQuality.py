@@ -8,6 +8,7 @@
 # Created    : 07/11/2008    jmiguel@iaa.es
 # Last update: 23/06/2009    jmiguel@iaa.es
 #              17/09/2010    jmiguel@iaa.es - Added support to MEF files
+#              22/10/2010    jmiguel@iaa.es - Updated the way to find out MEF files
 ################################################################################
 
 
@@ -115,15 +116,15 @@ class CheckQuality:
         
         fits_file=pyfits.open(self.input_file, 'update')
         try:
-            if fits_file[0].header['EXTEND']==True:
+            if len(fits_file)>1: # is a MEF
                 naxis1=fits_file[1].header['NAXIS1']
                 naxis2=fits_file[1].header['NAXIS2']
-            else:      
+            else:  # is a simple FITS      
                 naxis1=fits_file[0].header['NAXIS1']
                 naxis2=fits_file[0].header['NAXIS2']
-        except KeyError:
-            naxis1=fits_file[0].header['NAXIS1']
-            naxis2=fits_file[0].header['NAXIS2']    
+        except KeyError,e:
+            log.error("Error while reading FITS header NAXIS keywords :%s",str(e))
+            return -1,-1
             
         
         #fwhm_world=[float(line.split()[7]) for line in fileinput.input(source_file)]

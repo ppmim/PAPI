@@ -206,10 +206,10 @@ class MEF_ReductionSet:
         for rs in self.l_red_set:
             try:
                 outs.append(rs.reduce(red_mode))
-            except:
-                log.error("Error while MEF data reduction")
-                raise
-        
+            except Exception, e:
+                log.error("Error while MEF data reduction: %s",str(e))
+                raise e
+            
         #Package results from each extension into a MEF file (only if nExt>1)
         if len(self.l_red_set)>1:
             mef=misc.mef.MEF(outs)
@@ -792,13 +792,13 @@ class ReductionSet:
         if self.obs_mode=="dither":
             log.debug("---> dither sequece <----")
             misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
-            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", None, False, gainmap=True)
+            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", bpm=None, norm=False)
             superflat.create()
         elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
             log.debug("----> EXTENDED SOURCE !!! <----")
             sky_list=self.getSkyFrames()
             misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
-            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", None, False, gainmap=True)
+            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", bpm=None, norm=False)
             superflat.create()                            
         else:
             log.error("Dither mode not supported")
@@ -808,23 +808,16 @@ class ReductionSet:
         ######################################    
         # 3 - Compute Gain map and apply BPM
         ######################################
+        log.info("**** Computing gain-map ****")
         gainfile = self.out_dir+'/gain_'+self.m_filter+'.fits'
-        shutil.move(self.out_dir+"/superFlat.fits",gainfile)
-        """log.info("**** Computing gain-map ****")
         nxblock=16
         nyblock=16
         #The next values are to find out bad pixels 
         nsig=5
         mingain=0.7
         maxgain=1.3
-        superflat_file = self.out_dir+"/superFlat.fits"
-        gainfile = self.out_dir+'/gain_'+self.m_filter+'.fits'
-        gain_cmd=self.m_papi_path+'/irdr/bin/gainmap '+ superflat_file + '  ' + gainfile +' '+ str(nsig) + '  ' + str(nxblock) + '  '+ str(nyblock) + '  ' + str(mingain) + '  ' + str(maxgain) 
-        
-        if misc.utils.runCmd( gain_cmd )==0:
-            log.error("Some error while creating gainmap ....")
-            return
-        """
+        g=calGainMap.GainMap(self.out_dir+"/superFlat.fits", gainfile)
+        g.create() 
            
         ########################################
         # Add external Bad Pixel Map to gainmap

@@ -81,6 +81,8 @@ class MasterDomeFlat:
     """
     
     def __init__(self, input_files, output_dir, output_filename="/tmp/mdflat.fits", config_par=None):
+        """ Initialization method """
+        
         self.__input_files = input_files
         self.__output_file_dir = output_dir
         self.__output_filename = output_filename  # full filename (path+filename)
@@ -105,8 +107,13 @@ class MasterDomeFlat:
         domelist_lampon  = []
         domelist_lampoff = []
         
-        # Get the user-defined list of dark frames
-        framelist = self.__input_files
+        # Get the user-defined list of flat frames
+        if type(self.__input_files)==type(list()): 
+            framelist = self.__input_files  # list of sources files to be used in sky-flat computation
+        elif os.path.isfile(self.__input_files):
+            framelist = [line.replace( "\n", "") for line in fileinput.input(self.__input_files)]
+        else:
+            raise Exception("Cannot read source files")
         
         
         # Determine the number of Flats frames to combine

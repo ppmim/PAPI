@@ -95,25 +95,16 @@ class MEF:
                 print 'Error, can not open file %s' %(file)
                 return 0
             
-            try:
-                if hdulist[0].header['EXTEND']!=True:
-                    print 'Error, file %s is not a MEF file' %(file)
-                    return 0
-            except KeyError:
-                print 'Error, file %s is not a MEF file' %(file)
-                return 0
-            
-            try:
-                next=hdulist[0].header['NEXTEND']
-            except KeyError:
-                print 'Warning, card NEXTEND not found. Counting number of extensions...'
-                next=0
-                while (1):
-                    try:
-                        if (hdulist[next+1].header['XTENSION'] == 'IMAGE'): next += 1
-                    except:
-                        break
-            print "->Found %d extensions" %(next)
+            #Check if is a MEF file 
+            if len(hdulist)>1:
+                mef=True
+                next=len(hdulist)-1
+                log.debug("Found a MEF file with %d extensions", next)
+            else:
+                mef=False
+                next=1
+                log.error("Found a simple FITS file. Join operation only supported for MEF files")
+                
                          
             out_filename=file.replace(".fits", output_filename_suffix)
             width=naxis1=2048
@@ -166,25 +157,15 @@ class MEF:
                 print 'Error, can not open file %s' %(file)
                 raise Exception("Error, can not open file %s"%file)
             
-            try:
-                if hdulist[0].header['EXTEND']!=True:
-                    print 'Error, file %s is not a MEF file' %(file)
-                    raise Exception("Error, file %s is not a MEF file"%(file))
-            except KeyError:
-                raise Exception("Error, file %s is not a MEF file"%(file))
-            
-            try:
-                next=hdulist[0].header['NEXTEND']
-            except KeyError:
-                print 'Warning, card NEXTEND not found. Counting number of extensions...'
-                next=0
-                while (1):
-                    try:
-                        if (hdulist[next+1].header['XTENSION'] == 'IMAGE'): next += 1
-                    except:
-                        break
-                print "->Found %d extensions" %(next)
-                         
+            #Check if is a MEF file 
+            if len(hdulist)>1:
+                mef=True
+                next=len(hdulist)-1
+                log.debug("MEF file with %d extensions", next)
+            else:
+                mef=False
+                next=1
+                log.error("Warning, Found a simple FITS file")
             
             for i in range(1,next+1):
                 suffix=out_filename_suffix%i
@@ -241,17 +222,17 @@ class MEF:
                 print 'Error, can not open file %s' %(file)
                 raise Exception("Error, can not open file %s"%file)
             
-            # Check if is a MEF, thus
-            try:
-                if f[0].header['EXTEND']==True:
-                    print 'Warning, file %s looks like a MEF file. Only can create a MEF from single FITS' %(file)
-                    #f.close()
-                    #del prihdu
-                    #del fo
-                    #raise Exception("Error, file %s is already a MEF file"%(file))
-            except KeyError:
-                #ok, we suppose file is not a MEF
-                pass                        
+            #Check if is a MEF file 
+            if len(f)>1:
+                mef=True
+                next=len(f)-1
+                log.error("Found a MEF file with %d extensions. Operation only supported for simple FITS", next)
+                raise Exception("Found a MEF file with %d extensions. Operation only supported for simple FITS"%next)
+            else:
+                mef=False
+                next=1
+                log.debug("Simple FITS file")
+                                        
             hdu = pyfits.ImageHDU(data=f[0].data, header=f[0].header)
             #hdu.header.update('EXTVER',1)
             fo.append(hdu)

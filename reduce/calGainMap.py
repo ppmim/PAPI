@@ -10,7 +10,7 @@
 #
 # Created    : 23/09/2010    jmiguel@iaa.es -
 # Last update: 23/09/2009    jmiguel@iaa.es - 
-#
+#              21/10/2019    jmiguel@iaa.es - Add normalization wrt chip 1
 # TODO
 #  
 ################################################################################
@@ -21,6 +21,7 @@
 import getopt
 import sys
 import os
+import tempfile
 import logging
 from optparse import OptionParser
 
@@ -32,12 +33,76 @@ import misc.utils as utils
 import pyfits
 import numpy as np
 import datahandler
+import reduce.calSuperFlat
 
 
 # Logging
 from misc.paLog import log
 
-
+class SkyGainMap:
+    """ Compute the gain map from a list of sky frames """
+    def __init__(self, filelist,  output_filename="/tmp/superFlat.fits",  bpm=None):
+        """ """
+        self.framelist = filelist
+        self.output = output_filename
+        self.bpm = bpm
+        
+    def create(self):
+        """ Creation of the Gain map"""
+        
+        #First, we create the Super Sky Flat
+        try:
+            output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
+            os.close(output_fd)
+            superflat = reduce.calSuperFlat.SuperSkyFlat(self.framelist, tmp_output_path, self.bpm, norm=False)
+            superflat.create()
+        except Exception,e:
+            log.error("Error while creating super sky flat: %s", str(e))
+            raise e
+        
+        # Secondly, we create the proper gainmap
+        try:
+            g=GainMap(tmp_output_path, self.output)
+            g.create()   
+        except Exception,e:
+            log.error("Error while creating gain map: %s", str(e))
+            raise e
+        
+        os.remove(tmp_output_path)
+        return self.output      
+               
+class DomeGainMap:
+    """ Compute the gain map from a list of dome (lamp-on,lamp-off) frames """
+    
+    def __init_(self, filelist,  output_filename="/tmp/domeFlat.fits",  bpm=None):
+        """ """
+        self.framelist = filelist
+        self.output = output_filename
+        self.bpm = bpm
+        
+    def create(self):
+        """ Creation of the Gain map"""
+        
+        #First, we create the Dome Flat
+        try:
+            output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
+            os.close(output_fd)
+            domeflat = reduce.calDomeFlat.MasterDomeFlat(self.framelist, output_dir="/tmp", output_filename=tmp_output_path)
+            domeflat.create()
+        except Exception,e:
+            log.error("Error while creating master dome flat: %s", str(e))
+            raise e
+        
+        # Secondly, we create the proper gainmap
+        try:
+            g=GainMap(tmp_output_path, self.output)
+            g.create()   
+        except Exception,e:
+            log.error("Error while creating gain map: %s", str(e))
+            raise e 
+        os.remove(tmp_output_path)
+        return self.output 
+                 
 class GainMap:
     """
     \brief Class used to build a Gain Map from a Flat Field image (dome, twilight, science)  
@@ -62,7 +127,7 @@ class GainMap:
     """
     def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  bpm=None):
          
-        self.flat = flatfield
+        self.flat = flatfield  # Flat-field image (NOT normalized !!!!, because normalization is done here)
         self.output_file_dir = os.path.dirname(output_filename)
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
@@ -80,9 +145,9 @@ class GainMap:
         # flat, nsig, nxblock, nyblock, mingain, maxgain, bpm=None ):
         
         """
-        \brief Given a (normalized) flat field, compute the gain map taking into account the input parameters and an optional Bad Pixel Map
+        \brief Given a NOT normalized flat field, compute the gain map taking into account the input 
+               parameters and an optional Bad Pixel Map (bpm)
         """
-                                  
         
         log.debug("Start creating Gain Map") 
         if os.path.exists(self.output_filename): os.remove(self.output_filename)
@@ -107,14 +172,15 @@ class GainMap:
             else:
                 flatM=myflat[0].data
             
-            # Normalize the flat
-            #arr = np.array(flatM,copy=False).ravel()
-            #arr = flatM[200:naxis1-200, 200:naxis2-200]
-            median=np.median(flatM[200:naxis1-200, 200:naxis2-200])
-            mean=np.mean(flatM[200:naxis1-200, 200:naxis2-200])
-            mode=3*median-2*mean
-            log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
-            log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
+            # ##############################################################################
+            # Normalize the flat (if MEF, all extension is normlized wrt extension/chip 1) #
+            # ##############################################################################
+            if chip==0:
+                median=np.median(flatM[200:naxis1-200, 200:naxis2-200])
+                mean=np.mean(flatM[200:naxis1-200, 200:naxis2-200])
+                mode=3*median-2*mean
+                log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
+                log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
             flatM=flatM/median   
             
             # Check for bad pixel 

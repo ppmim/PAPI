@@ -13,6 +13,7 @@
 #              03/03/2010    jmiguel@iaa.es - Big modification to convert to a class and make more checkings
 #              16/09/2010    jmiguel@iaa.es - Renamed to calSuperFlat and added support to MEF files
 #              23/09/2010    jmiguel@iaa.es - Added (optional) gain map creation and/or normaliced flat field
+#              21/10/2010    jmiguel@iaa.es - Removed gain map computation
 #
 # TODO
 #  
@@ -51,7 +52,8 @@ from iraf import mscred
 
 class SuperSkyFlat:
     """
-    \brief Class used to build a super sky Flat from a dither set of science frames containing objects 
+    \brief Class used to build a super sky Flat from a dither set of science frames containing objects.
+           Optionally, Gain map can be generated from the super-flat 
     
     \par Class:
         SuperSkyFlat
@@ -71,19 +73,19 @@ class SuperSkyFlat:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  bpm=None, norm=False, gainmap=False):
+    def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  bpm=None, norm=True):
          
         if type(filelist)==type(list()): 
             self.filelist = filelist  # list of sources files to be used in sky-flat computation
         elif os.path.isfile(filelist):
             self.filelist= [line.replace( "\n", "") for line in fileinput.input(filelist)]
         else:
-            raise Exception("Cannot read source files")   
+            raise Exception("Cannot read source files")
+           
         self.output_file_dir = os.path.dirname(output_filename)
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
         self.norm = norm # if true, the flat field will be normalized
-        self.gainmap = gainmap
         
         # Some default parameter values
         self.m_MIN_N_GOOD=2
@@ -140,11 +142,12 @@ class SuperSkyFlat:
         #        ywindow=5,
         #        outtype="median"
         #        )
-                
+        
+        # (optional) Normalize the wrt chip 1        
         if (self.norm):        
             log.info("Normalizing flat field (wrt extension 1 when applicable)...")
             f=pyfits.open(tmp1)
-            if f[0].header['EXTEND']==True:
+            if len(f)>1: # is a MEF 
                 # normalize wrt extension 1 (chip 1?)
                 median=np.median(f[1].data[100:1900,100:1900])
             else:
@@ -159,16 +162,8 @@ class SuperSkyFlat:
                             verbose = 'yes'
                             )
         else: out=tmp1
-                        
+        shutil.move(out, self.output_filename)
                                                            
-        misc.fileUtils.removefiles(self.output_filename)
-        if (self.gainmap):
-            log.info("Creating gain map ...")                                                 
-            g=calGainMap.GainMap(out, self.output_filename)
-            g.create() 
-        else:
-            shutil.move(out, self.output_filename)
-            
         log.debug("Image created : %s", self.output_filename)
         return self.output_filename
                                     
@@ -197,9 +192,6 @@ if __name__ == "__main__":
     parser.add_option("-N", "--norm",
                   action="store_true", dest="norm", help="normalize output SuperFlat (optional)", default=False)
         
-    parser.add_option("-G", "--gain",
-                  action="store_true", dest="gainmap", help="create gainmap from SuperFlat (optional)", default=False)
-        
 
     (options, args) = parser.parse_args()
     if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
@@ -209,7 +201,7 @@ if __name__ == "__main__":
         print "reading %s ..." % options.source_file_list
     
     filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    superflat = SuperSkyFlat(filelist, options.output_filename, options.bpm, options.norm, options.gainmap)
+    superflat = SuperSkyFlat(filelist, options.output_filename, options.bpm, options.norm)
     superflat.create()
           
         

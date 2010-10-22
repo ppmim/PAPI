@@ -919,7 +919,7 @@ class MainGUI(panicQL):
         if not outfileName.isEmpty():
             try:
                 self.setCursor(Qt.waitCursor)
-                self._task=reduce.calSuperFlat.SuperSkyFlat(self.m_popup_l_sel, str(outfileName), None, False, True)
+                self._task=reduce.calGainMap.SkyGainMap(self.m_popup_l_sel, str(outfileName), None)
                 thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
                 thread.start()
             except Exception, e:
