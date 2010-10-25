@@ -65,12 +65,13 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS'):
 
     """
     
+    log.debug("*** Start Astrometric calibration ***")
+    
     # Save the resulting image to a temporary file if no path was specified
     if output_image is None:
         output_fd, output_path = tempfile.mkstemp(suffix='.fits')
         os.close(output_fd)
-    log.debug("*** Start Astrometric calibration ***")
-    
+
     ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
     # initwcs also converts to J2000.0 EQUINOX
     log.debug("***Doing WCS-header initialization ...")
@@ -160,8 +161,10 @@ class AstroWarp(object):
         """
         
         log.debug("*** Start Astrowarp ***")
+
         ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
         # initwcs also converts to J2000.0 EQUINOX
+        # TBD: re-implement in Python method the call to 'irdr:initwcs'
         log.debug("***Doing WCS-header initialization ...")
         initwcs_path=os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
         for file in self.input_files:
@@ -198,15 +201,15 @@ class AstroWarp(object):
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
         swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
-        swarp.ext_config['IMAGEOUT_NAME']=os.getcwd() + "/coadd_tmp.fits"
-        swarp.ext_config['WEIGHTOUT_NAME']=os.getcwd() + "/coadd_tmp.weight.fits"
+        swarp.ext_config['IMAGEOUT_NAME']= os.path.dirname(coadded_file)+ "/coadd_tmp.fits"
+        swarp.ext_config['WEIGHTOUT_NAME']=os.path.dirname(coadded_file)+ "/coadd_tmp.weight.fits"
         swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
         swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
         swarp.run(self.input_files, updateconfig=False, clean=False)
         
         ## STEP 4: Make again the final astrometric calibration to the final coadd
         log.debug("*** Doing final astrometril calibration....")
-        doAstrometry(os.getcwd() + "/coadd_tmp.fits", self.coadded_file, self.catalog)
+        doAstrometry(os.path.dirname(coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog)
         
         
         

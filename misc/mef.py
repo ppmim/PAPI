@@ -71,10 +71,15 @@ class MEF:
                  
         self.input_files = input_files
             
-    def doJoin(self, output_filename_suffix=".join.fits"):
+    def doJoin(self, output_filename_suffix=".join.fits", output_dir=None):
         """
         \brief Method used to join a MEF into a single FITS frames, coping all the header information required
         
+        INPUTS:
+           output_filename_suffix : suffix for the new joined FITS files.
+           output_dir : directory name where the join-fits file must be created. If None given,
+                        the same directory of the source files will be used.
+                
         NOTES:
       
         -An alternative way is to use SWARP to create a single FITS frame ( swarp file_with_ext.fits )
@@ -87,8 +92,11 @@ class MEF:
         """
            
         log.info("Starting JoinMEF")
-         
+        
+            
         for file in self.input_files:        
+            if output_dir==None:
+                output_dir=os.path.dirname(file)
             try:
                 hdulist = pyfits.open(file)
             except IOError:
@@ -106,7 +114,7 @@ class MEF:
                 log.error("Found a simple FITS file. Join operation only supported for MEF files")
                 
                          
-            out_filename=file.replace(".fits", output_filename_suffix)
+            out_filename=output_dir+"/"+os.path.basename(file).replace(".fits", output_filename_suffix)
             width=naxis1=2048
             height=naxis2=2048
             temp12=np.zeros((height,width*2), dtype=np.float32)
@@ -148,6 +156,7 @@ class MEF:
         """
         log.info("Starting SplitMEF")
         
+            
         out_filenames=[]
         n=0 
         for file in self.input_files:        

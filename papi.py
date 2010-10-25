@@ -78,16 +78,19 @@ from reduce.makeobjmask import *
 import reduce.imtrim
 import reduce.astrowarp
 import misc.mef 
-import misc.mef
+import astromatic
 
 
 class MEF_ReductionSet:
     """ 
     This class implement a reduction set of multi-extension-FITS and allow 
-    all the basic data reduction operations over them 
+    all the basic data reduction operations over them. It also works with simple
+    FITS files.
+    
+    TODO: parallel data reduction
     """
     
-    def __init__(self, sci_list, out_dir, out_file="/tmp/out.fits", dark=None, flat=None, bpm=None, file_n=0):
+    def __init__(self, sci_list, out_dir=None, out_file="out.fits", dark=None, flat=None, bpm=None, file_n=0):
         """ Initialization """
         
         # Data set definition values
@@ -102,11 +105,25 @@ class MEF_ReductionSet:
         # MEF-concerning 
         self.nExt = -1               # number of extensions (= number of ReductionSet's)
         self.l_red_set = []          # list of ReductionSet's. Filled in by the split() method
-         
-              
+        
+        # Checking output directory 
+        if out_dir==None:
+            try:
+                os.mkdir(os.getcwd()+"/papi_out")
+            except:
+                log.error("Error creating output directory %s:", os.getcwd()+"/papi_out")
+                raise
+            self.out_dir=os.getcwd()+"/papi_out"
+        elif not os.path.isdir(out_dir):
+            try:
+                os.mkdir(out_dir)
+            except:
+                log.error("Directory %s doesn't exist, error while creating.", out_dir)
+                raise
+                  
     def split(self):
         """ 
-        Split the data (science & calibration) into into N 'ReductionSet', where N is the number 
+        Split the data (science & calibration) into N 'ReductionSet', where N is the number 
         of extension of the Multi-Extension FITS
         """
               
@@ -114,7 +131,8 @@ class MEF_ReductionSet:
         #load file list from file
         #sci_files=[line.replace( "\n", "") for line in fileinput.input(self.science_list)]
         sci_files = self.science_list
-                  
+        
+            
         # First, we need to check if we have MEF files
         if datahandler.ClFits( sci_files[0] ).mef==False:
             self.nExt=1
@@ -126,19 +144,19 @@ class MEF_ReductionSet:
             kws=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']    
             try:
                 mef = misc.mef.MEF(sci_files)
-                (nExt,new_sci_files)=mef.doSplit(".Q%02d.fits", copy_keyword=kws)
+                (nExt,new_sci_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
                 n=0
                 if self.master_dark!=None:
                     mef = misc.mef.MEF([self.master_dark])
-                    (n,new_dark_files)=mef.doSplit(".Q%02d.fits", copy_keyword=kws)
+                    (n,new_dark_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
                 if self.master_flat!=None:
                     mef = misc.mef.MEF([self.master_flat])
-                    (n,new_flat_files)=mef.doSplit(".Q%02d.fits", copy_keyword=kws)
+                    (n,new_flat_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
                 if self.bpm!=None:
                     mef = misc.mef.MEF([self.bpm])
-                    (n,new_bpm_files)=mef.doSplit(".Q%02d.fits", copy_keyword=kws)
-            except:
-                log.debug("Some error while splitting data set ...")
+                    (n,new_bpm_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
+            except Exception,e:
+                log.debug("Some error while splitting data set ...%s",str(e))
                 raise
             
             sources=[]
@@ -147,12 +165,12 @@ class MEF_ReductionSet:
             bpms=[]
             # now, generate the new output filenames        
             for n in range(1,nExt+1):
-                sources.append([file.replace(".fits",".Q%02d.fits"%n) for file in sci_files])
-                if self.master_dark: darks.append(self.master_dark.replace(".fits",".Q%02d.fits"%n))
+                sources.append([self.out_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in sci_files])
+                if self.master_dark: darks.append(self.out_dir+"/"+os.path.basename(self.master_dark.replace(".fits",".Q%02d.fits"%n)))
                 else: darks.append(None)
-                if self.master_flat: flats.append(self.master_flat.replace(".fits",".Q%02d.fits"%n))
+                if self.master_flat: flats.append(self.out_dir+"/"+os.path.basename(self.master_flat.replace(".fits",".Q%02d.fits"%n)))
                 else: flats.append(None)
-                if self.bpm: bpms.append(self.bpm.replace(".fits",".Q%02d.fits"%n))
+                if self.bpm: bpms.append(self.out_dir+"/"+os.path.basename(self.bpm.replace(".fits",".Q%02d.fits"%n)))
                 else: bpms.append(None)
                 """
                 for f in new_file_names:
@@ -160,11 +178,11 @@ class MEF_ReductionSet:
                         sources.append(f)
                 """
                 # Create the ReductionSet
-                rs = ReductionSet(sources[n-1], out_dir=self.out_dir, out_file="/tmp/out_Q%02d.fits"%n, obs_mode="dither", \
+                rs = ReductionSet(sources[n-1], out_dir=self.out_dir, out_file=self.out_dir+"/out_Q%02d.fits"%n, obs_mode="dither", \
                                   dark=darks[n-1], flat=flats[n-1], bpm=bpms[n-1], red_mode="single")
                 self.l_red_set.append( rs )
                     
-            return nExt,sources,darks,flats,bpms
+        return nExt,sources,darks,flats,bpms
     
     def subtractNearSky(self, fn=-1, out_filename="/tmp/skysub.fits"):
         """ run a near-sky subtraction to a give frame (fn) from the sci frame list"""
@@ -201,10 +219,11 @@ class MEF_ReductionSet:
         ############
         self.split()
         ############
-        
+    
         outs=[]
         for rs in self.l_red_set:
             try:
+                # Here, we should programm the parallel data reduction 
                 outs.append(rs.reduce(red_mode))
             except Exception, e:
                 log.error("Error while MEF data reduction: %s",str(e))
@@ -212,12 +231,24 @@ class MEF_ReductionSet:
             
         #Package results from each extension into a MEF file (only if nExt>1)
         if len(self.l_red_set)>1:
-            mef=misc.mef.MEF(outs)
-            mef.createMEF(self.out_file)
+            #log.debug("*** Creating MEF file with all outputs from reduction....***")
+            #mef=misc.mef.MEF(outs)
+            #mef.createMEF(self.out_file)
             # other option, do a SWARP to register the N-extension into one wide-single extension
+            log.debug("*** Coadding overlapped files....")
+            swarp = astromatic.SWARP()
+            swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+            swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
+            swarp.ext_config['IMAGEOUT_NAME']= self.out_file
+            swarp.ext_config['WEIGHTOUT_NAME']=self.out_file.replace(".fits",".weight.fits")
+            swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
+            swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
+            swarp.run(outs, updateconfig=False, clean=False)
         else:
             shutil.move(outs[0], self.out_file)
-            
+        
+        log.info("*** Final reduced file %s created. Congratulations !! ***",self.out_file)
+        
         return self.out_file
                    
     def doQuickReduction(self):
@@ -714,7 +745,7 @@ class ReductionSet:
     def cleanUpFiles(self):
         """Clean up files from the working directory, probably from the last execution"""
         
-        misc.fileUtils.removefiles(self.out_dir+"/*.fits", self.out_dir+"/c_*", self.out_dir+"/dc_*", self.out_dir+"/*.nip", self.out_dir+"/*.pap" )
+        #misc.fileUtils.removefiles(self.out_dir+"/*.fits", self.out_dir+"/c_*", self.out_dir+"/dc_*", self.out_dir+"/*.nip", self.out_dir+"/*.pap" )
         misc.fileUtils.removefiles(self.out_dir+"/coadd*", self.out_dir+"/*.objs", self.out_dir+"/uparm*", self.out_dir+"/*.skysub*" )
         misc.fileUtils.removefiles(self.out_dir+"/*.head", self.out_dir+"/*.list", self.out_dir+"/*.xml", self.out_dir+"/*.ldac", self.out_dir+"/*.png" )
 
@@ -739,9 +770,14 @@ class ReductionSet:
         self.cleanUpFiles()
         
         # Copy/link source files (file or directory) to reduce to the working directory
-        papi.linkSourceFiles(self.sci_filelist, self.out_dir)
-        #files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
-        self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in self.sci_filelist]
+        if not os.path.dirname(self.sci_filelist[0])==self.out_dir:
+            papi.linkSourceFiles(self.sci_filelist, self.out_dir)
+            #files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
+            self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in self.sci_filelist]
+        else:
+            print "Input files already in output directory!"
+            self.m_LAST_FILES=self.sci_filelist
+            
         print "SOURCES=\n",self.m_LAST_FILES
         
         ######################################################
@@ -816,7 +852,7 @@ class ReductionSet:
         nsig=5
         mingain=0.7
         maxgain=1.3
-        g=calGainMap.GainMap(self.out_dir+"/superFlat.fits", gainfile)
+        g=reduce.calGainMap.GainMap(self.out_dir+"/superFlat.fits", gainfile)
         g.create() 
            
         ########################################
@@ -872,9 +908,7 @@ class ReductionSet:
         ## END OF SINGLE REDUCTION  ##
         if self.obs_mode!='dither' or self.red_mode=="single":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
-            #self.makeAstrometry(self.out_dir+'/coadd1.fits', '2mass', re_grid=True)
             reduce.astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', self.out_file, "2MASS" ) 
-            #shutil.move(self.out_dir+'/coadd.fits', self.out_file)
             log.info("Generated output file ==>%s", self.out_file)
             log.info("#########################################")
             log.info("##### End of SINGLE data reduction ######")
@@ -994,8 +1028,12 @@ if __name__ == "__main__":
                   action="store", dest="source_file_list",
                   help="Source file list of data frames. It can be a file or directory name.")
     
-    parser.add_option("-o", "--output",
+    parser.add_option("-o", "--output_file",
                   action="store", dest="output_filename", help="final reduced output image")
+    
+    parser.add_option("-d", "--outdir",
+                  action="store", dest="out_dir", default="/tmp",
+                  help="output dir for intermidiate files")
     
     parser.add_option("-t", "--type",
                   action="store", dest="type", default="quick", help="type of reduction (quick|science)")
@@ -1003,21 +1041,18 @@ if __name__ == "__main__":
     parser.add_option("-m", "--obs_mode",
                   action="store", dest="obs_mode", default="dither", help="observing mode (dither|ext_dither)")
     
-    parser.add_option("-d", "--outdir",
-                  action="store", dest="out_dir", default="/tmp",
-                  help="output dir for intermidiate files")
     
     parser.add_option("-D", "--dark",
                   action="store", dest="dark",
-                  help="master dark to subtract]")
+                  help="master dark to subtract")
     
     parser.add_option("-F", "--flat",
                   action="store", dest="flat",
-                  help="master flat to divide by]")
-    
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
+                  help="master flat to divide by")
+
+    parser.add_option("-b", "--bpm",
+                  action="store", dest="bpm", help="bad pixel mask")
+
     
     parser.add_option("-C", "--config_file",
                   action="store_true", dest="config_file", help="config file for the data reduction process")
@@ -1027,9 +1062,11 @@ if __name__ == "__main__":
                   
     parser.add_option("-1", "--single",
                   action="store_true", dest="single", help="make a single reduction", default=False)              
-                  
-    parser.add_option("-b", "--bpm",
-                  action="store", dest="bpm", help="bad pixel mask")
+
+    parser.add_option("-v", "--verbose",
+                  action="store_true", dest="verbose", default=True,
+                  help="verbose mode [default]")
+
                                 
     (options, args) = parser.parse_args()
     
@@ -1040,7 +1077,7 @@ if __name__ == "__main__":
         print "reading %s ..." % options.source_file_list
     
     
-    # Create the MEF_RS
+    # Create the MEF_RS (it works both simple FITS as MEF files)
     sci_files=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     mef_rs = MEF_ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, \
                                 dark=options.dark, flat=options.flat, bpm=options.bpm)
