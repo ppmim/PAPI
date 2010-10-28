@@ -226,7 +226,9 @@ class ClFits:
           
         # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , UNKNOW)  
         try:
-            if myfits[0].header['OBJECT'].lower().count('dark') :
+            if myfits[0].header['OBJECT'].lower().count('master'):
+                self.type=myfits[0].header['PAPI.TYPE']
+            elif myfits[0].header['OBJECT'].lower().count('dark') :
                 self.type="DARK"
             elif myfits[0].header['OBJECT'].lower().count('lamp off'):
                 self.type="DOME_FLAT_LAMP_OFF"
@@ -240,8 +242,6 @@ class ClFits:
                 self.type="TW_FLAT"
             elif myfits[0].header['OBJECT'].lower().count('sky for'):
                 self.type="SKY_FOR"
-            elif myfits[0].header['OBJECT'].lower().count('MASTER'):
-                self.type=myfits[0].header['PAPI.TYPE']
             elif myfits[0].header['OBJECT'].lower().count('focus'):
                 self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' !!!
             else:

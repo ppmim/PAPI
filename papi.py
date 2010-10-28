@@ -75,7 +75,7 @@ import reduce.imtrim
 import reduce.astrowarp
 import misc.mef 
 import astromatic
-
+import datahandler.dataset
 
 class MEF_ReductionSet:
     """ 
@@ -255,11 +255,11 @@ class MEF_ReductionSet:
         return self.doReduction(red_mode="single")
                 
 class ReductionSet:
-    def __init__(self, sci_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, red_mode="single"):
+    def __init__(self, rs_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, red_mode="single"):
         """ Init function """
         
         # Input values
-        self.sci_filelist = sci_filelist # list containing the science data filenames to reduce
+        self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
         self.out_dir   = out_dir   # directory where all output will be written
         self.out_file  = out_file  # final reduced data file (out)
         self.obs_mode  = obs_mode  # observing mode (dither, dither_on_off, dither_off_on....)
@@ -285,6 +285,11 @@ class ReductionSet:
         self.MAX_MJD_DIFF = 6.95e-3  # Maximun seconds (600secs aprox) of temporal distant allowed between two consecutive frames 
         self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
         
+        #DataBase (in memory)
+        self.db=datahandler.dataset.DataSet("file")
+        self.db.createDB()
+        self.db.load(rs_filelist)
+        self.db.ListDataSet()
           
     def checkData(self, chk_filter=True, chk_type=True, chk_expt=True, chk_itime=True, \
                   chk_ncoadd=True, chk_cont=True):
@@ -502,7 +507,7 @@ class ReductionSet:
         
         
         if list==None:
-            m_list=self.sci_filelist
+            m_list=self.rs_filelist
         else: m_list=list
         
         match_list = []
@@ -576,7 +581,7 @@ class ReductionSet:
                                   
     def subtractNearSky (self, fn= 0):
         """
-            Compute and subtract the nearest sky to the image in position 'fn' in the frame list (sci_filelist) 
+            Compute and subtract the nearest sky to the image in position 'fn' in the frame list (rs_filelist) 
                          
             This function make use of skyfilter_single.c (IRDR)              
             
@@ -593,7 +598,7 @@ class ReductionSet:
             
         """
                                                   
-        near_list = self.sci_filelist
+        near_list = self.rs_filelist
         if fn<0 or fn>len(near_list):
             log.error("Wrong frame number selected in near-sky subtraction")
             return None
@@ -802,7 +807,7 @@ class ReductionSet:
         
         log.debug("Creating Master darks...")
         # 1. Look for dark frames
-        full_dark_list = self.getDarkFrames(self.sci_filelist)
+        full_dark_list = self.getDarkFrames(self.rs_filelist)
         
         # 2. take the first group having the same TEXP
         last_texp = full_dark_list[0][1]
@@ -832,6 +837,9 @@ class ReductionSet:
                     log.error("Some error while creating master dark: %s",str(e))
                     raise e
                 
+        # insert products (master darks) into DB
+        for f in l_mdarks: self.db.insert(f)
+        self.db.ListDataSet()         
         return l_mdarks        
         
     def buildMasterDFlats(self):
@@ -848,7 +856,7 @@ class ReductionSet:
         
         log.debug("Creating Master TwFlat...")
         # 1. Look for twflat frames
-        full_flat_list = self.getTwFlatFrames(self.sci_filelist)
+        full_flat_list = self.getTwFlatFrames(self.rs_filelist)
         
         # 2. take the first group having the same TEXP
         last_texp = full_dark_list[0][1]
@@ -901,13 +909,13 @@ class ReductionSet:
         os.chdir(self.out_dir)
         
         # Copy/link source files (file or directory) to reduce to the working directory
-        if not os.path.dirname(self.sci_filelist[0])==self.out_dir:
-            papi.linkSourceFiles(self.sci_filelist, self.out_dir)
+        if not os.path.dirname(self.rs_filelist[0])==self.out_dir:
+            papi.linkSourceFiles(self.rs_filelist, self.out_dir)
             #files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
-            self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in self.sci_filelist]
+            self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in self.rs_filelist]
         else:
             print "Input files already in output directory!"
-            self.m_LAST_FILES=self.sci_filelist
+            self.m_LAST_FILES=self.rs_filelist
             
         print "SOURCES=\n",self.m_LAST_FILES
         

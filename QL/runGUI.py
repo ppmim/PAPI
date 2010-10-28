@@ -193,7 +193,7 @@ class MainGUI(panicQL):
     def new_file_func(self, filename, process=True):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
-        log.debug( "New file detected--> %s", filename)
+        log.debug( "New file detected --> %s", filename)
         self.textEdit_log.append("New file detected in source-->  " + filename)
         ## Insert into DB
         #datahandler.dataset.initDB()

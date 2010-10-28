@@ -168,7 +168,9 @@ class MasterDark:
         else:
             scale_str='none'
         
+        if f_ncoadds==-1: f_ncoadds=1
         self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
+        
         # Call the noao.imred.ccdred task through PyRAF
         
         misc.utils.listToFile(good_frames, self.__output_file_dir+"/files.list") 

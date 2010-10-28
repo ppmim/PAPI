@@ -65,7 +65,8 @@ class DataSet:
         """
 
         # 1. Load the source
-        if os.path.isdir(source):
+        if type(source)==type(list()): contents = source 
+        elif os.path.isdir(source):
             log.debug("Loadding Source Directory %s" %source)
             contents = [os.path.join(source, file) for file in os.listdir(source)]
         elif os.path.isfile(source):
