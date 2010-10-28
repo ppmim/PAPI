@@ -42,14 +42,11 @@ from qt import *
 from panicQL import *
 import sys
 import os
-import subprocess
-import threading
 import os.path
 import fnmatch
 import shutil
 import time
 from optparse import OptionParser
-import re
 
 # PAPI modules
 import reduce
@@ -151,7 +148,7 @@ class MainGUI(panicQL):
         ## Init in memory Database
         datahandler.dataset.initDB()
         
-        ## Data Collectors init
+        ## Data Collectors initialization
         self.file_pattern = str(self.lineEdit_filename_filter.text())
         self.dc=datahandler.DataCollector("dir", self.m_sourcedir, self.file_pattern , self.new_file_func)
         self.dc_outdir=None
@@ -887,7 +884,7 @@ class MainGUI(panicQL):
         rb = reduce.ReductionBlock (self.m_popup_l_sel)
         if len(self.m_popup_l_sel)>2:
             outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/super_sky_flat.fits", "*.fits", self, "Save File dialog")
-            if not fileName.isEmpty():
+            if not outfileName.isEmpty():
                 try:
                     rb.createSuperFlat(self.m_masterDark, str(outfileName))
                 except:
@@ -976,13 +973,10 @@ class MainGUI(panicQL):
         print "RA_DEC_OFFSET", ra_dec_near_offset
         print "TIME_NEAR_OFFSET", time_near_offset
       
-        # initialize variable
-        isMEF=False        
         # Look for near science files
         if self.m_listView_item_selected:
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
-                isMEF=fits.isMEF()
                 near_list = datahandler.dataset.filesDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
                 # For the moment, the minimun number of nearest is >0
                 if len(near_list)==0:
@@ -1094,11 +1088,6 @@ class MainGUI(panicQL):
         
         file_n=0 # really, not used for the moment
         
-        # Check list lenght
-        if len(self.m_popup_l_sel)<1:
-            QMessageBox.information(self, "Info", "Not enought science frames selected")
-            return
-        
         ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
         time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
         print "RA_DEC_OFFSET", ra_dec_near_offset
@@ -1148,12 +1137,12 @@ class MainGUI(panicQL):
             return    
         elif len(self.m_popup_l_sel)>4:
             # Create file list from current selected science files
-            file_lst=[]
+            file_list=[]
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))
                     return
-                else: file_lst.append(file)
+                else: file_list.append(file)
             file_n=-1 # actually, not used
             
         # Select the name of the output result file
@@ -1216,7 +1205,7 @@ class MainGUI(panicQL):
         #Change cursor
         self.setCursor(Qt.waitCursor)
         # Call external script (papi)
-        self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, out_filename)      
+        self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
         self._proc.startCommand()
       
       
@@ -1301,7 +1290,7 @@ class MainGUI(panicQL):
             # A SCIENCE frame
             if (f.type=="SCIENCE"):
                 # A MEF SCIENCE frame
-                if (f.mef==True):
+                if f.mef:
                     # Split the Multi-Extension FITS file
                     n_ext = misc.fileUtils.splitMEF( frame_to_reduce, mef_filenames  )
                     par = True # for tests
@@ -1348,7 +1337,7 @@ class MainGUI(panicQL):
             else:
                 clog.append('------>Frame is not a science frame, then it only will be displayed' )
                 # Multi-Extension FITS file
-                if f.mef==True:
+                if f.mef:
                     #ds9 -zscale 'foo.fits[1]' 'foo.fits[2]' 'foo.fits[3]' foo.fits[4]' -tile
                     display.showFrame(frame_to_reduce)
                 # Single FITS file
@@ -1411,7 +1400,7 @@ class MainGUI(panicQL):
 
     ################################################################################
 
-    def do_parallel_reduc_MEF_2( filenames ):
+    def do_parallel_reduc_MEF_2( self, filenames ):
     # Doing Asynchronous callback with Pyro!! NOT USED !!! only for a test  !!
 
       import Pyro.naming, Pyro.core

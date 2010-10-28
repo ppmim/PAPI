@@ -20,13 +20,9 @@ import datahandler
 import os
 import sys
 
-
-
 ###### Enable logging
-#import misc.paLog
 from misc.paLog import log
 
-    
 
 ############################################################
 class DataSet:  
@@ -508,7 +504,7 @@ def initDB(source_directory=None):
 
 #######################################################################################
 #This is only for testing purposes
-##################################
+#######################################################################################
 if __name__ == "__main__": 
 
     #log.initLog("/tmp/panic.log",logging.DEBUG)
@@ -524,6 +520,7 @@ if __name__ == "__main__":
     #print "\n--------> Now, we delete file orion0021_x4.fits " 
     
     sys.exit()
+    
     t1.delete("/disk-a/caha/panic/DATA/data_mat/QL1/orion0021_x4.fits","2007-10-18")
     t1.ListDataSet()
 

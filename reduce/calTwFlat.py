@@ -60,14 +60,17 @@ class MasterTwilightFlat:
     \par Description:
         
         1. Check the  TYPE(twilight) and FILTER of each Flat frame
-           If any frame on list missmatch the FILTER, then the master twflat will skip this frame and contiune with then next ones
+           If any frame on list missmatch the FILTER, then the master 
+           twflat will skip this frame and contiune with then next ones.
            EXPTIME do not need be the same, so EXPTIME scaling with 'mode' will be done
            
            1.1: Check either over or under exposed frames
         
-        2. We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS because they might have diff EXPTIMEs
+        2. We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS because 
+           they might have diff EXPTIMEs
         
-        3. Make the combine (with sigclip rejection) of dark subtracted Flat frames scaling by 'mode'
+        3. Make the combine (with sigclip rejection) of dark subtracted Flat frames 
+           scaling by 'mode'
         
         4. Normalize the tw-flat dividing by the mean value
         
@@ -94,7 +97,11 @@ class MasterTwilightFlat:
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, flat_files, dark_model, output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000, bpm=None):
+    def __init__(self, flat_files, dark_model, output_filename="/tmp/mtwflat.fits", \
+                lthr=1000, hthr=100000, bpm=None):
+        
+        """Initialization method"""
+        
         self.__input_files = flat_files
         self.__master_dark = dark_model
         self.__output_file_dir = os.path.dirname(output_filename)

@@ -19,13 +19,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import sys
 from qt import QWidget, QProcess, \
                QString, QStringList, QTimer, \
                SIGNAL, SLOT
 
 #Log
-import misc.paLog
 from misc.paLog import log
 import reduce # for TaskInfo
   
@@ -121,6 +119,5 @@ class RunQtProcess(QWidget):
         self._task_info_list.append(self.taskInfo)
                 
     def normalEnd(self):
-              
-        return self._exit
+        return self.exit
     

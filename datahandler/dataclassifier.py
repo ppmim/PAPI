@@ -192,7 +192,7 @@ class ClFits:
         # Check the file exists
         if not os.path.exists( self.pathname ):
             log.error('Cannot find frame : "%s"' % self.pathname)
-            raise "File not found"
+            raise Exception("File %s not found", self.pathname)
                     
         # Open the file            
         try:

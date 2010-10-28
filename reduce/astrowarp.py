@@ -220,7 +220,6 @@ if __name__ == "__main__":
     log.debug( 'Start AstroWarp....')
     # Get and check command-line options
     
-    
     usage = "usage: %prog [options] arg1 arg2 ..."
     parser = OptionParser(usage)
     
