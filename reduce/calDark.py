@@ -192,9 +192,9 @@ class MasterDark:
         
         darkframe = pyfits.open(self.__output_filename,'update')
         #darkframe[0].header.add_history('Combined images by averaging (%s files) ' % good_frames)
-        #Add a new keyword-->PIP_TYPE
-        darkframe[0].header.update('hierarch PAPI.TYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
-        darkframe[0].header.update('OBJECT','MASTER_DARK')
+        #Add a new keyword-->PAPITYPE
+        darkframe[0].header.update('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
+        #darkframe[0].header.update('OBJECT','MASTER_DARK')
         darkframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file    
     
         log.debug('Saved master DARK to %s' , self.__output_filename)

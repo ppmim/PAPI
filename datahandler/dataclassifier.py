@@ -82,9 +82,9 @@ class ClFits:
         self.detectorID= ""
         self.date_obs  = ""
         self.time_obs  = ""
-        self.ra        = ""
-        self.dec       = ""
-        self.mdj       = "" # modified julian date of observation
+        self.ra        = -1
+        self.dec       = -1
+        self.mdj       = -1 # modified julian date of observation
         self.object    = ""
         self.chipcode  = 1
         self.ncoadds   = -1
@@ -123,7 +123,7 @@ class ClFits:
         return (self.type=="DOME_FLAT_LAMP_OFF")
     
     def isTwFlat(self):
-        return (self.type=="TW_FLAT_DUSK" or self.type=="TW_FLAT_DAWN" or self.type=="TW_FLAT")
+        return (self.type=="TW_FLAT_DUSK" or self.type=="TW_FLAT_DAWN" or self.type=="TW_FLAT" or self.type=="SKY_FLAT")
 	
     def isScience(self):
         return (self.type.count("SCIENCE"))
@@ -224,26 +224,39 @@ class ClFits:
         # pointer to the primary-main header
         self.my_header = myfits[0].header
           
-        # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , UNKNOW)  
+         
+        # Some temporal to allow work with diff instrument data files
         try:
-            if myfits[0].header['OBJECT'].lower().count('master'):
-                self.type=myfits[0].header['PAPI.TYPE']
-            elif myfits[0].header['OBJECT'].lower().count('dark') :
+            if myfits[0].header['INSTRUME']=='Omega2000':
+                keyword_with_frame_type = 'OBJECT'
+            elif myfits[0].header['INSTRUME']=='HAWKI':
+                keyword_with_frame_type = 'IMAGETYP'
+            else: keyword_with_frame_type = 'OBJECT' # default    
+        except KeyError:
+            log.warning('INSTRUME keyword not found')
+            keyword_with_frame_type = 'OBJECT' #default
+            
+        # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , MASTER_calibration, UNKNOW)     
+        try:
+            if myfits[0].header.has_key('PAPITYPE'):
+                self.type=myfits[0].header['PAPITYPE']
+            elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
                 self.type="DARK"
-            elif myfits[0].header['OBJECT'].lower().count('lamp off'):
+            elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
                 self.type="DOME_FLAT_LAMP_OFF"
-            elif myfits[0].header['OBJECT'].lower().count('lamp on'):
+            elif myfits[0].header[keyword_with_frame_type].lower().count('lamp on'):
                 self.type="DOME_FLAT_LAMP_ON"
-            elif myfits[0].header['OBJECT'].lower().count('dusk'):
+            elif myfits[0].header[keyword_with_frame_type].lower().count('dusk'):
                 self.type="TW_FLAT_DUSK"
-            elif myfits[0].header['OBJECT'].lower().count('dawn'):
+            elif myfits[0].header[keyword_with_frame_type].lower().count('dawn'):
                 self.type="TW_FLAT_DAWN"
-            elif myfits[0].header['OBJECT'].lower().count('skyflat') or myfits[0].header['OBJECT'].lower().count('flat'):
-                self.type="TW_FLAT"
-            elif myfits[0].header['OBJECT'].lower().count('sky for'):
+            elif myfits[0].header[keyword_with_frame_type].lower().count('skyflat') or \
+                 myfits[0].header[keyword_with_frame_type].lower().count('flat'): 
+                self.type="SKY_FLAT"
+            elif myfits[0].header[keyword_with_frame_type].lower().count('sky for'):
                 self.type="SKY_FOR"
-            elif myfits[0].header['OBJECT'].lower().count('focus'):
-                self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' !!!
+            elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
+                self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, pero tiene pinta de un despiste del operador !!!
             else:
                 self.type="SCIENCE"
             log.debug("Image type: %s", self.type)
@@ -254,7 +267,6 @@ class ClFits:
         #Is pre-reduced the image ? by default, no
         self.processed=False
         
-
         #print "File :"+ self.pathname
         #Filter
         try:
@@ -310,21 +322,21 @@ class ClFits:
             self.ra = myfits[0].header['RA']
         except KeyError:
             log.warning('RA keyword not found')
-            self.ra  = ''
+            self.ra  = -1
         
         #Dec-coordinate (in degrees)
         try:
             self.dec = myfits[0].header['DEC']
         except KeyError:
             log.warning('DEC keyword not found')
-            self.dec  = ''
+            self.dec  = -1
 
         #MJD-Modified julian date 'days' of observation
         try:
             self.mjd = myfits[0].header['MJD-OBS']
         except KeyError:
             log.warning('MJD-OBS keyword not found')
-            self.mjd  = ''
+            self.mjd  = -1
            
         #OBJECT
         try:
@@ -346,7 +358,7 @@ class ClFits:
         self.runID='0'
         
         
-        # PRESS1 and PRESS2 wrong keyword values
+        # Fix PRESS1 and PRESS2 wrong keyword values
         try:
             if myfits[0].header['INSTRUME']=='Omega2000':
                 myfits[0].header.update('PRESS1', 0.0)

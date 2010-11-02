@@ -163,6 +163,11 @@ class SuperSkyFlat:
                             )
         else: out=tmp1
         shutil.move(out, self.output_filename)
+        
+        # Update FITS header 
+        f=pyfits.open(self.output_filename,'update')
+        f[0].header.update('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
+        f.close()
                                                            
         log.debug("Image created : %s", self.output_filename)
         return self.output_filename

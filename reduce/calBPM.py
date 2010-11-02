@@ -237,11 +237,10 @@ class BadPixelMask:
         hdu.scale('int16') # importat to set first data type
         hdu.data=bpm     
         hdulist = pyfits.HDUList([hdu])
-        hdu.header.update('OBJECT','MASTER_PIXEL_MASK')
+        hdu.header.update('PAPITYPE','MASTER_BPM')
         hdu.header.add_history('BPM created from %s' % good_flats)
         hdulist.writeto(self.output)
         hdulist.close(output_verify='ignore')
-        
         
         # Remove temp files
         #misc.fileUtils.removefiles(flat_comb)

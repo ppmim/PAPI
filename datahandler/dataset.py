@@ -244,7 +244,7 @@ class DataSet:
           \param delta_time    secs for data-time obs search time window
           \param runId
 
-          \return A list with the filenames that match the specified fields, otherwise None
+          \return A list with the filenames that match the specified fields, otherwise an empty list
         """
 
         try:
@@ -291,24 +291,24 @@ class DataSet:
             cur.execute(s_select,(detectorId, type, filter))
             
             rows=cur.fetchall()
-            if len(rows)==0:
-                # Any match
-                print "Empty response"
-                return None
-            elif len(rows)>1:
-                for row in rows:
-                    print row #only for debug
-                print "Total rows selected:  %d" %(len(rows))   
-                return rows
-            else:
-                return rows
-                         
-        except sqlite.DatabaseError:
+            res_list=[]
+            if len(rows)>0:
+                res_list = [str(f[0]) for f in rows] # important to apply str() !!
+            print "Total rows selected:  %d" %(len(res_list))
+            print "Files found :\n ", res_list
+            return res_list
+                             
+        except sqlite.DatabaseError,e:
             log.exception("Error in DataSet.GetFile function...")
-            raise
-            return None
+            raise Exception("Error in DataSet.GetFile: %s",str(e))
+            return []
 
-    
+    def GetFilesT( self, type, texp=-1, filter="ANY"):
+        """ Get all the files which match with the specified type, texp and filter"""
+              
+        return self.GetFiles( "ANY", type, texp, filter, mjd=55000 , ra=0, dec=0, delta_pos=360*3600/2, delta_time=9999999, runId=None)
+          
+      
     ############################################################    
     def GetFileInfo( self, filename ):
         """
@@ -369,23 +369,16 @@ class DataSet:
                             (detectorId, type, texp-ROUND, texp+ROUND, date, runId))
                 
             rows=cur.fetchall()
-            if len(rows)==0:
-                # No match
-                # Then, we try to compute it
-                # TODO
-                pass
-                return None
-            elif len(rows)>1:
-                for row in rows:
-                    print row #only for debug
-                return rows
-            else:
-                return rows
+            if len(rows)>0:
+                res_list = [str(f[0]) for f in rows] # important to apply str() !!
+            print "Total rows selected:  %d" %(len(res_list))
+            print "Files found :\n ", res_list
+            return res_list
                 
         except sqlite.DatabaseError:
             log.exception("Error in DataSet.GetMasterDark function...")
             raise
-            return None
+            return []
 
      ############################################################    
     def GetMasterFlat( self, detectorId, type, filter, date, create=False, runId=None):
@@ -516,7 +509,7 @@ if __name__ == "__main__":
     t1.load("/disk-a/caha/panic/DATA/SIMU_PANIC_3/")
     t1.ListDataSet()
     print 'GET FILES !!!!!!!!!!!!!!!!!!!!!!!! 1/36=%f' %(1/36)
-    t1.GetFiles('ANY', 'SCIENCE', -1, 'ANY', 54846.85034991 , 83.9975, -5.240611, 0.0166, 0.00556, runId=0)
+    t1.GetFiles('ANY', 'SCIENCE', -1, 'ANY', 54846.85034991 , 83.9975, -5.240611, 10000, 10000, runId=0)
     #(detectorId, type, texp, filter, mjd, ar, dec, delta_pos, delta_time, runId=None):
     #print "\n--------> Now, we delete file orion0021_x4.fits " 
     

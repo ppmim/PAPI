@@ -241,7 +241,7 @@ class GainMap:
         output=self.output_filename
         log.debug('Generating output file: %s', output)
         prihdr = myflat[0].header.copy()
-        prihdr.update('OBJECT','MASTER_GAINMAP')
+        prihdr.update('PAPITYPE','MASTER_GAINMAP','TYPE of PANIC Pipeline generated file')
         prihdr.add_history('Gain map based on %s' % self.flat)
         fo = pyfits.HDUList()
         # Add primary header to output file...

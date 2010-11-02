@@ -295,9 +295,9 @@ class MasterDomeFlat:
         flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
         flatframe[0].header.add_history('lamp_on  files: %s' %domelist_lampon )
         flatframe[0].header.add_history('lamp_off files: %s' %domelist_lampoff )
-        #Add a new keyword-->PIP_TYPE
-        flatframe[0].header.update('PATYPE','MASTER_DOME_FLAT','TYPE of PANIC Pipeline generated file')
-        flatframe[0].header.update('OBJECT','MASTER_DOME_FLAT')
+        #Add a new keyword-->PAPITYPE
+        flatframe[0].header.update('PAPITYPE','MASTER_DOME_FLAT','TYPE of PANIC Pipeline generated file')
+        #flatframe[0].header.update('OBJECT','MASTER_DOME_FLAT')
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         
         

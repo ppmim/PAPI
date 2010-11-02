@@ -990,8 +990,7 @@ class MainGUI(panicQL):
             p=1
             file_n=-1
             my_list=""
-            for f in near_list:
-                file=str(f[0])
+            for file in near_list:
                 my_list = my_list + file + "\n"
                 if (file==self.m_listView_item_selected): file_n=p
                 else: p+=1
@@ -1116,8 +1115,7 @@ class MainGUI(panicQL):
             file_list=[]
             view_list = ""
             i=1
-            for f in near_list:
-                file = str(f[0])
+            for file in near_list:
                 if file==self.m_listView_item_selected: file_n=i
                 else: i=i+1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):

@@ -185,9 +185,11 @@ class MEF_ReductionSet:
     def subtractNearSky(self, fn=-1, out_filename="/tmp/skysub.fits"):
         """ run a near-sky subtraction to a give frame (fn) from the sci frame list"""
         
-        ############
+        #################
+        # Split mef-data
+        #################
         self.split()
-        ############
+        
         
         outs=[]
         if fn==-1: m_fn = self.file_n
@@ -214,9 +216,10 @@ class MEF_ReductionSet:
     def doReduction(self, red_mode="single"):
         """ Do the data reduction of all MEF's , in principle sequencially """
                                 
-        ############
+        #################
+        # Split mef-data
+        #################
         self.split()
-        ############
     
         outs=[]
         for rs in self.l_red_set:
@@ -505,7 +508,7 @@ class ReductionSet:
         sorted by TEXP.
         """
         
-        
+        """
         if list==None:
             m_list=self.rs_filelist
         else: m_list=list
@@ -520,8 +523,61 @@ class ReductionSet:
         match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
         
         return match_list
+        """
+        # query the DB for DARK frames 
+        m_list = self.db.GetFilesT('DARK')
+        
+        match_list = []
+        for file in m_list:
+            fits = datahandler.ClFits(file)
+            if fits.isDark():
+                match_list.append((file, fits.expTime()))
+        
+        # Sort out frames by TEXP
+        match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
+        
+        return match_list
     
-                         
+    def getTwFlatFrames(self):
+        """
+        Query the DB (date set) to look for TwFlats sorted by FILTER.
+        """
+
+        # query the DB for TW_FLAT frames for any TEXP,FILTER 
+        m_list = self.db.GetFilesT('SKY_FLAT')
+        match_list = []
+        for file in m_list:
+            fits = datahandler.ClFits(file)
+            if fits.isTwFlat():
+                match_list.append((file, fits.getFilter()))
+        
+        
+        # Sort out frames by FILTER
+        match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
+        
+        return match_list
+    
+    def getDomeFlatFrames(self):
+        """
+        Query the DB (date set) to look for DomeFlats (on and off) sorted by FILTER.
+        """
+
+        # query the DB for DOME_FLAT frames for any TEXP,FILTER 
+        m_list = self.db.GetFilesT('DOME_FLAT_LAMP_ON')
+        m_list2 = self.db.GetFilesT('DOME_FLAT_LAMP_OFF')
+        
+        match_list = []
+        for file in m_list+m_list2:
+            fits = datahandler.ClFits(file)
+            if fits.isDomeFlat():
+                match_list.append((file, fits.getFilter()))
+        
+        
+        # Sort out frames by FILTER
+        match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
+        
+        return match_list
+    
     def skyFilter( self, list_file, gain_file, mask='nomask', obs_mode='dither' ):
         """
             For each input image, a sky frame is computed by combining a certain number of the closest images, 
@@ -808,16 +864,25 @@ class ReductionSet:
         log.debug("Creating Master darks...")
         # 1. Look for dark frames
         full_dark_list = self.getDarkFrames(self.rs_filelist)
-        
+        if len(full_dark_list)<=0:
+            log.error("Any DomeFlatField frames found")
+            raise Exception("Any DomeFlatField frames found")
+
         # 2. take the first group having the same TEXP
         last_texp = full_dark_list[0][1]
-        outfile = self.out_dir+"/master_dark.fits" # class MasterDark will add as suffix (TEXP,NCOADD)
+        outfile = self.out_dir+"/master_dark.fits" # class MasterDark will add as suffix (TEXP_NCOADDS)
         group=[]
         l_mdarks=[]
+        build_master=False
         for tupla in full_dark_list:
             if tupla[1]==last_texp:
                 group.append(tupla[0])
+                if tupla==full_dark_list[-1]: # the last file in the list
+                    build_master=True
             else:
+                build_master=True
+            
+            if build_master and len(group)>1:    
                 try:
                     task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
                     out=task.createMaster()
@@ -825,68 +890,119 @@ class ReductionSet:
                 except Exception,e:
                     log.error("Some error while creating master dark: %s",str(e))
                     raise e
+                # reset for new group
                 group=[]
                 group.append(tupla[0])
                 last_texp=tupla[1]
-            if tupla==full_dark_list[-1]: # the last file in the list
-                try:
-                    task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
-                    out=task.createMaster()
-                    l_mdarks.append(out) # out must be equal to outfile
-                except Exception,e:
-                    log.error("Some error while creating master dark: %s",str(e))
-                    raise e
+                build_master=False
                 
         # insert products (master darks) into DB
         for f in l_mdarks: self.db.insert(f)
         self.db.ListDataSet()         
         return l_mdarks        
         
-    def buildMasterDFlats(self):
+    def buildMasterDomeFlats(self):
         """
-        Look for dark files in the data set, group them by DIT,NCOADD and create
-        the master darks, as many as found groups
+        Look for DOME FLATS files in the data set, group them by FILTER and create
+        the master DomeFlat, as many as found groups (i.e., filters)
         """
         
+        log.debug("Building Master DomeFlats...")
+        # 1. Look for domeflat frames
+        full_flat_list = self.getDomeFlatFrames()
+        if len(full_flat_list)<=0:
+            log.error("Any DomeFlatField frames found")
+            raise Exception("Any DomeFlatField frames found")
+            
+        # 2. take the first group having the same FILTER
+        last_filter = full_flat_list[0][1]
+        group=[]
+        l_mflats=[]
+        build_master=False
+        
+        for tupla in full_flat_list:
+            if tupla[1]==last_filter:
+                group.append(tupla[0])
+                if tupla==full_flat_list[-1]: # the last file in the list
+                    build_master=True
+            else: # we have found the end of the group 
+                build_master=True
+                
+            if build_master and len(group)>1:
+                try:
+                    outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
+                    task=reduce.calDomeFlat.MasterDomeFlat(group, os.path.dirname(outfile), outfile, None)
+                    out=task.createMaster()
+                    l_mflats.append(out) # out must be equal to outfile
+                except Exception,e:
+                    log.error("Some error while creating master DomeFlat: %s",str(e))
+                    raise e
+                
+                # reset for new group
+                group=[]
+                group.append(tupla[0])
+                last_filter=tupla[1]
+                build_master=False            
+                
+        # insert products (master dome flats) into DB
+        for f in l_mflats: self.db.insert(f)
+        self.db.ListDataSet()  
+        return l_mflats
+    
     def buildMasterTwFlats(self):
         """
         Look for TwFlats files in the data set, group them by FILTER and create
         the master twflat, as many as found groups
         """
         
-        log.debug("Creating Master TwFlat...")
+        log.debug("Building Master TwFlats...")
         # 1. Look for twflat frames
-        full_flat_list = self.getTwFlatFrames(self.rs_filelist)
-        
-        # 2. take the first group having the same TEXP
-        last_texp = full_dark_list[0][1]
-        outfile = self.out_dir+"/master_dark.fits" # class MasterDark will add as suffix (TEXP,NCOADD)
+        full_flat_list = self.getTwFlatFrames()
+        if len(full_flat_list)<=0:
+            log.error("Any TwFlatField frames found")
+            raise Exception("Any TwFlatField frames found")
+            
+        # 2. take the first group having the same FILTER
+        last_filter = full_flat_list[0][1]
         group=[]
-        l_mdarks=[]
-        for tupla in full_dark_list:
-            if tupla[1]==last_texp:
+        l_mflats=[]
+        build_master=False
+        
+        for tupla in full_flat_list:
+            if tupla[1]==last_filter:
                 group.append(tupla[0])
-            else:
+                if tupla==full_flat_list[-1]: # the last file in the list
+                    build_master=True
+            else: # we have found the end of the group 
+                build_master=True
+                
+            if build_master and len(group)>1:
                 try:
-                    task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
-                    out=task.createMaster()
-                    l_mdarks.append(out) # out must be equal to outfile
+                    master_dark=self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
+                    # if required, master_dark will be scaled in MasterTwilightFlat class
+                    if len(master_dark)>0:
+                        outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
+                        task=reduce.calTwFlat.MasterTwilightFlat(group, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
+                        out=task.createMaster()
+                        l_mflats.append(out) # out must be equal to outfile
+                    else:
+                        # should we create master dark ??
+                        log.error("MASTER_DARK not found")
+                        raise Exception("MASTER_DARK not found")
                 except Exception,e:
-                    log.error("Some error while creating master dark: %s",str(e))
-                    raise e
-                group=[]
-                group.append(tupla[0])
-                last_texp=tupla[1]
-            if tupla==full_dark_list[-1]: # the last file in the list
-                try:
-                    task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
-                    out=task.createMaster()
-                    l_mdarks.append(out) # out must be equal to outfile
-                except Exception,e:
-                    log.error("Some error while creating master dark: %s",str(e))
+                    log.error("Some error while creating master TwFlat: %s",str(e))
                     raise e
                 
-        return l_mdarks
+                # reset for new group
+                group=[]
+                group.append(tupla[0])
+                last_filter=tupla[1]
+                build_master=False            
+                
+        # insert products (master twflats) into DB
+        for f in l_mflats: self.db.insert(f)
+        self.db.ListDataSet()  
+        return l_mflats
         
     def reduce(self, red_mode):
         """ Main procedure for data reduction """
@@ -1219,7 +1335,21 @@ if __name__ == "__main__":
 
     rs = ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, obs_mode="dither", \
                                 dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode="single")
-    out = rs.buildMasterDarks()
-     
+    
+    try:
+        out = rs.buildMasterDarks()
+    except:
+        print "Cannot build Master Darks !"
+    
+    try:
+        out2 = rs.buildMasterTwFlats()
+    except:
+        print "Cannot build TwFlats !"
+        
+    try:
+        out3 = rs.buildMasterDomeFlats()
+    except:
+        print "Cannot build Master Dome Flats"
+        
     if options.show:
         out.show()    

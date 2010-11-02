@@ -261,10 +261,10 @@ class MasterTwilightFlat:
             if next>0:
                 for i in range(1,next+1):
                     f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
-                    f[i].header.add_history('Dark subtracted %s (interpolated)' %self.__master_dark)
+                    f[i].header.add_history('Dark subtracted %s (interpolated)' %os.path.basename(self.__master_dark))
             else:
                 f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
-                f[0].header.add_history('Dark subtracted %s (interpolated)' %self.__master_dark)    
+                f[0].header.add_history('Dark subtracted %s (interpolated)' %os.path.basename(self.__master_dark))    
             
             #a=numpy.reshape(f[0].data, (2048*2048,))
             #print "MODE=", 3*numpy.median(a)-2*numpy.mean(a)
@@ -332,12 +332,11 @@ class MasterTwilightFlat:
         flatframe = pyfits.open(self.__output_filename,'update')
         flatframe[0].header.add_history('Computed normalized master twilight flat' )
         flatframe[0].header.add_history('Twilight files: %s' %framelist )
-        #Add a new keyword-->PIP_TYPE
-        flatframe[0].header.update('PIP_TYPE','MASTER_TW_FLAT','TYPE of PANIC Pipeline generated file')
-        flatframe[0].header.update('OBJECT','MASTER_TW_FLAT','Master Twilight flat field')
+        #Add a new keyword-->PAPI_TYPE
+        flatframe[0].header.update('PAPITYPE','MASTER_TW_FLAT','TYPE of PANIC Pipeline generated file')
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         
-        log.debug(t.tac() )
+        log.debug(t.tac())
         log.debug('Saved master TW_FLAT to %s' ,  self.__output_filename )
     
         return self.__output_filename
