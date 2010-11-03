@@ -244,7 +244,7 @@ class DataSet:
           \param delta_time    secs for data-time obs search time window
           \param runId
 
-          \return A list with the filenames that match the specified fields, otherwise an empty list
+          \return A list with the filenames that match the specified fields, otherwise an empty list []
         """
 
         try:
@@ -304,7 +304,9 @@ class DataSet:
             return []
 
     def GetFilesT( self, type, texp=-1, filter="ANY"):
-        """ Get all the files which match with the specified type, texp and filter"""
+        """ Get all the files which match with the specified type, texp and filter
+            If query does not match, then return a empty list []
+        """
               
         return self.GetFiles( "ANY", type, texp, filter, mjd=55000 , ra=0, dec=0, delta_pos=360*3600/2, delta_time=9999999, runId=None)
           

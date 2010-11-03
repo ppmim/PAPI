@@ -68,7 +68,6 @@ from misc.paLog import log
 import datahandler
 import reduce
 import misc.fileUtils
-import PAPI.linkSources as papi
 import misc.utils
 from reduce.makeobjmask import *
 import reduce.imtrim
@@ -77,186 +76,6 @@ import misc.mef
 import astromatic
 import datahandler.dataset
 
-class MEF_ReductionSet:
-    """ 
-    This class implement a reduction set of multi-extension-FITS and allow 
-    all the basic data reduction operations over them. It also works with simple
-    FITS files.
-    
-    TODO: parallel data reduction
-    """
-    
-    def __init__(self, sci_list, out_dir=None, out_file="out.fits", dark=None, flat=None, bpm=None, file_n=0):
-        """ Initialization """
-        
-        # Data set definition values
-        self.science_list= sci_list  # the list containing the MEF science data filenames to reduce
-        self.out_dir = out_dir       # directory where all output will be written
-        self.out_file = out_file     # output filename for result frame (a fits file)
-        self.master_dark = dark      # the master dark (filename) to use (input)
-        self.master_flat = flat      # the master flat (filename) to use (input)
-        self.bpm = bpm               # the master Bad Pixel Mask (filename) to use (input)
-        self.file_n = file_n         # the file position of file to which run a specific funtion (nearSkySubtraction,....)
-        
-        # MEF-concerning 
-        self.nExt = -1               # number of extensions (= number of ReductionSet's)
-        self.l_red_set = []          # list of ReductionSet's. Filled in by the split() method
-        
-        # Checking output directory 
-        if out_dir==None:
-            try:
-                os.mkdir(os.getcwd()+"/papi_out")
-            except:
-                log.error("Error creating output directory %s:", os.getcwd()+"/papi_out")
-                raise
-            self.out_dir=os.getcwd()+"/papi_out"
-        elif not os.path.isdir(out_dir):
-            try:
-                os.mkdir(out_dir)
-            except:
-                log.error("Directory %s doesn't exist, error while creating.", out_dir)
-                raise
-                  
-    def split(self):
-        """ 
-        Split the data (science & calibration) into N 'ReductionSet', where N is the number 
-        of extension of the Multi-Extension FITS
-        """
-              
-        #Source files 
-        #load file list from file
-        #sci_files=[line.replace( "\n", "") for line in fileinput.input(self.science_list)]
-        sci_files = self.science_list
-        
-        sources=[]
-        darks=[]
-        flats=[]
-        bpms=[]    
-        # First, we need to check if we have MEF files
-        if not datahandler.ClFits( sci_files[0] ).mef:
-            self.nExt=1
-            sources = sci_files
-            darks.append(self.master_dark)
-            flats.append(self.master_flat)
-            bpms.append(self.bpm)
-            rs = ReductionSet(sci_files, out_dir=self.out_dir, out_file=self.out_file, obs_mode="dither", \
-                                dark=self.master_dark, flat=self.master_flat, bpm=self.bpm)          
-            self.l_red_set.append( rs )
-        else:            
-            #Suppose we have MEF files ...
-            kws=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']    
-            try:
-                mef = misc.mef.MEF(sci_files)
-                (self.nExt,new_sci_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
-                n=0
-                if self.master_dark!=None:
-                    mef = misc.mef.MEF([self.master_dark])
-                    (n,new_dark_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
-                if self.master_flat!=None:
-                    mef = misc.mef.MEF([self.master_flat])
-                    (n,new_flat_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
-                if self.bpm!=None:
-                    mef = misc.mef.MEF([self.bpm])
-                    (n,new_bpm_files)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
-            except Exception,e:
-                log.debug("Some error while splitting data set ...%s",str(e))
-                raise
-            # now, generate the new output filenames        
-            for n in range(1,self.nExt+1):
-                sources.append([self.out_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in sci_files])
-                if self.master_dark: darks.append(self.out_dir+"/"+os.path.basename(self.master_dark.replace(".fits",".Q%02d.fits"%n)))
-                else: darks.append(None)
-                if self.master_flat: flats.append(self.out_dir+"/"+os.path.basename(self.master_flat.replace(".fits",".Q%02d.fits"%n)))
-                else: flats.append(None)
-                if self.bpm: bpms.append(self.out_dir+"/"+os.path.basename(self.bpm.replace(".fits",".Q%02d.fits"%n)))
-                else: bpms.append(None)
-                """
-                for f in new_file_names:
-                    #if re.search(".*(\.Q01)(.fits)$", f):
-                        sources.append(f)
-                """
-                # Create the ReductionSet
-                rs = ReductionSet(sources[n-1], out_dir=self.out_dir, out_file=self.out_dir+"/out_Q%02d.fits"%n, obs_mode="dither", \
-                                  dark=darks[n-1], flat=flats[n-1], bpm=bpms[n-1], red_mode="single")
-                self.l_red_set.append( rs )
-                    
-        return self.nExt,sources,darks,flats,bpms
-    
-    def subtractNearSky(self, fn=-1, out_filename="/tmp/skysub.fits"):
-        """ run a near-sky subtraction to a give frame (fn) from the sci frame list"""
-        
-        #################
-        # Split mef-data
-        #################
-        self.split()
-        
-        
-        outs=[]
-        if fn==-1: m_fn = self.file_n
-        else: m_fn = fn
-        
-        log.debug("# RedSet = %d",len(self.l_red_set))
-        log.debug("# File pos = %d", m_fn)
-        for rs in self.l_red_set:
-            try:
-                outs.append(rs.subtractNearSky(m_fn))
-            except:
-                log.error("Error while MEF near sky subtraction")
-                raise
-        
-        #Package results from each extension into a MEF file (only if nExt>1)
-        if len(self.l_red_set)>1:
-            mef=misc.mef.MEF(outs)
-            mef.createMEF(out_filename)
-        else:
-            shutil.move(outs[0], out_filename) 
-        
-        return out_filename
-        
-    def doReduction(self, red_mode="single"):
-        """ Do the data reduction of all MEF's , in principle sequencially """
-                                
-        #################
-        # Split mef-data
-        #################
-        self.split()
-    
-        outs=[]
-        for rs in self.l_red_set:
-            try:
-                # Here, we should programm the parallel data reduction 
-                outs.append(rs.reduce(red_mode))
-            except Exception, e:
-                log.error("Error while MEF data reduction: %s",str(e))
-                raise e
-            
-        #Package results from each extension into a MEF file (only if nExt>1)
-        if len(self.l_red_set)>1:
-            #log.debug("*** Creating MEF file with all outputs from reduction....***")
-            #mef=misc.mef.MEF(outs)
-            #mef.createMEF(self.out_file)
-            # other option, do a SWARP to register the N-extension into one wide-single extension
-            log.debug("*** Coadding overlapped files....")
-            swarp = astromatic.SWARP()
-            swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
-            swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
-            swarp.ext_config['IMAGEOUT_NAME']= self.out_file
-            swarp.ext_config['WEIGHTOUT_NAME']=self.out_file.replace(".fits",".weight.fits")
-            swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
-            swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
-            swarp.run(outs, updateconfig=False, clean=False)
-        else:
-            shutil.move(outs[0], self.out_file)
-        
-        log.info("*** Final reduced file %s created. Congratulations !! ***",self.out_file)
-        
-        return self.out_file
-                   
-    def doQuickReduction(self):
-        """ Do the data quick reduction of all MEF's , in principle sequencially """
-                                
-        return self.doReduction(red_mode="single")
-                
 class ReductionSet:
     def __init__(self, rs_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, red_mode="single"):
         """ Init function """
@@ -270,6 +89,8 @@ class ReductionSet:
         self.master_flat = flat    # master flat to use (input)
         self.bpm = bpm             # master Bad Pixel Mask to use (input)
         self.red_mode = red_mode   # reduction mode (single=for QL, full=for science) 
+        
+        self.gr_sci = []           # list of group of observing object/sequence (see getObjectSequences() ) 
         
         # Environment variables
         self.m_terapix_path = os.environ['TERAPIX']
@@ -289,11 +110,22 @@ class ReductionSet:
         self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
         
         #DataBase (in memory)
+        self.db=None
+    
+    def __initDB(self):
+        """
+        Initialize the data base, loading the full frame list
+        
+        NOTE: If we init the DB in the constructor __init__(), we will have problems
+        if we call use the DB from any method of ReductionSet and from other thread.
+        For more info, see http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency
+        """
+        #DataBase (in memory)
         self.db=datahandler.dataset.DataSet("file")
         self.db.createDB()
-        self.db.load(rs_filelist)
+        self.db.load(self.rs_filelist)
         self.db.ListDataSet()
-          
+        
     def checkData(self, chk_filter=True, chk_type=True, chk_expt=True, chk_itime=True, \
                   chk_ncoadd=True, chk_cont=True):
         """
@@ -426,15 +258,54 @@ class ReductionSet:
         for tuple in dataset:
             sorted_files.append(tuple[0])
         
-        return sorted_files                                
-                     
+        return sorted_files
+    
+    def split(self, frame_list):
+        """ 
+        Split the data in frame list (any kind, science or calibration) into N 'sub-list',
+        where N is the number of extension of the Multi-Extension FITS.
+        """
+        
+        log.debug("Starting split() method ....")
+        
+        new_frame_list=[] # a list of N list, where N=number of extension of the MEF 
+        nExt=0
+        if frame_list==None or len(frame_list)==0:
+            return [],0
+            
+        # First, we need to check if we have MEF files
+        if not datahandler.ClFits( frame_list[0] ).mef:
+            nExt=1
+            new_frame_list.append(frame_list)
+        else:            
+            #Suppose we have MEF files ...
+            kws=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']    
+            try:
+                mef = misc.mef.MEF(frame_list)
+                (nExt, sp_frame_list)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
+            except Exception,e:
+                log.debug("Some error while splitting data set ...%s",str(e))
+                raise
+            # now, generate the new output filenames        
+            for n in range(1,nExt+1):
+                new_frame_list.append([self.out_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
+                """
+                for f in new_file_names:
+                    #if re.search(".*(\.Q01)(.fits)$", f):
+                        sources.append(f)
+                """
+        
+        print "NEW_FRAME_LIST=",new_frame_list
+        
+        return new_frame_list, nExt
+    
     def getObsMode(self):
         """
         Return the type of dither sequece followed in the currect  'm_LAST_FILES' list. It could be:
             - dither (T-T-T-T-T- ....)
             - dither_on_off (T-S-T-S-T-S-T-S-T-....)
             - dither_off_on (S-T-S-T-S-T-S-T-S-....)
-            - other  (non defined sequence,unknown)
+            - other  (non defined sequence,unknown) (i.e,  T-S-T-T-S-T-T-S-T-....)
             
             NOTE: To find out the dither/observing sequence then OBJECT keyword will be checked (see ClFits class)
         """
@@ -501,7 +372,29 @@ class ReductionSet:
                 sky_list.append(file)
                 
         return sky_list
-    
+
+    def getCalibFor(self, sci_obj_list):
+        """
+        Given a list of frames belonging to a observing sequence for a given object (star, galaxi, whatever),
+        return the most appropiate calibration files (master dark,flat,bpm) to
+        reduce the sequence
+        """
+        obj_frame = datahandler.ClFits(sci_obj_list[0])
+        # We take as sample, the first frame in the list, but all frames must
+        # have the same features (expT,filter,ncoadda, readout-mode, ...)
+        expTime = obj_frame.expTime()
+        filter = obj_frame.getFilter()
+        
+        master_dark=self.db.GetFilesT('MASTER_DARK', expTime)
+        master_flat=self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+        master_bpm =self.db.GetFilesT('MASTER_BPM')
+        
+        log.debug("Found master dark %s", master_dark)
+        log.debug("Found master flat %s", master_flat)
+        log.debug("Found master bpm %s", master_bpm)
+        
+        return master_dark, master_flat, master_bpm
+        
     def getDarkFrames(self, list=None):
         """
         Given a list of files (data set), return the files matching as dark frames
@@ -556,6 +449,21 @@ class ReductionSet:
         match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
         
         return match_list
+    
+    def getObjectSequences(self):
+        """
+        Query the DB (data set) to look for object/pointing sequences sorted by
+        MJD and grouped by FILTER.
+        """
+        
+        # TODO: simplified version, return the list of sci files
+        self.gr_sci = [] 
+        self.gr_sci.append(self.db.GetFilesT("SCIENCE") + self.db.GetFilesT("SKY_FOR"))
+        # TBD: sort out by MJD and group by FILTER
+        
+        log.debug("Found %d groups of SCI files: %s", len(self.gr_sci), self.gr_sci)
+        
+        return self.gr_sci
     
     def getDomeFlatFrames(self):
         """
@@ -635,27 +543,33 @@ class ReductionSet:
             log.error("Some problem while running command %s", skyfilter_cmd) 
             return []
                                   
-    def subtractNearSky (self, fn= 0):
+    
+    def subtractNearSky(self, near_list=None, file_pos=0, out_filename=None):
         """
-            Compute and subtract the nearest sky to the image in position 'fn' in the frame list (rs_filelist) 
+            Compute and subtract the nearest sky to the image in position 'fn' in the given frame list (near_list) 
                          
             This function make use of skyfilter_single.c (IRDR)              
             
             INPUT
-                fn : file position in sci file list (the list is supposed to be sorted by obs-date)
+                file_pos : file position in sci file list (the list is supposed to be sorted by obs-date)
             
             OUTPUT
                 The function generate a sky subtrated image (*.skysub.fits)
             
             VERSION
-                1.0, 20101011 by jmiguel@iaa.es
+                1.1, 20101103 by jmiguel@iaa.es
         
             TODO: extended objects !!!!
             
         """
-                                                  
-        near_list = self.rs_filelist
-        if fn<0 or fn>len(near_list):
+        log.debug("Start subtractNearSky")
+        
+        # default values
+        if near_list==None: near_list = self.rs_filelist
+        if out_filename==None: out_filename=self.out_file
+        
+        # Some previus checks
+        if file_pos<0 or file_pos>len(near_list):
             log.error("Wrong frame number selected in near-sky subtraction")
             return None
         
@@ -663,26 +577,45 @@ class ReductionSet:
             log.error("Wrong number of sky frames provided. Min number of sky frame is %d", self.MIN_SKY_FRAMES)
             return None
         
-        # Create the temp list file of nearest (ar,dec,mjd) from current selected science file
-        listfile=self.out_dir+"/nearfiles.list"
-        utils.listToFile(near_list, listfile) 
-
         # Get the gain map
         gain=self.master_flat
         if not os.path.exists( gain ):
-            raise Exception("Error, no gain map %s found"%gain)
-            #TODO: try to compute GainMap !!!
-                    
-        hwidth=2
-        cmd=self.m_papi_path+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(listfile, gain, hwidth, fn)
-        #Call external app skyfilter (papi)
-        e=utils.runCmd( cmd )
-        if e==1: # success
-            return near_list[fn-1].replace(".fits", (".fits.skysub"))  
+            raise Exception("Error, no gain map file %s found"%gain)
+            #TODO: try to compute GainMap using the given images !!!
+        
+        print "NEAR_LIST=",near_list    
+        # 1. Split MEF file
+        obj_ext, next = self.split(near_list) # it must return a list of list (one per each extension)
+        out_ext = []
+        
+        # 2. Process each extension
+        for n in range(next):
+            log.debug("===> Processing extension %d", n+1)
+            # Create the temp list file of nearest (ar,dec,mjd) from current selected science file
+            listfile=self.out_dir+"/nearfiles.list"
+            utils.listToFile(obj_ext[n], listfile)
+            print "NEAR_FILES=", obj_ext[n]
+            #Call external app skyfilter (papi)
+            hwidth=2 ## TODO is it right ?????
+            cmd=self.m_papi_path+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(listfile, gain, hwidth, file_pos)
+            e=utils.runCmd( cmd )
+            if e==1: # success
+                out_ext.append(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))  
+            else:
+                log.error("Some error while subtracting sky in extension #%d# ", n+1)
+                raise Exception("Some error while subtracting sky in extension #%d# ", n+1)
+        
+        # 3. Package results back from each extension into a MEF file (only if nExt>1)
+        if len(out_ext)>1:
+            mef=misc.mef.MEF(out_ext)
+            mef.createMEF(out_filename)
+        elif len(out_ext)==1:
+            shutil.move(out_ext[0], out_filename) 
         else:
-            log.error("Error while subtracting near sky")
-            return None
-                                                  
+            log.error("Some error while subtracting sky. Any output produced.")
+            
+        return out_filename
+    
     def getPointingOffsets (self, images_in=None,  p_min_area=5, p_mask_thresh=2, p_offsets_file='/tmp/offsets.pap'):
         """DESCRIPTION
                 Derive pointing offsets between each image using SExtractor OBJECTS (makeObjMask) and offsets (IRDR)
@@ -788,7 +721,7 @@ class ReductionSet:
         else: return (None,None)
     
                                               
-    def createMasterObjMask( self, input_file, output_master_obj_mask ):
+    def __createMasterObjMask( self, input_file, output_master_obj_mask ):
         """
         Create a master object mask from a input file using SExtractor and
         then dilate the object file by a certain factor to remove also the
@@ -841,7 +774,7 @@ class ReductionSet:
         """Clean up files from the working directory, probably from the last execution"""
         """ TB reviewed """
         
-        #misc.fileUtils.removefiles(self.out_dir+"/*.fits")
+        misc.fileUtils.removefiles(self.out_dir+"/*.fits")
         misc.fileUtils.removefiles(self.out_dir+"/c_*", self.out_dir+"/dc_*",
                                    self.out_dir+"/*.nip", self.out_dir+"/*.pap" )
         misc.fileUtils.removefiles(self.out_dir+"/coadd*", self.out_dir+"/*.objs",
@@ -850,9 +783,6 @@ class ReductionSet:
                                    self.out_dir+"/*.xml", self.out_dir+"/*.ldac",
                                    self.out_dir+"/*.png" )
 
-    def prepareData(self):
-        """Prepara input data files to be reduced, doing some FITS header modification and data """
-        pass
     
     ############# Calibration Stuff ############################################
     def buildMasterDarks(self):
@@ -865,7 +795,7 @@ class ReductionSet:
         # 1. Look for dark frames
         full_dark_list = self.getDarkFrames(self.rs_filelist)
         if len(full_dark_list)<=0:
-            log.error("Any DomeFlatField frames found")
+            log.error("Any Dark frames found")
             raise Exception("Any DomeFlatField frames found")
 
         # 2. take the first group having the same TEXP
@@ -1003,14 +933,121 @@ class ReductionSet:
         for f in l_mflats: self.db.insert(f)
         self.db.ListDataSet()  
         return l_mflats
+    
+    def reduceSet(self, red_mode="single"):
+        """
+        The main method for full set data reduction.
         
-    def reduce(self, red_mode):
-        """ Main procedure for data reduction """
+        Main steps:
         
-        log.info("###############################")
-        log.info("#### Start data reduction #####")
-        log.info("## MODE = %s  ##", self.red_mode)
-        log.info("###############################")
+         1. Build master calibration files
+        
+         2. Find out Objects/pointings/filter
+        
+         3. For each object/pointing/filter do :
+         
+            3.1 c=get_calibration_files (depend on filter/text)
+            3.2 o=reduce_obj()
+            3.3 exts=split(c,o)
+            3.4 for each extension e do:
+                out+=reduce_obj(o_e, c_e)
+            3.5 create_joined_mef(out)
+            3.6 Add objects to catalog (?)
+        """
+       
+        log.info("Starting Reduction of data set ...")
+        
+        # Clean old files 
+        self.cleanUpFiles()
+        
+        # Init DB
+        if self.db==None: self.__initDB()
+        
+        if red_mode=="single": # we suppose it's Quick-Look mode, thus not use calibration files
+            log.debug("Single/quick reduction mode, no calibration files will be built")
+        else:
+            log.debug("Builing calibration the whole files ...")
+            try:
+                self.buildMasterDarks()
+            except:
+                print "Cannot build Master Darks !"
+            try:     
+                self.buildMasterDomeFlats()
+            except:
+                print "Cannot build Master Dome Flats !"
+            try:    
+                self.buildMasterTwFlats()
+            except:
+                print "Cannot build Master Tw Flats !"
+            
+        sequences=self.getObjectSequences()
+        i=0
+        out_ext=[] # it will store the reduced output filenames
+        # For each object/sequece, split and reduce de sequence
+        for obj_seq in sequences:  #sequences is a list of list, and obj_seq is a list
+            log.debug("===> Reduction of obj_seq %d",i)
+            if len(obj_seq)<=0:
+                log.debug("Found an empty obs. object sequence")
+                #raise Exception("Found an empty obs. object sequence")
+            else:
+                # TODO: avoid call getCalibFor() when red_mode="single"
+                dark, flat, bpm = self.getCalibFor(obj_seq) # return 3 list of calibration frames (dark, flat, bpm)
+                obj_ext, next = self.split(obj_seq) # it must return a list of list (one per each extension)
+                dark_ext, cext = self.split(dark)
+                flat_ext, cext = self.split(flat)
+                bpm_ext, cext = self.split(bpm)
+                for n in range(next):
+                    log.debug("===> Reducting extension group %d", n+1)
+                    if dark_ext==[]: mdark=None
+                    else: mdark=dark_ext[n]
+                    if flat_ext==[]: mflat=None
+                    else: mflat=flat_ext[n]
+                    if bpm_ext==[]: mbpm=None
+                    else: mbpm=bpm_ext[n]
+                    try:
+                        out_ext.append(self.reduceObj(obj_ext[n], mdark, mflat, mbpm, red_mode, \
+                                                      output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
+                    except Exception,e:
+                        log.error("Some error while reduction of extension group %d of object sequence %d", n+1, i)
+                        raise e
+            i+=1
+        
+            # if all reduction were fine, now join/stich back the extensions in a widther frame
+            if len(out_ext)>1:
+                log.debug("*** Creating final output file joining/stiching single output frames....***")
+                #mef=misc.mef.MEF(outs)
+                #mef.createMEF(self.out_file)
+                # other option, do a SWARP to register the N-extension into one wide-single extension
+                log.debug("*** Coadding overlapped files....")
+                swarp = astromatic.SWARP()
+                swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+                swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
+                swarp.ext_config['IMAGEOUT_NAME']= self.out_file
+                swarp.ext_config['WEIGHTOUT_NAME']=self.out_file.replace(".fits",".weight.fits")
+                swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
+                swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
+                swarp.run(out_ext, updateconfig=False, clean=False)
+            else:
+                shutil.move(out_ext[0], self.out_file)
+        
+            log.info("*** Final reduced file %s created. Congratulations !! ***",self.out_file)
+        
+            # TBD : for each object sequence, we need a different final output file !!!!
+        log.critical(" TBD : for each object sequence, we need a different final output file !!!!")
+        
+        return self.out_file
+        
+    def reduceObj(self, obj_frames, master_dark, master_flat, master_bpm, red_mode, output_file):
+        """ Given a set of object(sci) frames and (optional) master calibration files,
+            run the data reduction of the observing object sequence, producing an reduced
+            ouput frame if no error; otherwise return None or raise exception
+        """
+        
+        log.info("##################################")
+        log.info("#### Starting data reduction #####")
+        log.info("#### MODE = %s  ##", self.red_mode)
+        log.info("##################################")
+        print "OBJS =",obj_frames
         
         # set the reduction mode
         if red_mode!=None: self.red_mode=red_mode
@@ -1018,20 +1055,20 @@ class ReductionSet:
         dark_flat = False
         
         # Clean old files 
-        self.cleanUpFiles()
+        #self.cleanUpFiles()
         
         # Change cwd to self.out_dir
         old_cwd=os.getcwd()
-        os.chdir(self.out_dir)
+        os.chdir(self.out_dir) 
         
         # Copy/link source files (file or directory) to reduce to the working directory
-        if not os.path.dirname(self.rs_filelist[0])==self.out_dir:
-            papi.linkSourceFiles(self.rs_filelist, self.out_dir)
+        if not os.path.dirname(obj_frames[0])==self.out_dir:
+            misc.fileUtils.linkSourceFiles(obj_frames, self.out_dir)
             #files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
-            self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in self.rs_filelist]
+            self.m_LAST_FILES=[self.out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
         else:
             print "Input files already in output directory!"
-            self.m_LAST_FILES=self.rs_filelist
+            self.m_LAST_FILES=obj_frames
             
         print "SOURCES=\n",self.m_LAST_FILES
         
@@ -1069,10 +1106,10 @@ class ReductionSet:
         ######################################
         # 1 - Apply dark, flat to ALL files 
         ######################################
-        if self.master_dark!=None and self.master_flat!=None:
+        if master_dark!=None and master_flat!=None:
             log.info("**** Applying dark and Flat ****")
             dark_flat=True
-            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, self.master_dark, self.master_flat, self.out_dir)
+            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, master_dark, master_flat, out_dir)
             self.m_LAST_FILES = res.apply()
             
         ######################################    
@@ -1100,31 +1137,31 @@ class ReductionSet:
         # 3 - Compute Gain map and apply BPM
         ######################################
         log.info("**** Computing gain-map ****")
-        gainfile = self.out_dir+'/gain_'+self.m_filter+'.fits'
+        gainmap = self.out_dir+'/gain_'+self.m_filter+'.fits'
         #nxblock=16
         #nyblock=16
         #The next values are to find out bad pixels 
         #nsig=5
         #mingain=0.7
         #maxgain=1.3
-        g=reduce.calGainMap.GainMap(self.out_dir+"/superFlat.fits", gainfile)
+        g=reduce.calGainMap.GainMap(self.out_dir+"/superFlat.fits", gainmap)
         g.create() 
            
         ########################################
         # Add external Bad Pixel Map to gainmap
         ########################################     
-        if self.bpm !=None:
-            if not os.path.exists( self.bpm ):
-                print('No external Bad Pixel Mask found. Cannot find file : "%s"' %self.bpm)
+        if master_bpm !=None:
+            if not os.path.exists( master_bpm ):
+                print('No external Bad Pixel Mask found. Cannot find file : "%s"' %master_bpm)
             else:
-                iraf.imarith(operand1=gainfile,
-                  operand2=self.bpm,
+                iraf.imarith(operand1=gainmap,
+                  operand2=master_bpm,
                   op='*',
-                  result=gainfile.replace(".fits","_bpm.fits"),
+                  result=gainmap.replace(".fits","_bpm.fits"),
                   verbose='yes'
                   )
                 #replace old gain file
-                os.rename(gainfile.replace(".fits","_bpm.fits"), gainfile)
+                os.rename(gainmap.replace(".fits","_bpm.fits"), gainmap)
                         
         #########################################
         # 4 - First Sky subtraction (IRDR) - sliding window technique
@@ -1132,7 +1169,7 @@ class ReductionSet:
         log.info("**** 1st Sky subtraction (without object mask) ****")
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/skylist1.list")
         # return only filtered images; in exteded-sources, sky frames  are not included 
-        self.m_LAST_FILES=self.skyFilter(self.out_dir+"/skylist1.list", gainfile, 'nomask', self.obs_mode)      
+        self.m_LAST_FILES=self.skyFilter(self.out_dir+"/skylist1.list", gainmap, 'nomask', self.obs_mode)      
                         
         #########################################
         # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
@@ -1144,7 +1181,7 @@ class ReductionSet:
         # 6 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation
         #########################################
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
-        offset_mat=self.getPointingOffsets (self.out_dir+"/files_skysub.list", 5, 3, self.out_dir+'/offsets1.pap')                
+        offset_mat=self.getPointingOffsets (self.out_dir+"/files_skysub.list", 15, 5, self.out_dir+'/offsets1.pap')                
                         
         
         #########################################
@@ -1163,12 +1200,12 @@ class ReductionSet:
         ## END OF SINGLE REDUCTION  ##
         if self.obs_mode!='dither' or self.red_mode=="single":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
-            reduce.astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', self.out_file, "2MASS" ) 
-            log.info("Generated output file ==>%s", self.out_file)
+            reduce.astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', output_file, "2MASS" ) 
+            log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
             log.info("##### End of SINGLE data reduction ######")
             log.info("#########################################")
-            return self.out_file 
+            return output_file 
         
         log.info("************************")
         log.info(" START SECOND PASS      ")
@@ -1178,7 +1215,7 @@ class ReductionSet:
         # 8 - Create master object mask
         #########################################
         log.info("**** Master object mask creation ****")
-        obj_mask=self.createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')  
+        obj_mask=self.__createMasterObjMask(self.out_dir+'/coadd1.fits', self.out_dir+'/masterObjMask.fits')  
         
         ###########################################################
         # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK
@@ -1201,7 +1238,7 @@ class ReductionSet:
             i=i+1
                 
         fs.close()
-        self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainfile, 'mask', self.obs_mode)      
+        self.m_LAST_FILES=self.skyFilter( self.out_dir+"/skylist2.pap", gainmap, 'mask', self.obs_mode)      
     
         #### EXIT ########
         #log.info("Sucessful end of Pipeline (I hope!)")
@@ -1249,9 +1286,9 @@ class ReductionSet:
         # 10 - Make Astrometry
         #########################################
         log.info("**** Computing Astrometric calibration of coadded(2) result frame ****")
-        reduce.astrowarp.doAstrometry(self.out_dir+'/coadd2.fits', self.out_file, "2MASS" )
+        reduce.astrowarp.doAstrometry(self.out_dir+'/coadd2.fits', output_file, "2MASS" )
         
-        log.info("Generated output file ==>%s", self.out_file)
+        log.info("Generated output file ==>%s", output_file)
         
         os.chdir(old_cwd)
         
@@ -1259,7 +1296,7 @@ class ReductionSet:
         log.info("##### End of data reduction ######")
         log.info("##################################")
         
-        return self.out_file 
+        return output_file 
         
                             
 ################################################################################
@@ -1327,15 +1364,20 @@ if __name__ == "__main__":
         print "reading %s ..." % options.source_file_list
     
     
-    # Create the MEF_RS (it works both simple FITS as MEF files)
+    # Create the RS (it works both simple FITS as MEF files)
     sci_files=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    #mef_rs = MEF_ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, \
-    #                            dark=options.dark, flat=options.flat, bpm=options.bpm)
-    #out=mef_rs.doQuickReduction()
-
     rs = ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, obs_mode="dither", \
                                 dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode="single")
     
+    try:
+        rs.reduceSet()
+    except Exception,e:
+        print "Cannot reduce the Data Set, check error log...."
+        raise e
+    else:
+        print "Yuppiiii !!!"
+        
+    """
     try:
         out = rs.buildMasterDarks()
     except:
@@ -1350,6 +1392,7 @@ if __name__ == "__main__":
         out3 = rs.buildMasterDomeFlats()
     except:
         print "Cannot build Master Dome Flats"
-        
+    """
+    
     if options.show:
         out.show()    

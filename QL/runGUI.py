@@ -836,9 +836,9 @@ class MainGUI(panicQL):
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         try:
-            self._task = papi.MEF_ReductionSet( self.m_popup_l_sel, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            dark=None, flat=None, bpm=None)
-            thread=reduce.ExecTaskThread(self._task.doQuickReduction, self._task_info_list)
+            self._task = papi.ReductionSet( self.m_popup_l_sel, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
             thread.start()
         except:
             QMessageBox.critical(self, "Error", "Error while subtracting near sky")
@@ -1005,10 +1005,11 @@ class MainGUI(panicQL):
             self.setCursor(Qt.waitCursor)
             #Create working thread that compute sky-frame
             try:
-                self._task = papi.MEF_ReductionSet( [item[0] for item in near_list], self.m_outputdir, \
-                                                dark=None, flat=self.m_masterFlat, bpm=None, file_n=file_n)
-                                                
-                thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list)
+                self._task = papi.ReductionSet( [str(item) for item in near_list], self.m_outputdir, \
+                                                out_file=self.m_outputdir+"/skysub.fits", \
+                                                obs_mode="dither", dark=None, flat=self.m_masterFlat, \
+                                                bpm=None, red_mode="single")
+                thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list, self._task.rs_filelist, file_n)
                 thread.start()
             except:
                 QMessageBox.critical(self, "Error", "Error while subtracting near sky")
@@ -1154,9 +1155,9 @@ class MainGUI(panicQL):
         #Create working thread that compute sky-frame
         if len(file_list)>1:
             try:
-                self._task = papi.MEF_ReductionSet( file_list, self.m_outputdir, \
-                                                    out_file=self.m_outputdir+"/red_result.fits", dark=None, flat=None, bpm=None)
-                thread=reduce.ExecTaskThread(self._task.doQuickReduction, self._task_info_list)
+                self._task = papi.ReductionSet( file_list, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
                 thread.start()
             except:
                 QMessageBox.critical(self, "Error", "Error while subtracting near sky")
@@ -1231,7 +1232,9 @@ class MainGUI(panicQL):
                 self.setCursor(Qt.waitCursor)
                 #Create working thread that compute sky-frame
                 try:
-                    thread=reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, self._task_info_list, self.m_listView_item_selected, out_file, catalog)
+                    thread=reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, self._task_info_list, \
+                                                #args of the doAstrometry function
+                                                self.m_listView_item_selected, out_file, catalog)
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while subtracting near sky")

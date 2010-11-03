@@ -199,9 +199,9 @@ class ClFits:
             myfits = pyfits.open(self.pathname)                                 
             #myfits = pyfits.open(self.pathname, 'update')
             #myfits[0].verify()
-        except:
-            log.error('Could not open frame - something wrong with input data')
-            raise
+        except Exception,e:
+            log.error('Could not open frame %s - something wrong with input data : %s',self.pathname, str(e))
+            raise e
         
         #Check if is a MEF file 
         if len(myfits)>1:
@@ -256,7 +256,7 @@ class ClFits:
             elif myfits[0].header[keyword_with_frame_type].lower().count('sky for'):
                 self.type="SKY_FOR"
             elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
-                self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, pero tiene pinta de un despiste del operador !!!
+                self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, pero tiene pinta que fue  un despiste del operador !!!
             else:
                 self.type="SCIENCE"
             log.debug("Image type: %s", self.type)
