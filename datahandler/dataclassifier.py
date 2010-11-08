@@ -71,8 +71,8 @@ class ClFits:
         self.type      = "UNKNOW"
         self.naxis1    = -1
         self.naxis2    = -1
-        self.runID     = "-1"
-        self.dataSetID = -1
+        self.runID     = -1 # exposition ID for the current night (unique for that night)
+        self.obID      = -1 # Observation Block ID (unique) provided by the OT
         self.processed = False
         self.exptime   = -1
         self.filter    = ""
@@ -100,6 +100,10 @@ class ClFits:
     
     def getFilter(self):
         return self.filter
+    
+    def getOBId(self):
+        """return the Observation Block ID"""
+        return self.obID
     
     def getNaxis1(self):
         return self.naxis1
@@ -270,7 +274,10 @@ class ClFits:
         #print "File :"+ self.pathname
         #Filter
         try:
-            self.filter  = myfits[0].header['FILTER']
+            if myfits[0].header['INSTRUME']=='HAWKI': 
+                self.filter = myfits[0].header['FILTER2']
+            else:
+                self.filter  = myfits[0].header['FILTER']
         except KeyError:
             log.warning('FILTER keyword not found')
             self.filter  = 'UNKNOWN'
@@ -353,12 +360,29 @@ class ClFits:
             self.chipcode  = 1  # default
         
         #DetectorID
-        self.detectorID='O2k'
+        if myfits[0].header['INSTRUME']=='HAWKI': 
+            self.detectorID=myfits[0].header['HIERARCH ESO DET CHIP NAME']
+        else: 
+            self.detectorID='O2k'
         #RunID
-        self.runID='0'
+        self.runID=-1
         
+        #OB_ID
+        try:
+            if myfits[0].header['INSTRUME']=='HAWKI':
+                self.obID = myfits[0].header['HIERARCH ESO OBS ID']
+            elif myfits[0].header['INSTRUME']=='Omega2000':
+                self.obID = myfits[0].header['POINT_NO'] # for O2000
+            elif myfits[0].header['INSTRUME']=='PANIC':
+                self.obID = myfits[0].header['OB_ID'] # for PANIC
+            else:
+                self.obID = -1
+        except Exception,e:
+            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            self.obID = -1
+               
         
-        # Fix PRESS1 and PRESS2 wrong keyword values
+        # To Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers
         try:
             if myfits[0].header['INSTRUME']=='Omega2000':
                 myfits[0].header.update('PRESS1', 0.0)

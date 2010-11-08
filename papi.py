@@ -49,6 +49,7 @@ from optparse import OptionParser
 import fileinput
 import glob
 import shutil
+import tempfile
 
 
 # IRAF packages
@@ -121,7 +122,7 @@ class ReductionSet:
         For more info, see http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency
         """
         #DataBase (in memory)
-        self.db=datahandler.dataset.DataSet("file")
+        self.db=datahandler.dataset.DataSet(source="file")
         self.db.createDB()
         self.db.load(self.rs_filelist)
         self.db.ListDataSet()
@@ -399,6 +400,7 @@ class ReductionSet:
         """
         Given a list of files (data set), return the files matching as dark frames
         sorted by TEXP.
+        Return a list of tuples with (filename,tExp)
         """
         
         """
@@ -429,11 +431,12 @@ class ReductionSet:
         # Sort out frames by TEXP
         match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
         
-        return match_list
+        return match_list # a list of tuples as (file,tExp)
     
     def getTwFlatFrames(self):
         """
         Query the DB (date set) to look for TwFlats sorted by FILTER.
+        Return a list of tuples with (filename,filter)
         """
 
         # query the DB for TW_FLAT frames for any TEXP,FILTER 
@@ -448,7 +451,7 @@ class ReductionSet:
         # Sort out frames by FILTER
         match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
         
-        return match_list
+        return match_list # a list of tuples as (file,filter)
     
     def getObjectSequences(self):
         """
@@ -468,6 +471,7 @@ class ReductionSet:
     def getDomeFlatFrames(self):
         """
         Query the DB (date set) to look for DomeFlats (on and off) sorted by FILTER.
+        Return a list of tuples with (filename,filter)
         """
 
         # query the DB for DOME_FLAT frames for any TEXP,FILTER 
@@ -484,7 +488,7 @@ class ReductionSet:
         # Sort out frames by FILTER
         match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
         
-        return match_list
+        return match_list # a list of tuples as (file,filter)
     
     def skyFilter( self, list_file, gain_file, mask='nomask', obs_mode='dither' ):
         """
@@ -666,7 +670,7 @@ class ReductionSet:
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
                             
-    def coaddStackImages(self, input='/tmp/stack.pap', gain='/tmp/gain.fits', output='/tmp/coadd.fits', type_comb='average'):
+    def coaddStackImages(self, input='/tmp/stack.pap', gain=None, output=None, type_comb='average'):
         """
             Register the aligned-stack of dithered FITS images listed in 'input'
             file using offset specified inside, and calculate the mean plane.
@@ -785,6 +789,71 @@ class ReductionSet:
 
     
     ############# Calibration Stuff ############################################
+    def buildGainMaps(self, type="sky"):
+        """
+        Look for master flats (sky, twlight, or dome) files in the data set, group them by
+        FILTER and create the master gainmap, as many as found groups
+        
+        Return the list of gainmap created
+        
+        TODO: take into account the possibility to found several master flats and then combine them,
+        now only the first one found is used
+        
+        """
+        
+        log.debug("Building GainMap...")
+        # 1. Look for master flat frames
+        if type=="sky":
+            full_flat_list = self.db.GetFilesT(type="MASTER_SKY_FLAT", texp=-1, filter="ANY")
+        elif type=="twlight":
+            full_flat_list = self.db.GetFilesT(type="MASTER_TW_FLAT", texp=-1, filter="ANY")
+        elif type=="dome":
+            full_flat_list = self.db.GetFilesT(type="MASTER_DOME_FLAT", texp=-1, filter="ANY")
+        else:
+            log.error("Wrong type of master flat specified")
+            raise Exception("Wrong type of master flat specified")
+        
+        if full_flat_list==None or len(full_flat_list)==0:
+            log.error("Any master flat field found")
+            return []
+
+        # 2. take the first group having the same FILTER
+        last_filter = full_flat_list[0][1]
+        group=[]
+        l_gainmaps=[]
+        build_master=False
+        
+        for tupla in full_flat_list:
+            if tupla[1]==last_filter:
+                group.append(tupla[0])
+                if tupla==full_flat_list[-1]: # the last file in the list
+                    build_master=True
+            else: # we have found the end of the group 
+                build_master=True
+                
+            if build_master:
+                try:
+                    #TODO: here we should check if we have more that one master flat, and if have, then combine them ... 
+                    outfile = group[0].replace(".fits",".GAIN.fits")
+                    task=reduce.calGainMap.GainMap(group[0], os.path.dirname(outfile), bpm=None)
+                    out=task.create()
+                    l_gainmaps.append(out) # out must be equal to outfile
+                except Exception,e:
+                    log.error("Some error while creating gainmap: %s",str(e))
+                    raise e
+                
+                # reset for new group
+                group=[]
+                group.append(tupla[0])
+                last_filter=tupla[1]
+                build_master=False            
+                
+        # insert products (gainmaps) into DB
+        for f in l_gainmaps: self.db.insert(f)
+        self.db.ListDataSet()  
+        return l_gainmaps
+    
+
     def buildMasterDarks(self):
         """
         Look for dark files in the data set, group them by DIT,NCOADD and create
@@ -800,7 +869,7 @@ class ReductionSet:
 
         # 2. take the first group having the same TEXP
         last_texp = full_dark_list[0][1]
-        outfile = self.out_dir+"/master_dark.fits" # class MasterDark will add as suffix (TEXP_NCOADDS)
+        #outfile = self.out_dir+"/master_dark.fits" # class MasterDark will add as suffix (TEXP_NCOADDS)
         group=[]
         l_mdarks=[]
         build_master=False
@@ -814,6 +883,9 @@ class ReductionSet:
             
             if build_master and len(group)>1:    
                 try:
+                    # generate a random filename for the master, to ensure we do not overwrite any file
+                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                    os.close(output_fd)
                     task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
                     out=task.createMaster()
                     l_mdarks.append(out) # out must be equal to outfile
@@ -860,7 +932,10 @@ class ReductionSet:
                 
             if build_master and len(group)>1:
                 try:
-                    outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
+                    # generate a random filename for the master, to ensure we do not overwrite any file
+                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                    os.close(output_fd)
+                    #outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
                     task=reduce.calDomeFlat.MasterDomeFlat(group, os.path.dirname(outfile), outfile, None)
                     out=task.createMaster()
                     l_mflats.append(out) # out must be equal to outfile
@@ -911,7 +986,10 @@ class ReductionSet:
                     master_dark=self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
                     # if required, master_dark will be scaled in MasterTwilightFlat class
                     if len(master_dark)>0:
-                        outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
+                        # generate a random filename for the master, to ensure we do not overwrite any file
+                        output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                        os.close(output_fd)
+                        #outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
                         task=reduce.calTwFlat.MasterTwilightFlat(group, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
                         out=task.createMaster()
                         l_mflats.append(out) # out must be equal to outfile
@@ -919,6 +997,62 @@ class ReductionSet:
                         # should we create master dark ??
                         log.error("MASTER_DARK not found")
                         raise Exception("MASTER_DARK not found")
+                except Exception,e:
+                    log.error("Some error while creating master TwFlat: %s",str(e))
+                    raise e
+                
+                # reset for new group
+                group=[]
+                group.append(tupla[0])
+                last_filter=tupla[1]
+                build_master=False            
+                
+        # insert products (master twflats) into DB
+        for f in l_mflats: self.db.insert(f)
+        self.db.ListDataSet()  
+        return l_mflats
+    
+    def buildMasterSuperFlats(self):
+        """
+        Look for science/sky files in the data set, group them by FILTER and
+        temporal proximity and then create the master superFlats, as many as
+        found groups.
+        
+        TODO: not totally implemented, need temporal/pointing grouping 
+        """
+        
+        log.debug("Building Master SuperFlats...")
+        # 1. Look for SCIENCE/SKY frames
+        full_file_list = self.db.GetFilesT(type="SCIENCE", texp=-1, filter="ANY")
+        if len(full_file_list)<=0:
+            log.error("Any science frames found")
+            raise Exception("Any science frames found")
+            
+        # 2. take the first group having the same FILTER
+        last_filter = full_files_list[0][1]
+        group=[]
+        l_mflats=[]
+        build_master=False
+        
+        for tupla in full_files_list:
+            if tupla[1]==last_filter:
+                group.append(tupla[0])
+                if tupla==full_files_list[-1]: # the last file in the list
+                    build_master=True
+            else: # we have found the end of the group 
+                build_master=True
+                
+            if build_master and len(group)>1:
+                #master_dark=self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
+                #TODO: master dark is not used for the moment
+                try:
+                    # generate a random filename for the master super flat, to ensure we do not overwrite any file
+                    output_fd, output_path = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                    os.close(output_fd)
+                    #outfile = self.out_dir+"/master_superflat_%s.fits"%last_filter # added as suffix (FILTER)
+                    superflat = reduce.SuperSkyFlat(group, output_path, bpm=None, norm=False)
+                    out=superflat.create()
+                    l_mflats.append(out)
                 except Exception,e:
                     log.error("Some error while creating master TwFlat: %s",str(e))
                     raise e
@@ -966,20 +1100,27 @@ class ReductionSet:
         if red_mode=="single": # we suppose it's Quick-Look mode, thus not use calibration files
             log.debug("Single/quick reduction mode, no calibration files will be built")
         else:
-            log.debug("Builing calibration the whole files ...")
+            log.debug("Building calibration for the whole files ...")
             try:
                 self.buildMasterDarks()
             except:
-                print "Cannot build Master Darks !"
+                log.error("Cannot build Master Darks !")
+            
             try:     
                 self.buildMasterDomeFlats()
             except:
-                print "Cannot build Master Dome Flats !"
+                log.error("Cannot build Master Dome Flats !")
+            
             try:    
                 self.buildMasterTwFlats()
             except:
-                print "Cannot build Master Tw Flats !"
+                log.error("Cannot build Master Tw Flats !")
             
+            try:    
+                self.buildGainMaps()
+            except:
+                log.error("Cannot build Gain Maps !")
+                
         sequences=self.getObjectSequences()
         i=0
         out_ext=[] # it will store the reduced output filenames
@@ -1040,7 +1181,10 @@ class ReductionSet:
     def reduceObj(self, obj_frames, master_dark, master_flat, master_bpm, red_mode, output_file):
         """ Given a set of object(sci) frames and (optional) master calibration files,
             run the data reduction of the observing object sequence, producing an reduced
-            ouput frame if no error; otherwise return None or raise exception
+            ouput frame if no error; otherwise return None or raise exception.
+            
+            NOTE: Currently this method only accepts single FITS files (not MEF), it means
+                  the splitting must be done previusly to call this method.
         """
         
         log.info("##################################")
@@ -1111,27 +1255,30 @@ class ReductionSet:
             dark_flat=True
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, master_dark, master_flat, out_dir)
             self.m_LAST_FILES = res.apply()
-            
+        
         ######################################    
         # 2 - Compute Super Sky Flat-Field 
-        ######################################
-        # - Find out what kind of observing mode we have (dither, ext_dither, ...)
-        log.info('**** Computing Super-Sky Flat-Field ****')
-        if self.obs_mode=="dither":
-            log.debug("---> dither sequece <----")
-            misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
-            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", bpm=None, norm=False)
-            superflat.create()
-        elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
-            log.debug("----> EXTENDED SOURCE !!! <----")
-            sky_list=self.getSkyFrames()
-            misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
-            superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", self.out_dir+"/superFlat.fits", bpm=None, norm=False)
-            superflat.create()                            
+        ######################################    
+        if master_flat==None:
+            # - Find out what kind of observing mode we have (dither, ext_dither, ...)
+            log.info('**** Computing Super-Sky Flat-Field ****')
+            master_flat=self.out_dir+"/superFlat.fits"
+            if self.obs_mode=="dither":
+                log.debug("---> dither sequece <----")
+                misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
+                superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", master_flat, bpm=None, norm=False)
+                superflat.create()
+            elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
+                log.debug("----> EXTENDED SOURCE !!! <----")
+                sky_list=self.getSkyFrames()
+                misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
+                superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", master_flat, bpm=None, norm=False)
+                superflat.create()                            
+            else:
+                log.error("Dither mode not supported")
+                raise Exception("Error, dither mode not supported") 
         else:
-            log.error("Dither mode not supported")
-            raise Exception("Error, dither mode not supported") 
-              
+            log.info("Using the given (dome or twlight) master flat")
               
         ######################################    
         # 3 - Compute Gain map and apply BPM
@@ -1144,7 +1291,7 @@ class ReductionSet:
         #nsig=5
         #mingain=0.7
         #maxgain=1.3
-        g=reduce.calGainMap.GainMap(self.out_dir+"/superFlat.fits", gainmap)
+        g=reduce.calGainMap.GainMap(master_flat, gainmap)
         g.create() 
            
         ########################################
@@ -1298,7 +1445,11 @@ class ReductionSet:
         
         return output_file 
         
-                            
+    def test(self):
+        log.debug("Una prueba")
+        self.__initDB()
+        self.db.GetOBFiles()
+        
 ################################################################################
 # main
 ################################################################################
@@ -1370,7 +1521,15 @@ if __name__ == "__main__":
                                 dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode="single")
     
     try:
-        rs.reduceSet()
+        rs.test()
+    except Exception,e:
+        print "some error !!!"
+        raise e
+    
+    sys.exit(0)
+
+    try:
+        rs.reduceSet(red_mode="full")
     except Exception,e:
         print "Cannot reduce the Data Set, check error log...."
         raise e

@@ -36,7 +36,7 @@ import astromatic
 from misc.paLog import log
 
 def doAstrometry( input_image, output_image=None, catalog='2MASS'):
-    """ Do the astrometric calibration to the input image
+    """ Do the astrometric calibration to the input image (only one)
       
     The method does astrometry on the image entirely using Emmanuel Bertin's
     tools, namely SExtractor, SCAMP and SWarp. First, SExtractor is run on the
@@ -219,6 +219,7 @@ class AstroWarp(object):
 if __name__ == "__main__":
     log.debug( 'Start AstroWarp....')
     # Get and check command-line options
+    
     
     usage = "usage: %prog [options] arg1 arg2 ..."
     parser = OptionParser(usage)

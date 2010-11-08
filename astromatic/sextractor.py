@@ -298,9 +298,26 @@ class SExtractor:
         {"comment": 'Array to put in the FILTER_MASK file',
          "value": [[1, 2, 1],
                    [2, 4, 2],
-                   [1, 2, 1]]}
+                   [1, 2, 1]]},
+        #-------------------------------- WEIGHTing ----------------------------------
+        "WEIGHT_TYPE":
+        {"comment": 'type of WEIGHTing: NONE, BACKGROUND, MAP_RMS, MAP_VAR or MAP_WEIGHT',
+         "value": "NONE"},
+         
+        "WEIGHT_IMAGE":
+        {"comment": 'weight-map filename',
+         "value": "weight.fits"},
+         
+        "WEIGHT_GAIN":
+        {"comment": 'modulate gain (E/ADU) with weights? (Y/N)',
+         "value": "Y"},
+         
+        "WEIGHT_THRESH":
+        {"comment": 'weight threshold[s] for bad pixels',
+         "value": ""}
+          
+         
         }
-
     
     # -- Special config. keys that should not go into the config. file.
 

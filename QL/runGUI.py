@@ -46,6 +46,7 @@ import os.path
 import fnmatch
 import shutil
 import time
+import math
 from optparse import OptionParser
 
 # PAPI modules
@@ -115,6 +116,16 @@ class MainGUI(panicQL):
         self._last_cmd=None             # Last external shell command executed or started
         self._last_cmd_output=None      # Output (file) that last shell command should generate
 
+        # Stuff to detect end of an observation sequence to know if data reduction could start
+        self.curr_sequence = []  # list having the files of the current sequence received
+        self.last_filter=""  # filter name (J,H,Ks, ...) of the last dataframe received
+        self.last_ob_id=-1   # Obseving Block ID (unique) of the last dataframe received
+        self.isOTrunning = True
+        self.last_ra = -1
+        self.last_dec = -1
+        self.MAX_POINT_DIST = 1000 # minimun distance (arcsec) to consider a telescope pointing to a new target
+        
+        
         self.m_listView_first_item_selected=''
         self.m_listView_item_selected='' 
         self.m_show_imgs = False
@@ -213,13 +224,20 @@ class MainGUI(panicQL):
         elem.setText (6, str(ra))
         elem.setText (7, str(dec))
         
-        ## Last frame
+        ## Update Last frame widget
         self.lineEdit_last_file.setText(str(os.path.basename(filename)))
+
+        ## Check if end of observing sequence, then start processing
+        (end_seq, seq)=self.checkEndObsSequence(filename)
+        if end_seq:
+            log.debug("Detected end of observing sequence, starting processing ....")
+            self.textEdit_log.append("<info_tag> Detected end of observing sequence, starting processing ....</info_tag> ")
+            process=True
         
         if process:
-            ###############
-            #QL-Mode
-            ###############
+            ########################################
+            #Check QL-Mode to process the sequence
+            ########################################
             #QL-Mode: None
             if self.comboBox_QL_Mode.currentText()=="None":
                 return
@@ -227,15 +245,12 @@ class MainGUI(panicQL):
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 if self.m_show_imgs:
                     display.showFrame(filename)
-                ## Process
-                if self.m_proc_imgs:
-                    self.m_processing = True    # Pause autochecking files
-                    self.process(filename)
-                    self.m_processing = False   # Resume autochecking files
             
             #QL-Mode: Pre-reduction
             elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
-                return ## TO BE DONE
+                ## Process
+                self.process(seq)
+                return
             #QL-Mode: UserDef_1
             elif self.comboBox_QL_Mode.currentText().contains("UserDef_1"):
                 return ## TO BE DONE
@@ -251,11 +266,26 @@ class MainGUI(panicQL):
                      
         self.new_file_func(filename, process=False)
         
-    def process(self, filename):
+    def process(self, obsSequence):
         ## Process the new image received with the QL pipeliene recipes
         print "------------------------------------------>m_processing(process)=", self.m_processing
-        self.textEdit_log.append("++Processing file : " + filename)
-        self.QL2(filename, self.textEdit_log)
+        self.textEdit_log.append("++Processing Obs. Sequence : " + obsSequence)
+        #self.QL2(filename, self.textEdit_log)
+        
+        #Change to working directory
+        os.chdir(self.m_papi_dir)
+        #Change cursor
+        self.setCursor(Qt.waitCursor)
+        self.m_processing = True    # Pause autochecking files
+        #Create working thread that process the obsSequence
+        try:
+            self._task = papi.ReductionSet( obsSequence, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
+            thread.start()
+        except:
+            QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence")
+            raise
 
     
     
@@ -376,6 +406,67 @@ class MainGUI(panicQL):
                 os.chdir(self._ini_cwd)
             except:
                 raise Exception("Error while checking _task_info_list")
+    
+    def checkEndObsSequence(self, filename):
+        """
+        Check if the given filename is the end of an observing sequence, if it is,
+        the method returns True and a list having the files which belong to the list
+        and it means the reduction could start.
+        Otherwise, False will be returned (and the unfinished currenct list) and
+        no reduction can still be done.
+        """
+        
+        # Read the FITS file
+        fits = datahandler.ClFits(filename)
+        #only for debug !!
+        log.info("C_FILTER= %s, L_FILTER=%s, C_OB_ID=%s, L_OB_ID=%s",
+                 fits.getFilter(), self.last_filter, fits.getOBId(), self.last_ob_id )
+        #############################################
+        # Based on the meta-data provided by the OT
+        if self.isOTrunning:
+            if self.last_ob_id==-1: # first time
+                self.last_filter=fits.getFilter()
+                self.last_ob_id=fits.getOBId()
+                self.curr_sequence.append(filename)
+                return False,self.curr_sequence
+                
+            if self.last_filter!=fits.getFilter() or self.last_ob_id!=fits.getOBId():
+                self.last_filter=fits.getFilter()
+                self.last_ob_id=fits.getOBId()
+                seq=self.curr_sequence
+                #reset the sequence list
+                self.curr_sequence=[filename]
+                return True,seq
+            else:
+                self.curr_sequence.append(filename)
+                return False,self.curr_sequence
+        
+        ############################################
+        # Based on any meta-data from OT
+        # TODO: TBC !!! I don't know if it will work with calibration sequences
+        elif not self.isOTrunning:
+            if self.last_ra==-1: # first time
+                self.last_ra=fits.getRA()
+                self.last_dec=fits.getDec()
+                self.curr_sequence.append(filename)
+                return False,self.curr_sequence
+            else:
+                ra_point_distance=self.last_ra-fits.getRA()
+                dec_point_distance=self.last_dec-fits.getDec()
+                dist=math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
+                self.last_ra=fits.getRA()
+                self.last_dec=fits.getDec() 
+                if self.last_filter!=fits.getFilter() or dist>self.MAX_POINT_DIST:
+                    seq=self.curr_sequence
+                    #reset the sequence list
+                    self.curr_sequence=[filename]
+                    return True,seq
+                else:
+                    self.curr_sequence.append(filename)
+                    return False,self.curr_sequence
+        else:
+            log.warning("No way to know when the end of the observation sequence happpens")
+            return False,[]
      
     def checkFunc(self):
         """

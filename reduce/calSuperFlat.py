@@ -16,7 +16,7 @@
 #              21/10/2010    jmiguel@iaa.es - Removed gain map computation
 #
 # TODO
-#  
+#    - dark subtraction ??? (SIMPLE doesn't it)
 ################################################################################
 
 ################################################################################
@@ -53,7 +53,6 @@ from iraf import mscred
 class SuperSkyFlat:
     """
     \brief Class used to build a super sky Flat from a dither set of science frames containing objects.
-           Optionally, Gain map can be generated from the super-flat 
     
     \par Class:
         SuperSkyFlat
@@ -74,7 +73,20 @@ class SuperSkyFlat:
         
     """
     def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  bpm=None, norm=True):
-         
+        """
+        Initialization method.
+        
+        INPUTS:
+            filelist : it can be a file or a python-list having the list of files to use for the super-flat
+            
+            output_filename (optional): filename for the super flat created
+            
+            bpm (optional) : bad pixel map to be used
+            
+            norm (optional): flag to indicate if the super flat must be normalized
+        """
+                    
+            
         if type(filelist)==type(list()): 
             self.filelist = filelist  # list of sources files to be used in sky-flat computation
         elif os.path.isfile(filelist):

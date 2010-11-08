@@ -10,7 +10,7 @@
 #
 # Created    : 23/09/2010    jmiguel@iaa.es -
 # Last update: 23/09/2009    jmiguel@iaa.es - 
-#              21/10/2019    jmiguel@iaa.es - Add normalization wrt chip 1
+#              21/10/2019    jmiguel@iaa.es - Add normalization wrt chip 1 and support for MEF
 # TODO
 #  
 ################################################################################
@@ -105,12 +105,12 @@ class DomeGainMap:
                  
 class GainMap:
     """
-    \brief Class used to build a Gain Map from a Flat Field image (dome, twilight, science)  
+    \brief Class used to build a Gain Map from a Flat Field image (dome, twilight, science-sky)  
     
     \par Class:
         GainMap
     \par Purpose:
-         Create a Gain Map
+         Create a Gain Map from a master flat-field (dome, tw, sky)
     \par Description:
             
     \par Language:

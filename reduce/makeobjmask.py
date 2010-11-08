@@ -100,7 +100,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, outputfile="/tmp/out.txt"
             log.error( 'File %s does not exist', fn)
             raise Exception ("File %s does not exist",fn) 
      
-        log.debug("*** Creating SExtractor object mask ....")
+        log.debug("*** Creating SExtractor object mask for file %s....", fn)
         sex = astromatic.SExtractor()
         #sex.config['CONFIG_FILE']=sex_config
         sex.config['CATALOG_TYPE'] = "FITS_LDAC"
@@ -118,7 +118,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, outputfile="/tmp/out.txt"
             sex.run(fn, updateconfig=True, clean=False)
         except Exception,e: 
             log.debug("Some error while running SExtractor : %s", str(e))
-            raise Exception("Some error while running SExtractor : \n %s",str(e))
+            raise Exception("Some error while running SExtractor : %s",str(e))
         
         log.debug("Object mask file created for file : %s",fn)
         f_out.write(fn+".objs"+"\n")

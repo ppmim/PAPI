@@ -31,17 +31,17 @@ class DataSet:
     \brief
     Class used to define a data set of frames load from a local directory or a Data Base  
     """
-    TABLE_COLUMNS="(id, filename, date, ut_time, mjd, type, filter, texp, detector_id, run_id, ra, dec, object)"
+    TABLE_COLUMNS="(id, run_id, ob_id, filename, date, ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
 
     ############################################################
-    def __init__( self , _source):
+    def __init__( self , source):
         """
         \brief The constructor
         
         \param source : can be a 'directory' name, a 'filename' containing the list file or a 'db_address'
         """
         self.con=None #connection
-        self.source=_source
+        self.source=source
         self.id = 0
 
     ############################################################    
@@ -106,10 +106,11 @@ class DataSet:
             raise
             return -1
         
-        data = (self.id, filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, fitsf.filter, fitsf.exptime, fitsf.detectorID, fitsf.runID, fitsf.ra, fitsf.dec, fitsf.object) 
+        data = (self.id, fitsf.runID, fitsf.obID, filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, fitsf.filter, \
+                fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object, fitsf.detectorID) 
         cur = self.con.cursor()
         try:
-            cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +"values (?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
+            cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +"values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
             self.con.commit()
 
         except sqlite.DatabaseError:
@@ -310,7 +311,50 @@ class DataSet:
               
         return self.GetFiles( "ANY", type, texp, filter, mjd=55000 , ra=0, dec=0, delta_pos=360*3600/2, delta_time=9999999, runId=None)
           
-      
+    def GetOBFiles(self, filter=None):
+        """ Get all the files for each Observation Block found. 
+            filter:  filter can be specified to restrict the search
+            
+            Return a list of list, having each list the list of files beloging to.
+        """
+        
+        #print "start GetOBFiles....."
+        
+        ob_id_list=[]
+        ob_file_list=[]
+
+        if filter==None:
+            s_filter="filter>=?"
+            filter=""
+        else:
+            s_filter="filter=?"
+              
+        # First, look for OB_IDs
+        #s_select="select ob_id from dataset where %s group by ob_id" %(s_filter)
+        s_select="select DISTINCT ob_id from dataset where %s" %(s_filter)
+        #print s_select
+        cur=self.con.cursor()
+        cur.execute(s_select,(filter,))
+        rows=cur.fetchall()
+        if len(rows)>0:
+            ob_id_list = [str(f[0]) for f in rows] # important to apply str() !!
+        print "Total rows selected:  %d" %(len(ob_id_list))
+        print "OB_IDs found :\n ", ob_id_list
+        
+        # Finally, look for files of each OB_ID
+        for ob_id in ob_id_list:
+            s_select="select filename from dataset where ob_id=? order by mjd"    
+            #print s_select
+            cur=self.con.cursor()
+            cur.execute(s_select,(int(ob_id),))
+            #print "done !"
+            rows=cur.fetchall()
+            if len(rows)>0:
+                ob_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
+            print "%d files found in OB %d" %(len(rows), int(ob_id))
+            
+        return ob_id_list, ob_file_list     
+               
     ############################################################    
     def GetFileInfo( self, filename ):
         """

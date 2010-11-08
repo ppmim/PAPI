@@ -69,10 +69,10 @@ int main(int argc, char *argv[])
                               -yshift[i], &wdata[i]); 
 
         /* per togliere i bordi inutili
-	 * data[i] = new_shift_image(plane, wplane, nx, ny, 
+	    * data[i] = new_shift_image(plane, wplane, nx, ny, 
 			 xbelow, xabove, ybelow, yabove,
 			 -xshift[i], -yshift[i], &wdata[i]);
-	*/
+	    */
 
         free(wplane);  free(plane);
 
