@@ -423,6 +423,20 @@ class MainGUI(panicQL):
                  fits.getFilter(), self.last_filter, fits.getOBId(), self.last_ob_id )
         #############################################
         # Based on the meta-data provided by the OT
+        # Option based on number of expositions (NOEXP) in the pattern and the exposition 
+        # number (EXPNO) of the current frame
+        if self.isOTrunning:
+            log.info("EXPNO= %s, NOEXPO= %s", fits.getExpNo(), fits.getNoExp())
+            if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1:
+                self.curr_sequence.append(filename)
+                seq=self.curr_sequence
+                self.curr_sequence=[]
+                return True,seq
+            else:
+                self.curr_sequence.append(filename)
+                return False,self.curr_sequence
+        """
+        # next option for sequence detection is based on FILTER and OB_ID
         if self.isOTrunning:
             if self.last_ob_id==-1: # first time
                 self.last_filter=fits.getFilter()
@@ -440,11 +454,11 @@ class MainGUI(panicQL):
             else:
                 self.curr_sequence.append(filename)
                 return False,self.curr_sequence
-        
+        """
         ############################################
         # Based on any meta-data from OT
         # TODO: TBC !!! I don't know if it will work with calibration sequences
-        elif not self.isOTrunning:
+        if not self.isOTrunning:
             if self.last_ra==-1: # first time
                 self.last_ra=fits.getRA()
                 self.last_dec=fits.getDec()

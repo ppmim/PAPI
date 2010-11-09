@@ -73,6 +73,9 @@ class ClFits:
         self.naxis2    = -1
         self.runID     = -1 # exposition ID for the current night (unique for that night)
         self.obID      = -1 # Observation Block ID (unique) provided by the OT
+        self.obPat     = -1 # Observation (dither) Pattern 
+        self.pat_expno = -1 # Exposure number within (dither) pattern
+        self.pat_noexp = -1 # Number of exposures within pattern
         self.processed = False
         self.exptime   = -1
         self.filter    = ""
@@ -104,6 +107,15 @@ class ClFits:
     def getOBId(self):
         """return the Observation Block ID"""
         return self.obID
+    
+    def getNoExp(self):
+        return self.pat_noexp
+    
+    def getExpNo(self):
+        return self.pat_expno
+    
+    def getOBPat(self):
+        return self.obPat
     
     def getNaxis1(self):
         return self.naxis1
@@ -360,14 +372,19 @@ class ClFits:
             self.chipcode  = 1  # default
         
         #DetectorID
-        if myfits[0].header['INSTRUME']=='HAWKI': 
-            self.detectorID=myfits[0].header['HIERARCH ESO DET CHIP NAME']
-        else: 
-            self.detectorID='O2k'
+        try:
+            if myfits[0].header['INSTRUME']=='HAWKI': 
+                self.detectorID=myfits[0].header['HIERARCH ESO DET CHIP NAME']
+            else: 
+                self.detectorID='O2k'
+        except:
+              log.warning("Cannot find HIERARCH ESO DET CHIP NAME")
+              self.detectorID='unknown'
+               
         #RunID
         self.runID=-1
         
-        #OB_ID
+        #OB_ID : Observation Block Id
         try:
             if myfits[0].header['INSTRUME']=='HAWKI':
                 self.obID = myfits[0].header['HIERARCH ESO OBS ID']
@@ -381,7 +398,48 @@ class ClFits:
             log.error("Cannot find INSTRUMET keyword : %s:",str(e))
             self.obID = -1
                
-        
+        #OB_PAT : Observation Block Pattern
+        try:
+            if myfits[0].header['INSTRUME']=='HAWKI':
+                self.obPat = myfits[0].header['HIERARCH ESO TPL ID']
+            elif myfits[0].header['INSTRUME']=='Omega2000':
+                self.obPat = myfits[0].header['DITH_PAT'] # for O2000
+            elif myfits[0].header['INSTRUME']=='PANIC':
+                self.obPat = myfits[0].header['OB_PAT'] # for PANIC
+            else:
+                self.obPat = -1
+        except Exception,e:
+            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            self.obPat = -1
+                   
+        #PAT_EXPN : Pattern Exposition Number
+        try:
+            if myfits[0].header['INSTRUME']=='HAWKI':
+                self.pat_expno = myfits[0].header['HIERARCH ESO TPL EXPNO']
+            elif myfits[0].header['INSTRUME']=='Omega2000':
+                self.pat_expno = -1 # not available
+            elif myfits[0].header['INSTRUME']=='PANIC':
+                self.pat_expno = myfits[0].header['PAT_EXPN'] # for PANIC
+            else:
+                self.pat_expno = -1
+        except Exception,e:
+            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            self.pat_expno = -1
+            
+        #PAT_NEXP : Number of Exposition of Pattern
+        try:
+            if myfits[0].header['INSTRUME']=='HAWKI':
+                self.pat_noexp = myfits[0].header['HIERARCH ESO TPL NEXP']
+            elif myfits[0].header['INSTRUME']=='Omega2000':
+                self.pat_noexp = -1 # not available
+            elif myfits[0].header['INSTRUME']=='PANIC':
+                self.pat_noexp = myfits[0].header['PAT_NEXP'] # for PANIC
+            else:
+                self.pat_noexp = -1
+        except Exception,e:
+            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            self.pat_noexp = -1
+            
         # To Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers
         try:
             if myfits[0].header['INSTRUME']=='Omega2000':

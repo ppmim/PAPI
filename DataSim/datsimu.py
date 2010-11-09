@@ -48,10 +48,10 @@ import dircache
 import getopt
 import pyfits
 import shutil
+import fileinput
 
-
-from threading import Thread
-
+#PAPI modules
+import datahandler
 
 #################################################################################        
 
@@ -60,7 +60,7 @@ def run(args):
     print "Start the Data Simulator..."
 
     # Init the variables with default values
-    source_path = ""
+    source = ""
     dest_path = ""
     in_data_type = "all"
     delay = 1.0
@@ -83,8 +83,8 @@ def run(args):
     
     for option, parameter in opts:
         if option in ("-s", "--source"):
-            source_path = parameter
-            print "SOURCE directory =", source_path
+            source = parameter
+            print "SOURCE directory or filelist =", source
         if option in ("-d", "--dest"):
             dest_path = parameter
             print "DEST directory =", dest_path
@@ -101,15 +101,33 @@ def run(args):
             mef=True
             print "MEF = True"
             
-    if  source_path=="" or dest_path=="":
+    if  source=="" or dest_path=="":
         usage()
         sys.exit(2)
         
-    list_s = dircache.listdir(source_path)
+    # read source files
+    list_s=[]    
+    if os.path.isfile(source):
+        for file in fileinput.input(source):
+            file.replace( "\n", "")
+            if file.endswith(".fits") or file.endswith(".fit"):
+                list_s.append(file)
+    elif os.path.isdir(source):
+        for file in dircache.listdir(source):
+            print "parsing file ->",file
+            if file.endswith(".fits") or file.endswith(".fit"):
+                list_s.append(source+"/"+file)           
+    
+    print "to sort out ..."
+    # sort out files
+    list_s=sortOutData(list_s)
+    
+    print "to copy...."
+    # procced to copy to destiny
     for frame in list_s:
         toCopy=False
         if ( frame.endswith(".fits") or frame.endswith(".fit") ):
-            data = pyfits.open(source_path + "/" + frame)
+            data = pyfits.open(frame)
             read_type = data[0].header['OBJECT']
             print "FILE= %s ,TYPE = %s" %(frame, read_type)
             if  ( in_data_type == "" or in_data_type == "all" ):
@@ -117,11 +135,11 @@ def run(args):
             elif  (read_type.count(in_data_type)>0): #re.compile("dark",re.IGNORECASE).search(read_type, 1)):
                 toCopy=True
         
-            if  (toCopy == True):
+            if (toCopy == True):
                 if ( not test ):
                     # If MEF is activated 
                     if ( mef ):
-                        filelist[0]=source_path + "/" + frame
+                        filelist[0]=frame
                         filelist[1]=filelist[0]
                         filelist[2]=filelist[0]
                         filelist[3]=filelist[0]
@@ -131,8 +149,8 @@ def run(args):
                             time.sleep(float(delay))
                     else:
                         try:
-                            shutil.copyfile(source_path + "/" + frame, dest_path + "/" + frame)
-                            print 'Copied %s file to %s' %(frame,dest_path)
+                            shutil.copy(frame, dest_path )
+                            print 'Copied %s file to %s' %(frame, dest_path)
                             time.sleep(float(delay))
                         except ValueError:
                             print "I/O error: file not copied"
@@ -142,7 +160,30 @@ def run(args):
         
           
     print "END the Data Simulator"
-
+    
+def sortOutData(list):
+    """
+    Sort out input data files by MJD
+    """
+    
+    dataset=[]
+    m_list=list
+        
+    for file in m_list:
+        try:
+            fits=datahandler.ClFits(file)
+        except:
+            print "Error reading file %s , skipped..."%(file)      
+        else:
+            dataset.append((file, fits.getMJD()))
+        
+    dataset=sorted(dataset, key=lambda data_file: data_file[1])          
+    sorted_files=[]
+    for tuple in dataset:
+        sorted_files.append(tuple[0])
+    
+    return sorted_files
+    
 def usage ():
      print "Unknown command line parameter. Required parameters are : "
      print "-s / --source=		Source of data frames"
@@ -155,10 +196,10 @@ def usage ():
 
 
 #################################################################################
-"""
-Create a Multi Extension FITS from a set of 4 frames given
-"""
 def createMEF( filelist, filename, next=4):
+    """
+    Create a Multi Extension FITS from a set of 4 frames given
+    """
 
     #STEP 1: Check all required frames are given
     if ( len(filelist) != next ):
@@ -207,19 +248,6 @@ def createMEF( filelist, filename, next=4):
     return 1
 
 #################################################################################  
-
-class myThread(Thread):
-    
-    def __init__(self):
-        threading.Thread.__init__(self)
-        
-    def run(self):
-            
-        #The task to do
-        
-        print 'CHILD: run_darkcombine  finished OK'
-        
-################################################################################      
 if __name__=="__main__":
 
     filelist=['/disk-a/caha/panic/DATA/data_mat/QL1/orion0028.fits','/disk-a/caha/panic/DATA/data_mat/QL1/orion0029.fits','/disk-a/caha/panic/DATA/data_mat/QL1/orion0030.fits','/disk-a/caha/panic/DATA/data_mat/QL1/orion0031.fits']
@@ -228,21 +256,4 @@ if __name__=="__main__":
 
     run(sys.argv[1:])
 
-#    aThread1 = myThread()
-#    aThread1.start()
-    
-#    aThread2 = myThread()
-#    aThread2.start()
-    
-#    while aThread1.isAlive():
-#        print 'Thread1...parent\'s heartbeat...'
-#        sleep(2)
-        
-#    while aThread1.isAlive():
-#        print 'Thread2...parent\'s heartbeat...'
-#        sleep(2)
-    
-    
-#    print 'PARENT: Thread finished, but did apsum?'
-        
 ################################################################################

@@ -50,6 +50,7 @@ import fileinput
 import glob
 import shutil
 import tempfile
+import dircache
 
 
 # IRAF packages
@@ -456,17 +457,29 @@ class ReductionSet:
     def getObjectSequences(self):
         """
         Query the DB (data set) to look for object/pointing sequences sorted by
-        MJD and grouped by FILTER.
+        MJD and grouped by OB_ID,OB_PAT,FILTER.
         """
         
+        """
         # TODO: simplified version, return the list of sci files
         self.gr_sci = [] 
         self.gr_sci.append(self.db.GetFilesT("SCIENCE") + self.db.GetFilesT("SKY_FOR"))
         # TBD: sort out by MJD and group by FILTER
+        """
         
-        log.debug("Found %d groups of SCI files: %s", len(self.gr_sci), self.gr_sci)
+        self.db.GetOBFiles()
+        (seq_par, obj_seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
+        k=0
+        for par in seq_par:
+            print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
+            print "-----------------------------------------------------------------------------------\n"
+            for file in obj_seq_list[k]:
+                print file
+            k+=1
         
-        return self.gr_sci
+        log.debug("Found %d groups of SCI files: %s", len(seq_par), obj_seq_list)
+        
+        return obj_seq_list
     
     def getDomeFlatFrames(self):
         """
@@ -1151,9 +1164,9 @@ class ReductionSet:
                     except Exception,e:
                         log.error("Some error while reduction of extension group %d of object sequence %d", n+1, i)
                         raise e
-            i+=1
         
             # if all reduction were fine, now join/stich back the extensions in a widther frame
+            seq_result_outfile=self.out_file.replace(".fits","_OBJ%02d.fits"%(i))
             if len(out_ext)>1:
                 log.debug("*** Creating final output file joining/stiching single output frames....***")
                 #mef=misc.mef.MEF(outs)
@@ -1163,18 +1176,20 @@ class ReductionSet:
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
                 swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
-                swarp.ext_config['IMAGEOUT_NAME']= self.out_file
+                swarp.ext_config['IMAGEOUT_NAME']= seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME']=self.out_file.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
                 swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
                 swarp.run(out_ext, updateconfig=False, clean=False)
             else:
-                shutil.move(out_ext[0], self.out_file)
+                shutil.move(out_ext[0], seq_result_outfile)
         
-            log.info("*** Final reduced file %s created. Congratulations !! ***",self.out_file)
-        
-            # TBD : for each object sequence, we need a different final output file !!!!
-        log.critical(" TBD : for each object sequence, we need a different final output file !!!!")
+            i+=1    
+            log.info("*** Obs. Sequence reduced. File %s created.  ***", seq_result_outfile)
+                    
+            
+        #log.critical(" TBD : for each object sequence, we need a different final output file !!!!")
+        log.critical("*** All Obs.Sequences (%d) has been reduced. Congratulations !!", i)
         
         return self.out_file
         
@@ -1449,6 +1464,14 @@ class ReductionSet:
         log.debug("Una prueba")
         self.__initDB()
         self.db.GetOBFiles()
+        (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
+        k=0
+        for par in seq_par:
+            print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
+            print "-----------------------------------------------------------------------------------\n"
+            for file in seq_list[k]:
+                print file
+            k+=1
         
 ################################################################################
 # main
@@ -1463,7 +1486,7 @@ if __name__ == "__main__":
     
                   
     parser.add_option("-s", "--source",
-                  action="store", dest="source_file_list",
+                  action="store", dest="source",
                   help="Source file list of data frames. It can be a file or directory name.")
     
     parser.add_option("-o", "--output_file",
@@ -1508,15 +1531,24 @@ if __name__ == "__main__":
                                 
     (options, args) = parser.parse_args()
     
-    if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    if not options.source or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if options.verbose:
-        print "reading %s ..." % options.source_file_list
+        print "reading %s ..." % options.source
     
     
-    # Create the RS (it works both simple FITS as MEF files)
-    sci_files=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    sci_files=[]
+    
+    # Read file or list-directory 
+    if os.path.isfile(options.source):
+        sci_files=[line.replace( "\n", "") for line in fileinput.input(options.source)]
+    elif os.path.isdir(options.source):
+        for file in dircache.listdir(options.source):
+            if file.endswith(".fits") or file.endswith(".fit"):
+                sci_files.append(options.source+"/"+file)
+                
+    # Create the RS (it works both simple FITS as MEF files)            
     rs = ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, obs_mode="dither", \
                                 dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode="single")
     
@@ -1526,10 +1558,10 @@ if __name__ == "__main__":
         print "some error !!!"
         raise e
     
-    sys.exit(0)
+    #sys.exit(0)
 
     try:
-        rs.reduceSet(red_mode="full")
+        rs.reduceSet(red_mode="single")
     except Exception,e:
         print "Cannot reduce the Data Set, check error log...."
         raise e

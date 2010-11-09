@@ -31,7 +31,7 @@ class DataSet:
     \brief
     Class used to define a data set of frames load from a local directory or a Data Base  
     """
-    TABLE_COLUMNS="(id, run_id, ob_id, filename, date, ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
+    TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, filename, date, ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
 
     ############################################################
     def __init__( self , source):
@@ -106,11 +106,11 @@ class DataSet:
             raise
             return -1
         
-        data = (self.id, fitsf.runID, fitsf.obID, filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, fitsf.filter, \
+        data = (self.id, fitsf.runID, fitsf.obID, fitsf.obPat, filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, fitsf.filter, \
                 fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object, fitsf.detectorID) 
         cur = self.con.cursor()
         try:
-            cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +"values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
+            cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +"values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
             self.con.commit()
 
         except sqlite.DatabaseError:
@@ -353,8 +353,70 @@ class DataSet:
                 ob_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             print "%d files found in OB %d" %(len(rows), int(ob_id))
             
-        return ob_id_list, ob_file_list     
-               
+        return ob_id_list, ob_file_list
+                 
+    def GetSeqFiles(self, filter=None, type=None):
+        """ 
+            Get all the files for each Observing Sequence (OS) found. 
+            By OS we mean a set of files with common features that make them
+            capable to be reduced.
+            
+            INPUTS:
+              filter:  filter can be specified to restrict the search
+              
+              type: it can be SCIENCE, DARKs,FLATs  (None=any type)
+              
+              NOTE: this method is thought to work fine for SCIENCE sequences;
+              for calibration sequences need improvements
+            
+            Return a list of list, having each list the list of files beloging 
+            to the sequence.
+        """
+        
+        seq_pat_list=[] # list of sequences features (ob_id,ob_pat,filter)
+        seq_list=[] # list of list of sequences filenames
+
+        if filter==None:
+            s_filter="filter>=?"
+            filter=""
+        else:
+            s_filter="filter=?"
+              
+        if type==None:
+            s_type="type>=''"
+        elif type=="SCIENCE":
+            s_type="type='SCIENCE' or type='SKY_FOR' or type='SKY'"
+        elif type=="FLAT":
+            s_type="type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
+        else:
+            s_type="type='%s'"%(str(type))
+                      
+        # First, look for OB_IDs
+        #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
+        s_select="select DISTINCT ob_id,ob_pat,filter from dataset where %s and %s" %(s_filter,s_type)
+        #print s_select
+        cur=self.con.cursor()
+        cur.execute(s_select,(filter,))
+        rows=cur.fetchall()
+        if len(rows)>0:
+            seq_pat_list = [[f[0], f[1], f[2]] for f in rows] # important to apply str() !!
+        print "Total rows selected:  %d" %(len(seq_pat_list))
+        print "OS's found :\n ", seq_pat_list
+        
+        # Finally, look for files of each OB_ID
+        for seq in seq_pat_list:
+            s_select="select filename from dataset where ob_id=? and ob_pat=? and filter=? order by mjd"    
+            #print s_select
+            cur=self.con.cursor()
+            cur.execute(s_select,(seq[0],seq[1],seq[2],))
+            #print "done !"
+            rows=cur.fetchall()
+            if len(rows)>0:
+                seq_list.append([str(f[0]) for f in rows]) # important to apply str() !!
+            print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2]))
+            
+        return seq_pat_list, seq_list
+                       
     ############################################################    
     def GetFileInfo( self, filename ):
         """
