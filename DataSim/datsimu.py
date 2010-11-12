@@ -109,18 +109,21 @@ def run(args):
     list_s=[]    
     if os.path.isfile(source):
         for file in fileinput.input(source):
-            file.replace( "\n", "")
+            file=file.replace( "\n", "")
+            print "parsing file ->",file
             if file.endswith(".fits") or file.endswith(".fit"):
                 list_s.append(file)
+                print "MY_FILE",file
     elif os.path.isdir(source):
         for file in dircache.listdir(source):
             print "parsing file ->",file
             if file.endswith(".fits") or file.endswith(".fit"):
                 list_s.append(source+"/"+file)           
     
-    print "to sort out ..."
+    print "to sort out ...",list_s
     # sort out files
     list_s=sortOutData(list_s)
+    print "LIST",list_s
     
     print "to copy...."
     # procced to copy to destiny

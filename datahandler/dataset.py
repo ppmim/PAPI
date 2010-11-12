@@ -104,7 +104,6 @@ class DataSet:
         except:
             log.exception( "Unexpected error reading FITS file %s" %filename )
             raise
-            return -1
         
         data = (self.id, fitsf.runID, fitsf.obID, fitsf.obPat, filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, fitsf.filter, \
                 fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object, fitsf.detectorID) 

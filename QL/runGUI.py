@@ -132,6 +132,7 @@ class MainGUI(panicQL):
         self.m_proc_imgs = False
         self.m_processing = False
         self._proc = None # variable to handle QProcess tasks
+        self.read_error_files = []
         
         ## Create log tags
         # Error
@@ -201,11 +202,70 @@ class MainGUI(panicQL):
         self.listView_config.setSorting(-1)
         ### FIN DE PRUEBAS #####
     
+    def fits_simple_verify(self, fitsfile):
+    
+        """
+        Performs 2 simple checks on the input fitsfile, which is a string
+        containing a path to a FITS file.  First, it checks that the first card is
+        SIMPLE, and second it checks that the file 2880 byte aligned.
+        
+        This function is useful for performing quick verification of FITS files.
+        
+        Raises:
+          ValueError:  if either of the 2 checks fails
+          IOError:     if fitsfile doesn't exist
+        """
+        
+        if not os.path.exists(fitsfile):
+            raise IOError("file '%s' doesn't exist" % fitsfile)
+    
+    
+        f = open(fitsfile)
+    
+        FITS_BLOCK_SIZE = 2880
+        try:
+            # check first card name
+            card = f.read(len("SIMPLE"))
+            if card != "SIMPLE":
+                raise ValueError("input file is not a FITS file")
+    
+    
+            # check file size
+            stat_result = os.stat(fitsfile)
+            file_size = stat_result.st_size
+            if file_size % FITS_BLOCK_SIZE != 0:
+                raise ValueError("FITS file is not 2880 byte aligned (corrupted?)")
+        finally:
+            f.close()
+        
     def new_file_func(self, filename, process=True):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
-        log.debug( "New file detected --> %s", filename)
-        self.textEdit_log.append("New file detected in source-->  " + filename)
+        log.debug( "New file detected --> %s. Going to verification...", filename)
+        # (Try) to check if the FITS file writing has finished
+        try:
+            temp = pyfits.open(filename)
+            temp.verify(option='exception')
+            temp.close()
+            self.fits_simple_verify(filename)
+            
+            if filename in self.read_error_files:
+                log.debug("Second try to read %s successful ! ", filename)
+                self.read_error_files.remove(filename)
+            temp.close()
+        except Exception,e:
+            log.error("Error while opening file %s. Maybe writing is not finished: %s", filename, str(e))
+            if filename not in self.read_error_files:
+                log.debug("Removing file from DC.dirlist %s", filename)
+                self.dc.remove(filename) # it means the file could be detected again by the DataCollector
+                self.read_error_files.append(filename) # to avoid more than two tries of opening the file
+            else:
+                #definitely, we discard the file
+                log.error("Definitely discarted file %s", filename)
+                self.read_error_files.remove(filename)
+            return
+           
+        self.textEdit_log.append("New file (verified) detected in source-->  " + filename)
         ## Insert into DB
         #datahandler.dataset.initDB()
         datahandler.dataset.filesDB.insert(filename)
@@ -230,11 +290,9 @@ class MainGUI(panicQL):
         ## Check if end of observing sequence, then start processing
         (end_seq, seq)=self.checkEndObsSequence(filename)
         if end_seq:
-            log.debug("Detected end of observing sequence, starting processing ....")
-            self.textEdit_log.append("<info_tag> Detected end of observing sequence, starting processing ....</info_tag> ")
-            process=True
+            log.debug("Detected end of observing sequence")
+            self.textEdit_log.append("<info_tag> Detected end of observing sequence</info_tag> ")
         
-        if process:
             ########################################
             #Check QL-Mode to process the sequence
             ########################################
@@ -268,24 +326,30 @@ class MainGUI(panicQL):
         
     def process(self, obsSequence):
         ## Process the new image received with the QL pipeliene recipes
-        print "------------------------------------------>m_processing(process)=", self.m_processing
-        self.textEdit_log.append("++Processing Obs. Sequence : " + obsSequence)
+        
+        log.debug("Starting to process the Observation Sequence...")
+        self.textEdit_log.append("<info_tag> ++ Starting to process a new Observation Sequence : </info_tag>")
+        
+        for file in obsSequence:
+            self.textEdit_log.append("   - %s"%file)
+            
         #self.QL2(filename, self.textEdit_log)
         
         #Change to working directory
         os.chdir(self.m_papi_dir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
-        self.m_processing = True    # Pause autochecking files
+        self.m_processing = False    # Pause autochecking coming files
         #Create working thread that process the obsSequence
         try:
             self._task = papi.ReductionSet( obsSequence, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
                                             obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
             thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
             thread.start()
-        except:
-            QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence")
-            raise
+        except Exception,e:
+            QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: %s",str(e))
+            self.m_processing = False
+            raise e
 
     
     
@@ -395,8 +459,16 @@ class MainGUI(panicQL):
                 self._task_info=self._task_info_list.pop()
                 if self._task_info._exit_status == 0: # EXIT_SUCCESS, all was OK
                     if self._task_info._return!=None:
-                        QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
-                        display.showFrame(self._task_info._return)
+                        if type(self._task_info._return)==type(list()): 
+                            str_list=""
+                            #QMessageBox.information(self,"Info", QString("%1 files created").arg(len(self._task_info._return)))
+                            for file in self._task_info._return:
+                                display.showFrame(file)
+                                str_list+=str(file)+"\n"
+                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))    
+                        elif os.path.isfile(self._task_info._return):
+                            QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
+                            display.showFrame(self._task_info._return)
                 else:
                     QMessageBox.critical(self, "Error", "Error while running task.  "+str(self._task_info._exc))
                 #Anyway, restore cursor
@@ -404,8 +476,8 @@ class MainGUI(panicQL):
                 self.m_processing=False
                 # Return to the previus working directory
                 os.chdir(self._ini_cwd)
-            except:
-                raise Exception("Error while checking _task_info_list")
+            except Exception,e:
+                raise Exception("Error while checking _task_info_list: %s", str(e))
     
     def checkEndObsSequence(self, filename):
         """

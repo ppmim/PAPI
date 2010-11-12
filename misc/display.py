@@ -47,7 +47,7 @@ def startDisplay():
     time.sleep(2)
     stdout_handle=os.popen("/sbin/pidofproc ds9","r")
     if stdout_handle.read() =='':
-        time.sleep(1)
+        time.sleep(2)
     time.sleep(1)
   else:
     # DS9 is already running...

@@ -65,35 +65,50 @@ class DataCollector ():
         self.newfiles     = []
         self.reducedfiles = []
         
+    def remove(self, pathname):
+        """
+        Remove a file from the current 'self.dirlist', so it could be again detected
+        """
+        
+        self.dirlist.remove(pathname)
+        #self.newfiles.remove(pathname)
+        
     def SetFileFilter(self, new_filter):
         self.filename_filter = new_filter
         
     def autoCheckFiles(self):
-    
-	    """
-	    Automatic checking of new files
-	    """
-    
-	    # Is the autocheck mode is a dir and exists
-	    if os.path.exists(self.source):	    
-		    # If this is the first time this routine is called, prepare the
-		    # directory list.
-		    if (self.checkID is None):
-			    if self.mode=="dir":
-				    # Store the current contents of the input directory for future reference
-				    self.dirlist =  [os.path.join(self.source, file) for file in os.listdir(self.source)]
-			    elif self.mode=="file":
-				    self.dirlist = [line for line in fileinput.input(self.source)]
-			    print 'Autochecking started'		
-		    # Check for new files in the input directory
-		    self.findNewFiles()
-	    else:
-		    # Reset the ID of the waiting loop
-		    self.checkID = None
-		    #messageLog.put('Autochecking stopped', 5)
-		    print 'Autochecking stopped'
-    
-    
+        """
+        Automatic checking of new files
+        """
+        # Is the autocheck mode is a dir and exists
+        if os.path.exists(self.source):	    
+            # If this is the first time this routine is called, prepare the
+            # directory list.
+            if (self.checkID is None):
+                if self.mode=="dir":
+                    # Store the current contents of the input directory for future reference
+                    #self.dirlist =  [os.path.join(self.source, file) for file in os.listdir(self.source)]
+                    self.dirlist = self.__listFiles(self.source)
+                elif self.mode=="file":
+                    self.dirlist = [line for line in fileinput.input(self.source)]
+                print 'Autochecking started'		
+            # Check for new files in the input directory
+            self.findNewFiles()
+        else:
+            # Reset the ID of the waiting loop
+            self.checkID = None
+            #messageLog.put('Autochecking stopped', 5)
+            print 'Autochecking stopped'
+                
+    def __listFiles(self, dirpath):
+        """
+        Get directory listing sorted by creation date
+        """
+        a = [os.path.join(dirpath, s) for s in os.listdir(dirpath)
+            if os.path.isfile(os.path.join(dirpath, s))]
+        a.sort(key=lambda s: os.path.getmtime(s))
+        return a
+           
     def findNewFiles(self):
     
         """
@@ -107,7 +122,8 @@ class DataCollector ():
         
         if self.mode=="dir":
             # Read the directory contents
-            contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
+            #contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
+            contents = self.__listFiles(self.source)
         elif self.mode=="file":
             # Read the file contents
             contents = [line for line in fileinput.input(self.source)]
@@ -176,8 +192,8 @@ class DataCollector ():
 			        and (file not in self.reducedfiles)    
 			        and (file not in self.newfiles)
 			        ):
-			    
-                print 'Appending file to the queue'
+              
+                print '[DC] Appending file to the queue'
 			    
                 ## new---
                 
@@ -193,8 +209,8 @@ class DataCollector ():
                 
                 self.callback_func(file)
                 # Only then, send message to the receiver client
-                self.newfiles.append(file)
-                print 'Found new file ....%s' %file
+                #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12
+                print '[DC] Found new file ....%s' %file
             else:
                 print "Warning, %s not a compliant file !!" %file
 	

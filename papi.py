@@ -1100,6 +1100,11 @@ class ReductionSet:
                 out+=reduce_obj(o_e, c_e)
             3.5 create_joined_mef(out)
             3.6 Add objects to catalog (?)
+            
+         
+        Return a list of N files produced as result of the data reduction of
+        the N sequecend found.
+        
         """
        
         log.info("Starting Reduction of data set ...")
@@ -1133,16 +1138,21 @@ class ReductionSet:
                 self.buildGainMaps()
             except:
                 log.error("Cannot build Gain Maps !")
-                
+        
+        
+        
         sequences=self.getObjectSequences()
         i=0
-        out_ext=[] # it will store the reduced output filenames
+        out_ext=[] # it will store the partial extension reduced output filenames
+        seq_result_outfile="" # will store the full-frame out filename of the current reduced sequence  
+        seq_outfile_list=[] # will store the full-frame result for each sequence-data-reduction 
         # For each object/sequece, split and reduce de sequence
         for obj_seq in sequences:  #sequences is a list of list, and obj_seq is a list
             log.debug("===> Reduction of obj_seq %d",i)
-            if len(obj_seq)<=0:
-                log.debug("Found an empty obs. object sequence")
-                #raise Exception("Found an empty obs. object sequence")
+            if len(obj_seq)<4:
+                log.debug("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
+                raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
+                #return []
             else:
                 # TODO: avoid call getCalibFor() when red_mode="single"
                 dark, flat, bpm = self.getCalibFor(obj_seq) # return 3 list of calibration frames (dark, flat, bpm)
@@ -1166,7 +1176,7 @@ class ReductionSet:
                         raise e
         
             # if all reduction were fine, now join/stich back the extensions in a widther frame
-            seq_result_outfile=self.out_file.replace(".fits","_OBJ%02d.fits"%(i))
+            seq_result_outfile=self.out_file.replace(".fits","_SEQ%02d.fits"%(i))
             if len(out_ext)>1:
                 log.debug("*** Creating final output file joining/stiching single output frames....***")
                 #mef=misc.mef.MEF(outs)
@@ -1184,14 +1194,15 @@ class ReductionSet:
             else:
                 shutil.move(out_ext[0], seq_result_outfile)
         
-            i+=1    
+            i+=1
+            seq_outfile_list.append(seq_result_outfile)
             log.info("*** Obs. Sequence reduced. File %s created.  ***", seq_result_outfile)
                     
             
         #log.critical(" TBD : for each object sequence, we need a different final output file !!!!")
         log.critical("*** All Obs.Sequences (%d) has been reduced. Congratulations !!", i)
         
-        return self.out_file
+        return seq_outfile_list
         
     def reduceObj(self, obj_frames, master_dark, master_flat, master_bpm, red_mode, output_file):
         """ Given a set of object(sci) frames and (optional) master calibration files,
@@ -1234,11 +1245,13 @@ class ReductionSet:
         ######################################################
         # 0 - Some checks (filter, ....) 
         ######################################################
+        # TODO : it could/should be done in reduceSet, to avoid the spliting ...??
         log.info("**** Data ckecking ****")
         try:
             self.checkData(chk_filter=True, chk_type=False, chk_expt=True, chk_itime=True, chk_ncoadd=True)
         except:
-            raise 
+            raise
+        
         ######################################################
         # 00 - Sort out data by MJD (self.m_LAST_FILES)
         ######################################################

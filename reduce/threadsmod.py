@@ -22,6 +22,7 @@ from qt import QMessageBox
 import misc.display as display
 
 #######################################
+lock = threading.Lock()
 
 class ReduceThread(threading.Thread):  
 
@@ -81,20 +82,21 @@ class ExecTaskThread(threading.Thread):
         self._task_info_list = task_info_list
     
     def run(self):
-        
+      
+        lock.acquire()
         try:
-            try:
-                self._task_info._curr_status = "INITIATED"
-                self._task_info._return      = self._task(*self._args)  # Execute the task
-                self._task_info._exit_status = 0             # EXIT_SUCCESS, all was OK
-            except Exception, e:
-                self._task_info._curr_status = "FINISHED"
-                self._task_info._return      = None
-                self._task_info._exit_status = 1             # EXIT_FAILURE, some error happened
-                self._task_info._exc = e
-                raise e
+            self._task_info._curr_status = "INITIATED"
+            self._task_info._return      = self._task(*self._args)  # Execute the task
+            self._task_info._exit_status = 0             # EXIT_SUCCESS, all was OK
+        except Exception, e:
+            self._task_info._curr_status = "FINISHED"
+            self._task_info._return      = None
+            self._task_info._exit_status = 1             # EXIT_FAILURE, some error happened
+            self._task_info._exc = e
+            raise e
         finally:
             self._task_info_list.append(self._task_info)
+            lock.release()    
             #self._event.set() # signal for the waiting thread (consumer)
 
             
