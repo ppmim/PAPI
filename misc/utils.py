@@ -101,7 +101,7 @@ def listToFile ( a_list, output_file=None ):
         temp_fd=open(output_file,"w+") # truncate the file if exists
     
     for filename in a_list:
-        temp_fd.write(filename+"\n")
+        temp_fd.write(filename.replace('//','/')+"\n")
     
     temp_fd.close()
     

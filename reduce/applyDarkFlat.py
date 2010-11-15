@@ -28,7 +28,7 @@
 # Last update: 05/06/2009    jmiguel@iaa.es
 #              11/03/2010    jmiguel@iaa.es - Added out_dir for output files
 #              18/03/2010    jmiguel@iaa.es - Modified to support only dark subtraction, only flatfielding or both 
-#
+#              15/11/2010    jmiguel@iaa.es - Added normalization to flat-field
 ################################################################################
 
 ################################################################################
@@ -89,10 +89,10 @@ class ApplyDarkFlat:
   
     """
     def __init__(self, sci_files, mdark=None, mflat=None, out_dir="/tmp/", bpm=None):
-        self.__sci_files = sci_files
-        self.__mdark = mdark
-        self.__mflat = mflat
-        self.__bpm = bpm
+        self.__sci_files = sci_files  # list of files which apply dark and flat
+        self.__mdark = mdark          # master dark to apply
+        self.__mflat = mflat          # master flat to apply (dome, twlight) - not normalized !!
+        self.__bpm = bpm              # not used at the moment
         self.__out_dir = out_dir
       
     
@@ -134,6 +134,15 @@ class ApplyDarkFlat:
                 flat_filter=flat[0].header['FILTER']
                 flat_data=flat[0].data
                 out_suffix=out_suffix.replace(".fits","_F.fits")
+                # ##############################################################################
+                # Normalize the flat (if MEF, all extension is normlized wrt extension/chip 1) #
+                # ##############################################################################
+                median=np.median(flat_data[200:naxis1-200, 200:naxis2-200])
+                mean=np.mean(flat_data[200:naxis1-200, 200:naxis2-200])
+                mode=3*median-2*mean
+                log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
+                log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
+                flat_data=flat_data/median
         else:
             flat_data = 1.0
             flat_time = None
@@ -168,9 +177,42 @@ class ApplyDarkFlat:
                 (path,name)=os.path.split(iframe)
                 newpathname=self.__out_dir+"/"+name.replace(".fits", out_suffix)
                 misc.fileUtils.removefiles(newpathname)
-                s_time=float(f[0].header['EXPTIME'])
+                i_time=float(f[0].header['EXPTIME'])
+                time_scale = i_time / dark_time
+                
+                # ---- nueva version sopporte MEF's ------------------
+                # Cleanup: Remove temporary files
+                scaled_dark="/tmp/scaled_dark.fits"
+                misc.fileUtils.removefiles(scaled_dark)
+                
+                # Compute scaled dark
+                iraf.mscred.mscarith(operand1=self.__mdark,
+                    operand2=time_scale,
+                    op='*',
+                    pixtype='real',
+                    result=scaled_dark,
+                    )
+                
+                # Substract dark
+                iraf.mscred.mscarith(operand1=iframe,
+                    operand2=scaled_dark,
+                    op='-',
+                    pixtype='real',
+                    result=temp_i,
+                    )    
+                    
+                # Divide by normalized master flat
+                iraf.mscred.mscarith(operand1=temp_i,
+                    operand2=master_flat,
+                    op='/',
+                    pixtype='real',
+                    result=newpathname,
+                    )
+                         
+                # ------ version actual --------------
+                
                 # STEP 2.1: Check EXPTIME and apply master DARK and master FLAT
-                if dark_time!=None and s_time!=dark_time:
+                if dark_time!=None and i_time!=dark_time:
                     log.debug("Scaling master dark ...")
                     f[0].data = (f[0].data - dark_data*float(f[0].header['EXPTIME']/dark[0].header['EXPTIME']) )/flat_data
                     f[0].header.add_history('Dark subtracted (scaled) %s' %self.__mdark)
@@ -217,10 +259,10 @@ def usage ():
     print 'OPTIONS'
     print "-s / --source=      Source file list of data frames"
     print "-d / --dark=        Master dark frame to subtract (optional)"
-    print "-f / --flat=        Master flat field to divide by (optional)"
+    print "-f / --flat=        Master (not normalized) flat field to divide by (optional)"
     print "-v                  Verbose debugging output\n"
     print 'VERSION'
-    print '       2009 June 05'
+    print '       15 Nov 2010 '
     print ''
     raise SystemExit
 

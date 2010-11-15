@@ -79,7 +79,7 @@ import astromatic
 import datahandler.dataset
 
 class ReductionSet:
-    def __init__(self, rs_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, red_mode="single"):
+    def __init__(self, rs_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, red_mode="single", classf=True):
         """ Init function """
         
         # Input values
@@ -91,7 +91,7 @@ class ReductionSet:
         self.master_flat = flat    # master flat to use (input)
         self.bpm = bpm             # master Bad Pixel Mask to use (input)
         self.red_mode = red_mode   # reduction mode (single=for QL, full=for science) 
-        
+        self.classf = classf       # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only classf by FILTER)
         self.gr_sci = []           # list of group of observing object/sequence (see getObjectSequences() ) 
         
         # Environment variables
@@ -113,6 +113,8 @@ class ReductionSet:
         
         #DataBase (in memory)
         self.db=None
+        
+        print "CLASS=",classf
     
     def __initDB(self):
         """
@@ -126,6 +128,10 @@ class ReductionSet:
         self.db=datahandler.dataset.DataSet(source="file")
         self.db.createDB()
         self.db.load(self.rs_filelist)
+        if self.master_dark!=None: self.db.insert(self.master_dark)
+        if self.master_flat!=None: self.db.insert(self.master_flat)
+        if self.bpm !=None: self.db.insert(self.bpm)
+        
         self.db.ListDataSet()
         
     def checkData(self, chk_filter=True, chk_type=True, chk_expt=True, chk_itime=True, \
@@ -379,7 +385,9 @@ class ReductionSet:
         """
         Given a list of frames belonging to a observing sequence for a given object (star, galaxi, whatever),
         return the most appropiate calibration files (master dark,flat,bpm) to
-        reduce the sequence
+        reduce the sequence.
+        
+        Reduce 3-list of calibration files (dark, flat, bpm), even is each one has only 1 file 
         """
         obj_frame = datahandler.ClFits(sci_obj_list[0])
         # We take as sample, the first frame in the list, but all frames must
@@ -389,6 +397,9 @@ class ReductionSet:
         
         master_dark=self.db.GetFilesT('MASTER_DARK', expTime)
         master_flat=self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+        if master_flat==[]:
+            master_flat=self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
+            
         master_bpm =self.db.GetFilesT('MASTER_BPM')
         
         log.debug("Found master dark %s", master_dark)
@@ -457,7 +468,10 @@ class ReductionSet:
     def getObjectSequences(self):
         """
         Query the DB (data set) to look for object/pointing sequences sorted by
-        MJD and grouped by OB_ID,OB_PAT,FILTER.
+        MJD; they can be grouped by:
+        
+            a) FILTER (it is used when no date set classification can be done)
+            b) OB_ID,OB_PAT,FILTER.
         """
         
         """
@@ -467,19 +481,30 @@ class ReductionSet:
         # TBD: sort out by MJD and group by FILTER
         """
         
-        self.db.GetOBFiles()
-        (seq_par, obj_seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
-        k=0
-        for par in seq_par:
-            print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
-            print "-----------------------------------------------------------------------------------\n"
-            for file in obj_seq_list[k]:
-                print file
-            k+=1
+        if not self.classf:
+            (filters, seq_list)=self.db.GetFilterFiles()
+            k=0
+            for filter in filters:
+                print "\nFILTER=%s"%filter
+                print "-----------------------------------------------------------------------------------\n"
+                for file in seq_list[k]:
+                    print file
+                k+=1
+            log.debug("Found %d groups of SCI files: %s", len(filters), seq_list)
+            
+        else:
+            (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
+            k=0
+            for par in seq_par:
+                print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
+                print "-----------------------------------------------------------------------------------\n"
+                for file in seq_list[k]:
+                    print file
+                k+=1
         
-        log.debug("Found %d groups of SCI files: %s", len(seq_par), obj_seq_list)
+            log.debug("Found %d groups of SCI files: %s", len(seq_par), seq_list)
         
-        return obj_seq_list
+        return seq_list
     
     def getDomeFlatFrames(self):
         """
@@ -1119,27 +1144,32 @@ class ReductionSet:
             log.debug("Single/quick reduction mode, no calibration files will be built")
         else:
             log.debug("Building calibration for the whole files ...")
-            try:
-                self.buildMasterDarks()
-            except:
-                log.error("Cannot build Master Darks !")
             
-            try:     
-                self.buildMasterDomeFlats()
-            except:
-                log.error("Cannot build Master Dome Flats !")
-            
-            try:    
-                self.buildMasterTwFlats()
-            except:
-                log.error("Cannot build Master Tw Flats !")
-            
-            try:    
-                self.buildGainMaps()
-            except:
-                log.error("Cannot build Gain Maps !")
+            if self.master_dark==None:
+                log.debug("Building calibration for the whole files ...")
+                try:
+                    self.buildMasterDarks()
+                except:
+                    log.error("Cannot build Master Darks !")
+                    
+            if self.master_flat==None:
+                try:     
+                    self.buildMasterDomeFlats()
+                except:
+                    log.error("Cannot build Master Dome Flats !")
+                
+                try:    
+                    self.buildMasterTwFlats()
+                except:
+                    log.error("Cannot build Master Tw Flats !")
+                
+                try:    
+                    self.buildGainMaps()
+                except:
+                    log.error("Cannot build Gain Maps !")
         
-        
+            # TODO: and BPM ???
+            
         
         sequences=self.getObjectSequences()
         i=0
@@ -1154,20 +1184,25 @@ class ReductionSet:
                 raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
                 #return []
             else:
-                # TODO: avoid call getCalibFor() when red_mode="single"
-                dark, flat, bpm = self.getCalibFor(obj_seq) # return 3 list of calibration frames (dark, flat, bpm)
+                #avoid call getCalibFor() when red_mode="single"
+                if red_mode=="single":
+                    dark,flat,bpm=[],[],[]
+                else:
+                    dark, flat, bpm = self.getCalibFor(obj_seq)
+                    # return 3 list of calibration frames (dark, flat, bpm), because there might be more than one master dark/flat/bpm
                 obj_ext, next = self.split(obj_seq) # it must return a list of list (one per each extension)
                 dark_ext, cext = self.split(dark)
                 flat_ext, cext = self.split(flat)
                 bpm_ext, cext = self.split(bpm)
                 for n in range(next):
                     log.debug("===> Reducting extension group %d", n+1)
+                    ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                     if dark_ext==[]: mdark=None
-                    else: mdark=dark_ext[n]
+                    else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
                     if flat_ext==[]: mflat=None
-                    else: mflat=flat_ext[n]
+                    else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
                     if bpm_ext==[]: mbpm=None
-                    else: mbpm=bpm_ext[n]
+                    else: mbpm=bpm_ext[n][0]   # At the moment, we have the first calibration file for each extension
                     try:
                         out_ext.append(self.reduceObj(obj_ext[n], mdark, mflat, mbpm, red_mode, \
                                                       output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
@@ -1202,6 +1237,9 @@ class ReductionSet:
         #log.critical(" TBD : for each object sequence, we need a different final output file !!!!")
         log.critical("*** All Obs.Sequences (%d) has been reduced. Congratulations !!", i)
         
+        for f in seq_outfile_list: self.db.insert(f)
+        self.db.ListDataSet()
+        
         return seq_outfile_list
         
     def reduceObj(self, obj_frames, master_dark, master_flat, master_bpm, red_mode, output_file):
@@ -1217,7 +1255,7 @@ class ReductionSet:
         log.info("#### Starting data reduction #####")
         log.info("#### MODE = %s  ##", self.red_mode)
         log.info("##################################")
-        print "OBJS =",obj_frames
+        #print "OBJS =",obj_frames
         
         # set the reduction mode
         if red_mode!=None: self.red_mode=red_mode
@@ -1281,7 +1319,7 @@ class ReductionSet:
         if master_dark!=None and master_flat!=None:
             log.info("**** Applying dark and Flat ****")
             dark_flat=True
-            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, master_dark, master_flat, out_dir)
+            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, master_dark, master_flat, self.out_dir)
             self.m_LAST_FILES = res.apply()
         
         ######################################    
@@ -1537,6 +1575,9 @@ if __name__ == "__main__":
     parser.add_option("-1", "--single",
                   action="store_true", dest="single", help="make a single reduction", default=False)              
 
+    parser.add_option("-n", "--no_class",
+                  action="store_true", dest="no_class", help="not try to do dataset classification", default=False)
+    
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
@@ -1555,26 +1596,30 @@ if __name__ == "__main__":
     
     # Read file or list-directory 
     if os.path.isfile(options.source):
-        sci_files=[line.replace( "\n", "") for line in fileinput.input(options.source)]
+        sci_files=[line.replace("\n", "").replace('//','/') for line in fileinput.input(options.source)]
     elif os.path.isdir(options.source):
         for file in dircache.listdir(options.source):
             if file.endswith(".fits") or file.endswith(".fit"):
-                sci_files.append(options.source+"/"+file)
+                sci_files.append((options.source+"/"+file).replace('//','/'))
                 
+    if options.single: red_m="single"
+    else: red_m="full"
+    
     # Create the RS (it works both simple FITS as MEF files)            
     rs = ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, obs_mode="dither", \
-                                dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode="single")
+                                dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode=red_m, classf=not(options.no_class))
     
-    try:
+    """try:
         rs.test()
     except Exception,e:
         print "some error !!!"
         raise e
     
     #sys.exit(0)
-
+    """
+    
     try:
-        rs.reduceSet(red_mode="single")
+        rs.reduceSet(red_mode=red_m)
     except Exception,e:
         print "Cannot reduce the Data Set, check error log...."
         raise e

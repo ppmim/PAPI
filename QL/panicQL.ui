@@ -596,6 +596,52 @@
                     <string>Filter data sources list using its class/type</string>
                 </property>
             </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>ALL</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>DARK</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>DOME_FLAT</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>TW_FLAT</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>SCIENCE</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>REDUCED</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox_classFilter</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>220</x>
+                        <y>172</y>
+                        <width>110</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Filter data sources list using its class/type</string>
+                </property>
+            </widget>
             <widget class="QListView">
                 <column>
                     <property name="text">
@@ -632,7 +678,7 @@
                 </column>
                 <column>
                     <property name="text">
-                        <string>TExp</string>
+                        <string>ExpT</string>
                     </property>
                     <property name="clickable">
                         <bool>true</bool>
@@ -704,52 +750,6 @@
                 </property>
                 <property name="rootIsDecorated">
                     <bool>true</bool>
-                </property>
-            </widget>
-            <widget class="QComboBox">
-                <item>
-                    <property name="text">
-                        <string>ALL</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>DARK</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>DOME_FLAT</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>TW_FLAT</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>SCIENCE</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>REDUCED</string>
-                    </property>
-                </item>
-                <property name="name">
-                    <cstring>comboBox_classFilter</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>220</x>
-                        <y>172</y>
-                        <width>110</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Filter data sources list using its class/type</string>
                 </property>
             </widget>
         </widget>
@@ -1945,27 +1945,6 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_Darks_4</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>13</x>
-                        <y>20</y>
-                        <width>160</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Science Files...</string>
-                </property>
-            </widget>
             <widget class="QLabel">
                 <property name="name">
                     <cstring>textLabel1_5</cstring>
@@ -1980,74 +1959,6 @@
                 </property>
                 <property name="text">
                     <string>&lt;b&gt;Data Type&lt;/b&gt;</string>
-                </property>
-            </widget>
-            <widget class="QListView">
-                <column>
-                    <property name="text">
-                        <string>File</string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Class</string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Filter</string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>TEXP</string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <column>
-                    <property name="text">
-                        <string>Origin</string>
-                    </property>
-                    <property name="clickable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="resizable">
-                        <bool>true</bool>
-                    </property>
-                </column>
-                <property name="name">
-                    <cstring>listView_2</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>10</x>
-                        <y>57</y>
-                        <width>480</width>
-                        <height>180</height>
-                    </rect>
                 </property>
             </widget>
             <widget class="QLabel">
@@ -2176,6 +2087,22 @@
                         <width>120</width>
                         <height>22</height>
                     </rect>
+                </property>
+            </widget>
+            <widget class="QCheckBox">
+                <property name="name">
+                    <cstring>checkBox22</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>503</x>
+                        <y>219</y>
+                        <width>280</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Automatically create dataset from headers</string>
                 </property>
             </widget>
             <widget class="QListView">
@@ -2420,20 +2347,109 @@
                     <enum>Accept</enum>
                 </property>
             </widget>
-            <widget class="QCheckBox">
+            <widget class="QLabel">
                 <property name="name">
-                    <cstring>checkBox22</cstring>
+                    <cstring>textLabel1_6</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>503</x>
-                        <y>219</y>
-                        <width>280</width>
+                        <x>18</x>
+                        <y>28</y>
+                        <width>170</width>
                         <height>20</height>
                     </rect>
                 </property>
                 <property name="text">
-                    <string>Automatically create dataset from headers</string>
+                    <string>&lt;font color="#2626ff"&gt;&lt;b&gt;Observing Sequences&lt;/b&gt;&lt;/font&gt;</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_Darks_4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>500</x>
+                        <y>60</y>
+                        <width>160</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Science Files...</string>
+                </property>
+            </widget>
+            <widget class="QListView">
+                <column>
+                    <property name="text">
+                        <string>File</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Class</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Filter</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>ExpT</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <column>
+                    <property name="text">
+                        <string>Data-Obs</string>
+                    </property>
+                    <property name="clickable">
+                        <bool>true</bool>
+                    </property>
+                    <property name="resizable">
+                        <bool>true</bool>
+                    </property>
+                </column>
+                <property name="name">
+                    <cstring>listView_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>10</x>
+                        <y>57</y>
+                        <width>480</width>
+                        <height>180</height>
+                    </rect>
                 </property>
             </widget>
         </widget>

@@ -66,7 +66,16 @@ class MasterDomeFlat:
     \par Purpose:
         Create a master Dome flat field
     \par Description:
-        
+            
+         1. Check the EXPTIME , TYPE(dome) and FILTER of each Flat frame
+         2. Separate lamp ON/OFF dome flats
+         3. Make the combine of Flat LAMP-OFF frames
+         4. Make the combine of Flat LAMP-ON frames
+         5. Subtract lampON-lampOFF (implicit dark subtraction)
+         6. Normalize the flat-field
+            
+         # NOTE : We do not subtract any MASTER_DARK, it is not required for DOME FLATS (it is done implicitly)   
+    
     \par Language:
         PyRaf
     \param data

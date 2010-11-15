@@ -277,7 +277,7 @@ if __name__ == "__main__":
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
-                  help="Flat Field image. It has to be a fullpath file name (required)")
+                  help="Flat Field image NOT normalized. It has to be a fullpath file name (required)")
                   
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", help="output file to write the Gain Map")

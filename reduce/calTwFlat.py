@@ -250,9 +250,11 @@ class MasterTwilightFlat:
             next=0
                 
         t_dark=cdark.expTime()
+        fileList = []
         for iframe in good_frames:
             # Remove an old dark subtracted flat frames
-            misc.fileUtils.removefiles(iframe.replace(".fits","_D.fits"))
+            my_frame = self.__output_file_dir+"/"+os.path.basename(iframe.replace(".fits","_D.fits"))
+            misc.fileUtils.removefiles(my_frame)
             
             # Build master dark with proper (scaled) EXPTIME and subtract (???? I don't know how good is this method of scaling !!!)
             f = pyfits.open(iframe)
@@ -272,23 +274,20 @@ class MasterTwilightFlat:
             
             # Write output to outframe (data object actually still points to input data)
             try:
-                f.writeto(iframe.replace(".fits","_D.fits"), output_verify='ignore')
+                f.writeto(my_frame, output_verify='ignore')
             except IOError:
-                raise ExError('Cannot write output to %s' % iframe.replace(".fits", "_D.fits"))
+                raise ExError('Cannot write output to %s' % my_frame)
                      
             f.close()
+            fileList.append(my_frame)
                     
         # STEP 3: Make the combine of dark subtracted Flat frames scaling by 'mode'
         # - Build the frame list for IRAF
         log.debug("Combining dark subtracted Twilight flat frames...")
         comb_flat_frame=(self.__output_file_dir+"/comb_tw_flats.fits").replace("//","/")
-        #print "COMB=", comb_flat_frame
         misc.fileUtils.removefiles(comb_flat_frame)
-        m_framesStr=utils.listToString(good_frames)
-        m_darksubStr=m_framesStr.replace(".fits", "_D.fits")
-        fileList=utils.stringToList(m_darksubStr)
-        # - Call IRAF task
         misc.utils.listToFile(fileList, self.__output_file_dir+"/twflat_d.list") 
+        # - Call IRAF task
         iraf.mscred.flatcombine(input="@"+self.__output_file_dir+"/twflat_d.list",
                         output=comb_flat_frame,
                         combine='median',
@@ -392,7 +391,7 @@ if __name__ == "__main__":
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
     print "Files:",filelist
     try:
-        mTwFlat = MasterTwilightFlat(filelist,dark_file, output_filename)
+        mTwFlat = MasterTwilightFlat(filelist, dark_file, output_filename)
         mTwFlat.createMaster()
     except:
         log.error("Unexpected error: %s", sys.exc_info()[0])

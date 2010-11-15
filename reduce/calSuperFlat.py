@@ -128,9 +128,9 @@ class SuperSkyFlat:
         tmp1=(self.output_file_dir+"/tmp_sf.fits").replace('//','/')
         misc.fileUtils.removefiles(tmp1)
         log.info("Combining images...")
-        misc.utils.listToFile(m_filelist, "/tmp/files.txt") 
+        misc.utils.listToFile(m_filelist, self.output_file_dir+"/files.txt") 
         # Combine the images to find out the super Flat using sigma-clip algorithm
-        iraf.mscred.combine(input=("'"+"@"+"/tmp/files.txt"+"'").replace('//','/'),
+        iraf.mscred.combine(input=("'"+"@"+self.output_file_dir+"/files.txt"+"'").replace('//','/'),
                     output=tmp1,
                     combine='median',
                     offset='none',

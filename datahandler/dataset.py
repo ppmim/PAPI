@@ -99,6 +99,8 @@ class DataSet:
         """
 
         log.debug("Inserting file %s into dataset" % filename)
+        if filename==None: return 0
+        
         try:
             fitsf=datahandler.ClFits ( filename )
         except:
@@ -354,6 +356,42 @@ class DataSet:
             
         return ob_id_list, ob_file_list
                  
+    def GetFilterFiles(self):
+        """ 
+            Get all the SCIENCE files found for each Filter; no other keyword is 
+            looked for (OB_ID, OB_PAT, ...) 
+            
+            Return a list of list, having each list the list of files beloging to.
+        """
+        
+        filter_list=[]
+        filter_file_list=[]
+              
+        # First, look for Filters on SCIENCE files
+        s_select="select DISTINCT filter from dataset where type='SCIENCE' or type='SKY_FOR' "
+        #print s_select
+        cur=self.con.cursor()
+        cur.execute(s_select,"")
+        rows=cur.fetchall()
+        if len(rows)>0:
+            filter_list = [str(f[0]) for f in rows] # important to apply str() !!
+        print "Total rows selected:  %d" %(len(filter_list))
+        print "Filters found :\n ", filter_list
+        
+        # Finally, look for files of each Filter
+        for filter in filter_list:
+            s_select="select filename from dataset where filter=? and (type='SCIENCE' or type='SKY_FOR') order by mjd"    
+            #print s_select
+            cur=self.con.cursor()
+            cur.execute(s_select,(filter,))
+            #print "done !"
+            rows=cur.fetchall()
+            if len(rows)>0:
+                filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
+            print "%d files found for Filter %s" %(len(rows), filter)
+            
+        return filter_list, filter_file_list
+                         
     def GetSeqFiles(self, filter=None, type=None):
         """ 
             Get all the files for each Observing Sequence (OS) found. 

@@ -115,6 +115,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS'):
     swarp = astromatic.SWARP()
     swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME']=output_image
+    swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS,RA,DEC'
     swarp.ext_config['WEIGHTOUT_NAME']=output_image.replace(".fits",".weight.fits")
     swarp.ext_config['HEADER_SUFFIX']=".head"
     #Rename the external header produced by SCAMP (.head) to a filename to be looked for by SWARP 

@@ -409,7 +409,7 @@ class ClFits:
             else:
                 self.obPat = -1
         except Exception,e:
-            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            log.error("Cannot find keyword : %s:",str(e))
             self.obPat = -1
                    
         #PAT_EXPN : Pattern Exposition Number
