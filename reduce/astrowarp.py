@@ -202,15 +202,16 @@ class AstroWarp(object):
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
         swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
-        swarp.ext_config['IMAGEOUT_NAME']= os.path.dirname(coadded_file)+ "/coadd_tmp.fits"
-        swarp.ext_config['WEIGHTOUT_NAME']=os.path.dirname(coadded_file)+ "/coadd_tmp.weight.fits"
-        swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
-        swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
+        swarp.ext_config['IMAGEOUT_NAME']=os.path.dirname(self.coadded_file)+ "/coadd_tmp.fits"
+        swarp.ext_config['WEIGHTOUT_NAME']=os.path.dirname(self.coadded_file)+ "/coadd_tmp.weight.fits"
+        if os.path.isfile(self.input_files[0].replace(".fits",".weight.fits")):
+            swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
+            swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
         swarp.run(self.input_files, updateconfig=False, clean=False)
         
         ## STEP 4: Make again the final astrometric calibration to the final coadd
         log.debug("*** Doing final astrometril calibration....")
-        doAstrometry(os.path.dirname(coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog)
+        doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog)
         
         
         

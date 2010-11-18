@@ -8,8 +8,9 @@
 # Created    : 19/05/2009    jmiguel@iaa.es
 # Last update: 29/09/2009    jmiguel@iaa.es
 #              14/12/2009    jmiguel@iaa.es  - Check NCOADDS; use ClFits class; Skip non TW flats and cotinue working with the good ones
-#              03/03/2010    jmiguel@iaa.es Added READMODE checking 
-#              20/09/2010    jmiguel@iaa.es Addedd support of MEF files
+#              03/03/2010    jmiguel@iaa.es  - Added READMODE checking 
+#              20/09/2010    jmiguel@iaa.es  - Added support of MEF files
+#              18/11/2010    jmiguel@iaa.es  - Added optional normalization by mode
 #
 # TODO:
 #   - use of dark model to subtract right dark current
@@ -98,7 +99,7 @@ class MasterTwilightFlat:
   
     """
     def __init__(self, flat_files, dark_model, output_filename="/tmp/mtwflat.fits", \
-                lthr=1000, hthr=100000, bpm=None):
+                lthr=1000, hthr=100000, bpm=None, normal=True):
         
         """Initialization method"""
         
@@ -134,7 +135,7 @@ class MasterTwilightFlat:
         # Check exist master DARK
         if not os.path.exists( self.__master_dark  ):
             log.error('Cannot find frame : "%s"' % self.__master_dark)
-            raise "Master Dark not found"
+            raise Exception("Any Master Dark not found")
         
         # Determine the number of Flats frames to combine
         try:
@@ -304,15 +305,16 @@ class MasterTwilightFlat:
         
         # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
         # Compute the mean of the image
-        log.debug("Normalizing master flat frame...")
-        if next>0:
-            chip=1 # normalize wrt to mode of chip 1
-        else:
-            chip=0
-        f=pyfits.open(comb_flat_frame)
-        mode=3*numpy.median(f[chip].data)-2*numpy.mean(f[chip].data)
-        f.close()        
-            
+        if normal:
+            log.debug("Normalizing master flat frame...")
+            if next>0:
+                chip=1 # normalize wrt to mode of chip 1
+            else:
+                chip=0
+            f=pyfits.open(comb_flat_frame)
+            mode=3*numpy.median(f[chip].data)-2*numpy.mean(f[chip].data)
+            f.close()        
+        else: mode=1            
         
         # Cleanup: Remove temporary files
         misc.fileUtils.removefiles(self.__output_filename)
@@ -323,13 +325,14 @@ class MasterTwilightFlat:
                     pixtype='real',
                     result=self.__output_filename,
                     )
-    
         
         # Change back to the original working directory
         iraf.chdir()
         
         flatframe = pyfits.open(self.__output_filename,'update')
-        flatframe[0].header.add_history('Computed normalized master twilight flat' )
+        if normal: flatframe[0].header.add_history('Computed normalized master twilight flat')
+        else: flatframe[0].header.add_history('Computed master twilight flat')
+        
         flatframe[0].header.add_history('Twilight files: %s' %framelist )
         #Add a new keyword-->PAPI_TYPE
         flatframe[0].header.update('PAPITYPE','MASTER_TW_FLAT','TYPE of PANIC Pipeline generated file')

@@ -357,6 +357,29 @@ class MainGUI(panicQL):
     ### SLOTS ###########################################
     #####################################################
 
+    def findOS_slot(self):
+        
+        parList,fileList = datahandler.dataset.filesDB.GetSeqFiles()
+        k=0
+        for seq in parList:
+            # create the father
+            elem = QListViewItem( self.listView_OS )
+            elem.setText (0, "OB_ID="+str(seq[0])+" OB_PAT="+seq[1]+" FILTER="+seq[2] ) # OB_ID + OB_PAT + FILTER
+            #elem.setText (1, str(seq[1])) # OB_PAT
+            #elem.setText (2, str(seq[2])) # FILTER
+            for file in fileList[k]:
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(file)
+                e_child = QListViewItem(elem)
+                e_child.setText (0, str(file))
+                e_child.setText (1, str(type))
+                e_child.setText (2, str(filter))
+                e_child.setText (3, str(texp))
+                e_child.setText (4, str(date)+"::"+str(ut_time))
+                e_child.setText (5, str(object))
+                e_child.setText (6, str(ra))
+                e_child.setText (7, str(dec))
+            k+=1    
+    
     def setDataSourceDir_slot(self):
         #dir=""
         source=QFileDialog.getExistingDirectory( self.m_default_data_dir, self,"get existing directory", "Choose a directory",True )
@@ -462,8 +485,9 @@ class MainGUI(panicQL):
                         if type(self._task_info._return)==type(list()): 
                             str_list=""
                             #QMessageBox.information(self,"Info", QString("%1 files created").arg(len(self._task_info._return)))
+                            display.showFrame(self._task_info._return) #_return is a file list
                             for file in self._task_info._return:
-                                display.showFrame(file)
+                                #display.showFrame(file)
                                 str_list+=str(file)+"\n"
                             QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))    
                         elif os.path.isfile(self._task_info._return):
@@ -578,7 +602,13 @@ class MainGUI(panicQL):
             self.m_show_imgs=False
             
     def data_grouping_slot(self):
-      
+        """
+        Slot called when the 'checkBox_data_grouping' is clicked.
+        If checked, then data grouping will be done using OB_ID, OB_PAT, FILTER keywords
+        (or whatever we decide at the moment).
+        If not checked, tha data grouping will be done using RA,Dec values.
+        """
+        
         if self.checkBox_data_grouping.isChecked():
             self.lineEdit_ra_dec_near_offset.setEnabled(False)
             self.lineEdit_time_near_offset.setEnabled(False)
@@ -695,19 +725,62 @@ class MainGUI(panicQL):
     def slot_classFilter(self, filter_string):
         """ Filter files on main ListView"""
         
-        self.listView_dataS.clearSelection()
-        it=QListViewItemIterator (self.listView_dataS)
-        listViewItem = it.current()
-        while listViewItem:
-            if listViewItem.text(1).contains(self.comboBox_classFilter.currentText()) or self.comboBox_classFilter.currentText()=="ALL":
-                listViewItem.setVisible(True)
-                listViewItem.setSelectable(True)
+        if self.comboBox_classFilter.currentText()=="GROUP":
+            self.listView_dataS.clear()
+            parList,fileList = datahandler.dataset.filesDB.GetSeqFiles()
+            k=0
+            for seq in parList:
+                # create the father
+                elem = QListViewItem( self.listView_dataS )
+                elem.setText (0, "OB_ID="+str(seq[0])+" OB_PAT="+str(seq[1])+" FILTER="+str(seq[2]) ) # OB_ID + OB_PAT + FILTER
+                #elem.setText (1, str(seq[1])) # OB_PAT
+                #elem.setText (2, str(seq[2])) # FILTER
+                for file in fileList[k]:
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(file)
+                    e_child = QListViewItem(elem)
+                    e_child.setText (0, str(file))
+                    e_child.setText (1, str(type))
+                    e_child.setText (2, str(filter))
+                    e_child.setText (3, str(texp))
+                    e_child.setText (4, str(date)+"::"+str(ut_time))
+                    e_child.setText (5, str(object))
+                    e_child.setText (6, str(ra))
+                    e_child.setText (7, str(dec))
+                k+=1
+        else:
+            #####################################    
+            ## No grouping, only filtering
+            #####################################
+            self.listView_dataS.clear()
+            if str(self.comboBox_classFilter.currentText())=="ALL":
+                fileList = datahandler.dataset.filesDB.GetFilesT("ANY")    
             else:
-                listViewItem.setVisible(False)
-                listViewItem.setSelectable(False)
-            it+=1
-            listViewItem = it.current() 
-                       
+                fileList = datahandler.dataset.filesDB.GetFilesT(str(self.comboBox_classFilter.currentText()))
+            for file in fileList:
+                elem = QListViewItem( self.listView_dataS )
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(file)
+                elem.setText (0, str(file))
+                elem.setText (1, str(type))
+                elem.setText (2, str(filter))
+                elem.setText (3, str(texp))
+                elem.setText (4, str(date)+"::"+str(ut_time))
+                elem.setText (5, str(object))
+                elem.setText (6, str(ra))
+                elem.setText (7, str(dec))
+            # filtering
+            """self.listView_dataS.clearSelection()
+            it=QListViewItemIterator (self.listView_dataS)
+            listViewItem = it.current()
+            while listViewItem:
+                if listViewItem.text(1).contains(self.comboBox_classFilter.currentText()) or self.comboBox_classFilter.currentText()=="ALL":
+                    listViewItem.setVisible(True)
+                    listViewItem.setSelectable(True)
+                else:
+                    listViewItem.setVisible(False)
+                    listViewItem.setSelectable(False)
+                it+=1
+                listViewItem = it.current() 
+            """           
 #########################################################################
 ###### Pop-Up ###########################################################
 #########################################################################
@@ -721,6 +794,10 @@ class MainGUI(panicQL):
         while listViewItem: 
             if listViewItem.isSelected():
                 self.m_popup_l_sel.append(str(listViewItem.text(0)))
+                # if a parent of the group, no popup to show 
+                if (self.comboBox_classFilter.currentText()=="GROUP" and \
+                    listViewItem.firstChild()!=None): # is a parent of a group
+                        return
             it+=1
             listViewItem = it.current()
         
@@ -824,7 +901,9 @@ class MainGUI(panicQL):
         """To know which item is selected """
                 
         if listItem:
-            self.m_listView_item_selected=str(listItem.text(0))
+            if self.comboBox_classFilter.currentText()=="GROUP" and listItem.firstChild()!=None: # it'a a parent
+                return
+            else: self.m_listView_item_selected=str(listItem.text(0))
             
     ######### End Pup-Up ########################################################    
     
@@ -1420,8 +1499,38 @@ class MainGUI(panicQL):
                 QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
         
     
-
+    def createCalibs_slot(self):
+        
+        """
+        Given the current data set files, compute the whole master calibration files
+        """
+        
+        fileList = datahandler.dataset.filesDB.GetFilesT("ANY")
+        
+        if len(fileList)>1:
+            #Change cursor
+            self.setCursor(Qt.waitCursor)
+            try:
+                self._task = papi.ReductionSet( fileList, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+                thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
+                thread.start()
+            except:
+                QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
+                raise
+        
     def testSlot(self):
+
+        it=QListViewItemIterator (self.listView_OS)
+        listViewItem = it.current()
+        while listViewItem: 
+            if listViewItem.isSelected():
+                print "1st CHILD=", listViewItem.firstChild()
+                
+            it+=1
+            listViewItem = it.current()
+
+        """
 
         rb = reduce.ReductionBlock (self.m_popup_l_sel)
         if rb.createBadPixelMask(self.m_outputdir+"/badPixelMask"):
@@ -1448,7 +1557,7 @@ class MainGUI(panicQL):
         item.setFontUnderline( True )
         self.textEdit_log.append("HOLA me llamo <mytag> Jose Miguel </mytag>")
 
-        
+        """
     
     #######################################################################################
     # Quick-Look 2: Preprocess frame. If the frame is  MEF, it will be stripped and

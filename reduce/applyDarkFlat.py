@@ -29,6 +29,7 @@
 #              11/03/2010    jmiguel@iaa.es - Added out_dir for output files
 #              18/03/2010    jmiguel@iaa.es - Modified to support only dark subtraction, only flatfielding or both 
 #              15/11/2010    jmiguel@iaa.es - Added normalization to flat-field
+#              16/11/2010    jmiguel@iaa.es - Added support for MEF files
 ################################################################################
 
 ################################################################################
@@ -43,6 +44,7 @@ import time
 
 import misc.fileUtils
 import misc.utils as utils
+import datahandler
 
 # Pyraf modules
 from pyraf import iraf
@@ -50,7 +52,7 @@ from iraf import noao
 from iraf import imred
 from iraf import ccdred
 
-import numpy
+import numpy as np
 
 # Interact with FITS files
 import pyfits
@@ -94,12 +96,12 @@ class ApplyDarkFlat:
         self.__mflat = mflat          # master flat to apply (dome, twlight) - not normalized !!
         self.__bpm = bpm              # not used at the moment
         self.__out_dir = out_dir
-      
+        
     
     def apply(self):
       
         """
-        \brief Apply masters to sci file list
+        \brief Apply masters to science file list
         """   
         log.debug("Start applyDarkFlat")
         
@@ -107,7 +109,14 @@ class ApplyDarkFlat:
         t=utils.clock()
         t.tic()
     
+        # some variables 
         out_suffix=".fits"
+        dmef = False # flag to indicate if dark is a MEF file or not
+        fmef = False # flag to indicate if flat is a MEF file or not
+        next = 1 # number of extension of the MEF file (1=simple FITS file)
+        mode = 1 # mode of the flat frame (if mef, mode of chip 0)
+        
+        # #######################
         # Master DARK reading:
         if self.__mdark!=None:
             if not os.path.exists(self.__mdark):      # check whether input file exists
@@ -115,43 +124,57 @@ class ApplyDarkFlat:
                 sys.exit(1)
             else:
                 dark = pyfits.open(self.__mdark)
-                dark_time=dark[0].header['EXPTIME']
-                dark_data=dark[0].data
+                cdark = datahandler.ClFits (self.__mdark)
+                dark_time=cdark.expTime()
+                #dark_data=dark[0].data
+                if len(dark)>1:
+                    dmef=True
+                    next=len(dark)-1
+                    log.debug("Dark MEF file with %d extensions",next)
                 out_suffix=out_suffix.replace(".fits","_D.fits")
         # No master dark privided, then no dark subtracted
         else:
             dark_data=0
             dark_time=None
             
-        # Master FLAT reading
+       # ######################
+       # Master FLAT reading
         if self.__mflat!=None:    
             if not os.path.exists(self.__mflat):      # check whether input file exists
                 log.error('File %s does not exist', self.__mflat)
                 sys.exit(2)
             else:
                 flat = pyfits.open(self.__mflat)
-                flat_time=flat[0].header['EXPTIME']
-                flat_filter=flat[0].header['FILTER']
-                flat_data=flat[0].data
-                out_suffix=out_suffix.replace(".fits","_F.fits")
-                # ##############################################################################
-                # Normalize the flat (if MEF, all extension is normlized wrt extension/chip 1) #
-                # ##############################################################################
-                median=np.median(flat_data[200:naxis1-200, 200:naxis2-200])
-                mean=np.mean(flat_data[200:naxis1-200, 200:naxis2-200])
+                cflat = datahandler.ClFits (self.__mflat)
+                flat_time=cflat.expTime()
+                flat_filter=cflat.getFilter()
+                #flat_data=flat[0].data
+                if len(flat)>1:
+                    fmef=True
+                    if len(dark)!=len(flat):
+                        raise Exception("Number of extensions does not match in Dark and Flat files!")
+                    else: next=len(flat)-1    
+                    log.debug("Flat MEF file with %d extensions",next)
+                    
+                # compute mode for next normalization (in case of MEF, we normalize all extension wrt chip 0)
+                naxis1=cflat.getNaxis1()
+                naxis2=cflat.getNaxis2()
+                if len(flat)>1: ext=1
+                else: ext=0
+                median=np.median(flat[ext].data[200:naxis1-200, 200:naxis2-200])
+                mean=np.mean(flat[ext].data[200:naxis1-200, 200:naxis2-200])
                 mode=3*median-2*mean
                 log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
-                log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
-                flat_data=flat_data/median
+                log.debug("Flat-field will be normalized by MODE ( %f ) value", mode)
+                out_suffix=out_suffix.replace(".fits","_F.fits")
         else:
             flat_data = 1.0
             flat_time = None
-            flat_filter = None 
-               
-               
+            flat_filter = None
+            mode = 1 
+        
         # Get the user-defined list of flat frames
         framelist = self.__sci_files
-       
         
         # STEP 2: Check the  TYPE and FILTER of each science file
         # If any frame on list missmatch the FILTER, then the procedure will be aborted
@@ -164,65 +187,48 @@ class ApplyDarkFlat:
                 log.error("File '%s' does not exist", iframe)
                 continue  
             f = pyfits.open(iframe)
+            cf= datahandler.ClFits (iframe)
             debug=False
             if (debug):
-              print "Science frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f[0].header['EXPTIME'],f[0].header['OBJECT'], f[0].header['FILTER'])
+              print "Science frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, cf.expTime(), cf.getType(), cf.getFilter())
             # Check FILTER
-            if ( flat_filter!=None and f[0].header['FILTER']!=flat_filter ):
+            if ( flat_filter!=None and cf.getFilter()!=flat_filter):
                 log.error("Error: Task 'applyDarkFlat' found a frame with different FILTER. Skipping frame...")
                 f.close()
                 n_removed=n_removed+1
             else:
+                # check Number of Extension
+                if (len(f)-1)!=next:
+                    raise Exception("File %s does not match the number of extensions (%d)",iframe,next)
+                
                 # Delete old files
                 (path,name)=os.path.split(iframe)
-                newpathname=self.__out_dir+"/"+name.replace(".fits", out_suffix)
+                newpathname=(self.__out_dir+"/"+name.replace(".fits", out_suffix)).replace("//","/")
                 misc.fileUtils.removefiles(newpathname)
-                i_time=float(f[0].header['EXPTIME'])
-                time_scale = i_time / dark_time
-                
-                # ---- nueva version sopporte MEF's ------------------
-                # Cleanup: Remove temporary files
-                scaled_dark="/tmp/scaled_dark.fits"
-                misc.fileUtils.removefiles(scaled_dark)
-                
-                # Compute scaled dark
-                iraf.mscred.mscarith(operand1=self.__mdark,
-                    operand2=time_scale,
-                    op='*',
-                    pixtype='real',
-                    result=scaled_dark,
-                    )
-                
-                # Substract dark
-                iraf.mscred.mscarith(operand1=iframe,
-                    operand2=scaled_dark,
-                    op='-',
-                    pixtype='real',
-                    result=temp_i,
-                    )    
-                    
-                # Divide by normalized master flat
-                iraf.mscred.mscarith(operand1=temp_i,
-                    operand2=master_flat,
-                    op='/',
-                    pixtype='real',
-                    result=newpathname,
-                    )
-                         
-                # ------ version actual --------------
-                
-                # STEP 2.1: Check EXPTIME and apply master DARK and master FLAT
-                if dark_time!=None and i_time!=dark_time:
-                    log.debug("Scaling master dark ...")
-                    f[0].data = (f[0].data - dark_data*float(f[0].header['EXPTIME']/dark[0].header['EXPTIME']) )/flat_data
-                    f[0].header.add_history('Dark subtracted (scaled) %s' %self.__mdark)
-                    if flat_time!=None: f[0].header.add_history('Flat-Fielding with %s' %self.__mflat)
-                else:
-                    log.debug("Not master dark EXPTIME scaling required")
-                    f[0].data = (f[0].data - dark_data)/ flat_data
-                    print "Flat data=", flat_data
-                    if dark_time!=None: f[0].header.add_history('Dark subtracted %s' %self.__mdark)
-                    if flat_time!=None: f[0].header.add_history('Flat-Fielding with %s' %self.__mflat)        
+                i_time=float(cf.expTime()) # all extension have the same TEXP
+                time_scale = float(i_time / dark_time)
+                                
+                for chip in range(0,next):
+                    if next>1:# it means, MEF
+                        dark_data=dark[chip+1].data
+                        flat_data=flat[chip+1].data/mode # normalization wrt chip 0
+                        sci_data=f[chip+1].data 
+                    else:
+                        dark_data=dark[0].data
+                        flat_data=flat[0].data/mode  # normalization
+                        sci_data=f[0].data 
+                                                               
+                    # STEP 2.1: Check EXPTIME and apply master DARK and master FLAT
+                    if time_scale!=1.0: log.debug("Scaling master dark ...")
+                    sci_data = (sci_data - dark_data*time_scale)/flat_data
+                    #store back the new values
+                    if next>1:# it means, MEF
+                        f[chip+1].data=sci_data
+                    else:
+                        f[0].data=sci_data        
+               
+                if dark_time!=None: f[0].header.add_history('Dark subtracted %s' %self.__mdark)
+                if flat_time!=None: f[0].header.add_history('Flat-Fielding with %s' %self.__mflat)        
                             
                 # Write output to outframe (data object actually still points to input data)
                 try:
@@ -254,12 +260,13 @@ def usage ():
     print '       applyDarkFlat.py [options]\n'
     print 'DESCRIPTION'
     print '       Subtract a master dark file or divide by a'
-    print '       master flat field (or both) a list of science files. '
+    print '       master flat field (or both) a list of science files.' 
+    print '       Input Flat will be normalized before dividing by, so it must NOT be normalized'
     print ' '
     print 'OPTIONS'
     print "-s / --source=      Source file list of data frames"
     print "-d / --dark=        Master dark frame to subtract (optional)"
-    print "-f / --flat=        Master (not normalized) flat field to divide by (optional)"
+    print "-f / --flat=        Master (NOT normalized!) flat field to divide by (optional)"
     print "-v                  Verbose debugging output\n"
     print 'VERSION'
     print '       15 Nov 2010 '

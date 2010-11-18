@@ -281,3 +281,15 @@ void panicQL::data_grouping_slot()
 {
 
 }
+
+
+void panicQL::findOS_slot()
+{
+
+}
+
+
+void panicQL::createCalibs_slot()
+{
+
+}

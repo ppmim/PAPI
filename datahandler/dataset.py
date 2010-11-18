@@ -250,6 +250,7 @@ class DataSet:
         """
 
         try:
+            # NOT USED !!! RUN_ID !!! NOT USED 
             #RUNID: The run id may no be specified
             if runId==None or runId=='*':
                 s_run_id="run_id like '%'"
@@ -257,6 +258,13 @@ class DataSet:
             else:
                 s_run_id="run_id=?"
             
+            #Type: The type of the image (ANY, DARK, FLAT,SCIENCE, ....)
+            if type=='ANY':
+                s_type="type>=?"
+                type=""
+            else:
+                s_type="type=?"
+                
             #DetectorID: Detector identifier
             if detectorId=='ANY':
                 s_detectorId="detector_id>=?"
@@ -285,12 +293,12 @@ class DataSet:
             #MJD
             s_mjd="mjd>%s and mjd<%s" %(mjd-delta_time, mjd+delta_time)
             
-            s_select="select filename from dataset where %s and type=? and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_filter, s_texp, s_ar, s_dec, s_mjd)
+            s_select="select filename from dataset where %s and %s and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd)
             print s_select
             cur=self.con.cursor()
             #cur.execute("select filename from dataset where detector_id=? and  type=? and texp>? and texp<?  and filter=? and date=? and run_id=?",
             #                 (detectorId, type, texp-ROUND, texp+ROUND, filter, date, runId))
-            cur.execute(s_select,(detectorId, type, filter))
+            cur.execute(s_select,(detectorId, type, filter,))
             
             rows=cur.fetchall()
             res_list=[]
@@ -406,8 +414,10 @@ class DataSet:
               NOTE: this method is thought to work fine for SCIENCE sequences;
               for calibration sequences need improvements
             
-            Return a list of list, having each list the list of files beloging 
-            to the sequence.
+            Return two lists:
+                 - a list of list of parameters of each list found (OB_ID, OB_PAT,FILTER)
+                 - a of list, having each list the list of files beloging 
+                   to the sequence.
         """
         
         seq_pat_list=[] # list of sequences features (ob_id,ob_pat,filter)

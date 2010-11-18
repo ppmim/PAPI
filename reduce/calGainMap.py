@@ -125,12 +125,13 @@ class GainMap:
         JMIbanez, IAA-CSIC
         
     """
-    def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  bpm=None):
+    def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  bpm=None, do_normalization=True):
          
-        self.flat = flatfield  # Flat-field image (NOT normalized !!!!, because normalization is done here)
+        self.flat = flatfield  # Flat-field image (normalized or not, because optionaly, normalization can be done here)
         self.output_file_dir = os.path.dirname(output_filename)
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
+        self.do_norm=do_normalization
         
         # Some default parameter values
         self.m_MINGAIN = 0.5   #pixels with sensitivity < MINGAIN are assumed bad 
@@ -176,11 +177,13 @@ class GainMap:
             # Normalize the flat (if MEF, all extension is normlized wrt extension/chip 1) #
             # ##############################################################################
             if chip==0:
-                median=np.median(flatM[200:naxis1-200, 200:naxis2-200])
-                mean=np.mean(flatM[200:naxis1-200, 200:naxis2-200])
-                mode=3*median-2*mean
-                log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
-                log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
+                if self.do_norm:
+                    median=np.median(flatM[200:naxis1-200, 200:naxis2-200])
+                    mean=np.mean(flatM[200:naxis1-200, 200:naxis2-200])
+                    mode=3*median-2*mean
+                    log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
+                    log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
+                else: median=1.0 # maybe normalization is already done...
             flatM=flatM/median   
             
             # Check for bad pixel 
@@ -261,7 +264,9 @@ class GainMap:
         
         fo.writeto(output,output_verify='ignore')
         fo.close(output_verify='ignore')
-        del fo        
+        del fo
+                
+        return output
                                     
 ################################################################################
 # main

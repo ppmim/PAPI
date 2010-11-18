@@ -11,6 +11,7 @@
 #              14/12/2009    jmiguel@iaa.es - Skip non DOME flats and cotinue working with the good ones
 #              12/02/2010    jmiguel@iaa.es - Check min number of dome flats
 #              03/03/2010    jmiguel@iaa.es - Added READMODE checking 
+#              17/11/2010    jmiguel@iaa.es - modified normalization by mode (instead of mean) and added optional flag for it
 # 
 # TODO:
 #    - include BPM creation
@@ -89,13 +90,13 @@ class MasterDomeFlat:
   
     """
     
-    def __init__(self, input_files, output_dir, output_filename="/tmp/mdflat.fits", config_par=None):
+    def __init__(self, input_files, output_dir, output_filename="/tmp/mdflat.fits", normal=True):
         """ Initialization method """
         
         self.__input_files = input_files
         self.__output_file_dir = output_dir
         self.__output_filename = output_filename  # full filename (path+filename)
-        self.__config_par = config_par
+        self.__normal = normal
         self.MIN_FLATS = 4
         
     
@@ -250,25 +251,28 @@ class MasterDomeFlat:
                     result = flat_diff
                     )
             
-            # STEP 5: Normalize the flat-field
+            # STEP 5: Normalize (if required) the flat-field wrt chip 0
             # Compute the mean of the image
-            log.debug("Normalizing master flat frame...")
             # mean has the array of mean values for each extension
-            mean_values = iraf.mscred.mscstat (
-                images=flat_diff,
-                fields='mean', Stdout=1)
+            if self.__normal:
+                log.debug("Normalizing master flat frame wrt chip 0...") 
+                values = iraf.mscred.mscstat(
+                    images=flat_diff,
+                    fields='mode', Stdout=1)
             
-            #take the mean of all chips/extensions
-            mean=0
-            for i in range(1,len(mean_values)):
-                mean+=float(mean_values[i])
-            mean=mean/i
+                #take the mean of all chips/extensions
+                #mean=0
+                #for i in range(1,len(values)):
+                #    mean+=float(values[i])
+                #mean=mean/i
+                mode = values[1] # wrt chip 0
+            else: mode=1
             
             # Compute normalized flat
             self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
             misc.fileUtils.removefiles(self.__output_filename)
             iraf.mscred.mscarith(operand1=flat_diff,
-                        operand2=mean,
+                        operand2=mode,
                         op='/',
                         result=self.__output_filename,
                         )
@@ -281,18 +285,20 @@ class MasterDomeFlat:
             
             # STEP 5: Normalize the flat-field
             # Compute the mean of the image
-            log.debug("Normalizing master flat frame...")
-            # mean has the array of mean values for each extension
-            mean = float(iraf.imstat (
-                images=flat_diff,
-                fields='mean', Stdout=1)[1])
+            if self.__normal:
+                log.debug("Normalizing master flat frame...")
+                # mean has the array of mean values for each extension
+                mode = float(iraf.imstat (
+                    images=flat_diff,
+                    fields='mode', Stdout=1)[1])
+                    
+            else: mode=1
                 
-            
             # Compute normalized flat
             self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
             misc.fileUtils.removefiles(self.__output_filename)
             iraf.imarith(operand1=flat_diff,
-                        operand2=mean,
+                        operand2=mode,
                         op='/',
                         result=self.__output_filename,
                         )                  
@@ -301,7 +307,9 @@ class MasterDomeFlat:
         iraf.chdir()
         
         flatframe = pyfits.open(self.__output_filename,'update')
-        flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
+        if self.__normal: flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
+        else: flatframe[0].header.add_history('Computed master dome flat (lamp_on-lamp_off)' )
+        
         flatframe[0].header.add_history('lamp_on  files: %s' %domelist_lampon )
         flatframe[0].header.add_history('lamp_off files: %s' %domelist_lampoff )
         #Add a new keyword-->PAPITYPE

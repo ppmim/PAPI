@@ -91,37 +91,52 @@ def startDisplay2():
 ################################################################################
 # Show the current frame into DS9 display
 
-def showFrame(frame):
-
-  f=datahandler.ClFits(frame)
-
+def showFrame(frame, del_all=True):
+  """
+  Show in DS9 display the file/s given in the input
+  """
+  
   #Check display
   startDisplay()
   
-  if (f.mef==True):
-        # Multi-Extension FITS files
-        if (f.isDark()):
-            # (Hawki) Dark files don't have WCS information required by ds9 mosaicimage
-            os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
-            os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
-            os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
-            os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
-            os.system(("%s/xpaset -p ds9 file multiframe %s" % (ds9_path, frame)))
-        else:
-            # Beware, 'mosaicimage' ds9 facility require WCS information 
-            os.system(("%s/xpaset -p ds9 file mosaicimage %s" % (ds9_path, frame)))
-            os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
-            os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
-            os.system(("%s/xpaset -p ds9 zoom to fit" % ds9_path))
-  else:
-        # Single FITS files
+  # frame could be a single file or a file list 
+  if type(frame)==type(list()): 
+        fileList = frame  # list of sources files to be used in sky-flat computation
         os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
-        os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
-        os.system(("%s/xpaset -p ds9 single" % ds9_path))
-        os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
-        os.system(("%s/xpaset -p ds9 file %s" %(ds9_path, frame)))
-        os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
-        os.system(("%s/xpaset -p ds9 zoom to fit" % ds9_path))
+        delete_all=False
+  elif os.path.isfile(frame):
+        delete_all=del_all
+        fileList=[frame]
+  
+  for file in fileList:
+        f=datahandler.ClFits(file)
+        if (f.mef==True):
+                # Multi-Extension FITS files
+                if (f.isDark() or f.isMasterDark()):
+                    # (Hawki) Dark files don't have WCS information required by ds9 mosaicimage
+                    if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
+                    os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
+                    os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
+                    os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
+                    os.system(("%s/xpaset -p ds9 file multiframe %s" % (ds9_path, file)))
+                else:
+                    # Beware, 'mosaicimage' ds9 facility require WCS information
+                    if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
+                    os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
+                    os.system(("%s/xpaset -p ds9 single" % ds9_path)) 
+                    os.system(("%s/xpaset -p ds9 file mosaicimage %s" % (ds9_path, file)))
+                    os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
+                    os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
+                    os.system(("%s/xpaset -p ds9 zoom to fit" % ds9_path))
+        else:
+                # Single FITS files
+                if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
+                os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
+                os.system(("%s/xpaset -p ds9 single" % ds9_path))
+                os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
+                os.system(("%s/xpaset -p ds9 file %s" %(ds9_path, file)))
+                os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
+                os.system(("%s/xpaset -p ds9 zoom to fit" % ds9_path))
 
 
 ################################################################################

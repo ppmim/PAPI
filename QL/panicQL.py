@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon Oct 18 18:28:56 2010
+# Created: Wed Nov 17 17:53:43 2010
 #      by: The PyQt User Interface Compiler (pyuic) 3.14.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -10768,9 +10768,6 @@ class panicQL(QMainWindow):
         textLabel4_2_font.setBold(1)
         self.textLabel4_2.setFont(textLabel4_2_font)
 
-        self.pushButton_tempD = QPushButton(self.tab,"pushButton_tempD")
-        self.pushButton_tempD.setGeometry(QRect(20,93,110,23))
-
         self.pushButton_outputD = QPushButton(self.tab,"pushButton_outputD")
         self.pushButton_outputD.setGeometry(QRect(19,61,110,23))
 
@@ -10784,12 +10781,6 @@ class panicQL(QMainWindow):
 
         self.textLabel1_3 = QLabel(self.tab,"textLabel1_3")
         self.textLabel1_3.setGeometry(QRect(430,10,50,20))
-
-        self.pushButton_clear = QPushButton(self.tab,"pushButton_clear")
-        self.pushButton_clear.setGeometry(QRect(848,390,70,23))
-        pushButton_clear_font = QFont(self.pushButton_clear.font())
-        pushButton_clear_font.setBold(1)
-        self.pushButton_clear.setFont(pushButton_clear_font)
 
         self.pushButton_remove = QPushButton(self.tab,"pushButton_remove")
         self.pushButton_remove.setGeometry(QRect(755,390,70,23))
@@ -10814,13 +10805,6 @@ class panicQL(QMainWindow):
         textLabel4_2_2_font.setBold(1)
         self.textLabel4_2_2.setFont(textLabel4_2_2_font)
 
-        self.checkBox_process = QCheckBox(self.tab,"checkBox_process")
-        self.checkBox_process.setGeometry(QRect(631,110,290,20))
-
-        self.pushButton_start_proc = QPushButton(self.tab,"pushButton_start_proc")
-        self.pushButton_start_proc.setGeometry(QRect(777,160,140,23))
-        self.pushButton_start_proc.setPaletteBackgroundColor(QColor(244,156,137))
-
         self.pushButton_file_filter = QPushButton(self.tab,"pushButton_file_filter")
         self.pushButton_file_filter.setGeometry(QRect(566,30,120,23))
 
@@ -10833,34 +10817,56 @@ class panicQL(QMainWindow):
         self.comboBox_QL_Mode = QComboBox(0,self.tab,"comboBox_QL_Mode")
         self.comboBox_QL_Mode.setGeometry(QRect(641,160,110,21))
 
+        self.pushButton_clear = QPushButton(self.tab,"pushButton_clear")
+        self.pushButton_clear.setGeometry(QRect(848,390,70,23))
+        pushButton_clear_font = QFont(self.pushButton_clear.font())
+        pushButton_clear_font.setBold(1)
+        self.pushButton_clear.setFont(pushButton_clear_font)
+
+        self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
+        self.comboBox_classFilter.setGeometry(QRect(220,172,110,21))
+
+        self.pushButton_tempD = QPushButton(self.tab,"pushButton_tempD")
+        self.pushButton_tempD.setGeometry(QRect(20,93,110,23))
+
         self.listView_dataS = QListView(self.tab,"listView_dataS")
         self.listView_dataS.addColumn(self.__tr("File                                                        "))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
         self.listView_dataS.addColumn(self.__tr("Class                            "))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
         self.listView_dataS.addColumn(self.__tr("Filter     "))
-        self.listView_dataS.addColumn(self.__tr("TExp"))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
+        self.listView_dataS.addColumn(self.__tr("ExpT"))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
         self.listView_dataS.addColumn(self.__tr("Date-Obs                     "))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
         self.listView_dataS.addColumn(self.__tr("Object         "))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
         self.listView_dataS.addColumn(self.__tr("RA                       "))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
         self.listView_dataS.addColumn(self.__tr("Dec                     "))
+        self.listView_dataS.header().setResizeEnabled(0,self.listView_dataS.header().count() - 1)
         self.listView_dataS.setGeometry(QRect(0,200,920,185))
         self.listView_dataS.setSelectionMode(QListView.Extended)
         self.listView_dataS.setAllColumnsShowFocus(1)
         self.listView_dataS.setRootIsDecorated(1)
 
-        self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
-        self.comboBox_classFilter.setGeometry(QRect(220,172,110,21))
+        self.checkBox_process = QCheckBox(self.tab,"checkBox_process")
+        self.checkBox_process.setGeometry(QRect(631,110,290,20))
+
+        self.pushButton_start_proc = QPushButton(self.tab,"pushButton_start_proc")
+        self.pushButton_start_proc.setGeometry(QRect(777,160,140,23))
+        self.pushButton_start_proc.setPaletteBackgroundColor(QColor(244,156,137))
+
+        self.pushButton_createCalibs = QPushButton(self.tab,"pushButton_createCalibs")
+        self.pushButton_createCalibs.setGeometry(QRect(480,160,140,23))
+        self.pushButton_createCalibs.setPaletteBackgroundColor(QColor(244,156,137))
         self.tabWidget3.insertTab(self.tab,QString.fromLatin1(""))
 
         self.TabPage = QWidget(self.tabWidget3,"TabPage")
 
         self.buttonGroup2_2 = QButtonGroup(self.TabPage,"buttonGroup2_2")
         self.buttonGroup2_2.setGeometry(QRect(231,10,300,111))
-
-        self.textLabel4_3 = QLabel(self.buttonGroup2_2,"textLabel4_3")
-        self.textLabel4_3.setGeometry(QRect(20,30,110,20))
-
-        self.textLabel4_3_2 = QLabel(self.buttonGroup2_2,"textLabel4_3_2")
-        self.textLabel4_3_2.setGeometry(QRect(20,54,100,20))
 
         self.lineEdit_ra_dec_near_offset = QLineEdit(self.buttonGroup2_2,"lineEdit_ra_dec_near_offset")
         self.lineEdit_ra_dec_near_offset.setGeometry(QRect(137,30,50,21))
@@ -10873,13 +10879,19 @@ class panicQL(QMainWindow):
         self.lineEdit_time_near_offset.setGeometry(QRect(137,54,50,21))
         self.lineEdit_time_near_offset.setPaletteBackgroundColor(QColor(255,255,137))
 
-        self.checkBox_data_grouping = QCheckBox(self.buttonGroup2_2,"checkBox_data_grouping")
-        self.checkBox_data_grouping.setGeometry(QRect(18,80,270,19))
-        self.checkBox_data_grouping.setChecked(0)
-
         self.textLabel5_2 = QLabel(self.buttonGroup2_2,"textLabel5_2")
         self.textLabel5_2.setGeometry(QRect(191,56,58,20))
         self.textLabel5_2.setMidLineWidth(1)
+
+        self.textLabel4_3 = QLabel(self.buttonGroup2_2,"textLabel4_3")
+        self.textLabel4_3.setGeometry(QRect(20,30,110,20))
+
+        self.textLabel4_3_2 = QLabel(self.buttonGroup2_2,"textLabel4_3_2")
+        self.textLabel4_3_2.setGeometry(QRect(20,54,100,20))
+
+        self.checkBox_data_grouping = QCheckBox(self.buttonGroup2_2,"checkBox_data_grouping")
+        self.checkBox_data_grouping.setGeometry(QRect(18,80,270,19))
+        self.checkBox_data_grouping.setChecked(0)
 
         self.groupBox4 = QGroupBox(self.TabPage,"groupBox4")
         self.groupBox4.setGeometry(QRect(16,10,200,111))
@@ -10892,23 +10904,8 @@ class panicQL(QMainWindow):
         self.checkBox7_2_2_2.setGeometry(QRect(20,47,130,19))
         self.checkBox7_2_2_2.setChecked(1)
 
-        self.buttonGroup3 = QButtonGroup(self.TabPage,"buttonGroup3")
-        self.buttonGroup3.setGeometry(QRect(550,10,350,110))
-
-        self.textLabel1_2 = QLabel(self.buttonGroup3,"textLabel1_2")
-        self.textLabel1_2.setGeometry(QRect(10,30,58,20))
-
-        self.checkBox_doRegrig = QCheckBox(self.buttonGroup3,"checkBox_doRegrig")
-        self.checkBox_doRegrig.setGeometry(QRect(18,80,140,19))
-
-        self.comboBox_AstromCatalog = QComboBox(0,self.buttonGroup3,"comboBox_AstromCatalog")
-        self.comboBox_AstromCatalog.setGeometry(QRect(10,50,90,21))
-
         self.groupBox1 = QGroupBox(self.TabPage,"groupBox1")
         self.groupBox1.setGeometry(QRect(352,132,560,280))
-
-        self.comboBox1 = QComboBox(0,self.groupBox1,"comboBox1")
-        self.comboBox1.setGeometry(QRect(21,161,118,21))
 
         self.checkBox8_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_2")
         self.checkBox8_2_2.setGeometry(QRect(24,81,180,19))
@@ -10954,15 +10951,11 @@ class panicQL(QMainWindow):
         self.radioButton26.setGeometry(QRect(11,20,60,20))
         self.radioButton26.setChecked(1)
 
+        self.comboBox1 = QComboBox(0,self.groupBox1,"comboBox1")
+        self.comboBox1.setGeometry(QRect(21,161,118,21))
+
         self.groupBox3 = QGroupBox(self.TabPage,"groupBox3")
         self.groupBox3.setGeometry(QRect(11,130,330,280))
-
-        self.checkBox10 = QCheckBox(self.groupBox3,"checkBox10")
-        self.checkBox10.setGeometry(QRect(31,161,180,19))
-
-        self.checkBox_show_imgs = QCheckBox(self.groupBox3,"checkBox_show_imgs")
-        self.checkBox_show_imgs.setGeometry(QRect(31,26,240,20))
-        self.checkBox_show_imgs.setChecked(1)
 
         self.checkBox10_2 = QCheckBox(self.groupBox3,"checkBox10_2")
         self.checkBox10_2.setGeometry(QRect(32,210,200,19))
@@ -10973,11 +10966,30 @@ class panicQL(QMainWindow):
         self.checkBox8_3 = QCheckBox(self.groupBox3,"checkBox8_3")
         self.checkBox8_3.setGeometry(QRect(31,86,200,19))
 
+        self.checkBox9 = QCheckBox(self.groupBox3,"checkBox9")
+        self.checkBox9.setGeometry(QRect(31,136,190,19))
+
+        self.checkBox_show_imgs = QCheckBox(self.groupBox3,"checkBox_show_imgs")
+        self.checkBox_show_imgs.setGeometry(QRect(31,26,250,20))
+        self.checkBox_show_imgs.setChecked(1)
+
         self.checkBox8 = QCheckBox(self.groupBox3,"checkBox8")
         self.checkBox8.setGeometry(QRect(31,111,180,19))
 
-        self.checkBox9 = QCheckBox(self.groupBox3,"checkBox9")
-        self.checkBox9.setGeometry(QRect(31,136,190,19))
+        self.checkBox10 = QCheckBox(self.groupBox3,"checkBox10")
+        self.checkBox10.setGeometry(QRect(31,161,180,19))
+
+        self.buttonGroup3 = QButtonGroup(self.TabPage,"buttonGroup3")
+        self.buttonGroup3.setGeometry(QRect(550,10,350,110))
+
+        self.textLabel1_2 = QLabel(self.buttonGroup3,"textLabel1_2")
+        self.textLabel1_2.setGeometry(QRect(10,30,58,20))
+
+        self.checkBox_doRegrig = QCheckBox(self.buttonGroup3,"checkBox_doRegrig")
+        self.checkBox_doRegrig.setGeometry(QRect(18,80,140,19))
+
+        self.comboBox_AstromCatalog = QComboBox(0,self.buttonGroup3,"comboBox_AstromCatalog")
+        self.comboBox_AstromCatalog.setGeometry(QRect(10,50,90,21))
         self.tabWidget3.insertTab(self.TabPage,QString.fromLatin1(""))
 
         self.tab_2 = QWidget(self.tabWidget3,"tab_2")
@@ -11084,47 +11096,14 @@ class panicQL(QMainWindow):
 
         self.TabPage_2 = QWidget(self.tabWidget3,"TabPage_2")
 
-        self.pixmapLabel1 = QLabel(self.TabPage_2,"pixmapLabel1")
-        self.pixmapLabel1.setGeometry(QRect(760,20,151,110))
-        self.pixmapLabel1.setPixmap(self.image0)
-        self.pixmapLabel1.setScaledContents(1)
-
-        self.pushButton_Darks_4 = QPushButton(self.TabPage_2,"pushButton_Darks_4")
-        self.pushButton_Darks_4.setGeometry(QRect(13,20,160,23))
-        pushButton_Darks_4_font = QFont(self.pushButton_Darks_4.font())
-        pushButton_Darks_4_font.setBold(1)
-        self.pushButton_Darks_4.setFont(pushButton_Darks_4_font)
-
         self.textLabel1_5 = QLabel(self.TabPage_2,"textLabel1_5")
         self.textLabel1_5.setGeometry(QRect(13,267,70,20))
-
-        self.listView_2 = QListView(self.TabPage_2,"listView_2")
-        self.listView_2.addColumn(self.__tr("File"))
-        self.listView_2.addColumn(self.__tr("Class"))
-        self.listView_2.addColumn(self.__tr("Filter"))
-        self.listView_2.addColumn(self.__tr("TEXP"))
-        self.listView_2.addColumn(self.__tr("Origin"))
-        self.listView_2.setGeometry(QRect(10,57,480,180))
 
         self.textLabel2 = QLabel(self.TabPage_2,"textLabel2")
         self.textLabel2.setGeometry(QRect(13,297,130,20))
 
         self.comboBox5 = QComboBox(0,self.TabPage_2,"comboBox5")
         self.comboBox5.setGeometry(QRect(150,298,92,22))
-
-        self.pushButton10_4 = QPushButton(self.TabPage_2,"pushButton10_4")
-        self.pushButton10_4.setGeometry(QRect(10,380,108,30))
-        self.pushButton10_4.setPaletteBackgroundColor(QColor(244,159,110))
-        pushButton10_4_font = QFont(self.pushButton10_4.font())
-        pushButton10_4_font.setBold(1)
-        self.pushButton10_4.setFont(pushButton10_4_font)
-
-        self.pushButton26 = QPushButton(self.TabPage_2,"pushButton26")
-        self.pushButton26.setGeometry(QRect(10,344,111,30))
-        self.pushButton26.setPaletteBackgroundColor(QColor(244,205,98))
-
-        self.comboBox6 = QComboBox(0,self.TabPage_2,"comboBox6")
-        self.comboBox6.setGeometry(QRect(150,267,120,22))
 
         self.listView_config = QListView(self.TabPage_2,"listView_config")
         self.listView_config.addColumn(self.__tr("Task"))
@@ -11134,8 +11113,57 @@ class panicQL(QMainWindow):
         self.listView_config.setGeometry(QRect(300,270,610,150))
         self.listView_config.setDefaultRenameAction(QListView.Accept)
 
+        self.textLabel1_6 = QLabel(self.TabPage_2,"textLabel1_6")
+        self.textLabel1_6.setGeometry(QRect(18,28,170,20))
+
+        self.pushButton_findOS = QPushButton(self.TabPage_2,"pushButton_findOS")
+        self.pushButton_findOS.setGeometry(QRect(230,20,160,23))
+        pushButton_findOS_font = QFont(self.pushButton_findOS.font())
+        pushButton_findOS_font.setBold(1)
+        self.pushButton_findOS.setFont(pushButton_findOS_font)
+
+        self.pixmapLabel1 = QLabel(self.TabPage_2,"pixmapLabel1")
+        self.pixmapLabel1.setGeometry(QRect(850,10,75,55))
+        self.pixmapLabel1.setPixmap(self.image0)
+        self.pixmapLabel1.setScaledContents(1)
+
         self.checkBox22 = QCheckBox(self.TabPage_2,"checkBox22")
-        self.checkBox22.setGeometry(QRect(503,219,280,20))
+        self.checkBox22.setGeometry(QRect(430,30,280,20))
+
+        self.listView_OS = QListView(self.TabPage_2,"listView_OS")
+        self.listView_OS.addColumn(self.__tr("File"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.addColumn(self.__tr("Class"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.addColumn(self.__tr("Filter"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.addColumn(self.__tr("ExpT"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.addColumn(self.__tr("Data-Obs"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.addColumn(self.__tr("Object"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.addColumn(self.__tr("RA"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.addColumn(self.__tr("Dec"))
+        self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
+        self.listView_OS.setGeometry(QRect(10,70,920,180))
+        self.listView_OS.setShowSortIndicator(0)
+        self.listView_OS.setRootIsDecorated(1)
+
+        self.pushButton26 = QPushButton(self.TabPage_2,"pushButton26")
+        self.pushButton26.setGeometry(QRect(10,344,111,30))
+        self.pushButton26.setPaletteBackgroundColor(QColor(244,205,98))
+
+        self.pushButton10_4 = QPushButton(self.TabPage_2,"pushButton10_4")
+        self.pushButton10_4.setGeometry(QRect(10,380,108,30))
+        self.pushButton10_4.setPaletteBackgroundColor(QColor(244,159,110))
+        pushButton10_4_font = QFont(self.pushButton10_4.font())
+        pushButton10_4_font.setBold(1)
+        self.pushButton10_4.setFont(pushButton10_4_font)
+
+        self.comboBox6 = QComboBox(0,self.TabPage_2,"comboBox6")
+        self.comboBox6.setGeometry(QRect(150,267,120,22))
         self.tabWidget3.insertTab(self.TabPage_2,QString.fromLatin1(""))
 
         self.fileOpenAction = QAction(self,"fileOpenAction")
@@ -11285,6 +11313,9 @@ class panicQL(QMainWindow):
         self.connect(self.toolsDS9_displayAction,SIGNAL("activated()"),self.start_ds9_slot)
         self.connect(self.toolsIRAF_consoleAction,SIGNAL("activated()"),self.iraf_console_slot)
         self.connect(self.checkBox_data_grouping,SIGNAL("clicked()"),self.data_grouping_slot)
+        self.connect(self.pushButton_findOS,SIGNAL("clicked()"),self.findOS_slot)
+        self.connect(self.listView_OS,SIGNAL("rightButtonPressed(QListViewItem*,const QPoint&,int)"),self.testSlot)
+        self.connect(self.pushButton_createCalibs,SIGNAL("clicked()"),self.createCalibs_slot)
 
 
     def languageChange(self):
@@ -11298,18 +11329,13 @@ class panicQL(QMainWindow):
         QToolTip.add(self.checkBox_outDir_autocheck,self.__tr("Autocheck for new incoming images"))
         self.textLabel1.setText(self.__tr("<b>Data List  View</b>"))
         self.textLabel4_2.setText(self.__tr("Class Filter"))
-        self.pushButton_tempD.setText(self.__tr("Temporary Dir"))
         self.pushButton_outputD.setText(self.__tr("Output Dir"))
         self.textLabel2_3.setText(self.__tr("Last File :"))
         self.textLabel1_3.setText(self.__tr("Check"))
-        self.pushButton_clear.setText(self.__tr("Clear All"))
-        QToolTip.add(self.pushButton_clear,self.__tr("Clear list view panel, but not files on disk"))
         self.pushButton_remove.setText(self.__tr("Remove"))
         QToolTip.add(self.pushButton_remove,self.__tr("Remove data file from the list view, but keeping on disk","Remove data file from the list view, but keeping on disk"))
         self.pushButton_add.setText(self.__tr("Add..."))
         self.textLabel4_2_2.setText(self.__tr("QL Mode"))
-        self.checkBox_process.setText(self.__tr("Process raw images when detected"))
-        self.pushButton_start_proc.setText(self.__tr("START processing"))
         self.pushButton_file_filter.setText(self.__tr("Filename Filter"))
         self.textLabel4.setText(self.__tr("Files in queue"))
         self.pushButton_dataSourceD.setText(self.__tr("Input Dir"))
@@ -11322,14 +11348,8 @@ class panicQL(QMainWindow):
         self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_2"))
         self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_3"))
         QToolTip.add(self.comboBox_QL_Mode,self.__tr("Filter data sources list using its class/type"))
-        self.listView_dataS.header().setLabel(0,self.__tr("File                                                        "))
-        self.listView_dataS.header().setLabel(1,self.__tr("Class                            "))
-        self.listView_dataS.header().setLabel(2,self.__tr("Filter     "))
-        self.listView_dataS.header().setLabel(3,self.__tr("TExp"))
-        self.listView_dataS.header().setLabel(4,self.__tr("Date-Obs                     "))
-        self.listView_dataS.header().setLabel(5,self.__tr("Object         "))
-        self.listView_dataS.header().setLabel(6,self.__tr("RA                       "))
-        self.listView_dataS.header().setLabel(7,self.__tr("Dec                     "))
+        self.pushButton_clear.setText(self.__tr("Clear All"))
+        QToolTip.add(self.pushButton_clear,self.__tr("Clear list view panel, but not files on disk"))
         self.comboBox_classFilter.clear()
         self.comboBox_classFilter.insertItem(self.__tr("ALL"))
         self.comboBox_classFilter.insertItem(self.__tr("DARK"))
@@ -11337,38 +11357,34 @@ class panicQL(QMainWindow):
         self.comboBox_classFilter.insertItem(self.__tr("TW_FLAT"))
         self.comboBox_classFilter.insertItem(self.__tr("SCIENCE"))
         self.comboBox_classFilter.insertItem(self.__tr("REDUCED"))
+        self.comboBox_classFilter.insertItem(self.__tr("GROUP"))
         QToolTip.add(self.comboBox_classFilter,self.__tr("Filter data sources list using its class/type"))
+        self.pushButton_tempD.setText(self.__tr("Temporary Dir"))
+        self.listView_dataS.header().setLabel(0,self.__tr("File                                                        "))
+        self.listView_dataS.header().setLabel(1,self.__tr("Class                            "))
+        self.listView_dataS.header().setLabel(2,self.__tr("Filter     "))
+        self.listView_dataS.header().setLabel(3,self.__tr("ExpT"))
+        self.listView_dataS.header().setLabel(4,self.__tr("Date-Obs                     "))
+        self.listView_dataS.header().setLabel(5,self.__tr("Object         "))
+        self.listView_dataS.header().setLabel(6,self.__tr("RA                       "))
+        self.listView_dataS.header().setLabel(7,self.__tr("Dec                     "))
+        self.checkBox_process.setText(self.__tr("Process raw images when detected"))
+        self.pushButton_start_proc.setText(self.__tr("START processing"))
+        self.pushButton_createCalibs.setText(self.__tr("Create Calibrations"))
         self.tabWidget3.changeTab(self.tab,self.__tr("Main"))
         self.buttonGroup2_2.setTitle(self.__tr("Data Grouping"))
-        self.textLabel4_3.setText(self.__tr("RA,Dec offsets"))
-        self.textLabel4_3_2.setText(self.__tr("Time offsets"))
         self.lineEdit_ra_dec_near_offset.setText(self.__tr("150"))
         self.textLabel5.setText(self.__tr("arcsecs"))
         self.lineEdit_time_near_offset.setText(self.__tr("900"))
+        self.textLabel5_2.setText(self.__tr("secs"))
+        self.textLabel4_3.setText(self.__tr("RA,Dec offsets"))
+        self.textLabel4_3_2.setText(self.__tr("Time offsets"))
         self.checkBox_data_grouping.setText(self.__tr("Header (POINT_NO, DITH_NO, EXPO_NO)"))
         QToolTip.add(self.checkBox_data_grouping,self.__tr("Use header keywords POINT_NO, DITH_NO, EXPO_NO for data grouping"))
-        self.textLabel5_2.setText(self.__tr("secs"))
         self.groupBox4.setTitle(self.__tr("Common settings"))
         self.checkBox7_2_2.setText(self.__tr("Check header"))
         self.checkBox7_2_2_2.setText(self.__tr("Create Log file"))
-        self.buttonGroup3.setTitle(self.__tr("Astrometry"))
-        self.textLabel1_2.setText(self.__tr("Catalog"))
-        self.checkBox_doRegrig.setText(self.__tr("Apply (re-grid)"))
-        self.comboBox_AstromCatalog.clear()
-        self.comboBox_AstromCatalog.insertItem(self.__tr("2MASS"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("USNO-B1"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("GSC 2.2"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("SDSS-R5"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("UCAC-2"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("FILE"))
         self.groupBox1.setTitle(self.__tr("Pre-reduction Mode"))
-        self.comboBox1.clear()
-        self.comboBox1.insertItem(self.__tr("1-Current frame"))
-        self.comboBox1.insertItem(self.__tr("2-frames"))
-        self.comboBox1.insertItem(self.__tr("3-frames"))
-        self.comboBox1.insertItem(self.__tr("4-frames"))
-        self.comboBox1.insertItem(self.__tr("5-frames"))
-        self.comboBox1.setCurrentItem(3)
         self.checkBox8_2_2.setText(self.__tr("Apply Twlight-Flat"))
         self.checkBox8_2_3_2_2.setText(self.__tr("Quality measurements  (background, psf, ....)"))
         self.textLabel3.setText(self.__tr("# sky nearest frames"))
@@ -11382,14 +11398,31 @@ class panicQL(QMainWindow):
         self.radioButton25_2.setText(self.__tr("Grouping using OT keywords"))
         self.radioButton25.setText(self.__tr("Automatic grouping (ra,dec,mjd, filter, ...)"))
         self.radioButton26.setText(self.__tr("No"))
+        self.comboBox1.clear()
+        self.comboBox1.insertItem(self.__tr("1-Current frame"))
+        self.comboBox1.insertItem(self.__tr("2-frames"))
+        self.comboBox1.insertItem(self.__tr("3-frames"))
+        self.comboBox1.insertItem(self.__tr("4-frames"))
+        self.comboBox1.insertItem(self.__tr("5-frames"))
+        self.comboBox1.setCurrentItem(3)
         self.groupBox3.setTitle(self.__tr("Lazy Mode"))
-        self.checkBox10.setText(self.__tr("Subtract nearest sky"))
-        self.checkBox_show_imgs.setText(self.__tr("Only show new images when detected"))
         self.checkBox10_2.setText(self.__tr("Apply 'static' Astrometry"))
         self.checkBox7.setText(self.__tr("Substract dark"))
         self.checkBox8_3.setText(self.__tr("Apply Bad Pixel Mask (BPM)"))
-        self.checkBox8.setText(self.__tr("Flat-Field"))
         self.checkBox9.setText(self.__tr("Subtract consecutive frames"))
+        self.checkBox_show_imgs.setText(self.__tr("Only show new images when detected"))
+        self.checkBox8.setText(self.__tr("Flat-Field"))
+        self.checkBox10.setText(self.__tr("Subtract nearest sky"))
+        self.buttonGroup3.setTitle(self.__tr("Astrometry"))
+        self.textLabel1_2.setText(self.__tr("Catalog"))
+        self.checkBox_doRegrig.setText(self.__tr("Apply (re-grid)"))
+        self.comboBox_AstromCatalog.clear()
+        self.comboBox_AstromCatalog.insertItem(self.__tr("2MASS"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("USNO-B1"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("GSC 2.2"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("SDSS-R5"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("UCAC-2"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("FILE"))
         self.tabWidget3.changeTab(self.TabPage,self.__tr("QL Settings"))
         self.pushButton_Darks_add.setText(self.__tr("Add..."))
         self.pushButton_DomeF_add.setText(self.__tr("Add..."))
@@ -11410,25 +11443,12 @@ class panicQL(QMainWindow):
         self.textLabel1_4_2_2.setText(self.__tr("<b>Sky Flat</b>"))
         self.pushButton_test1.setText(self.__tr("Test1"))
         self.tabWidget3.changeTab(self.tab_2,self.__tr("Calibrations"))
-        self.pushButton_Darks_4.setText(self.__tr("Science Files..."))
         self.textLabel1_5.setText(self.__tr("<b>Data Type</b>"))
-        self.listView_2.header().setLabel(0,self.__tr("File"))
-        self.listView_2.header().setLabel(1,self.__tr("Class"))
-        self.listView_2.header().setLabel(2,self.__tr("Filter"))
-        self.listView_2.header().setLabel(3,self.__tr("TEXP"))
-        self.listView_2.header().setLabel(4,self.__tr("Origin"))
         self.textLabel2.setText(self.__tr("<b>Reduction Schema</b>"))
         self.comboBox5.clear()
         self.comboBox5.insertItem(self.__tr("Basic"))
         self.comboBox5.insertItem(self.__tr("Pre-advanced"))
         self.comboBox5.insertItem(self.__tr("Advanced"))
-        self.pushButton10_4.setText(self.__tr("Reduce"))
-        self.pushButton26.setText(self.__tr("Create DR-File"))
-        self.comboBox6.clear()
-        self.comboBox6.insertItem(self.__tr("Sparse Field"))
-        self.comboBox6.insertItem(self.__tr("Crowded Field"))
-        self.comboBox6.insertItem(self.__tr("Extended Object (T-S)"))
-        self.comboBox6.insertItem(self.__tr("Extended Object (S-T-S-S-T)"))
         self.listView_config.header().setLabel(0,self.__tr("Task"))
         self.listView_config.header().setLabel(1,self.__tr("Skip"))
         self.listView_config.header().setLabel(2,self.__tr("Find_File"))
@@ -11455,7 +11475,24 @@ class panicQL(QMainWindow):
         item = QListViewItem(self.listView_config,item)
         item.setText(0,self.__tr("Photometry (global estimation)"))
 
+        self.textLabel1_6.setText(self.__tr("<font color=\"#2626ff\"><b>Observing Sequences</b></font>"))
+        self.pushButton_findOS.setText(self.__tr("Find Obs. Sequences"))
         self.checkBox22.setText(self.__tr("Automatically create dataset from headers"))
+        self.listView_OS.header().setLabel(0,self.__tr("File"))
+        self.listView_OS.header().setLabel(1,self.__tr("Class"))
+        self.listView_OS.header().setLabel(2,self.__tr("Filter"))
+        self.listView_OS.header().setLabel(3,self.__tr("ExpT"))
+        self.listView_OS.header().setLabel(4,self.__tr("Data-Obs"))
+        self.listView_OS.header().setLabel(5,self.__tr("Object"))
+        self.listView_OS.header().setLabel(6,self.__tr("RA"))
+        self.listView_OS.header().setLabel(7,self.__tr("Dec"))
+        self.pushButton26.setText(self.__tr("Create DR-File"))
+        self.pushButton10_4.setText(self.__tr("Reduce"))
+        self.comboBox6.clear()
+        self.comboBox6.insertItem(self.__tr("Sparse Field"))
+        self.comboBox6.insertItem(self.__tr("Crowded Field"))
+        self.comboBox6.insertItem(self.__tr("Extended Object (T-S)"))
+        self.comboBox6.insertItem(self.__tr("Extended Object (S-T-S-S-T)"))
         self.tabWidget3.changeTab(self.TabPage_2,self.__tr("Pipeline"))
         self.fileOpenAction.setText(self.__tr("Open"))
         self.fileOpenAction.setMenuText(self.__tr("&Open"))
@@ -11671,6 +11708,12 @@ class panicQL(QMainWindow):
 
     def data_grouping_slot(self):
         print "panicQL.data_grouping_slot(): Not implemented yet"
+
+    def findOS_slot(self):
+        print "panicQL.findOS_slot(): Not implemented yet"
+
+    def createCalibs_slot(self):
+        print "panicQL.createCalibs_slot(): Not implemented yet"
 
     def __tr(self,s,c = None):
         return qApp.translate("panicQL",s,c)
