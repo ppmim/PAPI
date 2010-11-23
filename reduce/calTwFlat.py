@@ -107,12 +107,14 @@ class MasterTwilightFlat:
         self.__master_dark = dark_model
         self.__output_file_dir = os.path.dirname(output_filename)
         self.__output_filename = output_filename  # full filename (path+filename)
-        self.__bpm = bpm
+        self.__bpm=bpm
+        self.__normal=normal
         
         self.m_MIN_N_GOOD=2
         self.m_lthr=lthr
         self.m_hthr=hthr
         self.m_min_flats=5
+        
     
     def createMaster(self):
       
@@ -305,7 +307,7 @@ class MasterTwilightFlat:
         
         # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
         # Compute the mean of the image
-        if normal:
+        if self.__normal:
             log.debug("Normalizing master flat frame...")
             if next>0:
                 chip=1 # normalize wrt to mode of chip 1
@@ -330,7 +332,7 @@ class MasterTwilightFlat:
         iraf.chdir()
         
         flatframe = pyfits.open(self.__output_filename,'update')
-        if normal: flatframe[0].header.add_history('Computed normalized master twilight flat')
+        if self.__normal: flatframe[0].header.add_history('Computed normalized master twilight flat')
         else: flatframe[0].header.add_history('Computed master twilight flat')
         
         flatframe[0].header.add_history('Twilight files: %s' %framelist )

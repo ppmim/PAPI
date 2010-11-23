@@ -47,6 +47,7 @@ import fnmatch
 import shutil
 import time
 import math
+import tempfile
 from optparse import OptionParser
 
 # PAPI modules
@@ -123,8 +124,9 @@ class MainGUI(panicQL):
         self.isOTrunning = True
         self.last_ra = -1
         self.last_dec = -1
+        self.last_filename=None  # last filename of the FITS received
         self.MAX_POINT_DIST = 1000 # minimun distance (arcsec) to consider a telescope pointing to a new target
-        
+        self.MAX_READ_ERRORS = 5
         
         self.m_listView_first_item_selected=''
         self.m_listView_item_selected='' 
@@ -132,7 +134,7 @@ class MainGUI(panicQL):
         self.m_proc_imgs = False
         self.m_processing = False
         self._proc = None # variable to handle QProcess tasks
-        self.read_error_files = []
+        self.read_error_files = {} # a dictionary to track the error while reading/detecting FITS files
         
         ## Create log tags
         # Error
@@ -234,6 +236,7 @@ class MainGUI(panicQL):
             stat_result = os.stat(fitsfile)
             file_size = stat_result.st_size
             if file_size % FITS_BLOCK_SIZE != 0:
+                log.warning("FITS file is not 2880 byte aligned (corrupted?)")
                 raise ValueError("FITS file is not 2880 byte aligned (corrupted?)")
         finally:
             f.close()
@@ -241,32 +244,45 @@ class MainGUI(panicQL):
     def new_file_func(self, filename, process=True):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
+        
         log.debug( "New file detected --> %s. Going to verification...", filename)
-        # (Try) to check if the FITS file writing has finished
+        # (Try) to check if the FITS file writing has finished -- 
+        # TODO: does not work !!!
         try:
             temp = pyfits.open(filename)
-            temp.verify(option='exception')
+            #temp.verify(option='exception')  # it is a too severe checking !!!
             temp.close()
             self.fits_simple_verify(filename)
             
             if filename in self.read_error_files:
                 log.debug("Second try to read %s successful ! ", filename)
-                self.read_error_files.remove(filename)
+                #self.read_error_files.remove(filename)
+                del self.read_error_files[filename] 
             temp.close()
         except Exception,e:
             log.error("Error while opening file %s. Maybe writing is not finished: %s", filename, str(e))
             if filename not in self.read_error_files:
                 log.debug("Removing file from DC.dirlist %s", filename)
                 self.dc.remove(filename) # it means the file could be detected again by the DataCollector
-                self.read_error_files.append(filename) # to avoid more than two tries of opening the file
+                #self.read_error_files.append(filename) # to avoid more than two tries of opening the file
+                self.read_error_files[filename]=1 # init the error counter
             else:
-                #definitely, we discard the file
-                log.error("Definitely discarted file %s", filename)
-                self.read_error_files.remove(filename)
+                if self.read_error_files[filename]>self.MAX_READ_ERRORS:
+                    #definitely, we discard the file
+                    log.error("Definitely discarted file %s", filename)
+                    self.textEdit_log.append(QString("<error_tag> File %1 corrupted and discarted</error_tag>").arg(filename))
+                    del self.read_error_files[filename] # could be interesting to have a list of discarted files ??
+                    #self.read_error_files.remove(filename)
+                else:
+                    log.debug("File %s still has some read error ...will retry to read it again ...")
+                    self.read_error_files[filename]+=1
+                    self.dc.remove(filename) # it means the file could be detected again by the DataCollector
             return
            
         self.textEdit_log.append("New file (verified) detected in source-->  " + filename)
+        ######################
         ## Insert into DB
+        ######################
         #datahandler.dataset.initDB()
         datahandler.dataset.filesDB.insert(filename)
         ## Query DB
@@ -286,38 +302,48 @@ class MainGUI(panicQL):
         
         ## Update Last frame widget
         self.lineEdit_last_file.setText(str(os.path.basename(filename)))
+        self.last_filename=filename
 
-        ## Check if end of observing sequence, then start processing
+        ## Check if end of observing sequence (science or calibration), then start processing
         (end_seq, seq)=self.checkEndObsSequence(filename)
         if end_seq:
             log.debug("Detected end of observing sequence")
-            self.textEdit_log.append("<info_tag> Detected end of observing sequence</info_tag> ")
+            self.textEdit_log.append("<info_tag> Detected end of observing sequence</info_tag> ")       
         
-            ########################################
-            #Check QL-Mode to process the sequence
-            ########################################
-            #QL-Mode: None
-            if self.comboBox_QL_Mode.currentText()=="None":
-                return
-            #QL-Mode: Lazy
-            elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
-                if self.m_show_imgs:
-                    display.showFrame(filename)
+        
+        ##################################################################
+        ## If selected, file or sequence processing will start ....
+        ##################################################################
+        if self.comboBox_QL_Mode.currentText()=="None":
+            return
+        elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
+            self.process(seq)
+            return
+        elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
+            self.processLazy(filename)
+            return
             
-            #QL-Mode: Pre-reduction
-            elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
-                ## Process
-                self.process(seq)
-                return
-            #QL-Mode: UserDef_1
-            elif self.comboBox_QL_Mode.currentText().contains("UserDef_1"):
-                return ## TO BE DONE
-            #QL-Mode: UserDef_2
-            elif self.comboBox_QL_Mode.currentText().contains("UserDef_2"):
-                return ## TO BE DONE
-            #QL-Mode: UserDef_3
-            elif self.comboBox_QL_Mode.currentText().contains("UserDef_3"):
-                return ## TO BE DONE
+ 
+ 
+        """    
+        elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
+            if self.m_show_imgs:
+                display.showFrame(filename)
+        #QL-Mode: Pre-reduction
+        elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
+            ## Process
+            self.process(seq)
+            return
+        #QL-Mode: UserDef_1
+        elif self.comboBox_QL_Mode.currentText().contains("UserDef_1"):
+            return ## TO BE DONE
+        #QL-Mode: UserDef_2
+        elif self.comboBox_QL_Mode.currentText().contains("UserDef_2"):
+            return ## TO BE DONE
+        #QL-Mode: UserDef_3
+        elif self.comboBox_QL_Mode.currentText().contains("UserDef_3"):
+            return ## TO BE DONE
+        """
         
     def new_file_func_out(self, filename):
         """Callback used when a new file is detected in output dir"""
@@ -339,7 +365,7 @@ class MainGUI(panicQL):
         os.chdir(self.m_papi_dir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
-        self.m_processing = False    # Pause autochecking coming files
+        self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
         #Create working thread that process the obsSequence
         try:
             self._task = papi.ReductionSet( obsSequence, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
@@ -351,11 +377,72 @@ class MainGUI(panicQL):
             self.m_processing = False
             raise e
 
-    
-    
-    #####################################################
-    ### SLOTS ###########################################
-    #####################################################
+    def processLazy(self, filename):
+        """Do some  operations to the last file detected """
+        
+        log.debug("Starting to process the file %s",filename)
+        
+        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(filename)
+        
+        # ONLY SCIENCE frames will be processed 
+        if type!="SCIENCE":
+            return
+
+        self.textEdit_log.append("<info_tag> ++ Starting to process a las file : </info_tag>")
+        
+        # ###########################################################################################
+        # Depending on what options have been selected by the user, we do a processing or other...
+        if self.checkBox_subDark.isChecked() or self.checkBox_appFlat.isChecked():
+            #Change to working directory
+            os.chdir(self.m_papi_dir)  # -- required ???
+            #Create working thread that process the file
+            try:
+                master_dark=datahandler.dataset.filesDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
+                master_flat=datahandler.dataset.filesDB.GetFilesT('MASTER_TW_FLAT',-1, filter) # could be > 1 master darks, then use the last(mjd sorted)
+                if len(master_dark)>0 and len(master_flat)>0:
+                    #Change cursor
+                    self.setCursor(Qt.waitCursor)
+                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    self._task = reduce.ApplyDarkFlat([filename], master_dark[0], master_flat[0], self.m_outputdir)
+                    thread=reduce.ExecTaskThread(self._task.apply, self._task_info_list)
+                    thread.start()
+                else:
+                    QMessageBox.critical(self, "Error", "Error, cannot find the master calibration files")
+            except:
+                QMessageBox.critical(self, "Error", "Error while processing file.  %s",str(e))
+                self.m_processing = False
+                self.setCursor(Qt.arrowCursor)
+                raise e    
+        # ##########################################################################################
+        elif self.checkBox_subLastFrame.isChecked():
+            #Change to working directory
+            os.chdir(self.m_papi_dir)  # -- required ???
+            #Create working thread that process the file
+            try:
+                ltemp=datahandler.dataset.filesDB.GetFilesT('SCIENCE') # (mjd sorted)
+                if len(ltemp)>1:
+                    last_file=ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
+                    #Change cursor
+                    self.setCursor(Qt.waitCursor)
+                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    #self._task = self.mathOp([filename,last_file],'-',outputFile=None)
+                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list,  [filename, last_file],'-',None)
+                    thread.start()
+                else:
+                    log.debug("Cannot find the previous file to subtract by")
+            except:
+                QMessageBox.critical(self, "Error", "Error while processing file.  %s",str(e))
+                self.m_processing = False
+                self.setCursor(Qt.arrowCursor)
+                raise e
+        # ########################################################################################
+        elif self.checkBox_show_imgs.isChecked():
+            display.showFrame(filename)
+            
+        
+#####################################################
+### SLOTS ###########################################
+#####################################################
 
     def findOS_slot(self):
         
@@ -489,9 +576,11 @@ class MainGUI(panicQL):
                             for file in self._task_info._return:
                                 #display.showFrame(file)
                                 str_list+=str(file)+"\n"
-                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))    
+                            #QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
+                            self.textEdit_log.append(QString("<info_tag> ++>%1 files created: \n %1</info_tag>").arg(len(self._task_info._return)).arg(str(str_list)))
                         elif os.path.isfile(self._task_info._return):
-                            QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
+                            #QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
+                            self.textEdit_log.append(QString("<info_tag> ++>Output file %1 created </info_tag>").arg(self._task_info._return))
                             display.showFrame(self._task_info._return)
                 else:
                     QMessageBox.critical(self, "Error", "Error while running task.  "+str(self._task_info._exc))
@@ -755,7 +844,8 @@ class MainGUI(panicQL):
             if str(self.comboBox_classFilter.currentText())=="ALL":
                 fileList = datahandler.dataset.filesDB.GetFilesT("ANY")    
             else:
-                fileList = datahandler.dataset.filesDB.GetFilesT(str(self.comboBox_classFilter.currentText()))
+                type=str(self.comboBox_classFilter.currentText())
+                fileList = datahandler.dataset.filesDB.GetFilesT(type)
             for file in fileList:
                 elem = QListViewItem( self.listView_dataS )
                 (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(file)
@@ -1017,7 +1107,59 @@ class MainGUI(panicQL):
                     display.showFrame(str(outFilename))
                     self.textEdit_log.append("New file created: " + str(outFilename))
 
+    def mathOp(self, files, operator, outputFile=None):
+        """This method will do the math operation (+,-,/) specified with the input files"""
+        
+        log.debug("Start mathOp")
+        
+        if outputFile==None:
+            output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=self.m_outputdir)
+            os.close(output_fd)
 
+        if operator!='+' and operator!='-' and operator!='/':
+            log.error("Math operation not allowed")
+            return None
+
+        # Remove an old output file (might it happen ?)
+        misc.fileUtils.removefiles(outputFile)
+        ## MATH operation '+'
+        if (operator=='+' and len(files)>2):
+            log.debug("Frame list to combine = [%s]", self.m_file_list_p )
+            misc.utils.listToFile(self.m_file_list_p, self.m_output_dir+"/files.tmp") 
+            iraf.mscred.combine(input=("@"+(self.m_outputdir+"/files.tmp").replace('//','/')),
+                     output=outputFile,
+                     combine='average',
+                     ccdtype='',
+                     reject='sigclip',
+                     lsigma=3,
+                     hsigma=3,
+                     subset='no',
+                     scale='mode'
+                     #masktype='none'
+                     #verbose='yes'
+                     #scale='exposure',
+                     #expname='EXPTIME'
+                     #ParList = _getparlistname ('flatcombine')
+                     )
+        ## MATH operation '-,/,*'
+        else:
+            """iraf.mscarith(operand1=self.m_file_list_p[0],
+                      operand2=self.m_file_list_p[1],
+                      op=operator,
+                      result=outputFile,
+                      extname="",
+                      verbose='yes'
+                      )
+            """
+            iraf.mscarith(operand1=files[0],
+                      operand2=files[1],
+                      op=operator,
+                      result=outputFile,
+                      verbose='yes'
+                      )
+            
+        return outputFile
+        
     def sumFrames_slot(self):
         """This methot is called to sum two images selected from the File List View"""
 

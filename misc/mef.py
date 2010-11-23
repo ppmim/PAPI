@@ -50,9 +50,17 @@ class MEF:
     \par Purpose:
          Basic operations with MEF files
     \par Description:
-         All PANIC observational data will be recorded in the so-called multi-extension FITS format. A MEF file is comprised of several segments called Header/Data Units (HDUs). Every HDU consists of an Header Unit (the well known FITS headers) in ASCII format followed by an optional Data Unit. The first HDU is called the primary, and any number of additional HDUs may follow. These additional HDUs are referred to as FITS extensions.
+         All PANIC observational data will be recorded in the so-called multi-extension
+         FITS format. A MEF file is comprised of several segments called Header/Data Units (HDUs). 
+         Every HDU consists of an Header Unit (the well known FITS headers) in ASCII format
+         followed by an optional Data Unit. The first HDU is called the primary,
+         and any number of additional HDUs may follow. These additional HDUs are referred
+         to as FITS extensions.
 
-         In the PANIC FITS, the primary HDU only contains ASCII header cards describing the observation, but no data. The astronomical data arrays are stored in additional image extensions. There are 4 image extensions , 1 for each detector in the mosaic.
+         In the PANIC FITS, a MEF file contains 5 FITS HDU's. The first HDU, called primary HDU,
+         only contains ASCII header cards describing the observation and common to all detectors, 
+         but no data. The astronomical data arrays are stored in 4 additional HDU's, called image
+         extensions. Thus, there are 4 image extensions, 1 for each detector in the mosaic.
         
     \par Language:
         Python, PyFITS

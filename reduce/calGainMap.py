@@ -150,7 +150,7 @@ class GainMap:
                parameters and an optional Bad Pixel Map (bpm)
         """
         
-        log.debug("Start creating Gain Map") 
+        log.debug("Start creating Gain Map for file: %s", self.flat) 
         if os.path.exists(self.output_filename): os.remove(self.output_filename)
 
         # Check if we have a MEF file

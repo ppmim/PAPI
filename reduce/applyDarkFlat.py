@@ -198,7 +198,7 @@ class ApplyDarkFlat:
                 n_removed=n_removed+1
             else:
                 # check Number of Extension
-                if (len(f)-1)!=next:
+                if (len(f)>1 and (len(f)-1)!=next) or len(f)!=next:
                     raise Exception("File %s does not match the number of extensions (%d)",iframe,next)
                 
                 # Delete old files

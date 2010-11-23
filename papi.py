@@ -479,7 +479,7 @@ class ReductionSet:
         """
         
         if not self.classf:
-            (filters, seq_list)=self.db.GetFilterFiles()
+            (filters, seq_list)=self.db.GetFilterFiles() # only SCIENCE FILES or SKY_FOR
             k=0
             for filter in filters:
                 print "\nFILTER=%s"%filter
@@ -893,6 +893,7 @@ class ReductionSet:
         
         # 3. take the first group having the same FILTER
         last_filter = sorted_list[0][1]
+        print "SORTED LIST=", sorted_list
         group=[]
         build_master=False
         
@@ -910,7 +911,8 @@ class ReductionSet:
                     # generate a random filename for the master, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                     os.close(output_fd)
-                    task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=False)
+                    print "FLAT CANDIDATE=", group[0]
+                    task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=True)
                     out=None
                     out=task.create()
                     l_gainmaps.append(out) # out must be equal to outfile
@@ -922,8 +924,10 @@ class ReductionSet:
                 group=[]
                 group.append(tupla[0])
                 last_filter=tupla[1]
-                build_master=False            
+                build_master=False
                 
+                if tupla==sorted_list[-1]: # the last file in the list
+                    
         # insert products (gainmaps) into DB
         for f in l_gainmaps: self.db.insert(f)
         self.db.ListDataSet()  
@@ -1167,13 +1171,14 @@ class ReductionSet:
             log.debug("Building calibration for the whole files ...")
             
             if self.master_dark==None:
-                log.debug("Building calibration for the whole files ...")
+                log.debug("Building Master darks ...")
                 try:
                     self.buildMasterDarks()
                 except Exception,e:
                     log.error("Cannot build Master Darks !: %s",str(e))
                     
             if self.master_flat==None:
+                log.debug("Building Master flats and gainmaps ...")
                 try:     
                     self.buildMasterDomeFlats()
                 except Exception,e:
@@ -1201,7 +1206,7 @@ class ReductionSet:
         
             # TODO: and BPM ???
             
-        
+        return [] # PRUEBNA !!!!
         sequences=self.getObjectSequences()
         i=0
         out_ext=[] # it will store the partial extension reduced output filenames
@@ -1576,7 +1581,9 @@ class ReductionSet:
 # main
 ################################################################################
 if __name__ == "__main__":
-    log.debug( 'Start PAPI....')
+    log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+    log.debug(">Start PAPI....")
+    log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     # Get and check command-line options
     
     
