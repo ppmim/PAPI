@@ -1345,12 +1345,6 @@ class ReductionBlock:
         log.debug("Operation FINISHED ---> %s", t.tac())
         return
 
-    ################################################################################## 
-    def SNAP_like_reduction(self, master_flat=None):
-       """ Make a reduction block procedure based on the SNAP pipeline"""
-
-        ### TODO ###
-        
         
     ############### Private functions ################################################ 
     def sortByDateObs(self):

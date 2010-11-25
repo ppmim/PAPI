@@ -582,22 +582,6 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QCheckBox">
-                <property name="name">
-                    <cstring>checkBox_process</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>631</x>
-                        <y>110</y>
-                        <width>290</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Process raw images when detected</string>
-                </property>
-            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_start_proc</cstring>
@@ -727,6 +711,22 @@
                 </property>
                 <property name="readOnly">
                     <bool>true</bool>
+                </property>
+            </widget>
+            <widget class="QCheckBox">
+                <property name="name">
+                    <cstring>checkBox_process</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>631</x>
+                        <y>110</y>
+                        <width>290</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Process raw images when detected</string>
                 </property>
             </widget>
             <widget class="QComboBox">
@@ -1354,47 +1354,6 @@
                         </property>
                     </widget>
                 </widget>
-                <widget class="QComboBox">
-                    <item>
-                        <property name="text">
-                            <string>1-Current frame</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>2-frames</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>3-frames</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>4-frames</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>5-frames</string>
-                        </property>
-                    </item>
-                    <property name="name">
-                        <cstring>comboBox1</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>21</x>
-                            <y>161</y>
-                            <width>118</width>
-                            <height>21</height>
-                        </rect>
-                    </property>
-                    <property name="currentItem">
-                        <number>3</number>
-                    </property>
-                </widget>
                 <widget class="QCheckBox">
                     <property name="name">
                         <cstring>checkBox7_2</cstring>
@@ -1485,6 +1444,47 @@
                     </property>
                     <property name="checked">
                         <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QComboBox">
+                    <item>
+                        <property name="text">
+                            <string>1-Current frame</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>2-frames</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>3-frames</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>4-frames</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>5-frames</string>
+                        </property>
+                    </item>
+                    <property name="name">
+                        <cstring>comboBox_skyWindow</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>21</x>
+                            <y>161</y>
+                            <width>118</width>
+                            <height>21</height>
+                        </rect>
+                    </property>
+                    <property name="currentItem">
+                        <number>3</number>
                     </property>
                 </widget>
             </widget>

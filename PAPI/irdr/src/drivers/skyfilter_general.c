@@ -262,11 +262,14 @@ static void readdata(int i, int usemask)
 static short readSkyTarget( char *fn)
 {
     char *str = get_key_str(fn, "OBJECT");
-
+    int i=0;
+    
     if (str == NULL)
         return -1;
+    /* Convert string to upper case. */
+    for( i = 0 ; (str[i] = toupper(str[i])) != '\0' ; i++);
     
-    if (strncmp(str,"sky",3)==0) return 0; /* sky */ 
+    if (strstr(str,"SKY")!=NULL) return 0; /* sky */ 
     else return 1; /* target */
 
 }

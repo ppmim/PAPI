@@ -39,7 +39,6 @@
 
 # system modules
 from qt import *
-from panicQL import *
 import sys
 import os
 import os.path
@@ -50,7 +49,8 @@ import math
 import tempfile
 from optparse import OptionParser
 
-# PAPI modules
+# PANIC modules
+from panicQL import *
 import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
@@ -59,7 +59,6 @@ import reduce.astrowarp
 import papi
 import misc.fileUtils
 import misc.utils as utils
-import misc.mef
 import misc.mef
 import datahandler
 import misc.display as display
@@ -131,7 +130,7 @@ class MainGUI(panicQL):
         self.m_listView_first_item_selected=''
         self.m_listView_item_selected='' 
         self.m_show_imgs = False
-        self.m_proc_imgs = False
+        self.m_proc_imgs = False # not used !!
         self.m_processing = False
         self._proc = None # variable to handle QProcess tasks
         self.read_error_files = {} # a dictionary to track the error while reading/detecting FITS files
@@ -289,8 +288,14 @@ class MainGUI(panicQL):
         (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(filename)
         #fileinfo=datahandler.dataset.filesDB.GetFileInfo(str(dir)+"/"+filename)c
         #print "FILEINFO= ", fileinfo
-        ## Show into ListView table
-        elem = QListViewItem( self.listView_dataS )
+        
+        #########################
+        # an alternative method to update the ListView; it will allow keep the view filter
+        self.slot_classFilter() 
+        #########################
+        
+        ## Update the ListView table
+        """elem = QListViewItem( self.listView_dataS )
         elem.setText (0, str(filename))
         elem.setText (1, str(type))
         elem.setText (2, str(filter))
@@ -299,7 +304,7 @@ class MainGUI(panicQL):
         elem.setText (5, str(object))
         elem.setText (6, str(ra))
         elem.setText (7, str(dec))
-        
+        """
         ## Update Last frame widget
         self.lineEdit_last_file.setText(str(os.path.basename(filename)))
         self.last_filename=filename
@@ -425,7 +430,6 @@ class MainGUI(panicQL):
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
                     self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    #self._task = self.mathOp([filename,last_file],'-',outputFile=None)
                     thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list,  [filename, last_file],'-',None)
                     thread.start()
                 else:
@@ -679,6 +683,7 @@ class MainGUI(panicQL):
                 self.dc_outdir.check()
             
     def process_slot(self):
+        """ not USED !!!"""
         if self.checkBox_process.isChecked():
             self.m_proc_imgs=True
         else:
@@ -811,7 +816,7 @@ class MainGUI(panicQL):
             self.lineEdit_filename_filter.setText( str(new_filter) )
             self.dc.SetFileFilter( str(new_filter) )
 
-    def slot_classFilter(self, filter_string):
+    def slot_classFilter(self):
         """ Filter files on main ListView"""
         
         if self.comboBox_classFilter.currentText()=="GROUP":
@@ -821,7 +826,7 @@ class MainGUI(panicQL):
             for seq in parList:
                 # create the father
                 elem = QListViewItem( self.listView_dataS )
-                elem.setText (0, "OB_ID="+str(seq[0])+" OB_PAT="+str(seq[1])+" FILTER="+str(seq[2]) ) # OB_ID + OB_PAT + FILTER
+                elem.setText(0, "OB_ID="+str(seq[0])+" OB_PAT="+str(seq[1])+" FILTER="+str(seq[2]) + " #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
                 #elem.setText (1, str(seq[1])) # OB_PAT
                 #elem.setText (2, str(seq[2])) # FILTER
                 for file in fileList[k]:
@@ -837,9 +842,9 @@ class MainGUI(panicQL):
                     e_child.setText (7, str(dec))
                 k+=1
         else:
-            #####################################    
-            ## No grouping, only filtering
-            #####################################
+            #############################################    
+            ## No grouping, only filtering by given type
+            #############################################
             self.listView_dataS.clear()
             if str(self.comboBox_classFilter.currentText())=="ALL":
                 fileList = datahandler.dataset.filesDB.GetFilesT("ANY")    
@@ -858,7 +863,9 @@ class MainGUI(panicQL):
                 elem.setText (6, str(ra))
                 elem.setText (7, str(dec))
             # filtering
-            """self.listView_dataS.clearSelection()
+            
+            """
+            self.listView_dataS.clearSelection()
             it=QListViewItemIterator (self.listView_dataS)
             listViewItem = it.current()
             while listViewItem:
@@ -1095,17 +1102,17 @@ class MainGUI(panicQL):
         if (len(self.m_popup_l_sel)!=2):
             QMessageBox.critical(self, "Error", "You need to select  2 files")
         else:
-            rb = reduce.ReductionBlock (self.m_popup_l_sel)
             outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/sub.fits", "*.fits", self, "Save File dialog")
             if not outFilename.isEmpty():
                 try:
-                    rb.mathOp('-', str(outFilename))
+                    #Change cursor
+                    self.setCursor(Qt.waitCursor)
+                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'-', str(outFilename))
+                    thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while subtracting files")
                     raise
-                else:
-                    display.showFrame(str(outFilename))
-                    self.textEdit_log.append("New file created: " + str(outFilename))
 
     def mathOp(self, files, operator, outputFile=None):
         """This method will do the math operation (+,-,/) specified with the input files"""
@@ -1124,8 +1131,8 @@ class MainGUI(panicQL):
         misc.fileUtils.removefiles(outputFile)
         ## MATH operation '+'
         if (operator=='+' and len(files)>2):
-            log.debug("Frame list to combine = [%s]", self.m_file_list_p )
-            misc.utils.listToFile(self.m_file_list_p, self.m_output_dir+"/files.tmp") 
+            log.debug("Frame list to combine = [%s]", files )
+            misc.utils.listToFile(files, self.m_outputdir+"/files.tmp") 
             iraf.mscred.combine(input=("@"+(self.m_outputdir+"/files.tmp").replace('//','/')),
                      output=outputFile,
                      combine='average',
@@ -1143,8 +1150,8 @@ class MainGUI(panicQL):
                      )
         ## MATH operation '-,/,*'
         else:
-            """iraf.mscarith(operand1=self.m_file_list_p[0],
-                      operand2=self.m_file_list_p[1],
+            """iraf.mscarith(operand1=files[0],
+                      operand2=files[1],
                       op=operator,
                       result=outputFile,
                       extname="",
@@ -1166,17 +1173,18 @@ class MainGUI(panicQL):
         if (len(self.m_popup_l_sel)<2):
             QMessageBox.critical(self, "Error", "You need to select  at least 2 files")
         else:
-            rb = reduce.ReductionBlock (self.m_popup_l_sel)
             outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/sum.fits", "*.fits", self, "Save File dialog")
             if not outFilename.isEmpty():
                 try:
-                    rb.mathOp('+', str(outFilename))
+                    #Change cursor
+                    self.setCursor(Qt.waitCursor)
+                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'+', str(outFilename))
+                    thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while summing files")
+                    QMessageBox.critical(self, "Error", "Error while adding files")
                     raise
-                else:
-                    display.showFrame(str(outFilename))
-                    self.textEdit_log.append("New file created: " + str(outFilename))
+                
 
     def divideFrames_slot(self):
         """This methot is called to divide two images selected from the File List View"""
@@ -1184,17 +1192,17 @@ class MainGUI(panicQL):
         if (len(self.m_popup_l_sel)!=2):
             QMessageBox.critical(self, "Error", "You need to select  2 files")
         else:
-            rb = reduce.ReductionBlock (self.m_popup_l_sel)
             outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/div.fits", "*.fits", self, "Save File dialog")
             if not outFilename.isEmpty():
                 try:
-                    rb.mathOp('/', str(outFilename))
+                    #Change cursor
+                    self.setCursor(Qt.waitCursor)
+                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'/', str(outFilename))
+                    thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while dividing files")
                     raise
-                else:
-                    display.showFrame(str(outFilename))
-                    self.textEdit_log.append("New file created: " + str(outFilename))
 
     def createMasterDark_slot(self):
 
@@ -1277,7 +1285,7 @@ class MainGUI(panicQL):
                     raise
         
     def createSkyFlat_slot_1(self):
-        """ DOES NOT WORK FINE , TO_REVIEW!!!!"""
+        """ DOES NOT WORK FINE , TO_REVIEW anymore used ??? !!!!"""
         
         rb = reduce.ReductionBlock (self.m_popup_l_sel)
         if len(self.m_popup_l_sel)>2:
@@ -1485,6 +1493,7 @@ class MainGUI(panicQL):
         """
         
         file_n=0 # really, not used for the moment
+        file_list=[]
         
         ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
         time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
@@ -1511,7 +1520,6 @@ class MainGUI(panicQL):
                 return
             
             # Create nearest file list (ar,dec,mjd) from current selected science file
-            file_list=[]
             view_list = ""
             i=1
             for file in near_list:
@@ -1532,9 +1540,8 @@ class MainGUI(panicQL):
         elif len(self.m_popup_l_sel)>1 and len(self.m_popup_l_sel)<4:
             QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>4) !")
             return    
-        elif len(self.m_popup_l_sel)>4:
+        elif len(self.m_popup_l_sel)>=4:
             # Create file list from current selected science files
-            file_list=[]
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))

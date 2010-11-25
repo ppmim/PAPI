@@ -203,7 +203,7 @@ class ClFits:
 
     def recognize(self):
      
-        log.info("Recognizing file %s" %self.filename)
+        ###log.info("Recognizing file %s" %self.filename)
 
         # Check the file exists
         if not os.path.exists( self.pathname ):
@@ -227,7 +227,7 @@ class ClFits:
         else:
             self.mef=False
             self.next=1
-            log.debug("Found a simple FITS file")
+            ###log.debug("Found a simple FITS file")
         
         # If file is a MEF, some values will be read from the header extensions      
         if self.mef:
@@ -269,13 +269,13 @@ class ClFits:
             elif myfits[0].header[keyword_with_frame_type].lower().count('skyflat') or \
                  myfits[0].header[keyword_with_frame_type].lower().count('flat'): 
                 self.type="SKY_FLAT"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('sky for'):
+            elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
                 self.type="SKY_FOR"
             elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
                 self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, pero tiene pinta que fue  un despiste del operador !!!
             else:
                 self.type="SCIENCE"
-            log.debug("Image type: %s", self.type)
+            ###log.debug("Image type: %s", self.type)
         except KeyError:
             log.warning('OBJECT keyword not found')
             self.type='UNKNOW'
@@ -368,7 +368,7 @@ class ClFits:
         try:
             self.chipcode = myfits[0].header['CHIPCODE']
         except KeyError:
-            log.warning('CHIPCODE keyword not found, setting default (1)')
+            ###log.warning('CHIPCODE keyword not found, setting default (1)')
             self.chipcode  = 1  # default
         
         #DetectorID
@@ -409,7 +409,7 @@ class ClFits:
             else:
                 self.obPat = -1
         except Exception,e:
-            log.error("Cannot find keyword : %s:",str(e))
+            ###log.error("Cannot find keyword : %s:",str(e))
             self.obPat = -1
                    
         #PAT_EXPN : Pattern Exposition Number

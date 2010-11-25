@@ -79,7 +79,8 @@ import astromatic
 import datahandler.dataset
 
 class ReductionSet:
-    def __init__(self, rs_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None, red_mode="single", classf=True):
+    def __init__(self, rs_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None,\
+                 red_mode="single", classf=True, check_data=True):
         """ Init function """
         
         # Input values
@@ -93,7 +94,7 @@ class ReductionSet:
         self.red_mode = red_mode   # reduction mode (single=for QL, full=for science) 
         self.classf = classf       # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only classf by FILTER)
         self.gr_sci = []           # list of group of observing object/sequence (see getObjectSequences() ) 
-        
+        self.check_data=check_data # flat to indicate if data checking need to be done (see checkData() method)
         # Environment variables
         self.m_terapix_path = os.environ['TERAPIX']
         self.m_papi_path = os.environ['PAPI_HOME']
@@ -110,6 +111,7 @@ class ReductionSet:
 
         self.MAX_MJD_DIFF = 6.95e-3  # Maximun seconds (600secs aprox) of temporal distant allowed between two consecutive frames 
         self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
+        self.MAX_EXPT_DIFF = 2 # Maximun exposition time difference (seconds) between frames
         
         #DataBase (in memory)
         self.db=None
@@ -140,9 +142,7 @@ class ReductionSet:
         Return true is all files in file have the same filter and/or type and/or
         expt; false otherwise.
         Also check the temporal continuity (distant between two consecutive frames),
-        if exceeded return False 
-        
-        \return True or False
+        if exceeded raise an exception 
         """
         
         f = datahandler.ClFits(self.m_LAST_FILES[0])
@@ -173,36 +173,44 @@ class ReductionSet:
                 if fi.getFilter() != filter_0:
                     log.debug("File %s does not match file FILTER", file)
                     mismatch_filter=True
+                    break
             if chk_type and not mismatch_type: 
                 if fi.getType() != type_0:
                     log.debug("File %s does not match file TYPE", file)
                     mismatch_type=True
+                    break
             if chk_expt and not mismatch_expt: 
-                if fi.expTime() != expt_0:
+                #if fi.expTime() != expt_0:
+                if prev_MJD!=-1 and ((fi.expTime()+self.MAX_EXPT_DIFF)<expt_0 or \
+                    (fi.expTime()-self.MAX_EXPT_DIFF)>expt_0):   # more relaxed situation
                     log.debug("File %s does not match file EXPTIME", file)
                     mismatch_expt=True
+                    break
             if chk_itime and not mismatch_itime: 
                 if fi.getItime() != itime_0:
                     log.debug("File %s does not match file ITIME", file)
                     mismatch_itime=True
+                    break
             if chk_ncoadd and not mismatch_ncoadd: 
                 if fi.getNcoadds() != ncoadd_0:
                     log.debug("File %s does not match file NCOADD", file)
                     mismatch_ncoadd=True
+                    break
             if chk_cont and not mismatch_cont:
                 if prev_MJD!=-1 and (fi.getMJD()-prev_MJD)>self.MAX_MJD_DIFF:
                     log.error("Maximmun time distant between two consecutives frames exceeded !!")
                     mismatch_cont=True
+                    break
                 else:
                     prev_MJD=fi.getMJD()
                     
         if mismatch_filter or mismatch_type or mismatch_expt or  mismatch_itime or mismatch_ncoadd or mismatch_cont:
-            log.error("Data checking found a mismatch ....check your data files....")
-            raise Exception("Error while checking data")
+            log.error("Data checking found a mismatch....check your data files....")
+            raise Exception("Error while checking data (filter, type, ExpT, Itime, NCOADDs, MJD)")
             #return False             
         else:    
             log.debug("All files match same file filter")
-            return True
+            #return True
             
     def checkFilter(self):
         """
@@ -352,7 +360,8 @@ class ReductionSet:
                         return 'other'
                 i=i+1                 
         elif fits_0.isObject() and fits_1.isObject():
-            # Then, we are going to suppose the sequence T-T-T-T-T- .... (dither)
+            # check if all are objects ...
+            # and if are, then, we are going to suppose the sequence T-T-T-T-T- .... (dither)
             mode='dither'
             for file in self.m_LAST_FILES:
                 fits=datahandler.ClFits(file)
@@ -893,41 +902,32 @@ class ReductionSet:
         
         # 3. take the first group having the same FILTER
         last_filter = sorted_list[0][1]
-        print "SORTED LIST=", sorted_list
         group=[]
         build_master=False
-        
-        for tupla in sorted_list:
-            if tupla[1]==last_filter:
-                group.append(tupla[0])
-                if tupla==sorted_list[-1]: # the last file in the list
-                    build_master=True
-            else: # we have found the end of the group 
-                build_master=True
-                
-            if build_master:
-                try:
-                    #TODO: here we should check if we have more that one master flat, and if have, then combine them ... 
-                    # generate a random filename for the master, to ensure we do not overwrite any file
-                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
-                    os.close(output_fd)
-                    print "FLAT CANDIDATE=", group[0]
-                    task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=True)
-                    out=None
-                    out=task.create()
-                    l_gainmaps.append(out) # out must be equal to outfile
-                except Exception,e:
-                    log.error("Some error while creating gainmap: %s",str(e))
-                    raise e
-                
-                # reset for new group
+        k=0
+        while k<len(sorted_list):
+            while k<len(sorted_list) and sorted_list[k][1]==last_filter:
+                group.append(sorted_list[k][0])
+                k+=1
+            #create the new master
+            try:
+                #TODO: here we should check if we have more that one master flat, and if have, then combine them ... 
+                # generate a random filename for the master, to ensure we do not overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                os.close(output_fd)
+                print "FLAT CANDIDATE=", group[0]
+                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=True)
+                out=None
+                out=task.create()
+                l_gainmaps.append(out) # out must be equal to outfile
+            except Exception,e:
+                log.error("Some error while creating gainmap: %s",str(e))
+                raise e
+            if k<len(sorted_list):
+                # reset the new group
                 group=[]
-                group.append(tupla[0])
-                last_filter=tupla[1]
-                build_master=False
-                
-                if tupla==sorted_list[-1]: # the last file in the list
-                    
+                last_filter=sorted_list[k][1]
+
         # insert products (gainmaps) into DB
         for f in l_gainmaps: self.db.insert(f)
         self.db.ListDataSet()  
@@ -952,31 +952,27 @@ class ReductionSet:
         last_texp = full_dark_list[0][1]
         #outfile = self.out_dir+"/master_dark.fits" # class MasterDark will add as suffix (TEXP_NCOADDS)
         group=[]
-        build_master=False
-        for tupla in full_dark_list:
-            if tupla[1]==last_texp:
-                group.append(tupla[0])
-                if tupla==full_dark_list[-1]: # the last file in the list
-                    build_master=True
-            else:
-                build_master=True
-            
-            if build_master and len(group)>1:    
-                try:
-                    # generate a random filename for the master, to ensure we do not overwrite any file
-                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
-                    os.close(output_fd)
-                    task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
-                    out=task.createMaster()
-                    l_mdarks.append(out) # out must be equal to outfile
-                except Exception,e:
-                    log.error("Some error while creating master dark: %s",str(e))
-                    raise e
-                # reset for new group
+        k=0
+        while k<len(full_dark_list):
+            while k<len(full_dark_list) and full_dark_list[k][1]==last_texp:
+                group.append(full_dark_list[k][0])
+                k+=1
+            #create the new master
+            try:
+                # generate a random filename for the master, to ensure we do not overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                os.close(output_fd)
+                task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
+                out=task.createMaster()
+                l_mdarks.append(out) # out must be equal to outfile
+            except Exception,e:
+                log.error("Some error while creating master dark: %s",str(e))
+                log.error("but, proceding with next dark group ...")
+                #raise e
+            if k<len(full_dark_list):
+                # reset the new group
                 group=[]
-                group.append(tupla[0])
-                last_texp=tupla[1]
-                build_master=False
+                last_texp=full_dark_list[k][1]
                 
         # insert products (master darks) into DB
         for f in l_mdarks: self.db.insert(f)
@@ -1000,34 +996,28 @@ class ReductionSet:
         # 2. take the first group having the same FILTER
         last_filter = full_flat_list[0][1]
         group=[]
-        build_master=False
-        
-        for tupla in full_flat_list:
-            if tupla[1]==last_filter:
-                group.append(tupla[0])
-                if tupla==full_flat_list[-1]: # the last file in the list
-                    build_master=True
-            else: # we have found the end of the group 
-                build_master=True
-                
-            if build_master and len(group)>1:
-                try:
-                    # generate a random filename for the master, to ensure we do not overwrite any file
-                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
-                    os.close(output_fd)
-                    #outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
-                    task=reduce.calDomeFlat.MasterDomeFlat(group, os.path.dirname(outfile), outfile, None)
-                    out=task.createMaster()
-                    l_mflats.append(out) # out must be equal to outfile
-                except Exception,e:
-                    log.error("Some error while creating master DomeFlat: %s",str(e))
-                    raise e
-                
-                # reset for new group
+        k=0
+        while k<len(full_flat_list):
+            while k<len(full_flat_list) and full_flat_list[k][1]==last_filter:
+                group.append(full_flat_list[k][0])
+                k+=1
+            #create the new master
+            try:
+                # generate a random filename for the master, to ensure we do not overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                os.close(output_fd)
+                #outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
+                task=reduce.calDomeFlat.MasterDomeFlat(group, os.path.dirname(outfile), outfile, None)
+                out=task.createMaster()
+                l_mflats.append(out) # out must be equal to outfile
+            except Exception,e:
+                log.error("Some error while creating master DomeFlat: %s",str(e))
+                log.error("but, proceding with next flat group ...")
+                #raise e
+            if k<len(full_flat_list):
+                # reset the new group
                 group=[]
-                group.append(tupla[0])
-                last_filter=tupla[1]
-                build_master=False            
+                last_filter=full_flat_list[k][1]
                 
         # insert products (master dome flats) into DB
         for f in l_mflats: self.db.insert(f)
@@ -1051,41 +1041,35 @@ class ReductionSet:
         # 2. take the first group having the same FILTER
         last_filter = full_flat_list[0][1]
         group=[]
-        build_master=False
-        
-        for tupla in full_flat_list:
-            if tupla[1]==last_filter:
-                group.append(tupla[0])
-                if tupla==full_flat_list[-1]: # the last file in the list
-                    build_master=True
-            else: # we have found the end of the group 
-                build_master=True
-                
-            if build_master and len(group)>1:
-                try:
-                    master_dark=self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
-                    # if required, master_dark will be scaled in MasterTwilightFlat class
-                    if len(master_dark)>0:
-                        # generate a random filename for the master, to ensure we do not overwrite any file
-                        output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
-                        os.close(output_fd)
-                        #outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
-                        task=reduce.calTwFlat.MasterTwilightFlat(group, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
-                        out=task.createMaster()
-                        l_mflats.append(out) # out must be equal to outfile
-                    else:
-                        # should we create master dark ??
-                        log.error("MASTER_DARK not found")
-                        raise Exception("MASTER_DARK not found")
-                except Exception,e:
-                    log.error("Some error while creating master TwFlat: %s",str(e))
-                    raise e
-                
-                # reset for new group
+        k=0
+        while k<len(full_flat_list):
+            while k<len(full_flat_list) and full_flat_list[k][1]==last_filter:
+                group.append(full_flat_list[k][0])
+                k+=1
+            try:
+                master_dark=self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
+                # if required, master_dark will be scaled in MasterTwilightFlat class
+                if len(master_dark)>0:
+                    # generate a random filename for the master, to ensure we do not overwrite any file
+                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                    os.close(output_fd)
+                    #outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
+                    task=reduce.calTwFlat.MasterTwilightFlat(group, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
+                    out=task.createMaster()
+                    l_mflats.append(out) # out must be equal to outfile
+                else:
+                    # should we create master dark ??
+                    log.error("MASTER_DARK not found. Cannot build master twflat")
+                    log.error("but, proceding with next twflat group ...")
+                    #raise Exception("MASTER_DARK not found")
+            except Exception,e:
+                log.error("Some error while creating master TwFlat: %s",str(e))
+                log.error("but, proceding with next twflat group ...")
+                #raise e
+            if k<len(full_flat_list):
+                # reset the new group
                 group=[]
-                group.append(tupla[0])
-                last_filter=tupla[1]
-                build_master=False            
+                last_filter=full_flat_list[k][1]
                 
         # insert products (master twflats) into DB
         for f in l_mflats: self.db.insert(f)
@@ -1124,7 +1108,8 @@ class ReductionSet:
                     l_mflats.append(out)
                 except Exception,e:
                     log.error("Some error while creating master SuperFlat: %s",str(e))
-                    raise e
+                    log.error("but, proceding with next group ...")
+                    #raise e
                 
         # insert products (master SuperFlats) into DB
         for f in l_mflats: self.db.insert(f)
@@ -1176,7 +1161,7 @@ class ReductionSet:
                     self.buildMasterDarks()
                 except Exception,e:
                     log.error("Cannot build Master Darks !: %s",str(e))
-                    
+            
             if self.master_flat==None:
                 log.debug("Building Master flats and gainmaps ...")
                 try:     
@@ -1206,7 +1191,8 @@ class ReductionSet:
         
             # TODO: and BPM ???
             
-        return [] # PRUEBNA !!!!
+        #return [] # PRUEBNA !!!!
+        
         sequences=self.getObjectSequences()
         i=0
         out_ext=[] # it will store the partial extension reduced output filenames
@@ -1321,10 +1307,11 @@ class ReductionSet:
         ######################################################
         # TODO : it could/should be done in reduceSet, to avoid the spliting ...??
         log.info("**** Data ckecking ****")
-        try:
-            self.checkData(chk_filter=True, chk_type=False, chk_expt=True, chk_itime=True, chk_ncoadd=True)
-        except:
-            raise
+        if self.check_data:
+            try:
+                self.checkData(chk_filter=True, chk_type=False, chk_expt=True, chk_itime=True, chk_ncoadd=True)
+            except Exception,e:
+                raise e
         
         ######################################################
         # 00 - Sort out data by MJD (self.m_LAST_FILES)
@@ -1362,23 +1349,27 @@ class ReductionSet:
         # 2 - Compute Super Sky Flat-Field 
         ######################################    
         if master_flat==None:
-            # - Find out what kind of observing mode we have (dither, ext_dither, ...)
-            log.info('**** Computing Super-Sky Flat-Field ****')
-            master_flat=self.out_dir+"/superFlat.fits"
-            if self.obs_mode=="dither":
-                log.debug("---> dither sequece <----")
-                misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
-                superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", master_flat, bpm=None, norm=False)
-                superflat.create()
-            elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
-                log.debug("----> EXTENDED SOURCE !!! <----")
-                sky_list=self.getSkyFrames()
-                misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
-                superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", master_flat, bpm=None, norm=False)
-                superflat.create()                            
-            else:
-                log.error("Dither mode not supported")
-                raise Exception("Error, dither mode not supported") 
+            try:
+                # - Find out what kind of observing mode we have (dither, ext_dither, ...)
+                log.info('**** Computing Super-Sky Flat-Field ****')
+                master_flat=self.out_dir+"/superFlat.fits"
+                if self.obs_mode=="dither":
+                    log.debug("---> dither sequece <----")
+                    misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files.list")
+                    superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", master_flat, bpm=None, norm=False)
+                    superflat.create()
+                elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
+                    log.debug("----> EXTENDED SOURCE !!! <----")
+                    sky_list=self.getSkyFrames()
+                    print "SKY_LIST=",sky_list
+                    misc.utils.listToFile(sky_list, self.out_dir+"/files.list")
+                    superflat = reduce.SuperSkyFlat(self.out_dir+"/files.list", master_flat, bpm=None, norm=False)
+                    superflat.create()                            
+                else:
+                    log.error("Dither mode not supported")
+                    raise Exception("Error, dither mode not supported")
+            except Exception,e:
+                raise e    
         else:
             log.info("Using the given (dome or twlight) master flat")
               
@@ -1632,6 +1623,9 @@ if __name__ == "__main__":
 
     parser.add_option("-n", "--no_class",
                   action="store_true", dest="no_class", help="not try to do dataset classification", default=False)
+
+    parser.add_option("-k", "--no_check",
+                  action="store_true", dest="no_check", help="not check data properties match (type, expt, filter, ncoadd, mjd)", default=False)
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
@@ -1662,7 +1656,8 @@ if __name__ == "__main__":
     
     # Create the RS (it works both simple FITS as MEF files)            
     rs = ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, obs_mode="dither", \
-                                dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode=red_m, classf=not(options.no_class))
+                                dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode=red_m, \
+                                classf=not(options.no_class), check_data=not(options.no_check))
     
     """try:
         rs.test()

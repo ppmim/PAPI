@@ -262,6 +262,9 @@ class DataSet:
             if type=='ANY':
                 s_type="type>=?"
                 type=""
+            elif type=='DOME_FLAT':
+                s_type="type like 'DOME_FLAT%' or type=?"
+                type=""
             else:
                 s_type="type=?"
                 

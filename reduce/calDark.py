@@ -118,7 +118,7 @@ class MasterDark:
             raise
         
         if nframes<self.m_min_ndarks:
-            log.error("Not enought number of dark frames (>%s) to compute master dark",self.m_min_ndarks)
+            log.error("Not enought number of dark frames (>%s) to compute master dark: %s",self.m_min_ndarks, framelist)
             raise Exception("Not enought number of dark frames (>=%s) to compute master dark" %(self.m_min_ndarks))
             
             
