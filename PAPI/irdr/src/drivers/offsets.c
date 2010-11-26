@@ -94,14 +94,21 @@ int main(int argc, char *argv[])
     
 	    /*fprintf(stderr, "x = %d, y=%d, p=%f, n=%d, nx=%d, ny=%d, ixoff=%f, iyoff=%f, xoff=%f, yoff=%f, hwid=%d",
 	    x,y, p, n, nx, ny, ixoff, iyoff, xoff, yoff, hwid);*/
-    
+        
+        fprintf(stderr, "-->First correlation overlap computed is : %f", frac);
+
         if (frac < MINFRAC) {                          /* cross-corr failed? */
             int maxhwid = MAXNCC / 2 - 1;
     
-            fprintf(stderr, "-> Bad correlation overlap, increasing search radius to %d pix\n", maxhwid);
+            fprintf(stderr, "-> Bad correlation (%f) overlap, increasing search radius to %d pix\n", frac, maxhwid);
     
             frac = correlate(x, y, p, n, img, nx, ny, 0, 0, 
                                 &xoff, &yoff, maxhwid);
+            fprintf(stderr, "-->Second correlation overlap computed is : %f", frac);
+            if (frac < MINFRAC) {
+                fprintf(stderr, "-> Still Bad correlation (%f) overlap; cannot find translation offsets overlap for this image\n", frac);
+                
+            }    
         }
     
 	    corrx = corrx + xoff - ixoff ;	/* cumulate the corrections , to take into account with the next frame */
