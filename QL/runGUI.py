@@ -127,7 +127,7 @@ class MainGUI(panicQL):
         self.MAX_POINT_DIST = 1000 # minimun distance (arcsec) to consider a telescope pointing to a new target
         self.MAX_READ_ERRORS = 5
         
-        self.m_listView_first_item_selected=''
+        self.m_listView_first_item_selected=None #QListViewItem
         self.m_listView_item_selected='' 
         self.m_show_imgs = False
         self.m_proc_imgs = False # not used !!
@@ -449,6 +449,7 @@ class MainGUI(panicQL):
 #####################################################
 
     def findOS_slot(self):
+        """ ONLY FOR A TEST - to be removed """
         
         parList,fileList = datahandler.dataset.filesDB.GetSeqFiles()
         k=0
@@ -888,86 +889,122 @@ class MainGUI(panicQL):
         self.m_popup_l_sel = []
         it=QListViewItemIterator (self.listView_dataS)
         listViewItem = it.current()
+        father=None
         while listViewItem: 
             if listViewItem.isSelected():
                 self.m_popup_l_sel.append(str(listViewItem.text(0)))
                 # if a parent of the group, no popup to show 
                 if (self.comboBox_classFilter.currentText()=="GROUP" and \
                     listViewItem.firstChild()!=None): # is a parent of a group
-                        return
+                    father=listViewItem
+                    self.m_listView_first_item_selected=father
+                    break
             it+=1
             listViewItem = it.current()
         
         if len(self.m_popup_l_sel)<=0:
             return
-        
         #print "LIST=", self.m_popup_l_sel
         
-        # Get the first one selected
-        self.m_listView_first_item_selected = self.m_popup_l_sel[0]
-        #### Create the Popup menu 
-        popUpMenu = QPopupMenu()
-        id=popUpMenu.insertItem("Display image", self.display_slot, 0, 1 )
-        popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Create Master Dark",  self.createMasterDark_slot, 0, 2 )
-        popUpMenu.insertItem("Create Master Dome-Flat", self.createMasterDFlat_slot, 0, 3)
-        popUpMenu.insertItem("Create Master Twilight-Flat", self.createMasterTwFlat_slot, 0, 4 )
-        popUpMenu.insertItem("Create Gain Map (SuperFlat)", self.createGainMap_slot, 0, 5 )
-        popUpMenu.insertItem("Create Bad Pixel Mask", self.createBPM_slot, 0, 6 )
-        popUpMenu.insertSeparator()
-        popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Subtract (own) sky", self.subtract_ownSky_slot, 0, 7 )
-        popUpMenu.insertItem("Subtract nearest sky", self.subtract_nearSky_slot, 0, 8 )
-        popUpMenu.insertItem("Quick single Pre-Reduction", self.do_quick_reduction_slot, 0, 9 )
-        popUpMenu.insertItem("Stack-Shift and Align", self.createStackedFrame_slot, 0, 10 )
-        popUpMenu.insertItem("Build super-Mosaic", self.createSuperMosaic_slot, 0, 11)
-        popUpMenu.setItemEnabled(12, False)
-        popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Raw astrometry", self.do_raw_astrometry, 0, 13)
-        popUpMenu.insertSeparator()
-        popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 14 )
-        popUpMenu.insertItem("FWHM estimation", self.fwhm_estimation_slot, 0, 15 )
-        popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 16 )
-        popUpMenu.insertItem("Test", self.testSlot, 0, 17 )
-        popUpMenu.insertSeparator()
-        # Math sub-menu
-        subPopUpMenu = QPopupMenu()
-        subPopUpMenu.insertItem("Substract Frames", self.subtractFrames_slot, 0, 1 )
-        subPopUpMenu.insertItem("Sum Frames", self.sumFrames_slot, 0, 2 )
-        subPopUpMenu.insertItem("Divide Frames", self.divideFrames_slot, 0, 3 )
-        popUpMenu.insertItem("Math", subPopUpMenu, 0, 18 )
-        # Fits sub-menu
-        subPopUpMenu2 = QPopupMenu()
-        subPopUpMenu2.insertItem("Split MEF file", self.splitMEF_slot, 0, 1 )
-        subPopUpMenu2.insertItem("Join MEF file", self.joinMEF_slot, 0, 2 )
-        subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
-        subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
-        popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 19 )
-        
-
-        ## Disable some menu items depeding of the number of item selected in the list view
-        if len(self.m_popup_l_sel)==1:
-            popUpMenu.setItemEnabled(2, False)
-            popUpMenu.setItemEnabled(3, False)
-            popUpMenu.setItemEnabled(4, False)
-            popUpMenu.setItemEnabled(5, False)
-            popUpMenu.setItemEnabled(6, False)
-            #popUpMenu.setItemEnabled(10, False)
-            subPopUpMenu.setItemEnabled(1,False)
-            subPopUpMenu.setItemEnabled(2,False)
-            subPopUpMenu.setItemEnabled(3,False)
-        elif len(self.m_popup_l_sel)>1:
-            popUpMenu.setItemEnabled(1, False)
-            popUpMenu.setItemEnabled(8, False)
-            popUpMenu.setItemEnabled(11, False)
-        elif len(self.m_popup_l_sel)>2:
-            subPopUpMenu.setItemEnabled(1,False)
-            subPopUpMenu.setItemEnabled(3,False)
+        # we have selected a group father
+        if father: # we have selected a group father
+            #### Create the Group Popup menu
+            popUpMenu = QPopupMenu()
+            popUpMenu.insertItem("Reduce Obs. Sequece", self.reduceSequence_slot, 0, 1 )   
+            group_files=[]
+            child=father.firstChild()
+            while child:
+                group_files.append(str(child.text(0)))
+                child=child.nextSibling()
+            #print "CHILDS=",group_files
+        else:
+            #### Create the Files Popup menu 
+            popUpMenu = QPopupMenu()
+            popUpMenu.insertItem("Display image", self.display_slot, 0, 1 )
+            popUpMenu.insertSeparator()
+            popUpMenu.insertItem("Create Master Dark",  self.createMasterDark_slot, 0, 2 )
+            popUpMenu.insertItem("Create Master Dome-Flat", self.createMasterDFlat_slot, 0, 3)
+            popUpMenu.insertItem("Create Master Twilight-Flat", self.createMasterTwFlat_slot, 0, 4 )
+            popUpMenu.insertItem("Create Gain Map (SuperFlat)", self.createGainMap_slot, 0, 5 )
+            popUpMenu.insertItem("Create Bad Pixel Mask", self.createBPM_slot, 0, 6 )
+            popUpMenu.insertSeparator()
+            popUpMenu.insertSeparator()
+            popUpMenu.insertItem("Subtract (own) sky", self.subtract_ownSky_slot, 0, 7 )
+            popUpMenu.insertItem("Subtract nearest sky", self.subtract_nearSky_slot, 0, 8 )
+            popUpMenu.insertItem("Quick single Pre-Reduction", self.do_quick_reduction_slot, 0, 9 )
+            popUpMenu.insertItem("Stack-Shift and Align", self.createStackedFrame_slot, 0, 10 )
+            popUpMenu.insertItem("Build super-Mosaic", self.createSuperMosaic_slot, 0, 11)
+            popUpMenu.setItemEnabled(12, False)
+            popUpMenu.insertSeparator()
+            popUpMenu.insertItem("Raw astrometry", self.do_raw_astrometry, 0, 13)
+            popUpMenu.insertSeparator()
+            popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 14 )
+            popUpMenu.insertItem("FWHM estimation", self.fwhm_estimation_slot, 0, 15 )
+            popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 16 )
+            popUpMenu.insertItem("Test", self.testSlot, 0, 17 )
+            popUpMenu.insertSeparator()
+            # Math sub-menu
+            subPopUpMenu = QPopupMenu()
+            subPopUpMenu.insertItem("Substract Frames", self.subtractFrames_slot, 0, 1 )
+            subPopUpMenu.insertItem("Sum Frames", self.sumFrames_slot, 0, 2 )
+            subPopUpMenu.insertItem("Divide Frames", self.divideFrames_slot, 0, 3 )
+            popUpMenu.insertItem("Math", subPopUpMenu, 0, 18 )
+            # Fits sub-menu
+            subPopUpMenu2 = QPopupMenu()
+            subPopUpMenu2.insertItem("Split MEF file", self.splitMEF_slot, 0, 1 )
+            subPopUpMenu2.insertItem("Join MEF file", self.joinMEF_slot, 0, 2 )
+            subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
+            subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
+            popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 19 )
+            
+    
+            ## Disable some menu items depeding of the number of item selected in the list view
+            if len(self.m_popup_l_sel)==1:
+                popUpMenu.setItemEnabled(2, False)
+                popUpMenu.setItemEnabled(3, False)
+                popUpMenu.setItemEnabled(4, False)
+                popUpMenu.setItemEnabled(5, False)
+                popUpMenu.setItemEnabled(6, False)
+                #popUpMenu.setItemEnabled(10, False)
+                subPopUpMenu.setItemEnabled(1,False)
+                subPopUpMenu.setItemEnabled(2,False)
+                subPopUpMenu.setItemEnabled(3,False)
+            elif len(self.m_popup_l_sel)>1:
+                popUpMenu.setItemEnabled(1, False)
+                popUpMenu.setItemEnabled(8, False)
+                popUpMenu.setItemEnabled(11, False)
+            elif len(self.m_popup_l_sel)>2:
+                subPopUpMenu.setItemEnabled(1,False)
+                subPopUpMenu.setItemEnabled(3,False)
             
             
         ## Finally, execute the popup
         popUpMenu.exec_loop(QCursor.pos())   
-
+    
+    def reduceSequence_slot(self):
+        """Run the data reduction of the current group/sequence selected"""
+        
+        group_files=[]
+        child=self.m_listView_first_item_selected.firstChild()
+        while child:
+            group_files.append(str(child.text(0)))
+            child=child.nextSibling()
+        print "CHILDS=",group_files
+        
+        #Change to working directory
+        os.chdir(self.m_papi_dir)
+        #Change cursor
+        self.setCursor(Qt.waitCursor)
+        #Create working thread that compute sky-frame
+        try:
+            self._task = papi.ReductionSet( group_files, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
+            thread.start()
+        except Exception,e:
+            QMessageBox.critical(self, "Error", "Error while group data reduction: %s",str(e))
+            raise e
+        
     def splitMEF_slot(self):
         """Split each MEF selected file from the list view into NEXT separate single FITS file, where NEXT is number of extensions.
            As result, NEXT files should be created
@@ -1227,7 +1264,7 @@ class MainGUI(panicQL):
 
     def do_quick_reduction_slot_V1(self):
         # Run quick-reduction mode with the
-        self.QL2(self.m_listView_first_item_selected, self.textEdit_log)
+        self.QL2(self.m_popup_l_sel[0], self.textEdit_log)
     
     def do_quick_reduction_slot(self):
         """ Do a quick reduction of the user selected files in the list view panel"""
@@ -1246,9 +1283,9 @@ class MainGUI(panicQL):
                                             obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
             thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
             thread.start()
-        except:
-            QMessageBox.critical(self, "Error", "Error while subtracting near sky")
-            raise 
+        except Exception,e:
+            QMessageBox.critical(self, "Error", "Error while Quick data reduction: %s",str(e))
+            raise e
 
     def createMasterDFlat_slot(self):
         

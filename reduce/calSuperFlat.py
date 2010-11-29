@@ -125,6 +125,7 @@ class SuperSkyFlat:
         if not datahandler.checkDataProperties( m_filelist ):
             log.error("Data integrity ERROR, some files not having same properties")
             raise Exception("Found a data integrity error")
+        
           
         tmp1=(self.output_file_dir+"/tmp_sf.fits").replace('//','/')
         misc.fileUtils.removefiles(tmp1)

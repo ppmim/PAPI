@@ -51,6 +51,7 @@ import glob
 import shutil
 import tempfile
 import dircache
+import math
 
 
 # IRAF packages
@@ -109,10 +110,10 @@ class ReductionSet:
         self.m_itime  = 0.0      # Integration Time of the currenct data set files
         self.m_n_files = ""      # Number of file in the data set
 
-        self.MAX_MJD_DIFF = 6.95e-3  # Maximun seconds (600secs aprox) of temporal distant allowed between two consecutive frames 
+        self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
         self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
         self.MAX_EXPT_DIFF = 2 # Maximun exposition time difference (seconds) between frames
-        
+        self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
         #DataBase (in memory)
         self.db=None
         
@@ -488,29 +489,73 @@ class ReductionSet:
         """
         
         if not self.classf:
-            (filters, seq_list)=self.db.GetFilterFiles() # only SCIENCE FILES or SKY_FOR
+            (filters, seq_list)=self.db.GetFilterFiles() # only SCIENCE or SKY_FOR frames
+            # Now, we need to check temporal (bases on MJD) continuty and split a group if it is discontinued
+            new_seq_list=[]
+            new_filters=[]
             k=0
-            for filter in filters:
+            for seq in seq_list:
+                group=[]
+                mjd_0=datahandler.ClFits(seq[0]).getMJD()
+                for file in seq:
+                    t=datahandler.ClFits(file).getMJD()
+                    if math.fabs(t-mjd_0)<self.MAX_MJD_DIFF:
+                        group.append(file)
+                        mjd_0=t
+                    else:
+                        new_seq_list.append(group)
+                        new_filters.append(filters[k])
+                        mjd_0=t
+                        group=[file]
+                new_seq_list.append(group)
+                new_filters.append(filters[k])
+                k+=1
+                
+            # Print out the found groups
+            k=0
+            for filter in new_filters:
                 print "\nFILTER=%s"%filter
                 print "-----------------------------------------------------------------------------------\n"
-                for file in seq_list[k]:
+                for file in new_seq_list[k]:
                     print file
                 k+=1
-            log.debug("Found %d groups of SCI files: %s", len(filters), seq_list)
+            log.debug("Found %d groups of SCI files: %s", len(new_filters), new_seq_list)
             
         else:
             (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
+            # Now, we need to check temporal (based on MJD) continuty and split a group if it is discontinued
+            new_seq_list=[]
+            new_seq_par=[]
             k=0
-            for par in seq_par:
+            for seq in seq_list:
+                group=[]
+                mjd_0=datahandler.ClFits(seq[0]).getMJD()
+                for file in seq:
+                    t=datahandler.ClFits(file).getMJD()
+                    if math.fabs(t-mjd_0)<self.MAX_MJD_DIFF:
+                        group.append(file)
+                        mjd_0=t
+                    else:
+                        new_seq_list.append(group)
+                        new_seq_par.append(seq_par[k])
+                        mjd_0=t
+                        group=[file]
+                new_seq_list.append(group)
+                new_seq_par.append(seq_par[k])
+                k+=1
+                
+            # Print out the found groups
+            k=0
+            for par in new_seq_par:
                 print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
                 print "-----------------------------------------------------------------------------------\n"
-                for file in seq_list[k]:
+                for file in new_seq_list[k]:
                     print file
                 k+=1
         
-            log.debug("Found %d groups of SCI files: %s", len(seq_par), seq_list)
+            log.debug("Found %d groups of SCI files: %s", len(new_seq_par), new_seq_list)
         
-        return seq_list
+        return new_seq_list
     
     def getDomeFlatFrames(self):
         """
@@ -691,12 +736,13 @@ class ReductionSet:
         
         log.debug("Creaing OBJECTS images (SExtractor)....")
 
-        if images_in==None:
+        if images_in==None: # then we use the images ending with suffing in the output directory
             makeObjMask( self.out_dir+'*'+suffix , p_min_area, p_mask_thresh, output_list_file)
-        elif os.path.isfile(images_in):
+        elif os.path.isfile(images_in): # we use the given list of images
             makeObjMask( images_in , p_min_area, p_mask_thresh, output_list_file)
         else:
-            log.error("Option not recognized !!!")    
+            log.error("Option not recognized !!!")
+            raise Exception("Wrong input frames given")
                            
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
@@ -704,12 +750,17 @@ class ReductionSet:
         offsets_cmd=self.m_papi_path+'/irdr/bin/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
             log.error ("Some error while computing dither offsets")
-            return 0
+            raise Exception("Some error while computing dither offsets")
         else:
             try:
-                offsets_mat = numpy.loadtxt(p_offsets_file, usecols = (1,2,3)) # columns => (xoffset, yoffset, match fraction) in PIXELS  
+                offsets_mat = numpy.loadtxt(p_offsets_file, usecols = (1,2,3)) # columns => (xoffset, yoffset, match fraction) in PIXELS
+                # check if correlation overlap fraction is good enought
+                if (offsets_mat[:,2]<self.MIN_CORR_FRAC).sum()>1:
+                    log.error("Some error while computing dither offsets. Overlap correlation fraction is < %f",self.MIN_CORR_FRAC)
+                    raise Exception("Wrong overlap correlation fraction for translation offsets")
+                    
             except IOError:
-                log.debug("Any offsets read. Check images ....")   
+                log.debug("No offsets read. There may be some problem while computing translation offsets ....")   
         
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
@@ -1415,7 +1466,7 @@ class ReductionSet:
         # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
         #########################################
                             
-        log.info("**** Quality Assessment: TODO ****")                   
+        log.info("**** Quality Assessment **** (TBD)")                   
 
         ## -- una prueba con astrowarp ---
         """
@@ -1438,8 +1489,11 @@ class ReductionSet:
         # 6 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation
         #########################################
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
-        offset_mat=self.getPointingOffsets (self.out_dir+"/files_skysub.list", 15, 5, self.out_dir+'/offsets1.pap')                
-                        
+        try:
+            offset_mat=self.getPointingOffsets(self.out_dir+"/files_skysub.list", 15, 5, self.out_dir+'/offsets1.pap')                
+        except Exception,e:
+            log.error("Erron while getting pointing offsets. Cannot continue with data reduction...")
+            raise e
         
         #########################################
         # 7 - First pass coaddition using offsets
@@ -1694,4 +1748,4 @@ if __name__ == "__main__":
     """
     
     if options.show:
-        out.show()    
+        pass   
