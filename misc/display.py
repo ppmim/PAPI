@@ -46,7 +46,7 @@ def startDisplay():
     print "DS9 not running "
     # DS9 is not running, so we start it  
     os.system(("%s/ds9 &" % ds9_path))
-    time.sleep(2)
+    time.sleep(4)
     stdout_handle=os.popen("/sbin/pidofproc ds9","r")
     if stdout_handle.read() =='':
         time.sleep(2)

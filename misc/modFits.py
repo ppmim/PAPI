@@ -98,8 +98,8 @@ if __name__ == "__main__":
                   action="store", dest="input_file_list",
                   help="Source file list of data frames. It has to be a fullpath file name")
                   
-    parser.add_option("-k", "--key",
-                  action="store", dest="keyword",
+    parser.add_option("-k", "--key_value",
+                  action="store", dest="keyword_value", nargs=2
                   help="Extension number in which to look for 'keyword'")
                   
     parser.add_option("-v", "--value",
@@ -107,8 +107,8 @@ if __name__ == "__main__":
                   help="Value to set to 'keyword'")
                                 
     parser.add_option("-e", "--ext",
-                  action="store", dest="extension_number",
-                  help="Extension number in which to look for 'keyword' [0,N]", default=0)
+                  action="store", dest="extension_number", default=0,
+                  help="Extension number in which to look for 'keyword' [0,N]")
     
     (options, args) = parser.parse_args()
     

@@ -41,7 +41,7 @@ def default_config_file():
     
     """
 
-    return "../config_files/papi1.cfg"
+    return "./config_files/papi1.cfg"
 
 
 def check_required_option(option_name, option_value):
