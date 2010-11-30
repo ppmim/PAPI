@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Adapted to PAPI by jmiguel@iaa.es 26-May-2010
+# Adapted to PAPI by jmiguel@iaa.es 29-Nov-2010
 
 import sys
 import ConfigParser
@@ -41,7 +41,7 @@ def default_config_file():
     
     """
 
-    return "papi.cfg"
+    return "../config_files/papi1.cfg"
 
 
 def check_required_option(option_name, option_value):
@@ -399,38 +399,25 @@ def read_config_file(config_file = default_config_file()):
               "' could not be read."
         sys.exit(style.error_exit_message())    
 
-    options = {}     # empty dictionary
+    options = {}     # empty dictionaryl
 
-     ##################### "general" section ##################################
+    ##################### "general" section ##################################
     ## ACTUALIZAR LLAMADAS a read_parameter()
     general = {} 
-    general["filter_by_size"] = read_parameter(config, "general", "filter_by_size", bool)
-
-    # Test that both 'minimum_width' and 'minimum_height' are >= 0. Negative 
-    # values could be ignored, but, although small, there is a chance they
-    # might be due to an mistake .
-
-    minimum_width = read_parameter(config, "general", "minimum_width", int)
-    if minimum_width < 0:
-        print style.prefix() + "Invalid parameter. The value of 'maximum_width' in section" \
-              "'general' ("+ str(minimum_width)  + ") cannot be smaller than zero."
-        sys.exit(style.error_exit_message())    
-    else:
-        general["minimum_width"] = minimum_width
-
-    minimum_height = read_parameter(config, "general", "minimum_height", int)
-    if minimum_height < 0:
-        print style.prefix() + "Invalid parameter. The value of 'maximum_height' in section" \
-              "'general' ("+ str(minimum_height)  + ") cannot be smaller than zero."
-        sys.exit(style.error_exit_message())    
-    else:
-        general["minimum_height"] = minimum_width
-
+ 
+    general["config_dir"] = read_parameter(config, "general", "config_dir", str, True, config_file)
+    general["output_dir"] = read_parameter(config, "general", "output_dir", str, True, config_file)
+    general["temp_dir"] = read_parameter(config, "general", "temp_dir", str, True, config_file)
+    
+    general["red_mode"] = read_parameter(config, "general", "red_mode", str, True, config_file)
+    general["check_data"] = read_parameter(config, "general", "check_data", bool, True, config_file)
+    general["group_by"] = read_parameter(config, "general", "group_by", str, True, config_file)
+    general["apply_dark_flat"] = read_parameter(config, "general", "apply_dark_flat", bool, True, config_file)
+    
 
     general["scale"] = read_parameter(config, "general", "scale", float, True, config_file)
     general["equinox"] = read_parameter(config, "general", "equinox", int, True, config_file)
     general["radecsys"] = read_parameter(config, "general", "radecsys", str, True, config_file)
-    general["recursive"] = read_parameter(config, "general", "recursive", bool, True, config_file)
     general["pattern"] = read_parameter(config, "general", "pattern", str, False, config_file)
 
     filter_prefix = "filter_name_"
@@ -441,34 +428,6 @@ def read_config_file(config_file = default_config_file()):
         if not general[filter_prefix + filter_letter]:
             print style.prefix() + "In section 'general', the parameter '" + filter_prefix + filter_letter + "' must list at least one string."
             sys.exit(style.error_exit_message())
-
-    x_size = read_parameter(config, 'general', 'x_size', int, True, config_file)
-    if not x_size >= 1:
-        print style.prefix() + "The value of 'x_size' in section 'general' must be >= 1."
-        sys.exit(style.error_exit_message())    
-    else:
-        general['x_size'] = x_size
-        
-    y_size = read_parameter(config, 'general', 'y_size', int, True, config_file)
-    if not y_size >= 1:
-        print style.prefix() + "The value of 'y_size' in section 'general' must be >= 1."
-        sys.exit(style.error_exit_message())    
-    else:
-        general['y_size'] = y_size
-
-    x_bin = read_parameter(config, 'general', 'x_bin', int, True, config_file)
-    if not x_bin >= 1:
-        print style.prefix() + "The value of 'x_bin' in section 'general' must be >= 1."
-        sys.exit(style.error_exit_message())    
-    else:
-        general['x_bin'] = x_bin
-
-    y_bin = read_parameter(config, 'general', 'y_bin', int, True, config_file)
-    if not y_bin >= 1:
-        print style.prefix() + "The value of 'y_bin' in section 'general' must be >= 1."
-        sys.exit(style.error_exit_message())
-    else:
-        general['y_bin'] = y_bin
 
     options["general"] = general
 
@@ -486,6 +445,7 @@ def read_config_file(config_file = default_config_file()):
     ######################### "dark" section ##################################
 
     dark = {}
+    
     dark["object_names"] = read_list_of_strings(config, "dark", "object_names")
 
     # At least one string must be specified, comma-separated
@@ -493,56 +453,28 @@ def read_config_file(config_file = default_config_file()):
         print style.prefix() + "In section 'dark', the parameter 'object_names' must list at least one string."
         sys.exit(style.error_exit_message())
 
-    dark["intervals"] = read_list_of_intervals(config, "dark", "intervals")
-    if not dark["intervals"]:
-        print style.prefix() + "In section 'dark', the parameter 'intervals' cannot be left empty."
-        sys.exit(style.error_exit_message())
 
     dark["suffix"] = read_parameter(config, "dark", "suffix", str, False, config_file)
 
-    dark["output_dir"] = read_parameter(config, "dark", "output_dir", str, True, config_file)
-   
-    fraction = read_parameter(config, "dark", "fraction", float, True, config_file)
-    # Test that 'fraction' is in the range [0,1]
-    if not 0.0 <= fraction <= 1.0:
-        print style.prefix() + "[" + config_file + "] " + \
-              "The value of 'fraction' in section 'dark' must be in the range [0,1]."
-        sys.exit(style.error_exit_message())    
-    else:
-        dark["fraction"] = fraction
+    dark["check_prop"] = read_parameter(config, "dark", "check_prop", bool, False, config_file)
+
+    dark["min_frames"] = read_parameter(config, "dark", "min_frames", int, False, config_file)
+    
 
     options["dark"] = dark
 
 
     ########################## "dflats" section ################################
     dflats = {}
-    dflats["object_names_Z"] = read_list_of_strings(config, "dflats", "object_names_Z")
-    dflats["object_names_Y"] = read_list_of_strings(config, "dflats", "object_names_Y")
-    dflats["object_names_J"] = read_list_of_strings(config, "dflats", "object_names_J")
-    dflats["object_names_H"] = read_list_of_strings(config, "dflats", "object_names_H")
-    dflats["object_names_K"] = read_list_of_strings(config, "dflats", "object_names_K")
-    dflats["object_names_Ks"] = read_list_of_strings(config, "dflats", "object_names_Ks")
     
+    dflats["object_names"] = read_list_of_strings(config, "dflats", "object_names")
     
-    dflats["intervals_Z"] = read_list_of_intervals(config, "dflats", "intervals_Z")
-    dflats["intervals_Y"] = read_list_of_intervals(config, "dflats", "intervals_Y")
-    dflats["intervals_J"] = read_list_of_intervals(config, "dflats", "intervals_J")
-    dflats["intervals_H"] = read_list_of_intervals(config, "dflats", "intervals_H")
-    dflats["intervals_K"] = read_list_of_intervals(config, "dflats", "intervals_K")
-    dflats["intervals_Ks"] = read_list_of_intervals(config, "dflats", "intervals_Ks")
-    
-
     dflats["suffix"] = read_parameter(config, "dflats", "suffix", str, False, config_file)
-    dflats["output_dir"] = read_parameter(config, "dflats", "output_dir", str, True, config_file)
 
-    fraction = read_parameter(config, "dflats", "fraction", float, True, config_file)
-    # Test that 'fraction' is in the range [0,1]
-    if not 0.0 <= fraction <= 1.0:
-        print style.prefix() + "[" + config_file + "] The value of 'fraction' in section 'dflats' must be in the range [0,1]."
-        sys.exit(style.error_exit_message())    
-    else:
-        dflats["fraction"] = fraction
-
+    dflats["check_prop"] = read_parameter(config, "dflats", "check_prop", bool, False, config_file)
+    
+    dflats["min_frames"] = read_parameter(config, "dflats", "min_frames", int, False, config_file)
+    
     area_width = read_parameter(config, "dflats", "area_width", int, True, config_file)
     if not area_width > 1:
         print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'dflats' must be a positive integer."
@@ -554,75 +486,23 @@ def read_config_file(config_file = default_config_file()):
 
     ########################## "twflats" section ################################
     twflats = {}
-    twflats["object_names_Z"] = read_list_of_strings(config, "twflats", "object_names_Z")
-    twflats["object_names_Y"] = read_list_of_strings(config, "twflats", "object_names_Y")
-    twflats["object_names_J"] = read_list_of_strings(config, "twflats", "object_names_J")
-    twflats["object_names_H"] = read_list_of_strings(config, "twflats", "object_names_H")
-    twflats["object_names_K"] = read_list_of_strings(config, "twflats", "object_names_K")
-    twflats["object_names_Ks"] = read_list_of_strings(config, "twflats", "object_names_Ks")
     
+    twflats["object_names"] = read_list_of_strings(config, "twflats", "object_names")
     
-    twflats["intervals_Z"] = read_list_of_intervals(config, "twflats", "intervals_Z")
-    twflats["intervals_Y"] = read_list_of_intervals(config, "twflats", "intervals_Y")
-    twflats["intervals_J"] = read_list_of_intervals(config, "twflats", "intervals_J")
-    twflats["intervals_H"] = read_list_of_intervals(config, "twflats", "intervals_H")
-    twflats["intervals_K"] = read_list_of_intervals(config, "twflats", "intervals_K")
-    twflats["intervals_Ks"] = read_list_of_intervals(config, "twflats", "intervals_Ks")
-    
-
     twflats["suffix"] = read_parameter(config, "twflats", "suffix", str, False, config_file)
-    twflats["output_dir"] = read_parameter(config, "twflats", "output_dir", str, True, config_file)
 
-    fraction = read_parameter(config, "twflats", "fraction", float, True, config_file)
-    # Test that 'fraction' is in the range [0,1]
-    if not 0.0 <= fraction <= 1.0:
-        print style.prefix() + "[" + config_file + "] The value of 'fraction' in section 'twflats' must be in the range [0,1]."
-        sys.exit(style.error_exit_message())    
-    else:
-        twflats["fraction"] = fraction
-
+    twflats["check_prop"] = read_parameter(config, "twflats", "check_prop", bool, False, config_file)
+    
+    twflats["min_frames"] = read_parameter(config, "twflats", "min_frames", int, False, config_file)
+    
     area_width = read_parameter(config, "twflats", "area_width", int, True, config_file)
     if not area_width > 1:
-        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'twflats' must be a positive integer."
+        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'dflats' must be a positive integer."
         sys.exit(style.error_exit_message())    
     else:
         twflats["area_width"] = area_width
 
     options["twflats"] = twflats  
-
-        
-    ####################### "seeing" section #################################
-
-    seeing = {}
-
-    seeing["output_dir"] = read_parameter(config, "seeing", "output_dir", str, True, config_file)
-    seeing["discarded_dir"] = read_parameter(config, "seeing", "discarded_dir", str, False, config_file)
-    seeing["filename_Z"] = read_parameter(config, "seeing", "filename_Z", str, False, config_file)
-    seeing["filename_Y"] = read_parameter(config, "seeing", "filename_Y", str, False, config_file)
-    seeing["filename_J"] = read_parameter(config, "seeing", "filename_J", str, False, config_file)
-    seeing["filename_H"] = read_parameter(config, "seeing", "filename_H", str, False, config_file)
-    seeing["filename_K"] = read_parameter(config, "seeing", "filename_K", str, False, config_file)
-    seeing["filename_Ks"] = read_parameter(config, "seeing", "filename_Ks", str, False, config_file)
-
-    seeing["suffix"] = read_parameter(config, "seeing", "suffix", str, False, config_file)    
-
-    rpd = read_parameter(config, "seeing", "seeing_rpd", float, True, config_file)
-    if rpd < 0.0:
-        print style.prefix() + "[" + config_file + "] The value of 'seeing_rpd' in section 'seeing' must be >= 0.0"
-        sys.exit(style.error_exit_message())    
-    else:
-        seeing["seeing_rpd"] = rpd
-
-    seeing["discard_elong"] = read_parameter(config, "seeing", "discard_elong", bool, True, config_file)
-    elong_ratio = read_parameter(config, "seeing", "elong_ratio", float, True, config_file)
-    if elong_ratio < 1.0:
-        print style.prefix() + "[" + config_file + "] The value of 'elong_ratio' in section 'seeing' must be >= 1.0"
-        sys.exit(style.error_exit_message())    
-    else:
-        seeing["elong_ratio"] = elong_ratio
-
-    options["seeing"] = seeing
-
 
     
     ####################### "fits" section #################################
@@ -776,5 +656,4 @@ if __name__ == "__main__":
     print read_config_file()
         
     
-
 
