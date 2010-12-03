@@ -66,9 +66,13 @@ import astromatic
 import datahandler.dataset
 
 class ReductionSet:
-    def __init__(self, rs_filelist, out_dir, out_file, obs_mode, dark=None, flat=None, bpm=None,\
-                 red_mode="single", classf=True, check_data=True, config=None):
+    def __init__(self, rs_filelist, out_dir, out_file, obs_mode="dither", dark=None, flat=None, bpm=None,\
+                 red_mode="quick", group_by="filter", check_data=True, config_file=None):
         """ Init function """
+        
+        if len(rs_filelist)<=0:
+            log.error("Empy file list, no files to reduce ...")
+            raise Exception("Empy file list, no files to reduce ...")
         
         # Input values
         self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
@@ -77,17 +81,32 @@ class ReductionSet:
         self.obs_mode  = obs_mode  # observing mode (dither, dither_on_off, dither_off_on....)
         self.master_dark = dark    # master dark to use (input)
         self.master_flat = flat    # master flat to use (input)
-        self.bpm = bpm             # master Bad Pixel Mask to use (input)
-        self.red_mode = red_mode   # reduction mode (single=for QL, full=for science) 
-        self.classf = classf       # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only classf by FILTER)
-        self.gr_sci = []           # list of group of observing object/sequence (see getObjectSequences() ) 
+        self.master_bpm = bpm      # master Bad Pixel Mask to use (input)
+        self.red_mode = red_mode   # reduction mode (quick=for QL, science=for science) 
+        self.group_by = group_by   # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only by FILTER)
         self.check_data=check_data # flat to indicate if data checking need to be done (see checkData() method)
-        
-        #if config:
-        #    self.m_terapix_path= config['Terapix'].    
-        # Environment variables
-        self.m_terapix_path = os.environ['TERAPIX']
-        self.m_papi_path = os.environ['PAPI_HOME']
+        self.config_file = config_file # dictionary with all sections (general, darks, dflats, twflats, skysub, fits, keywords, config_files) and their values
+         
+        # some "default" config values (see below how they are updated from the config_file)
+        self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
+        self.HWIDTH = 2 #half width of sky filter window in frames
+        self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
+        self.MAX_MJD_DIFF = 2 # Maximun exposition time difference (seconds) between frames
+        self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
+         
+        if self.config_file:
+            self.m_terapix_path = self.config_file['config_files']['terapix_bin']
+            self.m_irdr_path = self.config_file['config_files']['irdr_bin']
+            # update config values from config_file
+            self.HWIDTH = self.config_file['skysub']['hwidth'] # half width of sky filter window in frames
+            self.MIN_SKY_FRAMES = self.config_file['skysub']['min_frames']  # minimun number of sky frames required in the sliding window for the sky subtraction
+            self.MAX_MJD_DIFF = self.config_file['general']['max_mjd_diff'] # Maximun exposition time difference (seconds) between frames
+            self.MIN_CORR_FRAC = self.config_file['general']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
+        else:   
+            # Environment variables
+            self.m_terapix_path = os.environ['TERAPIX']
+            self.m_irdr_path = os.environ['IRDR_BIN']
+            
         
         
         self.m_LAST_FILES = []   # Contain the files as result of the last processing step (science processed frames)
@@ -99,15 +118,10 @@ class ReductionSet:
         self.m_itime  = 0.0      # Integration Time of the currenct data set files
         self.m_n_files = ""      # Number of file in the data set
 
-        self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
-        self.HWIDTH = 2 #half width of sky filter window in frames
-        self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
-        self.MAX_EXPT_DIFF = 2 # Maximun exposition time difference (seconds) between frames
-        self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
+        
         #DataBase (in memory)
         self.db=None
         
-        print "CLASS=",classf
     
     def __initDB(self):
         """
@@ -123,7 +137,7 @@ class ReductionSet:
         self.db.load(self.rs_filelist)
         if self.master_dark!=None: self.db.insert(self.master_dark)
         if self.master_flat!=None: self.db.insert(self.master_flat)
-        if self.bpm !=None: self.db.insert(self.bpm)
+        if self.master_bpm !=None: self.db.insert(self.master_bpm)
         
         self.db.ListDataSet()
         
@@ -172,8 +186,8 @@ class ReductionSet:
                     break
             if chk_expt and not mismatch_expt: 
                 #if fi.expTime() != expt_0:
-                if prev_MJD!=-1 and ((fi.expTime()+self.MAX_EXPT_DIFF)<expt_0 or \
-                    (fi.expTime()-self.MAX_EXPT_DIFF)>expt_0):   # more relaxed situation
+                if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or \
+                    (fi.expTime()-self.MAX_MJD_DIFF)>expt_0):   # more relaxed situation
                     log.debug("File %s does not match file EXPTIME", file)
                     mismatch_expt=True
                     break
@@ -478,7 +492,8 @@ class ReductionSet:
         TBD: implement other alternative way of grouping : sort out by MJD and group by FILTER
         """
         
-        if not self.classf:
+        # group data file (only science) by Filter 
+        if self.group_by=="filter":
             (filters, seq_list)=self.db.GetFilterFiles() # only SCIENCE or SKY_FOR frames
             # Now, we need to check temporal (bases on MJD) continuty and split a group if it is discontinued
             new_seq_list=[]
@@ -510,7 +525,8 @@ class ReductionSet:
                     print file
                 k+=1
             log.debug("Found %d groups of SCI files: %s", len(new_filters), new_seq_list)
-            
+        
+        # group data files by meta-data given by the OT (OB_ID, OB_PAT, FILTER, ....)
         else:
             (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
             # Now, we need to check temporal (based on MJD) continuty and split a group if it is discontinued
@@ -596,15 +612,15 @@ class ReductionSet:
         out_files=[]
             
         if obs_mode=='dither':
-            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilter '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe 
+            skyfilter_cmd=self.m_irdr_path+'/skyfilter '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe 
         elif obs_mode=='dither_on_off':
-            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteronoff '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+            skyfilter_cmd=self.m_irdr_path+'/skyfilteronoff '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
         #elif obs_mode=='dither_on_off':
-        #    skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteronoff '+ '/tmp/skylist_prueba.list' + '  ' + gain_file +' '+ str(halfnsky)+' '+ 'mask' + '  ' + destripe
+        #    skyfilter_cmd=self.m_irdr_path+'/skyfilteronoff '+ '/tmp/skylist_prueba.list' + '  ' + gain_file +' '+ str(halfnsky)+' '+ 'mask' + '  ' + destripe
         elif obs_mode=='dither_off_on':
-            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilteroffon '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+            skyfilter_cmd=self.m_irdr_path+'/skyfilteroffon '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
         elif obs_mode=='other':
-            skyfilter_cmd=self.m_papi_path+'/irdr/bin/skyfilter_general '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+            skyfilter_cmd=self.m_irdr_path+'/skyfilter_general '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
         else:
             log.error("Observing mode not supported")
             raise
@@ -679,7 +695,7 @@ class ReductionSet:
             print "NEAR_FILES=", obj_ext[n]
             #Call external app skyfilter (papi)
             hwidth=2 ## TODO is it right ?????
-            cmd=self.m_papi_path+"/irdr/bin/skyfilter_single %s %s %d nomask none %d" %(listfile, gain, hwidth, file_pos)
+            cmd=self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d" %(listfile, gain, hwidth, file_pos)
             e=utils.runCmd( cmd )
             if e==1: # success
                 out_ext.append(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))  
@@ -698,7 +714,7 @@ class ReductionSet:
             
         return out_filename
     
-    def getPointingOffsets (self, images_in=None,  p_min_area=5, p_mask_thresh=2, p_offsets_file='/tmp/offsets.pap'):
+    def getPointingOffsets (self, images_in=None,  p_offsets_file='/tmp/offsets.pap'):
         """DESCRIPTION
                 Derive pointing offsets between each image using SExtractor OBJECTS (makeObjMask) and offsets (IRDR)
                 
@@ -724,11 +740,15 @@ class ReductionSet:
         output_list_file=self.out_dir+"/gpo_objs.pap"
         
         log.debug("Creaing OBJECTS images (SExtractor)....")
-
+        
+        mask_minarea=self.config_file['skysub']['mask_minarea']
+        mask_thresh=self.config_file['skysub']['mask_thresh']
+        satur_level=self.config_file['skysub']['satur_level']
+        
         if images_in==None: # then we use the images ending with suffing in the output directory
-            makeObjMask( self.out_dir+'*'+suffix , p_min_area, p_mask_thresh, output_list_file)
+            makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, satur_level, output_list_file)
         elif os.path.isfile(images_in): # we use the given list of images
-            makeObjMask( images_in , p_min_area, p_mask_thresh, output_list_file)
+            makeObjMask( images_in , mask_minarea, mask_thresh, satur_level, output_list_file)
         else:
             log.error("Option not recognized !!!")
             raise Exception("Wrong input frames given")
@@ -736,7 +756,7 @@ class ReductionSet:
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
         search_box=10 # half_width of search box in arcsec (default 10)
-        offsets_cmd=self.m_papi_path+'/irdr/bin/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
+        offsets_cmd=self.m_irdr_path+'/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
             log.error ("Some error while computing dither offsets")
             raise Exception("Some error while computing dither offsets")
@@ -795,7 +815,7 @@ class ReductionSet:
         
         # STEP 2: Run the coadd                                           
         if type_comb=='average': # (use IRDR::dithercubemean)
-            prog = self.m_papi_path+"/irdr/bin/dithercubemean "
+            prog = self.m_irdr_path+"/dithercubemean "
             cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
             e=utils.runCmd( cmd )
             if e==0:
@@ -818,8 +838,12 @@ class ReductionSet:
                                                              
         log.info("Start createMasterObjMask....")
                                                              
-        # STEP 1: create mask                                                     
-        makeObjMask( input_file+"*", 5, 2.0)
+        # STEP 1: create mask
+        mask_minarea=self.config_file['skysub']['mask_minarea']
+        mask_thresh=self.config_file['skysub']['mask_thresh']
+        satur_level=self.config_file['skysub']['satur_level']
+                                                             
+        makeObjMask( input_file+"*", mask_minarea, mask_thresh, satur_level)
         if os.path.exists(input_file+".objs"): 
             shutil.move(input_file+".objs", output_master_obj_mask)
             log.debug("New Object mask created : %s", output_master_obj_mask)
@@ -827,7 +851,7 @@ class ReductionSet:
         # STEP 2: dilate mask (NOT DONE)
         """
         log.info("Dilating image ....(NOT DONE by the moment)")
-        prog = self.m_papi_path+"/irdr/bin/dilate "
+        prog = self.m_irdr_path+"/dilate "
         scale = 0.5 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
         cmd  = prog + " " + input_file + " " + str(scale)
         
@@ -849,7 +873,7 @@ class ReductionSet:
         if re_grid: regrid_str='regrid'
         else: regrid_str='noregrid'
                                             
-        astrometry_cmd=self.m_papi_path+'/astrometry_scamp.pl '+ catalog + '  ' + regrid_str + ' ' + input_file
+        astrometry_cmd=self.m_irdr_path+'/astrometry_scamp.pl '+ catalog + '  ' + regrid_str + ' ' + input_file
         if misc.utils.runCmd( astrometry_cmd )==0:
             log.error ("Some error while computing Astrometry")
             return 0
@@ -1156,7 +1180,7 @@ class ReductionSet:
         self.db.ListDataSet()  
         return l_mflats # a list of master super flats created
     
-    def reduceSet(self, red_mode="single"):
+    def reduceSet(self, red_mode="quick"):
         """
         The main method for full set data reduction.
         
@@ -1190,8 +1214,8 @@ class ReductionSet:
         # Init DB
         if self.db==None: self.__initDB()
         
-        if red_mode=="single": # we suppose it's Quick-Look mode, thus not use calibration files
-            log.debug("Single/quick reduction mode, no calibration files will be built")
+        if red_mode=="quick": # we suppose it's Quick-Look mode, thus not use calibration files
+            log.debug("Quick reduction mode, no calibration files will be built")
         else:
             log.debug("Building calibration for the whole files ...")
             
@@ -1246,8 +1270,8 @@ class ReductionSet:
                 raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
                 #return []
             else:
-                #avoid call getCalibFor() when red_mode="single"
-                if red_mode=="single":
+                #avoid call getCalibFor() when red_mode="quick"
+                if red_mode=="quick":
                     dark,flat,bpm=[],[],[]
                 else:
                     dark, flat, bpm = self.getCalibFor(obj_seq)
@@ -1459,7 +1483,7 @@ class ReductionSet:
 
         ## -- una prueba con astrowarp ---
         """
-        if self.obs_mode!='dither' or self.red_mode=="single":
+        if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration and  coaddition result frame ****")
             #misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=output_file)
@@ -1479,7 +1503,7 @@ class ReductionSet:
         #########################################
         misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
         try:
-            offset_mat=self.getPointingOffsets(self.out_dir+"/files_skysub.list", 15, 5, self.out_dir+'/offsets1.pap')                
+            offset_mat=self.getPointingOffsets(self.out_dir+"/files_skysub.list", self.out_dir+'/offsets1.pap')                
         except Exception,e:
             log.error("Erron while getting pointing offsets. Cannot continue with data reduction...")
             raise e
@@ -1498,7 +1522,7 @@ class ReductionSet:
         self.coaddStackImages(self.out_dir+'/stack1.pap', gainmap, self.out_dir+'/coadd1.fits','average')
     
         ## END OF SINGLE REDUCTION  ##
-        if self.obs_mode!='dither' or self.red_mode=="single":
+        if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
             reduce.astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', output_file, "2MASS" ) 
             log.info("Generated output file ==>%s", output_file)

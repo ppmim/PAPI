@@ -71,71 +71,70 @@ def main(arguments = None):
     description = \
     "This module in the main application for the PANIC data reduction system "
 
-    wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
+    #wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
     parser = OptionParser(description = description, 
-                                   formatter = wider_format, 
+                                   #formatter = wider_format, 
                                    usage = "%prog [OPTION]... DIRECTORY...", 
                                    version = "%prog 1.0")
+    # general options
 
-    parser.add_option("--config", action="store", type="str",
-                      dest="config_file",
-                      help="if not specified, '%s' is used" \
-                            % misc.config.default_config_file())
+    parser.add_option("-c", "--config", type="str",
+                      action="store", dest="config_file",
+                      help="config file for the PANIC Pipeline application. If not specified, '%s' is used" \
+                      % misc.config.default_config_file())
                   
-    parser.add_option("-s", "--source",
+    parser.add_option("-s", "--source", type="str",
                   action="store", dest="source",
                   help="Source file list of data frames. It can be a file or directory name.")
     
-    parser.add_option("-o", "--output_file",
+    parser.add_option("-o", "--output_file", type="str",
                   action="store", dest="output_filename", 
                   help="final reduced output image")
     
-    parser.add_option("-d", "--outdir",
+    parser.add_option("-t", "--temp_dir", type="str",
+                  action="store", dest="temp_dir", default="/tmp",
+                  help="directory for temporal files (default=/tmp)")              
+    
+    parser.add_option("-d", "--outdir", type="str",
                   action="store", dest="out_dir", default="/tmp",
-                  help="output dir for intermidiate files")
+                  help="output dir for product files (default = /tmp)")
     
-    parser.add_option("-t", "--type",
-                  action="store", dest="type", default="quick", 
-                  help="type of reduction (quick|science)")
+    parser.add_option("-r", "--red_mode", type="str",
+                  action="store", dest="reduction_mode", default="quick", 
+                  help="Mode of data reduction to do (quick|science) default=quick")
                   
-    parser.add_option("-m", "--obs_mode",
+    parser.add_option("-m", "--obs_mode", type="str",
                   action="store", dest="obs_mode", 
-                  default="dither", help="observing mode (dither|ext_dither)")
-    
-    parser.add_option("-D", "--dark",
-                  action="store", dest="dark",
-                  help="master dark to subtract")
-    
-    parser.add_option("-F", "--flat",
-                  action="store", dest="flat",
-                  help="master flat to divide by")
-
-    parser.add_option("-b", "--bpm",
-                  action="store", dest="bpm", 
-                  help="bad pixel mask")
-    
-    parser.add_option("-C", "--config_file",
-                  action="store", dest="config_file", 
-                  help="config file for the data reduction process")
-                  
-    parser.add_option("-1", "--single",
-                  action="store_true", dest="single", default=False,
-                  help="make a single reduction")              
-
-    parser.add_option("-n", "--no_class",
-                  action="store_true", dest="no_class", default=False,
-                  help="not try to do dataset classification")
-
-    parser.add_option("-k", "--no_check",
-                  action="store_true", dest="no_check", default=False, 
-                  help="not check data properties match (type, expt, filter, ncoadd, mjd)")
+                  default="dither", help="observing mode (dither|ext_dither|other)")
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
+                  
+    # calibration options
+    
+    parser.add_option("-D", "--master_dark",
+                  action="store", dest="master_dark",
+                  help="master dark to subtract")
+    
+    parser.add_option("-F", "--master_flat", type="str",
+                  action="store", dest="master_flat",
+                  help="master flat to divide by")
+
+    parser.add_option("-b", "--bpm_file", type="str",
+                  action="store", dest="bpm_file", 
+                  help="bad pixel mask file")
+
+    parser.add_option("-g", "--group_by", type="str",
+                  action="store", dest="group_by", default=False,
+                  help="kind of data grouping (based on) to do with the dataset files (ot |filter)")
+
+    parser.add_option("-k", "--check_data", 
+                  action="store_true", dest="check_data", default=True, 
+                  help="if true, check data properties matching (type, expt, filter, ncoadd, mjd)")
 
         
-    (init_options, args) = parser.parse_args(args=arguments)
+    (init_options, i_args) = parser.parse_args(args=arguments)
     
     # Read the default configuration file if none was specified by the user
     if not init_options.config_file:
@@ -143,49 +142,59 @@ def main(arguments = None):
     else:
         config_file = init_options.config_file
     
+    # now, we "mix" the invokation parameter values with the values in the config file,
+    # having priority the invokation values over config file values
+    # note: only values of the 'general' section can be invoked
     options = misc.config.read_options(init_options, 'general', config_file)
 
+    print "options=",options
 
-    if not args:
+    if  i_args:
         parser.print_help()
+        print "por aqui ...."
         sys.exit(2) 
     
-    # Read the options from the configuration file
-    options = config.read_config_file()
     general_opts  = options['general'] 
+    print "GEN_OPTS",general_opts
   
         
-    if not options.source or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    if not general_opts['source'] or not general_opts['output_file'] \
+        or not general_opts['output_dir'] or not general_opts['temp_dir']   \
+        or len(i_args)!=0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
-    if options.verbose:
-        print "reading %s ..." % options.source
+    if general_opts['verbose']:
+        print "reading %s ..." % general_opts['source']
     
     
     sci_files=[]
     
     # Read file or list-directory 
-    if os.path.isfile(options.source):
-        sci_files=[line.replace("\n", "").replace('//','/') for line in fileinput.input(options.source)]
-    elif os.path.isdir(options.source):
-        for file in dircache.listdir(options.source):
+    if os.path.isfile(general_opts['source']):
+        sci_files=[line.replace("\n", "").replace('//','/') for line in fileinput.input(general_opts['source'])]
+    elif os.path.isdir(general_opts['source']):
+        for file in dircache.listdir(general_opts['source']):
             if file.endswith(".fits") or file.endswith(".fit"):
-                sci_files.append((options.source+"/"+file).replace('//','/'))
-                
-    if options.single: red_m="single"
-    else: red_m="full"
+                sci_files.append((general_opts['source']+"/"+file).replace('//','/'))
     
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    log.debug(">Start PAPI....")
+    log.debug(">> Starting PAPI....")
+    log.debug("   + source  : %s",general_opts['source'])
+    log.debug("   + out_dir : %s",general_opts['output_dir'])
+    log.debug("   + reduction_mode: %s",general_opts['reduction_mode'])
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     # Create the RS (it works both simple FITS as MEF files)            
-    rs = RS.ReductionSet( sci_files, options.out_dir, out_file=options.output_filename, obs_mode="dither", \
-                                dark=options.dark, flat=options.flat, bpm=options.bpm, red_mode=red_m, \
-                                classf=not(options.no_class), check_data=not(options.no_check))
+    rs = RS.ReductionSet( sci_files, general_opts['output_dir'], out_file=general_opts['output_file'], \
+                          obs_mode=general_opts['obs_mode'], \
+                          dark=general_opts['master_dark'], flat=general_opts['master_flat'], \
+                          bpm=general_opts['master_bpm'], red_mode=general_opts['reduction_mode'], \
+                          group_by=general_opts['group_by'], check_data=general_opts['check_data'], \
+                          config_file=options \
+                        )
     
     try:
-        rs.reduceSet(red_mode=red_m)
+        rs.reduceSet(red_mode=general_opts['reduction_mode'])
     except Exception,e:
         print "Cannot reduce the Data Set, check error log...."
         raise e
@@ -196,3 +205,5 @@ def main(arguments = None):
 ######################################################################
 if __name__ == "__main__":
     sys.exit(main())
+    
+    

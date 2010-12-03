@@ -125,7 +125,8 @@ class GainMap:
         JMIbanez, IAA-CSIC
         
     """
-    def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  bpm=None, do_normalization=True):
+    def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  bpm=None, \
+                do_normalization=True, mingain=0.5, maxgain=1.5, nxblock=16, nyblock=16, nsigma=5):
          
         self.flat = flatfield  # Flat-field image (normalized or not, because optionaly, normalization can be done here)
         self.output_file_dir = os.path.dirname(output_filename)
@@ -134,11 +135,11 @@ class GainMap:
         self.do_norm=do_normalization
         
         # Some default parameter values
-        self.m_MINGAIN = 0.5   #pixels with sensitivity < MINGAIN are assumed bad 
-        self.m_MAXGAIN = 1.5   #pixels with sensitivity > MAXGAIN are assumed bad 
-        self.m_NXBLOCK = 16    #image size should be multiple of block size 
-        self.m_NYBLOCK = 16
-        self.m_NSIG    = 5.0   #badpix if sensitivity > NSIG sigma from local bkg
+        self.m_MINGAIN = mingain #pixels with sensitivity < MINGAIN are assumed bad 
+        self.m_MAXGAIN = maxgain #pixels with sensitivity > MAXGAIN are assumed bad 
+        self.m_NXBLOCK = nxblock #image size should be multiple of block size 
+        self.m_NYBLOCK = nyblock
+        self.m_NSIG    = nsigma  #badpix if sensitivity > NSIG sigma from local bkg
         self.m_BPM     = bpm   #external BadPixelMap to take into account   
                 
                 
@@ -280,23 +281,56 @@ if __name__ == "__main__":
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
                   
-    parser.add_option("-s", "--source",
+    parser.add_option("-s", "--source", type="str",
                   action="store", dest="source_file",
                   help="Flat Field image NOT normalized. It has to be a fullpath file name (required)")
                   
-    parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", help="output file to write the Gain Map")
+    parser.add_option("-o", "--output", type="str",
+                  action="store", dest="output_filename", 
+                  help="output file to write the Gain Map")
     
-    parser.add_option("-b", "--bpm",
-                  action="store", dest="bpm", help="Bad pixel map (optional)")
+    parser.add_option("-b", "--bpm", type="str",
+                  action="store", dest="bpm", 
+                  help="Bad pixel map file (optional)")
    
-
+    parser.add_option("-L", "--low", type="float", default=0.5,
+                  action="store", dest="mingain", 
+                  help="pixel below this gain value  are considered bad (default=0.4)")
+    
+    parser.add_option("-H", "--high", type="float", default=1.5,
+                  action="store", dest="maxgain", 
+                  help="pixel above this gain value are considered bad (default=1.5)")
+                  
+    parser.add_option("-x", "--nx", type="int", default=16,
+                  action="store", dest="nxblock", 
+                  help="X dimen. (pixels) to compute local bkg (even) (default=16)")
+    
+    parser.add_option("-y", "--ny", type="int", default=16,
+                  action="store", dest="nyblock", 
+                  help="Y dimen. (pixels) to compute local bkg (even) (default=16)")
+                  
+    parser.add_option("-n", "--nsigma", type="int", default=5,
+                  action="store", dest="nsigma", 
+                  help="number of (+|-)stddev from local bkg to be bad pixel (default=5)")
+    
+    parser.add_option("-N", "--normal",  default=True,
+                  action="store_true", dest="normal", 
+                  help="Set if previous normalization need to be done to input flat-field (default=True)")                            
+                  
     (options, args) = parser.parse_args()
+    
+     
     if not options.source_file or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     
-    gainmap = GainMap(options.source_file, options.output_filename, options.bpm)
+   
+    
+    gainmap = GainMap(options.source_file, options.output_filename, options.bpm, \
+                      do_normalization=options.normal, \
+                      mingain=options.mingain, maxgain=options.maxgain, nxblock=options.nxblock, \
+                      nyblock=options.nyblock, nsigma=options.nsigma )
+                      
     gainmap.create()
           
         

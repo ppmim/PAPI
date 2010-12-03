@@ -120,8 +120,10 @@ def read_parameter(config_object, section, parameter, type, required = False,
         print style.prefix() + "The section '" + section + "' could not be found."
         sys.exit(style.error_exit_message())
     except ConfigParser.NoOptionError:
-        print style.prefix() + "The parameter '" + parameter + "' could not be found in section '" + section + "'."
-        sys.exit(style.error_exit_message())
+        if  not required: return None
+        else:
+            print style.prefix() + "The parameter '" + parameter + "' could not be found in section '" + section + "'."
+            sys.exit(style.error_exit_message())
     except ConfigParser.Error: 
         print style.prefix() + "An error occurred while parsing parameter '" + parameter +"."
         sys.exit(style.error_exit_message())    
@@ -405,21 +407,32 @@ def read_config_file(config_file = default_config_file()):
     ## ACTUALIZAR LLAMADAS a read_parameter()
     general = {} 
  
-    general["config_dir"] = read_parameter(config, "general", "config_dir", str, True, config_file)
+    #general["config_dir"] = read_parameter(config, "general", "config_dir", str, True, config_file)
+    
+    general["source"] = read_parameter(config, "general", "source", str, True, config_file)
     general["output_dir"] = read_parameter(config, "general", "output_dir", str, True, config_file)
     general["temp_dir"] = read_parameter(config, "general", "temp_dir", str, True, config_file)
+    general["output_file"] = read_parameter(config, "general", "output_file", str, True, config_file)
     
-    general["red_mode"] = read_parameter(config, "general", "red_mode", str, True, config_file)
-    general["check_data"] = read_parameter(config, "general", "check_data", bool, True, config_file)
-    general["group_by"] = read_parameter(config, "general", "group_by", str, True, config_file)
+    general["master_dark"] = read_parameter(config, "general", "master_dark", str, False, config_file)
+    general["master_flat"] = read_parameter(config, "general", "master_flat", str, False, config_file)
+    general["master_bpm"] = read_parameter(config, "general", "master_bpm", str, False, config_file)
+    
+    general["obs_mode"] = read_parameter(config, "general", "obs_mode", str, False, config_file)
+    general["reduction_mode"] = read_parameter(config, "general", "reduction_mode", str, False, config_file)
+    general["check_data"] = read_parameter(config, "general", "check_data", bool, False, config_file)
+    general["group_by"] = read_parameter(config, "general", "group_by", str, False, config_file)
+    
+    general["max_mjd_diff"] = read_parameter(config, "general", "max_mjd_diff", float, False, config_file)
+    general["min_corr_frac"] = read_parameter(config, "general", "min_corr_frac", float, False, config_file)
+    
     general["apply_dark_flat"] = read_parameter(config, "general", "apply_dark_flat", bool, True, config_file)
-    
-
     general["scale"] = read_parameter(config, "general", "scale", float, True, config_file)
     general["equinox"] = read_parameter(config, "general", "equinox", int, True, config_file)
     general["radecsys"] = read_parameter(config, "general", "radecsys", str, True, config_file)
     general["pattern"] = read_parameter(config, "general", "pattern", str, False, config_file)
-
+    general["verbose"] = read_parameter(config, "general", "verbose", bool, False, config_file)
+    
     filter_prefix = "filter_name_"
     for filter_letter in ["Z", "Y", "J", "H", "K", "Ks"]:
         general[filter_prefix + filter_letter] = read_list_of_strings(config, "general", filter_prefix + filter_letter)
@@ -431,8 +444,10 @@ def read_config_file(config_file = default_config_file()):
 
     options["general"] = general
 
-    ###################### config files #####################################
+    ###################### Astromatic config files #####################################
     config_files = {}
+    config_files["terapix_bin"] = read_parameter(config, "config_files", "terapix_bin", str, False, config_file)
+    config_files["irdr_bin"] = read_parameter(config, "config_files", "irdr_bin", str, False, config_file)
     config_files["sextractor_conf"] = read_file_parameter(config, "config_files", "sextractor_conf")
     config_files["sextractor_param"] = read_file_parameter(config, "config_files", "sextractor_param")
     config_files["sextractor_nnw"] = read_file_parameter(config, "config_files", "sextractor_nnw")
@@ -497,13 +512,34 @@ def read_config_file(config_file = default_config_file()):
     
     area_width = read_parameter(config, "twflats", "area_width", int, True, config_file)
     if not area_width > 1:
-        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'dflats' must be a positive integer."
+        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'twflats' must be a positive integer."
         sys.exit(style.error_exit_message())    
     else:
         twflats["area_width"] = area_width
 
     options["twflats"] = twflats  
 
+    
+    ########################## "skysub" section ################################
+    skysub = {}
+    
+    skysub["object_names"] = read_list_of_strings(config, "skysub", "object_names")
+    skysub["check_prop"] = read_parameter(config, "skysub", "check_prop", bool, False, config_file)
+    skysub["suffix"] = read_parameter(config, "skysub", "suffix", str, False, config_file)
+    skysub["min_frames"] = read_parameter(config, "skysub", "min_frames", int, False, config_file)
+    skysub["hwidth"] = read_parameter(config, "skysub", "hwidth", int, False, config_file)
+    skysub["mask_minarea"] = read_parameter(config, "skysub", "mask_minarea", int, False, config_file)
+    skysub["mask_thresh"] = read_parameter(config, "skysub", "mask_thresh", float, False, config_file)
+    skysub["satur_level"] = read_parameter(config, "skysub", "satur_level", long, False, config_file)
+    
+    area_width = read_parameter(config, "skysub", "area_width", int, True, config_file)
+    if not area_width > 1:
+        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'skysub' must be a positive integer."
+        sys.exit(style.error_exit_message())    
+    else:
+        skysub["area_width"] = area_width
+        
+    options["skysub"] = skysub     
     
     ####################### "fits" section #################################
     ## ACTUALIZAR LLAMADAS a read_parameter()

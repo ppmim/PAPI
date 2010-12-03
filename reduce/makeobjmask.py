@@ -51,7 +51,7 @@ import astromatic.sextractor
 
 
 #-----------------------------------------------------------------------
-def makeObjMask (inputfile, minarea=5,  threshold=2.0, outputfile="/tmp/out.txt"):
+def makeObjMask (inputfile, minarea=5,  threshold=2.0, satur_level=300000, outputfile="/tmp/out.txt"):
     """DESCRIPTION
                 Create an object mask of the inputfile/s based on SExtractor
            
@@ -109,7 +109,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, outputfile="/tmp/out.txt"
         sex.config['DETECT_THRESH'] = threshold
         sex.config['CHECKIMAGE_TYPE'] = "OBJECTS"
         sex.config['CHECKIMAGE_NAME'] = fn + ".objs"
-        sex.config['SATUR_LEVEL'] = 300000
+        sex.config['SATUR_LEVEL'] = satur_level
         if os.path.exists(fn.replace(".fits",".weight.fits")):
             sex.config['WEIGHT_TYPE']="MAP_WEIGHT"
             sex.config['WEIGHT_IMAGE']=fn.replace(".fits",".weight.fits")
