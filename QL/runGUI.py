@@ -1320,27 +1320,6 @@ class MainGUI(panicQL):
                 except:
                     log.error("Error creating master Twilight Flat file")
                     raise
-        
-    def createSkyFlat_slot_1(self):
-        """ DOES NOT WORK FINE , TO_REVIEW anymore used ??? !!!!"""
-        
-        rb = reduce.ReductionBlock (self.m_popup_l_sel)
-        if len(self.m_popup_l_sel)>2:
-            outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/super_sky_flat.fits", "*.fits", self, "Save File dialog")
-            if not outfileName.isEmpty():
-                try:
-                    rb.createSuperFlat(self.m_masterDark, str(outfileName))
-                except:
-                    QMessageBox.critical(self, "Error", "Error while creating super Flat")
-                    raise
-                else:
-                    QMessageBox.information(self,"Info",QString("Super Flat  %1 created").arg(str(outfileName)))
-                    display.showFrame(str(outfileName))
-            else:
-                pass
-        else:
-            QMessageBox.information(self,"Info","Error, not enought frames (>2) !")
-    
     
     def createGainMap_slot(self):
 
@@ -1717,15 +1696,6 @@ class MainGUI(panicQL):
             listViewItem = it.current()
 
         """
-
-        rb = reduce.ReductionBlock (self.m_popup_l_sel)
-        if rb.createBadPixelMask(self.m_outputdir+"/badPixelMask"):
-            QMessageBox.information(self,"Info",QString("BPM file %1 created").arg(self.m_outputdir+"/badPixelMask.pl"))
-        else:
-            QMessageBox.information(self,"Info","Error, building Bad Pixel Mask (BPM) !")
-        
-        self.textEdit_log.append("<info_tag> Test finished !!! </info_tag>")
-        
         return 
         
         name="Pepe"
@@ -1742,7 +1712,6 @@ class MainGUI(panicQL):
         item.setFontWeight( QFont.Bold )
         item.setFontUnderline( True )
         self.textEdit_log.append("HOLA me llamo <mytag> Jose Miguel </mytag>")
-
         """
     
     #######################################################################################

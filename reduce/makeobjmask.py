@@ -51,20 +51,22 @@ import astromatic.sextractor
 
 
 #-----------------------------------------------------------------------
-def makeObjMask (inputfile, minarea=5,  threshold=2.0, satur_level=300000, outputfile="/tmp/out.txt"):
+def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, outputfile="/tmp/out.txt"):
     """DESCRIPTION
                 Create an object mask of the inputfile/s based on SExtractor
            
            INPUTS
-                inputfile       it can be a regular expresion or a filename containing a filelist
+                inputfile    it can be a regular expresion or a filename containing a filelist
                 
            OPTIONAL INPUTS
                 
-                outputfile      filename of file list with the object file/s created by SExtractor
+                outputfile   filename of file list with the object file/s created by SExtractor
                 
-                p_min_area      SExtractor DETECT_MINAREA (minimun object area)
+                minarea      SExtractor DETECT_MINAREA (minimun object area)
                            
-                p_mask_thresh   SExtractor DETECT_THRESH
+                threshold    SExtractor DETECT_THRESH
+                
+                saturlevel
                 
                 
            OUTPUTS
@@ -95,13 +97,14 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, satur_level=300000, outpu
         
     f_out = open(outputfile,"w")
     
+    sex = astromatic.SExtractor()
+    n=0
     for fn in files:
         if not os.path.exists(fn):      # check whether input file exists
             log.error( 'File %s does not exist', fn)
             raise Exception ("File %s does not exist",fn) 
      
         log.debug("*** Creating SExtractor object mask for file %s....", fn)
-        sex = astromatic.SExtractor()
         #sex.config['CONFIG_FILE']=sex_config
         sex.config['CATALOG_TYPE'] = "FITS_LDAC"
         sex.config['CATALOG_NAME'] = fn + ".ldac"
@@ -109,7 +112,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, satur_level=300000, outpu
         sex.config['DETECT_THRESH'] = threshold
         sex.config['CHECKIMAGE_TYPE'] = "OBJECTS"
         sex.config['CHECKIMAGE_NAME'] = fn + ".objs"
-        sex.config['SATUR_LEVEL'] = satur_level
+        sex.config['SATUR_LEVEL'] = saturlevel
         if os.path.exists(fn.replace(".fits",".weight.fits")):
             sex.config['WEIGHT_TYPE']="MAP_WEIGHT"
             sex.config['WEIGHT_IMAGE']=fn.replace(".fits",".weight.fits")
@@ -120,12 +123,13 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, satur_level=300000, outpu
             log.debug("Some error while running SExtractor : %s", str(e))
             raise Exception("Some error while running SExtractor : %s",str(e))
         
+        n+=1
         log.debug("Object mask file created for file : %s",fn)
         f_out.write(fn+".objs"+"\n")
             
     sex.clean(config=True, catalog=True, check=False)
     f_out.close()
-    log.debug("Succesful ending of makeObjMask")
+    log.debug("Succesful ending of makeObjMask. => %d object mask files created", n)
     
     
 ################################################################################
@@ -137,19 +141,26 @@ if __name__ == "__main__":
     parser = OptionParser(usage)
     
                   
-    parser.add_option("-s", "--file",
+    parser.add_option("-s", "--file", type="str",
                   action="store", dest="inputfile",
                   help="Source file list of data frames.")
     
-    parser.add_option("-o", "--output",
-                  action="store", dest="outputfile", help="output file with the list of catalogs")
+    parser.add_option("-o", "--output", type="str",
+                  action="store", dest="outputfile", 
+                  help="output file with the list of catalogs")
     
-    parser.add_option("-m", "--minarea",
-                  action="store", dest="minarea", default=5, help="SExtractor DETECT_MINAREA (int)")
+    parser.add_option("-m", "--minarea", type="int", default=5,
+                  action="store", dest="minarea", 
+                  help="SExtractor DETECT_MINAREA (int)")
                   
-    parser.add_option("-t", "--threshold",
-                  action="store", dest="threshold", default=2, help="SExtractor DETECT_THRESH (int)")
-                                   
+    parser.add_option("-t", "--threshold",  type="float", default=2.0,
+                  action="store", dest="threshold", 
+                  help="SExtractor DETECT_THRESH (float)")
+    
+    parser.add_option("-l", "--saturlevel", type="int", default=300000,
+                  action="store", dest="saturlevel",
+                  help="SExtractor SATUR_LEVEL (int)")                               
+    
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
@@ -162,5 +173,5 @@ if __name__ == "__main__":
         parser.error("Incorrect number of arguments " )
         
 
-    makeObjMask( inputfile, minarea, threshold, outputfile)
+    makeObjMask( options.inputfile, options.minarea, options.threshold, options.saturlevel, options.outputfile)
     

@@ -109,6 +109,7 @@ class ReductionSet:
             
         
         
+        # real "variables" holding current reduction status
         self.m_LAST_FILES = []   # Contain the files as result of the last processing step (science processed frames)
         self.m_rawFiles = []     # Raw files (originals in the working directory)
         self.m_filter = ""       # Filter of the current data set (m_LAST_FILES)
@@ -185,9 +186,9 @@ class ReductionSet:
                     mismatch_type=True
                     break
             if chk_expt and not mismatch_expt: 
-                #if fi.expTime() != expt_0:
-                if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or \
-                    (fi.expTime()-self.MAX_MJD_DIFF)>expt_0):   # more relaxed situation
+                if fi.expTime() != expt_0:
+                #if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or \
+                #    (fi.expTime()-self.MAX_MJD_DIFF)>expt_0):   # more relaxed situation
                     log.debug("File %s does not match file EXPTIME", file)
                     mismatch_expt=True
                     break
@@ -283,7 +284,7 @@ class ReductionSet:
     
     def split(self, frame_list):
         """ 
-        Split the data in frame list (any kind, science or calibration) into N 'sub-list',
+        Split the data from the given frame list (any kind, science or calibration) into N 'sub-list',
         where N is the number of extension of the Multi-Extension FITS.
         """
         

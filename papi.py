@@ -111,7 +111,7 @@ def main(arguments = None):
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
                   
-    # calibration options
+    # file calibration options
     
     parser.add_option("-D", "--master_dark",
                   action="store", dest="master_dark",
