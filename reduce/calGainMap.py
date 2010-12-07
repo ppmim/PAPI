@@ -142,9 +142,8 @@ class GainMap:
         self.m_NSIG    = nsigma  #badpix if sensitivity > NSIG sigma from local bkg
         self.m_BPM     = bpm   #external BadPixelMap to take into account   
                 
-                
+               
     def create(self):
-        # flat, nsig, nxblock, nyblock, mingain, maxgain, bpm=None ):
         
         """
         \brief Given a NOT normalized flat field, compute the gain map taking into account the input 

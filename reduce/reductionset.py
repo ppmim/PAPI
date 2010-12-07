@@ -742,10 +742,15 @@ class ReductionSet:
         
         log.debug("Creaing OBJECTS images (SExtractor)....")
         
-        mask_minarea=self.config_file['skysub']['mask_minarea']
-        mask_thresh=self.config_file['skysub']['mask_thresh']
-        satur_level=self.config_file['skysub']['satur_level']
-        
+        if self.config_file:
+            mask_minarea=self.config_file['skysub']['mask_minarea']
+            mask_thresh=self.config_file['skysub']['mask_thresh']
+            satur_level=self.config_file['skysub']['satur_level']
+        else:
+            mask_minarea=25
+            mask_thresh=0.4
+            satur_level=300000
+            
         if images_in==None: # then we use the images ending with suffing in the output directory
             makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, satur_level, output_list_file)
         elif os.path.isfile(images_in): # we use the given list of images
@@ -840,9 +845,14 @@ class ReductionSet:
         log.info("Start createMasterObjMask....")
                                                              
         # STEP 1: create mask
-        mask_minarea=self.config_file['skysub']['mask_minarea']
-        mask_thresh=self.config_file['skysub']['mask_thresh']
-        satur_level=self.config_file['skysub']['satur_level']
+        if self.config_file:
+            mask_minarea=self.config_file['skysub']['mask_minarea']
+            mask_thresh=self.config_file['skysub']['mask_thresh']
+            satur_level=self.config_file['skysub']['satur_level']
+        else:
+            mask_minarea=25
+            mask_thresh=0.4
+            satur_level=300000
                                                              
         makeObjMask( input_file+"*", mask_minarea, mask_thresh, satur_level)
         if os.path.exists(input_file+".objs"): 
@@ -980,8 +990,24 @@ class ReductionSet:
                 # generate a random filename for the master, to ensure we do not overwrite any file
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
-                print "FLAT CANDIDATE=", group[0]
-                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=True)
+                # get gainmap parameters
+                if self.config_file:
+                    mingain=self.config_file['gainmap']['mingain']
+                    maxgain=self.config_file['gainmap']['maxgain']
+                    nxblock=self.config_file['gainmap']['nxblock']
+                    nyblock=self.config_file['gainmap']['nyblock']
+                    nsigma=self.config_file['gainmap']['nsigma']
+                else:
+                    mingain=0.5
+                    maxgain=1.5
+                    nxblock=16
+                    nyblock=16
+                    nsigma=5    
+                
+                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=True,
+                                               mingain=mingain, maxgain=maxgain, nxblock=nxblock,
+                                               nyblock=nyblock, nsigma=nsigma)
+                
                 out=None
                 out=task.create()
                 l_gainmaps.append(out) # out must be equal to outfile
@@ -1443,13 +1469,22 @@ class ReductionSet:
         ######################################
         log.info("**** Computing gain-map ****")
         gainmap = self.out_dir+'/gain_'+self.m_filter+'.fits'
-        #nxblock=16
-        #nyblock=16
-        #The next values are to find out bad pixels 
-        #nsig=5
-        #mingain=0.7
-        #maxgain=1.3
-        g=reduce.calGainMap.GainMap(master_flat, gainmap)
+        # get gainmap parameters
+        if self.config_file:
+            mingain=self.config_file['gainmap']['mingain']
+            maxgain=self.config_file['gainmap']['maxgain']
+            nxblock=self.config_file['gainmap']['nxblock']
+            nyblock=self.config_file['gainmap']['nyblock']
+            nsigma=self.config_file['gainmap']['nsigma']
+        else:
+            mingain=0.5
+            maxgain=1.5
+            nxblock=16
+            nyblock=16
+            nsigma=5
+        g=reduce.calGainMap.GainMap(master_flat, gainmap, bpm=master_bpm, do_normalization=True,
+                                    mingain=mingain, maxgain=maxgain, nxblock=nxblock,
+                                    nyblock=nyblock, nsigma=nsigma)
         g.create() 
            
         ########################################
@@ -1482,7 +1517,7 @@ class ReductionSet:
                             
         log.info("**** Quality Assessment **** (TBD)")                   
 
-        ## -- una prueba con astrowarp ---
+        ## -- una prueba con astrowarp : no va mal, a simple vista da resultados parecidos, y en CPU tambien =, por tanto, opcion a considerar !!---
         """
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration and  coaddition result frame ****")

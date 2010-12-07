@@ -541,6 +541,25 @@ def read_config_file(config_file = default_config_file()):
         
     options["skysub"] = skysub     
     
+    ########################## "skysub" section ################################
+    gainmap = {}
+    
+    gainmap["object_names"] = read_list_of_strings(config, "gainmap", "object_names")
+    gainmap["mingain"] = read_parameter(config, "gainmap", "mingain", float, True, config_file)
+    gainmap["maxgain"] = read_parameter(config, "gainmap", "maxgain", float, True, config_file)
+    gainmap["nxblock"] = read_parameter(config, "gainmap", "nxblock", int, True, config_file)
+    gainmap["nyblock"] = read_parameter(config, "gainmap", "nyblock", int, True, config_file)
+    gainmap["nsigma"] = read_parameter(config, "gainmap", "nsigma", float, True, config_file)
+    
+    area_width = read_parameter(config, "gainmap", "area_width", int, True, config_file)
+    if not area_width > 1:
+        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'gainmap' must be a positive integer."
+        sys.exit(style.error_exit_message())    
+    else:
+        gainmap["area_width"] = area_width
+        
+    options["gainmap"] = gainmap    
+    
     ####################### "fits" section #################################
     ## ACTUALIZAR LLAMADAS a read_parameter()
     # This options, although loaded from the configuration file, are not used
