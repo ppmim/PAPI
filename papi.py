@@ -95,8 +95,8 @@ def main(arguments = None):
                   action="store", dest="temp_dir", default="/tmp",
                   help="directory for temporal files (default=/tmp)")              
     
-    parser.add_option("-d", "--outdir", type="str",
-                  action="store", dest="out_dir", default="/tmp",
+    parser.add_option("-d", "--out_dir", type="str",
+                  action="store", dest="output_dir", default="/tmp",
                   help="output dir for product files (default = /tmp)")
     
     parser.add_option("-r", "--red_mode", type="str",
