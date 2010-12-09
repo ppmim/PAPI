@@ -88,10 +88,12 @@ class ReductionSet:
         self.config_file = config_file # dictionary with all sections (general, darks, dflats, twflats, skysub, fits, keywords, config_files) and their values
          
         # some "default" config values (see below how they are updated from the config_file)
+        # Environment variables
+        self.m_terapix_path = os.environ['TERAPIX']
+        self.m_irdr_path = os.environ['IRDR_BIN']
         self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
         self.HWIDTH = 2 #half width of sky filter window in frames
         self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
-        self.MAX_MJD_DIFF = 2 # Maximun exposition time difference (seconds) between frames
         self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
          
         if self.config_file:
@@ -102,10 +104,6 @@ class ReductionSet:
             self.MIN_SKY_FRAMES = self.config_file['skysub']['min_frames']  # minimun number of sky frames required in the sliding window for the sky subtraction
             self.MAX_MJD_DIFF = self.config_file['general']['max_mjd_diff'] # Maximun exposition time difference (seconds) between frames
             self.MIN_CORR_FRAC = self.config_file['general']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
-        else:   
-            # Environment variables
-            self.m_terapix_path = os.environ['TERAPIX']
-            self.m_irdr_path = os.environ['IRDR_BIN']
             
         
         
