@@ -41,8 +41,8 @@ import os
 import sys
 import fileinput
 
-from scipy import signal
-
+#from scipy import signal
+#comentado el signal porque en el portatil da un error !!!!!
 
 # Pyraf modules
 import pyraf
@@ -130,7 +130,7 @@ class BadPixelMask:
             raise ExError, "File does not exist"    
         
         # Read the file list
-        filelist=[line.replace( "\n", "") for line in fileinput.input(self.i_file_list)]
+        filelist=[line.replace( "\n", "").replace("//","/") for line in fileinput.input(self.i_file_list)]
         
         #STEP 1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF)
         #        and create string list for IRAF tasks
@@ -294,7 +294,7 @@ class BadPixelMask:
         
         
         # Read the file list
-        filelist=[line.replace( "\n", "") for line in fileinput.input(self.i_file_list)]
+        filelist=[line.replace( "\n", "").replace("//","/") for line in fileinput.input(self.i_file_list)]
         
         #STEP 1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
         #        and create string list for IRAF tasks

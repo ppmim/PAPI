@@ -41,7 +41,7 @@ def default_config_file():
     
     """
 
-    return "./config_files/papi1.cfg"
+    return "./config_files/papi_portatil.cfg"
 
 
 def check_required_option(option_name, option_value):
@@ -623,6 +623,15 @@ def read_config_file(config_file = default_config_file()):
 
     options["keywords"] = keywords
 
+    
+    #################### Quick-Look tool #####################
+    quicklook = {}
+    quicklook["source"] = read_parameter(config, "quicklook", "source", str, True, config_file)
+    quicklook["output_dir"] = read_parameter(config, "quicklook", "output_dir", str, True, config_file)
+    quicklook["temp_dir"] = read_parameter(config, "quicklook", "temp_dir", str, True, config_file)    
+    quicklook["run_mode"] = read_parameter(config, "quicklook", "run_mode", str, True, config_file)        
+
+    options["quicklook"] = quicklook
 
     #########################################################################
     # TODO: complete as the config file grows!

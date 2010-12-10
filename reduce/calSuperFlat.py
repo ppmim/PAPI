@@ -120,7 +120,7 @@ class SuperSkyFlat:
         
         # Check data integrity (all have the same properties)
         m_filelist=self.filelist
-        print "LISTA =", m_filelist
+        #print "LISTA =", m_filelist
             
         if not datahandler.checkDataProperties( m_filelist ):
             log.error("Data integrity ERROR, some files not having same properties")

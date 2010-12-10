@@ -5,21 +5,6 @@
 import logging
 
 
-"""logging.basicConfig(level=logging.DEBUG,
-    format='%(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s',
-    datefmt='%a, %d %b %Y %H:%M:%S',
-    filename='/tmp/panicTool.log',
-    filemode='w')
-#console = logging.StreamHandler()
-#console.setLevel(logging.DEBUG)
-#formatter = logging.Formatter('%(filename)s %(name)-12s: %(levelname)-8s %(message)s')
-# tell the handler to use this format
-#console.setFormatter(formatter)
-#logging.getLogger('').addHandler(console)
-log = logging.getLogger('panicQL.log')
-log.setLevel(logging.INFO)
-"""
-
 class ColorFormatter(logging.Formatter):
  
     def color(self, level=None):
@@ -37,50 +22,67 @@ class ColorFormatter(logging.Formatter):
         retval = logging.Formatter.format(self, record)
         return self.color(record.levelname) + retval + self.color()
 
-# Console
+
+### We define two logging handlers (Console and File), each one can have different properties (level, formater, ...)
+## Console
 console = logging.StreamHandler()
-console.setLevel(logging.INFO)
+console.setLevel(logging.INFO) # here we set the level for console handler
+# NOTE: Handler.setLevel() method, just as in logger objects, specifies the lowest severity that will be dispatched
+#to the appropriate destination.
+# Why are there two setLevel() methods? The level set in the logger determines which severity of messages it will pass
+# to its handlers. The level set in each handler determines which messages that handler will send on.
 console.setFormatter(ColorFormatter('    [%(name)s]: %(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s'))
-logging.getLogger('panicQL').addHandler(console)
-# File
-file_hd = logging.FileHandler("/tmp/panicQL.log")
-console.setLevel(logging.DEBUG)
+logging.getLogger('PAPI').addHandler(console)
+
+## File
+file_hd = logging.FileHandler("/tmp/papi.log")
+file_hd.setLevel(logging.DEBUG) # here we set the level for File handler 
 formatter = logging.Formatter('[%(name)s]: %(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s')
 file_hd.setFormatter(formatter)
-logging.getLogger('panicQL').addHandler(file_hd)
+logging.getLogger('PAPI').addHandler(file_hd)
 
-logging.getLogger('panicQL').setLevel(logging.DEBUG)
-log = logging.getLogger('panicQL')
+## define the global log level
+logging.getLogger('PAPI').setLevel(logging.DEBUG) # debug is the lowest level
+## define the global variable used whole arround the PAPI sources
+log = logging.getLogger('PAPI')
 
 
-## Test
+
+
+
+
+
+
+
+
+
+
 """
-log.debug('mensaje para depuracion')
-log.info('informacion')
-log.warning('el que avisa no es traidor')
-log.error('un errorcillo')
-log.critical('y la liaste parda')
-"""
-"""log = logging.getLogger('panicQL')
-hdlr = logging.FileHandler('/tmp/panicQL.log')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
-log.addHandler(hdlr)
+# STUFF NOT USED 
+logging.basicConfig(level=logging.DEBUG,
+    format='%(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s',
+    datefmt='%a, %d %b %Y %H:%M:%S',
+    filename='/tmp/panicTool.log',
+    filemode='w')
+#console = logging.StreamHandler()
+#console.setLevel(logging.DEBUG)
+#formatter = logging.Formatter('%(filename)s %(name)-12s: %(levelname)-8s %(message)s')
+# tell the handler to use this format
+#console.setFormatter(formatter)
+#logging.getLogger('').addHandler(console)
+log = logging.getLogger('panicQL.log')
 log.setLevel(logging.INFO)
-log.debug("Que pasa !!!!")
-"""
-
 
 
 def initLog(log_filename, log_level):
-    return
+    "" actually not used ...""
     logging.basicConfig(level=log_level,
                         format='%(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s',
                         datefmt='%a, %d %b %Y %H:%M:%S',
                         filename=log_filename,
                         filemode='w')
     
-
+"""
 
 
 

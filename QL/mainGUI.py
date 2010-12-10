@@ -85,11 +85,12 @@ import numpy
 class MainGUI(panicQL):
 
             
-    def __init__(self, source_dir=None, output_dir='/tmp/out/', temp_dir='/tmp/', config_file=None):               
+    def __init__(self, source_dir="/tmp/data", output_dir='/tmp/out', temp_dir='/tmp', config_opts=None):               
         
-        log.debug("Here start Quick-Look tool !!!")
         panicQL.__init__(self)
         
+        self.config_opts = config_opts
+              
         ## Init member variables
         # Init main directories
         if source_dir!= None:
@@ -125,8 +126,9 @@ class MainGUI(panicQL):
         self.last_dec = -1
         self.last_filename=None  # last filename of the FITS received
         self.MAX_POINT_DIST = 1000 # minimun distance (arcsec) to consider a telescope pointing to a new target
-        self.MAX_READ_ERRORS = 5
+        self.MAX_READ_ERRORS = 5 # maximun number of tries while reading a new detetected FITS files 
         
+        # GUI properties
         self.m_listView_first_item_selected=None #QListViewItem
         self.m_listView_item_selected='' 
         self.m_show_imgs = False
@@ -152,6 +154,13 @@ class MainGUI(panicQL):
         item.setFontWeight( QFont.Bold )
         item.setFontUnderline( True )
         
+        # Default run mode
+        if  self.config_opts['run_mode']=="None": self.comboBox_QL_Mode.setCurrentItem(0)
+        elif self.config_opts['run_mode']=="Lazy": self.comboBox_QL_Mode.setCurrentItem(1)
+        elif self.config_opts['run_mode']=="PreReduction": self.comboBox_QL_Mode.setCurrentItem(2)
+        else: self.comboBox_QL_Mode.setCurrentItem(0)
+        
+            
         
         self.textEdit_log.append("Wellcome to the <info_tag> PANIC QuickLook tool (v1.0) ! </info_tag>")
         

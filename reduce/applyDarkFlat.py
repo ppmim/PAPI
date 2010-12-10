@@ -47,10 +47,10 @@ import misc.utils as utils
 import datahandler
 
 # Pyraf modules
-from pyraf import iraf
-from iraf import noao
-from iraf import imred
-from iraf import ccdred
+#from pyraf import iraf
+#from iraf import noao
+#from iraf import imred
+#from iraf import ccdred
 
 import numpy as np
 
@@ -90,7 +90,7 @@ class ApplyDarkFlat:
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, sci_files, mdark=None, mflat=None, out_dir="/tmp/", bpm=None):
+    def __init__(self, sci_files, mdark=None, mflat=None, out_dir="/tmp", bpm=None):
         self.__sci_files = sci_files  # list of files which apply dark and flat
         self.__mdark = mdark          # master dark to apply
         self.__mflat = mflat          # master flat to apply (dome, twlight) - not normalized !!

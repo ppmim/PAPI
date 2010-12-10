@@ -67,7 +67,7 @@ import datahandler.dataset
 
 class ReductionSet:
     def __init__(self, rs_filelist, out_dir, out_file, obs_mode="dither", dark=None, flat=None, bpm=None,\
-                 red_mode="quick", group_by="filter", check_data=True, config_file=None):
+                 red_mode="quick", group_by="filter", check_data=True, config_dict=None):
         """ Init function """
         
         if len(rs_filelist)<=0:
@@ -85,26 +85,26 @@ class ReductionSet:
         self.red_mode = red_mode   # reduction mode (quick=for QL, science=for science) 
         self.group_by = group_by   # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only by FILTER)
         self.check_data=check_data # flat to indicate if data checking need to be done (see checkData() method)
-        self.config_file = config_file # dictionary with all sections (general, darks, dflats, twflats, skysub, fits, keywords, config_files) and their values
+        self.config_dict = config_dict # dictionary with all sections (general, darks, dflats, twflats, skysub, fits, keywords, config_dicts) and their values
          
-        # some "default" config values (see below how they are updated from the config_file)
-        # Environment variables
-        self.m_terapix_path = os.environ['TERAPIX']
-        self.m_irdr_path = os.environ['IRDR_BIN']
-        self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
-        self.HWIDTH = 2 #half width of sky filter window in frames
-        self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
-        self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
-         
-        if self.config_file:
-            self.m_terapix_path = self.config_file['config_files']['terapix_bin']
-            self.m_irdr_path = self.config_file['config_files']['irdr_bin']
-            # update config values from config_file
-            self.HWIDTH = self.config_file['skysub']['hwidth'] # half width of sky filter window in frames
-            self.MIN_SKY_FRAMES = self.config_file['skysub']['min_frames']  # minimun number of sky frames required in the sliding window for the sky subtraction
-            self.MAX_MJD_DIFF = self.config_file['general']['max_mjd_diff'] # Maximun exposition time difference (seconds) between frames
-            self.MIN_CORR_FRAC = self.config_file['general']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
-            
+        
+        if self.config_dict:
+            self.m_terapix_path = self.config_dict['config_files']['terapix_bin']
+            self.m_irdr_path = self.config_dict['config_files']['irdr_bin']
+            # update config values from config_dict
+            self.HWIDTH = self.config_dict['skysub']['hwidth'] # half width of sky filter window in frames
+            self.MIN_SKY_FRAMES = self.config_dict['skysub']['min_frames']  # minimun number of sky frames required in the sliding window for the sky subtraction
+            self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] # Maximun exposition time difference (seconds) between frames
+            self.MIN_CORR_FRAC = self.config_dict['general']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
+        else:
+            # some "default" config values (see below how they are updated from the config_dict)
+            # Environment variables
+            self.m_terapix_path = os.environ['TERAPIX']
+            self.m_irdr_path = os.environ['IRDR_BIN']
+            self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
+            self.HWIDTH = 2 #half width of sky filter window in frames
+            self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
+            self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
         
         
         # real "variables" holding current reduction status
@@ -315,7 +315,7 @@ class ReductionSet:
                         sources.append(f)
                 """
         
-        print "NEW_FRAME_LIST=",new_frame_list
+        #print "NEW_FRAME_LIST=",new_frame_list
         
         return new_frame_list, nExt
     
@@ -740,10 +740,10 @@ class ReductionSet:
         
         log.debug("Creaing OBJECTS images (SExtractor)....")
         
-        if self.config_file:
-            mask_minarea=self.config_file['skysub']['mask_minarea']
-            mask_thresh=self.config_file['skysub']['mask_thresh']
-            satur_level=self.config_file['skysub']['satur_level']
+        if self.config_dict:
+            mask_minarea=self.config_dict['skysub']['mask_minarea']
+            mask_thresh=self.config_dict['skysub']['mask_thresh']
+            satur_level=self.config_dict['skysub']['satur_level']
         else:
             mask_minarea=25
             mask_thresh=0.4
@@ -843,10 +843,10 @@ class ReductionSet:
         log.info("Start createMasterObjMask....")
                                                              
         # STEP 1: create mask
-        if self.config_file:
-            mask_minarea=self.config_file['skysub']['mask_minarea']
-            mask_thresh=self.config_file['skysub']['mask_thresh']
-            satur_level=self.config_file['skysub']['satur_level']
+        if self.config_dict:
+            mask_minarea=self.config_dict['skysub']['mask_minarea']
+            mask_thresh=self.config_dict['skysub']['mask_thresh']
+            satur_level=self.config_dict['skysub']['satur_level']
         else:
             mask_minarea=25
             mask_thresh=0.4
@@ -989,12 +989,12 @@ class ReductionSet:
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
                 # get gainmap parameters
-                if self.config_file:
-                    mingain=self.config_file['gainmap']['mingain']
-                    maxgain=self.config_file['gainmap']['maxgain']
-                    nxblock=self.config_file['gainmap']['nxblock']
-                    nyblock=self.config_file['gainmap']['nyblock']
-                    nsigma=self.config_file['gainmap']['nsigma']
+                if self.config_dict:
+                    mingain=self.config_dict['gainmap']['mingain']
+                    maxgain=self.config_dict['gainmap']['maxgain']
+                    nxblock=self.config_dict['gainmap']['nxblock']
+                    nyblock=self.config_dict['gainmap']['nyblock']
+                    nsigma=self.config_dict['gainmap']['nsigma']
                 else:
                     mingain=0.5
                     maxgain=1.5
@@ -1330,7 +1330,7 @@ class ReductionSet:
                 # other option, do a SWARP to register the N-extension into one wide-single extension
                 log.debug("*** Coadding overlapped files....")
                 swarp = astromatic.SWARP()
-                swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+                swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_dicts/swarp.conf"
                 swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
                 swarp.ext_config['IMAGEOUT_NAME']= seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME']=self.out_file.replace(".fits",".weight.fits")
@@ -1389,7 +1389,7 @@ class ReductionSet:
             print "Input files already in output directory!"
             self.m_LAST_FILES=obj_frames
             
-        print "SOURCES=\n",self.m_LAST_FILES
+        print "SOURCES TO BE REDUCED =\n",self.m_LAST_FILES
         
         ######################################################
         # 0 - Some checks (filter, ....) 
@@ -1468,12 +1468,12 @@ class ReductionSet:
         log.info("**** Computing gain-map ****")
         gainmap = self.out_dir+'/gain_'+self.m_filter+'.fits'
         # get gainmap parameters
-        if self.config_file:
-            mingain=self.config_file['gainmap']['mingain']
-            maxgain=self.config_file['gainmap']['maxgain']
-            nxblock=self.config_file['gainmap']['nxblock']
-            nyblock=self.config_file['gainmap']['nyblock']
-            nsigma=self.config_file['gainmap']['nsigma']
+        if self.config_dict:
+            mingain=self.config_dict['gainmap']['mingain']
+            maxgain=self.config_dict['gainmap']['maxgain']
+            nxblock=self.config_dict['gainmap']['nxblock']
+            nyblock=self.config_dict['gainmap']['nyblock']
+            nsigma=self.config_dict['gainmap']['nsigma']
         else:
             mingain=0.5
             maxgain=1.5
@@ -1606,15 +1606,17 @@ class ReductionSet:
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)
         #########################################
-        _astrowarp=False
+        _astrowarp=True
         if _astrowarp:
             log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=options.output_filename)
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=output_file, config_dict=self.config_dict)
             try:
                 aw.run()
             except Exception,e:
                 log.error("Some error while running Astrowarp....")
                 raise e
+            log.info("Sucessful end of Pipeline (I hope!)")
+            return coadded_file
         
         #### EXIT ########
         #log.info("Sucessful end of Pipeline (I hope!)")
@@ -1643,7 +1645,7 @@ class ReductionSet:
         #########################################
         # 10 - Make Astrometry
         #########################################
-        log.info("**** Computing Astrometric calibration of coadded(2) result frame ****")
+        log.info("**** Computing Astrometric calibration of coadded (2nd) result frame ****")
         reduce.astrowarp.doAstrometry(self.out_dir+'/coadd2.fits', output_file, "2MASS" )
         
         log.info("Generated output file ==>%s", output_file)

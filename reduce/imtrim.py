@@ -65,9 +65,11 @@ def imgTrim (inputfile):
               
         """ 
         ### Start the script #####
-        file=inputfile
+        file=inputfile.replace("//","/") # clean double slash (//) due to problems in IRAF
         
         log.debug("Start imgTrim ....")
+        
+        
         
         try:
             indata = pyfits.open(file)

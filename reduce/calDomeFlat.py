@@ -170,9 +170,9 @@ class MasterDomeFlat:
         
             # Separate lamp ON/OFF dome flats  
             if f.isDomeFlatON():
-                domelist_lampon.append(iframe)
+                domelist_lampon.append(iframe.replace("//","/"))
             elif f.isDomeFlatOFF():
-                domelist_lampoff.append(iframe)
+                domelist_lampoff.append(iframe.replace("//","/"))
             else:
                 log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with different Flat-Field type (should be domeflat on/off).Skipped")
         

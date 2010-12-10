@@ -157,7 +157,7 @@ class MasterDark:
                     f_ncoadds= f.getNcoadds()
                     f_type  = f.getType()
                     f_readmode = f.getReadMode()
-                    good_frames.append(iframe)
+                    good_frames.append(iframe.replace("//","/"))
                                         
         log.debug('Right, dark frames with same type are: %s', good_frames)   
     
@@ -182,7 +182,7 @@ class MasterDark:
                         reject='minmax',
                         nlow='0',
                         nhigh='1',
-			            nkeep='1',
+			nkeep='1',
                         scale=scale_str,
                         #expname='EXPTIME'
                         #ParList = _getparlistname('darkcombine')

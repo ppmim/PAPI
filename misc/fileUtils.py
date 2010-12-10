@@ -121,7 +121,7 @@ def linkSourceFiles( source, dest ):
     if (type(source)==type(list())):
         #we suppose is a list
         for file in source:
-            print "FILE=", file
+            #print "FILE=", file
             os.symlink(file, dest+"/"+os.path.basename(file))
     elif (os.path.isfile(source)):
         #We have a source-file with absolute path for the data files

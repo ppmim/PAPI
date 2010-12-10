@@ -35,7 +35,7 @@ import astromatic
 # Logging
 from misc.paLog import log
 
-def doAstrometry( input_image, output_image=None, catalog='2MASS'):
+def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=None):
     """ Do the astrometric calibration to the input image (only one)
       
     The method does astrometry on the image entirely using Emmanuel Bertin's
@@ -137,7 +137,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS'):
 class AstroWarp(object):
     """ Astrometric warping """
 
-    def __init__(self, input_files, catalog='2MASS', coadded_file="/tmp/astrowarp.fits"):
+    def __init__(self, input_files, catalog='2MASS', coadded_file="/tmp/astrowarp.fits", config_dict=None):
         """ Instantiation method for AstroWarp class
 
         Keyword arguments:
@@ -149,6 +149,7 @@ class AstroWarp(object):
         self.input_files = input_files
         self.catalog = catalog
         self.coadded_file = coadded_file
+        self.config_dict = config_dict
         
     def run(self):
         """ Start the computing of the coadded image, following the next steps:
@@ -167,10 +168,11 @@ class AstroWarp(object):
         # initwcs also converts to J2000.0 EQUINOX
         # TBD: re-implement in Python method the call to 'irdr:initwcs'
         log.debug("***Doing WCS-header initialization ...")
-        initwcs_path=os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
+        #initwcs_path=os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
+        initwcs_path=self.config_dict['config_files']['irdr_bin']+"/initwcs"
         for file in self.input_files:
             args = [initwcs_path, file]
-            print "ARGS=", args
+            #print "ARGS=", args
             ret_code = subprocess.call(args)
             if ret_code!=0:
                 raise RuntimeError("There was an error while running 'initwcs'")
@@ -188,7 +190,7 @@ class AstroWarp(object):
         ## STEP 2: Make the multi-astrometric calibration for each file (all overlapped-files together)
         log.debug("*** Doing multi-astrometric calibration ....")
         scamp = astromatic.SCAMP()
-        scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+        scamp.config['CONFIG_FILE']=self.config_dict['config_files']['scamp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
         scamp.ext_config['ASTREF_CATALOG']=self.catalog
         scamp.ext_config['SOLVE_PHOTOM']="N"
         cat_files = [(f + ".ldac.") for f in self.input_files]
@@ -200,7 +202,7 @@ class AstroWarp(object):
         # It requires the files are overlapped, i.e., have an common sky-area
         log.debug("*** Coadding overlapped files....")
         swarp = astromatic.SWARP()
-        swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+        swarp.config['CONFIG_FILE']=self.config_dict['config_files']['swarp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
         swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
         swarp.ext_config['IMAGEOUT_NAME']=os.path.dirname(self.coadded_file)+ "/coadd_tmp.fits"
         swarp.ext_config['WEIGHTOUT_NAME']=os.path.dirname(self.coadded_file)+ "/coadd_tmp.weight.fits"
