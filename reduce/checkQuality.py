@@ -124,7 +124,7 @@ class CheckQuality:
                 naxis2=fits_file[0].header['NAXIS2']
         except KeyError,e:
             log.error("Error while reading FITS header NAXIS keywords :%s",str(e))
-            return -1,-1
+            raise Exception("Error while reading FITS header NAXIS keywords")
             
         
         #fwhm_world=[float(line.split()[7]) for line in fileinput.input(source_file)]

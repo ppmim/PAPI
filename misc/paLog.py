@@ -26,7 +26,7 @@ class ColorFormatter(logging.Formatter):
 ### We define two logging handlers (Console and File), each one can have different properties (level, formater, ...)
 ## Console
 console = logging.StreamHandler()
-console.setLevel(logging.INFO) # here we set the level for console handler
+console.setLevel(logging.DEBUG) # here we set the level for console handler
 # NOTE: Handler.setLevel() method, just as in logger objects, specifies the lowest severity that will be dispatched
 #to the appropriate destination.
 # Why are there two setLevel() methods? The level set in the logger determines which severity of messages it will pass

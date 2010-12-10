@@ -70,6 +70,9 @@ class ReductionSet:
                  red_mode="quick", group_by="filter", check_data=True, config_dict=None):
         """ Init function """
         
+        if not config_dict:
+            raise Exception("Config dictionary not provided ...")
+            
         if len(rs_filelist)<=0:
             log.error("Empy file list, no files to reduce ...")
             raise Exception("Empy file list, no files to reduce ...")
@@ -671,7 +674,7 @@ class ReductionSet:
             log.error("Wrong frame number selected in near-sky subtraction")
             return None
         
-        if len(near_list)<(self.hwidth+1):
+        if len(near_list)<(self.HWIDTH+1):
             log.error("Wrong number of sky frames provided. Min number of sky frame is %d", self.MIN_SKY_FRAMES)
             return None
         
@@ -1558,7 +1561,7 @@ class ReductionSet:
         ## END OF SINGLE REDUCTION  ##
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
-            reduce.astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', output_file, "2MASS" ) 
+            reduce.astrowarp.doAstrometry(self.out_dir+'/coadd1.fits', output_file, "2MASS" , config_dict=self.config_dict) 
             log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
             log.info("##### End of SINGLE data reduction ######")
@@ -1616,7 +1619,7 @@ class ReductionSet:
                 log.error("Some error while running Astrowarp....")
                 raise e
             log.info("Sucessful end of Pipeline (I hope!)")
-            return coadded_file
+            return output_file
         
         #### EXIT ########
         #log.info("Sucessful end of Pipeline (I hope!)")
@@ -1646,7 +1649,7 @@ class ReductionSet:
         # 10 - Make Astrometry
         #########################################
         log.info("**** Computing Astrometric calibration of coadded (2nd) result frame ****")
-        reduce.astrowarp.doAstrometry(self.out_dir+'/coadd2.fits', output_file, "2MASS" )
+        reduce.astrowarp.doAstrometry(self.out_dir+'/coadd2.fits', output_file, "2MASS" , config_dict=self.config_dict)
         
         log.info("Generated output file ==>%s", output_file)
         

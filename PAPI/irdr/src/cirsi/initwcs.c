@@ -32,8 +32,8 @@
 
 static double CA35_ra_chip_offset [NCHIP] = {0.0, -0.054, 0.054, 0.054};
 static double CA35_dec_chip_offset [NCHIP] = {0.0, -0.054, -0.054, 0.054};
-static double CA22_ra_chip_offset [NCHIP] = {0.128, 0.128, -0.128, -0.128};
-static double CA22_dec_chip_offset [NCHIP] = {0.128, -0.128, -0.128, 0.128};
+static double CA22_ra_chip_offset [NCHIP] = {0.0, 0.128, -0.128, -0.128};
+static double CA22_dec_chip_offset [NCHIP] = {0.0, -0.128, -0.128, 0.128};
 
 /* ROTATIONS (chip rotations in degrees) */
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
         {
             fk5prec(epoch0, 2000.0, &ra, &dec);
 
-	        fprintf(stderr,"\n-->new  RA=%f, newDEC=%f\n", ra, dec);
+	    fprintf(stderr,"\n-->new  RA=%f, newDEC=%f\n", ra, dec);
 
             put_wcs(argv[i], ra, dec, scale, nx, ny);
 

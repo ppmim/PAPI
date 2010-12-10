@@ -1664,7 +1664,7 @@ class MainGUI(panicQL):
                 try:
                     thread=reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, self._task_info_list, \
                                                 #args of the doAstrometry function
-                                                self.m_listView_item_selected, out_file, catalog)
+                                                self.m_listView_item_selected, out_file, catalog, self.config_opts)
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while subtracting near sky")

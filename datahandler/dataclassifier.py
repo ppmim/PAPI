@@ -97,9 +97,9 @@ class ClFits:
         
         
         self.recognize()
-		
+
     def getType(self):
-        return self.type
+        return self.type 
     
     def getFilter(self):
         return self.filter
@@ -127,7 +127,7 @@ class ClFits:
         return self.pathname
     
     def isDark(self):
-		return (self.type=="DARK")
+        return (self.type=="DARK")
 
     def isDomeFlat(self):
         return (self.type=="DOME_FLAT_LAMP_ON" or self.type=="DOME_FLAT_LAMP_OFF" or self.type=="DOME_FLAT")
@@ -140,13 +140,13 @@ class ClFits:
     
     def isTwFlat(self):
         return (self.type=="TW_FLAT_DUSK" or self.type=="TW_FLAT_DAWN" or self.type=="TW_FLAT" or self.type=="SKY_FLAT")
-	
+
     def isScience(self):
         return (self.type.count("SCIENCE"))
     
-	def isRawScience(self):
-		return (self.type=="SCIENCE_RAW")
-    
+    def isRawScience(self):
+        return (self.type=="SCIENCE_RAW")
+
     def isReducedScience(self):
         return (self.type=="SCIENCE_REDUCED")
     

@@ -22,8 +22,6 @@
 
 import sys
 import os
-import time
-import math
 import shutil
 import tempfile
 import subprocess 
@@ -32,9 +30,39 @@ import fileinput
 
 # PAPI modules
 import astromatic 
+import datahandler
 # Logging
 from misc.paLog import log
 
+def initWCS( input_image ):
+    """
+    Call this routine to write rough WCS into FITS header and update RA,DEC
+    coordinates to J2000.0 equinox; and this way allow SCAMP make astrometry
+    with external Catalogs (in J2000??).
+    
+    Advert: The original file header (input_image) will be modified
+    """
+    
+    try:
+        f=datahandler.ClFits ( input_image )
+    except Exception,e:
+        raise e
+    
+    fits_file=pyfits.open(input_image, 'update')
+
+    if f.isMEF(): # is a MEF
+        raise Exception("Sorry, this function only works with simple FITS files with no extensions")
+    else:  # is a simple FITS      
+        naxis1=f.getNaxis1()
+        naxis2=f.getNaxis2()
+        if f.getInstrument()
+        f.getRA()
+        f.getDec()
+        
+    
+                
+    
+    
 def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=None):
     """ Do the astrometric calibration to the input image (only one)
       
@@ -67,6 +95,9 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     
     log.debug("*** Start Astrometric calibration ***")
     
+    if not config_dict:
+            raise Exception("Config dictionary not provided ...")
+            
     # Save the resulting image to a temporary file if no path was specified
     if output_image is None:
         output_fd, output_path = tempfile.mkstemp(suffix='.fits')
@@ -75,7 +106,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
     # initwcs also converts to J2000.0 EQUINOX
     log.debug("***Doing WCS-header initialization ...")
-    initwcs_path=os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
+    initwcs_path=config_dict['config_files']['irdr_bin']+"/initwcs" #os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
     args = [initwcs_path, input_image]
     print "ARGS=", args
     ret_code = subprocess.call(args)
@@ -97,7 +128,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     ## STEP 2: Make astrometric calibration 
     log.debug("Doing astrometric calibration....")
     scamp = astromatic.SCAMP()
-    scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+    scamp.config['CONFIG_FILE']=config_dict['config_files']['scamp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
     scamp.ext_config['ASTREF_CATALOG']=catalog
     scamp.ext_config['SOLVE_PHOTOM']="N"
     scamp.ext_config['CHECKPLOT_TYPE']="NONE"
@@ -113,7 +144,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     ## STEP 3: Merge the astrometric parameters (.head keywords) with SWARP, and using .head files created by SCAMP
     log.debug("Merging astrometric calibration parameters and resampling ...")
     swarp = astromatic.SWARP()
-    swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+    swarp.config['CONFIG_FILE']=config_dict['config_files']['swarp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME']=output_image
     swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS,RA,DEC'
     swarp.ext_config['WEIGHTOUT_NAME']=output_image.replace(".fits",".weight.fits")
@@ -146,10 +177,14 @@ class AstroWarp(object):
         coadded_file - the output final coadded image
         
         """
+        # TODO: I have to provide an alternate way to get a default config dictionary ...
+        if not config_dict:
+            raise Exception("Config dictionary not provided ...")
+            
         self.input_files = input_files
         self.catalog = catalog
         self.coadded_file = coadded_file
-        self.config_dict = config_dict
+        self.config_dict = config_dict # the config dictionary
         
     def run(self):
         """ Start the computing of the coadded image, following the next steps:
@@ -213,7 +248,7 @@ class AstroWarp(object):
         
         ## STEP 4: Make again the final astrometric calibration to the final coadd
         log.debug("*** Doing final astrometril calibration....")
-        doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog)
+        doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog, self.config_dict)
         
         
         

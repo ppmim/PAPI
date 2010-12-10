@@ -44,9 +44,6 @@ import os.path
 from optparse import OptionParser
 from optparse import IndentedHelpFormatter
 import fileinput
-import glob
-import shutil
-import tempfile
 import dircache
 
 
@@ -189,7 +186,7 @@ def main(arguments = None):
                           dark=general_opts['master_dark'], flat=general_opts['master_flat'], \
                           bpm=general_opts['master_bpm'], red_mode=general_opts['reduction_mode'], \
                           group_by=general_opts['group_by'], check_data=general_opts['check_data'], \
-                          config_file=options \
+                          config_dict=options \
                         )
     
     try:
