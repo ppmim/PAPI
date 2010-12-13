@@ -89,16 +89,16 @@ def main(arguments = None):
                   help="final reduced output image")
     
     parser.add_option("-t", "--temp_dir", type="str",
-                  action="store", dest="temp_dir", default="/tmp",
-                  help="directory for temporal files (default=/tmp)")              
+                  action="store", dest="temp_dir",
+                  help="directory for temporal files")              
     
     parser.add_option("-d", "--out_dir", type="str",
-                  action="store", dest="output_dir", default="/tmp",
-                  help="output dir for product files (default = /tmp)")
+                  action="store", dest="output_dir", 
+                  help="output dir for product files")
     
     parser.add_option("-r", "--red_mode", type="str",
-                  action="store", dest="reduction_mode", default="quick", 
-                  help="Mode of data reduction to do (quick|science) default=quick")
+                  action="store", dest="reduction_mode", 
+                  help="Mode of data reduction to do (quick|science)")
                   
     parser.add_option("-m", "--obs_mode", type="str",
                   action="store", dest="obs_mode", 
@@ -123,11 +123,11 @@ def main(arguments = None):
                   help="bad pixel mask file")
 
     parser.add_option("-g", "--group_by", type="str",
-                  action="store", dest="group_by", default=False,
+                  action="store", dest="group_by",
                   help="kind of data grouping (based on) to do with the dataset files (ot |filter)")
 
     parser.add_option("-k", "--check_data", 
-                  action="store_true", dest="check_data", default=True, 
+                  action="store_true", dest="check_data", 
                   help="if true, check data properties matching (type, expt, filter, ncoadd, mjd)")
 
         
@@ -144,14 +144,14 @@ def main(arguments = None):
     # note: only values of the 'general' section can be invoked
     options = misc.config.read_options(init_options, 'general', config_file)
 
-    #print "options=",options
+    print "options=",options
 
     if  i_args:    # i_args is the leftover positional arguments after all options have been processed
         parser.print_help()
         sys.exit(2) 
     
     general_opts  = options['general'] 
-    #print "GEN_OPTS",general_opts
+    print "GEN_OPTS",general_opts
   
         
     if not general_opts['source'] or not general_opts['output_file'] \

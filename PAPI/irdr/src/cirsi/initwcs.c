@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
         {
             fk5prec(epoch0, 2000.0, &ra, &dec);
 
-	    fprintf(stderr,"\n-->new  RA=%f, newDEC=%f\n", ra, dec);
+            fprintf(stderr,"\n-->new  RA=%f, newDEC=%f\n", ra, dec);
 
             put_wcs(argv[i], ra, dec, scale, nx, ny);
 

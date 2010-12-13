@@ -87,6 +87,7 @@ class ClFits:
         self.time_obs  = ""
         self.ra        = -1
         self.dec       = -1
+        self.equinox   = -1
         self.mdj       = -1 # modified julian date of observation
         self.object    = ""
         self.chipcode  = 1
@@ -171,11 +172,17 @@ class ClFits:
     def getDec(self):
         return self.dec
     
+    def getEquinox(self):
+        return self.equinox
+    
     def getNcoadds(self):
         return self.ncoadds
     
     def getItime(self):
         return self.itime
+    
+    def getInstrument(self):
+        return self.instrument
     
     def getReadMode(self):
         return self.readmode
@@ -241,6 +248,16 @@ class ClFits:
         self.my_header = myfits[0].header
           
          
+        # INSTRUMENT
+        try:
+            if myfits[0].header.has_key('INSTRUME'):
+                self.instrument=myfits[0].header['INSTRUME']
+            else:
+                self.instrument="Unknown"
+        except Exception,e:
+            log.warning("INSTRUME keyword not found")
+            self.instrument="Unknown"
+            
         # Some temporal to allow work with diff instrument data files
         try:
             if myfits[0].header['INSTRUME']=='Omega2000':
@@ -349,7 +366,13 @@ class ClFits:
         except KeyError:
             log.warning('DEC keyword not found')
             self.dec  = -1
-
+    
+        try:
+            self.equinox = myfits[0].header['EQUINOX']
+        except KeyError:
+            log.warning("EQUINOX keyword not found")
+            self.equinox=-1
+            
         #MJD-Modified julian date 'days' of observation
         try:
             self.mjd = myfits[0].header['MJD-OBS']

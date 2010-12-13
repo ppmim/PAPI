@@ -27,12 +27,17 @@ import tempfile
 import subprocess 
 from optparse import OptionParser
 import fileinput
+import pyfits
+
 
 # PAPI modules
 import astromatic 
 import datahandler
 # Logging
 from misc.paLog import log
+
+# for initWCS (fk5prec)
+from PyWCSTools import wcscon
 
 def initWCS( input_image ):
     """
@@ -51,17 +56,128 @@ def initWCS( input_image ):
     fits_file=pyfits.open(input_image, 'update')
 
     if f.isMEF(): # is a MEF
-        raise Exception("Sorry, this function only works with simple FITS files with no extensions")
-    else:  # is a simple FITS      
-        naxis1=f.getNaxis1()
-        naxis2=f.getNaxis2()
-        if f.getInstrument()
-        f.getRA()
-        f.getDec()
-        
-    
+        raise Exception("Sorry, currently this function only works with simple FITS files with no extensions")
+    else:  # is a simple FITS
+        header=fits_file[0].header
+        try:
+            checkWCS(header)
+        except Exception,e:
+            log.debug("No WCS compliant header, trying to creating one ...")
+            try:
+                # Read some basic values
+                naxis1=f.getNaxis1()
+                naxis2=f.getNaxis2()
+                ra=f.getRA()
+                dec=f.getDec()
+                equinox0=f.getEquinox()
+                # 
+                #TODO:Transform RA,Dec to J2000 -->fk5prec(epoch0, 2000.0, &ra, &dec);
+                #
+                WCS_J2000=1  #J2000(FK5) right ascension and declination
+                WCS_B1950=2  #B1950(FK4) right ascension and declination
+                [new_ra, new_dec]=wcscon.wcscon(WCS_J2000, WCS_J2000, equinox0, 2000.0, ra, dec, 0)
+                print "RA_NEW=",new_ra
+                print "RA_OLD=",ra
+                print "DEC_NEW=",new_dec
+                print "DEC_OLD=",dec
+                # Find out PIXSCALE
+                if header.has_key("PIXSCALE"):
+                    scale=header['PIXSCALE']
+                    degscale=scale/3600.0
+                else:
+                    log.error("Cannot find out the PIXSCALE for the image")
+                    fits_file.close()
+                    raise Exception("Cannot find out PIXSCALE for the image")
+                    
+                #Create initial WCS
+                #
+                header.update("CRPIX1", naxis1/2.0, "Ref. pixel in <axis direction>")
+                header.update("CRPIX2", naxis2/2.0, "Ref. pixel in <axis direction>")
+                header.update("CRVAL1", new_ra, "Coordinate value of ref. pixel")
+                header.update("CRVAL2", new_dec, "Coordinate value of ref. pixel")
+                header.update("RA", new_ra, "Coordinate value of ref. pixel")
+                header.update("DEC", new_dec, "Coordinate value of ref. pixel")
+                header.update("CTYPE1", "RA---TAN", "Pixel coordinate system")
+                header.update("CTYPE2", "DEC--TAN", "Pixel coordinate system")
+                #header.update("RADECSYS","FK5","Coordinate reference frame")
+                # CD matrix (the CDi_j elements) encode the sky position angle,
+                # the pixel scale, and a possible flipping. 
+                header.update("CD1_1",-degscale, "Translation matrix element")
+                header.update("CD1_2",0.0, "Translation matrix element")
+                header.update("CD2_1",0.0, "Translation matrix element")
+                header.update("CD2_2",-degscale, "Translation matrix element")
+                header.update("SCALE",scale, "Image scale")
+                header.update("EQUINOX",2000.0, "Standard FK5(years)")
                 
+                # clean imcompatible CDi_j and CDELT matrices
+                if header.has_key("CDELT1"):
+                    del header["CDELT1"]
+                if header.has_key("CDELT2"):
+                    del header["CDELT2"]
+                
+                log.debug("Successful WCS header created !")
+                
+            except Exception,e:
+                log.error("Some error while creating initial WCS header...", str(e))
+                fits_file.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
+                raise e
+            
+        fits_file.close()
+            
+        log.debug("Right WCS info")
+            
+def checkWCS( header ):
+    """
+    Checks for a variety of WCS keywords and raise an Exception if the header lacks a proper
+    combination of them.  This is needed because wcstools will not raise any
+    sort of error if a WCS isn't present or is malformed, and SCAMP (E.Bertin)
+    need a initial WCS information. This is probably 90% complete in terms of
+    its checking for the types of FITS files that we are likely to be using.
     
+    If you find any WCS keywords that cause wcstools to behave in an erratic
+    manner without signaling errors, add them to this method.  Experience has
+    shown that the astrophysical community has an uncanny ability to produce
+    data sets that cause FITS readers and WCS projections to break.  It is
+    important that we check for irregular cases and flag them before the code
+    runs and produces confusing results.  Our only defense against this is
+    experience with unusual data sets, so the more checks here the better.
+    
+    TODO(): Implement stricter checking under CDELT case, in
+    particular for full PC matrices (both kinds), as well as LATPOLE and
+    LONPOLE.  It would also be good to check for illegal values, but that's
+    a lot of work.
+    """
+    
+    keywords_to_check=['NAXIS1','NAXIS2','CTYPE1','CTYPE2','CRVAL1','CRVAL2',
+                       'CRPIX1','CRPIX2']
+    
+    # Every header must have these keywords.
+    for kw in keywords_to_check:
+        if not header.has_key(kw):
+            log.debug("Keyword %s not found",kw)
+            raise Exception("Keyword %s not found",kw)
+    
+    # Check for the equinox, which can be specified in more than 1 way.
+    if not header.has_key('EPOCH') and not header.has_key('EQUINOX'):
+        log.debug("Missing keyword EPOCH or EQUINOX")
+        raise Exception("Missing keyword EPOCH or EQUINOX")
+        
+    # Check some values
+    if header['CTYPE1']=='PIXEL' or header['CTYPE2']=='PIXEL':
+        log.debug("Wrong CTYPE value (PIXEL) for WCS header")
+        raise Exception ("Wrong CTYPE value (PIXEL) for WCS header")
+        
+    # Check for CDi_j or CDELT matrix
+    # CDELT matrix : Here we should probably be more rigorous and check
+    # for a full PC matrix or CROTA value, but for now
+    # this is pretty good.
+    if not header.has_key('CD1_1') or not header.has_key('CD1_2') \
+        or not header.has_key('CD2_1') or not header.has_key('CD2_2'):
+            if not header.has_key('CDELT1') or not header.has_key("CDELT2"):
+                log.debug("Couldn't find a complete set of CDi_j matrix or CDELT")
+                raise Exception("Couldn't find a complete set of CDi_j matrix or CDELT")
+                
+
     
 def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=None):
     """ Do the astrometric calibration to the input image (only one)
@@ -104,15 +220,18 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
         os.close(output_fd)
 
     ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
-    # initwcs also converts to J2000.0 EQUINOX
+    #initwcs also converts to J2000.0 EQUINOX
     log.debug("***Doing WCS-header initialization ...")
+    initWCS(input_image)
+    """
     initwcs_path=config_dict['config_files']['irdr_bin']+"/initwcs" #os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
     args = [initwcs_path, input_image]
     print "ARGS=", args
     ret_code = subprocess.call(args)
     if ret_code!=0:
         raise RuntimeError("There was an error while running 'initwcs'")
-            
+    """
+    
     ## STEP 1: Create SExtractor catalog (.ldac)
     log.debug("*** Creating SExtractor catalog ....")
     sex = astromatic.SExtractor()
@@ -203,15 +322,16 @@ class AstroWarp(object):
         # initwcs also converts to J2000.0 EQUINOX
         # TBD: re-implement in Python method the call to 'irdr:initwcs'
         log.debug("***Doing WCS-header initialization ...")
-        #initwcs_path=os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
-        initwcs_path=self.config_dict['config_files']['irdr_bin']+"/initwcs"
+        #initwcs_path=self.config_dict['config_files']['irdr_bin']+"/initwcs"
         for file in self.input_files:
+            initWCS(file)
+            """
             args = [initwcs_path, file]
             #print "ARGS=", args
             ret_code = subprocess.call(args)
             if ret_code!=0:
                 raise RuntimeError("There was an error while running 'initwcs'")
-               
+            """   
         ## STEP 1: Create SExtractor catalogs (.ldac)
         log.debug("*** Creating SExtractor catalog ....")
         for file in self.input_files:
