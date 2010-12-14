@@ -37,7 +37,7 @@ import datahandler
 from misc.paLog import log
 
 # for initWCS (fk5prec)
-from PyWCSTools import wcscon
+#from PyWCSTools import wcscon
 
 def initWCS( input_image ):
     """
@@ -75,7 +75,7 @@ def initWCS( input_image ):
                 # EQUINOX precessing is DONE by SCAMP !!!
                 WCS_J2000=1  #J2000(FK5) right ascension and declination
                 WCS_B1950=2  #B1950(FK4) right ascension and declination
-                [new_ra, new_dec]=wcscon.wcscon(WCS_J2000, WCS_J2000, equinox0, 2000.0, ra, dec, 0)
+                #[new_ra, new_dec]=wcscon.wcscon(WCS_J2000, WCS_J2000, equinox0, 2000.0, ra, dec, 0)
                 # Find out PIXSCALE
                 if header.has_key("PIXSCALE"):
                     scale=header['PIXSCALE']
@@ -89,13 +89,13 @@ def initWCS( input_image ):
                 #
                 header.update("CRPIX1", naxis1/2.0, "Ref. pixel in <axis direction>")
                 header.update("CRPIX2", naxis2/2.0, "Ref. pixel in <axis direction>")
-                header.update("CRVAL1", new_ra, "Coordinate value of ref. pixel")
-                header.update("CRVAL2", new_dec, "Coordinate value of ref. pixel")
-                header.update("RA", new_ra, "Coordinate value of ref. pixel")
-                header.update("DEC", new_dec, "Coordinate value of ref. pixel")
+                header.update("CRVAL1", ra, "Coordinate value of ref. pixel")
+                header.update("CRVAL2", dec, "Coordinate value of ref. pixel")
+                #header.update("RA", new_ra, "Coordinate value of ref. pixel")
+                #header.update("DEC", new_dec, "Coordinate value of ref. pixel")
                 header.update("CTYPE1", "RA---TAN", "Pixel coordinate system")
                 header.update("CTYPE2", "DEC--TAN", "Pixel coordinate system")
-                header.update("RADECSYS","FK5","Coordinate reference frame")
+                #header.update("RADECSYS","FK5","Coordinate reference frame")
                 # CD matrix (the CDi_j elements) encode the sky position angle,
                 # the pixel scale, and a possible flipping. 
                 header.update("CD1_1",-degscale, "Translation matrix element")
@@ -103,7 +103,7 @@ def initWCS( input_image ):
                 header.update("CD2_1",0.0, "Translation matrix element")
                 header.update("CD2_2",degscale, "Translation matrix element")
                 header.update("SCALE",scale, "Image scale")
-                header.update("EQUINOX", 2000.0, "Standard FK5(years)")
+                #header.update("EQUINOX", 2000.0, "Standard FK5(years)")
                 
                 # clean imcompatible CDi_j and CDELT matrices
                 if header.has_key("CDELT1"):
