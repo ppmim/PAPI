@@ -1,0 +1,73 @@
+IRDR (Infrared Data Reduction)
+Version: 0.93 (20 March 2001)
+
+Introduction
+
+  IRDR is a C library and set of stand-alone C programs and perl scripts
+  for processing IR imaging data.  See the file irdr/Programs, and
+  irdr/doc/irdr.ps.gz.
+
+Installation
+
+  download ftp://ftp.ast.cam.ac.uk/pub/sabbey/irdr-0.93.tar.gz
+  gunzip irdr-0.93.tar.gz
+  tar xvf irdr-0.93.tar
+  cd irdr
+  make all                                        # compiles WCSTools then IRDR
+  setenv IRDR_BASEDIR /home/sabbey/irdr/                   # use your location
+  set path = ($path $IRDR_BASEDIR/scripts $IRDR_BASEDIR/bin)
+  should have "sex" command (SExtractor 2.1+) in your path
+
+Current Limitations
+
+  Input images can be float (bitpix -32) or signed short integer (bitpix 16)
+  Ouput images are float or unsigned short integer:
+    unsigned short written as bitpix 16 with BZERO 32768.0, BSCALE = 1.0
+    BSCALE and BZERO are applied on input but hence dropped in output
+  Some FITS images don't end in .fits, to display outside of IRAF, eg:
+    linux> ds9 image.fits.skysub
+  Fast histogram analysis was designed for u_short data:
+    forces float and signed short data to unsigned short range (0 to 65535)
+    assumes a noise level > 1 count 
+  Need enough memory to hold all image planes (and weight maps) for coaddition
+  Assumes input data images have same dimensions
+  Expects CDELT or CDELT1 keywords, or SCALE or SECPIX (image arcsec/pixel)
+  Dither offset measurement guesses that North is up and East is left
+
+CIRSI data reduction example:
+
+  mkdir AXAF
+  cd AXAF
+  cp ~/irdr/scripts/cirsi/cirsi.csh .
+  vi cirsi.csh
+  ./cirsi.csh >& cirsi.log &
+
+  If you want clipping during coaddition of fewer than 5 image planes
+  (using poisson noise assumption), then change mean.o to meangain.o
+  in Makefile OBJ_MATH definition, and remember to setenv GAIN 10.17
+  or whatever it is.
+
+  Astrometry is done by running astrometry.pl to get reasonable astrometry
+  and then astrometry_refine.pl to tweak it.  Verification is done by running
+  verify.csh and then doverify.pro.  Scripts are in irdr/scripts/cirsi; add
+  this directory to your IDL_PATH.
+
+  The final step of creating a mosaic image can be done using either 
+  EIS Drizzle (www.eso.org/eis) or Bertin's Swarp package.
+
+History
+
+  Version 0.93 (20 Mar 2001)
+  Added program darkflat.c that does dark subtraction then flat correction
+
+  Version 0.92 (02 Feb 2001)
+  Modified fitsIO.c:
+  Write unsigned short FITS images with BZERO 32768.0, BSCALE 1.0 convention
+  Assume bitpix=16 input FITS images are signed short int (not unsigned)
+
+  Version 0.91 (26 Jan 2001)
+  Require setenv IRDR_BASEDIR /path/irdr
+  Arguments to makemask.pl changed, don't need to specify config directory
+
+  Version 0.9 (18 Jan 2001)
+  Initial release

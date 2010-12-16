@@ -1,0 +1,65 @@
+ * APMCAT gets data from the APM catalogues server. 
+ *
+ * This is a standalone program which makes a remote request of the
+ * APM catalogues system based on command line arguments and returns
+ * either a list or a postscript finding chart on standard output.
+ *
+ * Created: 1-February-1995 by T. McGlynn
+ *          Goddard Space Flight Center
+ *          Universities Space Research Association
+ *          Code 668.1
+ * Modified by Geraint Lewis and Mike Irwin to support APM online catalogues
+ *          1-April-1996
+
+To aquire the software:
+
+ftp to ftp.ast.cam.ac.uk;
+login as anonymous;
+cd apm;
+get apmcat.c;
+get apmcat.notes (for copy of these notes);
+quit
+
+To compile and link:
+
+gcc -lsocket -lnsl -o apmcat apmcat.c       Solaris
+gcc -o apmcat apmcat.c                      Sunos
+gcc -o apmcat apmcat.c                      Linux
+
+or ditto using "cc"
+
+NB. Since solaris 2.6 you need to recompile apmcat.c with cc ......viz....
+
+/opt/SUNWspro/bin/cc -lnsl -lsocket -o apmcat apmcat.c
+ 
+
+Usage: apmcat ra dec [optional arguments]  
+
+   where the optional arguments are of the form
+   keyword=value.  Valid arguments include:
+
+              survey=poss1          [or ukst survey]
+              box=5                 [box size in arcmins]
+              equinox=b1950         [or j2000]
+              numbers=n             [numbers on plot ? n/y]
+              ps=image.ps           [name of postscript image]
+              list=image.lis        [alternatively name of list file]
+              email=null            [email address]
+
+The above values are the defaults.
+The default is to return a postscript chart with the name image.ps 
+Please specify either a list or a postscript image.
+
+Examples:
+
+	apmcat "00 40 00.0" "11 41 00" survey=poss1 ps=chart.ps
+	apmcat  "10 31 21.3 -5 10 23" survey=ukst list=chart.list
+
+Notes:  If a field is absent from the catalogues you will be returned an
+        appropriate message.
+
+**** Current status:  see online www postscript plots of available fields 
+****                  check out http://www.ast.cam.ac.uk/~apmcat
+
+**** To do a list create a script with command line arguments as above.
+

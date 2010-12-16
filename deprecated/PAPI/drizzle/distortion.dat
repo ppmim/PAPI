@@ -1,0 +1,39 @@
+#--------------------------------------------------------------------------
+# Field distortion parameters
+#--------------------------------------------------------------------------
+#
+# Format:
+# XC YC XS YS
+# A1 A2 A3 A4 A5 A6
+#
+# XC,YC shift of "distortion" center of array with respect to geometrical 
+#	center which is
+#	513,513 	align=center
+#	512.5,512.5 	align=corner
+#	distortion center is 512,512 ==> XC=-1 YC=-1 with align=center
+# XS,YS HALF size of array
+#
+# Distortion is
+# Rcorrected = R*(1+A1*R+A2*R**2+ .... +A6*R**6)
+# R = sqrt ( ((Xpix-Xcen)/512)**2 + ((Ypix-Ycen)/512)**2 )
+#
+#--------------------------------------------------------------------------
+# NICS corrections as Dec 2000
+#
+# radial
+# -1.0 -1.0 512. 512.
+# 0.0 -0.0231 0.0 0.0138 0.0 -0.0047
+#
+#--------------------------------------------------------------------------
+# NICS corrections as Jul 2002
+#
+# radial
+# -1.0 -1.0 512. 512.
+# 0.0 -0.0055 0.0 -0.0072 0.0 0.0021
+#--------------------------------------------------------------------------
+# NICS corrections as Sep 2005 
+# created by FM, 3rd order fit to the previous
+# to use the drizzle version included in STSDAS
+#
+radial
+-0.0003 -0.120e-5 -4.00e-8

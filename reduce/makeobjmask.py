@@ -28,6 +28,8 @@
 # Last update: 04/08/2009    jmiguel@iaa.es
 #              26/10/2010    jmiguel@iaa.es - Added new astromatic.sextractor
 #                                             support
+#              16/12/2010    jmiguel@iaa.es - Added single point object mask feature
+#                                             (even for MEF files)
 ################################################################################
 #
 # Create object masks (SExtractor OBJECTS images) for a list of FITS images.
@@ -44,14 +46,16 @@ import os
 import glob
 import fileinput
 from optparse import OptionParser
+import pyfits
 
 import misc.utils as utils
 from misc.paLog import log
 import astromatic.sextractor
+import astromatic.ldac
 
 
 #-----------------------------------------------------------------------
-def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, outputfile="/tmp/out.txt"):
+def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, outputfile="/tmp/out.txt", single_point=False):
     """DESCRIPTION
                 Create an object mask of the inputfile/s based on SExtractor
            
@@ -66,14 +70,16 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
                            
                 threshold    SExtractor DETECT_THRESH
                 
-                saturlevel
+                saturlevel   Pixel Saturation level 
                 
+                single_point If true, means the image will be reduced to a single point object mask
                 
            OUTPUTS
                 outputfile      Filepath containig the list of objects mask files created by SExtractor ending with '.objs' suffix
               
       """
          
+    """
     # Some pathname settings and check
     irdr_basedir=''
     try:
@@ -85,13 +91,18 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
     sex_config=irdr_basedir+"/src/config/default.sex"        
     if not os.path.exists(sex_config):      # check whether input file exists
         log.error( 'File %s does not exist', sex_config)
-        sys.exit(1) 
-           
+        raise Exception("Files %s does not exists"%sex_config) 
+    """
+    
     files = []       
-    # Check if inputfile is a filename of a file list OR a regular expresion        
-    if os.path.isfile(inputfile):
+    # Check if inputfile is FITS file        
+    if utils.isaFITS(inputfile)==True:
+        files=[inputfile]
+    # or a text file having the list of files to be masked
+    elif os.path.isfile(inputfile):
         files=[line.replace( "\n", "") for line in fileinput.input(inputfile)]
-    else:
+    # or must be a regular expresion
+    else: 
         files = glob.glob(inputfile)
         files.sort()
         
@@ -116,20 +127,54 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
         if os.path.exists(fn.replace(".fits",".weight.fits")):
             sex.config['WEIGHT_TYPE']="MAP_WEIGHT"
             sex.config['WEIGHT_IMAGE']=fn.replace(".fits",".weight.fits")
-            
+        
+        # Run SExtractor     
         try:
             sex.run(fn, updateconfig=True, clean=False)
         except Exception,e: 
             log.debug("Some error while running SExtractor : %s", str(e))
             raise Exception("Some error while running SExtractor : %s",str(e))
         
+        # Reduce the object mask to a single point mask, in which each object
+        # is represented by a single, one-valued pixel, located at the
+        # coordinates specified by its X_IMAGE and Y_IMAGE parameters in the
+        # SExtractor catalog. The remaining pixels in the image
+        # will be set to zero. Note that, therefore, the 'single-point' mask will
+        # have as many non-zero pixels as objects are in the SExtractor caralog.
+        if single_point==True:
+            # NOTE we update/overwrite the image and don't create a new one
+            myfits=pyfits.open(fn+".objs", mode="update")
+            if len(myfits)>1: # is a MEF file
+                next=len(myfits)-1
+            else: next=1
+            for ext in range(next):
+                if next==1: data=myfits[ext].data
+                else: data=myfits[ext+1].data
+                data[:]=0 # set to 0 all pixels
+                x_size = len(data[0])
+                y_size = len(data)
+                #stars = read_stars(fn + ".ldac")
+                try:
+                    cat = astromatic.ldac.openObjectFile(fn+".ldac", table='LDAC_OBJECTS')
+                    for star in cat:
+                        if star['X_IMAGE']<x_size and star['Y_IMAGE']<y_size:
+                            data[round(star['X_IMAGE']),round(star['Y_IMAGE'])]=1
+                except Exception,e:
+                    myfits.close()
+                    raise Exception("Error while creating single point object mask :%s",str(e))
+                
+            myfits.close()
+            log.debug("Object mask (single_point) file created for file : %s",fn)
+        else:
+            log.debug("Object mask file created for file : %s",fn)    
+
         n+=1
-        log.debug("Object mask file created for file : %s",fn)
+        print "KK"
         f_out.write(fn+".objs"+"\n")
             
     sex.clean(config=True, catalog=True, check=False)
     f_out.close()
-    log.debug("Succesful ending of makeObjMask. => %d object mask files created", n)
+    log.debug("Succesful ending of makeObjMask => %d object mask files created", n)
     
     
 ################################################################################
@@ -159,7 +204,11 @@ if __name__ == "__main__":
     
     parser.add_option("-l", "--saturlevel", type="int", default=300000,
                   action="store", dest="saturlevel",
-                  help="SExtractor SATUR_LEVEL (int)")                               
+                  help="SExtractor SATUR_LEVEL (int)")
+    
+    parser.add_option("-1", "--single_point", default=True,
+                  action="store_true", dest="single_point",
+                  help="Create a single point object mask")
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
@@ -173,5 +222,5 @@ if __name__ == "__main__":
         parser.error("Incorrect number of arguments " )
         
 
-    makeObjMask( options.inputfile, options.minarea, options.threshold, options.saturlevel, options.outputfile)
+    makeObjMask( options.inputfile, options.minarea, options.threshold, options.saturlevel, options.outputfile, options.single_point)
     

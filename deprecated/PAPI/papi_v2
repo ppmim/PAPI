@@ -1,0 +1,549 @@
+#!/bin/csh
+
+###############################################
+### SNAP pipeline adaption for PANIC ##########
+###############################################
+
+
+setenv PAPI_HOME /home/jmiguel/DEVELOP/PIPELINE/PANIC/PAPI
+setenv IRDR_BASEDIR $PAPI_HOME/irdr
+setenv PAR_FILE $PAPI_HOME/papi.par
+setenv CALIB_DIR "/disk-a/caha/panic/calib/"
+setenv TEREAPIX /usr/local/terapix/bin/
+
+
+setenv cross "NO"
+setenv mod_head "NO"
+setenv convert "NO"
+setenv source_dir $PAPI_HOME/source/
+setenv comp_master_calib "NO"
+setenv darkflatten "NO"
+setenv astrometry "YES"
+
+
+
+if ( ! { ( echo $path | grep -s '{$PAPI_HOME}/irdr/bin' ) } ) then
+  set path = ($path $PAPI_HOME $PAPI_HOME/irdr $PAPI_HOME/irdr/bin)
+  rehash
+endif
+
+
+
+# parameter data ------------------------------------------------------
+
+if ( -f $PAR_FILE ) then
+ 	source $PAR_FILE
+	echo Using local parameters
+else
+ 	source $PAR_FILE
+	echo Using default parameters
+endif
+
+  
+
+# help  ----------------------------------------------------------------
+    
+if  ( $#argv == 0 || "$1" == help || $2 == help ) then
+	echo "PANIC/PAPI: PANIC Automatic PIpeline"
+	echo "Usage: papi [dir/file.list] [TYPE] [MOSAIC]"
+	echo "where: TYPE = (single|double|full);   default=double"
+	echo "       MOSAIC = (dither|onoff|offon); default=dither"
+	exit 
+endif
+
+
+
+# Clean old files and copy new directories  ------------------------------
+\rm *.fits
+$PAPI_HOME/copySource.py $1
+
+
+# input parameters  ------------------------------------------------------
+
+if      ( "$2" == "" ) then
+	set type = double
+else if ( "$2" == "double" ) then
+	set type = double
+else if ( "$2" == "single" ) then
+	set type = single
+else if ( "$2" == "full"  ) then
+	set type = full
+else 
+	echo UKNOWN TYPE, assuming double.
+	set type = double
+endif
+
+echo TYPE=$type
+
+
+if      ( "$3" == "" ) then
+	set mos = dither
+else if ( "$3" == "dither") then
+	set mos = dither
+else if ( "$3" == "onoff" ) then
+	set mos = onoff
+else if ( "$3" == "offon" ) then
+	set mos = offon
+else 
+	echo UKNOWN MOSAIC, assuming dither.
+	set mos = dither
+endif
+
+echo MOS=$mos
+
+
+if      ("$convert" == "YES" ) then
+
+
+\rm *.nip >& /dev/null
+
+# make list of input FITS images -------------------------------------------
+\rm c_*.fits single*.fits double*.fits coadd*.fits flat*.fits gain*.fits imc*.fits
+\ls -1 *.fits > rawlist.nip
+    
+
+
+#########################################
+#Convert from bitpix 32 to bitpix -32
+#########################################
+echo " "
+echo ---------------------------------------------------------------------
+echo BITPIX convertion from 32  to -32  ...
+echo ---------------------------------------------------------------------
+echo " "
+
+awk -F . '{printf "iofits  %s.fits c_%s.fits -32 \n", $1, $1}' \
+     rawlist.nip > crt.nip
+source ./crt.nip
+
+\ls -1 c_*.fits > c_rawlist.nip
+
+else
+    \ls -1 *.fits > tmp1.nip
+    awk -F . '{printf "\\mv %s.fits c_%s.fits \n", $1, $1}' \
+	< tmp1.nip > mv2.nip
+    source ./mv2.nip
+    \ls -1 c_*.fits > c_rawlist.nip
+
+endif
+
+
+
+if	("$cross" == "YES" ) then
+
+##################################################################################
+# cross-correlation correction (for correcting the cross-talking of NICS)
+##################################################################################
+echo " "
+echo ---------------------------------------------------------------------
+echo Cross-talking correction ...
+echo ---------------------------------------------------------------------
+echo " "
+
+awk -F . '{printf "crt_nics  %s.fits c_cr_%s.fits \n", $1, $1}' \
+     c_rawlist.nip > crt.nip
+source ./crt.nip
+
+endif
+
+#########################################
+#   set right header keywords
+#########################################
+echo ---------------------------------------------------------------------
+echo Setting right header keywords ...
+echo ---------------------------------------------------------------------
+
+if ("$mod_head" == "YES" ) then
+	head-nics.cl
+endif
+
+####################################################################
+#   Compute master dark and external (dome/twilight) flatfield
+####################################################################
+if ("$comp_master_calib" == "YES" ) then
+echo ---------------------------------------------------------------------
+echo Computing master calibration files: dark and dome/twilight flat ...
+echo ---------------------------------------------------------------------
+
+#dfits /disk-a/caha/panic/DATA/SIMU_PANIC/14-Ene-09/*.fits |fitsort OBJECT|grep dark2s | awk '{print $1}' > darks.list
+echo "Computing Master Dark...."   
+#/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/irdr/scripts/cirsi/dark.pl dark.list
+
+echo "Computing Master Flat...."
+#/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/irdr/scripts/cirsi/domeflat.pl flat_on.list flat_off.list 
+cp /tmp/*.c1.fits .
+
+endif
+
+
+####################################################################
+#   Calibrate data with dark and external (dome/twilight) flatfield
+####################################################################
+if ("$darkflatten" == "YES" ) then
+    echo ---------------------------------------------------------------------
+    echo Calibrating data with dark and dome/twilight flat ...
+    echo ---------------------------------------------------------------------
+    
+    awk -F . '{printf "%s.fits %s.DF.fits\n", $1, $1}' \
+        c_rawlist.nip > files_1.nip
+        
+    /disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/irdr/scripts/cirsi/darkflatten.pl files_1.nip dark.c1.fits gain.c1.fits
+    #/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/irdr/bin/dark files_1.nip dark.c1.fits
+    #/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/irdr/bin/flat files_1.nip gain.c1.fits
+    
+    #Rename the files
+    \ls -1 c_*.DF.fits > tmp1.nip
+    awk -F . '{printf "\\mv %s.DF.fits %s.fits \n", $1, $1}' \
+        < tmp1.nip > mv1.nip
+    source ./mv1.nip
+    \ls -1 c_*.fits > files.nip
+
+else
+    \ls -1 c_*.fits > files.nip
+endif
+
+
+#########################################
+#   Compute Super Sky Flat-Field
+#########################################
+echo " "
+echo ---------------------------------------------------------------------
+echo Computing flat-field  ...
+echo ---------------------------------------------------------------------
+echo " "
+
+if ( $mos == "dither" ) then
+   \cp files.nip mkflat.nip
+else if ( $mos == "onoff" ) then
+    awk -f /disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/onoff.awk < files.nip > mkflat.nip
+else if ( $mos == "offon" ) then
+    awk -f /disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/offon.awk < files.nip > mkflat.nip
+else 
+   echo MOSAIC UNKNOWN
+endif
+
+
+\rm flat.fits >& /dev/null
+\rm med.nip >& /dev/null
+echo "Calling mkflat.py ..."
+mksuperflat.py mkflat.nip sflat.fits
+
+echo "Computing gain-map ....."
+
+gainmap sflat.fits gain.fits $nsig $nxblock $nyblock $mingain $maxgain
+
+
+
+
+#########################################
+#   Add external bad pixel mask
+#########################################
+echo " "
+echo ---------------------------------------------------------------------
+echo Adding external bad pixel mask
+echo ---------------------------------------------------------------------
+echo " "
+
+addmask.py "/tmp/bpm.fits.pl"
+
+
+
+
+#########################################
+#   1-Sky subtraction (IRDR) ojo, genera imagenes con BITPIX=16 y bzero=32768
+#########################################
+echo " "
+echo ---------------------------------------------------------------------
+echo First pass sky subtraction ... 
+echo ---------------------------------------------------------------------
+echo " "
+
+
+if ( $mos == "dither" ) then
+   skyfilter files.nip gain.fits $halfnsky nomask $destripe
+else if ( $mos == "onoff" ) then
+   skyfilteronoff files.nip gain.fits $halfnsky nomask $destripe
+else if ( $mos == "offon" ) then
+   skyfilteroffon files.nip gain.fits $halfnsky nomask $destripe
+else 
+   echo MOSAIC UNKNOWN
+endif
+
+\ls -1 c_*.skysub > tmp1.nip
+awk -F . '{printf "\\mv %s.fits.skysub %s.skysub.fits \n", $1, $1}' \
+	< tmp1.nip > mv2.nip
+source ./mv2.nip
+
+
+
+
+################################################################
+#   First (coarse) astrometry for re-gridding calibrated data
+################################################################
+echo " "
+echo ---------------------------------------------------------------------
+echo " Regridding calibrated data (first astrometry).....(SExtractor+SCAMP)"
+echo ---------------------------------------------------------------------
+echo " "
+
+$PAPI_HOME/astrometry_scamp.pl usno *.skysub.fits
+
+
+
+################################################################
+#   Coadding re-gridded data
+################################################################
+echo " "
+echo ---------------------------------------------------------------------
+echo " Coadding re-gridded data.....(SWARP)"
+echo ---------------------------------------------------------------------
+echo " "
+
+$TERAPIX/swarp *.skysub.fits -WEIGHT_TYPE MAP_WEIGHT -COMBINE_TYPE WEIGHTED
+#$PAPI_HOME/coadd.py *.skysub.fits
+
+
+
+makemask.pl $off_minarea $off_thresh *.skysub.fits
+ 
+\ls -1 c_*.skysub.fits > tmp1.nip
+awk -F . '{printf "\\mv %s.skysub.fits.objs %s.skysub.objs.fits \n", $1, $1}' \
+	< tmp1.nip > mv3.nip
+source ./mv3.nip
+
+\ls -1 c_*.objs.fits > objfiles.nip
+
+
+
+
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Compute dither offsets ...using cross-correlation technique
+echo ---------------------------------------------------------------------
+echo " "
+
+offsets objfiles.nip $off_err > offsets1.nip
+sed -e "s/.objs.fits/.fits/" offsets1.nip >  single.nip
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo First pass coaddition ...
+echo ---------------------------------------------------------------------
+echo " "
+
+dithercubemean single.nip gain.fits single.fits single.weight.fits
+
+
+if ( $type == "single" ) then
+	\mv single.nip single.list
+
+    #NO SE USA imc.fits !!! para qué entonces ???
+	awk -f /disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/imcomb.awk < single.list
+	#imcomb.py
+    #esta funcion es mia, no se de donde la saque, pero en el SNAP origianal no esta
+    #parace mas bien una prueba que hice para ver como hace el aling IRAF ....
+    im_align_combine.py
+    
+	imtrim.py -i single.fits
+
+	echo " "
+	echo -------------------------------------------------------------------
+	echo Created files:
+	echo - single.fits        : final image with single-pass sky subtraction
+	echo - single.weight.fits : weight image
+	echo - gain.fits          : flat field image, with bad pixels set to 0
+	echo - single.list        : offset file
+	echo -------------------------------------------------------------------
+	echo " "
+
+	exit
+endif
+
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Make master object mask ...
+echo ---------------------------------------------------------------------
+echo " "
+
+  makemask.pl $mask_minarea $mask_thresh single.fits
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Dilate master object mask ...
+echo ---------------------------------------------------------------------
+echo " "
+ \cp single.fits.objs single_sin_dilatar.fits
+  #dilate single.fits.objs
+  ## Ojo, el dilate creo un FITS header erroneo !!!!!
+ \mv single.fits.objs coadd.objs.fits
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Second pass sky subtraction ... 
+echo ---------------------------------------------------------------------
+echo " "
+
+  awk '{print "coadd.objs.fits", $2,$3}' single.nip > offsets3.nip
+  paste files.nip offsets3.nip > skylist.nip
+
+
+if ( $mos == "dither" ) then
+   skyfilter skylist.nip gain.fits $halfnsky mask $destripe
+else if ( $mos == "onoff" ) then
+   skyfilteronoff skylist.nip gain.fits $halfnsky mask $destripe
+else if ( $mos == "offon" ) then
+   skyfilteroffon skylist.nip gain.fits $halfnsky mask $destripe
+else 
+   echo MOSAIC UNKNOWN
+endif
+
+echo "Second pass sky subtraction DONE !!"
+
+
+\ls -1 c_*.skysub > tmp1.nip
+
+awk -F . '{printf "\\mv %s.fits.skysub %s.skysub.fits \n", $1, $1}' \
+	< tmp1.nip > mv.nip
+source ./mv.nip
+
+
+### Provisional
+
+#ls -1 c_*.skysub_.fits > tmp2.nip
+#echo " "
+#echo ---------------------------------------------------------------------
+#echo BITPIX convertion from 32  to -32  ...
+#echo ---------------------------------------------------------------------
+#echo " "
+
+#awk -F . '{printf "iofits  %s.skysub_.fits %s.skysub.fits -32 \n", $1, $1}' \
+#     tmp2.nip > crt2.nip
+#source ./crt2.nip
+
+
+###
+
+
+
+if ( $type == "double" ) then
+
+	echo " "
+	echo -------------------------------------------------------------------
+	echo Final coaddition ...
+	echo -------------------------------------------------------------------
+	echo " "
+
+	\cp single.nip double.list
+
+    #NO SE USA imc.fits !!! para qué entonces ???
+	#awk -f /disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/imcomb.awk < double.list
+	#imcomb.py
+
+  	dithercubemean double.list gain.fits double.fits double.weight.fits
+
+  	imtrim.py -i double.fits
+
+	echo " "
+	echo -------------------------------------------------------------------
+	echo Created files:
+	echo - double.fits         : final image without distortion corrections
+	echo - double.weight.fits  : weight image
+	echo - double.objs.fits    : object mask image for second pass combination
+	echo - gain.fits           : flat field image, with bad pixels set to 0
+	echo - double.list         : offset file
+	echo -------------------------------------------------------------------
+	echo " "
+
+	
+
+endif
+
+if ( $astrometry == "YES" ) then
+
+	echo " "
+	echo -------------------------------------------------------------------
+	echo Astrometry computations ....
+	echo -------------------------------------------------------------------
+	echo " "
+
+    /disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/astrometry_scamp.pl usno double.fits
+
+endif
+
+exit
+
+######################################################
+########### FULL reduction mode ######################
+######################################################
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Correcting field distortion ...
+echo ---------------------------------------------------------------------
+echo " "
+
+awk -F . '{printf ("distor.cl %s.skysub.fits d%s.skysub.fits \n", $1, $1)}' \
+	< single.nip > drizzlecom.nip
+\rm d_* >& /dev/null
+source ./drizzlecom.nip
+
+distor.cl gain.fits dc_gain.fits
+dgain.py
+\mv dc_gain.fits gain.fits
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Replacing deviant pixels ...
+echo ---------------------------------------------------------------------
+echo " "
+
+\ls dc_* > drizlist.nip
+awk '{print "imrep.py ", $1}' drizlist.nip > replace.nip
+source ./replace.nip
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Detect objects and compute offsets of corrected images ...
+echo ---------------------------------------------------------------------
+echo " "
+
+makemask.pl $off_minarea $off_thresh dc_*.skysub.fits
+
+\ls -1 dc_*.skysub.fits.objs > tmp1.nip
+awk -F . '{printf "\\mv %s.skysub.fits.objs %s.skysub.objs.fits \n", $1, $1}' \
+	< tmp1.nip > mv1.nip
+source ./mv1.nip
+
+\ls -1 dc_*.objs.fits > newobjfiles.nip
+offsets newobjfiles.nip $off_err > newoffsets.nip
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Final coaddition ...
+echo ---------------------------------------------------------------------
+echo " "
+
+\rm final.list >& /dev/null
+sed -e "s/.objs//" newoffsets.nip >  final.list
+
+awk -f /disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/PAPI/imcomb.awk < final.list
+imcomb.py
+
+dithercubemean final.list gain.fits coadd.fits coadd.weight.fits
+
+dimtrim.py -i coadd.fits
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Created files:
+echo - coadd.fits         : final image
+echo - coadd.weight.fits  : weight image
+echo - coadd.objs.fits    : object mask image for second pass combination
+echo - gain.fits          : flat field image, with bad pixels set to 0
+echo - final.list         : offset file
+echo ---------------------------------------------------------------------
+echo " "
+
+

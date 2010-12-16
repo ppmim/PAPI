@@ -40,6 +40,8 @@ import time
 import subprocess
 import fileinput
 
+import pyfits
+
 # PAPI modules
 import misc.paLog
 from misc.paLog import log
@@ -155,5 +157,21 @@ def runCmd( str_cmd, p_shell=True ):
     else:
         return 1 # NO ERROR
         
-        
+def isaFITS(filepath):
+    """
+    Check if a given filepath is a FITS file
+    """
+    
+    if os.path.exists(filepath):
+        try:
+            fd=pyfits.open(filepath)
+            if fd[0].header['SIMPLE']==True:
+                return True
+            else:
+                return False
+        except Exception,e:
+            print str(e)
+            return False
+    else:
+        return False
                    

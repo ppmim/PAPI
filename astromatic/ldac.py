@@ -1,18 +1,41 @@
 ###############
 # @file ldac.py
-# @author Douglas Applegate
+# @author Douglas Applegate & Thomas Erben
 # @date 9/2/2008
 #
 # @brief Utilities to make accessing LDAC cats easier
 ###############
 
-from __future__ import with_statement
-import pyfits
+# HISTORY INFORMATION:
+# ====================
+#
+# 01.09.2010:
+# I included treatment of slices through vectorkeys in
+# LDACCat.__getitem__
+#
+# 09.09.2010:
+# I made the module more robust against the non-existence
+# of necessary libraries
+
+# standard-library includes: 
+import sys
+
+# import non-standard modules:
+try:
+    import pyfits, numpy
+except ImportError:
+    sys.stderr.write("This script needs the modules 'pyfits' and 'numpy'!\n")
+    sys.stderr.write("see http://www.stsci.edu/resources/software_hardware/pyfits\n")
+    sys.stderr.write("and/or http://numpy.scipy.org/\n")
+    sys.exit(1)
+
+#from __future__ import with_statement
 
 class LDACCat(object):
 
     def __init__(self, hdu):
         self.hdu = hdu
+        self.current=0
         
     def __len__(self):
         return len(self.hdu.data)
@@ -24,10 +47,24 @@ class LDACCat(object):
             return self.hdu.data[key]
 
         if type(key) == type("a"):
-            try:
-                return self.hdu.data.field(key)
-            except AttributeError:
-                raise KeyError(key)
+            # we need to deal with slices through vector keys
+            # such as 'MAG_APER(2)'
+            startind = key.find("(")
+            endind = key.find(")")
+
+            if startind > 0 and endind > 0:
+                keyname = key[:startind]
+                keyindex = int(key[startind + 1:endind]) - 1
+
+                try:
+                   return self.hdu.data.field(keyname)[:,keyindex]
+                except AttributeError:
+                   raise KeyError(key) 
+            else:
+                try:
+                    return self.hdu.data.field(key)
+                except AttributeError:
+                    raise KeyError(key)
 
         raise TypeError
 
@@ -41,7 +78,8 @@ class LDACCat(object):
         return self.hdu.columns.names
 
     def __iter__(self):
-        return self.hdu.data.__iter__()
+        return self
+        #return self.hdu.data.__iter__()
 
     def __contains__(self, item):
         return item in self.keys()
@@ -52,6 +90,12 @@ class LDACCat(object):
     def filter(self, mask):
         return LDACCat(pyfits.BinTableHDU(data=self.hdu.data[mask],
                                           header=self.hdu.header))
+    def next(self):
+        if self.current >= len(self.hdu.data):
+            raise StopIteration
+        else:
+            self.current += 1
+            return self.hdu.data[self.current -1]
 
     def saveas(self, file):
         self.hdu.writeto(file)

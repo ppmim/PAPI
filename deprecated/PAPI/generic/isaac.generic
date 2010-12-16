@@ -1,0 +1,257 @@
+#!/bin/csh
+
+setenv arch ARCHIT     
+setenv IRAFARCH ARCHIT 
+setenv iraf IRAFDIR 
+setenv IRDR_BASEDIR SNAPDIR/irdr   
+if ( ! { ( echo $path | grep -s 'SNAPDIR/irdr/bin' ) } ) then
+  set path = ($path SNAPDIR SNAPDIR/irdr SNAPDIR/irdr/bin)
+  rehash
+endif
+
+
+# parameter data ------------------------------------------------------
+
+if ( -f "snap.par" ) then
+ 	source "./snap.par"
+	echo Using local parameters
+else
+ 	source SNAPDIR/snap.par 
+	echo Using default parameters
+endif
+
+
+# help  ----------------------------------------------------------------
+
+if      ( "$1" == help || $2 == help ) then
+	echo SNAP: Speedy Near-infrared Automatic Pipeline
+	echo "Usage: snap [TYPE] [MOSAIC]"
+	echo "where: TYPE = (single|double);   default=double"
+	echo "       MOSAIC = (dither|onoff|offon); default=dither"
+endif
+
+
+# input parameters  ------------------------------------------------------
+
+if      ( "$1" == "" ) then
+	set type = double
+else if ( "$1" == "double" ) then
+	set type = double
+else if ( "$1" == "single" ) then
+	set type = single
+else 
+	echo UKNOWN TYPE, assuming double.
+	set type = double
+endif
+
+echo TYPE=$type
+
+
+if      ( "$2" == "" ) then
+	set mos = dither
+else if ( "$2" == "dither") then
+	set mos = dither
+else if ( "$2" == "onoff" ) then
+	set mos = onoff
+else if ( "$2" == "offon" ) then
+	set mos = offon
+else 
+	echo UKNOWN MOSAIC, assuming dither.
+	set mos = dither
+endif
+
+echo MOS=$mos
+
+
+\rm *.nip >& /dev/null
+
+# make list of iinput FITS images -------------------------------------------
+
+  \ls -1 *.fits > files.nip
+
+
+#   set right header keywords
+echo ---------------------------------------------------------------------
+echo Setting right header keywords ...
+echo ---------------------------------------------------------------------
+
+head-isaac.cl
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Computing flat-field  ...
+echo ---------------------------------------------------------------------
+echo " "
+
+if ( $mos == "dither" ) then
+   \cp files.nip mkflat.nip
+else if ( $mos == "onoff" ) then
+    AWK -f SNAPDIR/onoff.awk < files.nip > mkflat.nip
+else if ( $mos == "offon" ) then
+    AWK -f SNAPDIR/offon.awk < files.nip > mkflat.nip
+else 
+   echo MOSAIC UNKNOWN
+endif
+
+\rm flat.fits >& /dev/null
+\rm med.nip >& /dev/null
+mkflat.cl
+
+gainmap flat.fits gain.fits $nsig $nxblock $nyblock $mingain $maxgain
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Adding external bad pixel mask
+echo ---------------------------------------------------------------------
+echo " "
+
+addmask.cl
+
+
+echo " "
+echo ---------------------------------------------------------------------
+echo First pass sky subtraction ...
+echo ---------------------------------------------------------------------
+echo " "
+
+
+if ( $mos == "dither" ) then
+   skyfilter files.nip gain.fits $halfnsky nomask $destripe
+else if ( $mos == "onoff" ) then
+   skyfilteronoff files.nip gain.fits $halfnsky nomask $destripe
+else if ( $mos == "offon" ) then
+   skyfilteroffon files.nip gain.fits $halfnsky nomask $destripe
+else 
+   echo MOSAIC UNKNOWN
+endif
+
+\ls -1 *.skysub > tmp1.nip
+AWK -F . '{printf "\\mv %s.fits.skysub %s.skysub.fits \n", $1, $1}' \
+	< tmp1.nip > mv.nip
+source ./mv.nip
+
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Detecting objects ...
+echo ---------------------------------------------------------------------
+echo " "
+
+makemask.pl $off_minarea $off_thresh *.skysub.fits
+ 
+\ls -1 *.skysub.fits > tmp1.nip
+AWK -F . '{printf "\\mv %s.skysub.fits.objs %s.skysub.objs.fits \n", $1, $1}' \
+	< tmp1.nip > mv1.nip
+source ./mv1.nip
+
+\ls -1 *.objs.fits > objfiles.nip
+
+echo " "
+echo ---------------------------------------------------------------------
+echo Compute dither offsets ...
+echo ---------------------------------------------------------------------
+echo " "
+
+mosaic objfiles.nip $off_err > offsets1.nip
+sed -e "s/.objs.fits/.fits/" offsets1.nip >  single.nip
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo First pass coaddition ...
+echo ---------------------------------------------------------------------
+echo " "
+
+dithercubemean single.nip gain.fits single.fits single.weight.fits
+
+if ( $type == "single" ) then
+	\mv single.nip single.list
+
+	AWK -f SNAPDIR/imcomb.awk < single.list 
+	imcomb.cl
+
+	imtrim.cl single
+
+	echo " "
+	echo -------------------------------------------------------------------
+	echo Created files:
+	echo - single.fits        : final image with single-pass sky subtraction
+	echo - single.weight.fits : weight image
+	echo - gain.fits          : flat field image, with bad pixels set to 0
+	echo - single.list        : offset file
+	echo -------------------------------------------------------------------
+	echo " "
+
+	exit
+endif
+
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Make master object mask ...
+echo ---------------------------------------------------------------------
+echo " "
+
+  makemask.pl $mask_minarea $mask_thresh single.fits
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Dilate master object mask ...
+echo ---------------------------------------------------------------------
+echo " "
+  dilate single.fits.objs
+  \mv single.fits.objs coadd.objs.fits
+ 
+echo " "
+echo ---------------------------------------------------------------------
+echo Second pass sky subtraction ... 
+echo ---------------------------------------------------------------------
+echo " "
+
+  AWK '{print "coadd.objs.fits", $2,$3}' single.nip > offsets3.nip
+  paste files.nip offsets3.nip > skylist.nip
+
+if ( $mos == "dither" ) then
+   skyfilter skylist.nip gain.fits $halfnsky mask $destripe
+else if ( $mos == "onoff" ) then
+   skyfilteronoff skylist.nip gain.fits $halfnsky mask $destripe
+else if ( $mos == "offon" ) then
+   skyfilteroffon skylist.nip gain.fits $halfnsky mask $destripe
+else 
+   echo MOSAIC UNKNOWN
+endif
+
+\ls -1 *.skysub > tmp1.nip
+AWK -F . '{printf "\\mv %s.fits.skysub %s.skysub.fits \n", $1, $1}' \
+	< tmp1.nip > mv2.nip
+source ./mv2.nip
+
+
+echo " "
+echo -------------------------------------------------------------------
+echo Final coaddition ...
+echo -------------------------------------------------------------------
+echo " "
+
+\mv single.nip double.list
+
+AWK -f SNAPDIR/imcomb.awk < double.list 
+imcomb.cl
+
+dithercubemean double.list gain.fits double.fits double.weight.fits
+
+imtrim.cl double
+
+echo " "
+echo -------------------------------------------------------------------
+echo Created files:
+echo - double.fits         : final image without distortion corrections
+echo - double.weight.fits  : weight image
+echo - double.objs.fits    : object mask image for second pass combination
+echo - gain.fits         : flat field image, with bad pixels set to 0
+echo - double.list         : offset file
+echo -------------------------------------------------------------------
+echo " "
+
+exit
+
+

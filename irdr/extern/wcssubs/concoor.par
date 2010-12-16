@@ -1,0 +1,18 @@
+Parameters for CONCOOR 1.1 coordinate conversion program (June 8, 1994)
+
+PARMFILE='concoor.par'		 / Parameter file
+RA=6.		 / Right Ascension (hh.mmssss)
+DEC=62.33151692419639		 / Declination (dd.mmsssss)
+LONG=276.37648210420673		 / Longitude (degrees)
+LAT=-29.811954027763178		 / Latitude (degrees)
+INCOOR=B1950	 / Input coordinate system (B1950,J2000,Galactic,Ecliptic)
+OUTCOOR=J2000	 / Output coordinate system (B1950,J2000,Galactic,Ecliptic)
+FORMAT='COLON'	 / Output format (HMS=hh.mmssss dd.mmssss, TABLE, DEGREES)
+NDEC=3		 / Number of decimal places in output
+PRINT=T		 / Print results (y or n)
+LABEL=T		 / Label results (y or n)
+OUTFILE='coor.list'	 / Output file name (-=none)
+EPHDIR='/home/mink/Map/ephemerides'	/ Ephemeris directory pathname
+EPHNAME='DE-130'	/ Ephemeris name
+DIAG=F
+END

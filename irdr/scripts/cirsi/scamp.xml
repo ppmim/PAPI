@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="file:///usr/local/share/scamp/scamp.xsl"?>
+<VOTABLE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.ivoa.net/xml/VOTable/v1.1">
+<DESCRIPTION>produced by SCAMP</DESCRIPTION>
+<!-- VOTable description at http://www.ivoa.net/Documents/latest/VOT.html -->
+<RESOURCE ID="SCAMP" name="astro_prue.fits.ldac">
+ <DESCRIPTION>Data related to SCAMP</DESCRIPTION>
+ <INFO name="QUERY_STATUS" value="OK" />
+ <COOSYS ID="J2000" equinox="J2000" epoch="2000.0" system="ICRS"/>
+ <RESOURCE ID="MetaData" name="MetaData">
+  <DESCRIPTION>SCAMP meta-data</DESCRIPTION>
+  <INFO name="QUERY_STATUS" value="OK" />
+  <PARAM name="Software" datatype="char" arraysize="*" ucd="meta.title;meta.software" value="SCAMP"/>
+  <PARAM name="Version" datatype="char" arraysize="*" ucd="meta.version;meta.software" value="1.3.11"/>
+  <PARAM name="Soft_URL" datatype="char" arraysize="*" ucd="meta.ref.url;meta.software" value="http://terapix.iap.fr/soft/scamp/"/>
+  <PARAM name="Soft_Auth" datatype="char" arraysize="*" ucd="meta.bib.author;meta.software" value="Emmanuel Bertin"/>
+  <PARAM name="Soft_Ref" datatype="char" arraysize="*" ucd="meta.bib.bibcode;meta.software" value="2006ASPC..351..112B"/>
+  <PARAM name="NThreads" datatype="int" ucd="meta.number;meta.software" value="1"/>
+  <PARAM name="Date" datatype="char" arraysize="*" ucd="time.event.end;meta.software" value="2009-03-24"/>
+  <PARAM name="Time" datatype="char" arraysize="*" ucd="time.event.end;meta.software" value="12:29:27"/>
+  <PARAM name="Duration" datatype="float" ucd="time.event;meta.software" value="12" unit="s"/>
+  <PARAM name="User" datatype="char" arraysize="*" ucd="meta.curation" value="panic"/>
+  <PARAM name="Host" datatype="char" arraysize="*" ucd="meta.curation" value="udit43"/>
+  <PARAM name="Path" datatype="char" arraysize="*" ucd="meta.dataset" value="/disk-a/caha/panic/DEVELOP/PIPELINE/PAPI/irdr/scripts/cirsi"/>
+  <TABLE ID="Fields" name="Fields">
+   <DESCRIPTION>Data gathered by SCAMP for every  input catalog</DESCRIPTION>
+   <!-- NFields may be 0 if an error occurred early in the processing -->
+   <PARAM name="NFields" datatype="int" ucd="meta.number;meta.dataset" value="1"/>
+   <FIELD name="Catalog_Name" datatype="char" arraysize="*" ucd="meta.id;meta.table;meta.file"/>
+   <FIELD name="Image_Ident" datatype="char" arraysize="*" ucd="meta.id;obs.field"/>
+   <FIELD name="NExtensions" datatype="int" ucd="meta.record"/>
+   <FIELD name="NAxis" datatype="int" ucd="pos.wcs.naxis"/>
+   <FIELD name="Lng_Axis" datatype="int" ucd="meta.id;pos.eq.ra"/>
+   <FIELD name="Lat_Axis" datatype="int" ucd="meta.id;pos.eq.de"/>
+   <FIELD name="Ext_Header" datatype="boolean" ucd="meta.code"/>
+   <FIELD name="NDetect" datatype="int" ucd="meta.number;src"/>
+   <FIELD name="Group" datatype="int" ucd="meta.id.parent;meta.dataset"/>
+   <FIELD name="Astr_Instrum" datatype="char" arraysize="*" ucd="meta.id.parent;meta.dataset"/>
+   <FIELD name="Phot_Instrum" datatype="char" arraysize="*" ucd="meta.id.parent;meta.dataset"/>
+   <FIELD name="Photom_Flag" datatype="boolean" ucd="meta.code;phot"/>
+   <FIELD name="Photom_Link" datatype="boolean" ucd="meta.code;phot"/>
+   <FIELD name="Field_Coordinates" datatype="double" arraysize="2" ucd="pos.eq;obs.image" unit="deg"/>
+   <FIELD name="Pixel_Scale" datatype="float" arraysize="2"  ucd="instr.pixel;obs.image;stat.mean" unit="arcsec"/>
+   <FIELD name="Max_Radius" datatype="float" ucd="phys.size.radius" unit="arcmin"/>
+   <FIELD name="ZeroPoint_Corr" datatype="float" ucd="phot.mag;phot.calib;arith.zp" unit="mag"/>
+   <!-- =========== MATCHing statistics =========== -->
+   <FIELD name="DPixelScale" datatype="float" ucd="instr.pixel;obs.image;arith.ratio"/>
+   <FIELD name="DPosAngle" datatype="float" ucd="pos.posAng;obs.image;arith.diff" unit="deg"/>
+   <FIELD name="AS_Contrast" datatype="float" ucd="stat.correlation;arith.ratio"/>
+   <FIELD name="DX" datatype="float" ucd="pos.eq;arith.diff" unit="deg"/>
+   <FIELD name="DY" datatype="float" ucd="pos.eq;arith.diff" unit="deg"/>
+   <FIELD name="XY_Contrast" datatype="float" ucd="stat.correlation;arith.ratio"/>
+   <FIELD name="Shear" datatype="float" ucd="phys.size.axisRatio;obs.image"/>
+   <FIELD name="Shear_PosAngle" datatype="float" ucd="pos.posAng;obs.image" unit="deg"/>
+   <!-- =========== Astrometric statistics =========== -->
+   <FIELD name="Chi2_Internal" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="NDeg_Internal" datatype="int" ucd="stat.fit.dof"/>
+   <FIELD name="Chi2_Internal_HighSN" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="NDeg_Internal_HighSN" datatype="int" ucd="stat.fit.dof"/>
+   <FIELD name="AstromOffset_Reference" datatype="float" arraysize="2" ucd="arith.diff;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromSigma_Reference" datatype="float" arraysize="2" ucd="stat.stdev;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromCorr_Reference" datatype="float" ucd="stat.correlation;pos.eq;obs.field"/>
+   <FIELD name="Chi2_Reference" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="NDeg_Reference" datatype="int" ucd="stat.fit.dof"/>
+   <FIELD name="AstromOffset_Reference_HighSN" datatype="float" arraysize="2" ucd="arith.diff;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromCorr_Reference_HighSN" datatype="float" ucd="stat.correlation;pos.eq;obs.field"/>
+   <FIELD name="AstromSigma_Reference_HighSN" datatype="float" arraysize="2" ucd="stat.stdev;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="Chi2_Reference_HighSN" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="NDeg_Reference_HighSN" datatype="int" ucd="stat.fit.dof"/>
+   <DATA><TABLEDATA>
+    <TR>
+     <TD>astro_prue.fits.ldac</TD><TD>f07p06Ks:1/109</TD>
+     <TD>1</TD><TD>2</TD><TD>0</TD><TD>1</TD><TD>F</TD>
+     <TD>743</TD><TD>1</TD><TD>A1</TD><TD>P1</TD><TD>F</TD><TD>F</TD>
+     <TD>243.2544442 54.62323421</TD><TD>0.449782  0.449782</TD><TD>11.3224</TD><TD>0</TD>
+     <TD>0.999455</TD><TD>-0.295937</TD><TD>8.05607</TD>
+     <TD>-0.0170325</TD><TD>0.0112537</TD><TD>18.6551</TD><TD>1.93722e-05</TD><TD>79.1576</TD>
+     <TD>0</TD><TD>0</TD><TD>0</TD><TD>0</TD>
+     <TD>-0.0100745 0.0269511</TD><TD>0.292218 0.270963</TD><TD>-0.00835222</TD><TD>9.78875</TD><TD>464</TD><TD>0.0463521 -0.0092692</TD><TD>0.18576 0.157853</TD><TD>0.123996</TD><TD>6.07778</TD><TD>75</TD>
+    </TR>
+   </TABLEDATA></DATA>
+  </TABLE>
+  <TABLE ID="FGroups" name="FGroups">
+   <DESCRIPTION>Data gathered by SCAMP for every  group of fields found</DESCRIPTION>
+   <PARAM name="NFGroups" datatype="int" ucd="meta.number;meta.dataset" value="1"/>
+   <FIELD name="Name" datatype="char" arraysize="*" ucd="meta.id;meta.dataset"/>
+   <FIELD name="Index" datatype="int" ucd="meta.record;meta.dataset"/>
+   <FIELD name="NFields" datatype="int" ucd="meta.number;meta.dataset"/>
+   <FIELD name="NAxis" datatype="int" ucd="pos.wcs.naxis"/>
+   <FIELD name="Lng_Axis" datatype="int" ucd="meta.id;pos.eq.ra"/>
+   <FIELD name="Lat_Axis" datatype="int" ucd="meta.id;pos.eq.de"/>
+   <FIELD name="Field_Coordinates" datatype="double" arraysize="2" ucd="pos.eq;obs.field" unit="deg"/>
+   <FIELD name="Pixel_Scale" datatype="float" arraysize="2"  ucd="instr.pixel;obs.field;stat.mean" unit="arcsec"/>
+   <FIELD name="Max_Radius" datatype="float" ucd="phys.size.radius;obs.field" unit="arcmin"/>
+   <!-- =========== Astrometric statistics =========== -->
+   <FIELD name="AstRef_Catalog" datatype="char" arraysize="*" ucd="meta.id;meta.dataset"/>
+   <FIELD name="AstRef_Band" datatype="char" arraysize="*" ucd="instr.bandpass"/>
+   <FIELD name="AstromSigma_Internal" datatype="float" arraysize="2" ucd="stat.stdev;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromCorr_Internal" datatype="float" ucd="stat.correlation;pos.eq;obs.field"/>
+   <FIELD name="AstromChi2_Internal" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="AstromNDets_Internal" datatype="int" ucd="meta.number;src"/>
+   <FIELD name="AstromSigma_Internal_HighSN" datatype="float" arraysize="2" ucd="stat.stdev;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromCorr_Internal_HighSN" datatype="float" ucd="stat.correlation;pos.eq;obs.field"/>
+   <FIELD name="AstromChi2_Internal_HighSN" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="AstromNDets_Internal_HighSN" datatype="int" ucd="meta.number;src"/>
+   <FIELD name="AstromOffset_Reference" datatype="float" arraysize="2" ucd="arith.diff;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromSigma_Reference" datatype="float" arraysize="2" ucd="stat.stdev;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromCorr_Reference" datatype="float" ucd="stat.correlation;pos.eq;obs.field"/>
+   <FIELD name="AstromChi2_Reference" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="AstromNDets_Reference" datatype="int" ucd="meta.number;src"/>
+   <FIELD name="AstromOffset_Reference_HighSN" datatype="float" arraysize="2" ucd="arith.diff;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromSigma_Reference_HighSN" datatype="float" arraysize="2" ucd="stat.stDev;pos.eq;obs.field" unit="arcsec"/>
+   <FIELD name="AstromCorr_Reference_HighSN" datatype="float" ucd="stat.correlation;pos.eq;obs.field"/>
+   <FIELD name="AstromChi2_Reference_HighSN" datatype="float" ucd="stat.fit.chi2"/>
+   <FIELD name="AstromNDets_Reference_HighSN" datatype="int" ucd="meta.number;src"/>
+   <!-- =========== Photometric statistics =========== -->
+   <PARAM name="NPhotInstru" datatype="int" ucd="meta.number;meta.em" value="1"/>
+   <FIELD name="PhotInstru_Name" datatype="char" arraysize="*" ucd="meta.id;instr.bandpass"/>
+   <FIELD name="PhotSigma_Internal" datatype="float" arraysize="1" ucd="stat.error;phot.mag" unit="mag"/>
+   <FIELD name="PhotChi2_Internal" datatype="float" arraysize="1" ucd="stat.chi2;phot.mag" unit="mag"/>
+   <FIELD name="PhotNDets_Internal" datatype="int" arraysize="1" ucd="meta.number;src"/>
+   <FIELD name="PhotSigma_Internal_HighSN" datatype="float" arraysize="1" ucd="stat.error;phot.mag" unit="mag"/>
+   <FIELD name="PhotChi2_Internal_HighSN" datatype="float" arraysize="1" ucd="stat.chi2;phot.mag" unit="mag"/>
+   <FIELD name="PhotNDets_Internal_HighSN" datatype="int" arraysize="1" ucd="meta.number;src"/>
+   <FIELD name="PhotSigma_Reference" datatype="float" arraysize="1" ucd="stat.error;phot.mag" unit="mag"/>
+   <FIELD name="PhotChi2_Reference" datatype="float" arraysize="1" ucd="stat.chi2;phot.mag" unit="mag"/>
+   <FIELD name="PhotNDets_Reference" datatype="int" arraysize="1" ucd="meta.number;src"/>
+   <FIELD name="PhotSigma_Reference_HighSN" datatype="float" arraysize="1" ucd="stat.error;phot.mag" unit="mag"/>
+   <FIELD name="PhotChi2_Reference_HighSN" datatype="float" arraysize="1" ucd="stat.chi2;phot.mag" unit="mag"/>
+   <FIELD name="PhotNDets_Reference_HighSN" datatype="int" arraysize="1" ucd="meta.number;src"/>
+   <DATA><TABLEDATA>
+   <TR>
+     <TD>G1</TD><TD>1</TD><TD>1</TD>
+     <TD>2</TD><TD>0</TD><TD>1</TD>
+     <TD>243.2718932 54.61196312</TD><TD>0.450023  0.450023</TD><TD>11.3284</TD>
+     <TD>USNO-B1.0</TD><TD>Bj</TD>
+     <TD>0 0</TD><TD>0</TD><TD>0</TD><TD>464</TD>
+     <TD>0 0</TD><TD>0</TD><TD>0</TD><TD>75</TD>
+     <TD>-0.0100745 0.0269511</TD><TD>0.292219 0.270966</TD><TD>-0.00835212</TD><TD>9.78875</TD><TD>464</TD>
+     <TD>0 0</TD><TD>0 0</TD><TD>0</TD><TD>6.07778</TD><TD>0</TD>
+     <TD>P1</TD>
+     <TD>0</TD><TD>0</TD><TD>464</TD>
+     <TD>0</TD><TD>0</TD><TD>75</TD>
+     <TD>0</TD><TD>0</TD><TD>0</TD>
+     <TD>0</TD><TD>0</TD><TD>0</TD>
+    </TR>
+   </TABLEDATA></DATA>
+  </TABLE>
+  <TABLE ID="Astrometric_Instruments" name="Astrometric_Instruments">
+   <DESCRIPTION>Data gathered by SCAMP for every  astrometric instrument identified</DESCRIPTION>
+   <PARAM name="NAstromInstru" datatype="int" ucd="meta.number;meta.dataset" value="1"/>
+   <FIELD name="Name" datatype="char" arraysize="*" ucd="meta.id;meta.dataset"/>
+   <FIELD name="Index" datatype="int" ucd="meta.record;meta.dataset"/>
+   <FIELD name="NFields" datatype="int" ucd="meta.number;meta.dataset"/>
+   <FIELD name="NKeys" datatype="int" ucd="meta.number"/>
+   <FIELD name="Keys" datatype="*" ucd="meta.note"/>
+   <DATA><TABLEDATA>
+    <TR>
+     <TD>A1</TD><TD>1</TD><TD>1</TD>
+     <TD>2</TD><TD>FILTER  = 'KS      '            ,QRUNID  =                       </TD>
+    </TR>
+   </TABLEDATA></DATA>
+  </TABLE>
+  <TABLE ID="Photometric_Instruments" name="Photometric_Instruments">
+   <DESCRIPTION>Data gathered by SCAMP for every  photometric instrument identified</DESCRIPTION>
+   <PARAM name="NPhotomInstru" datatype="int" ucd="meta.number;meta.dataset" value="1"/>
+   <FIELD name="Name" datatype="char" arraysize="*" ucd="meta.id;meta.dataset"/>
+   <FIELD name="Index" datatype="int" ucd="meta.record;meta.dataset"/>
+   <FIELD name="NFields" datatype="int" ucd="meta.number;meta.dataset"/>
+   <FIELD name="MagZeroPoint_Output" datatype="float" ucd="phot.mag;phot.calib;arith.zp" unit="mag"/>
+   <FIELD name="NKeys" datatype="int" ucd="meta.number"/>
+   <FIELD name="Keys" datatype="*" ucd="meta.note"/>
+   <DATA><TABLEDATA>
+    <TR>
+     <TD>P1</TD><TD>1</TD><TD>1</TD><TD>0</TD>
+     <TD>1</TD><TD>FILTER  = 'KS      '            </TD>
+    </TR>
+   </TABLEDATA></DATA>
+  </TABLE>
+  <TABLE ID="Warnings" name="Warnings">
+   <DESCRIPTION>SCAMP warnings (limited to the last 1000)</DESCRIPTION>
+   <FIELD name="Date" datatype="char" arraysize="*" ucd="meta;time.event.end"/>
+   <FIELD name="Time" datatype="char" arraysize="*" ucd="meta;time.event.end"/>
+   <FIELD name="Msg" datatype="char" arraysize="*" ucd="meta"/>
+   <DATA><TABLEDATA>
+    <TR><TD>2009-03-24</TD><TD>12:29:15</TD><TD>FLAGS parameter not found in catalog astro_prue.fits.ldac</TD></TR>
+   </TABLEDATA></DATA>
+  </TABLE>
+  <RESOURCE ID="Config" name="Config">
+   <DESCRIPTION>SCAMP configuration</DESCRIPTION>
+   <PARAM name="Command_Line" datatype="char" arraysize="*" ucd="obs.param" value="scamp /tmp/astro_prue.fits.ldac -c scamp.cfg"/>
+   <PARAM name="Prefs_Name" datatype="char" arraysize="*" ucd="obs.param;meta.file" value="scamp.cfg"/>
+   <PARAM name="FGroup_Radius" unit="arcmin" datatype="double" ucd="phot.calib;obs.param" value="1"/>
+   <PARAM name="Ref_Server" datatype="char" arraysize="*" ucd="meta.ref.url" value="cocat1.u-strasbg.fr"/>
+   <PARAM name="Ref_Port" datatype="int" arraysize="1" ucd="meta.ref.url" value="1660"/>
+   <PARAM name="CDSClient_Exec" datatype="char" arraysize="*" ucd="meta;meta.file" value="aclient"/>
+   <PARAM name="AstRef_Catalog" datatype="char" arraysize="*" ucd="meta.code;meta.file" value="USNO-B1"/>
+   <PARAM name="AstRef_Band" datatype="char" arraysize="*" ucd="instr.bandpass" value="DEFAULT"/>
+   <PARAM name="AstRefCat_Name" datatype="char" arraysize="*" ucd="meta.id;meta.file;meta.dataset" value="astrefcat.cat"/>
+   <PARAM name="AstRefCent_Keys" datatype="char" arraysize="*" ucd="meta.id;pos.eq" value="X_WORLD,Y_WORLD"/>
+   <PARAM name="AstRefErr_Keys" datatype="char" arraysize="*" ucd="meta.id;pos.errorEllipse" value="ERRA_WORLD,ERRB_WORLD,ERRTHETA_WORLD"/>
+   <PARAM name="AstRefMag_Key" datatype="char" arraysize="*" ucd="meta.id;phot.mag" value="MAG"/>
+   <PARAM name="Save_RefCatalog" datatype="boolean" ucd="meta.code" value="F"/>
+   <PARAM name="RefOut_CatPath" datatype="char" arraysize="*" ucd="meta.id;meta.file" value="."/>
+   <PARAM name="MergedOutCat_Name" datatype="char" arraysize="*" ucd="meta.id;meta.file;meta.dataset" value="scamp.cat"/>
+   <PARAM name="MergedOutCat_Type" datatype="char" arraysize="*" ucd="meta.code;meta.dataset" value="NONE"/>
+   <PARAM name="Match" datatype="boolean" ucd="meta.code;obs.param" value="T"/>
+   <PARAM name="Match_NMax" datatype="int" ucd="meta.number;src;obs.param" value="0"/>
+   <PARAM name="PixScale_MaxErr" datatype="double" ucd="instr.precision;instr.pixel;obs.param" value="1.2"/>
+   <PARAM name="PosAngle_MaxErr" unit="deg" datatype="double" ucd="instr.precision;pos.posAng;obs.param" value="5"/>
+   <PARAM name="Position_MaxErr" unit="arcmin" datatype="double" arraysize="2" ucd="instr.precision;pos.eq;obs.param" value="0.0166667 0.0166667"/>
+   <PARAM name="Match_Resol" unit="arcsec" datatype="double" ucd="stat.param;phys.angSize" value="0"/>
+   <PARAM name="Match_Flipped" datatype="boolean" ucd="instr.param;obs.param" value="F"/>
+   <PARAM name="Mosaic_Type" datatype="char" arraysize="*" ucd="instr.param;obs.param" value="UNCHANGED"/>
+   <PARAM name="FixFocalPlane_NMin" datatype="int" ucd="meta.number;src;obs.param" value="1"/>
+   <PARAM name="CrossId_Radius" unit="arcsec" datatype="double" ucd="pos.angDistance;stat.max" value="2"/>
+   <PARAM name="Solve_Astrom" datatype="boolean" ucd="meta.code;obs.param" value="T"/>
+   <PARAM name="AstrInstru_Key" datatype="char" arraysize="*" ucd="meta.id;instr.setup;pos" value="FILTER,QRUNID"/>
+   <PARAM name="Stability_Type" datatype="char" arraysize="*" ucd="instr.param;obs.param" value="INSTRUMENT"/>
+   <PARAM name="Centroid_Keys" datatype="char" arraysize="*" ucd="meta.id;pos.barycenter;src" value="XWIN_IMAGE,YWIN_IMAGE"/>
+   <PARAM name="CentroidErr_Keys" datatype="char" arraysize="*" ucd="meta.id;pos.errorEllipse;src" value="ERRAWIN_IMAGE,ERRBWIN_IMAGE,ERRTHETAWIN_IMAGE"/>
+   <PARAM name="Distort_Keys" datatype="char" arraysize="*" ucd="meta.id;stat.fit.param;src" value="XWIN_IMAGE,YWIN_IMAGE"/>
+   <PARAM name="Distort_Groups" datatype="int" arraysize="2" ucd="meta.id;stat.fit.param" value="1 1"/>
+   <PARAM name="Distort_Degrees" datatype="int" arraysize="1" ucd="meta.id;stat.fit.param" value="3"/>
+   <PARAM name="AstrClip_NSigma" datatype="double" ucd="meta.id;stat.param;pos" value="0"/>
+   <PARAM name="Correct_ColourShifts" datatype="boolean" ucd="meta.code;obs.param" value="F"/>
+   <PARAM name="Solve_Photom" datatype="boolean" ucd="meta.code;phot.calib;obs.param" value="T"/>
+   <PARAM name="MagZero_Out" unit="mag" datatype="double" arraysize="1" ucd="arith.zp;phot.calib;obs.param" value="0"/>
+   <PARAM name="MagZero_IntErr" unit="mag" datatype="double" arraysize="1" ucd="stat.error;phot.mag;obs.param" value="0.01"/>
+   <PARAM name="MagZero_RefErr" unit="mag" datatype="double" arraysize="1" ucd="stat.error;phot.calib;obs.param" value="0.03"/>
+   <PARAM name="PhotInstru_Key" datatype="char" arraysize="*" ucd="meta.id;instr.setup;phot.calib" value="FILTER"/>
+   <PARAM name="MagZero_Key" datatype="char" arraysize="*" ucd="meta.id;arith.zp;phot.calib" value="PHOT_C"/>
+   <PARAM name="ExpoTime_Key" datatype="char" arraysize="*" ucd="meta.id;time.duration.expo" value="EXPTIME"/>
+   <PARAM name="AirMass_Key" datatype="char" arraysize="*" ucd="meta.id;obs.airmass" value="AIRMASS"/>
+   <PARAM name="Extinct_Key" datatype="char" arraysize="*" ucd="meta.id;obs.atmos.extinction" value="PHOT_K"/>
+   <PARAM name="PhotomFlag_Key" datatype="char" arraysize="*" ucd="meta.id;obs.atmos" value="PHOTFLAG"/>
+   <PARAM name="PhotFlux_Key" datatype="char" arraysize="*" ucd="meta.id;phot.flux;src" value="FLUX_AUTO"/>
+   <PARAM name="PhotFluxerr_Key" datatype="char" arraysize="*" ucd="meta.id;phot.flux;src" value="FLUXERR_AUTO"/>
+   <PARAM name="PhotClip_NSigma" datatype="double" ucd="meta.id;stat.param;phot" value="0"/>
+   <PARAM name="CheckPlot_CKey" datatype="char" arraysize="*" ucd="meta.id;meta.code" value="SCAMPCOL"/>
+   <PARAM name="CheckPlot_Dev" datatype="char" arraysize="*" ucd="meta.code" value="PNG"/>
+   <PARAM name="CheckPlot_Res" datatype="int" arraysize="1" ucd="meta.number;meta" value="0"/>
+   <PARAM name="CheckPlot_AntiAlias" datatype="boolean" ucd="meta.code" value="T"/>
+   <PARAM name="CheckPlot_Type" datatype="char" arraysize="*" ucd="meta.code" value="FGROUPS,DISTORTION,ASTR_INTERROR2D,ASTR_INTERROR1D,ASTR_REFERROR2D,ASTR_REFERROR1D,ASTR_CHI2,PHOT_ERROR"/>
+   <PARAM name="CheckPlot_Name" datatype="char" arraysize="*" ucd="meta.id;meta.file" value="fgroups,distort,astr_interror2d,astr_interror1d,astr_referror2d,astr_referror1d,astr_chi2,psphot_error"/>
+   <PARAM name="CheckImage_Type" datatype="char" arraysize="*" ucd="meta.code" value="NONE"/>
+   <PARAM name="CheckImage_Name" datatype="char" arraysize="*" ucd="meta.id;meta.file;meta.fits" value="check.fits"/>
+   <PARAM name="SN_Thresholds" datatype="double" arraysize="2" ucd="stat.snr;phot.flux;obs.param" value="10 100"/>
+   <PARAM name="Flags_Mask" datatype="int" ucd="meta.code.qual" value="240"/>
+   <PARAM name="WeightFlags_Mask" datatype="int" ucd="meta.code.qual" value="255"/>
+   <PARAM name="ImaFlags_Mask" datatype="int" ucd="meta.code.qual" value="0"/>
+   <PARAM name="AHeader_Global" datatype="char" arraysize="*" ucd="meta.id;meta.file" value="scamp.ahead"/>
+   <PARAM name="AHeader_Suffix" datatype="char" arraysize="*" ucd="meta.id.part;meta.file" value=".ahead"/>
+   <PARAM name="Header_Suffix" datatype="char" arraysize="*" ucd="meta.id.part;meta.file" value=".head"/>
+   <PARAM name="Header_Type" datatype="char" arraysize="*" ucd="meta.code;meta.file" value="NORMAL"/>
+   <PARAM name="Verbose_Type" datatype="char" arraysize="*" ucd="meta.code" value="NORMAL"/>
+   <PARAM name="Write_XML" datatype="boolean" ucd="meta.code" value="T"/>
+   <PARAM name="NThreads" datatype="int" ucd="meta.number;meta.software" value="1"/>
+  </RESOURCE>
+ </RESOURCE>
+</RESOURCE>
+</VOTABLE>

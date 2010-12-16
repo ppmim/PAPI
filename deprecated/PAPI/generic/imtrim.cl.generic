@@ -1,0 +1,161 @@
+#!IRAFBIN/cl.e -f
+
+
+set imextn = "oif:imh fxf:fits,fit,fts plf:pl qpf:qp stf:hhh,??h"
+logver = "IRAF V2.11 May 1997"
+images 
+imutil
+
+int nx, ny, xmin, xmax, ymin, ymax, start,step, lasti
+string imin, imsec
+real std
+
+imin = args//".fits"
+
+imgets (imin, "i_naxis1");  nx = int(imgets.value)
+imgets (imin, "i_naxis2");  ny = int(imgets.value)
+
+printf ("imstat.format = no   \n") | cl ()
+printf ("imstat.fields = \"stddev\" \n") | cl ()
+
+xmin=0
+lasti = 0
+start=1
+step=128
+for (i=start; i<=nx; i+=step) {
+	if (lasti==i) {
+		std=1.0
+	} else {
+		imstat (imin//"["//i//",*]") | scan (std)
+		# print (i, std, lasti)
+	}
+	if (std!=0.0) {
+		if (i==1) {
+			xmin=1
+			break
+		} else {
+			if (step==1) {
+				xmin=i
+				break
+			} else {
+				lasti = i
+				step = step/2
+				i=i-2*step
+			}
+		}
+	} else {
+	}
+}
+if (xmin==0 ) {
+	print ("No data in ", imin, " ?")
+	logout
+}
+	
+# print ("XMIN= ", xmin)
+
+lasti = 0
+start=nx
+step=128
+for (i=start; i>=1; i-=step) {
+	if (lasti==i) {
+		std=1.0
+	} else {
+		# print (i, std, lasti)
+		imstat (imin//"["//i//",*]") | scan (std)
+	}
+	if (std!=0.0) {
+		if (i==nx) {
+			xmax=nx
+			break
+		} else {
+			if (step==1) {
+				xmax=i
+				break
+			} else {
+				lasti = i
+				step = step/2
+				i=i+2*step
+			}
+		}
+	} else {
+	}
+}
+# print ("XMAX= ", xmax)
+
+lasti = 0
+start=1
+step=128
+for (i=start; i<=ny; i+=step) {
+	if (lasti==i) {
+		std=1.0
+	} else {
+		imstat (imin//"[*,"//i//"]") | scan (std)
+		# print (i, std, lasti)
+	}
+	if (std!=0.0) {
+		if (i==1) {
+			ymin=1
+			break
+		} else {
+			if (step==1) {
+				ymin=i
+				break
+			} else {
+				lasti = i
+				step = step/2
+				i=i-2*step
+			}
+		}
+	} else {
+	}
+}
+	
+# print ("YMIN= ", ymin)
+
+lasti = 0
+start=ny
+step=128
+for (i=start; i>=1; i-=step) {
+	if (lasti==i) {
+		std=1.0
+	} else {
+		# print (i, std, lasti)
+		imstat (imin//"[*,"//i//"]") | scan (std)
+	}
+	if (std!=0.0) {
+		if (i==ny) {
+			ymax=ny
+			break
+		} else {
+			if (step==1) {
+				ymax=i
+				break
+			} else {
+				lasti = i
+				step = step/2
+				i=i+2*step
+			}
+		}
+	} else {
+	}
+}
+# print ("YMAX= ", ymax)
+
+imsec = imin//"["//xmin//":"//xmax//","//ymin//":"//ymax//"]"
+imcopy (imsec, imin)
+
+imin = args//".weight.fits"
+imsec = imin//"["//xmin//":"//xmax//","//ymin//":"//ymax//"]"
+imcopy (imsec, imin)
+
+imin = args//".objs.fits"
+if (access(imin)) {
+	imsec = imin//"["//xmin//":"//xmax//","//ymin//":"//ymax//"]"
+	imcopy (imsec, imin)
+} else {
+}
+
+logout
+
+
+

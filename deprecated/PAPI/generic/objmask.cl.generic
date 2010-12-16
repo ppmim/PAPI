@@ -1,0 +1,21 @@
+#!IRAFBIN/cl.e -f
+
+
+set imextn = "oif:imh fxf:fits,fit,fts plf:pl qpf:qp stf:hhh,??h"
+logver = "IRAF V2.11 May 1997"
+language
+images 
+imutil
+
+if (access("mask.pl")==0) {
+	imcopy gain.fits mask.fits
+	imrepl mask 1 lower=0.5
+	imcopy mask.fits mask.pl
+	imdel mask.fits*
+} else {
+}
+
+imarith @objfiles.nip * mask.pl @objfiles.nip
+
+logout
+

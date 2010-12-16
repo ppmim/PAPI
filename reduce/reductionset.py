@@ -761,13 +761,15 @@ class ReductionSet:
             satur_level=300000
             
         if images_in==None: # then we use the images ending with suffing in the output directory
-            makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, satur_level, output_list_file)
+            makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, satur_level, \
+                        output_list_file, single_point=True)
         elif os.path.isfile(images_in): # we use the given list of images
-            makeObjMask( images_in , mask_minarea, mask_thresh, satur_level, output_list_file)
+            makeObjMask( images_in , mask_minarea, mask_thresh, satur_level, \
+                        output_list_file, single_point=True)
         else:
             log.error("Option not recognized !!!")
             raise Exception("Wrong input frames given")
-                           
+        
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
         search_box=10 # half_width of search box in arcsec (default 10)
@@ -888,9 +890,11 @@ class ReductionSet:
     def makeAstrometry( self, input_file, catalog='2mass', re_grid=False):
         """
         Compute the astrometry of the given input_file
-        (not used, deprecated)
+        (not used, DEPRECATED !!!)
         """
-                                            
+                                 
+        raise RuntimeError("makeAstrometry is Deprecated !")
+        
         if re_grid: regrid_str='regrid'
         else: regrid_str='noregrid'
                                             
@@ -1320,7 +1324,7 @@ class ReductionSet:
                 flat_ext, cext = self.split(flat)
                 bpm_ext, cext = self.split(bpm)
                 for n in range(next):
-                    if n!=2: continue
+                    if n!=3: continue
                     log.debug("===> Reducting extension %d", n+1)
                     ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                     if dark_ext==[]: mdark=None
