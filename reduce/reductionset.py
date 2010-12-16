@@ -76,7 +76,13 @@ class ReductionSet:
         if len(rs_filelist)<=0:
             log.error("Empy file list, no files to reduce ...")
             raise Exception("Empy file list, no files to reduce ...")
-        
+        else:
+            right_extension=True
+            for f in rs_filelist:
+                if not os.path.exists(f) or not os.path.splitext(f)[1]==".fits":
+                    log.error("File %s does not exists or not has '.fits' extension", f)
+                    raise Exception("File %s does not exist or has not '.fits' extension"%f)
+                    
         # Input values
         self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
         self.out_dir   = out_dir   # directory where all output will be written
@@ -86,7 +92,7 @@ class ReductionSet:
         self.master_flat = flat    # master flat to use (input)
         self.master_bpm = bpm      # master Bad Pixel Mask to use (input)
         self.red_mode = red_mode   # reduction mode (quick=for QL, science=for science) 
-        self.group_by = group_by   # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only by FILTER)
+        self.group_by = group_by.lower()   # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only by FILTER)
         self.check_data=check_data # flat to indicate if data checking need to be done (see checkData() method)
         self.config_dict = config_dict # dictionary with all sections (general, darks, dflats, twflats, skysub, fits, keywords, config_dicts) and their values
          
@@ -486,20 +492,20 @@ class ReductionSet:
         Query the DB (data set) to look for object/pointing sequences sorted by
         MJD; they can be grouped by:
         
-            a) FILTER (it is used when no date set classification can be done)
-            b) OB_ID,OB_PAT,FILTER.
+            a) FILTER, TEXP (it is used when no data set classification can be done)
+            b) OB_ID, OB_PAT, FILTER, TEXP
             
         Return : a list of list of sequence files belonging to
         
         TBD: implement other alternative way of grouping : sort out by MJD and group by FILTER
         """
         
-        # group data file (only science) by Filter 
+        # group data file (only science) by Filter,TExp 
         if self.group_by=="filter":
-            (filters, seq_list)=self.db.GetFilterFiles() # only SCIENCE or SKY_FOR frames
+            (seq_par, seq_list)=self.db.GetFilterFiles() # only SCIENCE or SKY_FOR frames
             # Now, we need to check temporal (bases on MJD) continuty and split a group if it is discontinued
             new_seq_list=[]
-            new_filters=[]
+            new_seq_par=[]
             k=0
             for seq in seq_list:
                 group=[]
@@ -510,25 +516,26 @@ class ReductionSet:
                         group.append(file)
                         mjd_0=t
                     else:
+                        log.debug("Sequence split due to temporal gap between sequence frames")
                         new_seq_list.append(group)
-                        new_filters.append(filters[k])
+                        new_seq_par.append(seq_par[k])
                         mjd_0=t
                         group=[file]
                 new_seq_list.append(group)
-                new_filters.append(filters[k])
+                new_seq_par.append(seq_par[k])
                 k+=1
                 
             # Print out the found groups
             k=0
-            for filter in new_filters:
-                print "\nFILTER=%s"%filter
-                print "-----------------------------------------------------------------------------------\n"
+            for par in new_seq_par:
+                print "\nFILTER=%s  TEXP=%s   #files=%d"%(par[0], par[1], len(new_seq_list[k]))
+                print "-------------------------------------------------------------------------------------------------\n"
                 for file in new_seq_list[k]:
                     print file
                 k+=1
-            log.debug("Found %d groups of SCI files: %s", len(new_filters), new_seq_list)
+            log.debug("Found %d groups of SCI files", len(new_seq_par))
         
-        # group data files by meta-data given by the OT (OB_ID, OB_PAT, FILTER, ....)
+        # group data files by meta-data given by the OT (OB_ID, OB_PAT, FILTER, TEXP)
         else:
             (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
             # Now, we need to check temporal (based on MJD) continuty and split a group if it is discontinued
@@ -544,6 +551,7 @@ class ReductionSet:
                         group.append(file)
                         mjd_0=t
                     else:
+                        log.debug("Sequence split due to temporal gap between sequence frames")
                         new_seq_list.append(group)
                         new_seq_par.append(seq_par[k])
                         mjd_0=t
@@ -555,13 +563,13 @@ class ReductionSet:
             # Print out the found groups
             k=0
             for par in new_seq_par:
-                print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
-                print "-----------------------------------------------------------------------------------\n"
+                print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s, TEXP=%s   #files=%d"%(par[0],par[1],par[2],par[3], len(new_seq_list[k]))
+                print "------------------------------------------------------------------------------------------------------------------\n"
                 for file in new_seq_list[k]:
                     print file
                 k+=1
         
-            log.debug("Found %d groups of SCI files: %s", len(new_seq_par), new_seq_list)
+            log.debug("Found ** %d ** groups of SCI files ", len(new_seq_par))
         
         return new_seq_list
     
@@ -765,18 +773,19 @@ class ReductionSet:
         search_box=10 # half_width of search box in arcsec (default 10)
         offsets_cmd=self.m_irdr_path+'/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
-            log.error ("Some error while computing dither offsets")
+            log.critical("Some error while computing dither offsets")
             raise Exception("Some error while computing dither offsets")
         else:
             try:
                 offsets_mat = numpy.loadtxt(p_offsets_file, usecols = (1,2,3)) # columns => (xoffset, yoffset, match fraction) in PIXELS
                 # check if correlation overlap fraction is good enought
                 if (offsets_mat[:,2]<self.MIN_CORR_FRAC).sum()>1:
-                    log.error("Some error while computing dither offsets. Overlap correlation fraction is < %f",self.MIN_CORR_FRAC)
+                    log.critical("Some error while computing dither offsets. Overlap correlation fraction is < %f",self.MIN_CORR_FRAC)
                     raise Exception("Wrong overlap correlation fraction for translation offsets")
                     
             except IOError:
-                log.debug("No offsets read. There may be some problem while computing translation offsets ....")   
+                log.critical("Any offsets read. There may be some problem while computing translation offsets ....")
+                raise Exception("Any offsets read")
         
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
@@ -1283,9 +1292,10 @@ class ReductionSet:
         
             # TODO: and BPM ???
             
-        #return [] # PRUEBNA !!!!
         
         sequences=self.getObjectSequences()
+        #return [] # PRUEBA !!!!
+
         i=0
         out_ext=[] # it will store the partial extension reduced output filenames
         seq_result_outfile="" # will store the full-frame out filename of the current reduced sequence  
@@ -1295,7 +1305,8 @@ class ReductionSet:
             log.debug("===> Reduction of obj_seq %d",i)
             if len(obj_seq)<4:
                 log.debug("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
-                raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
+                continue # continue with next sequence !!
+                #raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
                 #return []
             else:
                 #avoid call getCalibFor() when red_mode="quick"
@@ -1309,7 +1320,8 @@ class ReductionSet:
                 flat_ext, cext = self.split(flat)
                 bpm_ext, cext = self.split(bpm)
                 for n in range(next):
-                    log.debug("===> Reducting extension group %d", n+1)
+                    if n!=2: continue
+                    log.debug("===> Reducting extension %d", n+1)
                     ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                     if dark_ext==[]: mdark=None
                     else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
@@ -1321,8 +1333,9 @@ class ReductionSet:
                         out_ext.append(self.reduceObj(obj_ext[n], mdark, mflat, mbpm, red_mode, \
                                                       output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
                     except Exception,e:
-                        log.error("Some error while reduction of extension group %d of object sequence %d", n+1, i)
+                        log.error("Some error while reduction of extension %d of object sequence %d", n+1, i)
                         raise e
+                        #continue
         
             # if all reduction were fine, now join/stich back the extensions in a widther frame
             seq_result_outfile=self.out_file.replace(".fits","_SEQ%02d.fits"%(i))
@@ -1349,7 +1362,9 @@ class ReductionSet:
                     
             
         #log.critical(" TBD : for each object sequence, we need a different final output file !!!!")
-        log.critical("*** All Obs.Sequences (%d) has been reduced. Congratulations !!", i)
+        log.info("*******************************************************************")
+        log.info("*** All Obs.Sequences (%d) has been reduced. Congratulations !!****", i)
+        log.info("*******************************************************************")
         
         for f in seq_outfile_list: self.db.insert(f)
         self.db.ListDataSet()
@@ -1523,7 +1538,7 @@ class ReductionSet:
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration and  coaddition result frame ****")
             #misc.utils.listToFile(self.m_LAST_FILES, self.out_dir+"/files_skysub.list")
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=output_file)
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=output_file, config_dict=self.config_dict)
             try:
                 aw.run()
             except Exception,e:
@@ -1534,6 +1549,8 @@ class ReductionSet:
             log.info("##### End of SINGLE data reduction ######")
             log.info("#########################################")
             return output_file
+        
+        ## -- fin prueba !!
         """
         #########################################
         # 6 - Compute dither offsets from the first sky subtracted/filtered images using cross-correlation

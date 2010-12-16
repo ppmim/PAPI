@@ -144,14 +144,14 @@ def main(arguments = None):
     # note: only values of the 'general' section can be invoked
     options = misc.config.read_options(init_options, 'general', config_file)
 
-    print "options=",options
+    #print "options=",options
 
     if  i_args:    # i_args is the leftover positional arguments after all options have been processed
         parser.print_help()
         sys.exit(2) 
     
     general_opts  = options['general'] 
-    print "GEN_OPTS",general_opts
+    #print "GEN_OPTS",general_opts
   
         
     if not general_opts['source'] or not general_opts['output_file'] \

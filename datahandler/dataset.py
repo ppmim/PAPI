@@ -369,39 +369,41 @@ class DataSet:
                  
     def GetFilterFiles(self):
         """ 
-            Get all the SCIENCE files found for each Filter; no other keyword is 
+            Get all the SCIENCE files found for each (Filter,TExp); no other keyword is 
             looked for (OB_ID, OB_PAT, ...) 
             
-            Return a list of list, having each list the list of files beloging to.
+            Return the list of parameter-tuples and list of list,
+            having each list the list of files beloging to.
+            
         """
         
-        filter_list=[]
-        filter_file_list=[]
+        par_list=[] # parameter tuple list (filter,texp)
+        filter_file_list=[] # list of file list (one per each filter)
               
         # First, look for Filters on SCIENCE files
-        s_select="select DISTINCT filter from dataset where type='SCIENCE' or type='SKY_FOR' "
+        s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY_FOR' "
         #print s_select
         cur=self.con.cursor()
         cur.execute(s_select,"")
         rows=cur.fetchall()
         if len(rows)>0:
-            filter_list = [str(f[0]) for f in rows] # important to apply str() !!
-        print "Total rows selected:  %d" %(len(filter_list))
-        print "Filters found :\n ", filter_list
+            par_list = [ [f[0],f[1]] for f in rows] # important to apply str() ??
+        print "Total rows selected:  %d" %(len(par_list))
+        print "Filters found :\n ", par_list
         
         # Finally, look for files of each Filter
-        for filter in filter_list:
-            s_select="select filename from dataset where filter=? and (type='SCIENCE' or type='SKY_FOR') order by mjd"    
+        for par in par_list:
+            s_select="select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY_FOR') order by mjd"    
             #print s_select
             cur=self.con.cursor()
-            cur.execute(s_select,(filter,))
+            cur.execute(s_select,(par[0],par[1]))
             #print "done !"
             rows=cur.fetchall()
             if len(rows)>0:
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
-            print "%d files found for Filter %s" %(len(rows), filter)
+            print "%d files found for Filter %s" %(len(rows), par[0])
             
-        return filter_list, filter_file_list
+        return par_list, filter_file_list
                          
     def GetSeqFiles(self, filter=None, type=None):
         """ 
@@ -418,7 +420,7 @@ class DataSet:
               for calibration sequences need improvements
             
             Return two lists:
-                 - a list of list of parameters of each list found (OB_ID, OB_PAT,FILTER)
+                 - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
                  - a of list, having each list the list of files beloging 
                    to the sequence.
         """
@@ -443,27 +445,27 @@ class DataSet:
                       
         # First, look for OB_IDs
         #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
-        s_select="select DISTINCT ob_id,ob_pat,filter from dataset where %s and %s" %(s_filter,s_type)
+        s_select="select DISTINCT ob_id,ob_pat,filter,texp from dataset where %s and %s order by mjd" %(s_filter,s_type)
         #print s_select
         cur=self.con.cursor()
         cur.execute(s_select,(filter,))
         rows=cur.fetchall()
         if len(rows)>0:
-            seq_pat_list = [[f[0], f[1], f[2]] for f in rows] # important to apply str() !!
+            seq_pat_list = [[f[0], f[1], f[2], f[3]] for f in rows] # important to apply str() !!
         print "Total rows selected:  %d" %(len(seq_pat_list))
         print "OS's found :\n ", seq_pat_list
         
         # Finally, look for files of each OB_ID
         for seq in seq_pat_list:
-            s_select="select filename from dataset where ob_id=? and ob_pat=? and filter=? order by mjd"    
+            s_select="select filename from dataset where ob_id=? and ob_pat=? and filter=? and texp=? order by mjd"    
             #print s_select
             cur=self.con.cursor()
-            cur.execute(s_select,(seq[0],seq[1],seq[2],))
+            cur.execute(s_select,(seq[0],seq[1],seq[2],seq[3]))
             #print "done !"
             rows=cur.fetchall()
             if len(rows)>0:
                 seq_list.append([str(f[0]) for f in rows]) # important to apply str() !!
-            print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2]))
+            print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2])+"_"+str(seq[3]))
             
         return seq_pat_list, seq_list
                        
