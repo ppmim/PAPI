@@ -235,6 +235,8 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
     sex.config['CATALOG_TYPE'] = "FITS_LDAC"
     sex.config['CATALOG_NAME'] = input_image + ".ldac"
+    sex.config['DETECT_THRESH'] = config_dict['skysub']['mask_thresh']
+    sex.config['DETECT_MINAREA'] = config_dict['skysub']['mask_minarea']
     try:
         sex.run(input_image, updateconfig=True, clean=False)
     except: 
@@ -336,6 +338,8 @@ class AstroWarp(object):
             #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
             sex.config['CATALOG_TYPE'] = "FITS_LDAC"
             sex.config['CATALOG_NAME'] = file + ".ldac"
+            sex.config['DETECT_THRESH'] = self.config_dict['skysub']['mask_thresh']
+            sex.config['DETECT_MINAREA'] = self.config_dict['skysub']['mask_minarea']
             sex.run(file, updateconfig=True, clean=False)
                         
         ## STEP 2: Make the multi-astrometric calibration for each file (all overlapped-files together)

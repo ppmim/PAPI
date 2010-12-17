@@ -757,7 +757,7 @@ class ReductionSet:
             satur_level=self.config_dict['skysub']['satur_level']
         else:
             mask_minarea=25
-            mask_thresh=0.4
+            mask_thresh=2.0
             satur_level=300000
             
         if images_in==None: # then we use the images ending with suffing in the output directory
@@ -1324,7 +1324,9 @@ class ReductionSet:
                 flat_ext, cext = self.split(flat)
                 bpm_ext, cext = self.split(bpm)
                 for n in range(next):
-                    if n!=3: continue
+                    ################## only for debug purposes
+                    if n!=2: continue
+                    ################## end of debug 
                     log.debug("===> Reducting extension %d", n+1)
                     ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                     if dark_ext==[]: mdark=None

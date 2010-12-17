@@ -158,7 +158,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
                     cat = astromatic.ldac.openObjectFile(fn+".ldac", table='LDAC_OBJECTS')
                     for star in cat:
                         if star['X_IMAGE']<x_size and star['Y_IMAGE']<y_size:
-                            data[round(star['X_IMAGE']),round(star['Y_IMAGE'])]=1
+                            data[round(star['Y_IMAGE']),round(star['X_IMAGE'])]=1
                 except Exception,e:
                     myfits.close()
                     raise Exception("Error while creating single point object mask :%s",str(e))
@@ -206,7 +206,7 @@ if __name__ == "__main__":
                   action="store", dest="saturlevel",
                   help="SExtractor SATUR_LEVEL (int)")
     
-    parser.add_option("-1", "--single_point", default=True,
+    parser.add_option("-1", "--single_point", default=False,
                   action="store_true", dest="single_point",
                   help="Create a single point object mask")
     
