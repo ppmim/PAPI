@@ -57,7 +57,7 @@ class DataSet:
         self.id = 0
 
     ############################################################    
-    def  load( self , source ):
+    def load( self , source ):
 
         """
         \brief Load the source for files and insert them into the dataset DB

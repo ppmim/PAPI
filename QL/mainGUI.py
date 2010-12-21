@@ -253,6 +253,17 @@ class MainGUI(panicQL):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
         
+        ### Check if it's deleted file from source directory
+        if filename.endswith("__deleted__"):
+            log.debug("File %s disappeared from source directory. Deleted from DB"%filename.replace("__deleted__",""))
+            try:
+                datahandler.dataset.filesDB.delete(filename.replace("__deleted__",""))
+            except:
+                log.error("Some error while deleting file %s"%filename.replace("__deleted__",""))
+            self.slot_classFilter()
+            return
+    
+        ### otherwise, it must be a new file !!
         log.debug( "New file detected --> %s. Going to verification...", filename)
         # (Try) to check if the FITS file writing has finished -- 
         # TODO: does not work !!!
@@ -299,10 +310,9 @@ class MainGUI(panicQL):
         #print "FILEINFO= ", fileinfo
         
         #########################
-        # an alternative method to update the ListView; it will allow keep the view filter
+        # an alternative method to update the ListView; it allows keep the view filter
         self.slot_classFilter() 
         #########################
-        
         ## Update the ListView table
         """elem = QListViewItem( self.listView_dataS )
         elem.setText (0, str(filename))
@@ -836,7 +846,7 @@ class MainGUI(panicQL):
             for seq in parList:
                 # create the father
                 elem = QListViewItem( self.listView_dataS )
-                elem.setText(0, "OB_ID="+str(seq[0])+" OB_PAT="+str(seq[1])+" FILTER="+str(seq[2]) + " #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
+                elem.setText(0, "OB_ID="+str(seq[0])+" ** OB_PAT="+str(seq[1])+" ** FILTER="+str(seq[2]) + " ** #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
                 #elem.setText (1, str(seq[1])) # OB_PAT
                 #elem.setText (2, str(seq[2])) # FILTER
                 for file in fileList[k]:
@@ -950,7 +960,7 @@ class MainGUI(panicQL):
             popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 14 )
             popUpMenu.insertItem("FWHM estimation", self.fwhm_estimation_slot, 0, 15 )
             popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 16 )
-            popUpMenu.insertItem("Test", self.testSlot, 0, 17 )
+            popUpMenu.insertItem("Imexam", self.imexam_slot, 0, 17 )
             popUpMenu.insertSeparator()
             # Math sub-menu
             subPopUpMenu = QPopupMenu()
@@ -962,8 +972,8 @@ class MainGUI(panicQL):
             subPopUpMenu2 = QPopupMenu()
             subPopUpMenu2.insertItem("Split MEF file", self.splitMEF_slot, 0, 1 )
             subPopUpMenu2.insertItem("Join MEF file", self.joinMEF_slot, 0, 2 )
-            subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
-            subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
+            #subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
+            #subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
             popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 19 )
             
     
@@ -1019,27 +1029,26 @@ class MainGUI(panicQL):
            As result, NEXT files should be created
         """
         for file in self.m_popup_l_sel:
-            mef = misc.mef.MEF([file])
-            mef.doSplit(".%02d.fits")
-            #self.textEdit_log.append(QString(str(line)))
+            try:
+                mef = misc.mef.MEF([file])
+                mef.doSplit(".%02d.fits")
+            except Exception,e:
+                log.debug("Cannot split file %s. Maybe it's not a MEF file",str(e))
+                QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file"%(file))
+                #self.textEdit_log.append(QString(str(line)))
     
     def joinMEF_slot(self):
-        """Join a MEF file to stitch them together
+        """Join/stitch a MEF file to stitch them together
            As result, one single FITS file with the stitched image should be created
         """
         for file in self.m_popup_l_sel:
-            mef = misc.mef.MEF([file])
-            mef.doJoin(".join.fits")
+            try:
+                mef = misc.mef.MEF([file])
+                mef.doJoin(".join.fits")
+            except Exception,e:
+                log.debug("Cannot stitch file %s. Maybe it's not a MEF file",str(e))
+                QMessageBox.critical(self, "Error", "Cannot stitch file: %s. \n Maybe it's not a MEF file"%(file))
     
-    def sliceCube_slot(self):
-        """TBD"""
-        pass
-    
-    def coaddCube_slot(self):
-        """TBD"""
-        pass
-        
-
     def selected_file_slot(self, listItem):
         """To know which item is selected """
                 
@@ -1047,7 +1056,18 @@ class MainGUI(panicQL):
             if self.comboBox_classFilter.currentText()=="GROUP" and listItem.firstChild()!=None: # it'a a parent
                 return
             else: self.m_listView_item_selected=str(listItem.text(0))
+    
+    def imexam_slot(self, filename):
+        """ Imexam the currect filename selected """
+        
+        display.startDisplay()
+        try:
+            iraf.imexam(self.m_popup_l_sel[0])
+        except:
+            log.error("Error while Imexam with image %s",self.m_popup_l_sel[0])
+            QMessageBox.critical(self, "Error", "Error while Imexam with image %s"%(self.m_popup_l_sel[0]))
             
+        
     ######### End Pup-Up ########################################################    
     
     def fileExit(self):

@@ -23,6 +23,7 @@ import time
 #from threading import Thread
 import copy
 import fileinput
+import glob
 		
 #Logging        
 from misc.paLog import log       
@@ -104,11 +105,14 @@ class DataCollector ():
         """
         Get directory listing sorted by creation date
         """
-        a = [os.path.join(dirpath, s) for s in os.listdir(dirpath)
+        #a = [os.path.join(dirpath, s) for s in os.listdir(dirpath)
+        #    if os.path.isfile(os.path.join(dirpath, s))]
+        a = [os.path.join(dirpath, s) for s in glob.glob(dirpath+"/"+self.filename_filter) \
             if os.path.isfile(os.path.join(dirpath, s))]
+         
         a.sort(key=lambda s: os.path.getmtime(s))
         return a
-           
+
     def findNewFiles(self):
     
         """
@@ -148,9 +152,10 @@ class DataCollector ():
             if file not in contents:
                 # Hmm... a strange situation. Apparently a file listed in self.dirlist
                 # DISappeared from the directory. Adjust the lists accordingly
-                print 'File %s disappeared from directory - updating lists' % file
+                print '[DC] File %s disappeared from directory - updating lists' % file
                 self.dirlist.remove(file)
-                
+                self.callback_func(file+"__deleted__")
+				
                 ## new---
                 #fc=fits.FitsFile(file)
                 #fc.recognize()
@@ -167,7 +172,7 @@ class DataCollector ():
                 # Is this file already in the list of unprocessed files?
                 if file in self.newfiles:     self.newfiles.remove(file)
 	            
-    
+				
             if file in contents:
                 # Normal situation, all files in self.dirlist are also in the current
                 # directory listing. Remove these files one-by-one from the list, so that
@@ -212,7 +217,7 @@ class DataCollector ():
                 #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12
                 print '[DC] Found new file ....%s' %file
             else:
-                print "Warning, %s not a compliant file !!" %file
+                print "[DC] Warning, %s not a compliant file !!" %file
 	
     
 if __name__ == "__main__":

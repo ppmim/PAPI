@@ -413,7 +413,7 @@ class ClFits:
                 self.obID = myfits[0].header['HIERARCH ESO OBS ID']
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.obID = myfits[0].header['POINT_NO'] # for O2000
-            elif myfits[0].header['INSTRUME']=='PANIC':
+            elif myfits[0].header['INSTRUME']=='Panic':
                 self.obID = myfits[0].header['OB_ID'] # for PANIC
             else:
                 self.obID = -1
@@ -427,7 +427,7 @@ class ClFits:
                 self.obPat = myfits[0].header['HIERARCH ESO TPL ID']
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.obPat = myfits[0].header['DITH_PAT'] # for O2000
-            elif myfits[0].header['INSTRUME']=='PANIC':
+            elif myfits[0].header['INSTRUME']=='Panic':
                 self.obPat = myfits[0].header['OB_PAT'] # for PANIC
             else:
                 self.obPat = -1
@@ -441,7 +441,7 @@ class ClFits:
                 self.pat_expno = myfits[0].header['HIERARCH ESO TPL EXPNO']
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.pat_expno = -1 # not available
-            elif myfits[0].header['INSTRUME']=='PANIC':
+            elif myfits[0].header['INSTRUME']=='Panic':
                 self.pat_expno = myfits[0].header['PAT_EXPN'] # for PANIC
             else:
                 self.pat_expno = -1
@@ -455,7 +455,7 @@ class ClFits:
                 self.pat_noexp = myfits[0].header['HIERARCH ESO TPL NEXP']
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.pat_noexp = -1 # not available
-            elif myfits[0].header['INSTRUME']=='PANIC':
+            elif myfits[0].header['INSTRUME']=='Panic':
                 self.pat_noexp = myfits[0].header['PAT_NEXP'] # for PANIC
             else:
                 self.pat_noexp = -1
