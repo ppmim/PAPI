@@ -56,7 +56,7 @@ import reduce.calTwFlat
 import reduce.calBPM_2
 import reduce.checkQuality
 import reduce.astrowarp
-import papi
+import reduce.reductionset as RS
 import misc.fileUtils
 import misc.utils as utils
 import misc.mef
@@ -155,9 +155,9 @@ class MainGUI(panicQL):
         item.setFontUnderline( True )
         
         # Default run mode
-        if  self.config_opts['run_mode']=="None": self.comboBox_QL_Mode.setCurrentItem(0)
-        elif self.config_opts['run_mode']=="Lazy": self.comboBox_QL_Mode.setCurrentItem(1)
-        elif self.config_opts['run_mode']=="PreReduction": self.comboBox_QL_Mode.setCurrentItem(2)
+        if  self.config_opts['quicklook']['run_mode']=="None": self.comboBox_QL_Mode.setCurrentItem(0)
+        elif self.config_opts['quicklook']['run_mode']=="Lazy": self.comboBox_QL_Mode.setCurrentItem(1)
+        elif self.config_opts['quicklook']['run_mode']=="PreReduction": self.comboBox_QL_Mode.setCurrentItem(2)
         else: self.comboBox_QL_Mode.setCurrentItem(0)
         
             
@@ -253,6 +253,7 @@ class MainGUI(panicQL):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
         
+        ####################################################
         ### Check if it's deleted file from source directory
         if filename.endswith("__deleted__"):
             log.debug("File %s disappeared from source directory. Deleted from DB"%filename.replace("__deleted__",""))
@@ -262,7 +263,8 @@ class MainGUI(panicQL):
                 log.error("Some error while deleting file %s"%filename.replace("__deleted__",""))
             self.slot_classFilter()
             return
-    
+        
+        #######################################
         ### otherwise, it must be a new file !!
         log.debug( "New file detected --> %s. Going to verification...", filename)
         # (Try) to check if the FITS file writing has finished -- 
@@ -329,6 +331,8 @@ class MainGUI(panicQL):
         self.last_filename=filename
 
         ## Check if end of observing sequence (science or calibration), then start processing
+        end_seq=False
+        seq=[]
         (end_seq, seq)=self.checkEndObsSequence(filename)
         if end_seq:
             log.debug("Detected end of observing sequence")
@@ -336,14 +340,14 @@ class MainGUI(panicQL):
         
         
         ##################################################################
-        ## If selected, file or sequence processing will start ....
+        ## If selected, file or sequence processing will start ....Not completelly well designed !
         ##################################################################
         if self.comboBox_QL_Mode.currentText()=="None":
             return
         elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
             self.process(seq)
             return
-        elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
+        elif self.comboBox_QL_Mode.currentText().contains("Lazy") and end_seq:
             self.processLazy(filename)
             return
             
@@ -375,7 +379,10 @@ class MainGUI(panicQL):
         self.new_file_func(filename, process=False)
         
     def process(self, obsSequence):
-        ## Process the new image received with the QL pipeliene recipes
+        
+        """Process the observing sequence received according with the QL pipeliene recipes
+           The sequence could be a calib or science sequence.
+        """
         
         log.debug("Starting to process the Observation Sequence...")
         self.textEdit_log.append("<info_tag> ++ Starting to process a new Observation Sequence : </info_tag>")
@@ -392,12 +399,23 @@ class MainGUI(panicQL):
         self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
         #Create working thread that process the obsSequence
         try:
-            self._task = papi.ReductionSet( obsSequence, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
-            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
+            self._task = RS.ReductionSet( obsSequence, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single", \
+                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+            
+            if self._task.isaCalibSet():
+                log.debug("It's a calib sequence what is going to be reduced !")
+                thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
+            else:
+                log.debug("It's a science sequence what is going to be reduced !")
+                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
             thread.start()
         except Exception,e:
-            QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: %s",str(e))
+            #Anyway, restore cursor
+            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+            # thus the ExecTaskThread can't restore the cursor
+            self.setCursor(Qt.arrowCursor) 
+            QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
             self.m_processing = False
             raise e
 
@@ -433,7 +451,7 @@ class MainGUI(panicQL):
                 else:
                     QMessageBox.critical(self, "Error", "Error, cannot find the master calibration files")
             except:
-                QMessageBox.critical(self, "Error", "Error while processing file.  %s",str(e))
+                QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 self.m_processing = False
                 self.setCursor(Qt.arrowCursor)
                 raise e    
@@ -454,7 +472,7 @@ class MainGUI(panicQL):
                 else:
                     log.debug("Cannot find the previous file to subtract by")
             except:
-                QMessageBox.critical(self, "Error", "Error while processing file.  %s",str(e))
+                QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 self.m_processing = False
                 self.setCursor(Qt.arrowCursor)
                 raise e
@@ -608,21 +626,24 @@ class MainGUI(panicQL):
                             display.showFrame(self._task_info._return)
                 else:
                     QMessageBox.critical(self, "Error", "Error while running task.  "+str(self._task_info._exc))
+            except Exception,e:
+                raise Exception("Error while checking _task_info_list: %s", str(e))
+            finally:
                 #Anyway, restore cursor
                 self.setCursor(Qt.arrowCursor)
                 self.m_processing=False
                 # Return to the previus working directory
                 os.chdir(self._ini_cwd)
-            except Exception,e:
-                raise Exception("Error while checking _task_info_list: %s", str(e))
     
     def checkEndObsSequence(self, filename):
         """
-        Check if the given filename is the end of an observing sequence, if it is,
-        the method returns True and a list having the files which belong to the list
+        Check if the given filename is the end of an observing sequence (calib or science),
+        if it is, the method returns True and a list having the files which belong to the list
         and it means the reduction could start.
         Otherwise, False will be returned (and the unfinished currenct list) and
         no reduction can still be done.
+        
+        Note: It even works for calibration frame sequences (dark, flats, ...)
         """
         
         # Read the FITS file
@@ -633,7 +654,7 @@ class MainGUI(panicQL):
         #############################################
         # Based on the meta-data provided by the OT
         # Option based on number of expositions (NOEXP) in the pattern and the exposition 
-        # number (EXPNO) of the current frame
+        # number (EXPNO) of the current frame; It even works for calibration frames sequences (dark, flats, ...)
         if self.isOTrunning:
             log.info("EXPNO= %s, NOEXPO= %s", fits.getExpNo(), fits.getNoExp())
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1:
@@ -1008,7 +1029,7 @@ class MainGUI(panicQL):
         while child:
             group_files.append(str(child.text(0)))
             child=child.nextSibling()
-        print "CHILDS=",group_files
+        #print "CHILDS=",group_files
         
         #Change to working directory
         os.chdir(self.m_papi_dir)
@@ -1016,12 +1037,18 @@ class MainGUI(panicQL):
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         try:
-            self._task = papi.ReductionSet( group_files, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+            self._task = RS.ReductionSet( group_files, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single", \
+                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+            
             thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
             thread.start()
         except Exception,e:
-            QMessageBox.critical(self, "Error", "Error while group data reduction: %s",str(e))
+            #Anyway, restore cursor
+            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+            # thus the ExecTaskThread can't restore the cursor
+            self.setCursor(Qt.arrowCursor) 
+            QMessageBox.critical(self, "Error", "Error while group data reduction: \n%s"%str(e))
             raise e
         
     def splitMEF_slot(self):
@@ -1054,18 +1081,31 @@ class MainGUI(panicQL):
                 
         if listItem:
             if self.comboBox_classFilter.currentText()=="GROUP" and listItem.firstChild()!=None: # it'a a parent
+                self.m_listView_item_selected=None # for consistency
                 return
             else: self.m_listView_item_selected=str(listItem.text(0))
     
-    def imexam_slot(self, filename):
-        """ Imexam the currect filename selected """
+    def imexam_slot(self):
+        """Imexam the currect filename selected """
+        
+        try:
+            #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+            thread=reduce.ExecTaskThread(self.run_imexam, self._task_info_list, self.m_popup_l_sel[0] )
+            thread.start()
+        except:
+            QMessageBox.critical(self, "Error", "Error while Imexam with image %s"%(self.m_popup_l_sel[0]))
+            raise
+        
+    def run_imexam(self, filename):
+        """ Run Imexam the currect filename. First we start the DS9 display  """
         
         display.startDisplay()
         try:
-            iraf.imexam(self.m_popup_l_sel[0])
+            iraf.imexam(filename) # it's a sync call, i mean, a blocking call that doesn't return until is finished
         except:
-            log.error("Error while Imexam with image %s",self.m_popup_l_sel[0])
-            QMessageBox.critical(self, "Error", "Error while Imexam with image %s"%(self.m_popup_l_sel[0]))
+            log.error("Error while Imexam with image %s",filename)
+        finally:
+            return None
             
         
     ######### End Pup-Up ########################################################    
@@ -1286,7 +1326,7 @@ class MainGUI(panicQL):
                 thread.start()
             except Exception, e:
                 self.setCursor(Qt.arrowCursor)
-                QMessageBox.critical(self, "Error", "Error while creating master Dark. "+str(e))
+                QMessageBox.critical(self, "Error", "Error while creating master Dark. \n"+str(e))
                 raise e
         else:
             pass
@@ -1308,12 +1348,18 @@ class MainGUI(panicQL):
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         try:
-            self._task = papi.ReductionSet( self.m_popup_l_sel, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+            self._task = RS.ReductionSet( self.m_popup_l_sel, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single",\
+                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+                                            
             thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
             thread.start()
         except Exception,e:
-            QMessageBox.critical(self, "Error", "Error while Quick data reduction: %s",str(e))
+            #Anyway, restore cursor
+            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+            # thus the ExecTaskThread can't restore the cursor
+            self.setCursor(Qt.arrowCursor) 
+            QMessageBox.critical(self, "Error", "Error while Quick data reduction: \n%s"%str(e))
             raise e
 
     def createMasterDFlat_slot(self):
@@ -1329,6 +1375,7 @@ class MainGUI(panicQL):
                     thread=reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
                     thread.start()
                 except:
+                    self.setCursor(Qt.arrowCursor)
                     QMessageBox.critical(self, "Error", "Error while creating master Dome Flat")
                     raise
         else:
@@ -1347,6 +1394,7 @@ class MainGUI(panicQL):
                     thread=reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
                     thread.start()
                 except:
+                    self.setCursor(Qt.arrowCursor)
                     log.error("Error creating master Twilight Flat file")
                     raise
     
@@ -1398,7 +1446,7 @@ class MainGUI(panicQL):
             #Change to working directory
             os.chdir(self.m_papi_dir)
             #Change cursor
-            self.setCursor(Qt.waitCursor)
+            self.setCursor(Qt.waitCursor) # restored checkLastTask
             #Call external script (papi)
             self.m_processing = True
             self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, out_file)      
@@ -1456,13 +1504,19 @@ class MainGUI(panicQL):
             self.setCursor(Qt.waitCursor)
             #Create working thread that compute sky-frame
             try:
-                self._task = papi.ReductionSet( [str(item) for item in near_list], self.m_outputdir, \
+                self._task = RS.ReductionSet( [str(item) for item in near_list], self.m_outputdir, \
                                                 out_file=self.m_outputdir+"/skysub.fits", \
                                                 obs_mode="dither", dark=None, flat=self.m_masterFlat, \
-                                                bpm=None, red_mode="single")
+                                                bpm=None, red_mode="single",\
+                                                group_by="ot", check_data=True, config_dict=self.config_opts)
+                
                 thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list, self._task.rs_filelist, file_n)
                 thread.start()
             except:
+                #Anyway, restore cursor
+                # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+                # thus the ExecTaskThread can't restore the cursor
+                self.setCursor(Qt.arrowCursor) 
                 QMessageBox.critical(self, "Error", "Error while subtracting near sky")
                 raise 
               
@@ -1483,6 +1537,8 @@ class MainGUI(panicQL):
                     thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
                 except:
+                    #Restore cursor
+                    self.setCursor(Qt.arrowCursor)
                     QMessageBox.critical(self, "Error", "Not suitable frames to compute BPM.\n You need flat_off and flat_on frames")
                     raise
         else:
@@ -1605,11 +1661,17 @@ class MainGUI(panicQL):
         #Create working thread that compute sky-frame
         if len(file_list)>1:
             try:
-                self._task = papi.ReductionSet( file_list, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+                self._task = RS.ReductionSet( file_list, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single", \
+                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+                
                 thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
                 thread.start()
             except:
+                #Anyway, restore cursor
+                # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+                # thus the ExecTaskThread can't restore the cursor
+                self.setCursor(Qt.arrowCursor) 
                 QMessageBox.critical(self, "Error", "Error while subtracting near sky")
                 raise
         
@@ -1652,7 +1714,7 @@ class MainGUI(panicQL):
         #Change to working directory
         os.chdir(self.m_papi_dir)
         #Change cursor
-        self.setCursor(Qt.waitCursor)
+        self.setCursor(Qt.waitCursor) # restored in checkLastTask
         # Call external script (papi)
         self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
         self._proc.startCommand()
@@ -1705,11 +1767,17 @@ class MainGUI(panicQL):
             #Change cursor
             self.setCursor(Qt.waitCursor)
             try:
-                self._task = papi.ReductionSet( fileList, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single")
+                self._task = RS.ReductionSet( fileList, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single",\
+                                            group_by="ot", check_data=True, config_dict=self.config_opts )
+                
                 thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
                 thread.start()
             except:
+                #Anyway, restore cursor
+                # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+                # thus the ExecTaskThread can't restore the cursor
+                self.setCursor(Qt.arrowCursor) 
                 QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
                 raise
         
@@ -1847,7 +1915,8 @@ class MainGUI(panicQL):
 
     ################################################################################
     def do_seq_reduc_MEF(self, filenames ):
-
+      """ Therically not used anymore !!! DEPRECATED """
+      
       start = time.time()
 
       threads = []
@@ -1872,7 +1941,9 @@ class MainGUI(panicQL):
     ################################################################################
 
     def do_parallel_reduc_MEF_2( self, filenames ):
-    # Doing Asynchronous callback with Pyro!! NOT USED !!! only for a test  !!
+      """ Therically not used anymore !!! DEPRECATED"""
+      
+      # Doing Asynchronous callback with Pyro!! NOT USED !!! only for a test  !!
 
       import Pyro.naming, Pyro.core
       from Pyro.errors import NamingError

@@ -137,7 +137,7 @@ def main(arguments = None):
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     app = QApplication(sys.argv)
-    f = mainGUI.MainGUI(ql_opts['source'], ql_opts['output_dir'], ql_opts['temp_dir'], config_opts=ql_opts)
+    f = mainGUI.MainGUI(ql_opts['source'], ql_opts['output_dir'], ql_opts['temp_dir'], config_opts=options)
     f.show()
     app.setMainWidget(f)
     app.exec_loop()

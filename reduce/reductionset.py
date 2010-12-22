@@ -76,6 +76,9 @@ class ReductionSet:
         if len(rs_filelist)<=0:
             log.error("Empy file list, no files to reduce ...")
             raise Exception("Empy file list, no files to reduce ...")
+        #elif len(rs_filelist)<=3:
+        #    log.error("ReductionSet files are so few to be reduced")
+        #    raise Exception("ReductionSet #files are so few to be reduced")
         else:
             right_extension=True
             for f in rs_filelist:
@@ -140,9 +143,17 @@ class ReductionSet:
         For more info, see http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency
         """
         #DataBase (in memory)
-        self.db=datahandler.dataset.DataSet(source="file")
-        self.db.createDB()
-        self.db.load(self.rs_filelist)
+        try:
+            self.db=datahandler.dataset.DataSet(self.rs_filelist)
+            self.db.createDB()
+            self.db.load()
+        except Exception,e:
+            log.error("Error while data base initialization: \n %s"%str(e))
+            raise Exception("Error while data base initialization")
+            
+        
+        self.m_LAST_FILES=self.rs_filelist
+        
         if self.master_dark!=None: self.db.insert(self.master_dark)
         if self.master_flat!=None: self.db.insert(self.master_flat)
         if self.master_bpm !=None: self.db.insert(self.master_bpm)
@@ -595,6 +606,30 @@ class ReductionSet:
         
         return match_list # a list of tuples as (file,filter)
     
+    def isaCalibSet(self):
+        """Check all the current files in the ReductionSet list to find out if they are all calibatrion frames"""
+        
+        """
+        filelist = self.db.GetFilesT(type="SCIENCE", texp=-1, filter="ANY")
+        filelist+= self.db.GetFilesT(type="SKY", texp=-1, filter="ANY")
+        filelist+= self.db.GetFilesT(type="SKY_FOR", texp=-1, filter="ANY")
+        
+        if len(filelist)>0:
+            return False
+        else:
+            return True
+        
+        """
+        for file in self.rs_filelist:
+            fi = datahandler.ClFits(file)
+            if fi.isScience():
+                log.debug("File %s does not match as calibration file type %s", file)
+                return False
+            
+        log.debug("All files seem to be calibration files")
+        return True
+        
+        
     def skyFilter( self, list_file, gain_file, mask='nomask', obs_mode='dither' ):
         """
             For each input image, a sky frame is computed by combining a certain number of the closest images, 

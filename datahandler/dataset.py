@@ -38,7 +38,8 @@ class DataSet:
         """
         \brief The constructor
         
-        \param source : can be a 'directory' name, a 'filename' containing the list file or a 'db_address'
+        \param source : can be a 'directory' name, a 'filename' containing the
+                        list file or python list havind the files of the DataSet
         """
         self.con=None #connection
         self.source=source
@@ -57,13 +58,15 @@ class DataSet:
         self.id = 0
 
     ############################################################    
-    def load( self , source ):
+    def load( self , source=None ):
 
         """
         \brief Load the source for files and insert them into the dataset DB
 
         """
 
+        if source==None: source=self.source
+        
         # 1. Load the source
         if type(source)==type(list()): contents = source 
         elif os.path.isdir(source):
