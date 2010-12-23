@@ -168,19 +168,25 @@ class MainGUI(panicQL):
         self.__initializeGUI()
         
         ## Init in memory Database
-        datahandler.dataset.initDB()
-        #DataBase (in memory)
-        self.db_sources=None
-        self.db_outs=None
-        
+        ## -----------------------
+        #datahandler.dataset.initDB()
+        #DataBase for input files (in memory)
+        self.inputsDB=None
+        #DataBase for output files (in memory)
+        self.outputsDB=None
+        self.__initDBs()
         
         ## Data Collectors initialization
+        ## ------------------------------
         self.file_pattern = str(self.lineEdit_filename_filter.text())
+        # Data collector for input files
         self.dc=datahandler.DataCollector("dir", self.m_sourcedir, self.file_pattern , self.new_file_func)
+        # Data collector for output files
         self.dc_outdir=None # Initialized in checkOutDir_slot()
         #datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern, self.new_file_func_out)
         
-        # Task management
+        ## Task management
+        ## ---------------
         self._task = None                       # Pointer to task/thread that is running 
         #self._task_event = threading.Event()    # Event to syncronize ExecTaskThread and ExecTaskThread
         self._task_info=None
@@ -195,7 +201,7 @@ class MainGUI(panicQL):
         #time.sleep(1) # wait until display is up
         
     def __initializeGUI(self):
-        """This method will initialize some values in the GUI and in the members variables"""
+        """This method initializes some values in the GUI and in the members variables"""
 
         ## Init Panel widgets values
         self.lineEdit_sourceD.setText(self.m_sourcedir)
@@ -216,6 +222,27 @@ class MainGUI(panicQL):
         self.listView_config.setSorting(-1)
         ### FIN DE PRUEBAS #####
     
+    def __initDBs(self):
+        """This method initializes the in memory DBs used for input and output files"""
+        
+        # Inputs DB
+        try:
+            self.inputsDB=datahandler.dataset.DataSet(None)
+            self.inputsDB.createDB()
+            #self.inputsDB.load()
+        except Exception,e:
+            log.error("Error while INPUT data base initialization: \n %s"%str(e))
+            raise Exception("Error while INPUT data base initialization")
+        
+        # Outputs DB
+        try:
+            self.outputsDB=datahandler.dataset.DataSet(None)
+            self.outputsDB.createDB()
+            #self.outputsDB.load()
+        except Exception,e:
+            log.error("Error while OUTPUT data base initialization: \n %s"%str(e))
+            raise Exception("Error while OUTPUT data base initialization")    
+        
     def fits_simple_verify(self, fitsfile):
     
         """
@@ -256,10 +283,10 @@ class MainGUI(panicQL):
     def new_file_func_out(self, filename):
         """Callback used when a new file is detected in output dir"""
                      
-        self.new_file_func(filename, process=False)
+        self.new_file_func(filename, fromOutput=True)
         
             
-    def new_file_func(self, filename, process=True):
+    def new_file_func(self, filename, fromOutput=False):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
         
@@ -268,7 +295,8 @@ class MainGUI(panicQL):
         if filename.endswith("__deleted__"):
             log.debug("File %s disappeared from source directory. Deleted from DB"%filename.replace("__deleted__",""))
             try:
-                datahandler.dataset.filesDB.delete(filename.replace("__deleted__",""))
+                if fromOutput: self.outputsDB.delete(filename.replace("__deleted__",""))
+                else: self.inputsDB.delete(filename.replace("__deleted__",""))
             except:
                 log.error("Some error while deleting file %s"%filename.replace("__deleted__",""))
             self.slot_classFilter()
@@ -278,7 +306,6 @@ class MainGUI(panicQL):
         ### otherwise, it must be a new file !!
         log.debug( "New file detected --> %s. Going to verification...", filename)
         # (Try) to check if the FITS file writing has finished -- 
-        # TODO: does not work !!!
         try:
             temp = pyfits.open(filename)
             #temp.verify(option='exception')  # it is a too severe checking !!!
@@ -294,7 +321,8 @@ class MainGUI(panicQL):
             log.error("Error while opening file %s. Maybe writing is not finished: %s", filename, str(e))
             if filename not in self.read_error_files:
                 log.debug("Removing file from DC.dirlist %s", filename)
-                self.dc.remove(filename) # it means the file could be detected again by the DataCollector
+                if fromOutput: self.dc_outdir.remove(filename) # it means the file could be detected again by the DataCollector
+                else: self.dc.remove(filename)
                 #self.read_error_files.append(filename) # to avoid more than two tries of opening the file
                 self.read_error_files[filename]=1 # init the error counter
             else:
@@ -307,7 +335,8 @@ class MainGUI(panicQL):
                 else:
                     log.debug("File %s still has some read error ...will retry to read it again ...")
                     self.read_error_files[filename]+=1
-                    self.dc.remove(filename) # it means the file could be detected again by the DataCollector
+                    if fromOutput: self.dc_outdir.remove(filename) # it means the file could be detected again by the DataCollector
+                    else: self.dc.remove(filename) 
             return
            
         self.textEdit_log.append("New file (verified) detected in source-->  " + filename)
@@ -315,10 +344,10 @@ class MainGUI(panicQL):
         ## Insert into DB
         ######################
         #datahandler.dataset.initDB()
-        datahandler.dataset.filesDB.insert(filename)
+        self.inputsDB.insert(filename)
         ## Query DB
-        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(filename)
-        #fileinfo=datahandler.dataset.filesDB.GetFileInfo(str(dir)+"/"+filename)c
+        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(filename)
+        #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)c
         #print "FILEINFO= ", fileinfo
         
         #########################
@@ -429,7 +458,7 @@ class MainGUI(panicQL):
         
         log.debug("Starting to process the file %s",filename)
         
-        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(filename)
+        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(filename)
         
         # ONLY SCIENCE frames will be processed 
         if type!="SCIENCE":
@@ -444,8 +473,8 @@ class MainGUI(panicQL):
             os.chdir(self.m_papi_dir)  # -- required ???
             #Create working thread that process the file
             try:
-                master_dark=datahandler.dataset.filesDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
-                master_flat=datahandler.dataset.filesDB.GetFilesT('MASTER_TW_FLAT',-1, filter) # could be > 1 master darks, then use the last(mjd sorted)
+                master_dark=self.inputsDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
+                master_flat=self.inputsDB.GetFilesT('MASTER_TW_FLAT',-1, filter) # could be > 1 master darks, then use the last(mjd sorted)
                 if len(master_dark)>0 and len(master_flat)>0:
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
@@ -466,7 +495,7 @@ class MainGUI(panicQL):
             os.chdir(self.m_papi_dir)  # -- required ???
             #Create working thread that process the file
             try:
-                ltemp=datahandler.dataset.filesDB.GetFilesT('SCIENCE') # (mjd sorted)
+                ltemp=self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
                 if len(ltemp)>1:
                     last_file=ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
                     #Change cursor
@@ -493,7 +522,7 @@ class MainGUI(panicQL):
     def findOS_slot(self):
         """ ONLY FOR A TEST - to be removed """
         
-        parList,fileList = datahandler.dataset.filesDB.GetSeqFiles()
+        parList,fileList = self.inputsDB.GetSeqFiles()
         k=0
         for seq in parList:
             # create the father
@@ -502,7 +531,7 @@ class MainGUI(panicQL):
             #elem.setText (1, str(seq[1])) # OB_PAT
             #elem.setText (2, str(seq[2])) # FILTER
             for file in fileList[k]:
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(file)
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(file)
                 e_child = QListViewItem(elem)
                 e_child.setText (0, str(file))
                 e_child.setText (1, str(type))
@@ -562,9 +591,9 @@ class MainGUI(panicQL):
        
         for filename in filelist:
             #print "FILENAME= " , filename
-            datahandler.dataset.filesDB.insert(str(dir)+"/"+filename)
-            (date, ut_time, type, filter, texp, detector_id, run_id)=datahandler.dataset.filesDB.GetFileInfo(str(dir)+"/"+filename)
-            #fileinfo=datahandler.dataset.filesDB.GetFileInfo(str(dir)+"/"+filename)
+            self.inputsDB.insert(str(dir)+"/"+filename)
+            (date, ut_time, type, filter, texp, detector_id, run_id)=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
+            #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
             #print "FILEINFO= ", fileinfo
             elem = QListViewItem( self.listView_dataS )
             elem.setText (0, str(filename))
@@ -577,7 +606,7 @@ class MainGUI(panicQL):
               display.showFrame(str(dir)+"/"+filename) 
             
             #self.listView_dataS.insertItem(str(filename))
-        datahandler.dataset.filesDB.ListDataSet()
+        self.inputsDB.ListDataSet()
 
     def autocheck_slot(self):
         """Called when check-button for Input dir is clicked"""
@@ -817,7 +846,7 @@ class MainGUI(panicQL):
          
         self.listView_dataS.clear()
         self.dc.Clear()
-        datahandler.dataset.filesDB.clearDB()
+        self.inputsDB.clearDB()
 
 
     def add_slot(self):
@@ -841,14 +870,14 @@ class MainGUI(panicQL):
                 fileName=str(listViewItem.text(0))
                 self.listView_dataS.takeItem(listViewItem)
                 #self.dc.Clear(fileName)
-                datahandler.dataset.filesDB.delete( fileName )
+                self.inputsDB.delete( fileName )
                 ##self.m_popup_l_sel.append(str(listViewItem.text(0)))
                 print "SELECTED TO REMOVE=", fileName
             else:
                 it+=1
             listViewItem = it.current()
           
-        #datahandler.dataset.filesDB.ListDataSetNames()
+        #self.inputsDB.ListDataSetNames()
     
     def display_slot(self):
       
@@ -868,7 +897,7 @@ class MainGUI(panicQL):
         
         if self.comboBox_classFilter.currentText()=="GROUP":
             self.listView_dataS.clear()
-            parList,fileList = datahandler.dataset.filesDB.GetSeqFiles()
+            parList,fileList = self.inputsDB.GetSeqFiles()
             k=0
             for seq in parList:
                 # create the father
@@ -877,7 +906,7 @@ class MainGUI(panicQL):
                 #elem.setText (1, str(seq[1])) # OB_PAT
                 #elem.setText (2, str(seq[2])) # FILTER
                 for file in fileList[k]:
-                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(file)
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(file)
                     e_child = QListViewItem(elem)
                     e_child.setText (0, str(file))
                     e_child.setText (1, str(type))
@@ -894,13 +923,13 @@ class MainGUI(panicQL):
             #############################################
             self.listView_dataS.clear()
             if str(self.comboBox_classFilter.currentText())=="ALL":
-                fileList = datahandler.dataset.filesDB.GetFilesT("ANY")    
+                fileList = self.inputsDB.GetFilesT("ANY")    
             else:
                 type=str(self.comboBox_classFilter.currentText())
-                fileList = datahandler.dataset.filesDB.GetFilesT(type)
+                fileList = self.inputsDB.GetFilesT(type)
             for file in fileList:
                 elem = QListViewItem( self.listView_dataS )
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=datahandler.dataset.filesDB.GetFileInfo(file)
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(file)
                 elem.setText (0, str(file))
                 elem.setText (1, str(type))
                 elem.setText (2, str(filter))
@@ -1482,7 +1511,7 @@ class MainGUI(panicQL):
         if self.m_listView_item_selected:
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
-                near_list = datahandler.dataset.filesDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
+                near_list = self.inputsDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
                 # For the moment, the minimun number of nearest is >0
                 if len(near_list)==0:
                     QMessageBox.information(self, "Info", "Not enought science frames found")  
@@ -1616,7 +1645,7 @@ class MainGUI(panicQL):
             QMessageBox.information(self, "Info", "Only one file was selected, automatic file grouping will be done.")
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
-                near_list = datahandler.dataset.filesDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
+                near_list = self.inputsDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
                 print "NEAR_LIST=", near_list
                 # For the moment, the minimun number of nearest is >0
                 if len(near_list)==0:
@@ -1767,7 +1796,7 @@ class MainGUI(panicQL):
         Given the current data set files, compute the whole master calibration files
         """
         
-        fileList = datahandler.dataset.filesDB.GetFilesT("ANY")
+        fileList = self.inputsDB.GetFilesT("ANY")
         
         if len(fileList)>1:
             #Change cursor

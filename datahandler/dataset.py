@@ -34,7 +34,7 @@ class DataSet:
     TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, filename, date, ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
 
     ############################################################
-    def __init__( self , source):
+    def __init__( self , source ):
         """
         \brief The constructor
         

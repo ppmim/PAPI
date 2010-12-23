@@ -139,7 +139,7 @@ class ReductionSet:
         Initialize the data base, loading the full frame list
         
         NOTE: If we init the DB in the constructor __init__(), we will have problems
-        if we call use the DB from any method of ReductionSet and from other thread.
+        if we use the DB from any method of ReductionSet and then from other thread.
         For more info, see http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency
         """
         #DataBase (in memory)
