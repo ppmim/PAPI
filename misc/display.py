@@ -109,6 +109,7 @@ def showFrame(frame, del_all=False):
   # frame could be a single file or a file list 
   if type(frame)==type(list()): 
         fileList = frame  # list of sources files to be used in sky-flat computation
+        #print "DISPLAY found a list of frames to show ! :" %(frame)
         os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
         delete_all=False
   elif os.path.isfile(frame):
@@ -118,16 +119,19 @@ def showFrame(frame, del_all=False):
   for file in fileList:
         f=datahandler.ClFits(file)
         if (f.mef==True):
+                #print "PASO 0"
                 # Multi-Extension FITS files
                 if (f.isDark() or f.isMasterDark()):
                     # (Hawki) Dark files don't have WCS information required by ds9 mosaicimage
                     if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
-                    #os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
+                    os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
                     os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))
                     os.system(("%s/xpaset -p ds9 scale zscale" % ds9_path ))
                     os.system(("%s/xpaset -p ds9 file multiframe %s" % (ds9_path, file)))
+                    #print "PASO 2"
                     #os.system(("%s/xpaset -p ds9 medatacube multiframe %s" % (ds9_path, file)))
                 else:
+                    #print "PASO 3"
                     # Beware, 'mosaicimage' ds9 facility require WCS information
                     if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
                     if frame_no<MAX_FRAMES_NO:

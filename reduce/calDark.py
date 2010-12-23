@@ -93,7 +93,7 @@ class MasterDark:
         self.__output_file_dir=output_dir
         self.__output_filename=output_filename  # full filename (path+filename)
         self.__bpm=bpm
-        self.m_min_ndarks = 5
+        self.m_min_ndarks = 3
         self.m_texp_scale = texp_scale
     
     def createMaster(self):

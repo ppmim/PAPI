@@ -165,15 +165,19 @@ class MainGUI(panicQL):
         self.textEdit_log.append("Wellcome to the <info_tag> PANIC QuickLook tool (v1.0) ! </info_tag>")
         
 
-        self.initialize()
+        self.__initializeGUI()
         
         ## Init in memory Database
         datahandler.dataset.initDB()
+        #DataBase (in memory)
+        self.db_sources=None
+        self.db_outs=None
+        
         
         ## Data Collectors initialization
         self.file_pattern = str(self.lineEdit_filename_filter.text())
         self.dc=datahandler.DataCollector("dir", self.m_sourcedir, self.file_pattern , self.new_file_func)
-        self.dc_outdir=None
+        self.dc_outdir=None # Initialized in checkOutDir_slot()
         #datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern, self.new_file_func_out)
         
         # Task management
@@ -190,7 +194,7 @@ class MainGUI(panicQL):
         #display.startDisplay()
         #time.sleep(1) # wait until display is up
         
-    def initialize(self):
+    def __initializeGUI(self):
         """This method will initialize some values in the GUI and in the members variables"""
 
         ## Init Panel widgets values
@@ -248,7 +252,13 @@ class MainGUI(panicQL):
                 raise ValueError("FITS file is not 2880 byte aligned (corrupted?)")
         finally:
             f.close()
+    
+    def new_file_func_out(self, filename):
+        """Callback used when a new file is detected in output dir"""
+                     
+        self.new_file_func(filename, process=False)
         
+            
     def new_file_func(self, filename, process=True):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
@@ -372,12 +382,7 @@ class MainGUI(panicQL):
         elif self.comboBox_QL_Mode.currentText().contains("UserDef_3"):
             return ## TO BE DONE
         """
-        
-    def new_file_func_out(self, filename):
-        """Callback used when a new file is detected in output dir"""
-                     
-        self.new_file_func(filename, process=False)
-        
+    
     def process(self, obsSequence):
         
         """Process the observing sequence received according with the QL pipeliene recipes
@@ -613,12 +618,13 @@ class MainGUI(panicQL):
                     if self._task_info._return!=None:
                         if type(self._task_info._return)==type(list()): 
                             str_list=""
+                            #print "FILES CREATED=",self._task_info._return
                             #QMessageBox.information(self,"Info", QString("%1 files created").arg(len(self._task_info._return)))
                             display.showFrame(self._task_info._return) #_return is a file list
                             for file in self._task_info._return:
                                 #display.showFrame(file)
                                 str_list+=str(file)+"\n"
-                            #QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
+                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
                             self.textEdit_log.append(QString("<info_tag> ++>%1 files created: \n %1</info_tag>").arg(len(self._task_info._return)).arg(str(str_list)))
                         elif os.path.isfile(self._task_info._return):
                             #QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
