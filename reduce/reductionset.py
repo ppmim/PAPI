@@ -38,6 +38,7 @@ import shutil
 import tempfile
 import dircache
 import math
+import multiprocessing
 
 
 # IRAF packages
@@ -1359,24 +1360,38 @@ class ReductionSet:
                 flat_ext, cext = self.split(flat)
                 bpm_ext, cext = self.split(bpm)
                 for n in range(next):
-                    ################## only for debug purposes
-                    if n!=2: continue
-                    ################## end of debug 
-                    log.debug("===> Reducting extension %d", n+1)
-                    ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
-                    if dark_ext==[]: mdark=None
-                    else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                    if flat_ext==[]: mflat=None
-                    else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                    if bpm_ext==[]: mbpm=None
-                    else: mbpm=bpm_ext[n][0]   # At the moment, we have the first calibration file for each extension
-                    try:
-                        out_ext.append(self.reduceObj(obj_ext[n], mdark, mflat, mbpm, red_mode, \
-                                                      output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
-                    except Exception,e:
-                        log.error("Some error while reduction of extension %d of object sequence %d", n+1, i)
-                        raise e
-                        #continue
+                    parallel=False
+                    if parallel:
+                        log.debug("Entering parallel reduction ...")
+                        try:
+                            mdark=None
+                            mflat=None
+                            mbpm=None
+                            pool=multiprocessing.Pool(processes=2)
+                            pool.map(self.reduceObj,[[obj_ext[0], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q01.fits"],\
+                                                 [obj_ext[1], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q02.fits"]]\
+                                    )
+                        except:
+                            raise
+                    else: # serial
+                        ################## only for debug purposes
+                        #if n!=2: continue
+                        ################## end of debug 
+                        log.debug("===> Reducting extension %d", n+1)
+                        ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
+                        if dark_ext==[]: mdark=None
+                        else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        if flat_ext==[]: mflat=None
+                        else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        if bpm_ext==[]: mbpm=None
+                        else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
+                        try:
+                            out_ext.append(self.reduceObj(obj_ext[n], mdark, mflat, mbpm, red_mode, \
+                                                          output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
+                        except Exception,e:
+                            log.error("Some error while reduction of extension %d of object sequence %d", n+1, i)
+                            raise e
+                            #continue
         
             # if all reduction were fine, now join/stich back the extensions in a widther frame
             seq_result_outfile=self.out_file.replace(".fits","_SEQ%02d.fits"%(i))

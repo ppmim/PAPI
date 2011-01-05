@@ -102,7 +102,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
     elif os.path.isfile(inputfile):
         files=[line.replace( "\n", "") for line in fileinput.input(inputfile)]
     # or must be a regular expresion
-    else: 
+    else:
         files = glob.glob(inputfile)
         files.sort()
         
@@ -146,9 +146,10 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
             myfits=pyfits.open(fn+".objs", mode="update")
             if len(myfits)>1: # is a MEF file
                 next=len(myfits)-1
-            else: next=1
+            else: 
+              next=1
             for ext in range(next):
-                if next==1: data=myfits[ext].data
+                if next==1: data=myfits[0].data
                 else: data=myfits[ext+1].data
                 data[:]=0 # set to 0 all pixels
                 x_size = len(data[0])
@@ -156,6 +157,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
                 #stars = read_stars(fn + ".ldac")
                 try:
                     cat = astromatic.ldac.openObjectFile(fn+".ldac", table='LDAC_OBJECTS')
+                    if len(cat)<=0: continue
                     for star in cat:
                         if star['X_IMAGE']<x_size and star['Y_IMAGE']<y_size:
                             data[round(star['Y_IMAGE']),round(star['X_IMAGE'])]=1 # Note: be careful with X,Y coordinates position
@@ -169,7 +171,6 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
             log.debug("Object mask file created for file : %s",fn)    
 
         n+=1
-        print "KK"
         f_out.write(fn+".objs"+"\n")
             
     sex.clean(config=True, catalog=True, check=False)

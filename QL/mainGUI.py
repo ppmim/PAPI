@@ -344,7 +344,8 @@ class MainGUI(panicQL):
         ## Insert into DB
         ######################
         #datahandler.dataset.initDB()
-        self.inputsDB.insert(filename)
+        if fromOutput: self.inputsDB.insert(filename)
+        else: self.dc_outdir.remove(filename) 
         ## Query DB
         (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(filename)
         #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)c
