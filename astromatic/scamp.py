@@ -526,7 +526,8 @@ class SCAMP:
             
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + my_catalogs)
-        print commandline
+        
+        #print commandline
 
         rcode = runCmd(commandline)
         
@@ -592,8 +593,9 @@ def runCmd( str_cmd, p_shell=True ):
     if err.count('WARNING: Significant inaccuracy'):
         print "Canno't get accuracy astrometric calibration"
         return 2
-    elif (err.count('ERROR') or out.count('error') \
-      or err.count('Segmentation fault') or err.count("command not found")
+    elif (err.count('ERROR') or out.count('error') or err.count("Error") \
+      or err.count('Segmentation fault') or err.count("command not found") \
+      or err.count('No source found') \
       or err.count("No such file or directory")):
         print "An error happened while running command --> %s \n"%err
         return 1

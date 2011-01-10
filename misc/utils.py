@@ -148,12 +148,12 @@ def runCmd( str_cmd, p_shell=True ):
     out=p.stdout.read()
 
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
-    if (err.count('error') or err.count('ERROR') or out.count('error') or err.count('Segmentation fault') or err.count("command not found")
+    if (err.count('ERROR') or out.count('error') or err.count("Error") \
+      or err.count('Segmentation fault') or err.count("command not found") \
+      or err.count('No source found') \
       or err.count("No such file or directory")):
-        log.error( "An error happened while running command --> %s \n", err)
-        #sys.exit(3)
+        log.error("An error happened while running command --> %s \n"%err)
         return 0 # ERROR
-    
     else:
         return 1 # NO ERROR
         

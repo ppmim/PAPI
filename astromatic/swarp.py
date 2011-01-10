@@ -67,6 +67,9 @@ import fileinput
 import types
 
 
+#PAPI 
+import misc.utils
+
 # ======================================================================
 
 __version__ = "0.1 (2010-06-09)"
@@ -457,11 +460,12 @@ class SWARP:
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + my_files)
         
-        print commandline
+        #print commandline
 
-        rcode = os.system(commandline)
+        #rcode = os.system(commandline)
+        rcode = misc.utils.runCmd(commandline)
         
-        if (rcode):
+        if (rcode==0):
             raise SWARPException, \
                   "SWARP command [%s] failed." % commandline
             

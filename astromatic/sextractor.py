@@ -100,6 +100,9 @@ import copy
 from sexcatalog import *
 
 
+# PAPI packages
+import misc.utils
+
 # ======================================================================
 
 __version__ = "0.1.5 (2005-02-14)"
@@ -484,11 +487,12 @@ class SExtractor:
 
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + file)
-        print commandline
-
-        rcode = os.system(commandline)
-
-        if (rcode):
+        
+        #print commandline
+        #rcode = os.system(commandline)
+        rcode = misc.utils.runCmd(commandline)
+        
+        if (rcode==0):
             raise SExtractorException, \
                   "SExtractor command [%s] failed." % commandline
             
