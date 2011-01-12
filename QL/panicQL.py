@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon Nov 22 18:42:42 2010
+# Created: Tue Jan 11 13:16:33 2011
 #      by: The PyQt User Interface Compiler (pyuic) 3.14.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -10837,9 +10837,6 @@ class panicQL(QMainWindow):
         self.listView_dataS.setAllColumnsShowFocus(1)
         self.listView_dataS.setRootIsDecorated(1)
 
-        self.checkBox_process = QCheckBox(self.tab,"checkBox_process")
-        self.checkBox_process.setGeometry(QRect(631,110,290,20))
-
         self.pushButton_start_proc = QPushButton(self.tab,"pushButton_start_proc")
         self.pushButton_start_proc.setGeometry(QRect(777,160,140,23))
         self.pushButton_start_proc.setPaletteBackgroundColor(QColor(244,156,137))
@@ -10858,6 +10855,9 @@ class panicQL(QMainWindow):
         self.lineEdit_last_file.setGeometry(QRect(70,390,280,21))
         self.lineEdit_last_file.setPaletteBackgroundColor(QColor(255,255,137))
         self.lineEdit_last_file.setReadOnly(1)
+
+        self.checkBox_process = QCheckBox(self.tab,"checkBox_process")
+        self.checkBox_process.setGeometry(QRect(631,110,290,20))
 
         self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
         self.comboBox_classFilter.setGeometry(QRect(220,172,110,21))
@@ -10969,9 +10969,6 @@ class panicQL(QMainWindow):
         self.radioButton25 = QRadioButton(self.buttonGroup2,"radioButton25")
         self.radioButton25.setGeometry(QRect(10,41,260,20))
 
-        self.comboBox1 = QComboBox(0,self.groupBox1,"comboBox1")
-        self.comboBox1.setGeometry(QRect(21,161,118,21))
-
         self.checkBox7_2 = QCheckBox(self.groupBox1,"checkBox7_2")
         self.checkBox7_2.setGeometry(QRect(24,30,140,19))
         self.checkBox7_2.setChecked(0)
@@ -10990,6 +10987,9 @@ class panicQL(QMainWindow):
         self.checkBox8_2_3_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2")
         self.checkBox8_2_3_2.setGeometry(QRect(190,54,180,19))
         self.checkBox8_2_3_2.setChecked(1)
+
+        self.comboBox_skyWindow = QComboBox(0,self.groupBox1,"comboBox_skyWindow")
+        self.comboBox_skyWindow.setGeometry(QRect(21,161,118,21))
         self.tabWidget3.insertTab(self.TabPage,QString.fromLatin1(""))
 
         self.tab_2 = QWidget(self.tabWidget3,"tab_2")
@@ -11354,7 +11354,6 @@ class panicQL(QMainWindow):
         self.listView_dataS.header().setLabel(5,self.__tr("Object         "))
         self.listView_dataS.header().setLabel(6,self.__tr("RA                       "))
         self.listView_dataS.header().setLabel(7,self.__tr("Dec                     "))
-        self.checkBox_process.setText(self.__tr("Process raw images when detected"))
         self.pushButton_start_proc.setText(self.__tr("START processing"))
         self.pushButton_createCalibs.setText(self.__tr("Create Calibrations"))
         self.comboBox_QL_Mode.clear()
@@ -11366,6 +11365,7 @@ class panicQL(QMainWindow):
         self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_3"))
         QToolTip.add(self.comboBox_QL_Mode,self.__tr("Filter data sources list using its class/type"))
         self.textLabel2_3.setText(self.__tr("Last File :"))
+        self.checkBox_process.setText(self.__tr("Process raw images when detected"))
         self.comboBox_classFilter.clear()
         self.comboBox_classFilter.insertItem(self.__tr("ALL"))
         self.comboBox_classFilter.insertItem(self.__tr("DARK"))
@@ -11374,6 +11374,7 @@ class panicQL(QMainWindow):
         self.comboBox_classFilter.insertItem(self.__tr("SCIENCE"))
         self.comboBox_classFilter.insertItem(self.__tr("REDUCED"))
         self.comboBox_classFilter.insertItem(self.__tr("GROUP"))
+        self.comboBox_classFilter.insertItem(self.__tr("OUTS"))
         QToolTip.add(self.comboBox_classFilter,self.__tr("Filter data sources list using its class/type"))
         self.tabWidget3.changeTab(self.tab,self.__tr("Main"))
         self.buttonGroup2_2.setTitle(self.__tr("Data Grouping"))
@@ -11414,18 +11415,18 @@ class panicQL(QMainWindow):
         self.radioButton25_2.setText(self.__tr("Grouping using OT keywords"))
         self.radioButton26.setText(self.__tr("No"))
         self.radioButton25.setText(self.__tr("Automatic grouping (ra,dec,mjd, filter, ...)"))
-        self.comboBox1.clear()
-        self.comboBox1.insertItem(self.__tr("1-Current frame"))
-        self.comboBox1.insertItem(self.__tr("2-frames"))
-        self.comboBox1.insertItem(self.__tr("3-frames"))
-        self.comboBox1.insertItem(self.__tr("4-frames"))
-        self.comboBox1.insertItem(self.__tr("5-frames"))
-        self.comboBox1.setCurrentItem(3)
         self.checkBox7_2.setText(self.__tr("Substract dark"))
         self.checkBox8_2.setText(self.__tr("Apply Master Flat"))
         self.checkBox8_2_2.setText(self.__tr("Apply SuperFlat"))
         self.checkBox8_2_3_2_2.setText(self.__tr("Quality measurements  (background, psf, ....)"))
         self.checkBox8_2_3_2.setText(self.__tr("Compute distortion map"))
+        self.comboBox_skyWindow.clear()
+        self.comboBox_skyWindow.insertItem(self.__tr("1-Current frame"))
+        self.comboBox_skyWindow.insertItem(self.__tr("2-frames"))
+        self.comboBox_skyWindow.insertItem(self.__tr("3-frames"))
+        self.comboBox_skyWindow.insertItem(self.__tr("4-frames"))
+        self.comboBox_skyWindow.insertItem(self.__tr("5-frames"))
+        self.comboBox_skyWindow.setCurrentItem(3)
         self.tabWidget3.changeTab(self.TabPage,self.__tr("QL Settings"))
         self.pushButton_Darks_add.setText(self.__tr("Add..."))
         self.pushButton_DomeF_add.setText(self.__tr("Add..."))

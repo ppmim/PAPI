@@ -121,7 +121,7 @@ class ReductionSet:
         
         
         # real "variables" holding current reduction status
-        self.m_LAST_FILES = []   # Contain the files as result of the last processing step (science processed frames)
+        self.m_LAST_FILES = []   # Contain the files as result of the last processing step (science processed frames). Properly initialized in reduceObj()
         self.m_rawFiles = []     # Raw files (originals in the working directory)
         self.m_filter = ""       # Filter of the current data set (m_LAST_FILES)
         self.m_type = ""         # Type (dark, flat, object, ...) of the current data set; should be always object !
@@ -153,7 +153,7 @@ class ReductionSet:
             raise Exception("Error while data base initialization")
             
         
-        self.m_LAST_FILES=self.rs_filelist
+        self.m_LAST_FILES=self.rs_filelist # Later properly initialized in reduceObj()
         
         if self.master_dark!=None: self.db.insert(self.master_dark)
         if self.master_flat!=None: self.db.insert(self.master_flat)
@@ -675,8 +675,9 @@ class ReductionSet:
             
             # Rename output sky-subtracted files
             #for file in glob.glob(self.out_dir+'/*.fits.skysub'):
-            for file in fileinput.input(list_file):   
-                shutil.move(file.replace(".fits\n", ".fits.skysub"), file.replace(".fits\n", ".skysub.fits"))
+            files=[line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
+            for file in files:   
+                shutil.move(file.replace(".fits", ".fits.skysub"), file.replace(".fits", ".skysub.fits"))
                 #out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
             
             # Compose the output file list
@@ -727,10 +728,22 @@ class ReductionSet:
             return None
         
         # Get the gain map
-        gain=self.master_flat
-        if not os.path.exists( gain ):
-            raise Exception("Error, no gain map file %s found"%gain)
-            #TODO: try to compute GainMap using the given images !!!
+        if not os.path.exists( self.master_flat ):
+            #raise Exception("Error, gain map file <%s> not found"%gain)
+            #TODO: --> DONE try to compute GainMap using the given images !!!
+            log.debug("---> creating gain map <----")
+            output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+            os.close(output_fd)
+            output_fd, files_list= tempfile.mkstemp(suffix='.list', dir=self.out_dir)
+            os.close(output_fd)
+            try:
+                misc.utils.listToFile(near_list, files_list)
+                superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, norm=False)
+                superflat.create()
+            except Exception,e:
+                log.error("Error while creating gain map : %s", str(e))
+                raise
+        else: l_gainMap=self.master_flat
         
         # 1. Split MEF file
         obj_ext, next = self.split(near_list) # it must return a list of list (one per each extension)
@@ -745,7 +758,7 @@ class ReductionSet:
             print "NEAR_FILES=", obj_ext[n]
             #Call external app skyfilter (papi)
             hwidth=2 ## TODO is it right ?????
-            cmd=self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d" %(listfile, gain, hwidth, file_pos)
+            cmd=self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d" %(listfile, l_gainMap, hwidth, file_pos)
             e=utils.runCmd( cmd )
             if e==1: # success
                 out_ext.append(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))  
@@ -787,7 +800,9 @@ class ReductionSet:
            
         # STEP 1: Create SExtractor OBJECTS images
         suffix='_'+self.m_filter+'.skysub.fits'
-        output_list_file=self.out_dir+"/gpo_objs.pap"
+        #output_list_file=self.out_dir+"/gpo_objs.pap"
+        output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', dir=self.out_dir)
+        os.close(output_fd)
         
         log.debug("Creaing OBJECTS images (SExtractor)....")
         
@@ -906,7 +921,8 @@ class ReductionSet:
             mask_thresh=0.4
             satur_level=300000
                                                              
-        makeObjMask( input_file+"*", mask_minarea, mask_thresh, satur_level)
+        makeObjMask( input_file+"*", mask_minarea, mask_thresh, satur_level, \
+                    outputfile=self.out_dir+"/objmask_file.txt", single_point=False)
         if os.path.exists(input_file+".objs"): 
             shutil.move(input_file+".objs", output_master_obj_mask)
             log.debug("New Object mask created : %s", output_master_obj_mask)
@@ -947,18 +963,19 @@ class ReductionSet:
                                             
         
     
-    def cleanUpFiles(self):
+    def cleanUpFiles(self, list_dirs):
         """Clean up files from the working directory, probably from the last execution"""
         """ TB reviewed """
         
-        misc.fileUtils.removefiles(self.out_dir+"/*.fits")
-        misc.fileUtils.removefiles(self.out_dir+"/c_*", self.out_dir+"/dc_*",
-                                   self.out_dir+"/*.nip", self.out_dir+"/*.pap" )
-        misc.fileUtils.removefiles(self.out_dir+"/coadd*", self.out_dir+"/*.objs",
-                                   self.out_dir+"/uparm*", self.out_dir+"/*.skysub*")
-        misc.fileUtils.removefiles(self.out_dir+"/*.head", self.out_dir+"/*.list",
-                                   self.out_dir+"/*.xml", self.out_dir+"/*.ldac",
-                                   self.out_dir+"/*.png" )
+        for out_dir in list_dirs:
+            misc.fileUtils.removefiles(out_dir+"/*.fits")
+            misc.fileUtils.removefiles(out_dir+"/c_*", out_dir+"/dc_*",
+                                       out_dir+"/*.nip", out_dir+"/*.pap" )
+            misc.fileUtils.removefiles(out_dir+"/coadd*", out_dir+"/*.objs",
+                                       out_dir+"/uparm*", out_dir+"/*.skysub*")
+            misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.list",
+                                       out_dir+"/*.xml", out_dir+"/*.ldac",
+                                       out_dir+"/*.png" )
 
     
     ############# Calibration Stuff ############################################
@@ -1289,8 +1306,8 @@ class ReductionSet:
        
         log.info("Starting Reduction of data set ...")
         
-        # Clean old files 
-        self.cleanUpFiles()
+        # Clean old files in out_dir's
+        self.cleanUpFiles([self.out_dir]) #"/data/out2","/data/out3","/data/out4"])
         
         # Init DB
         if self.db==None: self.__initDB()
@@ -1363,38 +1380,57 @@ class ReductionSet:
                 dark_ext, cext = self.split(dark)
                 flat_ext, cext = self.split(flat)
                 bpm_ext, cext = self.split(bpm)
-                for n in range(next):
-                    parallel=True
-                    if parallel:
-                        log.debug("Entering parallel reduction ...")
-                        try:
-                            mdark=None
-                            mflat=None
-                            mbpm=None
+                parallel=False
+                if parallel:
+                    log.debug("Entering parallel data reduction ...")
+                    try:
+                        # Map the parallel process
+                        n_cpus=2
+                        results = pprocess.Map(limit=n_cpus, reuse=1) # IF reuse=0, it block the application !! I don't know why ?? though in pprocess examples it works! 
+                        calc = results.manage(pprocess.MakeReusable(self.reduceObj))
+                        for n in range(next):
+                            log.debug("===> (PAR) Reducting extension %d", n+1)
+                            ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
+                            if dark_ext==[]: mdark=None
+                            else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                            if flat_ext==[]: mflat=None
+                            else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                            if bpm_ext==[]: mbpm=None
+                            else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                             
-                            results = pprocess.Map(limit=2, reuse=1)
-                            calc = results.manage(pprocess.MakeReusable(self.reduceObj))
-                            calc( obj_ext[0], mdark, mflat, mbpm, red_mode, self.out_dir, self.out_dir+"/out_Q01.fits" )
-                            calc( obj_ext[1], mdark, mflat, mbpm, red_mode, "/data/out2", "/data/out2"+"/out_Q02.fits" )
+                            l_out_dir = self.out_dir+"/Q%02d"%(n+1)
+                            if not os.path.isdir(l_out_dir):
+                                try:
+                                    os.mkdir(l_out_dir)
+                                except OSError:
+                                    log.error("Cannot create output directory %s",l_out_dir)
+                            else: self.cleanUpFiles([l_out_dir])
                             
-                            for result in results:
-                                print result
+                            calc( obj_ext[n], mdark, mflat, mbpm, red_mode, l_out_dir, l_out_dir+"/out_Q%02d.fits"%(n+1))
+                        
+                        # Here is where we WAIT (BLOCKING) for the results (iteration is a blocking call)
+                        for result in results:
+                            print "RESULT=",result
+                            out_ext.append(result)
 
-                            log.critical("DONE ?")    
-                                
-                            #pool=multiprocessing.Pool(processes=2)
-                            #pool.map(self.reduceObj,[[obj_ext[0], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q01.fits"],\
-                            #                     [obj_ext[1], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q02.fits"]])
+                        log.critical("DONE PARALLEL REDUCTION ?")
                             
+                        #pool=multiprocessing.Pool(processes=2)
+                        # !! ERROR !!, because multiprocessing.pool.map() does not support class methods
+                        #pool.map(self.reduceObj,[[obj_ext[0], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q01.fits"],\
+                        #                     [obj_ext[1], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q02.fits"]])
                             
-                            
-                        except:
-                            raise
-                    else: # serial
+                    except Exception,e:
+                        log.error("Error while parallel data reduction !")
+                        raise e
+                    
+                else:
+                    for n in range(next):
+                        log.debug("Entering sequencial data reduction ...")    
                         ################## only for debug purposes
-                        #if n!=2: continue
+                        if n!=2: continue
                         ################## end of debug 
-                        log.debug("===> Reducting extension %d", n+1)
+                        log.debug("===> (SER) Reducting extension %d", n+1)
                         ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                         if dark_ext==[]: mdark=None
                         else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
@@ -1472,6 +1508,7 @@ class ReductionSet:
         os.chdir(out_dir) 
         
         # Copy/link source files (file or directory) to reduce to the working directory
+        # and Initialize self.m_LAST_FILES
         if not os.path.dirname(obj_frames[0])==out_dir:
             misc.fileUtils.linkSourceFiles(obj_frames, out_dir)
             #files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
@@ -1689,7 +1726,7 @@ class ReductionSet:
             i=i+1
                 
         fs.close()
-        self.m_LAST_FILES=self.skyFilter( out_dir+"/skylist2.pap", gainmap, 'mask', self.obs_mode)      
+        self.m_LAST_FILES=self.skyFilter(out_dir+"/skylist2.pap", gainmap, 'mask', self.obs_mode)      
     
         #### EXIT ########
         #log.info("Sucessful end of Pipeline (I hope!)")

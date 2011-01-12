@@ -765,6 +765,11 @@
                         <string>GROUP</string>
                     </property>
                 </item>
+                <item>
+                    <property name="text">
+                        <string>OUTS</string>
+                    </property>
+                </item>
                 <property name="name">
                     <cstring>comboBox_classFilter</cstring>
                 </property>

@@ -344,11 +344,11 @@ class MainGUI(panicQL):
         ## Insert into DB
         ######################
         #datahandler.dataset.initDB()
-        if fromOutput: self.inputsDB.insert(filename)
-        else: self.dc_outdir.remove(filename) 
+        if fromOutput: self.outputsDB.insert(filename)
+        else: self.inputsDB.insert(filename)
         ## Query DB
-        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(filename)
-        #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)c
+        #(date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(filename)
+        #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
         #print "FILEINFO= ", fileinfo
         
         #########################
@@ -369,6 +369,10 @@ class MainGUI(panicQL):
         ## Update Last frame widget
         self.lineEdit_last_file.setText(str(os.path.basename(filename)))
         self.last_filename=filename
+
+        if fromOutput:
+            #nothing else to do ...
+            return 
 
         ## Check if end of observing sequence (science or calibration), then start processing
         end_seq=False
@@ -435,7 +439,7 @@ class MainGUI(panicQL):
         #Create working thread that process the obsSequence
         try:
             self._task = RS.ReductionSet( obsSequence, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
                                             group_by="ot", check_data=True, config_dict=self.config_opts)
             
             if self._task.isaCalibSet():
@@ -443,7 +447,7 @@ class MainGUI(panicQL):
                 thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
-                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
+                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -923,14 +927,22 @@ class MainGUI(panicQL):
             ## No grouping, only filtering by given type
             #############################################
             self.listView_dataS.clear()
+            db=None
             if str(self.comboBox_classFilter.currentText())=="ALL":
-                fileList = self.inputsDB.GetFilesT("ANY")    
+                fileList = self.inputsDB.GetFilesT("ANY")
+                db=self.inputsDB
+                #db.ListDataSet()
+            elif  str(self.comboBox_classFilter.currentText())=="OUTS":
+                fileList = self.outputsDB.GetFilesT("ANY")
+                db=self.outputsDB
+                #db.ListDataSet()
             else:
                 type=str(self.comboBox_classFilter.currentText())
                 fileList = self.inputsDB.GetFilesT(type)
+                db=self.inputsDB
             for file in fileList:
                 elem = QListViewItem( self.listView_dataS )
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(file)
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=db.GetFileInfo(file)
                 elem.setText (0, str(file))
                 elem.setText (1, str(type))
                 elem.setText (2, str(filter))
@@ -1009,7 +1021,7 @@ class MainGUI(panicQL):
             popUpMenu.insertItem("Subtract nearest sky", self.subtract_nearSky_slot, 0, 8 )
             popUpMenu.insertItem("Quick single Pre-Reduction", self.do_quick_reduction_slot, 0, 9 )
             popUpMenu.insertItem("Stack-Shift and Align", self.createStackedFrame_slot, 0, 10 )
-            popUpMenu.insertItem("Build super-Mosaic", self.createSuperMosaic_slot, 0, 11)
+            #popUpMenu.insertItem("Build super-Mosaic", self.createSuperMosaic_slot, 0, 11)
             popUpMenu.setItemEnabled(12, False)
             popUpMenu.insertSeparator()
             popUpMenu.insertItem("Raw astrometry", self.do_raw_astrometry, 0, 13)
@@ -1044,14 +1056,19 @@ class MainGUI(panicQL):
                 #popUpMenu.setItemEnabled(10, False)
                 subPopUpMenu.setItemEnabled(1,False)
                 subPopUpMenu.setItemEnabled(2,False)
-                subPopUpMenu.setItemEnabled(3,False)
+                #subPopUpMenu.setItemEnabled(3,False)
             elif len(self.m_popup_l_sel)>1:
                 popUpMenu.setItemEnabled(1, False)
+                popUpMenu.setItemEnabled(7, False)
                 popUpMenu.setItemEnabled(8, False)
-                popUpMenu.setItemEnabled(11, False)
+                #popUpMenu.setItemEnabled(11, False)
             elif len(self.m_popup_l_sel)>2:
                 subPopUpMenu.setItemEnabled(1,False)
                 subPopUpMenu.setItemEnabled(3,False)
+            
+            if len(self.m_popup_l_sel)<5:
+                popUpMenu.setItemEnabled(9, False)
+                
             
             
         ## Finally, execute the popup
@@ -1074,10 +1091,10 @@ class MainGUI(panicQL):
         #Create working thread that compute sky-frame
         try:
             self._task = RS.ReductionSet( group_files, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
                                             group_by="ot", check_data=True, config_dict=self.config_opts)
             
-            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
+            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -1375,7 +1392,7 @@ class MainGUI(panicQL):
         """ Do a quick reduction of the user selected files in the list view panel"""
             
         if len(self.m_popup_l_sel)<5:
-            QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>4) !")
+            QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>=5) !")
             return
               
         #Change to working directory
@@ -1385,10 +1402,10 @@ class MainGUI(panicQL):
         #Create working thread that compute sky-frame
         try:
             self._task = RS.ReductionSet( self.m_popup_l_sel, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single",\
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick",\
                                             group_by="ot", check_data=True, config_dict=self.config_opts)
                                             
-            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
+            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -1463,7 +1480,8 @@ class MainGUI(panicQL):
                 
     def subtract_ownSky_slot(self):
         """ Subtract OWN image sky background using SExtrator tool
-            NOTE: this operation support MEF files
+            NOTE: this operation support MEF files, but the background image
+            created by SExtractor might not have all the keywords required (AR, DEC, INSTRUMENT, ...)
         """
         
         if not self.m_listView_item_selected:
@@ -1543,7 +1561,7 @@ class MainGUI(panicQL):
                 self._task = RS.ReductionSet( [str(item) for item in near_list], self.m_outputdir, \
                                                 out_file=self.m_outputdir+"/skysub.fits", \
                                                 obs_mode="dither", dark=None, flat=self.m_masterFlat, \
-                                                bpm=None, red_mode="single",\
+                                                bpm=None, red_mode="quick",\
                                                 group_by="ot", check_data=True, config_dict=self.config_opts)
                 
                 thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list, self._task.rs_filelist, file_n)
@@ -1626,7 +1644,8 @@ class MainGUI(panicQL):
         """ 
             Compute a stacked frame (subtract sky, shift and align) from a set of nearest (ra,dec, mjd) 
             frames, selected by user or automatic search.
-            Actually, it is basically a quick-reduction !!! (see do_quick_reduction_slot)
+            Actually, it is basically a quick-reduction !!! (see do_quick_reduction_slot), with the only difference
+            that here we can look for the files to be reduced in automatic way or use the ones selected  by the user (as in do_quick_reduction_slot)
         """
         
         file_n=0 # really, not used for the moment
@@ -1698,10 +1717,10 @@ class MainGUI(panicQL):
         if len(file_list)>1:
             try:
                 self._task = RS.ReductionSet( file_list, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single", \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
                                             group_by="ot", check_data=True, config_dict=self.config_opts)
                 
-                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "single")
+                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
                 thread.start()
             except:
                 #Anyway, restore cursor
@@ -1714,7 +1733,7 @@ class MainGUI(panicQL):
         
     def createSuperMosaic_slot(self):
         """
-        TBD 
+        TBD : here is only a scheme of the routine !!!!
         Create an stitched wide-mosaic of next frames
         """
         QMessageBox.information(self, "Info", "Sorry, funtion not yet implemented !")
@@ -1804,7 +1823,7 @@ class MainGUI(panicQL):
             self.setCursor(Qt.waitCursor)
             try:
                 self._task = RS.ReductionSet( fileList, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="single",\
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick",\
                                             group_by="ot", check_data=True, config_dict=self.config_opts )
                 
                 thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
@@ -1901,8 +1920,8 @@ class MainGUI(panicQL):
                         #Finaly, display the frame
                         display.showFrame (frame_out)
                     except:
-                        log.error("Error while single reduction")
-                        QMessageBox.critical(self, "Error", "Error while single reduction of selected frame")
+                        log.error("Error while quick reduction")
+                        QMessageBox.critical(self, "Error", "Error while quick reduction of selected frame")
                         
                     #frame_out = frame_to_reduce.replace(".fits","_D_F_S.fits")
                     #threadsmod.ReduceThread(i, filenames[i-1], dark_frame, flat_frame, out_frame)

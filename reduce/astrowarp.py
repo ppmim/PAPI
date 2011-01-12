@@ -348,7 +348,7 @@ class AstroWarp(object):
         scamp.config['CONFIG_FILE']=self.config_dict['config_files']['scamp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
         scamp.ext_config['ASTREF_CATALOG']=self.catalog
         scamp.ext_config['SOLVE_PHOTOM']="N"
-        cat_files = [(f + ".ldac.") for f in self.input_files]
+        cat_files = [(f + ".ldac") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         scamp.run(cat_files, updateconfig=False, clean=False)
         

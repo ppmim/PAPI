@@ -280,7 +280,7 @@ class DataSet:
                 
             #TEXP: Any 'texp' requirement 
             if  texp==-1:
-                s_texp="texp>%f" %(texp)
+                s_texp="texp>=%f" %(texp)
             else:
                 ROUND=10  # We do not need an accurate value !
                 s_texp="texp>%f and texp<%f" %(texp-ROUND, texp+ROUND)
