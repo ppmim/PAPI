@@ -108,7 +108,7 @@ class ReductionSet:
             self.HWIDTH = self.config_dict['skysub']['hwidth'] # half width of sky filter window in frames
             self.MIN_SKY_FRAMES = self.config_dict['skysub']['min_frames']  # minimun number of sky frames required in the sliding window for the sky subtraction
             self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] # Maximun exposition time difference (seconds) between frames
-            self.MIN_CORR_FRAC = self.config_dict['general']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
+            self.MIN_CORR_FRAC = self.config_dict['offsets']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
         else:
             # some "default" config values (see below how they are updated from the config_dict)
             # Environment variables
@@ -807,9 +807,9 @@ class ReductionSet:
         log.debug("Creaing OBJECTS images (SExtractor)....")
         
         if self.config_dict:
-            mask_minarea=self.config_dict['skysub']['mask_minarea']
-            mask_thresh=self.config_dict['skysub']['mask_thresh']
-            satur_level=self.config_dict['skysub']['satur_level']
+            mask_minarea=self.config_dict['offsets']['mask_minarea']
+            mask_thresh=self.config_dict['offsets']['mask_thresh']
+            satur_level=self.config_dict['offsets']['satur_level']
         else:
             mask_minarea=25
             mask_thresh=2.0
@@ -1380,12 +1380,14 @@ class ReductionSet:
                 dark_ext, cext = self.split(dark)
                 flat_ext, cext = self.split(flat)
                 bpm_ext, cext = self.split(bpm)
-                parallel=False
-                if parallel:
+                parallel=self.config_dict['general']['parallel']
+                
+                print "PARALLEL=",parallel
+                if parallel==True:
                     log.debug("Entering parallel data reduction ...")
                     try:
                         # Map the parallel process
-                        n_cpus=2
+                        n_cpus=self.config_dict['general']['ncpus']
                         results = pprocess.Map(limit=n_cpus, reuse=1) # IF reuse=0, it block the application !! I don't know why ?? though in pprocess examples it works! 
                         calc = results.manage(pprocess.MakeReusable(self.reduceObj))
                         for n in range(next):
@@ -1428,7 +1430,7 @@ class ReductionSet:
                     for n in range(next):
                         log.debug("Entering sequencial data reduction ...")    
                         ################## only for debug purposes
-                        if n!=2: continue
+                        #if n!=2: continue
                         ################## end of debug 
                         log.debug("===> (SER) Reducting extension %d", n+1)
                         ## At the moment, we have the first calibration file for each extension; what rule could we follow ?

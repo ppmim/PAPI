@@ -424,13 +424,15 @@ def read_config_file(config_file = default_config_file()):
     general["group_by"] = read_parameter(config, "general", "group_by", str, False, config_file)
     
     general["max_mjd_diff"] = read_parameter(config, "general", "max_mjd_diff", float, False, config_file)
-    general["min_corr_frac"] = read_parameter(config, "general", "min_corr_frac", float, False, config_file)
+    
     
     general["apply_dark_flat"] = read_parameter(config, "general", "apply_dark_flat", bool, True, config_file)
     general["scale"] = read_parameter(config, "general", "scale", float, True, config_file)
     general["equinox"] = read_parameter(config, "general", "equinox", int, True, config_file)
     general["radecsys"] = read_parameter(config, "general", "radecsys", str, True, config_file)
     general["pattern"] = read_parameter(config, "general", "pattern", str, False, config_file)
+    general["parallel"] = read_parameter(config, "general", "parallel", bool, True, config_file)
+    general["ncpus"] = read_parameter(config, "general", "ncpus", int, True, config_file)
     general["verbose"] = read_parameter(config, "general", "verbose", bool, False, config_file)
     
     filter_prefix = "filter_name_"
@@ -540,6 +542,16 @@ def read_config_file(config_file = default_config_file()):
         skysub["area_width"] = area_width
         
     options["skysub"] = skysub     
+    
+    ########################## "offsets" section ################################
+    offsets = {}
+    
+    offsets["mask_minarea"] = read_parameter(config, "offsets", "mask_minarea", int, False, config_file)
+    offsets["mask_thresh"] = read_parameter(config, "offsets", "mask_thresh", float, False, config_file)
+    offsets["min_corr_frac"] = read_parameter(config, "offsets", "min_corr_frac", float, False, config_file)
+    offsets["satur_level"] = read_parameter(config, "offsets", "satur_level", long, False, config_file)
+    
+    options["offsets"] = offsets     
     
     ########################## "skysub" section ################################
     gainmap = {}
