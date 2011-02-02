@@ -162,10 +162,10 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
                         if star['X_IMAGE']<x_size and star['Y_IMAGE']<y_size:
                             data[round(star['Y_IMAGE']),round(star['X_IMAGE'])]=1 # Note: be careful with X,Y coordinates position
                 except Exception,e:
-                    myfits.close()
+                    myfits.close(output_verify='ignore')
                     raise Exception("Error while creating single point object mask :%s",str(e))
                 
-            myfits.close()
+            myfits.close(output_verify='ignore')
             log.debug("Object mask (single_point) file created for file : %s",fn)
         else:
             log.debug("Object mask file created for file : %s",fn)    

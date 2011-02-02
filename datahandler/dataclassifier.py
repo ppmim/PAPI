@@ -201,7 +201,7 @@ class ClFits:
             try:
                 myfits = pyfits.open(self.pathname)
                 temp=myfits[0].data
-                myfits.close()
+                myfits.close(output_verify='ignore')
                 return temp
             except:
                 log.error('Could not open frame - something wrong with input data')
@@ -471,8 +471,12 @@ class ClFits:
         except KeyError:
             log.warning('INSTRUME keyword not found')
         
-        myfits.close()
-			
+        try:
+            myfits.close(output_verify='ignore')
+        except Exception, e:
+            log.error("Error while closing FITS file %s   : %s",self.pathname, str(e))
+        
+            
     def addHistory(self, string_history):
         """ Add a history keyword to the header
             NOTE: The update is only done in memory-header(my_header). To flush to disk, we should
