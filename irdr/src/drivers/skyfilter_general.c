@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 
             if (nskies_pre<hwid || nskies_post<hwid)
             {   
-                printf("WARNING: not found enought required sky frames...only: %d", nskies_pre+nskies_post);
+                printf("WARNING: not found enought sky frames required. Only found: %d frames but needed: %s", nskies_pre+nskies_post, 2*hwid);
             }
             
             avgscale /= (float) nsky;

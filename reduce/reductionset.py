@@ -633,7 +633,8 @@ class ReductionSet:
         
     def skyFilter( self, list_file, gain_file, mask='nomask', obs_mode='dither' ):
         """
-            For each input image, a sky frame is computed by combining a certain number of the closest images, 
+            For 'each' (really not each, depend on dither pattern, i.e., extended sources) input image,
+            a sky frame is computed by combining a certain number of the closest images, 
             then this sky frame is subtracted to the image and the result is divided by the master flat; 
                          
             This function is a wrapper for skyfilter.c (IRDR)              
@@ -653,7 +654,7 @@ class ReductionSet:
         """               
         
         # Skyfilter parameters
-        halfnsky=3
+        halfnsky=2  # TODO: get value from config file !!!!
         destripe='none'
         out_files=[]
             
@@ -674,17 +675,22 @@ class ReductionSet:
         if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
             
             # Rename output sky-subtracted files
-            #for file in glob.glob(self.out_dir+'/*.fits.skysub'):
-            files=[line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
-            for file in files:   
-                shutil.move(file.replace(".fits", ".fits.skysub"), file.replace(".fits", ".skysub.fits"))
-                #out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
+            for file in glob.glob(self.out_dir+'/*.fits.skysub'):
+                shutil.move(file, file.replace('.fits.skysub', '.skysub.fits'))
+                out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
             
-            # Compose the output file list
-            if obs_mode=='dither':
-               out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
-            elif (obs_mode=='dither_on_off' or obs_mode=='dither_off_on' or obs_mode=='other'):
-                out_files=glob.glob(self.out_dir+'/*.skysub.fits')
+            ## next commented implementation doesn't work with dither_on_off or other extended observing patterns
+            #files=[line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
+            #for file in files:   
+            #    shutil.move(file.replace(".fits", ".fits.skysub"), file.replace(".fits", ".skysub.fits"))
+            
+            ## Compose the output file list
+            #if obs_mode=='dither':
+            #   out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
+            #elif (obs_mode=='dither_on_off' or obs_mode=='dither_off_on' or obs_mode=='other'):
+            #    out_files=glob.glob(self.out_dir+'/*.skysub.fits')
+            ##
+            
             # Sort-out data files by obs-data (actually not required when obs_mode='dither')
             out_files=self.sortOutData(out_files) 
             

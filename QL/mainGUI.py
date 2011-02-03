@@ -101,10 +101,7 @@ class MainGUI(panicQL):
         self.m_sourcedir =  self.m_default_data_dir 
         self.m_outputdir = output_dir 
         self.m_tempdir = temp_dir
-        #self.m_panic_dir = '/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/'       # PANIC SW directory
-        self.m_papi_dir  = os.environ['PAPI_HOME']  # PAnic PIpeline directory
         self._ini_cwd = os.getcwd()
-    
     
         self.m_frameList_dark = ''
         self.m_frameList_dflat = ''
@@ -432,7 +429,7 @@ class MainGUI(panicQL):
         #self.QL2(filename, self.textEdit_log)
         
         #Change to working directory
-        os.chdir(self.m_papi_dir)
+        os.chdir(self.m_tempdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
@@ -475,7 +472,7 @@ class MainGUI(panicQL):
         # Depending on what options have been selected by the user, we do a processing or other...
         if self.checkBox_subDark.isChecked() or self.checkBox_appFlat.isChecked():
             #Change to working directory
-            os.chdir(self.m_papi_dir)  # -- required ???
+            os.chdir(self.m_tempdir)  # -- required ???
             #Create working thread that process the file
             try:
                 master_dark=self.inputsDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
@@ -497,7 +494,7 @@ class MainGUI(panicQL):
         # ##########################################################################################
         elif self.checkBox_subLastFrame.isChecked():
             #Change to working directory
-            os.chdir(self.m_papi_dir)  # -- required ???
+            os.chdir(self.m_tempdir)  # -- required ???
             #Create working thread that process the file
             try:
                 ltemp=self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
@@ -1085,7 +1082,7 @@ class MainGUI(panicQL):
         #print "CHILDS=",group_files
         
         #Change to working directory
-        os.chdir(self.m_papi_dir)
+        os.chdir(self.m_tempdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
@@ -1396,7 +1393,7 @@ class MainGUI(panicQL):
             return
               
         #Change to working directory
-        os.chdir(self.m_papi_dir)
+        os.chdir(self.m_tempdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
@@ -1498,7 +1495,7 @@ class MainGUI(panicQL):
             cmd="sex %s -c %s  -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
             
             #Change to working directory
-            os.chdir(self.m_papi_dir)
+            os.chdir(self.m_tempdir)
             #Change cursor
             self.setCursor(Qt.waitCursor) # restored checkLastTask
             #Call external script (papi)
@@ -1553,7 +1550,7 @@ class MainGUI(panicQL):
                 return     
             
             #Change to working directory
-            os.chdir(self.m_papi_dir)
+            os.chdir(self.m_tempdir)
             #Change cursor
             self.setCursor(Qt.waitCursor)
             #Create working thread that compute sky-frame
@@ -1710,7 +1707,7 @@ class MainGUI(panicQL):
         if outfileName.isEmpty(): return # nothig to do !
            
         #Change to working directory
-        os.chdir(self.m_papi_dir)
+        os.chdir(self.m_tempdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
@@ -1764,10 +1761,10 @@ class MainGUI(panicQL):
         
         # Call external script (SWARP)
         cwd=os.getcwd()
-        os.chdir(self.m_papi_dir)
-        cmd=self.m_papi_dir+"/build_mosaic %s" %(listfile)
+        os.chdir(self.m_tempdir)
+        cmd=self.m_tempdir+"/build_mosaic %s" %(listfile)
         #Change to working directory
-        os.chdir(self.m_papi_dir)
+        os.chdir(self.m_tempdir)
         #Change cursor
         self.setCursor(Qt.waitCursor) # restored in checkLastTask
         # Call external script (papi)
@@ -1794,7 +1791,7 @@ class MainGUI(panicQL):
                 else: catalog="2MASS"
                 
                 #Change to working directory
-                os.chdir(self.m_papi_dir)
+                os.chdir(self.m_tempdir)
                 #Change cursor
                 self.setCursor(Qt.waitCursor)
                 #Create working thread that compute sky-frame
