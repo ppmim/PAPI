@@ -114,7 +114,13 @@ class CheckQuality:
         
         source_file=catalog_file
         
-        fits_file=pyfits.open(self.input_file, 'update')
+        try:
+            if self.write: fits_file=pyfits.open(self.input_file, 'update')
+            else: fits_file=pyfits.open(self.input_file, 'readonly')
+        except Exception,e:
+            log.error("Error while openning file %s",self.input_file)
+            raise e
+        
         try:
             if len(fits_file)>1: # is a MEF
                 naxis1=fits_file[1].header['NAXIS1']
@@ -165,7 +171,7 @@ class CheckQuality:
             
             if self.write:
                 fits_file[0].header.update('hierarch PAPI.SEEING', efwhm*self.pixsize)
-            print "Fits keyword updated " 
+                print "Fits keyword updated " 
             
         else:
             print "Not enought stars found !!"

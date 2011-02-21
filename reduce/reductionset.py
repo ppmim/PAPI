@@ -644,7 +644,7 @@ class ReductionSet:
             
             OUTPUT
                 The function generate a set of sky subtrated images (*.skysub.fits) and
-                Return ONLY filtered images, when extended-source-mode sky frames are not included in the returned file list. 
+                Return ONLY filtered images; when extended-source-mode ,sky frames are not included in the returned file list. 
                 The out-file-list is previously ordered by obs-data.             
             
             VERSION
@@ -714,6 +714,7 @@ class ReductionSet:
             
             VERSION
                 1.1, 20101103 by jmiguel@iaa.es
+                1.2, 20110297 added out_dir parameter to skyfilter_single
         
             TODO: extended objects !!!!
             
@@ -751,7 +752,7 @@ class ReductionSet:
                 raise
         else: l_gainMap=self.master_flat
         
-        # 1. Split MEF file
+        # 1. Split MEF file (into the self.out_dir)
         obj_ext, next = self.split(near_list) # it must return a list of list (one per each extension)
         out_ext = []
         
@@ -764,10 +765,12 @@ class ReductionSet:
             print "NEAR_FILES=", obj_ext[n]
             #Call external app skyfilter (papi)
             hwidth=2 ## TODO is it right ?????
-            cmd=self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d" %(listfile, l_gainMap, hwidth, file_pos)
+            cmd=self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d %s"\
+                        %(listfile, l_gainMap, hwidth, file_pos, self.out_dir)
             e=utils.runCmd( cmd )
             if e==1: # success
-                out_ext.append(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))  
+                fname = self.out_dir+"/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
+                out_ext.append(fname)  
             else:
                 log.error("Some error while subtracting sky in extension #%d# ", n+1)
                 raise Exception("Some error while subtracting sky in extension #%d# ", n+1)

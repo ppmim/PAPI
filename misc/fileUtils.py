@@ -58,6 +58,7 @@ def removefiles(*patterns):
                 try:
                     #print "not removing...debug...."
                     os.remove(os.path.join(dirname, file))
+                    #print "removefiles[DEBUG]: file %s removed"%os.path.join(dirname, file)
                 except OSError, errstr:
                     # Succeed even if there were no files (and put warning in log)
                     log.error(errstr)

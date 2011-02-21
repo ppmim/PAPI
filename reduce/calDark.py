@@ -161,8 +161,6 @@ class MasterDark:
                                         
         log.debug('Right, dark frames with same type are: %s', good_frames)   
     
-        # Cleanup : Remove old masterdark
-        misc.fileUtils.removefiles(self.__output_filename)
         if self.m_texp_scale:
             scale_str='exposure'
         else:
@@ -170,6 +168,9 @@ class MasterDark:
         
         if f_ncoadds==-1: f_ncoadds=1
         self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
+        
+	# Cleanup : Remove old masterdark
+        misc.fileUtils.removefiles(self.__output_filename)
         
         # Call the noao.imred.ccdred task through PyRAF
         

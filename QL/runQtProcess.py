@@ -52,16 +52,21 @@ class RunQtProcess(QWidget):
             raise
         
     def startCommand(self):
-        print "RunQtProcess-Command=", self._command
+        print ">RunQtProcess-Command >>", self._command
         
         self.process.setArguments(QStringList.split(" ", self._command))
         self.process.closeStdin()
         
+        #print "\nArguments:\n"
+        #args=self.process.arguments()
+        #for item in args:
+        #    print "ITEM=",item
+            
         self._m_proc_status = True
         
         if not self.process.start():
             self._outWindow.setText(
-                QString("*** Failed to run %1 ***").arg(self._command)
+                QString("*** Failed to run command >> \n\t'%1' ").arg(self._command)
                 )
             self.exit = 1
             self.exitFunc()    
@@ -70,6 +75,7 @@ class RunQtProcess(QWidget):
         print "End startCommand"
 
     def stopCommand(self):
+        print "Stop command executed !"
         self.process.tryTerminate()
         QTimer.singleShot(5000, self.process, SLOT("kill()"))
 
@@ -80,8 +86,12 @@ class RunQtProcess(QWidget):
         """
         err = str(self.process.readStdout())
         
-        if (err.count('error') or err.count('ERROR') or err.count('Segmentation fault') or err.count("command not found")
-          or err.count("No such file or directory") or err.count('No match') or err.count("Failed") or err.count("fail")):
+        print "OUT=",err
+        
+        if (err.count('error') or err.count('ERROR') or err.count('Segmentation fault') \
+            or err.count("command not found") or err.count("Error") \
+            or err.count("No such file or directory") or err.count('No match') \
+            or err.count("Failed") or err.count("fail")):
             log.error( "An error happened while running command --> %s \n", err)
             self.exit = 1
         else:
@@ -95,19 +105,22 @@ class RunQtProcess(QWidget):
         TO IMPROVE !!!!
         """
         err = str(self.process.readLineStderr())
-        
-        if (err.count('error') or err.count('ERROR') or err.count('Segmentation fault') or err.count("command not found")
-          or err.count("No such file or directory") or err.count('No match') or err.count("Failed") or err.count("fail") or err.count("cannot")):
+
+        if (err.count('error') or err.count('ERROR') or err.count('Segmentation fault')\
+            or err.count("command not found") or err.count("Error") \
+            or err.count("No such file or directory") or err.count('No match') \
+            or err.count("Failed") or err.count("fail") or err.count("cannot")):
             log.error( "An error happened while running command --> %s \n", err)
             self.exit = 1
         else:
           pass 
           #log.info("readErrors: NO error detected!")
         
-        self._outWindow.append( QString("STDE>>> %1").arg(err) )
+        #self._outWindow.append( QString("STDERROR>>> %1").arg(err) )
     
     def exitFunc(self):
         
+        #print "EXIT function !!"
         # Firstly, remove previus task-status (when initiated)
         self.taskInfo._name =  "RunQtProcess : " + self._command
         self.taskInfo._curr_status = "FINISHED"             
@@ -117,7 +130,8 @@ class RunQtProcess(QWidget):
         
         # Add new task-status
         self._task_info_list.append(self.taskInfo)
-                
+        self._outWindow.append( QString("[INFO] Task finished : \n %1 \n").arg(self._command) )
+        
     def normalEnd(self):
         return self.exit
     

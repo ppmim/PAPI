@@ -10,11 +10,16 @@
  * imagefn objfn xshift yshift, where objfn is the object mask from the 
  * coadded dither set, and xshift,yshift are the dither offsets per frame.
  * If the nomask option is selected then the filelist should contain: imagefn.
+ *
+ *
+ * 20110207 : modified outfn() in order to accept an output directory
+ 
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 #include "irdr.h"
 
 #define MAXHWID 10                     /* max hwidth in frames of sky filter */
@@ -33,7 +38,7 @@ static float *dbuf [2*MAXHWID];        /* store image ptrs to make sky frame */
 static float *wbuf [2*MAXHWID];        /* collect corresponding mask ptrs */
 static float scale [2*MAXHWID];        /* normalizations to make sky frame */
 
-static char *outfn(char *fn);
+static char *outfn(char *fn, char *out_dir);
 static void readdata(int i, int usemask);
 static void freedata(int i, int usemask);
 
@@ -46,7 +51,7 @@ int main(int argc, char *argv[])
     /*unsigned int *skysubimg = NULL;*/
     float *sky = NULL, *skyw = NULL, *fimg;
 
-    if (argc!=7)
+    if (argc!=8)
         usage();
 
     if (!strcmp(argv[4], "mask"))
@@ -111,8 +116,8 @@ int main(int argc, char *argv[])
         int j, nsky = 0, skyend = skybeg + 2 * hwid;
         float avgscale = 0.0;
 
-	    if (skyend>=nplanes) skyend=nplanes-1;
-	        printf("Image: %d   Sky: ", i);
+	if (skyend>=nplanes) skyend=nplanes-1;
+	    printf("Image: %d   Sky: ", i);
 
         for (j = skybeg; j <= skyend; j++) {  /* collect adjacent frame ptrs */
             if (j != i) {                             /* skip current frame */
@@ -151,7 +156,7 @@ int main(int argc, char *argv[])
     
             /*skysubimg = longint(fimg, nx, ny);*/
             /* For PANIC, we need 32 bits images, so we write  -32 (float) FITS*/
-            writefits(outfn(fn[i]), fn[i], (char*)fimg, -32, nx, ny);
+            writefits(outfn(fn[i], argv[7]), fn[i], (char*)fimg, -32, nx, ny);
     
             free(sky);  /*free(skysubimg);*/  free(fimg);
     
@@ -201,15 +206,19 @@ static void freedata(int i, int usemask)
 }
 
 /* outfn: create output fn for sky subtracted image */
-static char *outfn(char *fn)
+static char *outfn(char *fn, char *out_dir)
 {
     static char *ext = ".skysub";
     static char buf[256];
+    char stmp[256], *bname;
 
-    if (strlen(fn) + strlen(ext) >= 256)
+    strcpy(stmp, fn);
+    bname=basename(stmp);
+        
+    if (strlen(out_dir) + strlen(bname) + strlen(ext) >= 256)
         eprintf("outfn: increase OUTLEN");
 
-    sprintf(buf, "%s%s", fn, ext);
+    sprintf(buf, "%s/%s%s", out_dir, bname, ext);
 
     return buf;
 }
@@ -219,7 +228,7 @@ static void usage(void)
 {
     static char *usage = "\n"
     "skyfilter_single - do running sky frame subtraction\n\n"
-    "usage: skyfilter_single listfn gainfn hwidth mask|nomask "
+    "usage: skyfilter_single listfn gainfn hwidth mask|nomask /path/out_dir"
     "row|col|rowcol|colrow|none\n\n"
     "where listfn - if object masking is used, then listfn should contain:\n"
     "               img_filename objmask_filename dither_x_off dither_y_off\n"
@@ -241,8 +250,9 @@ static void usage(void)
     "               rowcol for row offsets then column offsets,\n"
     "               colrow for column offsets then row offsets,\n"
     "               none for no correction\n\n"
-    "      filen|0  - file number (1-N) from the listfn to filter (0=, all will be filtered)\n\n"
-    "example: skyfilter filelist gain.fits 4 mask rowcol 1\n\n";
+    "      filen|0  - file number (1-N) from the listfn to filter (0=, all will be filtered)n"
+    "      /path/out_dir path to output dir for sky subtracted images \n\n"
+    "example: skyfilter_single filelist gain.fits 4 mask rowcol 1 /tmp \n\n";
 
     printf("%s", usage);
     exit(0);

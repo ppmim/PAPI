@@ -62,6 +62,7 @@ import misc.utils as utils
 import misc.mef
 import datahandler
 import misc.display as display
+import astromatic
 from runQtProcess import *
 #Log
 import misc.paLog
@@ -102,6 +103,15 @@ class MainGUI(panicQL):
         self.m_outputdir = output_dir 
         self.m_tempdir = temp_dir
         self._ini_cwd = os.getcwd()
+        
+        # check we have R/W access to temp and out directories
+        if not os.access(self.m_tempdir,os.R_OK|os.W_OK):
+            log.error("Directory %s has not R/W access",self.m_tempdir)
+            self.textEdit_log.append(QString("<error_tag>[WARNING]</error_tag> Directory %1 has not R/W access").arg(self.m_tempdir))
+        if not os.access(self.m_outputdir,os.R_OK|os.W_OK):
+            log.error("Directory %s has not R/W access",self.outputdir)
+            self.textEdit_log.append(QString("<error_tag>[WARNING]</error_tag> Directory %1 has not R/W access").arg(self.outputdir))
+            
     
         self.m_frameList_dark = ''
         self.m_frameList_dflat = ''
@@ -159,7 +169,7 @@ class MainGUI(panicQL):
         
             
         
-        self.textEdit_log.append("Wellcome to the <info_tag> PANIC QuickLook tool (v1.0) ! </info_tag>")
+        self.textEdit_log.append("[INFO] Wellcome to the <info_tag> PANIC QuickLook tool </info_tag>(v1.0) ! ")
         
 
         self.__initializeGUI()
@@ -258,7 +268,7 @@ class MainGUI(panicQL):
             raise IOError("file '%s' doesn't exist" % fitsfile)
     
     
-        f = open(fitsfile)
+        f = open(fitsfile,"readonly")
     
         FITS_BLOCK_SIZE = 2880
         try:
@@ -304,7 +314,7 @@ class MainGUI(panicQL):
         log.debug( "New file detected --> %s. Going to verification...", filename)
         # (Try) to check if the FITS file writing has finished -- 
         try:
-            temp = pyfits.open(filename)
+            temp = pyfits.open(filename,"readonly")
             #temp.verify(option='exception')  # it is a too severe checking !!!
             temp.close()
             self.fits_simple_verify(filename)
@@ -330,7 +340,7 @@ class MainGUI(panicQL):
                     del self.read_error_files[filename] # could be interesting to have a list of discarted files ??
                     #self.read_error_files.remove(filename)
                 else:
-                    log.debug("File %s still has some read error ...will retry to read it again ...")
+                    log.debug("File %s still has some read error ...will retry to read it again ...", filename)
                     self.read_error_files[filename]+=1
                     if fromOutput: self.dc_outdir.remove(filename) # it means the file could be detected again by the DataCollector
                     else: self.dc.remove(filename) 
@@ -649,7 +659,7 @@ class MainGUI(panicQL):
                     if self._task_info._return!=None:
                         if type(self._task_info._return)==type(list()): 
                             str_list=""
-                            #print "FILES CREATED=",self._task_info._return
+                            print "FILES CREATED=",self._task_info._return
                             #QMessageBox.information(self,"Info", QString("%1 files created").arg(len(self._task_info._return)))
                             display.showFrame(self._task_info._return) #_return is a file list
                             for file in self._task_info._return:
@@ -658,11 +668,12 @@ class MainGUI(panicQL):
                             QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
                             self.textEdit_log.append(QString("<info_tag> ++>%1 files created: \n %1</info_tag>").arg(len(self._task_info._return)).arg(str(str_list)))
                         elif os.path.isfile(self._task_info._return):
+                            #print "PASOOOOOO RETURNED =",self._task_info._return
                             #QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
                             self.textEdit_log.append(QString("<info_tag> ++>Output file %1 created </info_tag>").arg(self._task_info._return))
                             display.showFrame(self._task_info._return)
                 else:
-                    QMessageBox.critical(self, "Error", "Error while running task.  "+str(self._task_info._exc))
+                    QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
             except Exception,e:
                 raise Exception("Error while checking _task_info_list: %s", str(e))
             finally:
@@ -865,7 +876,7 @@ class MainGUI(panicQL):
         """ Delete the current selected file from the main list view panel, but we do not remote from the DataCollector neither file system"""
         
         self.m_popup_l_sel = []
-        it=QListViewItemIterator (self.listView_dataS)
+        it=QListViewItemIterator(self.listView_dataS)
         listViewItem = it.current()
         while listViewItem: 
             if listViewItem.isSelected():
@@ -1371,7 +1382,7 @@ class MainGUI(panicQL):
             try:
                 texp_scale=False
                 self.setCursor(Qt.waitCursor)
-                self._task=reduce.calDark.MasterDark (self.m_popup_l_sel, "/tmp", str(outfileName), texp_scale)
+                self._task=reduce.calDark.MasterDark(self.m_popup_l_sel, "/tmp", str(outfileName), texp_scale)
                 thread=reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
                 thread.start()
             except Exception, e:
@@ -1485,15 +1496,24 @@ class MainGUI(panicQL):
             return
         fits = datahandler.ClFits(self.m_listView_item_selected)
         if fits.getType()=='SCIENCE':
-            sex_config = os.environ['IRDR_BASEDIR']+"/src/config/default.sex"
-            minarea =  5
-            threshold = 2.0
+            sex_config = self.config_opts['config_files']['sextractor_conf']
+            sex_param = self.config_opts['config_files']['sextractor_param']
+            sex_conv = self.config_opts['config_files']['sextractor_conv']
+            minarea =  self.config_opts['skysub']['mask_minarea']
+            threshold = self.config_opts['skysub']['mask_thresh']
             input_file = self.m_listView_item_selected
-            out_file = self.m_listView_item_selected.replace(".fits",".skysub.fits")
+            out_file = self.m_outputdir+"/"+os.path.basename(input_file.replace(".fits",".skysub.fits"))
             #out_file = "/tmp/skysub.fits"
+        
             #cmd="sex %s -c %s -FITS_UNSIGNED Y -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
-            cmd="sex %s -c %s  -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
+            cmd="sex %s -c %s -DETECT_MINAREA %s -DETECT_THRESH %s -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s -PARAMETERS_NAME %s -FILTER_NAME %s"% (input_file, sex_config, str(minarea), str(threshold), out_file, sex_param, sex_conv )  
             
+            """
+            ***
+                Be sure that SExtractor working directory has R/W in order to create
+                temporal files created by SExtractor !!!
+            ***
+            """
             #Change to working directory
             os.chdir(self.m_tempdir)
             #Change cursor
@@ -1502,6 +1522,34 @@ class MainGUI(panicQL):
             self.m_processing = True
             self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, out_file)      
             self._proc.startCommand()
+
+            """
+            # Next implementation does not work because sex.run() doesn't retuen
+            # the output file created !
+            #
+            input_file = self.m_listView_item_selected
+            out_file = self.m_outputdir+"/"+os.path.basename(input_file.replace(".fits",".skysub.fits"))
+            sex = astromatic.SExtractor()
+            #sex.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
+            #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
+            sex.config['CATALOG_TYPE'] = "NONE"
+            sex.config['CHECKIMAGE_TYPE'] = "-BACKGROUND"
+            sex.config['CHECKIMAGE_NAME'] = out_file
+            sex.config['DETECT_THRESH'] = self.config_opts['skysub']['mask_thresh']
+            sex.config['DETECT_MINAREA'] = self.config_opts['skysub']['mask_minarea']
+            try:
+                self.setCursor(Qt.waitCursor)
+                updateconfig=True
+                clean=False
+                thread=reduce.ExecTaskThread(sex.run, self._task_info_list, \
+                                             # args for Sextractor:run() method
+                                             input_file, updateconfig, clean)
+                thread.start()    
+            except Exception,e:
+                self.setCursor(Qt.arrowCursor)
+                QMessageBox.critical(self, "Error", "Error while sky subtraction "+str(e))
+                raise e
+            """
         else:
             log.error("Sorry, selected file does not look a science file  ")
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             
@@ -1623,20 +1671,25 @@ class MainGUI(panicQL):
                 #self.textEdit_log.append(QString("<info_tag> Background estimation MEAN= %1    MODE=%2    STDDEV=%3    MIN=%4         MAX=%5</info_tag>").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
             
             display.showFrame(img)
-        except:
+        except Exception,e:
             self.textEdit_log.append("<error_tag> ERROR: something wrong while computing background </error_tag>")
-            raise
+            raise e
           
     def fwhm_estimation_slot (self):
         """ Give an FWHM estimation of the current selected image """
         
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
-        fwhm,std=cq.estimateFWHM()
-        if fwhm>0:
-            self.textEdit_log.append(QString("<info_tag> FWHM = %1 (pixels) std= %2 </info_tag>").arg(fwhm).arg(std))
-        else:
-            self.textEdit_log.append("<error_tag> ERROR: Cannot estimage FWHM with selected image  </error_tag>")           
-            
+        try:
+            fwhm,std=cq.estimateFWHM()
+            if fwhm>0:
+                self.textEdit_log.append(QString("<info_tag> FWHM = %1 (pixels) std= %2 </info_tag>").arg(fwhm).arg(std))
+            else:
+                self.textEdit_log.append("<error_tag> ERROR: Cannot estimage FWHM with selected image  </error_tag>")           
+        
+        except Exception,e:
+            self.textEdit_log.append("<error_tag> ERROR: something wrong while computing background </error_tag>")
+            raise e
+        
     def createStackedFrame_slot(self):
         """ 
             Compute a stacked frame (subtract sky, shift and align) from a set of nearest (ra,dec, mjd) 
@@ -1724,7 +1777,7 @@ class MainGUI(panicQL):
                 # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
                 # thus the ExecTaskThread can't restore the cursor
                 self.setCursor(Qt.arrowCursor) 
-                QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                QMessageBox.critical(self, "Error", "Error while building stack")
                 raise
         
         

@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
     
             /*skysubimg = longint(fimg, nx, ny);*/
             /* For PANIC, we need 32 bits images, so we write  -32 (float) FITS*/
-            writefits(outfn(fn[i]), fn[i], (char*)fimg, -32, nx, ny);
+            writefits(outfn(fn[i]), fn[i] /* to copy the header */, (char*)fimg, -32, nx, ny);
     
             free(sky);  /*free(skysubimg);*/  free(fimg);
     
