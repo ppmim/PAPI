@@ -1,0 +1,23 @@
+! omega2000.ctx defines commands for the O2000-utilities
+! Rene Fassbender 05.06.2003
+
+! all paths are defined relative to the entry point directory O2K_UTIL:
+
+
+! Observing Macro commands
+
+create/command o2k/focus @@ O2K_UTIL:/obs_macros/Focus/omega_focus
+!create/command o2k/domeflats @@ O2K_UTIL:/obs_macros/flatfields
+create/command o2k/domeflats @@ O2K_UTIL:/obs_macros/domeflats
+create/command o2k/tilt @@ O2K_UTIL:/obs_macros/Tilt/omega_tilt
+create/command o2k/dither @@ O2K_UTIL:/obs_macros/dither_pointing
+create/command o2k/sky_point @@ O2K_UTIL:/obs_macros/sky_pointing_new
+create/command o2k/old_sky @@ O2K_UTIL:/obs_macros/sky_pointing
+
+
+
+! Pipeline Commands
+
+create/command o2k/pipeline @@ O2K_UTIL:/pipeline/PRGs/OMEGA_pipeline
+create/command o2k/online @@ O2K_UTIL:/pipeline/PRGs/pipe_online
+
