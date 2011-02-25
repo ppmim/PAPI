@@ -11,7 +11,7 @@
 !        Comment line(s), summarizing the task (starting with exclamation mark)
 !        Label with task number (task_ followed by three digits),  e.g.  task_004:
 !        Line to write entry for this task into the log-file ({log_entry})
-!        What you want to do (either $cmd_o2000 commands or o2k/...,
+!        What you want to do (either $cmd_panic_new commands or o2k/...,
 !                    or MIDAS manipulations like loading an image into the display etc.
 !        Exit the procedure (goto exit)
 !
@@ -59,7 +59,7 @@ goto exit
 task_002:
 {log_entry}
 
-$cmd_o2000  filter H			! select H filter
+$cmd_panic_new  filter H			! select H filter
 o2k/domeflats 100000 1 "dome flat" 5,0	! take individual flats, sum = 100000 with lamp 5
 
 goto exit
@@ -70,7 +70,7 @@ goto exit
 task_003:
 {log_entry}
 
-$cmd_o2000 tele absolute 12 13 14 -0 3 15 2000	! move telescope to flat field position
+$cmd_panic_new tele absolute 12 13 14 -0 3 15 2000	! move telescope to flat field position
 
 o2k/skyflats  H   20000 3   2  "sky flat H"	! take 3 flats (each sum of 2 exposures)
 

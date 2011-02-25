@@ -61,16 +61,16 @@ DEFINE/LOCAL cg_flag/i/1/1 0
 
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start DQE !"
-   $ auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
    goto ende
 endif
 
 
 define/local abort_check/i/1/1 0    ! for return value of abort-file-check
   ! abort check: 0=does not exist ; 1=abort file exists
-  abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+  abort_check = m$exist("{geirslstabort}")
   if abort_check .eq. 1 then
-    $rm /disk-a/o2k/tmp/geirsLstAbort  ! remove file to reset
+    $rm {geirslstabort}  ! remove file to reset
   endif
 
 write/key outputr/r/1/2 {P5}
@@ -96,15 +96,15 @@ Y_step = 14.9*600/(n_Y-1)
 
 Set/format I1 F6.1
 ! set image parameters
-$cmd_o2000 crep {crep}
-$cmd_o2000 itime {itime}
-$cmd_o2000 sync
+$cmd_panic_new crep {crep}
+$cmd_panic_new itime {itime}
+$cmd_panic_new sync
 
-$cmd_o2000 filter {P4}
-$cmd_o2000 sync
+$cmd_panic_new filter {P4}
+$cmd_panic_new sync
 
 !-------------------------------------------------------------
-$auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
 inquire/key ans "Are you ready to preset telescope to -
 RA(J2000) {abs_RA}, DEC(J2000) {abs_DEC} [no] : "
 
@@ -113,7 +113,7 @@ ans = m$upper(ans)
 if ans(1:1) .eq. "Y"  then
    ! telescope to reference position (R) via start (S)
    $ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
-      $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+      $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
    inquire/key ans "All set with telescope centered on start position [no] ?"
    ans = m$upper(ans)
    if ans(1:1) .ne. "Y"  then
@@ -134,17 +134,17 @@ endif
 write/out "Taking DQE image {P4} [{ix},{iy}]"
 
   ! write object
-$cmd_o2000 object DQE reference {P4} start
+$cmd_panic_new object DQE reference {P4} start
 
-$cmd_o2000 read
-$cmd_o2000 sync
+$cmd_panic_new read
+$cmd_panic_new sync
 if save(1:7) .ne. "NO_SAVE" then
-   $cmd_o2000 save -i
+   $cmd_panic_new save -i
 endif
 
-$cmd_o2000 sync
+$cmd_panic_new sync
 ! get position of star
-$cmd_o2000 last 
+$cmd_panic_new last 
 write/keyword imaname </disk-a/o2k/tmp/geirsLstFile
 
 @@ O2K_UTIL:/obs_macros/cuts {imaname}
@@ -166,12 +166,12 @@ do iy = {first_y} {n_Y}
   write/out "Taking DQE image {P4} [{ix},{iy}]"
 
   ! write object
-  $cmd_o2000 object DQE measurement {P4} {ix},{iy}
+  $cmd_panic_new object DQE measurement {P4} {ix},{iy}
 
-  $cmd_o2000 read
-  $cmd_o2000 sync
+  $cmd_panic_new read
+  $cmd_panic_new sync
   if save(1:7) .ne. "NO_SAVE" then
-     $cmd_o2000 save -i
+     $cmd_panic_new save -i
   endif
 
   if ix .lt. n_X  then
@@ -181,11 +181,11 @@ do iy = {first_y} {n_Y}
   endif
 
   ! abort check: 0=does not exist ; 1=abort file exists
-  abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+  abort_check = m$exist("{geirslstabort}")
   if abort_check .eq. 1 then
       write/out "Program was aborted from GUI ..." 
-    $rm /disk-a/o2k/tmp/geirsLstAbort  ! remove file again
-              $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+    $rm {geirslstabort}  ! remove file again
+              $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
       goto ende
   endif
  enddo
@@ -194,7 +194,7 @@ do iy = {first_y} {n_Y}
  if iy .lt. n_Y  then
      ! telescope to start, again via reference position (R)
   $ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
-            $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+            $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
   inquire/key ans "Telescope at start position [no] ? "
   ans = m$upper(ans)
   if ans(1:1) .ne. "Y" then
@@ -210,15 +210,15 @@ do iy = {first_y} {n_Y}
 
 
   write/out "Taking image at reference position {iy} ..."
-  $cmd_o2000 object DQE reference {P4} {iy}
-  $cmd_o2000 read
-  $cmd_o2000 sync
+  $cmd_panic_new object DQE reference {P4} {iy}
+  $cmd_panic_new read
+  $cmd_panic_new sync
   if save(1:7) .ne. "NO_SAVE" then 
-    $cmd_o2000 save -i
+    $cmd_panic_new save -i
   endif
   
-  $cmd_o2000 sync      !get filename of last saved image
-  $cmd_o2000 last
+  $cmd_panic_new sync      !get filename of last saved image
+  $cmd_panic_new last
   write/keyword imaname </disk-a/o2k/tmp/geirsLstFile
   
   @@ O2K_UTIL:/obs_macros/autoguide {imaname} {starposx} {starposy} {starposx} {starposy}
@@ -242,11 +242,11 @@ do iy = {first_y} {n_Y}
  endif
 
  ! abort check: 0=does not exist ; 1=abort file exists
- abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+ abort_check = m$exist("{geirslstabort}")
  if abort_check .eq. 1 then
      write/out "Program was aborted from GUI ..." 
-     $rm /disk-a/o2k/tmp/geirsLstAbort  ! remove file again
-        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+     $rm {geirslstabort}  ! remove file again
+        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
      goto ende
  endif
 enddo
@@ -264,17 +264,17 @@ $ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
  endif
 $ $TECS_SCRIPT/t_offset +{ref_off(1)} -{ref_off(2)}
 wait/secs {tel_wait}
-$cmd_o2000 object DQE reference {P4} final
-$cmd_o2000 read
-$cmd_o2000 sync
+$cmd_panic_new object DQE reference {P4} final
+$cmd_panic_new read
+$cmd_panic_new sync
 if save(1:7) .ne. "NO_SAVE" then 
- $cmd_o2000 save -i
+ $cmd_panic_new save -i
 endif
 
 write/out
 write/out "         all done ..."
 write/out
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
 
 ende:
 return

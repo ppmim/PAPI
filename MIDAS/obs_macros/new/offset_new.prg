@@ -73,7 +73,7 @@ write/out " "
 write/out " or  RA = {off(1)}  Del = {off(2)} arcsec"
 write/out " "
 
-$ auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+$ play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
 defi/local move/c/1/1 a
 inquire/key move "move by hand or automatically [def]? [h/a]"
 
@@ -88,7 +88,7 @@ endif
 if move .eq. "h" then
     write/out Select the x/y coordinate system , then move the telescope manually !
 endif
-$ auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$ play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
 
 exit:
 return

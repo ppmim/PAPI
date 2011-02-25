@@ -45,62 +45,62 @@ wait_time = time_int - coadds * exp_time
 
 if wait_time .le. 0 then
   write/out "Time intervall too short for combination of exp_time and coadds!"
-  $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
   goto exit
 endif
 
 define/local abort_check/i/1/1 0	! for return value of abort-file-check
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-  $rm /disk-a/o2k/tmp/geirsLstAbort 
+  $rm {geirslstabort} 
 endif
 
 set/format I1 F5.1
 
 ! setup camera
 
-$cmd_o2000 object {P1}
+$cmd_panic_new object {P1}
 
-$cmd_o2000 counter DITH_NO clear	! clear dither counter 
-$cmd_o2000 counter POINT_NO clear	! clear pointing no 
-$cmd_o2000 counter EXPO_NO clear	! clear exposure counter-->EXPO_NO=1
+$cmd_panic_new counter DITH_NO clear	! clear dither counter 
+$cmd_panic_new counter POINT_NO clear	! clear pointing no 
+$cmd_panic_new counter EXPO_NO clear	! clear exposure counter-->EXPO_NO=1
 
-$cmd_o2000 itime {exp_time}
-$cmd_o2000 crep {coadds}
-$cmd_o2000 sync
+$cmd_panic_new itime {exp_time}
+$cmd_panic_new crep {coadds}
+$cmd_panic_new sync
 
 
 do i = 1 {n_exp}
    write/out "         Exposing step {i} with {exp_time}sec ..."
-   $cmd_o2000 read
-   $cmd_o2000 sync
+   $cmd_panic_new read
+   $cmd_panic_new sync
 		! abort check: 0=does not exist ; 1=abort file exists
-	abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+	abort_check = m$exist("{geirslstabort}")
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
-	  $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
-        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+	  $rm {geirslstabort} 	! remove file again
+        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
   	  goto exit
 	endif
 
    if coadds .eq. 1 then
-      $cmd_o2000 save
+      $cmd_panic_new save
    else
       if P7(1:1) .eq. "i" then
-         $cmd_o2000 save -i
+         $cmd_panic_new save -i
       else
-         $cmd_o2000 save
+         $cmd_panic_new save
       endif
    endif
 
    wait/sec {wait_time}
 enddo
 
-$cmd_o2000 sync
+$cmd_panic_new sync
 write/out "         det_tilt series finished ..."
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
 
 exit:
 return

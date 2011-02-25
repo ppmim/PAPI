@@ -24,7 +24,7 @@ endif
 
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start transmon !"
-   $ auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -91,7 +91,7 @@ if max_signal .gt. {ccd_para(4)} then
    write/out "The star seems to be saturated!"
    write/out "No log entry possible!"
    write/out
-   $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
    goto exit
 endif
 

@@ -24,7 +24,7 @@ endif
 
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start seeing !"
-   $ auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
    goto exit
 endif
 

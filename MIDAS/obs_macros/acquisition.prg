@@ -15,21 +15,21 @@ define/local answer/c/1/16 " "                         !
 define/local back/c/1/8 " "
 define/local i/i/1/1 0
 
-$cmd_o2000 tele absolute {P1}         ! move telescope to first field
-$cmd_o2000 sync tele
+$cmd_panic_new tele absolute {P1}         ! move telescope to first field
+$cmd_panic_new sync tele
 
-$cmd_o2000 crep  {P5}
-$cmd_o2000 itime {P4}
-$cmd_o2000 sync
+$cmd_panic_new crep  {P5}
+$cmd_panic_new itime {P4}
+$cmd_panic_new sync
 take_AQ:
-$cmd_o2000 read
-$cmd_o2000 sync
-$cmd_o2000 save -i
+$cmd_panic_new read
+$cmd_panic_new sync
+$cmd_panic_new save -i
 
 ! load flatfield corrected image into display for pixel-accurate telescope alignment
 
 set/midas output=logonly        ! suppress MIDAS output to screen
-$cmd_o2000 last	                                       ! writes last filename in file geirsLstFile
+$cmd_panic_new last	                                       ! writes last filename in file geirsLstFile
 write/keyword last_ima </disk-a/o2k/tmp/geirsLstFile   ! writes last filename in keyword last_ima
 set/midas output=yes            ! re-activate MIDAS output
 

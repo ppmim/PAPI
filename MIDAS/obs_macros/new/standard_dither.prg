@@ -17,28 +17,28 @@ define/local abort/c/1/80
     
     ! remove existing abort file
     ! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-$rm /disk-a/o2k/tmp/geirsLstAbort 
+$rm {geirslstabort} 
 endif
 
-$cmd_o2000 object "{P3} (AQ)"
-$cmd_o2000 crep 10
-$cmd_o2000 itime 2
+$cmd_panic_new object "{P3} (AQ)"
+$cmd_panic_new crep 10
+$cmd_panic_new itime 2
 
-$cmd_o2000 read
-$cmd_o2000 sync
+$cmd_panic_new read
+$cmd_panic_new sync
 
     ! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
   write/out "Program is aborted..."
-  $rm /disk-a/o2k/tmp/geirsLstAbort
-  $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $rm {geirslstabort}
+  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
   goto exit
 endif
 
-$cmd_o2000 last   ! writes last filename in file geirsLstFile
+$cmd_panic_new last   ! writes last filename in file geirsLstFile
     ! writes last filename in keyword framename
 write/keyword framename </disk-a/o2k/tmp/geirsLstFile 
 
@@ -57,13 +57,13 @@ endif
 
 o2k/dither {P1}_I {pointings},{integrated},{single} {P3}
 
-$cmd_o2000 last   ! writes last filename in file geirsLstFile
+$cmd_panic_new last   ! writes last filename in file geirsLstFile
     ! writes last filename in keyword framename
 write/keyword framename </disk-a/o2k/tmp/geirsLstFile 
 
 
 compute/ima test = {framename} / {P5}
-$auplay /disk-a/staff/GEIRS/SOUNDS/whistle.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
 
 load/ima test sc=2 ce={offset(1)},(offset(2)}
 back/det ? 2,5

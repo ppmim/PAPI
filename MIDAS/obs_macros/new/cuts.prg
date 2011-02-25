@@ -18,11 +18,11 @@ cute(2) = mean + (6 * sdev)
 LOOP:
 
 LOAD/IMA {P1} cuts={cute(1)},{cute(2)} center={cent(1)},{cent(2)} sc={scal}
- $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+ $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
 INQUIRE/KEY answ "Ready to choose star(y) or change cuts(n)? "
 answ = m$upper(answ)
 IF answ(1:1) .EQ. "N" THEN
- $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+ $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
 	INQUIRE/KEY cute "lower,upper cut? "
 	INQUIRE/KEY cent "center (x,y)?"
 	INQUIRE/KEY scal "scale? "

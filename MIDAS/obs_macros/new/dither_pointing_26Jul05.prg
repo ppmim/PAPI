@@ -97,7 +97,7 @@ endif
 
 if mid_session .ne. 32  then
    write/out "Please use OBSERVING (blue) MIDAS window to start dither sequence !"
-   $ auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
    goto end
 endif
 
@@ -127,7 +127,7 @@ if P7(1:1) .EQ. "Y" THEN
     offset_check = m$exist("/disk-a/o2k/tmp/offset_ok.dat")
     IF offset_check .EQ. 0 THEN 
         WRITE/OUT "ERROR: autoguide: no reference star, please rerun offset.prg"
-        $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+        $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
             goto END
     endif
     define/local file_id_4/i/1/2            ! file id for open/file
@@ -184,7 +184,7 @@ if tel_flag(1:2) .ne. "AQ"  then
       write/out "Flag for current telescope position (parameter 4b) has to be AQ or PREV"
       write/out "   ... abort    "
       write/out
-      $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
       goto exit
    endif
 endif   
@@ -211,9 +211,9 @@ set/format
 
     ! remove existing abort file
     ! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-$rm /disk-a/o2k/tmp/geirsLstAbort 
+$rm {geirslstabort} 
 endif
 !
 !!!!!!!!!!!!!!!!! PASS INFORMATION TO PIPELINE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -278,7 +278,7 @@ if m$exist("{P6}.dith") .eq. 1 then
    open/file {P6}.dith read fctrl
    if fctrl(1) .lt. 0 then
       write/out "Could not open {P6}.dith ..."
-      $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
       goto end
    endif
    ! First line is a comment
@@ -290,13 +290,13 @@ if m$exist("{P6}.dith") .eq. 1 then
       if m$index(input_buffer," ") .gt. 0  then
          write/out "         Data file for offsets must not contain blanks!"
          write/out "         Check line {i} and following..."
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          close/file {fctrl(1)}
          goto end
       endif
       if fctrl(2) .eq. -1 then
          write/out "Unexpected EOF reached!   Abort ..."
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          close/file {fctrl(1)}
          goto end
       else
@@ -462,7 +462,7 @@ if tel_flag(1:2) .eq. "AQ"  then
       if tel_return .ne. 0 then
          write/out "ERROR: Telescope return value for t_offset signals an error..."
          write/out "...the program is aborted"
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          goto exit
       else
          isodate = m$isodate()
@@ -525,9 +525,9 @@ endif
 !.............. telescope and camera commands now ............
 
     ! write initial image descriptors
-$cmd_o2000 counter DITH_NO set {start_position} ! set dither counter to start position
-$cmd_o2000 counter POINT_NO set {point_no}  ! set pointing no to its value
-$cmd_o2000 counter EXPO_NO clear        ! clear exposure counter-->EXPO_NO=1
+$cmd_panic_new counter DITH_NO set {start_position} ! set dither counter to start position
+$cmd_panic_new counter POINT_NO set {point_no}  ! set pointing no to its value
+$cmd_panic_new counter EXPO_NO clear        ! clear exposure counter-->EXPO_NO=1
 
 
     ! set telescope in XY-mode
@@ -535,9 +535,9 @@ $ $TECS_SCRIPT/t_coord_system xy
 
     ! set single image parameters
 set/format I1
-$cmd_o2000 crep {rep_integrate}
-$cmd_o2000 itime {single_time}
-$cmd_o2000 sync
+$cmd_panic_new crep {rep_integrate}
+$cmd_panic_new itime {single_time}
+$cmd_panic_new sync
 
 !
 !
@@ -559,7 +559,7 @@ set/format I1
 write/out "Taking image {loop} of {rep_image}..."   
 
     ! write object
-$cmd_o2000 object {P3}:{loop}/{rep_image}
+$cmd_panic_new object {P3}:{loop}/{rep_image}
 
 
 set/format I5   ! for telescope command
@@ -579,7 +579,7 @@ refstary = refstary - y_corroff / 0.44942 / 10.
 if tel_return .ne. 0 then
   write/out "ERROR: Telescope return value for t_offset signals an error..."
   write/out "...the program is aborted"
-  $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
   goto exit
 else
   isodate = m$isodate()
@@ -594,17 +594,17 @@ else
   endif         
 endif   
 
-$cmd_o2000 sync
-$cmd_o2000 read
-$cmd_o2000 sync
+$cmd_panic_new sync
+$cmd_panic_new read
+$cmd_panic_new sync
 
 
     ! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
   write/out "Program is aborted..."
-  $rm /disk-a/o2k/tmp/geirsLstAbort
-  $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $rm {geirslstabort}
+  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
   goto exit
 endif
 
@@ -612,7 +612,7 @@ endif
     ! add file to image catalog
 if loop .ge. 2 then
   set/midas output=logonly
-  $cmd_o2000 last   ! writes last filename in file geirsLstFile
+  $cmd_panic_new last   ! writes last filename in file geirsLstFile
     ! writes last filename in keyword pathname_ima
   write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
     ! add file to icat
@@ -621,13 +621,13 @@ if loop .ge. 2 then
 endif
 
 
-$cmd_o2000 save -i
+$cmd_panic_new save -i
 !AK
 if P7(1:1) .EQ. "Y" then
     if refstarx .GE. 10 .AND. refstarx .LE. 2038 then
        if refstary .GE. 10 .AND. refstary .LE. 2038 then
-           $cmd_o2000 sync
-           $cmd_o2000 last
+           $cmd_panic_new sync
+           $cmd_panic_new last
            write/keyword frame </disk-a/o2k/tmp/geirsLstFile    
 
            @@ O2K_UTIL:/obs_macros/new/autoguide_new {frame} {refstarx} {refstary} {expstarx({loop})} {expstary({loop})}
@@ -664,8 +664,8 @@ refstary = {expstary({loop})}
 !
 
     ! handle image descriptors
-$cmd_o2000 counter DITH_NO incr     ! increment dither counter by 1
-$cmd_o2000 counter EXPO_NO clear        ! reset exposure counter 
+$cmd_panic_new counter DITH_NO incr     ! increment dither counter by 1
+$cmd_panic_new counter EXPO_NO clear        ! reset exposure counter 
 
 
     ! check wether 20 images were taken
@@ -684,7 +684,7 @@ if counter .eq. 20 then
     if tel_return .ne. 0 then
       write/out "ERROR: Telescope return value for t_offset signals an error..."
       write/out "...the program is aborted"
-        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
       goto exit
         else
           isodate = m$isodate()
@@ -701,7 +701,7 @@ if counter .eq. 20 then
     if tel_return .ne. 0 then
       write/out "ERROR: Telescope return value for t_offset signals an error..."
       write/out "...the program is aborted"
-        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
       goto exit
         else
           isodate = m$isodate()
@@ -728,12 +728,12 @@ counter = counter+1
 enddo
 !-------------------------------------------------------------
 
-$cmd_o2000 sync    ! wait for last save
+$cmd_panic_new sync    ! wait for last save
 
 set/midas output=logonly
 
     ! add last file to image catalog
-$cmd_o2000 last ! writes last filename in file geirsLstFile
+$cmd_panic_new last ! writes last filename in file geirsLstFile
     ! writes last filename in keyword pathname_ima
 write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
     ! add file to icat
@@ -765,7 +765,7 @@ write/out
 	
     close/file {file_id_4(1)}
 
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
 
 exit:
 

@@ -134,9 +134,9 @@ define/local loop/i/1/1
 
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-  $rm /disk-a/o2k/tmp/geirsLstAbort 
+  $rm {geirslstabort} 
 endif
 
 
@@ -152,10 +152,10 @@ write/out
 set/format I1
 
 	! set camera parameters
-$cmd_o2000 crep 1				! 1 image
-$cmd_o2000 itime 1				! 1 second
-$cmd_o2000 object test images
-$cmd_o2000 sync
+$cmd_panic_new crep 1				! 1 image
+$cmd_panic_new itime 1				! 1 second
+$cmd_panic_new object test images
+$cmd_panic_new sync
 
 lamp = start_lamp					! initialize lamp
 lamp_level = start_level				! initialize lamp level
@@ -184,30 +184,30 @@ do loop = 1 5					! 5 loops is max
   wait/secs 1					! wait 1 second for lamp
 
 
-  $cmd_o2000 read
+  $cmd_panic_new read
 
-  $cmd_o2000 sync
+  $cmd_panic_new sync
 
 
 	! abort check: 0=does not exist ; 1=abort file exists
-  abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+  abort_check = m$exist("{geirslstabort}")
   if abort_check .eq. 1 then
     write/out "Program is aborted..."
-    $rm /disk-a/o2k/tmp/geirsLstAbort
+    $rm {geirslstabort}
     return
   endif
 
 
-  $cmd_o2000 save -c testframe.fits
+  $cmd_panic_new save -c testframe.fits
 
-  $cmd_o2000 sync
+  $cmd_panic_new sync
 
 
   $ flats ALLOFF				! turns all lamps off
  
 
 	! get file name and path	
-  $cmd_o2000 last	! writes last filename in file geirsLstFile
+  $cmd_panic_new last	! writes last filename in file geirsLstFile
 	! writes last filename in keyword pathname_ima
   write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
 
@@ -348,9 +348,9 @@ repetitions = countlevel/best_level
 
 
 	! write initial image descriptors
-$cmd_o2000 counter DITH_NO clear	! clear dither counter 
-$cmd_o2000 counter POINT_NO clear	! clear pointing no 
-$cmd_o2000 counter EXPO_NO clear	! clear exposure counter-->EXPO_NO=1
+$cmd_panic_new counter DITH_NO clear	! clear dither counter 
+$cmd_panic_new counter POINT_NO clear	! clear pointing no 
+$cmd_panic_new counter EXPO_NO clear	! clear exposure counter-->EXPO_NO=1
 
 
 
@@ -358,14 +358,14 @@ $cmd_o2000 counter EXPO_NO clear	! clear exposure counter-->EXPO_NO=1
 set/format I1
 
 if image_flag .eq. 0 then			! one integrated image
-  $cmd_o2000 crep {repetitions}
+  $cmd_panic_new crep {repetitions}
 else					! save single images
-  $cmd_o2000 crep 1
+  $cmd_panic_new crep 1
 endif
 
 
-$cmd_o2000 itime {single_time}
-$cmd_o2000 sync
+$cmd_panic_new itime {single_time}
+$cmd_panic_new sync
 
 
 
@@ -374,19 +374,19 @@ $cmd_o2000 sync
 if image_flag .eq. 0 then			! one integrated image
 
 	! write object
-  $cmd_o2000 object {P3}
+  $cmd_panic_new object {P3}
 
-  $cmd_o2000 read
+  $cmd_panic_new read
 
-  $cmd_o2000 sync read
+  $cmd_panic_new sync read
 
-  $cmd_o2000 save -i
+  $cmd_panic_new save -i
 
-  $cmd_o2000 sync
+  $cmd_panic_new sync
 
 
 	! get file name and path	
-  $cmd_o2000 last	! writes last filename in file geirsLstFile
+  $cmd_panic_new last	! writes last filename in file geirsLstFile
 	! writes last filename in keyword pathname_ima
   write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
 
@@ -415,34 +415,34 @@ else					! save single images
     write/out "Taking flatfield {loop} of {repetitions}..."	
 
 	! write object
-    $cmd_o2000 object {P3}:{loop}/{repetitions}
+    $cmd_panic_new object {P3}:{loop}/{repetitions}
 
-    $cmd_o2000 read
+    $cmd_panic_new read
 
-    $cmd_o2000 sync
+    $cmd_panic_new sync
 
 
 	! abort check: 0=does not exist ; 1=abort file exists
-    abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+    abort_check = m$exist("{geirslstabort}")
     if abort_check .eq. 1 then
       write/out "Program is aborted..."
-      $rm /disk-a/o2k/tmp/geirsLstAbort
+      $rm {geirslstabort}
       return
     endif
 
  
-   $cmd_o2000 save -i
+   $cmd_panic_new save -i
 
 
   enddo
 !-------------------------------------------------------------
 
  
-  $cmd_o2000 sync
+  $cmd_panic_new sync
 
 
 	! get file name and path	
-  $cmd_o2000 last	! writes last filename in file geirsLstFile
+  $cmd_panic_new last	! writes last filename in file geirsLstFile
 	! writes last filename in keyword pathname_ima
   write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
 

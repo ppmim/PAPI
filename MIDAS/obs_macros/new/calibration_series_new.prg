@@ -68,9 +68,9 @@ endif
 define/local abort_check/i/1/1 0	! for return value of abort-file-check
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-  $rm /disk-a/o2k/tmp/geirsLstAbort 
+  $rm {geirslstabort} 
 endif
 
 if P6(1:3) .eq. "LOG" then
@@ -90,49 +90,49 @@ set/format I1 F5.1
 
 ! setup camera
 
-$cmd_o2000 object {P1}
+$cmd_panic_new object {P1}
 
-$cmd_o2000 counter DITH_NO clear	! clear dither counter 
-$cmd_o2000 counter POINT_NO clear	! clear pointing no 
-$cmd_o2000 counter EXPO_NO clear	! clear exposure counter-->EXPO_NO=1
+$cmd_panic_new counter DITH_NO clear	! clear dither counter 
+$cmd_panic_new counter POINT_NO clear	! clear pointing no 
+$cmd_panic_new counter EXPO_NO clear	! clear exposure counter-->EXPO_NO=1
 
 do i = 1 {n_exp}
    if P8(1:3) .ne. "no_"  then
 	write/out "            now resetting exposure time to avoid fifo-overflow ..."
 	write/out "            next 2 images are dummies and will not be saved!"
-      $cmd_o2000 itime 0
-	$cmd_o2000 crep 1
-      $cmd_o2000 sync
-      $cmd_o2000 read
-      $cmd_o2000 sync
-      $cmd_o2000 read
-      $cmd_o2000 sync
+      $cmd_panic_new itime 0
+	$cmd_panic_new crep 1
+      $cmd_panic_new sync
+      $cmd_panic_new read
+      $cmd_panic_new sync
+      $cmd_panic_new read
+      $cmd_panic_new sync
    endif
 
    true_time = m$nint(exp_time*10.)/10.
 
-   $cmd_o2000 itime {true_time}
-   $cmd_o2000 crep {coadds}
-   $cmd_o2000 sync
+   $cmd_panic_new itime {true_time}
+   $cmd_panic_new crep {coadds}
+   $cmd_panic_new sync
    write/out "         Exposing step {i} with {exp_time}sec ..."
-   $cmd_o2000 read
-   $cmd_o2000 sync
+   $cmd_panic_new read
+   $cmd_panic_new sync
 		! abort check: 0=does not exist ; 1=abort file exists
-	abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+	abort_check = m$exist("{geirslstabort}")
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
-	  $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
-        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+	  $rm {geirslstabort} 	! remove file again
+        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
   	  goto exit
 	endif
 
    if coadds .eq. 1 then
-      $cmd_o2000 save
+      $cmd_panic_new save
    else
       if P7(1:1) .eq. "i" then
-         $cmd_o2000 save -i
+         $cmd_panic_new save -i
       else
-         $cmd_o2000 save
+         $cmd_panic_new save
       endif
    endif
 
@@ -148,9 +148,9 @@ do i = 1 {n_exp}
    endif
 enddo
 
-$cmd_o2000 sync
+$cmd_panic_new sync
 write/out "         calibration series finished ..."
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
 
 exit:
 return

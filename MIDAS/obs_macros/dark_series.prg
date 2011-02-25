@@ -18,8 +18,8 @@ write/out " "
 
 ! --- Taking darks ---
 
-$cmd_o2000 filter BLANK
-$cmd_o2000 sync
+$cmd_panic_new filter BLANK
+$cmd_panic_new sync
 
 write/out " Dark 1.6 s "
 o2k/calser dark1.6 = 1.6,1.6 10 5 0 i 

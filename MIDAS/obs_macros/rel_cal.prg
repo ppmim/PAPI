@@ -41,9 +41,9 @@ ndit = outputr(2)
 
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-  $rm /disk-a/o2k/tmp/geirsLstAbort 
+  $rm {geirslstabort} 
 endif
 
 ! telescope on first field
@@ -53,14 +53,14 @@ $ $TECS_SCRIPT/t_offset -8580 +8580 -
 if tel_return .lt. 0 then
   write/out "ERROR: Telescope signals error setting to first field ..."
   write/out "...the program is aborted"
-  $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
   goto ende
 endif	
 
 ! set image parameters
-$cmd_o2000 crep {ndit}
-$cmd_o2000 itime {dit}
-$cmd_o2000 sync
+$cmd_panic_new crep {ndit}
+$cmd_panic_new itime {dit}
+$cmd_panic_new sync
 
 define/local ix/i/1/1 0
 define/local iy/i/1/1 0
@@ -71,21 +71,21 @@ do iy = 1 3
    do ix = 1 3
 	write/out "Taking image ({ix},{iy})"
 	! write object
-	$cmd_o2000 object {P1} relcal {ix},{iy}
-	$cmd_o2000 read
-	$cmd_o2000 sync
+	$cmd_panic_new object {P1} relcal {ix},{iy}
+	$cmd_panic_new read
+	$cmd_panic_new sync
 	if ndit .gt. 1 then
-		$cmd_o2000 save -i
+		$cmd_panic_new save -i
 	else
-		$cmd_o2000 save
+		$cmd_panic_new save
 	endif
 
 	! abort check: 0=does not exist ; 1=abort file exists
-	abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+	abort_check = m$exist("{geirslstabort}")
 	if abort_check .eq. 1 then
 	   write/out "Program was aborted from GUI ..."	
-	   $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+	   $rm {geirslstabort} 	! remove file again
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
  	   goto ende
 	endif
       if ix .lt. 3 then
@@ -95,7 +95,7 @@ do iy = 1 3
          if tel_return .lt. 0 then
             write/out "ERROR: Telescope signals error offsetting in X to {ix}+1 ..."
             write/out "...the program is aborted"
-            $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+            $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
             goto ende
          endif	
 	endif
@@ -107,7 +107,7 @@ do iy = 1 3
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope signals error offsetting in Y to {iy}+1 ..."
          write/out "...the program is aborted"
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          goto ende
       endif	
    else
@@ -117,18 +117,18 @@ do iy = 1 3
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope signals error going back to origin ..."
          write/out "...the program is aborted"
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          goto ende
       endif	
    endif
 enddo
 
-$cmd_o2000 sync
+$cmd_panic_new sync
 
 write/out
 write/out "         calibration sequence done ..."
 write/out
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
 
 ende:
 return

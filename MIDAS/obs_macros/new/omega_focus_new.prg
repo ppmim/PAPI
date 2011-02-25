@@ -138,7 +138,7 @@ endif
 
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start focus !"
-   $ auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -377,7 +377,7 @@ if focusvalue .lt. 15000 .or. focusvalue .gt. 40000 then
   write/out "The estimated telescope focus of {focusvalue} is outside the valid range"
   write/out "focus limits of [15000,40000]! The program is aborted..."
   write/out
-  $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
   return
 endif
 
@@ -387,7 +387,7 @@ if stepsize .lt. 10 .or. stepsize .gt. 1000 then
   write/out "The focus steps of {stepsize} are outside the limits of [10,1000]"
   write/out "The stepsize is set to the default value of 200..."
   stepsize = 200
-  $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
 endif
 
 
@@ -440,9 +440,9 @@ write/out
 
     ! remove existing abort file
     ! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-  $rm /disk-a/o2k/tmp/geirsLstAbort 
+  $rm {geirslstabort} 
 endif
 
 
@@ -468,7 +468,7 @@ write/out
 write/out "First image taken at focus position: {first_focus} mm"
 
 
-$cmd_o2000 sync         ! wait until telescope processes are finished
+$cmd_panic_new sync         ! wait until telescope processes are finished
 
     ! first focus position
 $ $TECS_SCRIPT/t_afocus {first_focus} -
@@ -476,7 +476,7 @@ $ $TECS_SCRIPT/t_afocus {first_focus} -
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
          write/out "...the program is aborted"
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -484,14 +484,14 @@ wait/sec 10.    ' to ensure telescope focus is really set
 
     ! set the repetition parameter and integration time
 set/format I1
-$cmd_o2000 crep {repetition}
-$cmd_o2000 itime {int_time(2)}
-$cmd_o2000 sync
+$cmd_panic_new crep {repetition}
+$cmd_panic_new itime {int_time(2)}
+$cmd_panic_new sync
 
     ! initialize image descriptors
-$cmd_o2000 counter DITH_NO clear        ! set dither counter to 0
-$cmd_o2000 counter POINT_NO clear       ! set pointing no to 0
-$cmd_o2000 counter EXPO_NO clear        ! reset exposure counter  
+$cmd_panic_new counter DITH_NO clear        ! set dither counter to 0
+$cmd_panic_new counter POINT_NO clear       ! set pointing no to 0
+$cmd_panic_new counter EXPO_NO clear        ! reset exposure counter  
 
 
 
@@ -502,24 +502,24 @@ do loop = 1 {imagenumber} 1
     set/format f6.3
 
     ! telescope macro
-    $cmd_o2000 object focus: {loop} of {imagenumber}
+    $cmd_panic_new object focus: {loop} of {imagenumber}
     
-    $cmd_o2000 read
-    $cmd_o2000 sync
+    $cmd_panic_new read
+    $cmd_panic_new sync
 
         ! abort check: 0=does not exist ; 1=abort file exists
-    abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+    abort_check = m$exist("{geirslstabort}")
     if abort_check .eq. 1 then
       write/out "Program is aborted..." 
-      $rm /disk-a/o2k/tmp/geirsLstAbort     ! remove file again
-      $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+      $rm {geirslstabort}     ! remove file again
+      $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
       return
     endif
 
     if autoname_flag .eq. 0 then    
-      $cmd_o2000 save -i {current_name} ! file with specified name is saved
+      $cmd_panic_new save -i {current_name} ! file with specified name is saved
     else    
-      $cmd_o2000 save -i            ! file with name in GUI is saved
+      $cmd_panic_new save -i            ! file with name in GUI is saved
     endif
     
     
@@ -530,7 +530,7 @@ do loop = 1 {imagenumber} 1
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_dfocus signals an error..."
          write/out "...the program is aborted"
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -555,12 +555,12 @@ enddo
 
 write/keyword autoname_flag 2           ! 2-->autoname was used 
 
-$cmd_o2000 sync
+$cmd_panic_new sync
 
 write/out
 write/out "Taking of focus frames done..."
 write/out
-$auplay /disk-a/staff/GEIRS/SOUNDS/whistle.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
 
 
 endif   ! end of image taking 
@@ -621,7 +621,7 @@ write/key P1/c/1/80 {root_save}
     ! the names for the analysis have to be extracted now
 if autoname_flag .eq. 2 then
 
-  $cmd_o2000 last   ! writes last filename in file geirsLstFile
+  $cmd_panic_new last   ! writes last filename in file geirsLstFile
 
     ! writes last filename in keyword pathname_ima
   write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile  
@@ -1315,7 +1315,7 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
   write/out
   write/out
 
-  $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+  $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
   inquire/keyword move_check -
         "Adjust telescope focus to {bestfocus} (y/n)? [{move_check}]:" flush
   write/out
@@ -1340,7 +1340,7 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
          write/out "... could not set focus to best value!"
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -1350,6 +1350,6 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
   write/out
 exit:
 endif
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
 
 return

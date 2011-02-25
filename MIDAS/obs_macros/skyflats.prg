@@ -34,9 +34,12 @@ define/par P6 check C/A "Level check after each exposure [check/no_check] : "
 define/par P7 30000,45000 N/A "Saturation and monitoring level : "
 define/par P8 dusk C/A "Evening or morning twilight [dusk / dawn] : "
 
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
 if mid_session .ne. 32  then
    write/out "Please use OBSERVING (blue) MIDAS window to start skyflats !"
-   $ auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -44,9 +47,9 @@ endif
 define/local abort_check/i/1/1 0	! for return value of abort-file-check
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
-  $rm /disk-a/o2k/tmp/geirsLstAbort 
+  $rm {geirslstabort} 
 endif
 
 P6 = m$lower(P6)
@@ -70,28 +73,28 @@ define/local true_time/r/1/1 0.
 
 ! setup camera for test exposure
 
-$cmd_o2000 crep 1
-$cmd_o2000 object test {P1}
-$cmd_o2000 itime 0
-$cmd_o2000 itime -stdout | write/key min_time/r/1/1
-$cmd_o2000 sync
+$cmd_panic_new crep 1
+$cmd_panic_new object test {P1}
+$cmd_panic_new itime 0
+$cmd_panic_new itime -stdout | awk '{if(NR==1){print $1}}'| write/key min_time/r/1/1
+$cmd_panic_new sync
 
 if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
 
    testexp_1:
 
    ! abort check: 0=does not exist ; 1=abort file exists
-   abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+   abort_check = m$exist("{geirslstabort}")
    if abort_check .eq. 1 then
       write/out "Program is aborted..."
-	$auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
-	$rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
+	$play -q $GEIRS_DIR/SOUNDS/crash.au
+	$rm {geirslstabort} 	! remove file again
   	goto exit
    endif
 
-   $cmd_o2000 read
-   $cmd_o2000 sync
-   $cmd_o2000 median -stdout -raw | write/key curr_lev/r/1/2
+   $cmd_panic_new read
+   $cmd_panic_new sync
+   $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}'| write/key curr_lev/r/1/2
    act_lev = curr_lev(2)-curr_lev(1)
 
    if curr_lev(2) .ge. sat_lev(1) then
@@ -102,22 +105,22 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
          write/out
          write/out "         Sky much too bright. Detector saturated ! Abort ..."
          write/out
-         $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+         $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
          goto exit
       endif
    else
       set/format I1 F5.0
       write/out "         Minimum exposure time ({min_time}) --> {act_lev} cts/pixel"
-      exp_time = max_lev/act_lev*min_time
+      exp_time = max_lev/(act_lev*min_time)
       set/format F5.1
       write/out "         Sequence requires {exp_time}sec frame integration time."
       if exp_time .gt. 60 then
-         $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+         $play -q $GEIRS_DIR/SOUNDS/doorbell.au
          inquire/key answer "Proceed with exposure [y=def/n] ?"
          answer = m$lower(answer)
          if answer(1:1) .eq. "n"  then
             write/out "         Abort. No exposure taken!"
-            $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+            $play -q $GEIRS_DIR/SOUNDS/crash.au
            goto exit
          else
             write/out "         Taking flats now..."
@@ -132,53 +135,53 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
    endif
  
 ! take flatfield exposures
-   $auplay /disk-a/staff/GEIRS/SOUNDS/whistle.au
+   $play -q $GEIRS_DIR/SOUNDS/whistle.au
    set/format I1 F5.1
    
 
    do i = 1 {n_exp}
       true_time = m$nint(exp_time*10.)/10.
-      $cmd_o2000 object {P1}
-      $cmd_o2000 itime {true_time}
-      $cmd_o2000 crep {coadds}
-      $cmd_o2000 sync
-      $cmd_o2000 read
-      $cmd_o2000 sync
+      $cmd_panic_new object {P1}
+      $cmd_panic_new itime {true_time}
+      $cmd_panic_new crep {coadds}
+      $cmd_panic_new sync
+      $cmd_panic_new read
+      $cmd_panic_new sync
          ! abort check: 0=does not exist ; 1=abort file exists
-      abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+      abort_check = m$exist("{geirslstabort}")
       if abort_check .eq. 1 then
          write/out "Program is aborted..."
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
-         $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
+         $rm {geirslstabort} 	! remove file again
          goto exit
       endif
       if coadds .eq. 1 then
-         $cmd_o2000 save
+         $cmd_panic_new save
       else
-         $cmd_o2000 save -i
+         $cmd_panic_new save -i
       endif
 
       if i .lt. n_exp then
-         $cmd_o2000 tele relative {offset(1)} {offset(2)}
-         $cmd_o2000 sync tele
+         $cmd_panic_new tele relative {offset(1)} {offset(2)}
+         $cmd_panic_new sync tele
          if P6(1:2) .ne. "no" then
-            $cmd_o2000 object test {P1}
-            $cmd_o2000 itime 0
-            $cmd_o2000 crep 1
-            $cmd_o2000 sync
-            $cmd_o2000 read
-            $cmd_o2000 sync
-            $cmd_o2000 median -stdout -raw | write/key curr_lev/r/1/2
+            $cmd_panic_new object test {P1}
+            $cmd_panic_new itime 0
+            $cmd_panic_new crep 1
+            $cmd_panic_new sync
+            $cmd_panic_new read
+            $cmd_panic_new sync
+            $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}'| write/key curr_lev/r/1/2
             act_lev = curr_lev(2)-curr_lev(1)
-            exp_time = max_lev/act_lev*min_time
+            exp_time = max_lev/(act_lev*min_time)
             write/out "         Level = {act_lev} --> exposure time for frame {i}+1 = {exp_time}sec"
             if exp_time .gt. 60 then
-               $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+               $play -q $GEIRS_DIR/SOUNDS/doorbell.au
                inquire/key answer "Proceed with exposure [y=def/n] ?"
                answer = m$lower(answer)
                if answer(1:1) .eq. "n"  then
                   write/out "         Abort. No exposure taken!"
-                  $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+                  $play -q $GEIRS_DIR/SOUNDS/crash.au
                   goto exit
                else
                   write/out "         Taking next flat ..."
@@ -194,29 +197,29 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
    testexp_2:
 
    ! abort check: 0=does not exist ; 1=abort file exists
-   abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+   abort_check = m$exist("{geirslstabort}")
    if abort_check .eq. 1 then
       write/out "Program is aborted..."
-	$auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
-	$rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
+	$play -q $GEIRS_DIR/SOUNDS/crash.au
+	$rm {geirslstabort} 	! remove file again
   	goto exit
    endif
 
-   $cmd_o2000 read
-   $cmd_o2000 sync
-   $cmd_o2000 median -stdout -raw | write/key curr_lev/r/1/2
+   $cmd_panic_new read
+   $cmd_panic_new sync
+   $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}'| write/key curr_lev/r/1/2
    act_lev = curr_lev(2)-curr_lev(1)
 
    if curr_lev(2) .ge. sat_lev(1) then
       write/out
       write/out "         Sky already too bright. Detector saturated ! Abort ..."
       write/out
-      $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
       goto exit
    else
       set/format F5.0
       write/out "         Minimum exposure time ({min_time})--> {act_lev} cts/pixel"
-      exp_time = max_lev/act_lev*min_time
+      exp_time = max_lev/(act_lev*min_time)
       set/format F5.1
       write/out "         Sequence requires {exp_time}sec frame integration time."
       if loop .gt. 0  then
@@ -224,13 +227,13 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
             goto testexp_2
          else
             write/out "         Starting to take flats ..."
-            $auplay /disk-a/staff/GEIRS/SOUNDS/whistle.au
+            $play -q $GEIRS_DIR/SOUNDS/whistle.au
             goto take_data
          endif
       else
          loop = 1
          if exp_time .gt. start_time then
-            $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+            $play -q $GEIRS_DIR/SOUNDS/doorbell.au
             write/out
             try_again:
             write/out "         To stop loop type ABORT, else ..."
@@ -241,13 +244,13 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
                if answer(1:5) .eq. "ABORT"  then
                   write/out
                   write/out "         Flat sequence aborted by user !"
-                  $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+                  $play -q $GEIRS_DIR/SOUNDS/crash.au
                   goto exit
                else
                   i = m$tstno(answer)
                   if i .eq. 0 then
                      write/out "         Input error, must be number ..."
-                     $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+                     $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
                      goto try_again
                   endif
                   start_time = {answer}
@@ -255,7 +258,7 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
                      write/out "         Taking flats now..."
                   else
                      write/out "         Waiting until it is bright enough!"
-                     $auplay /disk-a/staff/GEIRS/SOUNDS/whistle.au
+                     $play -q $GEIRS_DIR/SOUNDS/whistle.au
                      goto testexp_2
                   endif
                endif
@@ -265,7 +268,7 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
                else
                   start_time = 60
                   write/out "         Waiting until it is bright enough!"
-                  $auplay /disk-a/staff/GEIRS/SOUNDS/whistle.au
+                  $play -q $GEIRS_DIR/SOUNDS/whistle.au
                   goto testexp_2
                endif
             endif
@@ -277,56 +280,56 @@ endif
 
    take_data:
 
-   $auplay /disk-a/staff/GEIRS/SOUNDS/whistle.au
+   $play -q $GEIRS_DIR/SOUNDS/whistle.au
    set/format i2 F5.1
 
    
 
    do i = 1 {n_exp}
       true_time = m$nint(exp_time*10.)/10.
-      $cmd_o2000 object {P1}
-      $cmd_o2000 itime {true_time}
-      $cmd_o2000 crep {coadds}
-      $cmd_o2000 sync
-      $cmd_o2000 read
-      $cmd_o2000 sync
+      $cmd_panic_new object {P1}
+      $cmd_panic_new itime {true_time}
+      $cmd_panic_new crep {coadds}
+      $cmd_panic_new sync
+      $cmd_panic_new read
+      $cmd_panic_new sync
          ! abort check: 0=does not exist ; 1=abort file exists
-      abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+      abort_check = m$exist("{geirslstabort}")
       if abort_check .eq. 1 then
          write/out "Program is aborted..."
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
-         $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
+         $rm {geirslstabort} 	! remove file again
          goto exit
       endif
       if coadds .eq. 1 then
-         $cmd_o2000 save
+         $cmd_panic_new save
       else
-         $cmd_o2000 save -i
+         $cmd_panic_new save -i
       endif
 
       if i .lt. n_exp then
-         $cmd_o2000 tele relative {offset(1)} {offset(2)}
-         $cmd_o2000 sync tele
+         $cmd_panic_new tele relative {offset(1)} {offset(2)}
+         $cmd_panic_new sync tele
          if P6(1:2) .ne. "no" then
-            $cmd_o2000 object test {P1}
-            $cmd_o2000 itime 0
-            $cmd_o2000 crep 1
-            $cmd_o2000 sync
-            $cmd_o2000 read
-            $cmd_o2000 sync
-            $cmd_o2000 median -stdout -raw | write/key curr_lev/r/1/2
+            $cmd_panic_new object test {P1}
+            $cmd_panic_new itime 0
+            $cmd_panic_new crep 1
+            $cmd_panic_new sync
+            $cmd_panic_new read
+            $cmd_panic_new sync
+            $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}' | write/key curr_lev/r/1/2
             act_lev = curr_lev(2)-curr_lev(1)
-            exp_time = max_lev/act_lev*min_time
+            exp_time = max_lev/(act_lev*min_time)
             if curr_lev(2) .gt. sat_lev(1) then
                write/out
                write/out "         It is now too bright. Sequence aborted ..."
-               $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+               $play -q $GEIRS_DIR/SOUNDS/crash.au
                goto exit
             endif
             if exp_time .lt. min_time then
                write/out
                write/out "         It is now too bright. Sequence aborted ..."
-               $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+               $play -q $GEIRS_DIR/SOUNDS/crash.au
                goto exit
             else
                write/out "         Level = {act_lev} --> exposure time adjusted to {exp_time}sec for frame {i}+1."
@@ -337,7 +340,7 @@ endif
 endif
 
 write/out  "         All done ..."
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 return

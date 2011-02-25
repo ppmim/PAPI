@@ -61,7 +61,7 @@ if max_signal .gt. {ccd_para(4)} then
    write/out "The star seems to be saturated!"
    write/out "No log entry possible!"
    write/out
-   $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+   $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
    goto exit
 endif
 

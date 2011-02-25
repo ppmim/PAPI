@@ -46,26 +46,33 @@ define/local curr_level/r/1/2 0,0
 define/local diff_level/r/1/1 0
 define/local saturation/r/1/1 {P8}
 
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
 lamp(2) = lamp(2) - 1
+
+write/out "GEIRSLSTABORT = {geirslstabort}"
 
 define/local abort_check/i/1/1 0	! for return value of abort-file-check
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
-abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+abort_check = m$exist("{geirslstabort}")
+
+
 if abort_check .eq. 1 then
-  $rm /disk-a/o2k/tmp/geirsLstAbort 
+  $rm {geirslstabort}
 endif
 
-$ /mpiwork/caha/bin/ffltest | write/key i
+$ $CA_FFLTEST | write/key i
 
 if i .eq. 1 then
    write/out "GUI for flatfield lamps is running. Please shut it down to run this macro."
-   $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 if i .eq. 2 then
    write/out "Error message from flatfield lamps. Please contact staff."
-   $auplay /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -77,36 +84,36 @@ endif
 set/format i1
 
 if lamp(1) .eq. 5  then
-   $flats L{lamp(1)} on {lamp(2)}
+   $ $FLAT_COMMAND L{lamp(1)} on {lamp(2)}
    lamp(2) = lamp(2) + 1
    write/out "         Using lamp 5 with {lamp(2)}W"
 else
-   $flats L{lamp(1)} on
+   $ $FLAT_COMMAND L{lamp(1)} on
    write/out "         Using lamp {lamp(1)}"
 endif
 
 wait/sec 2
 
-$cmd_o2000 itime {exp_time}
-$cmd_o2000 crep {coadds}
-$cmd_o2000 object {P1} lamp on
-$cmd_o2000 sync
+$cmd_panic_new itime {exp_time}
+$cmd_panic_new crep {coadds}
+$cmd_panic_new object {P1} lamp on
+$cmd_panic_new sync
 
 do i = 1 {n_ima}
    write/out "         Taking image {i} with lamp on ..."
-   $cmd_o2000 read
-   $cmd_o2000 sync
+   $cmd_panic_new read
+   $cmd_panic_new sync
 		! abort check: 0=does not exist ; 1=abort file exists
-	abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+	abort_check = m$exist("{geirslstabort}")
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
-	  $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
-        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+	  $rm {geirslstabort} 	! remove file again
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
 	endif
 
    if i .eq. 1  then
-      $cmd_o2000 median -stdout -raw | write/key curr_level/r/1/2
+      $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}'| write/key curr_level/r/1/2
       act_level = curr_level(2)-curr_level(1)
       diff_level = act_level
       if curr_level(1) .gt. 5000  then
@@ -114,7 +121,7 @@ do i = 1 {n_ima}
          write/out "         Image saturated. Sequence aborted !"
          write/out "         Level = {curr_level(2)}!"
          write/out
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif
       if act_level .gt. saturation  then
@@ -122,56 +129,56 @@ do i = 1 {n_ima}
          write/out "         Image saturated. Sequence aborted !"
          write/out "         Level = {diff_level}!"
          write/out
-         $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       else
          write/out "         Level of images with lamp on = {act_level} counts"
       endif
    endif
    if save(1:1) .eq. "s" then
-      $cmd_o2000 save
+      $cmd_panic_new save
    else
-      $cmd_o2000 save -i
+      $cmd_panic_new save -i
    endif
 enddo
 
-$flats ALLOFF
+$ $FLAT_COMMAND ALLOFF
 wait/sec 10
 
-$cmd_o2000 object {P1} lamp off
-$cmd_o2000 sync
+$cmd_panic_new object {P1} lamp off
+$cmd_panic_new sync
 
 do i = 1 {n_ima}
    write/out "         Taking image {i} with lamp off ..."
-   $cmd_o2000 read
-   $cmd_o2000 sync
+   $cmd_panic_new read
+   $cmd_panic_new sync
 
 		! abort check: 0=does not exist ; 1=abort file exists
-	abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+	abort_check = m$exist("{geirslstabort}")
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
-	  $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
-        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+	  $rm {geirslstabort}	! remove file again
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
 	endif
 
 
    if save(1:1) .eq. "s" then
-      $cmd_o2000 save
+      $cmd_panic_new save
    else
-      $cmd_o2000 save -i
+      $cmd_panic_new save -i
    endif
    if i .eq. 1  then
-      $cmd_o2000 median -stdout -raw | write/key curr_level/r/1/2
+      $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}'| write/key curr_level/r/1/2
       act_level = curr_level(2)-curr_level(1)
       diff_level = diff_level - act_level
       write/out "         Level of images with lamp off = {act_level} counts"
       write/out "         Level difference (on - off) = {diff_level} counts"
    endif
 enddo
-$cmd_o2000 sync
+$cmd_panic_new sync
 write/out "         done ..."
-$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 return
