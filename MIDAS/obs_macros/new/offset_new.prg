@@ -80,8 +80,8 @@ inquire/key move "move by hand or automatically [def]? [h/a]"
 
 if move .eq. "a" then
     write/out selecting xy coord system, offsetting the telescope ...
-    $ $TECS_SCRIPT/t_coord_system  xy
-    $ $TECS_SCRIPT/t_offset {off(1)} {off(2)}
+    $ {tecs_script}/t_coord_system  xy
+    $ {tecs_script}/t_offset {off(1)} {off(2)}
     WRITE/KEYWORD earendil/I/1/2 {P1},{P2}
 endif
 

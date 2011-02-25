@@ -10,6 +10,6 @@ write/key DETECTOR/C/1/8 OMEGA2k
 
 
 set/midas prompt=QUICK
-write/key mid_session/i/1/1 32
+write/key mid_session/i/1/1 31
 
 return

@@ -47,7 +47,7 @@ if abort_check .eq. 1 then
 endif
 
 ! telescope on first field
-$ $TECS_SCRIPT/t_offset -8580 +8580 -
+$ {tecs_script}/t_offset -8580 +8580 -
 | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
 if tel_return .lt. 0 then
@@ -89,7 +89,7 @@ do iy = 1 3
  	   goto ende
 	endif
       if ix .lt. 3 then
-	   $ $TECS_SCRIPT/t_offset 8580 0 -
+	   $ {tecs_script}/t_offset 8580 0 -
            | awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
          if tel_return .lt. 0 then
@@ -101,7 +101,7 @@ do iy = 1 3
 	endif
    enddo
    if iy .lt. 3 then
-      $ $TECS_SCRIPT/t_offset -17160 -8580 -
+      $ {tecs_script}/t_offset -17160 -8580 -
             | awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
       if tel_return .lt. 0 then
@@ -111,7 +111,7 @@ do iy = 1 3
          goto ende
       endif	
    else
-	$ $TECS_SCRIPT/t_offset -8580 +8580 -
+	$ {tecs_script}/t_offset -8580 +8580 -
             | awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
       if tel_return .lt. 0 then

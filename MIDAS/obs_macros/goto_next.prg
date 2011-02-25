@@ -74,7 +74,7 @@ write/out "Repetitions {repetitions} / dither position {n_dither}"
 write/out "Offset {act_pos(1)} / {act_pos(2)} 1/10 arcsec"
 write/out
 
-$ $TECS_SCRIPT/t_coord_system xy
-$ $TECS_SCRIPT/t_offset {act_pos(1)} {act_pos(2)}
+$ {tecs_script}/t_coord_system xy
+$ {tecs_script}/t_offset {act_pos(1)} {act_pos(2)}
 
 return

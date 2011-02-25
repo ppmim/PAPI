@@ -448,11 +448,11 @@ if tel_flag(1:2) .eq. "AQ"  then
       set/format I5     ! for telescope command
 
     ! offset telescope
-    $ $TECS_SCRIPT/caget -t mpia_t3_delta | write/keyword deltazero(1)
-    $ $TECS_SCRIPT/caget -t mpia_t3_alpha | write/keyword alphazero(1)
+    $ {tecs_script}/caget -t mpia_t3_delta | write/keyword deltazero(1)
+    $ {tecs_script}/caget -t mpia_t3_alpha | write/keyword alphazero(1)
     
-      $ $TECS_SCRIPT/t_coord_system xy 
-      $ $TECS_SCRIPT/t_offset {x_move} {y_move} -
+      $ {tecs_script}/t_coord_system xy 
+      $ {tecs_script}/t_offset {x_move} {y_move} -
        | awk '{if(NR==1){print $1}}' | write/keyword tel_return ! pipe return
        
       
@@ -531,7 +531,7 @@ $cmd_panic_new counter EXPO_NO clear        ! clear exposure counter-->EXPO_NO=1
 
 
     ! set telescope in XY-mode
-$ $TECS_SCRIPT/t_coord_system xy
+$ {tecs_script}/t_coord_system xy
 
     ! set single image parameters
 set/format I1
@@ -570,7 +570,7 @@ x_corroff = x_offset({counter}) + x_autooff
 y_corroff = y_offset({counter}) + y_autooff     
 
 
-$ $TECS_SCRIPT/t_offset {x_corroff} {y_corroff} -
+$ {tecs_script}/t_offset {x_corroff} {y_corroff} -
  | awk '{if(NR==1){print $1}}' | write/keyword tel_return   ! pipe return
       
 refstarx = refstarx + x_corroff / 0.44942 / 10.
@@ -675,7 +675,7 @@ if counter .eq. 20 then
         ! set telescope back to first position of last dither pattern
         ! calculated for integer pixel offsets
         
-    $ $TECS_SCRIPT/t_offset {X_back} {Y_back} -
+    $ {tecs_script}/t_offset {X_back} {Y_back} -
      | awk '{if(NR==1){print $1}}' | write/keyword tel_return
     !AK
     refstarx = refstarx + x_back / 0.44942 /10
@@ -692,7 +692,7 @@ if counter .eq. 20 then
     endif   
           
         ! set telescope to next starting position
-    $ $TECS_SCRIPT/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
+    $ {tecs_script}/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
     | awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
     refstarx = refstarx + x_repetition({pattern_reps}) / 0.44942 / 10.

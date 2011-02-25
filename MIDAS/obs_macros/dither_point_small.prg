@@ -352,8 +352,8 @@ if tel_flag(1:2) .eq. "AQ"  then
       set/format I5 	! for telescope command
 
 	! offset telescope
-      $ $TECS_SCRIPT/t_coord_system xy 
-      $ $TECS_SCRIPT/t_offset {x_move} {y_move} -
+      $ {tecs_script}/t_coord_system xy 
+      $ {tecs_script}/t_offset {x_move} {y_move} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
       if tel_return .ne. 0 then
@@ -385,7 +385,7 @@ $cmd_panic_new counter EXPO_NO clear		! clear exposure counter-->EXPO_NO=1
 
 
 	! set telescope in XY-mode
-$ $TECS_SCRIPT/t_coord_system xy
+$ {tecs_script}/t_coord_system xy
 
 	! set single image parameters
 set/format I1
@@ -409,7 +409,7 @@ $cmd_panic_new object {P3}:{loop}/{rep_image}
 set/format I5 	! for telescope command
 
 	! offset telescope
-$ $TECS_SCRIPT/t_offset {x_offset({counter})} {y_offset({counter})} -
+$ {tecs_script}/t_offset {x_offset({counter})} {y_offset({counter})} -
 | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
 if tel_return .ne. 0 then
@@ -463,7 +463,7 @@ if counter .eq. 20 then
 	set/format I5
 		! set telescope back to first position of last dither pattern
 		! calculated for integer pixel offsets
-	$ $TECS_SCRIPT/t_offset {X_back} {Y_back} -
+	$ {tecs_script}/t_offset {X_back} {Y_back} -
 	 | awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
 	if tel_return .ne. 0 then
@@ -477,7 +477,7 @@ if counter .eq. 20 then
 	endif	
 	
 		! set telescope to next starting position
-	$ $TECS_SCRIPT/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
+	$ {tecs_script}/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
 	| awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
 	if tel_return .ne. 0 then

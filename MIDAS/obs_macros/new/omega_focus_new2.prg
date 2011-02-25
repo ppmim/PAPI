@@ -392,7 +392,7 @@ write/out "First image taken at focus position: {first_focus} mm"
 $cmd_panic_new sync         ! wait until telescope processes are finished
 
     ! first focus position
-$ $TECS_SCRIPT/t_afocus {first_focus} -
+$ {tecs_script}/t_afocus {first_focus} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
@@ -443,7 +443,7 @@ do loop = 1 {imagenumber} 1
     
     set/format f5.3
 
-    $ $TECS_SCRIPT/t_dfocus {real_step} -
+    $ {tecs_script}/t_dfocus {real_step} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_dfocus signals an error..."
@@ -1206,7 +1206,7 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
 
   bestfocus = bestfocus/1000    ! in millimeters
 
-  $ $TECS_SCRIPT/t_afocus {bestfocus} -
+  $ {tecs_script}/t_afocus {bestfocus} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."

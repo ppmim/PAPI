@@ -146,7 +146,7 @@ if tel_flag(1:2) .ne. "AQ"  then
       write/out "Flag for current telescope position (parameter 4b) has to be AQ or PREV"
       write/out "   ... abort    "
       write/out
-      $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
       goto exit
    endif
 endif	
@@ -170,6 +170,16 @@ write/out "Telescope movements are logged into file tel_pos_{isodate}.log"
 write/out
 
 set/format
+
+!!!!!!!!!!!!!!!!!!!!!! ENVIRONMENT VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
+define/local tecs_script/c/1/256  " "
+tecs_script = M$SYMBOL("TECS_SCRIPT")
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
@@ -351,14 +361,14 @@ if tel_flag(1:2) .eq. "AQ"  then
       set/format I5 	! for telescope command
 
 	! offset telescope
-      $ $TECS_SCRIPT/t_coord_system xy 
-      $ $TECS_SCRIPT/t_offset {x_move} {y_move} -
+      $ {tecs_script}/t_coord_system xy 
+      $ {tecs_script}/t_offset {x_move} {y_move} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
       if tel_return .ne. 0 then
          write/out "ERROR: Telescope return value for t_offset signals an error..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       else
          isodate = m$isodate()
@@ -384,7 +394,7 @@ $cmd_panic_new counter EXPO_NO clear		! clear exposure counter-->EXPO_NO=1
 
 
 	! set telescope in XY-mode
-$ $TECS_SCRIPT/t_coord_system xy
+$ {tecs_script}/t_coord_system xy
 
 	! set single image parameters
 set/format I1
@@ -408,13 +418,13 @@ $cmd_panic_new object {P3}:{loop}/{rep_image}
 set/format I5 	! for telescope command
 
 	! offset telescope
-$ $TECS_SCRIPT/t_offset {x_offset({counter})} {y_offset({counter})} -
+$ {tecs_script}/t_offset {x_offset({counter})} {y_offset({counter})} -
 | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
 if tel_return .ne. 0 then
   write/out "ERROR: Telescope return value for t_offset signals an error..."
   write/out "...the program is aborted"
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 else
   isodate = m$isodate()
@@ -431,22 +441,26 @@ abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
   write/out "Program is aborted..."
   $rm {geirslstabort}
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 endif
 
+write/out "VOY POR AQUI (a)"
 
 	! add file to image catalog
 if loop .ge. 2 then
-  set/midas output=logonly
-  $cmd_panic_new last	! writes last filename in file geirsLstFile
-	! writes last filename in keyword pathname_ima
-  write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
+  !set/midas output=logonly
+  write/out "VOY POR AQUI (B1)"
+  $cmd_panic_new last	| awk '{print $2}' | write/keyword pathname_ima 
 	! add file to icat
+  write/out "VOY POR AQUI (B2)"      
   add/icat {icatalog} {pathname_ima}
+    write/out "VOY POR AQUI (B3)"
+  
   set/midas output=yes
 endif
 
+write/out "VOY POR AQUI (c)"
 
 $cmd_panic_new save -i
 
@@ -462,13 +476,13 @@ if counter .eq. 20 then
 	set/format I5
 		! set telescope back to first position of last dither pattern
 		! calculated for integer pixel offsets
-	$ $TECS_SCRIPT/t_offset {X_back} {Y_back} -
+	$ {tecs_script}/t_offset {X_back} {Y_back} -
 	 | awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
 	if tel_return .ne. 0 then
   	  write/out "ERROR: Telescope return value for t_offset signals an error..."
   	  write/out "...the program is aborted"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
         else
           isodate = m$isodate()
@@ -476,13 +490,13 @@ if counter .eq. 20 then
 	endif	
 	
 		! set telescope to next starting position
-	$ $TECS_SCRIPT/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
+	$ {tecs_script}/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
 	| awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
 	if tel_return .ne. 0 then
   	  write/out "ERROR: Telescope return value for t_offset signals an error..."
   	  write/out "...the program is aborted"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
         else
           isodate = m$isodate()
@@ -514,9 +528,7 @@ $cmd_panic_new sync    ! wait for last save
 set/midas output=logonly
 
 	! add last file to image catalog
-$cmd_panic_new last	! writes last filename in file geirsLstFile
-	! writes last filename in keyword pathname_ima
-write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
+$cmd_panic_new last | awk '{print $2}' | write/keyword pathname_ima 
 	! add file to icat
 add/icat {icatalog} {pathname_ima}
 
@@ -532,7 +544,7 @@ write/file {fctrl(1)} {isodate} done
 write/out
 write/out "All images for pointing are finished..." 
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 

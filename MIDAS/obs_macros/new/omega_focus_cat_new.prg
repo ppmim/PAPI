@@ -365,10 +365,10 @@ DEFINE/LOC ra/C/1/60 " "
 DEFINE/LOC dec/C/1/60 " "
 COPY/DKEY /disk-a/o2k/focus/{P7}.tbl RA ra
 COPY/DKEY /disk-a/o2k/focus/{P7}.tbl DEC dec
-!   $ $TECS_SCRIPT/caget -t mpia_t3_delta | write/keyword deltazero(1)Maybe this one will come in handy...
-!    $ $TECS_SCRIPT/caget -t mpia_t3_alpha | write/keyword alphazero(1)
+!   $ {tecs_script}/caget -t mpia_t3_delta | write/keyword deltazero(1)Maybe this one will come in handy...
+!    $ {tecs_script}/caget -t mpia_t3_alpha | write/keyword alphazero(1)
 
-$ $TECS_SCRIPT/t_posit {ra} {dec} 2000.0
+$ {tecs_script}/t_posit {ra} {dec} 2000.0
 ! müsste das nicht die aktuelle Zeit sein??
 write/out "Telescope is moved to coordinates of the catalogue {P7}: {ra} , {dec} "
 
@@ -409,7 +409,7 @@ write/out "First image taken at focus position: {first_focus} mm"
 $cmd_panic_new sync         ! wait until telescope processes are finished
 
     ! first focus position
-$ $TECS_SCRIPT/t_afocus {first_focus} -
+$ {tecs_script}/t_afocus {first_focus} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
@@ -463,7 +463,7 @@ do loop = 1 {imagenumber} 1
     
     set/format f5.3
 
-    $ $TECS_SCRIPT/t_dfocus {real_step} -
+    $ {tecs_script}/t_dfocus {real_step} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_dfocus signals an error..."
@@ -1088,7 +1088,7 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
 
   bestfocus = bestfocus/1000    ! in millimeters
 
-  $ $TECS_SCRIPT/t_afocus {bestfocus} -
+  $ {tecs_script}/t_afocus {bestfocus} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."

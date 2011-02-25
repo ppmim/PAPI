@@ -138,11 +138,26 @@ endif
 
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start focus !"
-   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 
 define/local file_check/i/1/1 0
+
+!!!!!!!!!!!!!!!!!!!!!! ENVIRONMENT VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
+define/local tecs_script/c/1/256  " "
+tecs_script = M$SYMBOL("TECS_SCRIPT")
+
+define/local panic_home/c/1/256  " "
+panic_home = M$SYMBOL("PANIC_HOME")
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 file_check =  m$exist("/disk-a/o2k/tmp/offset_ok.dat")
 if file_check .eq. 1 then
@@ -305,11 +320,9 @@ if P1 .eq. "prompt" then
 
     write/out "Specify the following input parameters:"
 
-    inquire/keyword focusvalue "Enter your estimated focus value in microns-
-      [{focusvalue}]:"
+    inquire/keyword focusvalue "Enter your estimated focus value in microns-[{focusvalue}]:"
 
-    inquire/keyword imagenumber "Enter number of images you want to take-
-     (5, 7, 9, ...)  [{imagenumber}]:"
+    inquire/keyword imagenumber "Enter number of images you want to take-(5, 7, 9, ...)  [{imagenumber}]:"
 
     inquire/keyword stepsize "Enter the stepsize in microns [{stepsize}]:"
 
@@ -317,8 +330,7 @@ if P1 .eq. "prompt" then
 
     inquire/keyword P2 "Enter the index of the first image [{P2}]:"
 
-    inquire/keyword int_time/r/1/1 "Enter the total integration time per image (secs)-
-     [{int_time(1)}]:"
+    inquire/keyword int_time/r/1/1 "Enter the total integration time per image (secs)-[{int_time(1)}]:"
 
     inquire/keyword int_time/r/2/1 "Enter the integration time for a single frame -
     (secs) [{int_time(2)}]:"
@@ -385,7 +397,7 @@ if focusvalue .lt. 15000 .or. focusvalue .gt. 40000 then
   write/out "The estimated telescope focus of {focusvalue} is outside the valid range"
   write/out "focus limits of [15000,40000]! The program is aborted..."
   write/out
-  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
   return
 endif
 
@@ -395,7 +407,7 @@ if stepsize .lt. 10 .or. stepsize .gt. 1000 then
   write/out "The focus steps of {stepsize} are outside the limits of [10,1000]"
   write/out "The stepsize is set to the default value of 200..."
   stepsize = 200
-  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
 endif
 
 
@@ -479,12 +491,12 @@ write/out "First image taken at focus position: {first_focus} mm"
 $cmd_panic_new sync         ! wait until telescope processes are finished
 
     ! first focus position
-$ $TECS_SCRIPT/t_afocus {first_focus} -
+$ {tecs_script}/t_afocus {first_focus} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -520,7 +532,7 @@ do loop = 1 {imagenumber} 1
     if abort_check .eq. 1 then
       write/out "Program is aborted..." 
       $rm {geirslstabort}     ! remove file again
-      $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+      $play -q $GEIRS_DIR/SOUNDS/crash.au
       return
     endif
 
@@ -533,12 +545,12 @@ do loop = 1 {imagenumber} 1
     
     set/format f5.3
 
-    $ $TECS_SCRIPT/t_dfocus {real_step} -
+    $ {tecs_script}/t_dfocus {real_step} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_dfocus signals an error..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -568,7 +580,7 @@ $cmd_panic_new sync
 write/out
 write/out "Taking of focus frames done..."
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+$play -q $GEIRS_DIR/SOUNDS/whistle.au
 
 
 endif   ! end of image taking 
@@ -629,10 +641,12 @@ write/key P1/c/1/80 {root_save}
     ! the names for the analysis have to be extracted now
 if autoname_flag .eq. 2 then
 
-  $cmd_panic_new last   ! writes last filename in file geirsLstFile
+  !$cmd_panic_new last   ! writes last filename in file geirsLstFile
 
     ! writes last filename in keyword pathname_ima
-  write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile  
+  !write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile  
+
+  $cmd_panic_new last | awk '{print $2}' | write/keyword pathname_ima  
 
     ! get position of last / in patname_ima
   slash_pos = m$indexb(pathname_ima,"/")
@@ -1323,7 +1337,7 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
   write/out
   write/out
 
-  $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+  $play -q $GEIRS_DIR/SOUNDS/doorbell.au
   inquire/keyword move_check -
         "Adjust telescope focus to {bestfocus} (y/n)? [{move_check}]:" flush
   write/out
@@ -1343,12 +1357,13 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
 
   bestfocus = bestfocus/1000    ! in millimeters
 
-  $ $TECS_SCRIPT/t_afocus {bestfocus} -
+  
+  $ {tecs_script}/t_afocus {bestfocus} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! pipe return
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
          write/out "... could not set focus to best value!"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -1358,6 +1373,6 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
   write/out
 exit:
 endif
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 return

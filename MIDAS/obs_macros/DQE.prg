@@ -112,7 +112,7 @@ ans = m$upper(ans)
 
 if ans(1:1) .eq. "Y"  then
    ! telescope to reference position (R) via start (S)
-   $ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
+   $ {tecs_script}/t_posit {abs_RA} {abs_DEC} 2000.0
       $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
    inquire/key ans "All set with telescope centered on start position [no] ?"
    ans = m$upper(ans)
@@ -122,7 +122,7 @@ if ans(1:1) .eq. "Y"  then
       Write/out
       goto ende
    endif
-   $ $TECS_SCRIPT/t_offset +{ref_off(1)} -{ref_off(2)}     ! position of first image
+   $ {tecs_script}/t_offset +{ref_off(1)} -{ref_off(2)}     ! position of first image
    wait/secs {tel_wait}
 else
    write/out
@@ -158,7 +158,7 @@ test_jump = first_x + first_y
 if test_jump .gt. 2 then
    jump_x = (first_x - 1) * x_step
    jump_y = (first_y - 1) * y_step
-   $ $TECS_SCRIPT/t_offset -{jump_x} {jump_y}
+   $ {tecs_script}/t_offset -{jump_x} {jump_y}
 endif
 
 do iy = {first_y} {n_Y}
@@ -176,7 +176,7 @@ do iy = {first_y} {n_Y}
 
   if ix .lt. n_X  then
     ! offset telescope in RA  (move star in +alpha direction)
-    $ $TECS_SCRIPT/t_offset -{X_step} 0
+    $ {tecs_script}/t_offset -{X_step} 0
     wait/secs {tel_wait} ! wait for telescope  before read
   endif
 
@@ -193,7 +193,7 @@ do iy = {first_y} {n_Y}
 
  if iy .lt. n_Y  then
      ! telescope to start, again via reference position (R)
-  $ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
+  $ {tecs_script}/t_posit {abs_RA} {abs_DEC} 2000.0
             $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
   inquire/key ans "Telescope at start position [no] ? "
   ans = m$upper(ans)
@@ -204,7 +204,7 @@ do iy = {first_y} {n_Y}
      goto ende
   endif
    
-  $ $TECS_SCRIPT/t_offset +{ref_off(1)} -{ref_off(2)}
+  $ {tecs_script}/t_offset +{ref_off(1)} -{ref_off(2)}
   wait/secs {tel_wait}
 
 
@@ -237,7 +237,7 @@ do iy = {first_y} {n_Y}
 
   ! offset telescope in Y (move star in -delta direction)
   y_offset = iy*Y_step + corr_off(2)
-  $ $TECS_SCRIPT/t_offset {corr_off(1)} {y_offset}
+  $ {tecs_script}/t_offset {corr_off(1)} {y_offset}
   wait/secs {tel_wait}
  endif
 
@@ -254,7 +254,7 @@ enddo
 write/out "Taking last image at starting position..."
 
 ! telescope to start for final reference
-$ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
+$ {tecs_script}/t_posit {abs_RA} {abs_DEC} 2000.0
  ans = m$upper(ans)
  if ans(1:1) .ne. "Y" then
     write/out
@@ -262,7 +262,7 @@ $ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
     write/out
     goto ende
  endif
-$ $TECS_SCRIPT/t_offset +{ref_off(1)} -{ref_off(2)}
+$ {tecs_script}/t_offset +{ref_off(1)} -{ref_off(2)}
 wait/secs {tel_wait}
 $cmd_panic_new object DQE reference {P4} final
 $cmd_panic_new read

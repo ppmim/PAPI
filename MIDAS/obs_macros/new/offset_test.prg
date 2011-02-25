@@ -63,7 +63,7 @@ if P8(1:3) .eq. "off"  then
    write/keyword y_offset/i/11/10 -36,-315,171,-99,288,-99,-54,-189,324,-324
 endif
 
-$ $TECS_SCRIPT/t_coord_system xy 
+$ {tecs_script}/t_coord_system xy 
 
 wait_time = time_int - coadds * exp_time
 
@@ -100,7 +100,7 @@ do i = 1 {n_exp}
    set/format I1
    test = m$abs(x_offset({i})) + m$abs(y_offset({i})) 
    if test .ne. 0 then
-      $ $TECS_SCRIPT/t_offset {x_offset({i})} {y_offset({i})} -
+      $ {tecs_script}/t_offset {x_offset({i})} {y_offset({i})} -
          | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
       if tel_return .ne. 0 then
         write/out "ERROR: Telescope return value for t_offset signals an error..."

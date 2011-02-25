@@ -317,8 +317,8 @@ define/local tel_return/i/1/1 0		! character keyword for telescop returns:0,-1
 	! offset telescope to start position
       x_off = x_off1 * step * 10
       y_off = y_off1 * step * 10
-      $ $TECS_SCRIPT/t_coord_system xy 
-      $ $TECS_SCRIPT/t_offset {x_off} {y_off} -
+      $ {tecs_script}/t_coord_system xy 
+      $ {tecs_script}/t_offset {x_off} {y_off} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
       if tel_return .ne. 0 then
@@ -386,8 +386,8 @@ if tel_flag(1:2) .eq. "AQ"  then
       set/format I5 	! for telescope command
 
 	! offset telescope
-      $ $TECS_SCRIPT/t_coord_system xy 
-      $ $TECS_SCRIPT/t_offset {x_mov} {y_mov} -
+      $ {tecs_script}/t_coord_system xy 
+      $ {tecs_script}/t_offset {x_mov} {y_mov} -
         | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
       if tel_return .ne. 0 then
@@ -419,7 +419,7 @@ $cmd_panic_new counter EXPO_NO clear		! clear exposure counter-->EXPO_NO=1
 
 
 	! set telescope in XY-mode
-$ $TECS_SCRIPT/t_coord_system xy
+$ {tecs_script}/t_coord_system xy
 
 	! set single image parameters
 set/format I1
@@ -445,7 +445,7 @@ set/format I5 	! for telescope command
 	! offset telescope
 x_off = x_offset({counter}) * step * 10
 y_off = y_offset({counter}) * step * 10
-$ $TECS_SCRIPT/t_offset {x_off} {y_off} -
+$ {tecs_script}/t_offset {x_off} {y_off} -
 | awk '{if(NR==1){print $1}}' | write/keyword tel_return	! pipe return
 
 if tel_return .ne. 0 then
@@ -501,7 +501,7 @@ if counter .eq. grid then
 		! calculated for integer pixel offsets
         x_off = X_back * step * 10
         y_off = Y_back * step * 10
- 	$ $TECS_SCRIPT/t_offset {x_off} {y_off} -
+ 	$ {tecs_script}/t_offset {x_off} {y_off} -
  	 | awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
  	if tel_return .ne. 0 then
@@ -515,7 +515,7 @@ if counter .eq. grid then
  	endif	
 	
 !		! set telescope to next starting position
-!	$ $TECS_SCRIPT/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
+!	$ {tecs_script}/t_offset {x_repetition({pattern_reps})} {y_repetition({pattern_reps})} -
 !	| awk '{if(NR==1){print $1}}' | write/keyword tel_return
 
 !	if tel_return .ne. 0 then
