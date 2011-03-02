@@ -24,7 +24,7 @@ endif
 
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start seeing !"
-   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -35,7 +35,7 @@ define/local help_x/r/1/1 0
 define/local help_y/r/1/1 0
 define/local fctrl/i/1/2 0,0
 define/local ncoadds/i/1/1 0
-define/local saturat/r/1/1 {ccd_para(4)}
+define/local saturat/r/1/1 {ccd_para(4)}  ! PENDIENTE 
 
 open/file Seeing.log append fctrl
 
@@ -44,7 +44,7 @@ if P1(1:4) .eq. "zoom"  then
 else
    center/gauss cursor seeing
 endif
-@@ PM:tvdisply
+@@ PM:tvdisply         ! PENDIENTE 
 define/local disp_frame/c/1/24 {tvdisply}
 define/local isodate/c/1/17 " "
 define/local filter/c/1/32 " "

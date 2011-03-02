@@ -102,7 +102,7 @@ define/parameter P5 1 N "Enter the identification number of the current pointing
 define/parameter P6 0 N "Enter the offset flag :"
 
 	! define keyword which contains the path where pipe_files are stored
-define/local file_path/c/1/80 "/disk-a/o2k/tmp"
+define/local file_path/c/1/80 "/home/panic/tmp"
 define/local isodate/c/1/32 " "
 define/local fctrl/i/1/2 0,0
 isodate = m$isodate()
@@ -440,7 +440,7 @@ $cmd_panic_new sync
 abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
   write/out "Program is aborted..."
-  $rm {geirslstabort}
+  $rm {geirslstabortp}
   $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 endif
@@ -449,13 +449,14 @@ write/out "VOY POR AQUI (a)"
 
 	! add file to image catalog
 if loop .ge. 2 then
+  wait/sec 5
   !set/midas output=logonly
   write/out "VOY POR AQUI (B1)"
   $cmd_panic_new last	| awk '{print $2}' | write/keyword pathname_ima 
 	! add file to icat
-  write/out "VOY POR AQUI (B2)"      
+  write/out "VOY POR AQUI (B2) IMAGEN= {pathname_ima}"      
   add/icat {icatalog} {pathname_ima}
-    write/out "VOY POR AQUI (B3)"
+  write/out "VOY POR AQUI (B3)"
   
   set/midas output=yes
 endif

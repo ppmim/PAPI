@@ -226,7 +226,7 @@ define/local boxsize/r/1/1      ! default value = 18 (world coordinates)
 define/local halfbox/r/1/1      ! half the boxsize
 
     ! Define the pixelscale for omega2000
-define/local pixelscale/r/1/1 0.45
+define/local pixelscale/r/1/1 0.45  ! PENDIENTE 
 
 
 

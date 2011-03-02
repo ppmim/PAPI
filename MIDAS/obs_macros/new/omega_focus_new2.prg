@@ -299,7 +299,7 @@ if focusvalue .lt. 15000 .or. focusvalue .gt. 40000 then
   write/out "The estimated telescope focus of {focusvalue} is outside the valid range"
   write/out "focus limits of [15000,40000]! The program is aborted..."
   write/out
-  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
   return
 endif
 
@@ -309,7 +309,7 @@ if stepsize .lt. 10 .or. stepsize .gt. 1000 then
   write/out "The focus steps of {stepsize} are outside the limits of [10,1000]"
   write/out "The stepsize is set to the default value of 200..."
   stepsize = 200
-  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
 endif
 
 
@@ -397,7 +397,7 @@ $ {tecs_script}/t_afocus {first_focus} -
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -433,7 +433,7 @@ do loop = 1 {imagenumber} 1
     if abort_check .eq. 1 then
       write/out "Program is aborted..." 
       $rm {geirslstabort}     ! remove file again
-      $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+      $play -q $GEIRS_DIR/SOUNDS/crash.au
       return
     endif
 
@@ -448,7 +448,7 @@ do loop = 1 {imagenumber} 1
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_dfocus signals an error..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -475,7 +475,7 @@ $cmd_panic_new sync
 write/out
 write/out "Taking of focus frames done..."
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+$play -q $GEIRS_DIR/SOUNDS/whistle.au
 
 
 endif   ! end of image taking 
@@ -1186,7 +1186,7 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
   write/out
   write/out
 
-  $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+  $play -q $GEIRS_DIR/SOUNDS/doorbell.au
   inquire/keyword move_check -
         "Adjust telescope focus to {bestfocus} (y/n)? [{move_check}]:" flush
   write/out
@@ -1211,7 +1211,7 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope return value for t_afocus signals an error..."
          write/out "... could not set focus to best value!"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif 
 
@@ -1221,6 +1221,6 @@ if action_flag .eq. 0 .or. action_flag .eq. 2 then
   write/out
 exit:
 endif
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 return

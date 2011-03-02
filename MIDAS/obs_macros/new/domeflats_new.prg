@@ -61,12 +61,12 @@ $ echo $status ! | write/key i
 
 if i .eq. 1 then
    write/out "GUI for flatfield lamps is running. Please shut it down to run this macro."
-   $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 if i .eq. 2 then
    write/out "Error message from flatfield lamps. Please contact staff."
-   $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 return
@@ -102,7 +102,7 @@ do i = 1 {n_ima}
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
 	  $rm {geirslstabort} 	! remove file again
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
 	endif
 
@@ -115,7 +115,7 @@ do i = 1 {n_ima}
          write/out "         Image saturated. Sequence aborted !"
          write/out "         Level = {diff_level}!"
          write/out
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       else
          write/out "         Level of images with lamp on = {act_level} counts"
@@ -144,7 +144,7 @@ do i = 1 {n_ima}
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
 	  $rm {geirslstabort} 	! remove file again
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
 	endif
 
@@ -164,7 +164,7 @@ do i = 1 {n_ima}
 enddo
 $cmd_panic_new sync
 write/out "         done ..."
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 return

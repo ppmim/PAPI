@@ -61,7 +61,7 @@ DEFINE/LOCAL cg_flag/i/1/1 0
 
 if mid_session .ne. 32  then
    write/out "Please use OBSERVING (blue) MIDAS window to start DQE !"
-   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto ende
 endif
 
@@ -113,7 +113,7 @@ ans = m$upper(ans)
 if ans(1:1) .eq. "Y"  then
    ! telescope to reference position (R) via start (S)
    $ {tecs_script}/t_posit {abs_RA} {abs_DEC} 2000.0
-      $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+      $play -q $GEIRS_DIR/SOUNDS/doorbell.au
    inquire/key ans "All set with telescope centered on start position [no] ?"
    ans = m$upper(ans)
    if ans(1:1) .ne. "Y"  then
@@ -185,7 +185,7 @@ do iy = {first_y} {n_Y}
   if abort_check .eq. 1 then
       write/out "Program was aborted from GUI ..." 
     $rm {geirslstabort}  ! remove file again
-              $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+              $play -q $GEIRS_DIR/SOUNDS/crash.au
       goto ende
   endif
  enddo
@@ -194,7 +194,7 @@ do iy = {first_y} {n_Y}
  if iy .lt. n_Y  then
      ! telescope to start, again via reference position (R)
   $ {tecs_script}/t_posit {abs_RA} {abs_DEC} 2000.0
-            $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+            $play -q $GEIRS_DIR/SOUNDS/doorbell.au
   inquire/key ans "Telescope at start position [no] ? "
   ans = m$upper(ans)
   if ans(1:1) .ne. "Y" then
@@ -243,7 +243,7 @@ inquire/key ans "Move telescope by 10arcsec in RA and 20arcsec in DEC "
  if abort_check .eq. 1 then
      write/out "Program was aborted from GUI ..." 
      $rm {geirslstabort}  ! remove file again
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
      goto ende
  endif
 enddo
@@ -271,7 +271,7 @@ endif
 write/out
 write/out "         all done ..."
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 ende:
 return

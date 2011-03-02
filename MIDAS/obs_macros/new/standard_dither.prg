@@ -34,7 +34,7 @@ abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
   write/out "Program is aborted..."
   $rm {geirslstabort}
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 endif
 
@@ -63,7 +63,7 @@ write/keyword framename </disk-a/o2k/tmp/geirsLstFile
 
 
 compute/ima test = {framename} / {P5}
-$play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+$play -q $GEIRS_DIR/SOUNDS/whistle.au
 
 load/ima test sc=2 ce={offset(1)},(offset(2)}
 back/det ? 2,5

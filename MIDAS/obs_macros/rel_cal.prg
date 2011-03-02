@@ -1,6 +1,8 @@
 ! rel_cal				HJR      21. September 2003
 !
-! relative calibration of an OMEGA2000 mosaic of 1 square degree (4x4 pointings)
+! modified for PANIC:   jmiguel@iaa.es  01-March-11
+!
+! relative calibration of an PANIC mosaic of 1(PENDIENTE) square degree (4x4 pointings)
 ! 3x3 pointings in intersection of deep exposures
 ! Telescope assumed to be positioned in center of 4x4 mosaic, spacing 14.3arcmin
 
@@ -13,7 +15,7 @@ define/par P3 ? N/A "Exposure time of single frame, number of exposures : "
 if p1(1:4) .eq. "help" then
    write/out
    write/out "rel_cal.prg"
-   write/out "call: o2k/relcal [object] = [exposure]" 
+   write/out "call: panic/relcal [object] = [exposure]" 
    write/out 
    write/out "The command line parameters are:"
    write/out "  P1 = identifier for the images taken (keyword OBJECT or IDENT)"
@@ -39,6 +41,17 @@ define/local abort_check/i/1/1 0	! for return value of abort-file-check
 dit = outputr(1)
 ndit = outputr(2)
 
+
+!!!!!!!!!!!!!!!!!!!!!! ENVIRONMENT VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
+define/local tecs_script/c/1/256  " "
+tecs_script = M$SYMBOL("TECS_SCRIPT")
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	! remove existing abort file
 	! abort check: 0=does not exist ; 1=abort file exists
 abort_check = m$exist("{geirslstabort}")
@@ -53,7 +66,7 @@ $ {tecs_script}/t_offset -8580 +8580 -
 if tel_return .lt. 0 then
   write/out "ERROR: Telescope signals error setting to first field ..."
   write/out "...the program is aborted"
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto ende
 endif	
 
@@ -85,7 +98,7 @@ do iy = 1 3
 	if abort_check .eq. 1 then
 	   write/out "Program was aborted from GUI ..."	
 	   $rm {geirslstabort} 	! remove file again
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
  	   goto ende
 	endif
       if ix .lt. 3 then
@@ -95,29 +108,29 @@ do iy = 1 3
          if tel_return .lt. 0 then
             write/out "ERROR: Telescope signals error offsetting in X to {ix}+1 ..."
             write/out "...the program is aborted"
-            $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+            $play -q $GEIRS_DIR/SOUNDS/crash.au
             goto ende
          endif	
 	endif
    enddo
    if iy .lt. 3 then
       $ {tecs_script}/t_offset -17160 -8580 -
-            | awk '{if(NR==1){print $1}}' | write/keyword tel_return
+            | awk '{if(NR==1){print $1}}' | write/keyword tel_return  ! PENDIENTE
 
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope signals error offsetting in Y to {iy}+1 ..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto ende
       endif	
    else
 	$ {tecs_script}/t_offset -8580 +8580 -
-            | awk '{if(NR==1){print $1}}' | write/keyword tel_return
+            | awk '{if(NR==1){print $1}}' | write/keyword tel_return    ! PENDIENTE
 
       if tel_return .lt. 0 then
          write/out "ERROR: Telescope signals error going back to origin ..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto ende
       endif	
    endif
@@ -128,7 +141,7 @@ $cmd_panic_new sync
 write/out
 write/out "         calibration sequence done ..."
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 ende:
 return

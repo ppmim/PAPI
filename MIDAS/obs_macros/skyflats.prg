@@ -37,7 +37,7 @@ define/par P8 dusk C/A "Evening or morning twilight [dusk / dawn] : "
 define/local geirslstabort/c/1/256  " "
 geirslstabort = M$SYMBOL("GEIRSLSTABORT")
 
-if mid_session .ne. 32  then
+if mid_session .ne. 31  then   ! PENDIENTE
    write/out "Please use OBSERVING (blue) MIDAS window to start skyflats !"
    $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
@@ -111,7 +111,7 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
    else
       set/format I1 F5.0
       write/out "         Minimum exposure time ({min_time}) --> {act_lev} cts/pixel"
-      exp_time = max_lev/(act_lev*min_time)
+      exp_time = max_lev/(act_lev*min_time + 10000)
       set/format F5.1
       write/out "         Sequence requires {exp_time}sec frame integration time."
       if exp_time .gt. 60 then
@@ -173,7 +173,7 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
             $cmd_panic_new sync
             $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}'| write/key curr_lev/r/1/2
             act_lev = curr_lev(2)-curr_lev(1)
-            exp_time = max_lev/(act_lev*min_time)
+            exp_time = max_lev/(act_lev*min_time + 10000)
             write/out "         Level = {act_lev} --> exposure time for frame {i}+1 = {exp_time}sec"
             if exp_time .gt. 60 then
                $play -q $GEIRS_DIR/SOUNDS/doorbell.au
@@ -219,7 +219,7 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
    else
       set/format F5.0
       write/out "         Minimum exposure time ({min_time})--> {act_lev} cts/pixel"
-      exp_time = max_lev/(act_lev*min_time)
+      exp_time = max_lev/(act_lev*min_time + 10000)
       set/format F5.1
       write/out "         Sequence requires {exp_time}sec frame integration time."
       if loop .gt. 0  then
@@ -319,7 +319,7 @@ endif
             $cmd_panic_new sync
             $cmd_panic_new median -stdout -raw | awk '{if(NR==1){print $1}}' | write/key curr_lev/r/1/2
             act_lev = curr_lev(2)-curr_lev(1)
-            exp_time = max_lev/(act_lev*min_time)
+            exp_time = max_lev/(act_lev*min_time + 10000)
             if curr_lev(2) .gt. sat_lev(1) then
                write/out
                write/out "         It is now too bright. Sequence aborted ..."

@@ -97,7 +97,7 @@ endif
 
 if mid_session .ne. 32  then
    write/out "Please use OBSERVING (blue) MIDAS window to start dither sequence !"
-   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto end
 endif
 
@@ -127,7 +127,7 @@ if P7(1:1) .EQ. "Y" THEN
     offset_check = m$exist("/disk-a/o2k/tmp/offset_ok.dat")
     IF offset_check .EQ. 0 THEN 
         WRITE/OUT "ERROR: autoguide: no reference star, please rerun offset.prg"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+        $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
             goto END
     endif
     define/local file_id_4/i/1/2            ! file id for open/file
@@ -184,7 +184,7 @@ if tel_flag(1:2) .ne. "AQ"  then
       write/out "Flag for current telescope position (parameter 4b) has to be AQ or PREV"
       write/out "   ... abort    "
       write/out
-      $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
       goto exit
    endif
 endif   
@@ -278,7 +278,7 @@ if m$exist("{P6}.dith") .eq. 1 then
    open/file {P6}.dith read fctrl
    if fctrl(1) .lt. 0 then
       write/out "Could not open {P6}.dith ..."
-      $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
       goto end
    endif
    ! First line is a comment
@@ -290,13 +290,13 @@ if m$exist("{P6}.dith") .eq. 1 then
       if m$index(input_buffer," ") .gt. 0  then
          write/out "         Data file for offsets must not contain blanks!"
          write/out "         Check line {i} and following..."
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          close/file {fctrl(1)}
          goto end
       endif
       if fctrl(2) .eq. -1 then
          write/out "Unexpected EOF reached!   Abort ..."
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          close/file {fctrl(1)}
          goto end
       else
@@ -485,7 +485,7 @@ if tel_flag(1:2) .eq. "AQ"  then
       if tel_return .ne. 0 then
          write/out "ERROR: Telescope return value for t_offset signals an error..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       else
          isodate = m$isodate()
@@ -558,7 +558,7 @@ refstary = refstary - y_corroff / 0.44942 / 10.
 if tel_return .ne. 0 then
   write/out "ERROR: Telescope return value for t_offset signals an error..."
   write/out "...the program is aborted"
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 else
   isodate = m$isodate()
@@ -583,7 +583,7 @@ abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
   write/out "Program is aborted..."
   $rm {geirslstabort}
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 endif
 
@@ -663,7 +663,7 @@ if counter .eq. 20 then
     if tel_return .ne. 0 then
       write/out "ERROR: Telescope return value for t_offset signals an error..."
       write/out "...the program is aborted"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
       goto exit
         else
           isodate = m$isodate()
@@ -693,7 +693,7 @@ if counter .eq. 20 then
     if tel_return .ne. 0 then
       write/out "ERROR: Telescope return value for t_offset signals an error..."
       write/out "...the program is aborted"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
       goto exit
         else
           isodate = m$isodate()
@@ -743,7 +743,7 @@ write/file {fctrl(1)} {isodate} done
 write/out
 write/out "All images for pointing are finished..." 
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 

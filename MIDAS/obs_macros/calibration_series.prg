@@ -105,7 +105,7 @@ do i = 1 {n_exp}
 	write/out "            now resetting exposure time to avoid fifo-overflow ..."
 	write/out "            next 2 images are dummies and will not be saved!"
       $cmd_panic_new itime 0
-	$cmd_panic_new crep 1
+      $cmd_panic_new crep 1
       $cmd_panic_new sync
       $cmd_panic_new read
       $cmd_panic_new sync

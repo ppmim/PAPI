@@ -51,6 +51,9 @@
 !                                       drizzle-compatible offsets  (HJR)
 !                                       add 1 / N-1  option for starting position
 !
+!               6.0     02.03.11        Adapted to PANIC by jmiguel@iaa.es
+!
+
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 !
@@ -102,8 +105,20 @@ define/parameter P4 1,PREV C "Enter the sequence number n of start position :"
 define/parameter P5 1 N "Enter the identification number of the current pointing :"
 define/parameter P6 0 N "Enter the offset flag :"
 
+
+!!!!!!!!!!!!!!!!!!!!!! ENVIRONMENT VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
+define/local tecs_script/c/1/256  " "
+tecs_script = M$SYMBOL("TECS_SCRIPT")
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 	! define keyword which contains the path where pipe_files are stored
-define/local file_path/c/1/80 "/disk-a/o2k/tmp"
+define/local file_path/c/1/80 "/home/panic/tmp"   ! PENDIENTE
 define/local isodate/c/1/32 " "
 define/local fctrl/i/1/2 0,0
 isodate = m$isodate()
@@ -147,7 +162,7 @@ if tel_flag(1:2) .ne. "AQ"  then
       write/out "Flag for current telescope position (parameter 4b) has to be AQ or PREV"
       write/out "   ... abort    "
       write/out
-      $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
       goto exit
    endif
 endif	
@@ -359,7 +374,7 @@ if tel_flag(1:2) .eq. "AQ"  then
       if tel_return .ne. 0 then
          write/out "ERROR: Telescope return value for t_offset signals an error..."
          write/out "...the program is aborted"
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       else
          isodate = m$isodate()
@@ -415,7 +430,7 @@ $ {tecs_script}/t_offset {x_offset({counter})} {y_offset({counter})} -
 if tel_return .ne. 0 then
   write/out "ERROR: Telescope return value for t_offset signals an error..."
   write/out "...the program is aborted"
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 else
   isodate = m$isodate()
@@ -432,7 +447,7 @@ abort_check = m$exist("{geirslstabort}")
 if abort_check .eq. 1 then
   write/out "Program is aborted..."
   $rm {geirslstabort}
-  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+  $play -q $GEIRS_DIR/SOUNDS/crash.au
   goto exit
 endif
 
@@ -440,10 +455,7 @@ endif
 	! add file to image catalog
 if loop .ge. 2 then
   set/midas output=logonly
-  $cmd_panic_new last	! writes last filename in file geirsLstFile
-	! writes last filename in keyword pathname_ima
-  write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
-	! add file to icat
+  $cmd_panic_new last | awk '{print $2}' | write/keyword pathname_ima  
   add/icat {icatalog} {pathname_ima}
   set/midas output=yes
 endif
@@ -469,7 +481,7 @@ if counter .eq. 20 then
 	if tel_return .ne. 0 then
   	  write/out "ERROR: Telescope return value for t_offset signals an error..."
   	  write/out "...the program is aborted"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
         else
           isodate = m$isodate()
@@ -483,7 +495,7 @@ if counter .eq. 20 then
 	if tel_return .ne. 0 then
   	  write/out "ERROR: Telescope return value for t_offset signals an error..."
   	  write/out "...the program is aborted"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
         else
           isodate = m$isodate()
@@ -515,9 +527,7 @@ $cmd_panic_new sync    ! wait for last save
 set/midas output=logonly
 
 	! add last file to image catalog
-$cmd_panic_new last	! writes last filename in file geirsLstFile
-	! writes last filename in keyword pathname_ima
-write/keyword pathname_ima </disk-a/o2k/tmp/geirsLstFile 
+$cmd_panic_new last | awk '{print $2}' | write/keyword pathname_ima  
 	! add file to icat
 add/icat {icatalog} {pathname_ima}
 
@@ -533,7 +543,7 @@ write/file {fctrl(1)} {isodate} done
 write/out
 write/out "All images for pointing are finished..." 
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 

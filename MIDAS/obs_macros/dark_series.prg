@@ -2,7 +2,7 @@ defi/loc abort_check/i/1/1/ 0
 defi/loc answ/c/1/1/ 
 
 write/out " "
-write/out "Programme to take a series of dark exposures with O-2000"
+write/out "Programme to take a series of dark exposures with PANIC"
 write/out "(1.6  2.0  3.0  4.0  5.0  6.0 seconds "
 write/out " "
 
@@ -22,7 +22,7 @@ $cmd_panic_new filter BLANK
 $cmd_panic_new sync
 
 write/out " Dark 1.6 s "
-o2k/calser dark1.6 = 1.6,1.6 10 5 0 i 
+panic/calser dark1.6 = 1.6,1.6 10 5 0 i 
 
 abort_check = m$exist("abortfile")
 if abort_check .eq. 1 then
@@ -32,7 +32,7 @@ goto exit
 endif
 
 write/out " Dark 2.0 s "
-o2k/calser dark2.0 = 2.0,2.0 10 5 0 i
+panic/calser dark2.0 = 2.0,2.0 10 5 0 i
  
 abort_check = m$exist("abortfile")
 if abort_check .eq. 1 then
@@ -42,7 +42,7 @@ goto exit
 endif
 
 write/out " Dark 3.0 s "
-o2k/calser dark3.0 = 3.0,3.0 10 5 0 i
+panic/calser dark3.0 = 3.0,3.0 10 5 0 i
 
 abort_check = m$exist("abortfile")
 if abort_check .eq. 1 then
@@ -52,7 +52,7 @@ goto exit
 endif
 
 write/out " Dark 4.0 s "
-o2k/calser dark4.0 = 4.0,4.0 10 5 0 i
+panic/calser dark4.0 = 4.0,4.0 10 5 0 i
 
 abort_check = m$exist("abortfile")
 if abort_check .eq. 1 then
@@ -62,7 +62,7 @@ goto exit
 endif
 
 write/out " Dark 5.0 s "
-o2k/calser dark5.0 = 5.0,5.0 10 5 0 i
+panic/calser dark5.0 = 5.0,5.0 10 5 0 i
 
 abort_check = m$exist("abortfile")
 if abort_check .eq. 1 then
@@ -72,7 +72,7 @@ goto exit
 endif
 
 write/out " Dark 6.0 s "
-o2k/calser dark6.0 = 6.0,6.0 10 5 0 i
+panic/calser dark6.0 = 6.0,6.0 10 5 0 i
 
 abort_check = m$exist("abortfile")
 if abort_check .eq. 1 then

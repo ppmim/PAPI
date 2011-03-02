@@ -36,7 +36,7 @@ define/par P8 dusk C/A "Evening or morning twilight [dusk / dawn] : "
 
 if mid_session .ne. 32  then
    write/out "Please use OBSERVING (blue) MIDAS window to start skyflats !"
-   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -84,7 +84,7 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
    abort_check = m$exist("{geirslstabort}")
    if abort_check .eq. 1 then
       write/out "Program is aborted..."
-	$play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+	$play -q $GEIRS_DIR/SOUNDS/crash.au
 	$rm {geirslstabort} 	! remove file again
   	goto exit
    endif
@@ -102,7 +102,7 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
          write/out
          write/out "         Sky much too bright. Detector saturated ! Abort ..."
          write/out
-         $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+         $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
          goto exit
       endif
    else
@@ -112,12 +112,12 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
       set/format F5.1
       write/out "         Sequence requires {exp_time}sec frame integration time."
       if exp_time .gt. 60 then
-         $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+         $play -q $GEIRS_DIR/SOUNDS/doorbell.au
          inquire/key answer "Proceed with exposure [y=def/n] ?"
          answer = m$lower(answer)
          if answer(1:1) .eq. "n"  then
             write/out "         Abort. No exposure taken!"
-            $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+            $play -q $GEIRS_DIR/SOUNDS/crash.au
            goto exit
          else
             write/out "         Taking flats now..."
@@ -126,7 +126,7 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
    endif
 
 ! take flatfield exposures
-   $play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+   $play -q $GEIRS_DIR/SOUNDS/whistle.au
    set/format I1 F5.1
    
 
@@ -142,7 +142,7 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
       abort_check = m$exist("{geirslstabort}")
       if abort_check .eq. 1 then
          write/out "Program is aborted..."
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          $rm {geirslstabort} 	! remove file again
          goto exit
       endif
@@ -167,12 +167,12 @@ if P8(1:4) .eq. "dusk"  then   ! ==================== d u s k ================
             exp_time = max_lev/act_lev*min_time
             write/out "         Level = {act_lev} --> exposure time for frame {i}+1 = {exp_time}sec"
             if exp_time .gt. 60 then
-               $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+               $play -q $GEIRS_DIR/SOUNDS/doorbell.au
                inquire/key answer "Proceed with exposure [y=def/n] ?"
                answer = m$lower(answer)
                if answer(1:1) .eq. "n"  then
                   write/out "         Abort. No exposure taken!"
-                  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+                  $play -q $GEIRS_DIR/SOUNDS/crash.au
                   goto exit
                else
                   write/out "         Taking next flat ..."
@@ -191,7 +191,7 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
    abort_check = m$exist("{geirslstabort}")
    if abort_check .eq. 1 then
       write/out "Program is aborted..."
-	$play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+	$play -q $GEIRS_DIR/SOUNDS/crash.au
 	$rm {geirslstabort} 	! remove file again
   	goto exit
    endif
@@ -205,7 +205,7 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
       write/out
       write/out "         Sky already too bright. Detector saturated ! Abort ..."
       write/out
-      $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+      $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
       goto exit
    else
       set/format F5.0
@@ -218,13 +218,13 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
             goto testexp_2
          else
             write/out "         Starting to take flats ..."
-            $play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+            $play -q $GEIRS_DIR/SOUNDS/whistle.au
             goto take_data
          endif
       else
          loop = 1
          if exp_time .gt. start_time then
-            $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+            $play -q $GEIRS_DIR/SOUNDS/doorbell.au
             write/out
             try_again:
             write/out "         To stop loop type ABORT, else ..."
@@ -235,13 +235,13 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
                if answer(1:5) .eq. "ABORT"  then
                   write/out
                   write/out "         Flat sequence aborted by user !"
-                  $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+                  $play -q $GEIRS_DIR/SOUNDS/crash.au
                   goto exit
                else
                   i = m$tstno(answer)
                   if i .eq. 0 then
                      write/out "         Input error, must be number ..."
-                     $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+                     $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
                      goto try_again
                   endif
                   start_time = {answer}
@@ -249,7 +249,7 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
                      write/out "         Taking flats now..."
                   else
                      write/out "         Waiting until it is bright enough!"
-                     $play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+                     $play -q $GEIRS_DIR/SOUNDS/whistle.au
                      goto testexp_2
                   endif
                endif
@@ -259,7 +259,7 @@ if P8(1:4) .eq. "dawn"  then   ! ==================== d a w n ================
                else
                   start_time = 60
                   write/out "         Waiting until it is bright enough!"
-                  $play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+                  $play -q $GEIRS_DIR/SOUNDS/whistle.au
                   goto testexp_2
                endif
             endif
@@ -271,7 +271,7 @@ endif
 
    take_data:
 
-   $play -q /disk-a/staff/GEIRS/SOUNDS/whistle.au
+   $play -q $GEIRS_DIR/SOUNDS/whistle.au
    set/format i2 F5.1
 
    
@@ -288,7 +288,7 @@ endif
       abort_check = m$exist("{geirslstabort}")
       if abort_check .eq. 1 then
          write/out "Program is aborted..."
-         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+         $play -q $GEIRS_DIR/SOUNDS/crash.au
          $rm {geirslstabort} 	! remove file again
          goto exit
       endif
@@ -314,13 +314,13 @@ endif
             if curr_lev(2) .gt. sat_lev(1) then
                write/out
                write/out "         It is now too bright. Sequence aborted ..."
-               $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+               $play -q $GEIRS_DIR/SOUNDS/crash.au
                goto exit
             endif
             if exp_time .lt. min_time then
                write/out
                write/out "         It is now too bright. Sequence aborted ..."
-               $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+               $play -q $GEIRS_DIR/SOUNDS/crash.au
                goto exit
             else
                write/out "         Level = {act_lev} --> exposure time adjusted to {exp_time}sec for frame {i}+1."
@@ -331,7 +331,7 @@ endif
 endif
 
 write/out  "         All done ..."
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 return

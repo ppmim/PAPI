@@ -2,6 +2,7 @@
 !
 ! monitoring atmospheric transmission with OMEGA2000
 !
+! modified for PANIC:   jmiguel@iaa.es  01-March-11
 
 define/par P1 ? N/A "Magnitude of star : "
 define/par P2 ? ? "Filter used : "
@@ -10,7 +11,7 @@ P1 = m$lower(P1)
 if p1(1:4) .eq. "help" then
    write/out
    write/out "transmon.prg"
-   write/out "call: o2k/transmon" 
+   write/out "call: panic/transmon" 
    write/out 
    write/out "Command line parameter:"
    write/out "   P1 = magnitude of the objekt to be used for monitoring"
@@ -24,7 +25,7 @@ endif
 
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start transmon !"
-   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -73,7 +74,7 @@ back = m$value(CR_mon,:tot_intens,@2)
 signal = star - back*n_star/n_back
 
 ! write log
-@@ PM:tvdisply
+@@ PM:tvdisply   ! PENDIENTE 
 define/local l/i/1/1 0
 define/local disp_frame/c/1/24 {tvdisply}
 define/local isodate/c/1/17 " "
@@ -91,7 +92,7 @@ if max_signal .gt. {ccd_para(4)} then
    write/out "The star seems to be saturated!"
    write/out "No log entry possible!"
    write/out
-   $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto exit
 endif
 
@@ -99,16 +100,16 @@ isodate = m$isodate()
 
 l = m$len(P2)
 if P2(1:{l}) .eq. "J"  then
-   define/local count_rate/r/1/1 4.78e9
+   define/local count_rate/r/1/1 4.78e9   ! PENDIENTE
 endif
 if P2(1:{l}) .eq. "H"  then
-   define/local count_rate/r/1/1 2.22e9
+   define/local count_rate/r/1/1 2.22e9   ! PENDIENTE 
 endif
 if P2(1:{l}) .eq. "Kprime"  then
-   define/local count_rate/r/1/1 1.67e9
+   define/local count_rate/r/1/1 1.67e9   ! PENDIENTE
 endif
 if P2(1:{l}) .eq. "K"  then
-   define/local count_rate/r/1/1 1.88e9
+   define/local count_rate/r/1/1 1.88e9   ! PENDIENTE
 endif
 
 expected = count_rate * 10 ** (-{P1}/2.5)

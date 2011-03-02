@@ -30,12 +30,12 @@ if m$exist("{P6}") .eq. 1 then
       if m$index(input_buffer," ") .gt. 0  then
          write/out "         Data file for offsets must not contain blanks!"
          write/out "         Check line {i} and following..."
-!         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+!         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       endif
       if fctrl(2) .eq. -1 then
          write/out "Unexpected EOF reached!   Abort ..."
-!         $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+!         $play -q $GEIRS_DIR/SOUNDS/crash.au
          goto exit
       else
          write/key values/r/1/2 {input_buffer}

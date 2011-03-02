@@ -1,5 +1,5 @@
 ! Measure relative DQE of OMEGA2000  (September 2003   HJR)
-!
+! DQE= Detection Quantum Efficiency
 !
 !     --------------------------------
 !     |   <---- -RA              (R) |      star (arrows) and 
@@ -53,18 +53,27 @@ define/local first_y/i/1/1 1
 define/local jump_x/i/1/1 0
 define/local jump_y/i/1/1 0
 define/local test_jump/i/1/1 0
-DEFINE/LOCAL imaname/c/1/80 " "
+DEFINE/LOCAL imaname/c/1/255 " "
 DEFINE/LOCAL starposx/r/1/1 0
 DEFINE/LOCAL starposy/r/1/1 0
 DEFINE/LOCAL corr_off/i/1/2 0,0
 DEFINE/LOCAL cg_flag/i/1/1 0
 
+!!!!!!!!!!!!!!!!!!!!!! ENVIRONMENT VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
+define/local tecs_script/c/1/256  " "
+tecs_script = M$SYMBOL("TECS_SCRIPT")
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 if mid_session .ne. 31  then
    write/out "Please use QUICKLOOK (green) MIDAS window to start DQE !"
-   $ play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+   $ play -q $GEIRS_DIR/SOUNDS/sorrydave.au
    goto ende
 endif
-
 
 define/local abort_check/i/1/1 0    ! for return value of abort-file-check
   ! abort check: 0=does not exist ; 1=abort file exists
@@ -104,7 +113,7 @@ $cmd_panic_new filter {P4}
 $cmd_panic_new sync
 
 !-------------------------------------------------------------
-$play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+$play -q $GEIRS_DIR/SOUNDS/doorbell.au
 inquire/key ans "Are you ready to preset telescope to -
 RA(J2000) {abs_RA}, DEC(J2000) {abs_DEC} [no] : "
 
@@ -113,7 +122,7 @@ ans = m$upper(ans)
 if ans(1:1) .eq. "Y"  then
    ! telescope to reference position (R) via start (S)
    $ {tecs_script}/t_posit {abs_RA} {abs_DEC} 2000.0
-      $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+      $play -q $GEIRS_DIR/SOUNDS/doorbell.au
    inquire/key ans "All set with telescope centered on start position [no] ?"
    ans = m$upper(ans)
    if ans(1:1) .ne. "Y"  then
@@ -131,7 +140,7 @@ else
    goto ende
 endif
 
-write/out "Taking DQE image {P4} [{ix},{iy}]"
+write/out "Taking DQE image > {P4} [{ix},{iy}]"
 
   ! write object
 $cmd_panic_new object DQE reference {P4} start
@@ -144,10 +153,9 @@ endif
 
 $cmd_panic_new sync
 ! get position of star
-$cmd_panic_new last 
-write/keyword imaname </disk-a/o2k/tmp/geirsLstFile
+$cmd_panic_new last | awk '{print $2}' | write/keyword imaname
 
-@@ O2K_UTIL:/obs_macros/cuts {imaname}
+@@ PANIC_UTIL:/obs_macros/cuts {imaname}
 starposx = {Q1}
 starposy = {Q2} 
 WRITE/OUT {starposx} {starposy}
@@ -185,7 +193,7 @@ do iy = {first_y} {n_Y}
   if abort_check .eq. 1 then
       write/out "Program was aborted from GUI ..." 
     $rm {geirslstabort}  ! remove file again
-              $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+              $play -q $GEIRS_DIR/SOUNDS/crash.au
       goto ende
   endif
  enddo
@@ -194,7 +202,7 @@ do iy = {first_y} {n_Y}
  if iy .lt. n_Y  then
      ! telescope to start, again via reference position (R)
   $ {tecs_script}/t_posit {abs_RA} {abs_DEC} 2000.0
-            $play -q /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+            $play -q $GEIRS_DIR/SOUNDS/doorbell.au
   inquire/key ans "Telescope at start position [no] ? "
   ans = m$upper(ans)
   if ans(1:1) .ne. "Y" then
@@ -218,10 +226,9 @@ do iy = {first_y} {n_Y}
   endif
   
   $cmd_panic_new sync      !get filename of last saved image
-  $cmd_panic_new last
-  write/keyword imaname </disk-a/o2k/tmp/geirsLstFile
+  $cmd_panic_new last | awk '{print $2}' | write/keyword imaname
   
-  @@ O2K_UTIL:/obs_macros/autoguide {imaname} {starposx} {starposy} {starposx} {starposy}
+  @@ PANIC_UTIL:/obs_macros/autoguide {imaname} {starposx} {starposy} {starposx} {starposy}
   
   corr_off(1) = {Q1}
   corr_off(2) = {Q2}
@@ -246,7 +253,7 @@ do iy = {first_y} {n_Y}
  if abort_check .eq. 1 then
      write/out "Program was aborted from GUI ..." 
      $rm {geirslstabort}  ! remove file again
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
      goto ende
  endif
 enddo
@@ -274,7 +281,7 @@ endif
 write/out
 write/out "         all done ..."
 write/out
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 ende:
 return

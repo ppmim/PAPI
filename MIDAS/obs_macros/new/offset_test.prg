@@ -69,7 +69,7 @@ wait_time = time_int - coadds * exp_time
 
 if wait_time .le. 0 then
   write/out "Time intervall too short for combination of exp_time and coadds!"
-  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
   goto exit
 endif
 
@@ -105,7 +105,7 @@ do i = 1 {n_exp}
       if tel_return .ne. 0 then
         write/out "ERROR: Telescope return value for t_offset signals an error..."
         write/out "...the program is aborted"
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
         goto exit
       else
          isodate = m$isodate()
@@ -122,7 +122,7 @@ do i = 1 {n_exp}
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
 	  $rm {geirslstabort} 	! remove file again
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
 	endif
 
@@ -144,7 +144,7 @@ enddo
 
 $cmd_panic_new sync
 write/out "         offset series finished ..."
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 close/file {fctrl(1)}

@@ -1,6 +1,8 @@
 !   a c q u i s i t i o n . p r g           HJR    14-Jul-04
 !
-!   acquire a filed for OMEGA2000
+!   modified by jmiguel@iaa.es  for PANIC   2-March-2011
+!
+!   acquire a filed for PANIC
 !
 !
 define/par P1 ? ? "Telescope position and equinox : "
@@ -14,6 +16,13 @@ define/local last_ima/c/1/64 " "
 define/local answer/c/1/16 " "                         !
 define/local back/c/1/8 " "
 define/local i/i/1/1 0
+
+!!!!!!!!!!!!!!!!!!!!!! ENVIRONMENT VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+define/local geirslstabort/c/1/256  " "
+geirslstabort = M$SYMBOL("GEIRSLSTABORT")
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 $cmd_panic_new tele absolute {P1}         ! move telescope to first field
 $cmd_panic_new sync tele
@@ -29,8 +38,7 @@ $cmd_panic_new save -i
 ! load flatfield corrected image into display for pixel-accurate telescope alignment
 
 set/midas output=logonly        ! suppress MIDAS output to screen
-$cmd_panic_new last	                                       ! writes last filename in file geirsLstFile
-write/keyword last_ima </disk-a/o2k/tmp/geirsLstFile   ! writes last filename in keyword last_ima
+$cmd_panic_new last | awk '{print $2}' | write/keyword last_ima
 set/midas output=yes            ! re-activate MIDAS output
 
 if P6(1:7) .ne. "NO_FLAT" then
@@ -54,7 +62,7 @@ if P3(1:3) .eq. "0,0"  then
       load {last_ima}.fits sc=-3,a
    endif
 
-   inquire/key answer "Was aequistion successful and shall we proceed to take data ?"
+   inquire/key answer "Was acquistion successful and shall we proceed to take data ?"
    answer = m$lower(answer)
    if answer(1:1) .eq. "n"  then
       back(1:4) = "stop"
@@ -66,7 +74,7 @@ else
    del/descr AQ lhcuts              ! force new calculation of cut levels
    load AQ ce={P3} sc=1             ! display image, centered on alignment star
    back/det
-   o2k/offset {P3}                  ! position alignment star to this position
+   panic/offset {P3}                  ! position alignment star to this position
    inquire/key answer "Do you want to check the alignment [yes/no/stop] : "
    answer = m$lower(answer)
    if answer(1:1) .eq. "y" then

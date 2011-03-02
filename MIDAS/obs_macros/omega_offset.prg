@@ -1,5 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ! !
-! omega_offset.prg
+! panic_offset.prg
 ! purpose: computes offset between two positions
 ! use as @@ omega_offset x,y
 !       x,y = the position [pixels] you want to go to

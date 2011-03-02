@@ -13,7 +13,7 @@ defi/loc abort_check/i/1/1/ 0
 defi/loc answ/c/1/1/ 
 
 write/out
-write/out "Programme to calibrate a series of O-2000 filters"
+write/out "Programme to calibrate a series of PANIC filters"
 write/out
 
 write/out " "
@@ -107,7 +107,7 @@ if z .eq. 1 then
    write/out "calibrating z ..."
    $cmd_panic_new filter Z
    $cmd_panic_new sync
-   o2k/domeflats "dome_z" = 5,10 6 10 10 i
+   panic/domeflats "dome_z" = 5,10 6 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -121,7 +121,7 @@ if Y .eq. 1 then
    write/out "calibrating Y ..."
    $cmd_panic_new filter Y
    $cmd_panic_new sync
-   o2k/domeflats "dome_Y" = 5,9 10 10 10 i
+   panic/domeflats "dome_Y" = 5,9 10 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -135,7 +135,7 @@ if J .eq. 1 then
    write/out "calibrating J ..."
    $cmd_panic_new filter J
    $cmd_panic_new sync
-   o2k/domeflats "dome_J" = 5,9 2.0 10 10 i
+   panic/domeflats "dome_J" = 5,9 2.0 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -149,7 +149,7 @@ if H .eq. 1 then
    write/out "calibrating H ..."
    $cmd_panic_new filter H
    $cmd_panic_new sync
-   o2k/domeflats "dome_H" = 5,1 2.0 10 10 i
+   panic/domeflats "dome_H" = 5,1 2.0 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -163,7 +163,7 @@ if K .eq. 1 then
    write/out "calibrating K ..."
    $cmd_panic_new filter K
    $cmd_panic_new sync
-   o2k/domeflats "dome_K" = 5,1 1.6 10 10 i
+   panic/domeflats "dome_K" = 5,1 1.6 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -177,7 +177,7 @@ if Ks .eq. 1 then
    write/out "calibrating Ks ..."
    $cmd_panic_new filter KS
    $cmd_panic_new sync
-   o2k/domeflats "dome_Ks" = 5,1 1.6 10 10 i
+   panic/domeflats "dome_Ks" = 5,1 1.6 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -191,7 +191,7 @@ if Kp .eq. 1 then
    write/out "calibrating K-prime ..."
    $cmd_panic_new filter K-PRIME
    $cmd_panic_new sync
-   o2k/domeflats "dome_Kp" = 5,1 1.6 10 10 i
+   panic/domeflats "dome_Kp" = 5,1 1.6 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -205,7 +205,7 @@ if nb2122 .eq. 1 then
    write/out "calibrating NB2122 ..."
    $cmd_panic_new filter NB2122 
    $cmd_panic_new sync
-   o2k/domeflats "dome_NB2122" = 3 1.6 10 10 i
+   panic/domeflats "dome_NB2122" = 3 1.6 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -219,7 +219,7 @@ if nb2144 .eq. 1 then
    write/out "calibrating NB2144 ..."
    $cmd_panic_new filter NB2144 
    $cmd_panic_new sync
-   o2k/domeflats "dome_NB2144" = 3 1.6 10 10 i
+   panic/domeflats "dome_NB2144" = 3 1.6 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -233,7 +233,7 @@ if mon .eq. 1 then
    write/out "calibrating methane_on ..."
    $cmd_panic_new filter METHANE_ON
    $cmd_panic_new sync
-   o2k/domeflats "dome_meth_on" = 5,9 4.0 10 10 i
+   panic/domeflats "dome_meth_on" = 5,9 4.0 10 10 i
 endif   
 
 abort_check = m$exist("abortfile")
@@ -247,7 +247,7 @@ if moff .eq. 1 then
    write/out "calibrating methane_off ..."
    $cmd_panic_new filter METHANE_OFF
    $cmd_panic_new sync
-   o2k/domeflats "dome_meth_off" = 5,10 4.0 10 10 i
+   panic/domeflats "dome_meth_off" = 5,10 4.0 10 10 i
 endif   
 
 

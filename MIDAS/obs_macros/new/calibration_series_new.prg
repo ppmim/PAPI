@@ -122,7 +122,7 @@ do i = 1 {n_exp}
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
 	  $rm {geirslstabort} 	! remove file again
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
 	endif
 
@@ -150,7 +150,7 @@ enddo
 
 $cmd_panic_new sync
 write/out "         calibration series finished ..."
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 return

@@ -45,7 +45,7 @@ wait_time = time_int - coadds * exp_time
 
 if wait_time .le. 0 then
   write/out "Time intervall too short for combination of exp_time and coadds!"
-  $play -q /disk-a/staff/GEIRS/SOUNDS/sorrydave.au
+  $play -q $GEIRS_DIR/SOUNDS/sorrydave.au
   goto exit
 endif
 
@@ -81,7 +81,7 @@ do i = 1 {n_exp}
 	if abort_check .eq. 1 then
   	  write/out "         Program is aborted..."	
 	  $rm {geirslstabort} 	! remove file again
-        $play -q /disk-a/staff/GEIRS/SOUNDS/crash.au
+        $play -q $GEIRS_DIR/SOUNDS/crash.au
   	  goto exit
 	endif
 
@@ -100,7 +100,7 @@ enddo
 
 $cmd_panic_new sync
 write/out "         det_tilt series finished ..."
-$play -q /disk-a/staff/GEIRS/SOUNDS/gong.au
+$play -q $GEIRS_DIR/SOUNDS/gong.au
 
 exit:
 return
