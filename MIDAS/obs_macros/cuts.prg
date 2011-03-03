@@ -19,7 +19,7 @@ LOOP:
 
 LOAD/IMA {P1} cuts={cute(1)},{cute(2)} center={cent(1)},{cent(2)} sc={scal}
  $play -q $GEIRS_DIR/SOUNDS/doorbell.au
-INQUIRE/KEY answ "Ready to choose star(y) or change cuts(n)? "
+INQUIRE/KEY answ "Ready to choose star(y) or change cuts(n)? " 
 answ = m$upper(answ)
 IF answ(1:1) .EQ. "N" THEN
  $play -q $GEIRS_DIR/SOUNDS/doorbell.au
