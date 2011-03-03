@@ -264,7 +264,9 @@ class ClFits:
                 keyword_with_frame_type = 'OBJECT'
             elif myfits[0].header['INSTRUME']=='HAWKI':
                 keyword_with_frame_type = 'IMAGETYP'
-            else: keyword_with_frame_type = 'OBJECT' # default    
+            elif myfits[0].header['INSTRUME']=='Panic': # current ID in GEIRS for PANIC
+                keyword_with_frame_type = 'OBJECT'
+            else: keyword_with_frame_type = 'OBJECT' # default, even for 'Panic'    
         except KeyError:
             log.warning('INSTRUME keyword not found')
             keyword_with_frame_type = 'OBJECT' #default
@@ -414,11 +416,15 @@ class ClFits:
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.obID = myfits[0].header['POINT_NO'] # for O2000
             elif myfits[0].header['INSTRUME']=='Panic':
-                self.obID = myfits[0].header['OB_ID'] # for PANIC
+                # check how was observed
+                if myfits[0].header.has_key('OBS_TOOL'):
+                    self.obID = myfits[0].header['OB_ID'] # for PANIC using OT
+                else:
+                    self.obID = myfits[0].header['POINT_NO'] # for PANIC using MIDAS or whatever
             else:
                 self.obID = -1
         except Exception,e:
-            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            log.error("Cannot find OB_ID keyword : %s:",str(e))
             self.obID = -1
                
         #OB_PAT : Observation Block Pattern
@@ -428,11 +434,14 @@ class ClFits:
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.obPat = myfits[0].header['DITH_PAT'] # for O2000
             elif myfits[0].header['INSTRUME']=='Panic':
-                self.obPat = myfits[0].header['OB_PAT'] # for PANIC
+                if myfits[0].header.has_key('OBS_TOOL'):
+                    self.obPat = myfits[0].header['OB_PAT'] # for PANIC using OT
+                else:
+                    self.obPat = myfits[0].header['POINT_NO'] # for PANIC using MIDAS or whatever
             else:
                 self.obPat = -1
         except Exception,e:
-            ###log.error("Cannot find keyword : %s:",str(e))
+            log.error("Cannot find keyword : %s:",str(e))
             self.obPat = -1
                    
         #PAT_EXPN : Pattern Exposition Number
@@ -440,13 +449,16 @@ class ClFits:
             if myfits[0].header['INSTRUME']=='HAWKI':
                 self.pat_expno = myfits[0].header['HIERARCH ESO TPL EXPNO']
             elif myfits[0].header['INSTRUME']=='Omega2000':
-                self.pat_expno = -1 # not available
+                self.pat_expno = myfits[0].header['DITH_NO']
             elif myfits[0].header['INSTRUME']=='Panic':
-                self.pat_expno = myfits[0].header['PAT_EXPN'] # for PANIC
+                if myfits[0].header.has_key('OBS_TOOL'):
+                    self.pat_expno = myfits[0].header['PAT_EXPN'] # for PANIC using OT
+                else:
+                    self.pat_expno = myfits[0].header['DITH_NO'] # for PANIC using MIDAS or whatever
             else:
                 self.pat_expno = -1
         except Exception,e:
-            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            log.error("Cannot find keyword : %s:",str(e))
             self.pat_expno = -1
             
         #PAT_NEXP : Number of Exposition of Pattern
@@ -456,11 +468,15 @@ class ClFits:
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.pat_noexp = -1 # not available
             elif myfits[0].header['INSTRUME']=='Panic':
-                self.pat_noexp = myfits[0].header['PAT_NEXP'] # for PANIC
+                if myfits[0].header.has_key('OBS_TOOL'):
+                    self.pat_noexp = myfits[0].header['PAT_NEXP'] # for PANIC using OT
+                else:
+                    # we could try to parse OBJECT key
+                    self.pat_noexp = -1 # for PANIC using MIDAS or whatever
             else:
                 self.pat_noexp = -1
         except Exception,e:
-            log.error("Cannot find INSTRUMET keyword : %s:",str(e))
+            log.error("Cannot find keyword : %s:",str(e))
             self.pat_noexp = -1
             
         # To Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers
@@ -468,8 +484,8 @@ class ClFits:
             if myfits[0].header['INSTRUME']=='Omega2000':
                 myfits[0].header.update('PRESS1', 0.0)
                 myfits[0].header.update('PRESS2', 0.0)
-        except KeyError:
-            log.warning('INSTRUME keyword not found')
+        except Exception,e:
+            log.warning("Keyword not found : %s ->", str(e))
         
         try:
             myfits.close(output_verify='ignore')

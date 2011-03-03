@@ -149,7 +149,7 @@ class MainGUI(panicQL):
         item =QStyleSheetItem( self.textEdit_log.styleSheet(), "error_tag" )
         item.setColor( QColor("red") )
         item.setFontWeight( QFont.Bold )
-        item.setFontUnderline( True )
+        item.setFontUnderline( False )
         # Warning
         item =QStyleSheetItem( self.textEdit_log.styleSheet(), "warning_tag" )
         item.setColor( QColor("blue") )
@@ -387,7 +387,7 @@ class MainGUI(panicQL):
         (end_seq, seq)=self.checkEndObsSequence(filename)
         if end_seq:
             log.debug("Detected end of observing sequence")
-            self.textEdit_log.append("<info_tag> Detected end of observing sequence</info_tag> ")       
+            self.textEdit_log.append("<warning_tag> Detected end of observing sequence</warning_tag> ")       
         
         
         ##################################################################
@@ -705,7 +705,14 @@ class MainGUI(panicQL):
         # number (EXPNO) of the current frame; It even works for calibration frames sequences (dark, flats, ...)
         if self.isOTrunning:
             log.info("EXPNO= %s, NOEXPO= %s", fits.getExpNo(), fits.getNoExp())
+            # General case for OT observations
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1:
+                self.curr_sequence.append(filename)
+                seq=self.curr_sequence
+                self.curr_sequence=[]
+                return True,seq
+            # Special case for GEIRS+MIDAS_scripts observations
+            elif fits.getOBId()!=self.last_ob_id or fits.getFilter()!= self.last_filter:
                 self.curr_sequence.append(filename)
                 seq=self.curr_sequence
                 self.curr_sequence=[]
@@ -713,6 +720,12 @@ class MainGUI(panicQL):
             else:
                 self.curr_sequence.append(filename)
                 return False,self.curr_sequence
+        #
+        # or only GEIRS and MIDAS macros were used for the observing, then
+        # POINT_NO, DITH_NO, EXPO_NO keyword will be checked for sequece detection
+        #
+        else:
+                
         """
         # next option for sequence detection is based on FILTER and OB_ID
         if self.isOTrunning:
@@ -1660,7 +1673,7 @@ class MainGUI(panicQL):
         
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
         try:     
-            img=cq.estimateBackground(self.m_outputdir+"bckg.fits")
+            img=cq.estimateBackground(self.m_outputdir+"/bckg.fits")
             
             values = (iraf.mscstat (images=img,
             fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
