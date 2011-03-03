@@ -64,6 +64,7 @@ class CheckQuality:
         self.pixsize= float(pixsize)
         self.write= False
         self.verbose= False
+        self.MIN_NUMBER_GOOD_STARS = 5
         
     
     def estimateFWHM(self):
@@ -109,8 +110,12 @@ class CheckQuality:
         
         # SExtractor execution
         
-        if utils.runCmd( sex_cmd )==0:
-            raise Exception("Some error happended while running SExtractor")
+        try:
+            if utils.runCmd( sex_cmd )==0:
+                raise Exception("Some error happended while running SExtractor")
+        except Exception,e:
+            log.error("Some error while runCmd")
+            raise e
         
         source_file=catalog_file
         
@@ -154,14 +159,25 @@ class CheckQuality:
             #fa=a[i,13]
             #fea=a[i,14]
             snr=flux/flux_err
-            if x>self.edge and x<naxis1-self.edge and y>self.edge and y<naxis2-self.edge and ellipticity<self.ellipmax and fwhm>0.1 and fwhm<20 and flags==0  and isoarea>float(self.isomin) and fwhm<2*std and snr>20.0:
+            if x>self.edge and x<naxis1-self.edge and y>self.edge and y<naxis2-self.edge \
+               and ellipticity<self.ellipmax and fwhm>0.1 and fwhm<20 and flags==0  \
+               and isoarea>float(self.isomin) and snr>20.0: # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
                 print "%s SNR_APER= %s " %(i, snr)
+            else:
+                """
+                print "START #%s"%i
+                print "  SNR=",snr
+                print "  FWHM=",fwhm
+                print "  AREA=",isoarea
+                print "  ELLIP=", ellipticity
+                """
         
         m_good_stars=numpy.array(good_stars)
         
+        print "Found <%d> GOOD stars"%len(m_good_stars)
         
-        if len(m_good_stars)>20:
+        if len(m_good_stars)>self.MIN_NUMBER_GOOD_STARS:
             std=numpy.std(m_good_stars[:,8])
             print "STD2=",std
             efwhm=numpy.median(m_good_stars[:,8])
@@ -175,6 +191,7 @@ class CheckQuality:
             
         else:
             print "Not enought stars found !!"
+            fits_file.close(output_verify='ignore')    
             return -1,-1
         
         #print "FWHM-median(pixels)= ", numpy.median(fwhm_world), numpy.amin(fwhm_world), numpy.amax(fwhm_world)
@@ -294,9 +311,12 @@ if __name__ == "__main__":
         usage()
     
     print '...reading', inputfile
-    
-    cq = CheckQuality(inputfile, isomin, ellipmax, edge, pixsize, write, verbose)
-    cq.estimateFWHM()
+    try:
+        cq = CheckQuality(inputfile, isomin, ellipmax, edge, pixsize, write, verbose)
+        cq.estimateFWHM()
+    except:
+        log.error("There was some error !!")
+        raise
     
     print 'ending application....'
 
