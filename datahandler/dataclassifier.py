@@ -95,6 +95,7 @@ class ClFits:
         self.itime     = 0.0
         self.readmode  = ""
         self.my_header = None
+        self.obs_tool  = False
         
         
         self.recognize()
@@ -163,6 +164,9 @@ class ClFits:
     def isMEF(self):
         return (self.mef)
     
+    def isFromOT(self):
+        return (self.obs_tool)
+    
     def expTime(self):
         return (self.exptime)
     
@@ -199,7 +203,7 @@ class ClFits:
             log.error("Wrong extension number especified. Not a MEF file.")
         else:
             try:
-                myfits = pyfits.open(self.pathname)
+                myfits = pyfits.open(self.pathname, ignore_missing_end=True) # since some problems with O2k files   
                 temp=myfits[0].data
                 myfits.close(output_verify='ignore')
                 return temp
@@ -219,7 +223,7 @@ class ClFits:
                     
         # Open the file            
         try:
-            myfits = pyfits.open(self.pathname)                                 
+            myfits = pyfits.open(self.pathname, ignore_missing_end=True) # since some problems with O2k files                                
             #myfits = pyfits.open(self.pathname, 'update')
             #myfits[0].verify()
         except Exception,e:
@@ -247,6 +251,10 @@ class ClFits:
         # pointer to the primary-main header
         self.my_header = myfits[0].header
           
+        
+        # Find out the how data file was "observed"
+        if myfits[0].header.has_key('OBS_TOOL'): self.obs_tool=True
+        else: self.obs_tool=False
          
         # INSTRUMENT
         try:
@@ -265,7 +273,10 @@ class ClFits:
             elif myfits[0].header['INSTRUME']=='HAWKI':
                 keyword_with_frame_type = 'IMAGETYP'
             elif myfits[0].header['INSTRUME']=='Panic': # current ID in GEIRS for PANIC
-                keyword_with_frame_type = 'OBJECT'
+                if self.obs_tool:
+                    keyword_with_frame_type = 'IMAGETYP'
+                else:
+                    keyword_with_frame_type = 'OBJECT'
             else: keyword_with_frame_type = 'OBJECT' # default, even for 'Panic'    
         except KeyError:
             log.warning('INSTRUME keyword not found')
@@ -417,7 +428,7 @@ class ClFits:
                 self.obID = myfits[0].header['POINT_NO'] # for O2000
             elif myfits[0].header['INSTRUME']=='Panic':
                 # check how was observed
-                if myfits[0].header.has_key('OBS_TOOL'):
+                if self.obs_tool:
                     self.obID = myfits[0].header['OB_ID'] # for PANIC using OT
                 else:
                     self.obID = myfits[0].header['POINT_NO'] # for PANIC using MIDAS or whatever
@@ -432,9 +443,9 @@ class ClFits:
             if myfits[0].header['INSTRUME']=='HAWKI':
                 self.obPat = myfits[0].header['HIERARCH ESO TPL ID']
             elif myfits[0].header['INSTRUME']=='Omega2000':
-                self.obPat = myfits[0].header['DITH_PAT'] # for O2000
+                self.obPat = myfits[0].header['POINT_NO'] # for O2000
             elif myfits[0].header['INSTRUME']=='Panic':
-                if myfits[0].header.has_key('OBS_TOOL'):
+                if self.obs_tool:
                     self.obPat = myfits[0].header['OB_PAT'] # for PANIC using OT
                 else:
                     self.obPat = myfits[0].header['POINT_NO'] # for PANIC using MIDAS or whatever
@@ -444,14 +455,14 @@ class ClFits:
             log.error("Cannot find keyword : %s:",str(e))
             self.obPat = -1
                    
-        #PAT_EXPN : Pattern Exposition Number
+        #PAT_EXPN : Pattern Exposition Number (expono of noexp)
         try:
             if myfits[0].header['INSTRUME']=='HAWKI':
                 self.pat_expno = myfits[0].header['HIERARCH ESO TPL EXPNO']
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.pat_expno = myfits[0].header['DITH_NO']
             elif myfits[0].header['INSTRUME']=='Panic':
-                if myfits[0].header.has_key('OBS_TOOL'):
+                if self.obs_tool:
                     self.pat_expno = myfits[0].header['PAT_EXPN'] # for PANIC using OT
                 else:
                     self.pat_expno = myfits[0].header['DITH_NO'] # for PANIC using MIDAS or whatever
@@ -461,14 +472,14 @@ class ClFits:
             log.error("Cannot find keyword : %s:",str(e))
             self.pat_expno = -1
             
-        #PAT_NEXP : Number of Exposition of Pattern
+        #PAT_NEXP : Number of Expositions of Pattern (expono of noexp)
         try:
             if myfits[0].header['INSTRUME']=='HAWKI':
                 self.pat_noexp = myfits[0].header['HIERARCH ESO TPL NEXP']
             elif myfits[0].header['INSTRUME']=='Omega2000':
                 self.pat_noexp = -1 # not available
             elif myfits[0].header['INSTRUME']=='Panic':
-                if myfits[0].header.has_key('OBS_TOOL'):
+                if self.obs_tool:
                     self.pat_noexp = myfits[0].header['PAT_NEXP'] # for PANIC using OT
                 else:
                     # we could try to parse OBJECT key

@@ -123,14 +123,14 @@ def run(args):
     print "to sort out ...",list_s
     # sort out files
     list_s=sortOutData(list_s)
-    print "LIST",list_s
+    #print "LIST",list_s
     
     print "to copy...."
     # procced to copy to destiny
     for frame in list_s:
         toCopy=False
         if ( frame.endswith(".fits") or frame.endswith(".fit") ):
-            data = pyfits.open(frame)
+            data = pyfits.open(frame, ignore_missing_end=True)
             read_type = data[0].header['OBJECT']
             print "FILE= %s ,TYPE = %s" %(frame, read_type)
             if  ( in_data_type == "" or in_data_type == "all" ):
@@ -215,7 +215,7 @@ def createMEF( filelist, filename, next=4):
     i=1
     for file in filelist:
         try:
-            infile=pyfits.open(file)
+            infile=pyfits.open(file, ignore_missing_end=True) # since some weird problems with O2k data
         except IOError:
             #raise Exception("ERROR, Cannot open file")
             print "ERROR, Cannot open file " + file

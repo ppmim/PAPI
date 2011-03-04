@@ -126,9 +126,10 @@ class MainGUI(panicQL):
 
         # Stuff to detect end of an observation sequence to know if data reduction could start
         self.curr_sequence = []  # list having the files of the current sequence received
-        self.last_filter=""  # filter name (J,H,Ks, ...) of the last dataframe received
-        self.last_ob_id=-1   # Obseving Block ID (unique) of the last dataframe received
         self.isOTrunning = True
+        self.last_filter=''  # filter name (J,H,Ks, ...) of the last dataframe received
+        self.last_ob_id=-1   # Obseving Block ID (unique) of the last dataframe received
+        self.last_img_type='' # image type (DARK, FLAT, SCIENCE, ...) of last received image
         self.last_ra = -1
         self.last_dec = -1
         self.last_filename=None  # last filename of the FITS received
@@ -154,12 +155,12 @@ class MainGUI(panicQL):
         item =QStyleSheetItem( self.textEdit_log.styleSheet(), "warning_tag" )
         item.setColor( QColor("blue") )
         item.setFontWeight( QFont.Bold )
-        item.setFontUnderline( True )
+        item.setFontUnderline( False )
         # Info
         item =QStyleSheetItem( self.textEdit_log.styleSheet(), "info_tag" )
         item.setColor( QColor("black") )
         item.setFontWeight( QFont.Bold )
-        item.setFontUnderline( True )
+        item.setFontUnderline( False )
         
         # Default run mode
         if  self.config_opts['quicklook']['run_mode']=="None": self.comboBox_QL_Mode.setCurrentItem(0)
@@ -314,7 +315,7 @@ class MainGUI(panicQL):
         log.debug( "New file detected --> %s. Going to verification...", filename)
         # (Try) to check if the FITS file writing has finished -- 
         try:
-            temp = pyfits.open(filename,"readonly")
+            temp = pyfits.open(filename,"readonly", ignore_missing_end=True) # since some problems with O2k files 
             #temp.verify(option='exception')  # it is a too severe checking !!!
             temp.close()
             self.fits_simple_verify(filename)
@@ -666,11 +667,11 @@ class MainGUI(panicQL):
                                 #display.showFrame(file)
                                 str_list+=str(file)+"\n"
                             QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
-                            self.textEdit_log.append(QString("<info_tag> ++>%1 files created: \n %1</info_tag>").arg(len(self._task_info._return)).arg(str(str_list)))
+                            self.textEdit_log.append(QString("<info_tag> >>%1 files created: \n %1</info_tag>").arg(len(self._task_info._return)).arg(str(str_list)))
                         elif os.path.isfile(self._task_info._return):
                             #print "PASOOOOOO RETURNED =",self._task_info._return
                             #QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
-                            self.textEdit_log.append(QString("<info_tag> ++>Output file %1 created </info_tag>").arg(self._task_info._return))
+                            self.textEdit_log.append(QString("<info_tag> >>Output file %1 created </info_tag>").arg(self._task_info._return))
                             display.showFrame(self._task_info._return)
                 else:
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
@@ -694,6 +695,8 @@ class MainGUI(panicQL):
         Note: It even works for calibration frame sequences (dark, flats, ...)
         """
         
+        endSeq=False
+        retSeq=[]
         # Read the FITS file
         fits = datahandler.ClFits(filename)
         #only for debug !!
@@ -703,28 +706,54 @@ class MainGUI(panicQL):
         # Based on the meta-data provided by the OT
         # Option based on number of expositions (NOEXP) in the pattern and the exposition 
         # number (EXPNO) of the current frame; It even works for calibration frames sequences (dark, flats, ...)
-        if self.isOTrunning:
-            log.info("EXPNO= %s, NOEXPO= %s", fits.getExpNo(), fits.getNoExp())
+        log.info("EXPNO= %s, NOEXPO= %s", fits.getExpNo(), fits.getNoExp())
+        if fits.isFromOT():
+            log.debug("Checking OT keywords...")
             # General case for OT observations
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1:
                 self.curr_sequence.append(filename)
-                seq=self.curr_sequence
+                retSeq=self.curr_sequence
                 self.curr_sequence=[]
-                return True,seq
-            # Special case for GEIRS+MIDAS_scripts observations
-            elif fits.getOBId()!=self.last_ob_id or fits.getFilter()!= self.last_filter:
-                self.curr_sequence.append(filename)
-                seq=self.curr_sequence
-                self.curr_sequence=[]
-                return True,seq
+                endSeq,retSeq = True,retSeq
             else:
                 self.curr_sequence.append(filename)
-                return False,self.curr_sequence
-        #
-        # or only GEIRS and MIDAS macros were used for the observing, then
+                endSeq,retSeq = False,self.curr_sequence
+        # ############################################
+        # We suppose data is obtained using GEIRS+MIDAS_scripts observations
         # POINT_NO, DITH_NO, EXPO_NO keyword will be checked for sequece detection
-        #
+        # TODO: TBC !!! I don't know if it will work with calibration sequences
         else:
+            log.debug("Checking GEIRS keywords...")
+            if self.last_ob_id==-1: # first time 
+                self.curr_sequence.append(filename)
+                endSeq,retSeq = False,self.curr_sequence
+            elif fits.getOBId()!=self.last_ob_id \
+                or fits.getFilter()!= self.last_filter \
+                or fits.getType()!=self.last_img_type:
+                retSeq=self.curr_sequence
+                #reset the sequence list
+                self.curr_sequence=[filename]
+                endSeq,retSeq = True,retSeq
+            else:
+                ra_point_distance=self.last_ra-fits.getRA()
+                dec_point_distance=self.last_dec-fits.getDec()
+                dist=math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
+                if dist>self.MAX_POINT_DIST:
+                    retSeq=self.curr_sequence
+                    #reset the sequence list
+                    self.curr_sequence=[filename]
+                    endSeq,retSeq = True,retSeq
+                else:
+                    self.curr_sequence.append(filename)
+                    endSeq,retSeq = False,self.curr_sequence
+        
+        #and finally, before return, update 'last'_values
+        self.last_ra=fits.getRA()
+        self.last_dec=fits.getDec()
+        self.last_filter=fits.getFilter()
+        self.last_ob_id=fits.getOBId()
+        self.last_img_type=fits.getType()
+        return endSeq,retSeq
                 
         """
         # next option for sequence detection is based on FILTER and OB_ID
@@ -746,32 +775,6 @@ class MainGUI(panicQL):
                 self.curr_sequence.append(filename)
                 return False,self.curr_sequence
         """
-        ############################################
-        # Based on any meta-data from OT
-        # TODO: TBC !!! I don't know if it will work with calibration sequences
-        if not self.isOTrunning:
-            if self.last_ra==-1: # first time
-                self.last_ra=fits.getRA()
-                self.last_dec=fits.getDec()
-                self.curr_sequence.append(filename)
-                return False,self.curr_sequence
-            else:
-                ra_point_distance=self.last_ra-fits.getRA()
-                dec_point_distance=self.last_dec-fits.getDec()
-                dist=math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
-                self.last_ra=fits.getRA()
-                self.last_dec=fits.getDec() 
-                if self.last_filter!=fits.getFilter() or dist>self.MAX_POINT_DIST:
-                    seq=self.curr_sequence
-                    #reset the sequence list
-                    self.curr_sequence=[filename]
-                    return True,seq
-                else:
-                    self.curr_sequence.append(filename)
-                    return False,self.curr_sequence
-        else:
-            log.warning("No way to know when the end of the observation sequence happpens")
-            return False,[]
      
     def checkFunc(self):
         """

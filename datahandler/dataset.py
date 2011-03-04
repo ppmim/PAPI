@@ -454,7 +454,7 @@ class DataSet:
         cur.execute(s_select,(filter,))
         rows=cur.fetchall()
         if len(rows)>0:
-            seq_pat_list = [[f[0], f[1], f[2], f[3]] for f in rows] # important to apply str() !!
+            seq_pat_list = [[f[0], f[1], f[2], f[3]] for f in rows] 
         print "Total rows selected:  %d" %(len(seq_pat_list))
         print "OS's found :\n ", seq_pat_list
         
