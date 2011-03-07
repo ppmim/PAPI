@@ -274,7 +274,8 @@ class ClFits:
                 keyword_with_frame_type = 'IMAGETYP'
             elif myfits[0].header['INSTRUME']=='Panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
-                    keyword_with_frame_type = 'IMAGETYP'
+                    #keyword_with_frame_type = 'IMAGETYP'
+                    keyword_with_frame_type = 'OBJECT'
                 else:
                     keyword_with_frame_type = 'OBJECT'
             else: keyword_with_frame_type = 'OBJECT' # default, even for 'Panic'    
