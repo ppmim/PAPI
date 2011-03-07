@@ -30,6 +30,7 @@
 #              14/12/2009    jmiguel@iaa.es - Skip non DARK frames and cotinue working with the good ones (good_frames)
 #              02/03/2010    jmiguel@iaa.es - added READEMODE checking
 #              14/09/2010    jmiguel@iaa.es - added support to MEF files, calling mscred.darkcombine subrutine instead of imred.darkcombine
+#              07/03/2011    jmiguel@iaa.es - Added Stats output and normalization (divide master dark by the TEXP to get a master dark in ADU/s units)
 #
 # TODO
 #  - checking of ITIME ( and not only EXPTIME, NCOADDS )
@@ -44,6 +45,8 @@ import os
 import logging
 import fileinput
 import time
+import shutil
+from optparse import OptionParser
 
 import misc.fileUtils
 import misc.utils as utils
@@ -88,14 +91,15 @@ class MasterDark:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, file_list, output_dir, output_filename="/tmp/mdark.fits", texp_scale=False, bpm=None):
+    def __init__(self, file_list, output_dir, output_filename="/tmp/mdark.fits", texp_scale=False, bpm=None, normalize=False):
         self.__file_list=file_list
         self.__output_file_dir=output_dir
         self.__output_filename=output_filename  # full filename (path+filename)
         self.__bpm=bpm
         self.m_min_ndarks = 3
         self.m_texp_scale = texp_scale
-    
+	self.m_normalize = normalize
+
     def createMaster(self):
       
         """
@@ -143,13 +147,13 @@ class MasterDark:
             f=datahandler.ClFits ( iframe )
             log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" %(iframe, f.expTime(), f.getType(), f.getNcoadds(), f.getReadMode() )) 
             if not f.isDark():
-                log.error("Error: Task 'createMasterDark' finished. Frame type is not 'DARK'.")
+                log.error("Error: Task 'createMasterDark' finished. Frame %s is not 'DARK'",iframe)
                 raise Exception("Found a non DARK frame") 
                 #continue
             else:        
                 # Check EXPTIME, TYPE(dark) and READMODE
                 if ( not self.m_texp_scale and f_expt!=-1 and (int(f.expTime()) != int(f_expt) or  f.getType()!=f_type or f.getNcoadds()!=f_ncoadds or f.getReadMode()!=f_readmode)  ):
-                    log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different EXPTIME, NCOADDS or READMODE")
+                    log.error("Error: Task 'createMasterDark' finished. Found a DARK frame (%s)with different EXPTIME, NCOADDS or READMODE",iframe)
                     #continue
                     raise Exception("Found a DARK frame with different EXPTIME or NCOADDS or READMODE") 
                 else: 
@@ -171,12 +175,13 @@ class MasterDark:
         
 	# Cleanup : Remove old masterdark
         misc.fileUtils.removefiles(self.__output_filename)
+	tmp1=self.__output_file_dir+"/dark_tmp.fits"
+	misc.fileUtils.removefiles(tmp1)
         
         # Call the noao.imred.ccdred task through PyRAF
-        
         misc.utils.listToFile(good_frames, self.__output_file_dir+"/files.list") 
         iraf.mscred.darkcombine(input="@"+(self.__output_file_dir+"/files.list").replace('//','/'),
-                        output=self.__output_filename,
+                        output=tmp1.replace('//','/'),
                         combine='average',
                         ccdtype='',
                         process='no',
@@ -188,18 +193,40 @@ class MasterDark:
                         #expname='EXPTIME'
                         #ParList = _getparlistname('darkcombine')
                         )
-                        
-        #outdata[0].header.add_history('Averaged %i frames to obtain combined DARK' % nframes)
         
+    
+	if self.m_normalize:
+	    # divide master dark by the TEXP to get a master dark in ADU/s units
+	    texp=datahandler.ClFits(tmp1).expTime()
+	    iraf.mscred.mscarith(operand1 = tmp1,
+				 operand2 = texp,
+				op = '/',
+				result =self.__output_filename,
+				verbose = 'no'
+				)
+	else:
+	    shutil.move(tmp1, self.__output_filename)
+	    
         darkframe = pyfits.open(self.__output_filename,'update')
         #darkframe[0].header.add_history('Combined images by averaging (%s files) ' % good_frames)
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.update('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         #darkframe[0].header.update('OBJECT','MASTER_DARK')
         darkframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file    
+
     
+	
         log.debug('Saved master DARK to %s' , self.__output_filename)
         log.debug("createMasterDark' finished %s", t.tac() )
+
+	# Get some stats from master dark (mean/median/rms)
+	print "Stats:"
+	print "----- "
+	values = (iraf.mscstat (images=self.__output_filename,\
+            fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
+	for line in values:
+	    print line
+
         
         return self.__output_filename
         
@@ -218,40 +245,49 @@ def usage ():
 if __name__ == "__main__":
     print 'Start MasterDark....'
     # Get and check command-line options
-    args = sys.argv[1:]
-    source_file_list = ""
-    output_filename = ""
-    texp_scale = False
     
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:o:t", ["source=","out=","t"])
-    except getopt.GetoptError:
-        # print help information and exit:
-        usage()
-        sys.exit(1)
-
+    usage = "usage: %prog [options] arg1 arg2 ..."
+    parser = OptionParser(usage)
     
-    for option, parameter in opts:
-        if option in ("-s", "--source"):
-            source_file_list = parameter
-            if not os.path.exists(os.path.dirname(source_file_list)):
-                print 'Error, file list does not exists'
-                sys.exit(1)
-        if option in ("-o", "--out"):
-            output_filename = parameter
-            print "Output file =", output_filename
-        if option in ("-t"):
-            texp_scale = True
-            print "TEXP scale =", texp_scale
-            
-    if  source_file_list=="" or output_filename=="":
-        usage()
-        sys.exit(3)
+                  
+    parser.add_option("-s", "--source",
+                  action="store", dest="source_file_list",
+                  help="Source file list of data frames. It can be a file or directory name.")
     
-    filelist=[line.replace( "\n", "") for line in fileinput.input(source_file_list)]
+    parser.add_option("-o", "--output",
+                  action="store", dest="output_filename", help="final coadded output image")
+    
+    parser.add_option("-n", "--normalize",
+                  action="store_true", dest="normalize", default=False,
+                  help="normalize master dark to 1 sec [default False]")
+    
+    parser.add_option("-e", "--scale",
+                  action="store_true", dest="texp_scale", default=False,
+                  help="scale raw frames by TEXP [default False]")
+    
+    parser.add_option("-v", "--verbose",
+                  action="store_true", dest="verbose", default=True,
+                  help="verbose mode [default]")
+    
+    (options, args) = parser.parse_args()
+    
+    
+    if not options.source_file_list or not options.output_filename=="":
+	parser.print_help()
+        parser.error("incorrect number of arguments " )
+    
+    
+    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
     #print "Files:",filelist
-    mDark = MasterDark(filelist,"/tmp", output_filename, texp_scale)
-    mDark.createMaster()
+    
+    try:
+	mDark = MasterDark(filelist,"/tmp", options.output_filename, options.texp_scale, None, options.normalize)
+	mDark.createMaster()
+    except Exception,e:
+	log.error("Task failed. Some error was found")
+	raise e
+	
+    
     
         
