@@ -196,6 +196,7 @@ class MasterDark:
         
     
 	if self.m_normalize:
+	    log.debug("Normalizing master dark to 1 sec")
 	    # divide master dark by the TEXP to get a master dark in ADU/s units
 	    texp=datahandler.ClFits(tmp1).expTime()
 	    iraf.mscred.mscarith(operand1 = tmp1,
