@@ -105,7 +105,9 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
     else:
         files = glob.glob(inputfile)
         files.sort()
-        
+    print "INPUT_FILE=",inputfile
+    print "MASKOBJ FILES=",files
+    
     f_out = open(outputfile,"w")
     
     sex = astromatic.SExtractor()

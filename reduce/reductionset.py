@@ -674,8 +674,10 @@ class ReductionSet:
                   
         if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
             
+            print "[DEBUG] outdir=",self.out_dir
             # Rename output sky-subtracted files
             for file in glob.glob(self.out_dir+'/*.fits.skysub'):
+                print "[DEBUG]= file_i=",file
                 shutil.move(file, file.replace('.fits.skysub', '.skysub.fits'))
                 out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
             
@@ -694,6 +696,7 @@ class ReductionSet:
             # Sort-out data files by obs-data (actually not required when obs_mode='dither')
             out_files=self.sortOutData(out_files) 
             
+            print "OUT_FILES=", out_files
             return out_files
         else:
             log.error("Some problem while running command %s", skyfilter_cmd) 
@@ -833,7 +836,7 @@ class ReductionSet:
         else:
             log.error("Option not recognized !!!")
             raise Exception("Wrong input frames given")
-        
+        print "IMAGES_IN=",images_in        
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
         search_box=10 # half_width of search box in arcsec (default 10)
@@ -1511,6 +1514,7 @@ class ReductionSet:
         log.info("##################################")
         log.info("#### Starting data reduction #####")
         log.info("#### MODE = %s  ##", self.red_mode)
+        log.info("     OUT_DIR= %s ##", out_dir)
         log.info("##################################")
         #print "OBJS =",obj_frames
         
