@@ -36,6 +36,7 @@ import os
 import logging
 import fileinput
 import time
+from optparse import OptionParser
 
 import misc.fileUtils
 import misc.utils as utils
@@ -268,7 +269,7 @@ class MasterDomeFlat:
                 mode = values[1] # wrt chip 0
             else: mode=1
             
-            # Compute normalized flat
+            # Compute normalized flat wrt chip 0
             self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
             misc.fileUtils.removefiles(self.__output_filename)
             iraf.mscred.mscarith(operand1=flat_diff,
@@ -331,51 +332,52 @@ class MasterDomeFlat:
         return self.__output_filename
         
 ################################################################################
-# Functions       
-def usage ():
-    print "Create 'master dome flat' procedure:"
-    print "Unknown command line parameter. Required parameters are : "
-    print "-s / --source=      Source file list of data frames"
-    print "-o / --out=         Output master filename "
-
-################################################################################
 # main
 if __name__ == "__main__":
-    print 'Start MasterFlat....'
-    # Get and check command-line options
-    args = sys.argv[1:]
-    source_file_list = ""
-    output_filename = ""
+    print 'Starting MasterDomeFlat....'
     
-    try:
-        opts, args = getopt.getopt(args, "s:o:", ['source=','out='])
-    except getopt.GetoptError:
-        # print help information and exit:
-        usage()
-        sys.exit(1)
-
+    usage = "usage: %prog [options] arg1 arg2 ..."
+    parser = OptionParser(usage)
     
-    for option, parameter in opts:
-        if option in ("-s", "--source"):
-            source_file_list = parameter
-            print "Source file list =", source_file_list
-            if not os.path.exists(os.path.dirname(source_file_list)):
-                print 'Error, file list does not exists'
-                sys.exit(1)
-        if option in ("-o", "--out"):
-            output_filename = parameter
-            print "Output file =", output_filename
-            
-    if  source_file_list=="" or output_filename=="":
-        usage()
-        sys.exit(3)
+                  
+    parser.add_option("-s", "--source",
+                  action="store", dest="source_file_list",
+                  help="Source file list of data frames. It can be a file or directory name.")
     
-    filelist=[line.replace( "\n", "") for line in fileinput.input(source_file_list)]
+    
+    parser.add_option("-o", "--output",
+                  action="store", dest="output_filename", help="final coadded output image")
+    
+    ## -optional
+    
+    """parser.add_option("-b", "--master_bpm",
+                  action="store", dest="master_bpm",
+                  help="Bad pixel mask to be used (optional)", default=None)
+    """
+    parser.add_option("-n", "--normalize",
+                  action="store_true", dest="normalize", default=False,
+                  help="normalize master flat by median [default False]")
+    
+    parser.add_option("-v", "--verbose",
+                  action="store_true", dest="verbose", default=True,
+                  help="verbose mode [default]")
+    
+    (options, args) = parser.parse_args()
+    
+    
+    if not options.source_file_list or not options.output_filename:
+        parser.print_help()
+        parser.error("incorrect number of arguments " )
+    
+    
+        
+    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     #output_filename="/tmp/out/out.fits"
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
 
     print "Files:",filelist
-    mDFlat = MasterDomeFlat(filelist, "/tmp", output_filename)
+    tmp_dir = os.path.dirname(options.output_filename)
+    mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, options.normalize)
     mDFlat.createMaster()
     
         

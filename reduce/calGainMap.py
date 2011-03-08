@@ -294,7 +294,7 @@ if __name__ == "__main__":
    
     parser.add_option("-L", "--low", type="float", default=0.5,
                   action="store", dest="mingain", 
-                  help="pixel below this gain value  are considered bad (default=0.4)")
+                  help="pixel below this gain value  are considered bad (default=0.5)")
     
     parser.add_option("-H", "--high", type="float", default=1.5,
                   action="store", dest="maxgain", 

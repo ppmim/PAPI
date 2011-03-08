@@ -230,15 +230,6 @@ class MasterDark:
         
         return self.__output_filename
         
-################################################################################
-# Functions       
-def usage ():
-    print "The required parameters are : "
-    print "-s / --source=     Source file list of data frames"
-    print "-o / --out=        Output master filename "
-    print "\n"
-    print "Optional parameters :"
-    print "-t                 Scale by TEXP "
 
 ################################################################################
 # main
@@ -272,7 +263,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
     
-    if not options.source_file_list or not options.output_filename=="":
+    if not options.source_file_list or not options.output_filename:
 	parser.print_help()
         parser.error("incorrect number of arguments " )
     

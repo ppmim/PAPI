@@ -27,6 +27,7 @@ import os
 import logging
 import fileinput
 import time
+from optparse import OptionParser
 
 import misc.fileUtils
 import misc.utils as utils
@@ -98,19 +99,19 @@ class MasterTwilightFlat:
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, flat_files, dark_model, output_filename="/tmp/mtwflat.fits", \
+    def __init__(self, flat_files, master_dark, output_filename="/tmp/mtwflat.fits", \
                 lthr=1000, hthr=100000, bpm=None, normal=True):
         
         """Initialization method"""
         
         self.__input_files = flat_files
-        self.__master_dark = dark_model
+        self.__master_dark = master_dark # if fact, it should be a dark model ???
         self.__output_file_dir = os.path.dirname(output_filename)
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__bpm=bpm
         self.__normal=normal
         
-        self.m_MIN_N_GOOD=2
+        self.m_MIN_N_GOOD=3
         self.m_lthr=lthr
         self.m_hthr=hthr
         self.m_min_flats=5
@@ -147,7 +148,7 @@ class MasterTwilightFlat:
             raise ExError('No FLAT frames defined')
         
         if nframes<self.m_min_flats:
-            log.error("Not enought number of flat frames (>%s) to compute master tw-flat",self.m_min_flats)
+            log.error("Not enought number (%s) of flat frames (>%s) to compute master tw-flat",nframes, self.m_min_flats)
             return False
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
@@ -179,7 +180,7 @@ class MasterTwilightFlat:
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
             #Compute the mean count value in chip to find out good frames (enought check ??)
             mean=0
-            myfits = pyfits.open(iframe)
+            myfits = pyfits.open(iframe, ignore_missing_end=True)
             if f.mef==True:
                 log.debug("Found a MEF file")
                 #log.error("Sorry, MEF files are not supported yet !")
@@ -192,7 +193,7 @@ class MasterTwilightFlat:
                 except:
                     raise
             else:
-                myfits=pyfits.open(iframe)
+                myfits=pyfits.open(iframe, ignore_missing_end=True)
                 mean=numpy.mean(myfits[0].data)
                 log.debug("MEAN value of MEF = %d", mean)
                 
@@ -237,7 +238,7 @@ class MasterTwilightFlat:
         #Open DARK
         try:
             cdark = datahandler.ClFits ( self.__master_dark )
-            mdark = pyfits.open(self.__master_dark)
+            mdark = pyfits.open(self.__master_dark, ignore_missing_end=True)
         except:
             mdark.close()
             raise
@@ -260,7 +261,7 @@ class MasterTwilightFlat:
             misc.fileUtils.removefiles(my_frame)
             
             # Build master dark with proper (scaled) EXPTIME and subtract (???? I don't know how good is this method of scaling !!!)
-            f = pyfits.open(iframe)
+            f = pyfits.open(iframe, ignore_missing_end=True)
             t_flat=datahandler.ClFits ( iframe ).expTime()
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
             if next>0:
@@ -313,7 +314,7 @@ class MasterTwilightFlat:
                 chip=1 # normalize wrt to mode of chip 1
             else:
                 chip=0
-            f=pyfits.open(comb_flat_frame)
+            f=pyfits.open(comb_flat_frame, ignore_missing_end=True)
             mode=3*numpy.median(f[chip].data)-2*numpy.mean(f[chip].data)
             f.close()        
         else: mode=1            
@@ -331,7 +332,7 @@ class MasterTwilightFlat:
         # Change back to the original working directory
         iraf.chdir()
         
-        flatframe = pyfits.open(self.__output_filename,'update')
+        flatframe = pyfits.open(self.__output_filename,'update', ignore_missing_end=True)
         if self.__normal: flatframe[0].header.add_history('Computed normalized master twilight flat')
         else: flatframe[0].header.add_history('Computed master twilight flat')
         
@@ -348,55 +349,70 @@ class MasterTwilightFlat:
         
         
         
-################################################################################
-# Functions       
-def usage ():
-    print "Create 'master twilight flat' procedure:"
-    print "Unknown command line parameter. Required parameters are : "
-    print "-s / --source=      Source file list of data frames"
-    print "-d / --dark=        Master dark current model to dark subtraction"
-    print "-o / --out=         Output master filename "
 
 ################################################################################
 # main
 if __name__ == "__main__":
-    print 'Start MasterTwFlat....'
+    print 'Starting MasterTwFlat....'
     # Get and check command-line options
-    args = sys.argv[1:]
-    source_file_list = ""
-    output_filename = ""
-    dark_file =""
-    try:
-        opts, args = getopt.getopt(args, "s:d:o:", ['source=','dark=', 'out='])
-    except getopt.GetoptError:
-        # print help information and exit:
-        usage()
-        sys.exit(1)
-
     
-    for option, parameter in opts:
-        if option in ("-s", "--source"):
-            source_file_list = parameter
-            print "Source file list =", source_file_list
-            if not os.path.isfile(source_file_list):
-                print 'Error, file list does not exists :', source_file_list
-                sys.exit(1)
-        if option in ("-d", "--dark"):
-            dark_file = parameter
-            print "Dark file =", dark_file
-        if option in ("-o", "--out"):
-            output_filename = parameter
-            print "Output file =", output_filename
-            
-    if  source_file_list=="" or output_filename=="" or dark_file=="":
-        usage()
-        sys.exit(3)
+    usage = "usage: %prog [options] arg1 arg2 ..."
+    parser = OptionParser(usage)
     
-    filelist=[line.replace( "\n", "") for line in fileinput.input(source_file_list)]
+                  
+    parser.add_option("-s", "--source",
+                  action="store", dest="source_file_list",
+                  help="Source file list of data frames. It can be a file or directory name.")
+    
+    parser.add_option("-d", "--master_dark",
+                  action="store", dest="master_dark",
+                  help="Master dark to subtract each raw flat (it will be scaled by TEXP)")
+    
+    parser.add_option("-o", "--output",
+                  action="store", dest="output_filename", help="final coadded output image")
+    
+    ## -optional
+    
+    parser.add_option("-b", "--master_bpm",
+                  action="store", dest="master_bpm",
+                  help="Bad pixel mask to be used (optional)", default=None)
+    
+    parser.add_option("-n", "--normalize",
+                  action="store_true", dest="normalize", default=False,
+                  help="normalize master flat by median [default False]")
+    
+    parser.add_option("-L", "--low", type="float", default=1000,
+                  action="store", dest="minlevel", 
+                  help="flats with median level bellow (default=1000) are rejected")
+    
+    parser.add_option("-H", "--high", type="float", default=100000,
+                  action="store", dest="maxlevel", 
+                  help="flats with median level above (default=100000) are rejected")
+    
+    
+    parser.add_option("-v", "--verbose",
+                  action="store_true", dest="verbose", default=True,
+                  help="verbose mode [default]")
+    
+    (options, args) = parser.parse_args()
+    
+    
+    if not options.source_file_list or not options.output_filename or not options.master_dark:
+        parser.print_help()
+        parser.error("incorrect number of arguments " )
+    
+    
+    # Start proceduce
+    
+    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list )]
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
     print "Files:",filelist
     try:
-        mTwFlat = MasterTwilightFlat(filelist, dark_file, output_filename)
+        mTwFlat = MasterTwilightFlat(filelist, options.master_dark,
+                                     options.output_filename, options.minlevel,
+                                     options.maxlevel,
+                                     options.master_bpm,
+                                     options.normalize)
         mTwFlat.createMaster()
     except:
         log.error("Unexpected error: %s", sys.exc_info()[0])
