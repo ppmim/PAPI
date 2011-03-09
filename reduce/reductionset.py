@@ -674,17 +674,17 @@ class ReductionSet:
                   
         if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
             
-            print "[DEBUG] outdir=",self.out_dir
             # Rename output sky-subtracted files
-            for file in glob.glob(self.out_dir+'/*.fits.skysub'):
-                print "[DEBUG]= file_i=",file
+            """for file in glob.glob(self.out_dir+'/*.fits.skysub'):
                 shutil.move(file, file.replace('.fits.skysub', '.skysub.fits'))
                 out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
-            
-            ## next commented implementation doesn't work with dither_on_off or other extended observing patterns
-            #files=[line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
-            #for file in files:   
-            #    shutil.move(file.replace(".fits", ".fits.skysub"), file.replace(".fits", ".skysub.fits"))
+            """
+            # look for sky subtracted images created by irdr::skyfilter            
+            files=[line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
+            for file in files:
+                if os.path.exists(file+".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
+                    shutil.move(file.replace(".fits", ".fits.skysub"), file.replace(".fits", ".skysub.fits"))
+                    out_files.append(file.replace(".fits", ".skysub.fits"))
             
             ## Compose the output file list
             #if obs_mode=='dither':
@@ -696,7 +696,6 @@ class ReductionSet:
             # Sort-out data files by obs-data (actually not required when obs_mode='dither')
             out_files=self.sortOutData(out_files) 
             
-            print "OUT_FILES=", out_files
             return out_files
         else:
             log.error("Some problem while running command %s", skyfilter_cmd) 
@@ -816,7 +815,7 @@ class ReductionSet:
         output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', dir=self.out_dir)
         os.close(output_fd)
         
-        log.debug("Creaing OBJECTS images (SExtractor)....")
+        log.debug("Creating OBJECTS images (SExtractor)....")
         
         if self.config_dict:
             mask_minarea=self.config_dict['offsets']['mask_minarea']
@@ -836,7 +835,7 @@ class ReductionSet:
         else:
             log.error("Option not recognized !!!")
             raise Exception("Wrong input frames given")
-        print "IMAGES_IN=",images_in        
+        
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
         search_box=10 # half_width of search box in arcsec (default 10)
@@ -1424,7 +1423,7 @@ class ReductionSet:
                         
                         # Here is where we WAIT (BLOCKING) for the results (iteration is a blocking call)
                         for result in results:
-                            print "RESULT=",result
+                            #print "RESULT=",result
                             out_ext.append(result)
 
                         log.critical("DONE PARALLEL REDUCTION ?")
@@ -1514,7 +1513,7 @@ class ReductionSet:
         log.info("##################################")
         log.info("#### Starting data reduction #####")
         log.info("#### MODE = %s  ##", self.red_mode)
-        log.info("     OUT_DIR= %s ##", out_dir)
+        log.info("#### OUT_DIR = %s ##",out_dir)
         log.info("##################################")
         #print "OBJS =",obj_frames
         
@@ -1658,7 +1657,7 @@ class ReductionSet:
         log.info("**** 1st Sky subtraction (without object mask) ****")
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
         # return only filtered images; in exteded-sources, sky frames  are not included 
-        self.m_LAST_FILES=self.skyFilter(out_dir+"/skylist1.list", gainmap, 'nomask', self.obs_mode)      
+        self.m_LAST_FILES=self.skyFilter(out_dir+"/skylist1.list", gainmap, 'nomask', self.obs_mode)       
                         
         #########################################
         # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
