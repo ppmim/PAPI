@@ -22,6 +22,8 @@ create/command panic/calser    @@ PANIC_UTIL:/obs_macros/calibration_series     
 create/command panic/focus @@ PANIC_UTIL:/obs_macros/Focus/omega_focus           ! DONE*
 create/command panic/tilt  @@ PANIC_UTIL:/obs_macros/Tilt/omega_tilt             ! TBD !!!
 
+create/command panic/simple     @@ PANIC_UTIL:/obs_macros/simple                 ! NEW
+
 create/command panic/acqui     @@ PANIC_UTIL:/obs_macros/acquisition
 create/command panic/dither    @@ PANIC_UTIL:/obs_macros/dither_pointing         ! DONE* problemas con add/icat
 create/command panic/smalldither    @@ PANIC_UTIL:/obs_macros/dither_point_small ! DONE* problemas con add/icat 
