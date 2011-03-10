@@ -445,23 +445,22 @@ if abort_check .eq. 1 then
   goto exit
 endif
 
-write/out "VOY POR AQUI (a)"
 
 	! add file to image catalog
 if loop .ge. 2 then
   wait/sec 5
   !set/midas output=logonly
-  write/out "VOY POR AQUI (B1)"
+  !write/out "P1"
   $cmd_panic_new last	| awk '{print $2}' | write/keyword pathname_ima 
 	! add file to icat
-  write/out "VOY POR AQUI (B2) IMAGEN= {pathname_ima}"      
+  !write/out "P2 IMAGE= {pathname_ima}"      
   add/icat {icatalog} {pathname_ima}
-  write/out "VOY POR AQUI (B3)"
+  !write/out "P3"
   
   set/midas output=yes
 endif
 
-write/out "VOY POR AQUI (c)"
+!write/out "P4"
 
 $cmd_panic_new save -i
 
