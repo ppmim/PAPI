@@ -252,9 +252,6 @@ class ClFits:
         self.my_header = myfits[0].header
           
         
-        # Find out the how data file was "observed"
-        if myfits[0].header.has_key('OBS_TOOL'): self.obs_tool=True
-        else: self.obs_tool=False
          
         # INSTRUMENT
         try:
@@ -265,6 +262,13 @@ class ClFits:
         except Exception,e:
             log.warning("INSTRUME keyword not found")
             self.instrument="Unknown"
+        
+        # Find out the how data file were"observed"
+        if myfits[0].header.has_key('OBS_TOOL') or self.instrument=='HAWKI':
+            self.obs_tool=True
+        else:
+            self.obs_tool=False
+        
             
         # Some temporal to allow work with diff instrument data files
         try:
