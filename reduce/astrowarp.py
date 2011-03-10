@@ -118,7 +118,7 @@ def initWCS( input_image ):
                 fits_file.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
                 raise e
             
-        fits_file.close()
+        fits_file.close(output_verify='ignore')
             
         log.debug("Right WCS info")
             
@@ -322,6 +322,7 @@ class AstroWarp(object):
         log.debug("***Doing WCS-header initialization ...")
         #initwcs_path=self.config_dict['config_files']['irdr_bin']+"/initwcs"
         for file in self.input_files:
+            log.debug("file: %s",file)
             initWCS(file)
             """
             args = [initwcs_path, file]

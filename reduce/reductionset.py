@@ -1426,7 +1426,7 @@ class ReductionSet:
                             #print "RESULT=",result
                             out_ext.append(result)
 
-                        log.critical("DONE PARALLEL REDUCTION ?")
+                        log.critical("DONE PARALLEL REDUCTION ")
                             
                         #pool=multiprocessing.Pool(processes=2)
                         # !! ERROR !!, because multiprocessing.pool.map() does not support class methods
