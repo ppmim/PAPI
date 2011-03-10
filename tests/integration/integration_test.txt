@@ -9,18 +9,8 @@ THINGS TO DO
 
 
 
-DOUBTS
-======
 
-- linearity test : how to compute the coefficients ? do you suggest some algorithm ?
-- derive CCD equation : what does 'derive CCD equation' mean ?
-- series of focus: how many star should be used to stats ?
-- series of focus --> two options ---> a) ala o2000 but with Filter and Readout-Mode
-                                       b) SExtractor (acuraccy?)
 
-- obs.mode simple: how to reduce ?
-
-- 
 
 
 
@@ -416,6 +406,41 @@ REMARKS:
    - macro should set proper kewords for the QL througt ~/tmp/fitsheader_panic.txt
    
    
+================================================================================
+T12) focus series
+
+
+OBJ: 
+  - take a series of darks 
+
+PRE-REQUIREMENTS:
+
+OT ACTION:
+
+ - Define corresponding OB's and run  (TBD)
+
+CL ACTION: OK
+
+  >>panic/focus focus=23500,200 number=7 itime=10,1
+
+QL ACTION: TBC
+  - Find out the best focus value
+   
+
+EXPECTED RESULT(s): TBC
+
+   - 7 images with 10 TEXP and IMAGETYP='focus'
+ 
+OBTAINED RESULT:
+
+
+PL DEMO:
+  - 
+  
+REMARKS:
+   - 
+
+PASS/FAIL:
    
    
       
@@ -499,9 +524,24 @@ TODO:
 - averiguar por que no se puede reducir con imagenes "falsas"
 - modificar MIDAS scripts para tener keys correctas (like OT)
 - ver por que da el error de TIMER[0] etc ... cuando intenta reducir el PQL, saca una ventana de error !!!
+- preparar documentación para SW-DEMO (ppt, diagramas, artículos, etc)
 
 
 
+DOUBTS & QUESTIONS
+==================
+
+- OT : how "times" should be provided to the OT , ala o2k or ala OT ?
+- MIDAS scripts: why is not the filter/readmode configured ?
+- linearity test : how to compute the coefficients ? do you suggest some algorithm ?
+- derive CCD equation : what does 'derive CCD equation' mean ?
+- series of focus: how many star should be used to stats ?
+- series of focus --> two options ---> a) ala o2000 but with Filter and Readout-Mode
+                                       b) SExtractor (acuraccy?)
+
+- OT+PL : obs.mode simple: how to reduce ?
+
+- PL: how to procede for 2nd.loop with extended object sequences ?
 
 
 
