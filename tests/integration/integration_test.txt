@@ -9,12 +9,6 @@ THINGS TO DO
 
 
 
-
-
-
-
-
-
 INTEGRATION TESTS
 =================
 
@@ -531,7 +525,7 @@ TODO:
 DOUBTS & QUESTIONS
 ==================
 
-- OT : how "times" should be provided to the OT , ala o2k or ala OT ?
+- OT : how "times" should be provided to the OT , ala o2k or ala OT ? JF: O2k !
 - MIDAS scripts: why is not the filter/readmode configured ?
 - linearity test : how to compute the coefficients ? do you suggest some algorithm ?
 - derive CCD equation : what does 'derive CCD equation' mean ?
@@ -539,10 +533,40 @@ DOUBTS & QUESTIONS
 - series of focus --> two options ---> a) ala o2000 but with Filter and Readout-Mode
                                        b) SExtractor (acuraccy?)
 
-- OT+PL : obs.mode simple: how to reduce ?
+- OT+PL : obs.mode simple: how to reduce ? no me preocupe, es solo para pruebas
 
-- PL: how to procede for 2nd.loop with extended object sequences ?
+- PL: how to procede for 2nd.loop with extended object sequences ? yes, mask objects on sky frames
+- MISC: how much money/budget for computers ???
+
+
+NEXT STEPS
+==========
+- calibration series with OT
+- best focus estimation with SExtractor (or even ala O2k)
+- absolute photometric calibration (SExtractor + 2MASS)
+- 
 
 
 
-   
+NOTES from the MEETING (11.03.2011)
+===================================
+
+- sky_point have to dither in object and sky
+- focus should be availabe in OT
+- ask to Ulli for MOSCA/LAICA focus procedure, muy importante para commisioning !!!
+- modificar OT para poder especif. de Tot exps. time
+
+- considerar la posibilidad de continuar un dither patther en una posición concreta debido a
+algún problema y que el pipeline sea capaz de reducirlo (al menos en el caso de filtros no criticos, Z...),
+- considerar que si el usuario "termina" manualmente una observación, se escriba END_SEQ en el FITS
+para que el PL pueda empezar la reducción.
+- OT: que pueda empezar no solo en un OB, sino en una posición dentro del un OB
+- skyflat en OT deben mover el telescopio entre cada exposition...
+- OT: debería poder permitir empezar la ejecución en un OB especifíco, y no solo del 1ro. al último sin poder empezar
+en un OB concreto.
+- ver si SCAMP puede resolver la distorsión que tendrá PANIC !!! no estamos seguros.
+
+- JF will send MPIA-photo pdf about a package for photometric calibration, interesante para la Quality checkings !!
+- PQL debe mostrar la imagen corregida de la distorsión óptica
+
+

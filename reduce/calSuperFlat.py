@@ -166,7 +166,7 @@ class SuperSkyFlat:
                 median=np.median(f[1].data[100:1900,100:1900])
             else:
                 median=np.median(f[0].data[100:1900,100:1900])
-            f.close()
+            f.close(output_verify='ignore')
             misc.fileUtils.removefiles(tmp1.replace(".fits","_n.fits"))                                                 
             out=tmp1.replace(".fits","_n.fits")
             iraf.mscred.mscarith(operand1 = tmp1,
@@ -181,7 +181,7 @@ class SuperSkyFlat:
         # Update FITS header 
         f=pyfits.open(self.output_filename,'update')
         f[0].header.update('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
-        f.close()
+        f.close(output_verify='ignore')
                                                            
         log.debug("Image created : %s", self.output_filename)
         return self.output_filename

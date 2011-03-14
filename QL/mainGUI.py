@@ -399,7 +399,7 @@ class MainGUI(panicQL):
         elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
             self.process(seq)
             return
-        elif self.comboBox_QL_Mode.currentText().contains("Lazy") and end_seq:
+        elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
             self.processLazy(filename)
             return
             
@@ -975,8 +975,9 @@ class MainGUI(panicQL):
                 elem.setText (5, str(object))
                 elem.setText (6, str(ra))
                 elem.setText (7, str(dec))
-            # filtering
             
+            self.listView_dataS.setCurrentItem(elem)
+            # filtering
             """
             self.listView_dataS.clearSelection()
             it=QListViewItemIterator (self.listView_dataS)
