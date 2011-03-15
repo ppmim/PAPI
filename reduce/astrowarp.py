@@ -62,6 +62,7 @@ def initWCS( input_image ):
         header=fits_file[0].header
         try:
             checkWCS(header)
+            log.debug("FITS looks having a right WCS header")
         except Exception,e:
             log.debug("No WCS compliant header, trying to creating one ...")
             try:
@@ -256,6 +257,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     #but, "ext_config" parameters will be used in any case
     try:
         scamp.run(cat_file, updateconfig=False, clean=False)
+        # TODO: we should catch the message 'WARNING: Not enough matched detections in instrument X' from SCAMP output
     except:
         raise
     
@@ -368,11 +370,14 @@ class AstroWarp(object):
             swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
         swarp.run(self.input_files, updateconfig=False, clean=False)
         
-        ## STEP 4: Make again the final astrometric calibration to the final coadd
-        log.debug("*** Doing final astrometril calibration....")
-        doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog, self.config_dict)
+        ## STEP 4: Make again the final astrometric calibration (only if we coadded more that one file) to the final coadd
+        if (len(self.input_files)>1):
+            log.debug("*** Doing final astrometril calibration....")
+            doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog, self.config_dict)
+        else:
+            shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file)
         
-        
+        log.info("Lucky you ! file %s created", self.coadded_file)
         
 ################################################################################
 # main
