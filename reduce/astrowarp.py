@@ -35,6 +35,7 @@ import astromatic
 import datahandler
 # Logging
 from misc.paLog import log
+import misc.config
 
 # for initWCS (fk5prec)
 #from PyWCSTools import wcscon
@@ -384,6 +385,8 @@ if __name__ == "__main__":
     usage = "usage: %prog [options] arg1 arg2 ..."
     parser = OptionParser(usage)
     
+    parser.add_option("-c", "--config_file",
+                  action="store", dest="config_file", help="config file")
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
@@ -392,12 +395,25 @@ if __name__ == "__main__":
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", help="final coadded output image")
     
+    
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
     
                                 
     (options, args) = parser.parse_args()
+    
+    # Read the default configuration file if none was specified by the user
+    if not options.config_file:
+        config_file = misc.config.default_config_file()       
+    else:
+        config_file = options.config_file
+    
+    # now, we "mix" the invokation parameter values with the values in the config file,
+    # having priority the invokation values over config file values
+    # note: only values of the 'general' section can be invoked
+    cfg_options = misc.config.read_config_file(config_file)
+    
     
     if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
@@ -406,7 +422,7 @@ if __name__ == "__main__":
         print "reading %s ..." % options.source_file_list
     
     filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename)
+    astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename, config_dict=cfg_options)
     
     try:
         astrowarp.run()

@@ -146,7 +146,7 @@ def main(arguments = None):
 
     #print "options=",options
 
-    if  i_args:    # i_args is the leftover positional arguments after all options have been processed
+    if i_args:    # i_args is the leftover positional arguments after all options have been processed
         parser.print_help()
         sys.exit(2) 
     

@@ -38,7 +38,9 @@ import os
 
 def applyDistort(src_image, dst_path, dist_matrix ):
     """ Apply (remove/add) to an image a distorion using a matrix distortion for a grid of points, so   
-        firstly, we need to compute the full distorion matrix to all the pixels of the image, and the map the new coordinates to remove/add the distorion. Note how matrix interpolation is done (prediction-->real), becaouse it caused to me some nightmares, but finally I caught it!
+        firstly, we need to compute the full distorion matrix to all the pixels of the image,
+        and then map the new coordinates to remove/add the distorion. Note how matrix interpolation
+        is done (prediction-->real), because it caused to me some nightmares, but finally I caught it!
     """
     
     src_img=pyfits.open(src_path)
@@ -52,29 +54,32 @@ def applyDistort(src_image, dst_path, dist_matrix ):
     SX=2048#4263
     SY=2048#4263
     #generate full-image coordinates in mm, having into account a pixel is 18um
-    Xp,Yp = N.meshgrid(N.arange(0,SX)*0.018, N.arange(0,SY)*0.018) 
+    #Xp,Yp = N.meshgrid(N.arange(0,SX)*0.018, N.arange(0,SY)*0.018) 
     
-    # ojo, me costo entender como hacer la interpolacion (prediction-->real), pero es asi por como luego mapeamos con map_coordinates para corregir la distorsion
-    x = dm[:,0]  
-    y = dm[:,1]
-    zx = dm[:,2]  # interpol values for x-axis
-    zy = dm[:,3]  # interpol values for y-axis
+    # ojo, me costo entender como hacer la interpolacion (prediction-->real),
+    # pero es asi por como luego mapeamos con map_coordinates para corregir la distorsion
+    x = dm[:,0] + 1*38.267
+    y = dm[:,1] + 1*38.267
+    zx = dm[:,2] + 1*38.767 # interpol values for x-axis
+    zy = dm[:,3] + 1*38.767 # interpol values for y-axis
     ipx = interpolate.interp2d(x,y,zx, kind='linear')
     ipy = interpolate.interp2d(x,y,zy, kind='linear')
-    # another option would be use 'interpolate.griddata' instead of interp2d, but I can't try it because need  Scipy_version>=0.98.3
+    # another option would be use 'interpolate.griddata' instead of interp2d,
+    # but I can't try it because need  Scipy_version>=0.98.3
     
-    #vx=N.arange(-38.367,38.367,0.018)
-    #vy=N.arange(-38.367,38.367,0.018)
-    vx=N.arange(0, 37.782,0.018)
-    vy=N.arange(0, 37.296,0.018)
+    #vx=N.arange(-38.267,38.367,0.036)
+    #vy=N.arange(-38.267,38.367,0.036)
+    vx=N.arange(0, 37.782*2,0.036)
+    vy=N.arange(0, 37.296*2,0.036)
     
-    Ix=ipx(vx,vy)/0.018 # interpolated value with call
-    Iy=ipy(vx,vy)/0.018
+    Ix=ipx(vx,vy)/(0.036*1) # interpolated value with call
+    Iy=ipy(vx,vy)/(0.036*1)
     
-    new_image = scipy.ndimage.map_coordinates(src.reshape(src_h, src_w), N.array([[Iy],[Ix]]), order=3) # ojo con la pos de los ejes !! 
+    new_image = scipy.ndimage.map_coordinates(src.reshape(src_h, src_w), \
+                                              N.array([[Iy],[Ix]]), order=3) # ojo con la pos de los ejes !! 
     
     #remove old file
-    os.remove(dst_path)    
+    if os.path.exists(dst_path): os.remove(dst_path)    
     # Save the new image in a FITS file
     hdu = pyfits.PrimaryHDU()
     hdu.header=src_img[0].header.copy()

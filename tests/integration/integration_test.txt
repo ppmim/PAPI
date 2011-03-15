@@ -551,7 +551,7 @@ NEXT STEPS
 NOTES from the MEETING (11.03.2011)
 ===================================
 
-- sky_point have to dither in object and sky
+- sky_point must to dither in object and sky
 - focus should be availabe in OT
 - ask to Ulli for MOSCA/LAICA focus procedure, muy importante para commisioning !!!
 - modificar OT para poder especif. de Tot exps. time
