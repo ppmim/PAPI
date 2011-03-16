@@ -394,8 +394,9 @@ if __name__ == "__main__":
                   action="store", dest="config_file", help="config file")
                   
     parser.add_option("-s", "--source",
-                  action="store", dest="source_file_list",
+                  action="store", dest="source_file",
                   help="Source file list of data frames. It can be a file or directory name.")
+    
     
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", help="final coadded output image")
@@ -420,20 +421,31 @@ if __name__ == "__main__":
     cfg_options = misc.config.read_config_file(config_file)
     
     
-    if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    if not options.source_file or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if options.verbose:
-        print "reading %s ..." % options.source_file_list
+        print "reading %s ..." % options.source_file
     
-    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename, config_dict=cfg_options)
+    # Check if source_file is a FITS file or a text file listing a set of files
+    if os.path.exists(options.source_file):
+        try:
+            misc.utils.fits_simple_verify(options.source_file)
+            filelist=[options.source_file]
+        except:
+            filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file)]
+            
+        astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename, config_dict=cfg_options)
     
-    try:
-        astrowarp.run()
-    except:
-        log.error("Some error while running Astrowarp....")
-        raise
-        sys.exit()
+        try:
+            astrowarp.run()
+        except:
+            log.error("Some error while running Astrowarp....")
+            raise
+    else:
+        log.error("Source file %s does not exists",options.source_file)
+        
+    sys.exit()
+        
     
     
