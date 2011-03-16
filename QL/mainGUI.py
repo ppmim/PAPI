@@ -251,43 +251,6 @@ class MainGUI(panicQL):
             log.error("Error while OUTPUT data base initialization: \n %s"%str(e))
             raise Exception("Error while OUTPUT data base initialization")    
         
-    def fits_simple_verify(self, fitsfile):
-    
-        """
-        Performs 2 simple checks on the input fitsfile, which is a string
-        containing a path to a FITS file.  First, it checks that the first card is
-        SIMPLE, and second it checks that the file 2880 byte aligned.
-        
-        This function is useful for performing quick verification of FITS files.
-        
-        Raises:
-          ValueError:  if either of the 2 checks fails
-          IOError:     if fitsfile doesn't exist
-        """
-        
-        if not os.path.exists(fitsfile):
-            raise IOError("file '%s' doesn't exist" % fitsfile)
-    
-    
-        f = open(fitsfile,"readonly")
-    
-        FITS_BLOCK_SIZE = 2880
-        try:
-            # check first card name
-            card = f.read(len("SIMPLE"))
-            if card != "SIMPLE":
-                raise ValueError("input file is not a FITS file")
-    
-    
-            # check file size
-            stat_result = os.stat(fitsfile)
-            file_size = stat_result.st_size
-            if file_size % FITS_BLOCK_SIZE != 0:
-                log.warning("FITS file is not 2880 byte aligned (corrupted?)")
-                raise ValueError("FITS file is not 2880 byte aligned (corrupted?)")
-        finally:
-            f.close()
-    
     def new_file_func_out(self, filename):
         """Callback used when a new file is detected in output dir"""
                      
@@ -318,7 +281,7 @@ class MainGUI(panicQL):
             temp = pyfits.open(filename,"readonly", ignore_missing_end=True) # since some problems with O2k files 
             #temp.verify(option='exception')  # it is a too severe checking !!!
             temp.close()
-            self.fits_simple_verify(filename)
+            misc.utils.fits_simple_verify(filename)
             
             if filename in self.read_error_files:
                 log.debug("Second try to read %s successful ! ", filename)
