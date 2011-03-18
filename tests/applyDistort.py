@@ -72,13 +72,15 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
     t=1 # offset factor
     pixel_size=0.0168  # pixel size in mm, it means the sampling rate of the matrix interpolation
     offset=abs(min(dm[:,0]))
+    # we offset the input matrix because it has a range [-v1,+v1], so we sum v1
+    # to offset in order to work with positive values for the matrix mapping 
     
     x = dm[:,0] + t*offset # predicted-X (undistorted)
     y = dm[:,1] + t*offset  # predicted-Y (undistorted)
     zx = dm[:,2]*scale_factor + t*offset # real-X ; interpol values for x-axis
     zy = dm[:,3]*scale_factor + t*offset # real-Y ; interpol values for y-axis
     
-    if not inverse: # correct distortion
+    if inverse: # correct distortion
         ipx = interpolate.interp2d(x,y,zx, kind='linear')
         ipy = interpolate.interp2d(x,y,zy, kind='linear')
     else:   # distort the image
@@ -88,13 +90,20 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
     # another option would be use 'interpolate.griddata' instead of interp2d,
     # but I can't try it because it's needed  Scipy_version>=0.98.3
     
+    pixel_size_x = (offset*2)/src_w
+    pixel_size_y = (offset*2)/src_h
+
     #vx=N.arange(-38.267,38.367,0.036)
     #vy=N.arange(-38.267,38.367,0.036)
-    vx=N.arange(0, offset*2, pixel_size)
-    vy=N.arange(0, offset*2, pixel_size)
+    vx=N.arange(0, offset*2, pixel_size_x)
+    vy=N.arange(0, offset*2, pixel_size_y)
     
-    Ix=ipx(vx,vy)/(pixel_size) # we divide by a sampling rate to have same points as pixels in the final image; 0.018 interpolated value with call
-    Iy=ipy(vx,vy)/(pixel_size)
+    Ix=ipx(vx,vy)/(pixel_size_x) # we divide by a sampling rate to have same points as pixels in the final image; 0.018 interpolated value with call
+    Iy=ipy(vx,vy)/(pixel_size_y)
+    
+    print "Offset=",offset
+    print "pxl_x=",pixel_size_x
+    print "pxl_y=",pixel_size_y
     
     # Apply distortion mapping the real(distorted) grid of points  previously interpolated
     new_image = scipy.ndimage.map_coordinates(src.reshape(src_h, src_w), \
@@ -123,7 +132,8 @@ if __name__ == "__main__":
     import sys
     
     usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    desc="Apply an optical distortion described by the input matrix to the source file"
+    parser = OptionParser(usage, description=desc)
     
     parser.add_option("-s", "--source_file",
                   action="store", dest="source_file", help="souce file (FITS) to apply matrix distortion")
@@ -146,7 +156,7 @@ if __name__ == "__main__":
     
     parser.add_option("-i", "--inverse",
                   action="store_true", dest="inverse", default=False,
-                  help="apply inverse distortion (correction?)")
+                  help="apply inverse distortion")
     
                                 
     (options, args) = parser.parse_args()
