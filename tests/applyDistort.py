@@ -36,6 +36,7 @@ import math
 from scipy import interpolate
 import os
 from optparse import OptionParser
+from pylab import *
 
 def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=False):
     """ Apply (remove/add) to an image a distorion using a matrix distortion for a grid of points, so   
@@ -62,7 +63,7 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
          
     #read the distorion matrix from file     
     dm = readDistMat(dist_matrix)
-         
+    
     #SX=src_h
     #SY=src_w
     #generate full-image coordinates in mm, having into account a pixel is 18um
@@ -72,13 +73,24 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
     t=1 # offset factor
     pixel_size=0.0168  # pixel size in mm, it means the sampling rate of the matrix interpolation
     offset=abs(min(dm[:,0]))
+    offset=0
     # we offset the input matrix because it has a range [-v1,+v1], so we sum v1
     # to offset in order to work with positive values for the matrix mapping 
     
     x = dm[:,0] + t*offset # predicted-X (undistorted)
     y = dm[:,1] + t*offset  # predicted-Y (undistorted)
-    zx = dm[:,2]*scale_factor + t*offset # real-X ; interpol values for x-axis
-    zy = dm[:,3]*scale_factor + t*offset # real-Y ; interpol values for y-axis
+    zx = (dm[:,2] + t*offset)*scale_factor # real-X ; interpol values for x-axis
+    zy = (dm[:,3] + t*offset)*scale_factor # real-Y ; interpol values for y-axis
+
+    # plot figure
+    print x-zx
+    figure()
+    Q = quiver( x, y, x-zx, y-zy, angles='xy', scale_units='xy',  scale=0.1)
+    title("PANIC (theorical) Distortion matrix to apply (K band)  (scale=0.1)")
+    #show()  
+  
+    #return
+
     
     if inverse: # correct distortion
         ipx = interpolate.interp2d(x,y,zx, kind='linear')
