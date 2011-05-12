@@ -315,7 +315,7 @@ class ReductionSet:
             return [],0
             
         # First, we need to check if we have MEF files
-        if not datahandler.ClFits( frame_list[0] ).mef:
+        if not datahandler.ClFits( frame_list[0] ).isMEF():
             nExt=1
             new_frame_list.append(frame_list)
         else:            
