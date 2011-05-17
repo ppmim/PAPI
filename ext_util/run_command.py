@@ -1,15 +1,27 @@
-import popen2
+#/usr/bin/env python
+"""This code is not currently used in PAPI, and popen2 is deprecated"""
+
+
+import popen2  # deprecated module, we should use subprocess.Popen
+import subprocess
 import os
 import select
 
 def run_command(cmd, timeout=None, callback=None):
     """
-    Run a command and return the text written to stdout and stderr, plus
+    @summary: Run a command and return the text written to stdout and stderr, plus
     the return value.
 
-    Returns: (int return value, string out, string err)
+    @return:  (int  value, string out, string err)
     """
     child = popen2.Popen3(cmd, True)
+    
+    #p = subprocess.Popen(cmd, shell=True, bufsize=0,
+    #      stdin=subprocess.PIPE, stdout=subprocess.PIPE, 
+    #      stderr=subprocess.STDOUT, close_fds=True)
+    
+    #(fout, fin, ferr) = (p.stdin, p.stdout, p.stderr)
+    
     (fout, fin, ferr) = (child.fromchild, child.tochild, child.childerr)
     fin.close()
     stdout = fout.fileno()

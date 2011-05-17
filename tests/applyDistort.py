@@ -86,10 +86,11 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
     print x-zx
     figure()
     Q = quiver( x, y, x-zx, y-zy, angles='xy', scale_units='xy',  scale=0.1)
-    title("PANIC (theorical) Distortion matrix to apply (K band)  (scale=0.1)")
+    title("PANIC (theorical) Geometrial Distortion (K band)  (scale=0.1)")
+    xlabel("[X] PANIC FOV mm")
+    ylabel("[Y] PANIC FOV mm")
     #show()  
   
-    #return
 
     
     if inverse: # correct distortion
@@ -176,8 +177,6 @@ if __name__ == "__main__":
     
     if not options.source_file or not options.output_file or not options.matrix_file:
         parser.print_help()
-        parser.error("incorrect number of arguments " )
-    else:
         applyDistort(options.source_file, options.output_file, options.matrix_file, \
                      options.scale_factor, options.inverse)
         

@@ -19,6 +19,8 @@ A wrapper for SExtractor
 A wrapper for SExtractor, the Source Extractor.
 by Laurent Le Guillou
 version: 0.1.5 - last modified: 2005-02-14
+version: 0.1.6 - last modified: 2011-06-17 by jmiguel@iaa.es 
+                 Substituted popen2.popen4 with subprocess.Popen 
 
 This wrapper allows you to configure SExtractor, run it and get
 back its outputs without the need of editing SExtractor
@@ -92,7 +94,7 @@ import __builtin__
 
 import sys
 import os
-import popen2
+import subprocess
 import exceptions
 import re
 import copy
@@ -105,7 +107,8 @@ import misc.utils
 
 # ======================================================================
 
-__version__ = "0.1.5 (2005-02-14)"
+#__version__ = "0.1.5 (2005-02-14)"
+__version__ = "0.1.6 (2011-05-17)"
 
 # ======================================================================
 
@@ -368,12 +371,16 @@ class SExtractor:
         selected=None
         for candidate in candidates:
             try:
-                (_out_err, _in) = popen2.popen4(candidate)
-                versionline = _out_err.read()
+                p = subprocess.Popen(candidate, shell=True, bufsize=bufsize,
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, 
+                    stderr=subprocess.STDOUT, close_fds=True)
+                (child_stdin, child_stdout_and_stderr) = p.communicate()
+ 
+                versionline = child_stdout_and_stderr.read()
                 if (versionline.find("SExtractor") != -1):
                     selected=candidate
                     break
-            except IOError:
+            except IOError, OSError:
                 continue
                 
         if not(selected):
@@ -489,7 +496,6 @@ class SExtractor:
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + file)
         
         #print commandline
-        #rcode = os.system(commandline)
         rcode = misc.utils.runCmd(commandline)
         
         if (rcode==0):

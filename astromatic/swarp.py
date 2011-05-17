@@ -32,7 +32,9 @@ A wrapper for SWARP
 
 A wrapper for SWARP from Astromatic (E.Bertin).
 by Jose M. Ibanez Mengual
+
 version: 0.1 - last modified: 2010-06-09
+Update 2011-5-17 : substituted popen2 with subprocess
 
 This wrapper allows you to configure SWARP, run it and get
 back its outputs without the need of editing SWARP
@@ -45,6 +47,9 @@ Tested on SWARP versions 2.17.x
 Example of use:
 
 -----------------------------------------------------------------
+
+
+
 
 TODO   
 
@@ -59,7 +64,7 @@ import __builtin__
 
 import sys
 import os
-import popen2
+import subprocess
 import exceptions
 import re
 import copy
@@ -364,8 +369,14 @@ class SWARP:
         selected=None
         for candidate in candidates:
             try:
-                (_out_err, _in) = popen2.popen4(candidate)
-                versionline = _out_err.read()
+                p = subprocess.Popen (candidate, shell = True, bufsize = bufsize,
+                    stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
+                    stderr = subprocess.STDOUT, close_fds = True)
+                
+                stdout_and_stderr = p.communicate()[0]
+ 
+                versionline = stdout_and_stderr.read()
+                
                 if (versionline.find("SWarp") != -1):
                     selected=candidate
                     break

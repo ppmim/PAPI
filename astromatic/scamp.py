@@ -46,6 +46,10 @@ Example of use:
 
 -----------------------------------------------------------------
 
+Update: 
+2011-5-17 : substituted popen2 with subprocess
+
+
 TODO   
 
 -----------------------------------------------------------------
@@ -59,7 +63,7 @@ import __builtin__
 
 import sys
 import os
-import popen2
+import subprocess
 import exceptions
 import re
 import copy
@@ -430,12 +434,17 @@ class SCAMP:
         selected=None
         for candidate in candidates:
             try:
-                (_out_err, _in) = popen2.popen4(candidate)
-                versionline = _out_err.read()
+                p = subprocess.Popen (candidate, shell = True, bufsize = bufsize,
+                    stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
+                    stderr = subprocess.STDOUT, close_fds = True)
+                
+                stdout_and_stderr = p.communicate()[0]
+ 
+                versionline = stdout_and_stderr.read()
                 if (versionline.find("SCAMP") != -1):
                     selected=candidate
                     break
-            except IOError:
+            except IOError,OSError:
                 continue
                 
         if not(selected):
@@ -568,8 +577,11 @@ def runCmd( str_cmd, p_shell=True ):
                 A wrapper to run system commands  
         INPUTS
                 str_cmd      - Command string to be executed in the shell
-                p_shell      - if True (default), command will be executed through the shell, and all cout/cerr messages will be available
-                             - if False, exception is the only way to find out problems during the call
+                p_shell      - if True (default), command will be executed 
+                                through the shell, and all cout/cerr messages 
+                                will be available
+                             - if False, exception is the only way to find 
+                             out problems during the call
         OUTPUT
                 Return 0 if some errors 
                 Retuen 1 if all was OK
@@ -580,14 +592,23 @@ def runCmd( str_cmd, p_shell=True ):
            
     print "Running command : %s \n"%str_cmd
     try:
-        p = subprocess.Popen(str_cmd, shell=p_shell, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        p = subprocess.Popen(str_cmd, buffer = 0, shell = p_shell, stdin = subprocess.PIPE, 
+                             stdout = subprocess.PIPE, stderr = subprocess.PIPE, 
+                             close_fds = True)
     except:
         print "Some error while running command..."
         raise
-        #return 1
        
-    err=p.stderr.read()
-    out=p.stdout.read()
+    #Warning
+    #We use communicate() rather than .stdin.write, .stdout.read or .stderr.read 
+    #to avoid deadlocks due to any of the other OS pipe buffers filling up and 
+    #blocking the child process.(Python Ref.doc)
+
+    std_out_std_err = p.communicate()[0]   
+    err = std_out_std_err
+    out = std_out_std_err
+
+
 
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
     if err.count('WARNING: Significant inaccuracy'):

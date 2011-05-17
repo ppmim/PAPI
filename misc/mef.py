@@ -22,7 +22,6 @@ __version__ = "$Revision: 64bda015861d $"
 ################################################################################
 # Import necessary modules
 
-import sys
 import os
 import fileinput
 from optparse import OptionParser
@@ -34,7 +33,8 @@ import misc.utils as utils
 # Interact with FITS files
 import pyfits
 import numpy as np
-
+import pywcs
+import numpy
 
 # Logging
 from misc.paLog import log
@@ -162,8 +162,8 @@ class MEF (object):
         log.info("Starting SplitMEF")
         
         if copy_keyword == None:
-            copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX',\
-                    'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP',\
+            copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX', 
+                    'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
                     'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'FILTER2']
                 
         out_filenames = []
@@ -187,13 +187,13 @@ class MEF (object):
                 suffix = out_filename_suffix % i
                 new_filename = file.replace(".fits", suffix)
                 if out_dir != None: 
-                    new_filename = new_filename.replace( \
-                                    os.path.dirname(new_filename), out_dir\
+                    new_filename = new_filename.replace( 
+                                    os.path.dirname(new_filename), out_dir
                                     ) 
                 out_filenames.append(new_filename)
-                out_hdulist = pyfits.HDUList( [pyfits.PrimaryHDU( \
-                                header = hdulist[i].header,\
-                                data = hdulist[i].data)]\
+                out_hdulist = pyfits.HDUList( [pyfits.PrimaryHDU( 
+                                header = hdulist[i].header,
+                                data = hdulist[i].data)]
                                              )
                 
                 out_hdulist.verify('silentfix')
@@ -219,7 +219,7 @@ class MEF (object):
         log.info("End of SplitMEF. %d files created", n)
         return n_ext , out_filenames
                     
-    def createMEF (self, output_file = os.getcwd()+"/mef.fits" , \
+    def createMEF (self, output_file = os.getcwd()+"/mef.fits" ,
                    primaryHeader = None):
         """ 
         @summary: Method used to create a MEF from a set of n>0 FITS frames                           
@@ -251,10 +251,10 @@ class MEF (object):
                 mef = True
                 n_ext = len(f)-1
                 
-                log.error ("Found a MEF file with %d extensions. \
-                Operation only supported for simple FITS", n_ext)
+                log.error ("Found a MEF file with %d extensions.\
+                 Operation only supported for simple FITS", n_ext)
                 
-                raise MEF_Exception ("Found a MEF file with %d extensions. \
+                raise MEF_Exception ("Found a MEF file with %d extensions.\
                 Operation only supported for simple FITS"%n_ext)
             else:
                 mef = False
@@ -277,10 +277,11 @@ class MEF (object):
         
         return n_ext, output_file
     
-    def convertGEIRSToMEF( self, out_filename_suffix=".mef.fits", \
-                           out_dir=None, copy_keyword=[]):
+    def convertGEIRSToMEF( self, out_filename_suffix = ".mef.fits",
+                           out_dir = None, copy_keyword = []):
         """ 
-        @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) having a 4-detector-frame to 1-MEF with
+        @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) 
+        having a 4-detector-frame to 1-MEF with
         a 4-extension FITS, one per each frame.
 
         @attention: it is NOT valid for cubes of data, by the moment
@@ -333,22 +334,66 @@ class MEF (object):
             out_filenames.append (new_filename)
             
             # Read all image sections (n_ext frames) and create the associated HDU
-            for i in range(1, n_ext+1):
-                hdu_data_i = in_hdulist[0].data[(2048*2048*n_ext)*(i-1):(2048*2048*n_ext)*i-1]
-                hdu_i = pyfits.ImageHDU(data=hdu_data_i)
-                # now, copy extra keywords required
-                for key in copy_keyword:
+            pix_centers = numpy.array ([[1024, 1024], [3072, 1024], 
+                                        [3072, 3072], [1024, 3072]], numpy.float_)
+            for i in range (0, n_ext/2):
+                for j in range (0, n_ext/2):
+                    log.debug("Reading %d-quadrant ..." % (i + j))
+                    hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 2048*j:2048*(j+1)]
+                    hdu_i = pyfits.ImageHDU (data = hdu_data_i)
+                    log.debug("Data size of %d-quadrant = %s" % (i, hdu_data_i.shape))
+                    
+                    # Create the new WCS
                     try:
-                        value = in_hdulist[0].header.ascardlist()[key].value
-                        comment = in_hdulist[0].header.ascardlist()[key].comment
-                        hdu_i.header.update(key, value, comment)
-                        # We DON'T need to update RA,DEC (pointing coordinates), because each 
-                        # extension should have CRVAL/CRPIX values!!
-                    except KeyError:
-                        print 'Warning, key %s cannot not be copied, is not in the header' % (key)
-                # Append new HDU to MEF
-                out_hdulist.append(hdu_i)
-                out_hdulist.verify('silentfix')
+                        orig_ar = float(primaryHeader['RA'])
+                        orig_dec = float(primaryHeader['DEC'])
+                    except ValueError:
+                        # no ar,dec values in the header, then can't re-compute ra,dec coordinates 
+                        # or update the wcs header
+                        pass
+                    else:
+                        #due to PANICv0 header hasn't a proper WCS header, we built a basic one 
+                        #in order to computer the new ra, dec coordinates
+                        new_wcs = pywcs.WCS(primaryHeader)
+                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2, primaryHeader['NAXIS2']/2]  
+                        new_wcs.wcs.crval =  [ primaryHeader['RA'], primaryHeader['DEC'] ]
+                        new_wcs.wcs.ctype = ['RA-TAN', 'DEC-TAN']
+                        new_wcs.wcs.cunit = ['deg', 'deg']
+                        pix_scale = 0.45 # arcsec per pixel
+                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], [pix_scale/3600.0, 0]]
+
+                        new_pix_center = new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
+                        
+                        prihdu.header.update ('RA', new_pix_center[0][0])
+                        prihdu.header.update ('DEC', new_pix_center[0][1])
+                        
+                        # Now update the new-wcs for the new subframe header
+                        hdu_i.header.update ('CRPIX1', 1024)
+                        hdu_i.header.update ('CRPIX2', 1024)
+                        hdu_i.header.update ('CRVAL1', new_pix_center[0][0])
+                        hdu_i.header.update ('CRVAL2', new_pix_center[0][1])
+                        hdu_i.header.update ('CD1_1', -pix_scale/3600.0, "Transformation matrix")
+                        hdu_i.header.update ('CD1_2', 0, "Transformation matrix")
+                        hdu_i.header.update ('CD2_1', 0,  "Transformation matrix")
+                        hdu_i.header.update ('CD2_2', pix_scale/3600.0, "Transformation matrix")
+                        hdu_i.header.update ('CTYPE1' , 'RA-TAN') 
+                        hdu_i.header.update ('CTYPE2' , 'DEC-TAN')
+                        hdu_i.header.update ('CUNIT1', 'deg')
+                        hdu_i.header.update ('CUNIT2', 'deg')
+                        
+                    # now, copy extra keywords required
+                    for key in copy_keyword:
+                        try:
+                            value = in_hdulist[0].header.ascardlist()[key].value
+                            comment = in_hdulist[0].header.ascardlist()[key].comment
+                            hdu_i.header.update (key, value, comment)
+                            # We DON'T need to update RA,DEC (pointing coordinates), because each 
+                            # extension should have CRVAL/CRPIX values!!
+                        except KeyError:
+                            print 'Warning, key %s cannot not be copied, is not in the header' % (key)
+                    # Append new HDU to MEF
+                    out_hdulist.append (hdu_i)
+                    out_hdulist.verify ('ignore')
             
             # Now, write the new MEF file
             #out_hdulist[0].header.update('NEXTEND', 4)
@@ -360,9 +405,10 @@ class MEF (object):
         
         return n_ext, out_filenames
     
-    def splitGEIRSToSimple( self, out_filename_suffix = " .Q%02d.fits", out_dir = None):
+    def splitGEIRSToSimple( self, out_filename_suffix = ".Q%02d.fits", out_dir = None):
         """ 
-        @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) having a 4-detector-frame to 4 single 
+        @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) 
+        having a 4-detector-frame to 4 single 
         FITS files with a frame per file. 
 
         @param out_filename_suffix: suffix added to the original input filename
@@ -377,8 +423,8 @@ class MEF (object):
         """
         
         log.info("Starting splitGEIRSToSimple")
-        n=0
-        out_filenames=[]
+        n = 0 
+        out_filenames = []
 
         # Iterate over the whole input file list 
         for file in self.input_files:        
@@ -394,41 +440,81 @@ class MEF (object):
                 raise MEF_Exception("Error, found a MEF file, expected a single FITS ")
             else:
                 log.info("OK, found a single FITS file")
-                
-                
+ 
             # copy primary header from input file
             primaryHeader = in_hdulist[0].header.copy()
-            out_hdulist = pyfits.HDUList()
             
-            
-            # Read all image sections (4 frames) and create the associated single FITS files
-            for i in range(1, 5):
-                # copy i-frame region 
-                data_i = in_hdulist[0].data[(2048*2048*4)*(i-1):(2048*2048*4)*i-1]    
-                # Create primary HDU (data + header)
-                prihdu = pyfits.PrimaryHDU (data = data_i, header = primaryHeader)
-                # Start by updating PRIMARY header keywords...
-                prihdu.header.update ('EXTEND', pyfits.FALSE, after = 'NAXIS')
-                # AR,DEC (WCS !!) need to be re-calculated !!!
-                new_ar = '' # TODO
-                new_dec = '' # TODO
-                prihdu.header.update ('AR', new_ar)
-                prihdu.header.update ('DEC', new_dec)
+            # Read all image sections (4 frames) and create the associated 4-single FITS files
+            n_ext = 4
+            pix_centers = numpy.array ([[1024, 1025], [3072, 1024], 
+                                        [3072, 3072], [1024, 3072]], numpy.float_)
+            for i in range (0, n_ext/2):
+                for j in range (0, n_ext/2):
+                    log.debug("Reading %d-quadrant ..." % (i*2 + j))
+                    hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 2048*j:2048*(j+1)]
+                    log.debug("Data size of %d-quadrant = %s" % (i*2+j, hdu_data_i.shape))    
+                    # Create primary HDU (data + header)
+                    out_hdulist = pyfits.HDUList()               
+                    prihdu = pyfits.PrimaryHDU (data = hdu_data_i, header = primaryHeader)
+                    # Start by updating PRIMARY header keywords...
+                    prihdu.header.update ('EXTEND', pyfits.FALSE, after = 'NAXIS')
+                    # AR,DEC (WCS !!) need to be re-calculated !!!
+                    
+                    # Create the new WCS
+                    try:
+                        orig_ar = float(primaryHeader['RA'])
+                        orig_dec = float(primaryHeader['DEC'])
+                    except ValueError:
+                        # no ar,dec values in the header, then can't re-compute ra,dec coordinates 
+                        # or update the wcs header
+                        pass
+                    else:
+                        #due to PANICv0 header hasn't a proper WCS header, we built a basic one 
+                        #in order to computer the new ra, dec coordinates
+                        new_wcs = pywcs.WCS(primaryHeader)
+                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2, primaryHeader['NAXIS2']/2]  
+                        new_wcs.wcs.crval =  [ primaryHeader['RA'], primaryHeader['DEC'] ]
+                        new_wcs.wcs.ctype = ['RA-TAN', 'DEC-TAN']
+                        new_wcs.wcs.cunit = ['deg', 'deg']
+                        pix_scale = 0.45 # arcsec per pixel
+                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], [pix_scale/3600.0, 0]]
+
+                        new_pix_center = new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
+                        
+                        prihdu.header.update ('RA', new_pix_center[0][0])
+                        prihdu.header.update ('DEC', new_pix_center[0][1])
+                        
+                        # Now update the new-wcs for the new subframe
+                        prihdu.header.update ('CRPIX1', 1024)
+                        prihdu.header.update ('CRPIX2', 1024)
+                        prihdu.header.update ('CRVAL1', new_pix_center[0][0])
+                        prihdu.header.update ('CRVAL2', new_pix_center[0][1])
+                        prihdu.header.update ('CTYPE1' , 'RA-TAN') 
+                        prihdu.header.update ('CTYPE2' , 'DEC-TAN')
+                        prihdu.header.update ('CUNIT1', 'deg')
+                        prihdu.header.update ('CUNIT2', 'deg')
+                        prihdu.header.update ('CD1_1', -pix_scale/3600.0, "Transformation matrix")
+                        prihdu.header.update ('CD1_2', 0, "Transformation matrix")
+                        prihdu.header.update ('CD2_1', 0,  "Transformation matrix")
+                        prihdu.header.update ('CD2_2', pix_scale/3600.0, "Transformation matrix")
+                        
+                    
+                    prihdu.header.update ('PA_QUAD', (i*2)+j, "PANIC Quadrant number [0,1,2,3]")
+                    
+                    out_hdulist.append (prihdu)    
+                    out_hdulist.verify ('ignore')
                 
-                out_hdulist.append (prihdu)    
-                out_hdulist.verify ('silentfix')
-            
-                new_filename = file.replace(".fits", out_filename_suffix%i)
-                if out_dir != None: 
-                    new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
-                out_filenames.append(new_filename)
- 
-                # Now, write the new MEF file
-                out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
-                out_hdulist.close (output_verify = 'ignore')
-                del out_hdulist
-                log.info ("FITS file %s created" % (out_filenames[n]))
-                n += 1
+                    new_filename = file.replace(".fits", out_filename_suffix % (i*2+j))
+                    if out_dir != None: 
+                        new_filename = new_filename.replace (os.path.dirname(new_filename), out_dir) 
+                    out_filenames.append (new_filename)
+     
+                    # Now, write the new MEF file
+                    out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
+                    out_hdulist.close (output_verify = 'ignore')
+                    del out_hdulist
+                    log.info ("FITS file %s created" % (out_filenames[n]))
+                    n += 1
         
         return out_filenames
                                   
@@ -497,14 +583,18 @@ if __name__ == "__main__":
         if not options.out_suffix: 
             options.out_suffix = ".join.fits"
         myMEF.doJoin (options.out_suffix)
+        
     elif options.split:
         if not options.out_suffix: 
             options.out_suffix = ".%02d.fits"
         myMEF.doSplit( options.out_suffix )
+    
     elif options.create:
         myMEF.createMEF(os.getcwd()+"/mef.fits")
+    
     elif options.geirs_split:
         myMEF.splitGEIRSToSimple()
+    
     elif options.geirs_convert:
         myMEF.convertGEIRSToMEF()
         
