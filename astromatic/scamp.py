@@ -434,13 +434,12 @@ class SCAMP:
         selected=None
         for candidate in candidates:
             try:
-                p = subprocess.Popen (candidate, shell = True, bufsize = bufsize,
+                p = subprocess.Popen (candidate, shell = True, bufsize = 0,
                     stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
                     stderr = subprocess.STDOUT, close_fds = True)
                 
-                stdout_and_stderr = p.communicate()[0]
+                versionline = p.communicate()[0]
  
-                versionline = stdout_and_stderr.read()
                 if (versionline.find("SCAMP") != -1):
                     selected=candidate
                     break
@@ -592,7 +591,7 @@ def runCmd( str_cmd, p_shell=True ):
            
     print "Running command : %s \n"%str_cmd
     try:
-        p = subprocess.Popen(str_cmd, buffer = 0, shell = p_shell, stdin = subprocess.PIPE, 
+        p = subprocess.Popen(str_cmd, bufsize = 0, shell = p_shell, stdin = subprocess.PIPE, 
                              stdout = subprocess.PIPE, stderr = subprocess.PIPE, 
                              close_fds = True)
     except:

@@ -369,13 +369,11 @@ class SWARP:
         selected=None
         for candidate in candidates:
             try:
-                p = subprocess.Popen (candidate, shell = True, bufsize = bufsize,
+                p = subprocess.Popen (candidate, shell = True, bufsize = 0,
                     stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
                     stderr = subprocess.STDOUT, close_fds = True)
                 
-                stdout_and_stderr = p.communicate()[0]
- 
-                versionline = stdout_and_stderr.read()
+                versionline = p.communicate()[0]
                 
                 if (versionline.find("SWarp") != -1):
                     selected=candidate

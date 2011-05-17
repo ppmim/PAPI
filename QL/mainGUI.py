@@ -939,7 +939,9 @@ class MainGUI(panicQL):
                 elem.setText (6, str(ra))
                 elem.setText (7, str(dec))
             
-            self.listView_dataS.setCurrentItem(elem)
+            if elem:
+                self.listView_dataS.setCurrentItem(elem)
+                
             # filtering
             """
             self.listView_dataS.clearSelection()
@@ -986,7 +988,9 @@ class MainGUI(panicQL):
         if father: # we have selected a group father
             #### Create the Group Popup menu
             popUpMenu = QPopupMenu()
-            popUpMenu.insertItem("Reduce Obs. Sequece", self.reduceSequence_slot, 0, 1 )   
+            popUpMenu.insertItem("Reduce Obs. Sequece", self.reduceSequence_slot, 0, 1 )
+            popUpMenu.insertItem("Copy files to clipboard", self.copy_files_slot, 0, 2 )
+               
             group_files=[]
             child=father.firstChild()
             while child:
@@ -997,6 +1001,7 @@ class MainGUI(panicQL):
             #### Create the Files Popup menu 
             popUpMenu = QPopupMenu()
             popUpMenu.insertItem("Display image", self.display_slot, 0, 1 )
+            popUpMenu.insertItem("Copy files to clipboard", self.copy_sel_files_slot, 0, 20 )
             popUpMenu.insertSeparator()
             popUpMenu.insertItem("Create Master Dark",  self.createMasterDark_slot, 0, 2 )
             popUpMenu.insertItem("Create Master Dome-Flat", self.createMasterDFlat_slot, 0, 3)
@@ -1065,11 +1070,11 @@ class MainGUI(panicQL):
     def reduceSequence_slot(self):
         """Run the data reduction of the current group/sequence selected"""
         
-        group_files=[]
-        child=self.m_listView_first_item_selected.firstChild()
+        group_files = []
+        child = self.m_listView_first_item_selected.firstChild()
         while child:
             group_files.append(str(child.text(0)))
-            child=child.nextSibling()
+            child = child.nextSibling()
         #print "CHILDS=",group_files
         
         #Change to working directory
@@ -1078,11 +1083,13 @@ class MainGUI(panicQL):
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         try:
-            self._task = RS.ReductionSet( group_files, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
-                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+            self._task = RS.ReductionSet (group_files, self.m_outputdir, 
+                                        out_file=self.m_outputdir+"/red_result.fits",
+                                        obs_mode="dither", dark=None, flat=None, 
+                                        bpm=None, red_mode="quick", group_by="ot", 
+                                        check_data=True, config_dict=self.config_opts)
             
-            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
+            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -1091,7 +1098,35 @@ class MainGUI(panicQL):
             self.setCursor(Qt.arrowCursor) 
             QMessageBox.critical(self, "Error", "Error while group data reduction: \n%s"%str(e))
             raise e
+    
+    def copy_files_slot(self):
+        """
+        Copy the file list fullnames belonging to the current group to the 
+        clipboard in order to allow copy&paste
+        """
         
+        text=""
+        child = self.m_listView_first_item_selected.firstChild()
+        while child:
+            text=text+str(child.text(0))+"\n"
+            child=child.nextSibling()    
+        
+        clipboard = QApplication.clipboard()
+        clipboard.setText(text)
+
+    def copy_sel_files_slot(self):
+        """
+        Copy the selected file list fullnames to the clipboard in order to 
+        allow copy&paste
+        """
+        
+        text=""
+        for filename in self.m_popup_l_sel:
+            text=text+str(filename)+"\n"
+        
+        clipboard = QApplication.clipboard()
+        clipboard.setText(text)    
+            
     def splitMEF_slot(self):
         """Split each MEF selected file from the list view into NEXT separate single FITS file, where NEXT is number of extensions.
            As result, NEXT files should be created

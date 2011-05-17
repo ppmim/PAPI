@@ -24,7 +24,7 @@
 #
 # papi.py
 #
-# Last update 30/Nov/2010
+# Last update 17/May/2011
 #
 ################################################################################
 
@@ -75,63 +75,67 @@ def main(arguments = None):
                                    version = "%prog 1.0")
     # general options
 
-    parser.add_option("-c", "--config", type="str",
-                      action="store", dest="config_file",
-                      help="config file for the PANIC Pipeline application. If not specified, '%s' is used" \
-                      % misc.config.default_config_file())
+    parser.add_option("-c", "--config", type = "str",
+                      action = "store", dest = "config_file",
+                      help = "config file for the PANIC Pipeline application.\
+                       If not specified, '%s' is used" \
+                       % misc.config.default_config_file())
                   
-    parser.add_option("-s", "--source", type="str",
-                  action="store", dest="source",
-                  help="Source file list of data frames. It can be a file or directory name.")
+    parser.add_option("-s", "--source", type = "str",
+                  action = "store", dest = "source",
+                  help = "Source file list of data frames. \
+                  It can be a file or directory name.")
     
-    parser.add_option("-o", "--output_file", type="str",
-                  action="store", dest="output_filename", 
-                  help="final reduced output image")
+    parser.add_option("-o", "--output_file", type = "str",
+                  action = "store", dest = "output_filename", 
+                  help = "final reduced output image")
     
-    parser.add_option("-t", "--temp_dir", type="str",
-                  action="store", dest="temp_dir",
-                  help="directory for temporal files")              
+    parser.add_option("-t", "--temp_dir", type = "str",
+                  action = "store", dest = "temp_dir",
+                  help = "directory for temporal files")              
     
-    parser.add_option("-d", "--out_dir", type="str",
-                  action="store", dest="output_dir", 
-                  help="output dir for product files")
+    parser.add_option("-d", "--out_dir", type = "str",
+                  action = "store", dest = "output_dir", 
+                  help = "output dir for product files")
     
-    parser.add_option("-r", "--red_mode", type="str",
-                  action="store", dest="reduction_mode", 
-                  help="Mode of data reduction to do (quick|science)")
+    parser.add_option("-r", "--red_mode", type = "str",
+                  action = "store", dest = "reduction_mode", 
+                  help = "Mode of data reduction to do (quick|science)")
                   
-    parser.add_option("-m", "--obs_mode", type="str",
-                  action="store", dest="obs_mode", 
-                  default="dither", help="observing mode (dither|ext_dither|other)")
+    parser.add_option("-m", "--obs_mode", type = "str",
+                  action = "store", dest = "obs_mode", 
+                  default = "dither", help = "observing mode (dither|ext_dither|other)")
     
     parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
+                  action = "store_true", dest = "verbose", default = True,
+                  help = "verbose mode [default]")
                   
     # file calibration options
     
     parser.add_option("-D", "--master_dark",
-                  action="store", dest="master_dark",
-                  help="master dark to subtract")
+                  action = "store", dest = "master_dark",
+                  help = "master dark to subtract")
     
     parser.add_option("-F", "--master_flat", type="str",
-                  action="store", dest="master_flat",
-                  help="master flat to divide by")
+                  action = "store", dest = "master_flat",
+                  help = "master flat to divide by")
 
-    parser.add_option("-b", "--bpm_file", type="str",
-                  action="store", dest="bpm_file", 
-                  help="bad pixel mask file")
+    parser.add_option("-b", "--bpm_file", type = "str",
+                  action = "store", dest = "bpm_file", 
+                  help = "bad pixel mask file")
 
-    parser.add_option("-g", "--group_by", type="str",
-                  action="store", dest="group_by",
-                  help="kind of data grouping (based on) to do with the dataset files (ot |filter)")
+    parser.add_option("-g", "--group_by", type = "str",
+                  action = "store", dest = "group_by",
+                  help = "kind of data grouping (based on) to do with the \
+                  dataset files (ot |filter)")
 
     parser.add_option("-k", "--check_data", 
-                  action="store_true", dest="check_data", 
-                  help="if true, check data properties matching (type, expt, filter, ncoadd, mjd)")
+                  action = "store_true", dest = "check_data", 
+                  help = "if true, check data properties matching \
+                  (type, expt, filter, ncoadd, mjd)")
 
         
-    (init_options, i_args) = parser.parse_args(args=arguments)
+    (init_options, i_args) = parser.parse_args (args = arguments)
     
     # Read the default configuration file if none was specified by the user
     if not init_options.config_file:
@@ -144,7 +148,7 @@ def main(arguments = None):
     # note: only values of the 'general' section can be invoked
     options = misc.config.read_options(init_options, 'general', config_file)
 
-    #print "options=",options
+    #print "options = ",options
 
     if i_args:    # i_args is the leftover positional arguments after all options have been processed
         parser.print_help()
@@ -156,18 +160,19 @@ def main(arguments = None):
         
     if not general_opts['source'] or not general_opts['output_file'] \
         or not general_opts['output_dir'] or not general_opts['temp_dir']   \
-        or len(i_args)!=0: # args is the leftover positional arguments after all options have been processed
+        or len(i_args) != 0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if general_opts['verbose']:
         print "reading %s ..." % general_opts['source']
     
     
-    sci_files=[]
+    sci_files = []
     
     # Read file or list-directory 
     if os.path.isfile(general_opts['source']):
-        sci_files=[line.replace("\n", "").replace('//','/') for line in fileinput.input(general_opts['source'])]
+        sci_files = [line.replace("\n", "").replace('//','/') 
+                     for line in fileinput.input(general_opts['source'])]
     elif os.path.isdir(general_opts['source']):
         for file in dircache.listdir(general_opts['source']):
             if file.endswith(".fits") or file.endswith(".fit"):
@@ -181,21 +186,23 @@ def main(arguments = None):
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     # Create the RS (it works both simple FITS as MEF files)            
-    rs = RS.ReductionSet( sci_files, general_opts['output_dir'], out_file=general_opts['output_file'], \
+    try:
+        rs = RS.ReductionSet( sci_files, general_opts['output_dir'], out_file=general_opts['output_file'], \
                           obs_mode=general_opts['obs_mode'], \
                           dark=general_opts['master_dark'], flat=general_opts['master_flat'], \
                           bpm=general_opts['master_bpm'], red_mode=general_opts['reduction_mode'], \
                           group_by=general_opts['group_by'], check_data=general_opts['check_data'], \
-                          config_dict=options \
+                          config_dict = options \
                         )
     
-    try:
         rs.reduceSet(red_mode=general_opts['reduction_mode'])
-    except Exception,e:
+    except RS.ReductionSetException, e:
+        print e
+    except Exception, e:
         print "Cannot reduce the Data Set, check error log...."
-        raise e
+        print e
     else:
-        print "Well done (i hope) !!!"
+        print "Well done (I hope) !!!"
         return 0
     
 ######################################################################

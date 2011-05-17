@@ -371,12 +371,11 @@ class SExtractor:
         selected=None
         for candidate in candidates:
             try:
-                p = subprocess.Popen(candidate, shell=True, bufsize=bufsize,
+                p = subprocess.Popen(candidate, shell=True, bufsize=0,
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, 
                     stderr=subprocess.STDOUT, close_fds=True)
-                (child_stdin, child_stdout_and_stderr) = p.communicate()
+                versionline = p.communicate()[0]
  
-                versionline = child_stdout_and_stderr.read()
                 if (versionline.find("SExtractor") != -1):
                     selected=candidate
                     break

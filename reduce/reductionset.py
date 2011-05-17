@@ -66,38 +66,45 @@ import misc.mef
 import astromatic
 import datahandler.dataset
 
+class ReductionSetException(Exception):
+    pass
+
+
 class ReductionSet:
-    def __init__(self, rs_filelist, out_dir, out_file, obs_mode="dither", dark=None, flat=None, bpm=None,\
-                 red_mode="quick", group_by="filter", check_data=True, config_dict=None):
+    def __init__(self, rs_filelist, out_dir, out_file, obs_mode="dither", 
+                 dark=None, flat=None, bpm=None, red_mode="quick", 
+                 group_by="filter", check_data=True, config_dict=None 
+                 ):
         """ Init function """
         
         if not config_dict:
             raise Exception("Config dictionary not provided ...")
             
-        if len(rs_filelist)<=0:
+        if len(rs_filelist) <= 0:
             log.error("Empy file list, no files to reduce ...")
-            raise Exception("Empy file list, no files to reduce ...")
+            raise ReductionSetException ("Empy file list, no files to reduce ...")
         #elif len(rs_filelist)<=3:
         #    log.error("ReductionSet files are so few to be reduced")
         #    raise Exception("ReductionSet #files are so few to be reduced")
         else:
-            right_extension=True
+            right_extension = True
             for f in rs_filelist:
-                if not os.path.exists(f) or not os.path.splitext(f)[1]==".fits":
+                if not os.path.exists(f) or not os.path.splitext(f)[1] == ".fits":
                     log.error("File %s does not exists or not has '.fits' extension", f)
-                    raise Exception("File %s does not exist or has not '.fits' extension"%f)
+                    raise ReductionSetException ("File %s does not exist or \
+                    has not '.fits' extension"%f)
                     
         # Input values
         self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
-        self.out_dir   = out_dir   # directory where all output will be written
-        self.out_file  = out_file  # final reduced data file (out)
-        self.obs_mode  = obs_mode  # observing mode (dither, dither_on_off, dither_off_on....)
-        self.master_dark = dark    # master dark to use (input)
-        self.master_flat = flat    # master flat to use (input)
-        self.master_bpm = bpm      # master Bad Pixel Mask to use (input)
-        self.red_mode = red_mode   # reduction mode (quick=for QL, science=for science) 
-        self.group_by = group_by.lower()   # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only by FILTER)
-        self.check_data=check_data # flat to indicate if data checking need to be done (see checkData() method)
+        self.out_dir = out_dir   # directory where all output will be written
+        self.out_file = out_file  # final reduced data file (out)
+        self.obs_mode = obs_mode  # observing mode (dither, dither_on_off, dither_off_on....)
+        self.master_dark = dark # master dark to use (input)
+        self.master_flat = flat # master flat to use (input)
+        self.master_bpm = bpm # master Bad Pixel Mask to use (input)
+        self.red_mode = red_mode # reduction mode (quick=for QL, science=for science) 
+        self.group_by = group_by.lower() # flag to decide if classification will be done (by OB_ID, OB_PAT, FILTER) or not (only by FILTER)
+        self.check_data = check_data # flat to indicate if data checking need to be done (see checkData() method)
         self.config_dict = config_dict # dictionary with all sections (general, darks, dflats, twflats, skysub, fits, keywords, config_dicts) and their values
          
         
