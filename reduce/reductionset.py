@@ -310,8 +310,9 @@ class ReductionSet:
     
     def split(self, frame_list):
         """ 
-        Split the data from the given frame list (any kind, science or calibration) into N 'sub-list',
-        where N is the number of extension of the Multi-Extension FITS.
+        Split the data from the given frame list (any kind, science or 
+        calibration) into N 'sub-list', where N is the number of extension of 
+        the Multi-Extension FITS.
         """
         
         log.debug("Starting split() method ....")
@@ -323,7 +324,7 @@ class ReductionSet:
             
         # First, we need to check if we have MEF files
         if not datahandler.ClFits( frame_list[0] ).isMEF():
-            nExt=1
+            nExt = 1
             new_frame_list.append(frame_list)
         else:            
             #Suppose we have MEF files ...
@@ -522,7 +523,8 @@ class ReductionSet:
         # group data file (only science) by Filter,TExp 
         if self.group_by=="filter":
             (seq_par, seq_list)=self.db.GetFilterFiles() # only SCIENCE or SKY_FOR frames
-            # Now, we need to check temporal (bases on MJD) continuty and split a group if it is discontinued
+            # Now, we need to check temporal (bases on MJD) continuty and split a 
+            # group if it is discontinued
             new_seq_list=[]
             new_seq_par=[]
             k=0
@@ -547,8 +549,10 @@ class ReductionSet:
             # Print out the found groups
             k=0
             for par in new_seq_par:
-                print "\nFILTER=%s  TEXP=%s   #files=%d"%(par[0], par[1], len(new_seq_list[k]))
-                print "-------------------------------------------------------------------------------------------------\n"
+                print "\nFILTER = %s  TEXP = %s   #files = %d " \
+                        %(par[0], par[1], len(new_seq_list[k]))
+                print "-------------------------------------------------------\
+                ------------------------------------------\n"
                 for file in new_seq_list[k]:
                     print file
                 k+=1
@@ -556,37 +560,40 @@ class ReductionSet:
         
         # group data files by meta-data given by the OT (OB_ID, OB_PAT, FILTER, TEXP)
         else:
-            (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
-            # Now, we need to check temporal (based on MJD) continuty and split a group if it is discontinued
-            new_seq_list=[]
-            new_seq_par=[]
-            k=0
+            (seq_par, seq_list)=self.db.GetSeqFiles(filter=None, type='SCIENCE')
+            # Now, we need to check temporal (based on MJD) continuity and 
+            # split a group if it is discontinued
+            new_seq_list = []
+            new_seq_par = []
+            k = 0
             for seq in seq_list:
-                group=[]
-                mjd_0=datahandler.ClFits(seq[0]).getMJD()
+                group = []
+                mjd_0 = datahandler.ClFits(seq[0]).getMJD()
                 for file in seq:
-                    t=datahandler.ClFits(file).getMJD()
+                    t = datahandler.ClFits(file).getMJD()
                     if math.fabs(t-mjd_0)<self.MAX_MJD_DIFF:
                         group.append(file)
-                        mjd_0=t
+                        mjd_0 = t
                     else:
                         log.debug("Sequence split due to temporal gap between sequence frames")
                         new_seq_list.append(group)
                         new_seq_par.append(seq_par[k])
-                        mjd_0=t
-                        group=[file]
+                        mjd_0 = t
+                        group = [file]
                 new_seq_list.append(group)
                 new_seq_par.append(seq_par[k])
-                k+=1
+                k += 1
                 
             # Print out the found groups
-            k=0
+            k = 0
             for par in new_seq_par:
-                print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s, TEXP=%s   #files=%d"%(par[0],par[1],par[2],par[3], len(new_seq_list[k]))
-                print "------------------------------------------------------------------------------------------------------------------\n"
+                print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s, \
+                TEXP=%s  #files=%d" % (par[0],par[1],par[2],par[3], len(new_seq_list[k]))
+                print "---------------------------------------------------------\
+                ---------------------------------------------------------\n"
                 for file in new_seq_list[k]:
                     print file
-                k+=1
+                k += 1
         
             log.debug("Found ** %d ** groups of SCI files ", len(new_seq_par))
         
@@ -1372,13 +1379,13 @@ class ReductionSet:
             # TODO: and BPM ???
             
         
-        sequences=self.getObjectSequences()
+        sequences = self.getObjectSequences()
         #return [] # PRUEBA !!!!
 
-        i=0 # index for object sequences 
-        out_ext=[] # it will store the partial extension reduced output filenames
-        seq_result_outfile="" # will store the full-frame out filename of the current reduced sequence  
-        seq_outfile_list=[] # will store the full-frame result for each sequence-data-reduction 
+        i = 0 # index for object sequences 
+        out_ext = [] # it will store the partial extension reduced output filenames
+        seq_result_outfile = "" # will store the full-frame out filename of the current reduced sequence  
+        seq_outfile_list = [] # will store the full-frame result for each sequence-data-reduction 
         # For each object/sequece, split and reduce de sequence
         for obj_seq in sequences:  #sequences is a list of list, and obj_seq is a list
             log.debug("===> Reduction of obj_seq %d",i)
@@ -1389,8 +1396,8 @@ class ReductionSet:
                 #return []
             else:
                 #avoid call getCalibFor() when red_mode="quick"
-                if red_mode=="quick":
-                    dark,flat,bpm=[],[],[]
+                if red_mode == "quick":
+                    dark,flat,bpm = [],[],[]
                 else:
                     dark, flat, bpm = self.getCalibFor(obj_seq)
                     # return 3 list of calibration frames (dark, flat, bpm), because there might be more than one master dark/flat/bpm
@@ -1404,20 +1411,20 @@ class ReductionSet:
                     log.info("Entering parallel data reduction ...")
                     try:
                         # Map the parallel process
-                        n_cpus=self.config_dict['general']['ncpus']
+                        n_cpus = self.config_dict['general']['ncpus']
                         results = pprocess.Map(limit=n_cpus, reuse=1) # IF reuse=0, it block the application !! I don't know why ?? though in pprocess examples it works! 
                         calc = results.manage(pprocess.MakeReusable(self.reduceObj))
                         for n in range(next):
                             log.info("===> (PARALLEL) Reducting extension %d", n+1)
                             ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
-                            if dark_ext==[]: mdark=None
+                            if dark_ext==[]: mdark = None
                             else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                            if flat_ext==[]: mflat=None
+                            if flat_ext==[]: mflat = None
                             else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                            if bpm_ext==[]: mbpm=None
-                            else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
+                            if bpm_ext==[]: mbpm = None
+                            else: mbpm = bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                             
-                            l_out_dir = self.out_dir+"/Q%02d"%(n+1)
+                            l_out_dir = self.out_dir + "/Q%02d" % (n+1)
                             if not os.path.isdir(l_out_dir):
                                 try:
                                     os.mkdir(l_out_dir)
@@ -1508,7 +1515,8 @@ class ReductionSet:
         
         return seq_outfile_list
         
-    def reduceObj(self, obj_frames, master_dark, master_flat, master_bpm, red_mode, out_dir, output_file):
+    def reduceObj(self, obj_frames, master_dark, master_flat, master_bpm, 
+                  red_mode, out_dir, output_file):
         """ Given a set of object(sci) frames and (optional) master calibration files,
             run the data reduction of the observing object sequence, producing an reduced
             ouput frame if no error; otherwise return None or raise exception.
@@ -1525,7 +1533,7 @@ class ReductionSet:
         #print "OBJS =",obj_frames
         
         # set the reduction mode
-        if red_mode!=None: self.red_mode=red_mode
+        if red_mode != None: self.red_mode=red_mode
         
         dark_flat = False
         
@@ -1533,7 +1541,7 @@ class ReductionSet:
         #self.cleanUpFiles()
         
         # Change cwd to self.out_dir
-        old_cwd=os.getcwd()
+        old_cwd = os.getcwd()
         os.chdir(out_dir) 
         
         # Copy/link source files (file or directory) to reduce to the working directory
@@ -1717,7 +1725,10 @@ class ReductionSet:
         ## END OF SINGLE REDUCTION  ##
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
-            reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, "2MASS" , config_dict=self.config_dict) 
+            
+            reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
+                                          "2MASS" , config_dict=self.config_dict, do_votable=True)
+             
             log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
             log.info("##### End of SINGLE data reduction ######")

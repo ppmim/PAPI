@@ -177,7 +177,8 @@ def checkWCS( header ):
                 
 
     
-def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=None):
+def doAstrometry( input_image, output_image=None, catalog='2MASS', 
+                  config_dict=None, do_votable=False):
     """ Do the astrometric calibration to the input image (only one)
       
     The method does astrometry on the image entirely using Emmanuel Bertin's
@@ -205,6 +206,10 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     catalog      - external catalog to be used for the astrometric calibration. 
                    By default, 2MASS is used 
 
+    config_dict  - dictionary with config arguments
+    
+    do_votable   - If True, build-out a VO-Table (SEx) with the fields required 
+                    for the photometry calibration 
     """
     
     log.debug("*** Start Astrometric calibration ***")
@@ -247,11 +252,12 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     ## STEP 2: Make astrometric calibration 
     log.debug("Doing astrometric calibration....")
     scamp = astromatic.SCAMP()
-    scamp.config['CONFIG_FILE']=config_dict['config_files']['scamp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
-    scamp.ext_config['ASTREF_CATALOG']=catalog
-    scamp.ext_config['SOLVE_PHOTOM']="N"
-    scamp.ext_config['CHECKPLOT_TYPE']="NONE"
-    scamp.ext_config['WRITE_XML']="N"
+    scamp.config['CONFIG_FILE'] = config_dict['config_files']['scamp_conf']
+    #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+    scamp.ext_config['ASTREF_CATALOG'] = catalog
+    scamp.ext_config['SOLVE_PHOTOM'] = "N"
+    scamp.ext_config['CHECKPLOT_TYPE'] = "NONE"
+    scamp.ext_config['WRITE_XML'] = "N"
     cat_file = input_image + ".ldac"   # xxxxx.fits.ldac
     #updateconfig=False means scamp will use the specified config file instead of the single config parameters
     #but, "ext_config" parameters will be used in any case
@@ -261,34 +267,53 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS', config_dict=N
     except:
         raise
     
-    ## STEP 3: Merge the astrometric parameters (.head keywords) with SWARP, and using .head files created by SCAMP
+    ## STEP 3: Merge and Warp the astrometric parameters (.head keywords) with SWARP, and using .head files created by SCAMP
     log.debug("Merging astrometric calibration parameters and resampling ...")
     swarp = astromatic.SWARP()
-    swarp.config['CONFIG_FILE']=config_dict['config_files']['swarp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
-    swarp.ext_config['IMAGEOUT_NAME']=output_image
-    swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS,RA,DEC'
-    swarp.ext_config['WEIGHTOUT_NAME']=output_image.replace(".fits",".weight.fits")
-    swarp.ext_config['HEADER_SUFFIX']=".head"
+    swarp.config['CONFIG_FILE'] = config_dict['config_files']['swarp_conf']
+    #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+    swarp.ext_config['IMAGEOUT_NAME'] = output_image
+    swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS,RA,DEC'
+    swarp.ext_config['WEIGHTOUT_NAME'] = output_image.replace(".fits",".weight.fits")
+    swarp.ext_config['HEADER_SUFFIX'] = ".head"
+    
     #Rename the external header produced by SCAMP (.head) to a filename to be looked for by SWARP 
     #SWARP take into account for re-projection an externar header for file 'xxxxx.ext' if exists 
     #an 'xxxx.head' header ('ext' can be any string, i.e. fits, skysub, ....)
-    shutil.move(input_image+".head", os.path.splitext(input_image)[0]+".head") # we use explitext() to remove the LAST suffix after, thus 'xxx.fits.skysub' ---> has as extension '.skysub'
+    shutil.move(input_image+".head", os.path.splitext(input_image)[0]+".head") 
+    # we use explitext() to remove the LAST suffix after, thus 'xxx.fits.skysub' ---> has as extension '.skysub'
     if (os.path.exists(input_image.replace(".fits",".weight.fits"))):
-        swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
-        swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
-        swarp.ext_config['WEIGHT_IMAGE']=input_image.replace(".fits",".weight.fits")
+        swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+        swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
+        swarp.ext_config['WEIGHT_IMAGE'] = input_image.replace(".fits",".weight.fits")
         
     try:
         swarp.run(input_image, updateconfig=False, clean=False)
     except:
         raise
-    
+
+    ## STEP 4: Create SExtractor catalog (ascii.votable)
+    if do_votable:
+        log.debug("*** Creating SExtractor VOTable catalog ....")
+        sex = astromatic.SExtractor()
+        #sex.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
+        #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
+        sex.config['CATALOG_TYPE'] = "ASCII_VOTABLE"
+        sex.config['CATALOG_NAME'] = os.path.splitext(output_image)[0] + ".xml"
+        sex.config['DETECT_THRESH'] = config_dict['skysub']['mask_thresh']
+        sex.config['DETECT_MINAREA'] = config_dict['skysub']['mask_minarea']
+        try:
+            sex.run(output_image, updateconfig=True, clean=False)
+        except: 
+            raise
+        
     return output_image 
 
 class AstroWarp(object):
     """ Astrometric warping """
 
-    def __init__(self, input_files, catalog='2MASS', coadded_file="/tmp/astrowarp.fits", config_dict=None):
+    def __init__(self, input_files, catalog='2MASS', 
+                 coadded_file="/tmp/astrowarp.fits", config_dict=None):
         """ Instantiation method for AstroWarp class
 
         Keyword arguments:
@@ -311,8 +336,10 @@ class AstroWarp(object):
       
             0. Initialize rought WCS header
             1. Call up SExtractor to create pixel object list (ldac catalog)
-            2. Call up SCAMP to make the astrometric calibration of the overlapped set of frames (.head calibration)
-            3. Call up SWARP to make the coadd, using the .head files generated by SCAMP and containing the distortion model parameters
+            2. Call up SCAMP to make the astrometric calibration of the overlapped set 
+            of frames (.head calibration)
+            3. Call up SWARP to make the coadd, using the .head files generated by 
+               SCAMP and containing the distortion model parameters
             4. Make the final astrometric calibration the the coadded frame (SExtractor+SCAMP)
             
         """
@@ -349,9 +376,10 @@ class AstroWarp(object):
         ## STEP 2: Make the multi-astrometric calibration for each file (all overlapped-files together)
         log.debug("*** Doing multi-astrometric calibration ....")
         scamp = astromatic.SCAMP()
-        scamp.config['CONFIG_FILE']=self.config_dict['config_files']['scamp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
-        scamp.ext_config['ASTREF_CATALOG']=self.catalog
-        scamp.ext_config['SOLVE_PHOTOM']="N"
+        scamp.config['CONFIG_FILE'] = self.config_dict['config_files']['scamp_conf']
+        #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+        scamp.ext_config['ASTREF_CATALOG'] = self.catalog
+        scamp.ext_config['SOLVE_PHOTOM'] = "N"
         cat_files = [(f + ".ldac") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         scamp.run(cat_files, updateconfig=False, clean=False)
@@ -361,21 +389,26 @@ class AstroWarp(object):
         # It requires the files are overlapped, i.e., have an common sky-area
         log.debug("*** Coadding overlapped files....")
         swarp = astromatic.SWARP()
-        swarp.config['CONFIG_FILE']=self.config_dict['config_files']['swarp_conf']#"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
-        swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
-        swarp.ext_config['IMAGEOUT_NAME']=os.path.dirname(self.coadded_file)+ "/coadd_tmp.fits"
-        swarp.ext_config['WEIGHTOUT_NAME']=os.path.dirname(self.coadded_file)+ "/coadd_tmp.weight.fits"
+        swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf']
+        #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
+        swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
+        swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
         if os.path.isfile(self.input_files[0].replace(".fits",".weight.fits")):
-            swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
-            swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
+            swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
         swarp.run(self.input_files, updateconfig=False, clean=False)
         
-        ## STEP 4: Make again the final astrometric calibration (only if we coadded more that one file) to the final coadd
+        ## STEP 4: Make again the final astrometric calibration (only 
+        ## if we coadded more that one file) to the final coadd)
+        ## PENDIENTE: I am not sure if it is needed to do again ?????
         if (len(self.input_files)>1):
             log.debug("*** Doing final astrometril calibration....")
-            doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file, self.catalog, self.config_dict)
+            doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+                         self.coadded_file, self.catalog, self.config_dict)
         else:
-            shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", self.coadded_file)
+            shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+                        self.coadded_file)
         
         log.info("Lucky you ! file %s created", self.coadded_file)
         
@@ -447,5 +480,4 @@ if __name__ == "__main__":
         
     sys.exit()
         
-    
     

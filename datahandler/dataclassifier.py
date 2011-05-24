@@ -132,7 +132,8 @@ class ClFits:
         return (self.type=="DARK")
 
     def isDomeFlat(self):
-        return (self.type=="DOME_FLAT_LAMP_ON" or self.type=="DOME_FLAT_LAMP_OFF" or self.type=="DOME_FLAT")
+        return (self.type=="DOME_FLAT_LAMP_ON" or 
+                self.type=="DOME_FLAT_LAMP_OFF" or self.type=="DOME_FLAT")
     
     def isDomeFlatON(self):
         return (self.type=="DOME_FLAT_LAMP_ON")
@@ -141,7 +142,8 @@ class ClFits:
         return (self.type=="DOME_FLAT_LAMP_OFF")
     
     def isTwFlat(self):
-        return (self.type=="TW_FLAT_DUSK" or self.type=="TW_FLAT_DAWN" or self.type=="TW_FLAT" or self.type=="SKY_FLAT")
+        return (self.type=="TW_FLAT_DUSK" or self.type=="TW_FLAT_DAWN" 
+                or self.type=="TW_FLAT" or self.type=="SKY_FLAT")
 
     def isScience(self):
         return (self.type.count("SCIENCE"))
@@ -203,7 +205,8 @@ class ClFits:
             log.error("Wrong extension number especified. Not a MEF file.")
         else:
             try:
-                myfits = pyfits.open(self.pathname, ignore_missing_end=True) # since some problems with O2k files   
+                myfits = pyfits.open(self.pathname, 
+                                     ignore_missing_end=True) # since some problems with O2k files   
                 temp=myfits[0].data
                 myfits.close(output_verify='ignore')
                 return temp
@@ -223,7 +226,8 @@ class ClFits:
                     
         # Open the file            
         try:
-            myfits = pyfits.open(self.pathname, ignore_missing_end=True) # since some problems with O2k files                                
+            myfits = pyfits.open(self.pathname, 
+                                 ignore_missing_end=True) # since some problems with O2k files                                
             #myfits = pyfits.open(self.pathname, 'update')
             #myfits[0].verify()
         except Exception,e:
@@ -307,7 +311,9 @@ class ClFits:
             elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
                 self.type="SKY_FOR"
             elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
-                self.type="SCIENCE"  #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, pero tiene pinta que fue  un despiste del operador !!!
+                self.type="SCIENCE"  
+                #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, 
+                #pero tiene pinta que fue  un despiste del operador !!!
             else:
                 self.type="SCIENCE"
             ###log.debug("Image type: %s", self.type)
