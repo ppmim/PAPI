@@ -698,8 +698,8 @@ class MainGUI(panicQL):
                 self.curr_sequence=[filename]
                 endSeq,retSeq = True,retSeq
             else:
-                ra_point_distance=self.last_ra-fits.getRA()
-                dec_point_distance=self.last_dec-fits.getDec()
+                ra_point_distance=self.last_ra-fits.ra
+                dec_point_distance=self.last_dec-fits.dec
                 dist=math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
                 if dist>self.MAX_POINT_DIST:
                     retSeq=self.curr_sequence
@@ -711,8 +711,8 @@ class MainGUI(panicQL):
                     endSeq,retSeq = False,self.curr_sequence
         
         #and finally, before return, update 'last'_values
-        self.last_ra=fits.getRA()
-        self.last_dec=fits.getDec()
+        self.last_ra=fits.ra
+        self.last_dec=fits.dec
         self.last_filter=fits.getFilter()
         self.last_ob_id=fits.getOBId()
         self.last_img_type=fits.getType()

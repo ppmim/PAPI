@@ -25,13 +25,21 @@ Module to do some photometry functionalities
 # Import necessary modules
 from optparse import OptionParser
 import sys
+import os
+import atpy 
+import matplotlib.pyplot as plt
+import numpy
 
+            
 import catalog_query
 
 # Logging
 from misc.paLog import log
 import misc.utils
+import astromatic
+import datahandler
 
+class CmdException(Exception): pass
 
 def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     """
@@ -41,7 +49,8 @@ def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 )
     @param err: max. error for finding objects within (arcseconds)
     @param out_filename: filename where results will be saved;if absent, 
             the location will be a tempfile with a generated name
-    @param out_format: format of the output generated; current options available are:
+    @param out_format: format of the output generated; current options available 
+            are:
         - VO Table (XML) (votable) (default)
         - SVC (Software handshaking structure) message (svc)
         - ASCII table (ascii)
@@ -57,24 +66,30 @@ def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 )
     ar2 = ''
     dec2 = ''
     
+    # del old instances
+    if os.path.exists(out): os.remove(out)
+    
     command_line = STILTSwrapper._stilts_pathname + " tskymatch2 " + \
          " in1=" + in1 + " in2=" + in2 + " out=" + out + \
          " error=" + s_error
           
     rcode = misc.utils.runCmd(command_line)
     
-    if rcode==0:
+    if rcode==0 or not os.path.exists(out):
         log.error("Some error while running command: %s", command_line)
-        return None
+        raise CmdException("XMatch failed")
     else:
-        return out_filename   
+        return out   
 
-def generate_phot_comp_plot ( input_catalog, out_filename=None, out_format='pdf'):
+def generate_phot_comp_plot ( input_catalog, expt = 1.0 , 
+                              out_filename=None, out_format='pdf'):
     """
     @summary: generate a photometry comparison plot, comparing instrumental magnitude
               versus 2MASS photometry
     
     @param catalog : VOTABLE catalog  having the photometric values (instrumental and 2MASS);
+    @param expt : exposure time of original input image; needed to 
+                compute the Instrumental Magnitude (Inst_Mag)  
     @param out_filename: filename where results will be saved;if absent, 
             the location will be a tempfile with a generated name
     @param out_format: format of the output generated; current options available are:
@@ -92,27 +107,26 @@ def generate_phot_comp_plot ( input_catalog, out_filename=None, out_format='pdf'
     """
     
     log.debug("entering in <generate_phot_comp_plot>")
-    # First, we add a column with the Instrumental magnitude, computed as:
-    #    inst_mag = -2.5 log10(FLUX_BEST/TEXP)
-    # where FLUX_BEST is obtained from SExtractor output catalog
+    ## 1 - First, we add a column with the Instrumental magnitude, computed as:
+    ##    inst_mag = -2.5 log10(FLUX_BEST/TEXP)
+    ## where FLUX_BEST is obtained from SExtractor output catalog
     
-    texp = 1.0
     input = input_catalog
     output_1 ="/tmp/output_1.xml"
     
     command_line = STILTSwrapper._stilts_pathname + " tpipe " + \
                     " ifmt=votable" + \
-                    " cmd='addcol Inst_Mag \"-2.5*log10(FLUX_BEST/%f)\"'" % texp + \
+                    " cmd='addcol Inst_Mag \"-2.5*log10(FLUX_BEST/%f)\"'" % expt + \
                     " omode=out" + " in=" + input + " out=" + output_1
 
     rcode = misc.utils.runCmd(command_line)
     
-    if rcode==0:
+    if rcode==0 or not os.path.exists(output_1):
         log.error("Some error while running command: %s", command_line)
-        return None
+        raise CmdException("STILTS command failed !")
     
         
-    # Secondly, generate the plot for photometric comparison
+    ## 2 - Secondly, generate the plot for photometric comparison
     input = output_1
     command_line = STILTSwrapper._stilts_pathname + " plot2d " + \
                     " in=" + input + \
@@ -120,20 +134,65 @@ def generate_phot_comp_plot ( input_catalog, out_filename=None, out_format='pdf'
                     " xdata=k_m ydata=Inst_Mag xlabel=\"2MASS K_m / mag\" " + \
                     " ylabel=\"Instrumental_Mag K / mag\" " 
                      
-    if out_filename:
+    if out_filename :
         command_line += " ofmt=" + out_format + " out=" + out_filename
                     
     rcode = misc.utils.runCmd(command_line)
     
     if rcode==0:
         log.error("Some error while running command: %s", command_line)
-        return None
+        raise CmdException("STILTS command failed !")
+    
     else:
         if out_filename: return out_filename
         else: return 'stdout'
 
-            
 
+def compute_regresion ( vo_catalog, column_x, column_y ):
+    """
+    @summary: Compute the linear regression of two columns of the input vo_catalog
+    @param column_x: column number for X values of the regression
+    @param column_y: column number for Y values of the regression
+    
+    @return: tuple with linear fit parameters 
+             a - intercept 
+             b - slope of the linear fit
+             r - estimated error
+             
+             None if happen some error  
+    """
+    
+    try:
+        table = atpy.Table(vo_catalog)
+    except Exception,e:
+        log.error("Canno't read the input table")
+        return None
+    
+    X = table[column_x]
+    Y = table[column_y]
+   
+    #remove the NaN values 
+    validdata_X = ~numpy.isnan(X)
+    validdata_Y = ~numpy.isnan(Y)
+    validdataBoth = validdata_X & validdata_Y
+    n_X = X[validdataBoth]
+    n_Y = Y[validdataBoth] 
+
+    # Compute the polyfit
+    res = numpy.polyfit(n_X, n_Y, 1, None, True)
+    a = res[0][1] # intercept
+    b = res[0][0] # slope
+    r = res[3][1] # regression coeff
+    
+    # Plot the results
+    pol = numpy.poly1d(res[0])
+    plt.plot(n_X, n_Y, '.', n_X, pol(n_X), '-')
+    plt.title("Poly fit: %f X + %f  r=%f" %(b,a,r))
+    plt.xlabel("2MASS Mag K / mag")
+    plt.ylabel("Inst_Mag K / mag")
+    plt.show()
+
+    
 class STILTSwrapper (object):
     """ Make a wrapper to some functionalities of STILTS 
     """
@@ -199,15 +258,15 @@ class STILTSwrapper (object):
 ################################################################################
 if __name__ == "__main__":
 
-    log.debug( 'Testing Photometric comparison')
+    log.debug( 'Testing Photometric calibration comparison with 2MASS')
     
         # Get and check command-line options
         
     usage = "usage: %prog [options] arg1 arg2 ..."
     parser = OptionParser(usage)
     
-    parser.add_option("-i", "--input_catalog",
-                  action="store", dest="input_catalog", help="input catalog (votable)\
+    parser.add_option("-i", "--input_image",
+                  action="store", dest="input_image", help="input image to calibrate\
                   to do photometric comparison with")
                   
     parser.add_option("-c", "--base_catalog (2MASS, USNO-B)",
@@ -216,7 +275,7 @@ if __name__ == "__main__":
     
     
     parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", help="plot output filename")
+                  action="store", dest="output_filename", help="output plot filename")
     
     
     parser.add_option("-v", "--verbose",
@@ -227,42 +286,83 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
     
-    if not options.input_catalog or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    if not options.input_image or len(args)!=0: 
+    # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("wrong number of arguments " )
     if not options.output_filename:
         options.output_filename=None
     
 
+    if not os.path.exists(options.input_image):
+        log.error ("Input image %s does not exist", options.input_image)
+        sys.exit(0)
+        
+    ## 0 - Generate image catalog (VOTable) -> SExtractor
+    log.debug("*** Creating SExtractor VOTable catalog ....")
+    #tmp_fd, tmp_name = tempfile.mkstemp(suffix='.xml', dir=os.getcwd())
+    #os.close(tmp_fd)
+    image_catalog = os.path.splitext(options.input_image)[0]  + ".xml"
+    sex = astromatic.SExtractor()
+    sex.ext_config['CHECKIMAGE_TYPE'] = "NONE"
+    sex.config['CATALOG_TYPE'] = "ASCII_VOTABLE"
+    sex.config['CATALOG_NAME'] = image_catalog
+    sex.config['DETECT_THRESH'] = 1.5
+    sex.config['DETECT_MINAREA'] = 5
+    try:
+        sex.run(options.input_image, updateconfig=True, clean=False)
+    except Exception,e:
+        log.errro("Canno't create SExtractor catalog : %s", str(e)) 
+        sys.exit(0)
+    
+    ## 0.1 - Read the RA,Dec and TEXP values from the input image
+    try:
+        my_fits = datahandler.ClFits(options.input_image)
+        exptime  = my_fits.expTime()
+        ra = my_fits.ra
+        dec = my_fits.dec
+    except Exception,e:
+        log.error("Cannot read properly FITS file : %s:", str(e))
+        sys.exit(0)
+            
     ## 1 - Generate region of base catalog
     icat = catalog_query.ICatalog ()
-    out_base_catalog = '/tmp/prueba.xml'
-    ra = 243.298750 # RA = 243.298750 / (deg) R.A.:  16:13:11.7
-    dec = 54.600278 # DEC = 54.600278 / Dec.:  54:36:01.0
+    out_base_catalog = os.getcwd() + "/catalog_region.xml"
     sr = 500 # arcsec
-    
     try:
-        res_file = icat.queryCatalog(ra, dec, sr, catalog_query.ICatalog.cat_names['2MASS'], 
-                      out_base_catalog, 'votable')[0]
+        res_file = icat.queryCatalog(ra, dec, sr, 
+                                     catalog_query.ICatalog.cat_names['2MASS'], 
+                                     out_base_catalog, 'votable')[0]
         log.debug("Output file generated : %s", res_file) 
     except Exception,e:
         log.error("Sorry, cann't solve the query to ICatalog: %s", str(e))
         sys.exit(0)
 
-    ## 2- XMatch the catalogs (input_catalog VS just base_catalog generated)          
-    out_xmatch_file = "/tmp/xmatch.xml"
+    ## 2- XMatch the catalogs (image_catalog VS just base_catalog generated)          
+    out_xmatch_file = os.getcwd() + "/xmatch.xml"
     try:
-        match_cat = catalog_xmatch(options.input_catalog, res_file, 
-                                   out_xmatch_file, out_format='votable', error=2.0 ) 
+        match_cat = catalog_xmatch( image_catalog, res_file, 
+                                   out_xmatch_file, out_format='votable', 
+                                   error=2.0 ) 
         log.debug("XMatch done !")
     except Exception,e:
         log.error("XMatch failed %s", str(e))
         sys.exit(0)
     
+    log.debug("My Own regression !!!")    
+    compute_regresion (out_xmatch_file, 'k_m', 'Inst_Mag' )
+    
+    log.debug("Well DONE !!")    
+    
     ## 3- Generate the plot file with the photometric comparison     
     try:
-        plot_file = generate_phot_comp_plot ( match_cat, options.output_filename, out_format='pdf')
+        plot_file = generate_phot_comp_plot ( match_cat, exptime, 
+                                              options.output_filename, 
+                                              out_format='pdf')
         log.debug("Plot file generated : %s", plot_file) 
     except Exception,e:
         log.error("Sorry, can't generate plot file: %s", str(e))
         sys.exit(0)
+        
+        
+        

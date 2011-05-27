@@ -294,7 +294,12 @@ class SExtractor:
 
         "PARAMETERS_LIST":
         {"comment": '[Extra key] catalog contents (to put in PARAMETERS_NAME)',
-         "value": ["NUMBER", "XWIN_IMAGE", "YWIN_IMAGE","ERRAWIN_IMAGE","ERRBWIN_IMAGE", "FLUX_BEST", "FLUXERR_BEST", "X_IMAGE", "Y_IMAGE", "FLAGS", "FWHM_IMAGE","FLUX_RADIUS","FLUX_AUTO", "FLUXERR_AUTO"]},
+         "value": ["NUMBER", "XWIN_IMAGE", "YWIN_IMAGE","ERRAWIN_IMAGE",
+                   "ERRBWIN_IMAGE", 
+                   "FLUX_BEST", "FLUXERR_BEST", 
+                   "X_IMAGE", "Y_IMAGE", "X_WORLD", "Y_WORLD", 
+                   "FLAGS", "FWHM_IMAGE","FLUX_RADIUS","FLUX_AUTO", 
+                   "FLUXERR_AUTO", "MAG_APER"]},
 
         "CONFIG_FILE":
         {"comment": '[Extra key] name of the main configuration file',

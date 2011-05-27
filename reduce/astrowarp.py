@@ -69,8 +69,8 @@ def initWCS( input_image ):
                 # Read some basic values
                 naxis1=f.getNaxis1()
                 naxis2=f.getNaxis2()
-                ra=f.getRA()
-                dec=f.getDec()
+                ra=f.ra
+                dec=f.dec
                 equinox0=f.getEquinox()
                 # 
                 # Transform RA,Dec to J2000 -->fk5prec(epoch0, 2000.0, &ra, &dec);
@@ -313,7 +313,7 @@ class AstroWarp(object):
     """ Astrometric warping """
 
     def __init__(self, input_files, catalog='2MASS', 
-                 coadded_file="/tmp/astrowarp.fits", config_dict=None):
+                 coadded_file="/tmp/astrowarp.fits", config_dict=None, do_votable=False):
         """ Instantiation method for AstroWarp class
 
         Keyword arguments:
@@ -330,6 +330,7 @@ class AstroWarp(object):
         self.catalog = catalog
         self.coadded_file = coadded_file
         self.config_dict = config_dict # the config dictionary
+        self.do_votable = do_votable
         
     def run(self):
         """ Start the computing of the coadded image, following the next steps:
@@ -405,7 +406,8 @@ class AstroWarp(object):
         if (len(self.input_files)>1):
             log.debug("*** Doing final astrometril calibration....")
             doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
-                         self.coadded_file, self.catalog, self.config_dict)
+                         self.coadded_file, self.catalog, 
+                         self.config_dict, self.do_votable)
         else:
             shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
                         self.coadded_file)
@@ -416,10 +418,10 @@ class AstroWarp(object):
 # main
 ################################################################################
 if __name__ == "__main__":
+    
     log.debug( 'Start AstroWarp....')
+
     # Get and check command-line options
-    
-    
     usage = "usage: %prog [options] arg1 arg2 ..."
     parser = OptionParser(usage)
     

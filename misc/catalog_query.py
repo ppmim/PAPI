@@ -41,12 +41,12 @@ class ICatalog (object):
               'ascii': 1
               }
     
+    url = "http://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query"
+    
     def __init__(self, *a, **k):
         """ The constructor """
         super (ICatalog, self).__init__ (*a, **k)
         
-        
-        self.url = "http://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query"
     
     def queryCatalog(self, ar, dec, sr=0.1, cat_name=None, 
                      out_filename=None, out_format='votable'):    
@@ -65,21 +65,24 @@ class ICatalog (object):
         """
         
         params={}
-        param['outfmt'] = ICatalog.outfmt[out_format]
-        param['objstr'] = str(ar) + "+" 
+        params['outfmt'] = ICatalog.outfmt[out_format]
+        params['objstr'] = str(ar) + "+" 
         if float(dec)>0:
-            param['objstr'] = str(ar) + "+" + str(dec)
+            params['objstr'] = str(ar) + "+" + str(dec)
         else:
-            param['objstr'] = str(ar) + "-" + str(dec) 
-            
-        spatial = "spatial=Cone"
-        radius = "radius=" + str(sr) #arcsecs
-        catalog = "catalog=" + str(cat_name)
+            params['objstr'] = str(ar) + str(dec) 
+        params['spatial'] = 'Cone'
+        params['radius'] = sr
+        params['catalog'] = cat_name
+        
+        query = urllib.urlencode(params)
+        get_url = ICatalog.url + "?" + query
+
         #query = self.url + "?" + out_fmt + "&" +  radius + "&" + objstr + "&" \
         #        + spatial + "&" + catalog 
         
         
-        log.debug("Query: %s", query)        
+        log.debug("Query: %s", get_url)        
 
         # check if file exist
         if os.path.exists(out_filename):
@@ -87,7 +90,7 @@ class ICatalog (object):
         
         try:
             urllib.urlcleanup()    
-            r = urllib.urlretrieve(query, out_filename)
+            r = urllib.urlretrieve(get_url, out_filename)
         except urllib.ContentTooShortError, e:
             log.error("Amount of data available was less than the expected \
             amount; might download was interrupted : %s", e)

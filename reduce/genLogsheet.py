@@ -104,7 +104,7 @@ class LogSheet:
         keys.sort()
         for key in keys:
             f=sorted_list[key]
-            logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, os.path.basename(f.filename), f.getFilter(), f.getType(), f.getRA(), f.getDec(), f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
+            logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, os.path.basename(f.filename), f.getFilter(), f.getType(), f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
             id=id+1    
                          
         logsheet.close()

@@ -1412,17 +1412,19 @@ class ReductionSet:
                     try:
                         # Map the parallel process
                         n_cpus = self.config_dict['general']['ncpus']
-                        results = pprocess.Map(limit=n_cpus, reuse=1) # IF reuse=0, it block the application !! I don't know why ?? though in pprocess examples it works! 
+                        results = pprocess.Map(limit=n_cpus, reuse=1) 
+                        # IF reuse=0, it block the application !! I don't know why ?? 
+                        # though in pprocess examples it works! 
                         calc = results.manage(pprocess.MakeReusable(self.reduceObj))
                         for n in range(next):
                             log.info("===> (PARALLEL) Reducting extension %d", n+1)
                             ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                             if dark_ext==[]: mdark = None
-                            else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                            else: mdark=dark_ext[n][0] # At the moment, we have the first calibration file for each extension
                             if flat_ext==[]: mflat = None
-                            else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                            else: mflat=flat_ext[n][0] # At the moment, we have the first calibration file for each extension
                             if bpm_ext==[]: mbpm = None
-                            else: mbpm = bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
+                            else: mbpm = bpm_ext[n][0] # At the moment, we have the first calibration file for each extension
                             
                             l_out_dir = self.out_dir + "/Q%02d" % (n+1)
                             if not os.path.isdir(l_out_dir):
@@ -1433,7 +1435,8 @@ class ReductionSet:
                             else: self.cleanUpFiles([l_out_dir])
                             
                             # async call to procedure
-                            calc( obj_ext[n], mdark, mflat, mbpm, red_mode, l_out_dir, l_out_dir+"/out_Q%02d.fits"%(n+1))
+                            extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
+                            calc( obj_ext[n], mdark, mflat, mbpm, red_mode, l_out_dir, extension_outfilename)
                         
                         # Here is where we WAIT (BLOCKING) for the results (iteration is a blocking call)
                         for result in results:
@@ -1474,32 +1477,36 @@ class ReductionSet:
                             #continue
         
             # if all reduction were fine, now join/stich back the extensions in a widther frame
-            seq_result_outfile=self.out_file.replace(".fits","_SEQ%02d.fits"%(i))
-            if len(out_ext)>1:
-                log.debug("*** Creating final output file joining/stiching single output frames....***")
+            seq_result_outfile = self.out_file.replace(".fits","_SEQ%02d.fits" %(i))
+            if len(out_ext) >1 :
+                log.debug("*** Creating final output file *WARPING* single output frames....***")
+                #option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
                 #mef.createMEF(self.out_file)
-                # other option, do a SWARP to register the N-extension into one wide-single extension
-                log.debug("*** Coadding overlapped files....")
+                #option 2(current): SWARP resulted images to register the N-extension into one wide-single extension
+                log.debug("*** Coadding/Warping overlapped files....")
                 swarp = astromatic.SWARP()
-                swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_dicts/swarp.conf"
-                swarp.ext_config['COPY_KEYWORDS']='OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
-                swarp.ext_config['IMAGEOUT_NAME']= seq_result_outfile
-                swarp.ext_config['WEIGHTOUT_NAME']=self.out_file.replace(".fits",".weight.fits")
-                swarp.ext_config['WEIGHT_TYPE']='MAP_WEIGHT'
-                swarp.ext_config['WEIGHT_SUFFIX']='.weight.fits'
+                swarp.config['CONFIG_FILE'] = "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_dicts/swarp.conf"
+                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
+                swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
+                swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")
+                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+                swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
                 swarp.run(out_ext, updateconfig=False, clean=False)
                 
                 seq_outfile_list.append(seq_result_outfile)
-                log.info("*** Obs. Sequence reduced. File %s created.  ***", seq_result_outfile)
+                log.info("*** Obs. Sequence reduced. File %s created.  ***", 
+                         seq_result_outfile)
                 
             elif len(out_ext)==1:
                 shutil.move(out_ext[0], seq_result_outfile)
                 
                 seq_outfile_list.append(seq_result_outfile)
-                log.info("*** Obs. Sequence reduced. File %s created.  ***", seq_result_outfile)
+                log.info("*** Obs. Sequence reduced. File %s created.  ***", 
+                         seq_result_outfile)
             else:
-                log.error("No output files generated by the current Obj.Seq. data reduction ....review your logs files")
+                log.error("No output files generated by the current Obj.Seq. \
+                data reduction ....review your logs files")
                 
             i+=1
             
@@ -1778,8 +1785,12 @@ class ReductionSet:
         #########################################
         _astrowarp=True
         if _astrowarp:
-            log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=output_file, config_dict=self.config_dict)
+            log.info("**** Astrometric calibration and stack of individual \
+            frames to field distortion correction ****")
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", 
+                                            coadded_file=output_file, 
+                                            config_dict=self.config_dict,
+                                            do_votable=True)
             try:
                 aw.run()
             except Exception,e:

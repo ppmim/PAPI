@@ -85,8 +85,8 @@ class ClFits:
         self.detectorID= ""
         self.date_obs  = ""
         self.time_obs  = ""
-        self.ra        = -1
-        self.dec       = -1
+        self._ra        = -1
+        self._dec       = -1
         self.equinox   = -1
         self.mdj       = -1 # modified julian date of observation
         self.object    = ""
@@ -172,11 +172,19 @@ class ClFits:
     def expTime(self):
         return (self.exptime)
     
-    def getRA(self):
-        return self.ra
+    @property
+    def ra(self):
+        return self._ra
     
-    def getDec(self):
-        return self.dec
+    @property
+    def dec(self):
+        return self._dec
+    
+    #def getRA(self):
+    #    return self.ra
+    
+    #def getDec(self):
+    #    return self.dec
     
     def getEquinox(self):
         return self.equinox
@@ -379,17 +387,17 @@ class ClFits:
         
         #RA-coordinate (in degrees)
         try:
-            self.ra = myfits[0].header['RA']
+            self._ra = myfits[0].header['RA']
         except KeyError:
             log.warning('RA keyword not found')
-            self.ra  = -1
+            self._ra  = -1
         
         #Dec-coordinate (in degrees)
         try:
-            self.dec = myfits[0].header['DEC']
+            self._dec = myfits[0].header['DEC']
         except KeyError:
             log.warning('DEC keyword not found')
-            self.dec  = -1
+            self._dec  = -1
     
         try:
             self.equinox = myfits[0].header['EQUINOX']
@@ -533,7 +541,7 @@ class ClFits:
             
         
         
-    def printClass(self):
+    def print_info(self):
         print "---------------------------------"
         print "Fichero   : ", self.pathname
         print "Data class: ", self.type
@@ -608,10 +616,10 @@ if __name__ == "__main__":
     if len(sys.argv)>1:
         try:
             dr = ClFits(sys.argv[1]) #"/disk-a/caha/panic/DATA/data_mat/skyflat0020.fits")
-            dr.printClass()
+            dr.print_info()
             print dr.isTwFlat()
-        except:
-            log.error("Error reading fits File")
+        except Exception, e:
+            log.error("Error reading fits File %s", str(e))
     else:
         usage()
 

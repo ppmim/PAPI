@@ -162,7 +162,7 @@ def runCmd( str_cmd, p_shell=True ):
       or err.count('No source found')
       or err.count("No such file or directory")
       ):
-        log.error("An error happened while running command --> %s \n"%err)
+        log.error("An error happened while running command --> %s \n" %err)
         return 0 # ERROR
     else:
         return 1 # NO ERROR
