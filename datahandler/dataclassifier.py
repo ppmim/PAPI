@@ -23,6 +23,9 @@ import os.path
 import pyfits
 import sys
 
+import pywcs 
+import numpy
+
 from time import strftime
 
 #Log
@@ -387,14 +390,26 @@ class ClFits:
         
         #RA-coordinate (in degrees)
         try:
-            self._ra = myfits[0].header['RA']
+            if myfits[0].header.has_key('RA'):
+                self._ra = myfits[0].header['RA']
+            else:
+                wcs = pywcs.WCS(myfits[0].header)
+                center_pix = np.array([[self.naxis1/2,self.naxis2/2]],np.float_)
+                ar = wcs.wcs_pix2sky(center_pix, 1)[0] # ups, we are supposing naxis1 is RA axis
+                log.debug("Read RA-WCS coordinate")
         except KeyError:
             log.warning('RA keyword not found')
             self._ra  = -1
-        
+            
         #Dec-coordinate (in degrees)
         try:
-            self._dec = myfits[0].header['DEC']
+            if myfits[0].header.has_key('DEC'):
+                self._dec = myfits[0].header['DEC']
+            else:
+                wcs = pywcs.WCS(myfits[0].header)
+                center_pix = np.array([[self.naxis1/2,self.naxis2/2]],np.float_)
+                dec = wcs.wcs_pix2sky(center_pix, 1)[1] # ups, we are supposing naxis2 is Declination axis
+                log.debug("Read Dec-WCS coordinate")
         except KeyError:
             log.warning('DEC keyword not found')
             self._dec  = -1

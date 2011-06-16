@@ -923,10 +923,15 @@ class MainGUI(panicQL):
                 fileList = self.outputsDB.GetFilesT("ANY")
                 db=self.outputsDB
                 #db.ListDataSet()
+            elif str(self.comboBox_classFilter.currentText())=="SKY_FLAT":
+                fileList = self.inputsDB.GetFilesT("SKY_FLAT")
+                db=self.inputsDB
             else:
                 type=str(self.comboBox_classFilter.currentText())
                 fileList = self.inputsDB.GetFilesT(type)
                 db=self.inputsDB
+
+            elem=None
             for file in fileList:
                 elem = QListViewItem( self.listView_dataS )
                 (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=db.GetFileInfo(file)
@@ -1462,12 +1467,18 @@ class MainGUI(panicQL):
         """Create a master twilight flat field from selected frames"""
         
         if len(self.m_popup_l_sel)>2:
-            outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/master_twflat.fits", "*.fits", self, "Save File dialog")
+            outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/master_twflat.fits", 
+                                                      "*.fits", 
+                                                      self, 
+                                                      "Save File dialog")
             if not outfileName.isEmpty():
                 try:
                     self.setCursor(Qt.waitCursor)
-                    self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel, self.m_masterDark, str(outfileName))
-                    thread=reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
+                    self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel, 
+                                                                      self.m_masterDark, 
+                                                                      str(outfileName))
+                    thread = reduce.ExecTaskThread(self._task.createMaster, 
+                                                 self._task_info_list)
                     thread.start()
                 except:
                     self.setCursor(Qt.arrowCursor)
@@ -1487,12 +1498,14 @@ class MainGUI(panicQL):
             QMessageBox.information(self,"Info","Not enought frames !")
             return
 
-        outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/gainmap.fits", "*.fits", self, "Save File dialog")
+        outfileName = QFileDialog.getSaveFileName (self.m_outputdir+"/gainmap.fits", 
+                                                   "*.fits", self, 
+                                                   "Save File dialog")
         if not outfileName.isEmpty():
             try:
                 self.setCursor(Qt.waitCursor)
-                self._task=reduce.calGainMap.SkyGainMap(self.m_popup_l_sel, str(outfileName), None)
-                thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
+                self._task = reduce.calGainMap.SkyGainMap(self.m_popup_l_sel, str(outfileName), None)
+                thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                 thread.start()
             except Exception, e:
                 self.setCursor(Qt.arrowCursor)

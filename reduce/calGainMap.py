@@ -54,7 +54,9 @@ class SkyGainMap:
         try:
             output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
             os.close(output_fd)
-            superflat = reduce.calSuperFlat.SuperSkyFlat(self.framelist, tmp_output_path, self.bpm, norm=False)
+            superflat = reduce.calSuperFlat.SuperSkyFlat(self.framelist, 
+                                                         tmp_output_path, 
+                                                         self.bpm, norm=False)
             superflat.create()
         except Exception,e:
             log.error("Error while creating super sky flat: %s", str(e))

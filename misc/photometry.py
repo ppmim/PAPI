@@ -29,6 +29,7 @@ import os
 import atpy 
 import matplotlib.pyplot as plt
 import numpy
+import math
 
             
 import catalog_query
@@ -128,12 +129,18 @@ def generate_phot_comp_plot ( input_catalog, expt = 1.0 ,
         
     ## 2 - Secondly, generate the plot for photometric comparison
     input = output_1
+    #command_line = STILTSwrapper._stilts_pathname + " plot2d " + \
+    #                " in=" + input + \
+    #                " subsetNS='j_k<=1.0 & k_snr>10'  lineNS=LinearRegression" + \
+    #                " xdata=k_m ydata=Inst_Mag xlabel=\"2MASS K_m / mag\" " + \
+    #                " ylabel=\"Instrumental_Mag K / mag\" " 
+                     
     command_line = STILTSwrapper._stilts_pathname + " plot2d " + \
                     " in=" + input + \
-                    " subsetNS='j_k<=1.0 & k_snr>10'  lineNS=LinearRegression" + \
-                    " xdata=k_m ydata=Inst_Mag xlabel=\"2MASS K_m / mag\" " + \
-                    " ylabel=\"Instrumental_Mag K / mag\" " 
-                     
+                    " subsetNS='k_snr>0'  lineNS=LinearRegression" + \
+                    " ydata=k_m xdata=Inst_Mag ylabel=\"2MASS K_m / mag\" " + \
+                    " xlabel=\"Instrumental_Mag K / mag\" "
+                                     
     if out_filename :
         command_line += " ofmt=" + out_format + " out=" + out_filename
                     
@@ -168,6 +175,8 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
         log.error("Canno't read the input table")
         return None
     
+    #X = table[column_x]
+    #Y = -2.5 * numpy.math.log10(table[column_y]/46.0)
     X = table[column_x]
     Y = table[column_y]
    
@@ -184,12 +193,14 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     b = res[0][0] # slope
     r = res[3][1] # regression coeff
     
+    print "Coeffs =", res
+    
     # Plot the results
     pol = numpy.poly1d(res[0])
     plt.plot(n_X, n_Y, '.', n_X, pol(n_X), '-')
-    plt.title("Poly fit: %f X + %f  r=%f" %(b,a,r))
-    plt.xlabel("2MASS Mag K / mag")
-    plt.ylabel("Inst_Mag K / mag")
+    plt.title("Poly fit: %f X + %f  r=%f ZP=%f" %(b,a,r,a))
+    plt.xlabel("Inst_Mag (MAG_AUTO) / mag")
+    plt.ylabel("2MASS Mag  / mag")
     plt.show()
 
     
@@ -321,6 +332,13 @@ if __name__ == "__main__":
         exptime  = my_fits.expTime()
         ra = my_fits.ra
         dec = my_fits.dec
+        log.debug("EXPTIME = %f"%exptime)
+        log.debug("RA = %f"%ra)
+        log.debug("DEC = %f"%dec)
+        log.debug("Filter = %s"%filter)
+        if ra<0 or dec<0:
+            log.debug("Found wrong RA,Dec values")
+            sys.exit(0)
     except Exception,e:
         log.error("Cannot read properly FITS file : %s:", str(e))
         sys.exit(0)
@@ -350,9 +368,11 @@ if __name__ == "__main__":
         sys.exit(0)
     
     log.debug("My Own regression !!!")    
-    compute_regresion (out_xmatch_file, 'k_m', 'Inst_Mag' )
+    #compute_regresion (out_xmatch_file, 'k_m', 'Inst_Mag' )
+    compute_regresion (out_xmatch_file, 'MAG_AUTO', 'j_m' )
+    log.debug("Well DONE !!")
+    #sys.exit(0)
     
-    log.debug("Well DONE !!")    
     
     ## 3- Generate the plot file with the photometric comparison     
     try:

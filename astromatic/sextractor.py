@@ -232,7 +232,7 @@ class SExtractor:
         
         "MAG_ZEROPOINT":
         {"comment": "magnitude zero-point",
-         "value": 30.0},
+         "value": 0.0},
         
         "MAG_GAMMA":
         {"comment": "gamma of emulsion (for photographic scans)",
@@ -299,7 +299,7 @@ class SExtractor:
                    "FLUX_BEST", "FLUXERR_BEST", 
                    "X_IMAGE", "Y_IMAGE", "X_WORLD", "Y_WORLD", 
                    "FLAGS", "FWHM_IMAGE","FLUX_RADIUS","FLUX_AUTO", 
-                   "FLUXERR_AUTO", "MAG_APER"]},
+                   "FLUXERR_AUTO", "MAG_AUTO", "MAG_APER"]},
 
         "CONFIG_FILE":
         {"comment": '[Extra key] name of the main configuration file',

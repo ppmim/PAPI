@@ -138,7 +138,7 @@ class MasterTwilightFlat:
         # Check exist master DARK
         if not os.path.exists( self.__master_dark  ):
             log.error('Cannot find frame : "%s"' % self.__master_dark)
-            raise Exception("Any Master Dark not found")
+            raise Exception("Master Dark not found")
         
         # Determine the number of Flats frames to combine
         try:
@@ -148,7 +148,8 @@ class MasterTwilightFlat:
             raise ExError('No FLAT frames defined')
         
         if nframes<self.m_min_flats:
-            log.error("Not enought number (%s) of flat frames (>%s) to compute master tw-flat",nframes, self.m_min_flats)
+            log.error("Not enought number (%s) of flat frames (>%s) to compute \
+            master tw-flat",nframes, self.m_min_flats)
             return False
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
@@ -231,7 +232,8 @@ class MasterTwilightFlat:
         #Clobber existing output images
         iraf.clobber='yes'
         
-        # STEP 2: We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS because they might have diff EXPTIMEs
+        # STEP 2: We subtract a proper MASTER_DARK, it is required for TWILIGHT
+        # FLATS because they might have diff EXPTIMEs
         # Prepare input list on IRAF string format
             
         log.debug("Start Dark subtraction")    
@@ -256,7 +258,7 @@ class MasterTwilightFlat:
         t_dark=cdark.expTime()
         fileList = []
         for iframe in good_frames:
-            # Remove an old dark subtracted flat frames
+            # Remove old dark subtracted flat frames
             my_frame = self.__output_file_dir+"/"+os.path.basename(iframe.replace(".fits","_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
@@ -267,10 +269,12 @@ class MasterTwilightFlat:
             if next>0:
                 for i in range(1,next+1):
                     f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
-                    f[i].header.add_history('Dark subtracted %s (interpolated)' %os.path.basename(self.__master_dark))
+                    f[i].header.add_history('Dark subtracted %s (interpolated)'
+                                             %os.path.basename(self.__master_dark))
             else:
                 f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
-                f[0].header.add_history('Dark subtracted %s (interpolated)' %os.path.basename(self.__master_dark))    
+                f[0].header.add_history('Dark subtracted %s (interpolated)' 
+                                        %os.path.basename(self.__master_dark))    
             
             #a=numpy.reshape(f[0].data, (2048*2048,))
             #print "MODE=", 3*numpy.median(a)-2*numpy.mean(a)
@@ -306,6 +310,9 @@ class MasterTwilightFlat:
                         #ParList = _getparlistname ('flatcombine')
                         )
         
+        # Remove the dark subtracted frames
+        for ftr in fileList: misc.fileUtils.removefiles(ftr)
+        
         # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
         # Compute the mean of the image
         if self.__normal:
@@ -332,17 +339,23 @@ class MasterTwilightFlat:
         # Change back to the original working directory
         iraf.chdir()
         
-        flatframe = pyfits.open(self.__output_filename,'update', ignore_missing_end=True)
-        if self.__normal: flatframe[0].header.add_history('Computed normalized master twilight flat')
-        else: flatframe[0].header.add_history('Computed master twilight flat')
+        flatframe = pyfits.open(self.__output_filename,'update', 
+                                ignore_missing_end=True)
+        if self.__normal: 
+            flatframe[0].header.add_history('Computed normalized master twilight flat')
+        else: 
+            flatframe[0].header.add_history('Computed master twilight flat')
         
         flatframe[0].header.add_history('Twilight files: %s' %framelist )
         #Add a new keyword-->PAPI_TYPE
-        flatframe[0].header.update('PAPITYPE','MASTER_TW_FLAT','TYPE of PANIC Pipeline generated file')
+        flatframe[0].header.update('PAPITYPE',
+                                   'MASTER_TW_FLAT',
+                                   'TYPE of PANIC Pipeline generated file')
+        
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         
         log.debug(t.tac())
-        log.debug('Saved master TW_FLAT to %s' ,  self.__output_filename )
+        log.debug('Saved master TW_FLAT to %s', self.__output_filename )
     
         return self.__output_filename
         

@@ -252,6 +252,7 @@ class DataSet:
           \return A list with the filenames that match the specified fields, otherwise an empty list []
         """
 
+        
         try:
             # NOT USED !!! RUN_ID !!! NOT USED 
             #RUNID: The run id may no be specified
@@ -267,6 +268,9 @@ class DataSet:
                 type=""
             elif type=='DOME_FLAT':
                 s_type="type like 'DOME_FLAT%' or type=?"
+                type=""
+            elif type=='SKY_FLAT':
+                s_type="type like 'TW_FLAT%' or type like 'SKY_FLAT%' or type=?"
                 type=""
             else:
                 s_type="type=?"

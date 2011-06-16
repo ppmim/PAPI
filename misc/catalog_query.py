@@ -66,11 +66,14 @@ class ICatalog (object):
         
         params={}
         params['outfmt'] = ICatalog.outfmt[out_format]
-        params['objstr'] = str(ar) + "+" 
         if float(dec)>0:
-            params['objstr'] = str(ar) + "+" + str(dec)
+            params['objstr'] = str(ar) + " +" + str(dec) 
+            # we must add a space between RA and Dec due to a recognized BUG 
+            # in IRSA Gator Engine
         else:
-            params['objstr'] = str(ar) + str(dec) 
+            params['objstr'] = str(ar) + " " + str(dec)
+            # we must add a space between RA and Dec due to a recognized BUG 
+            # in IRSA Gator Engine 
         params['spatial'] = 'Cone'
         params['radius'] = sr
         params['catalog'] = cat_name
@@ -107,8 +110,6 @@ if __name__ == "__main__":
     
     icat = ICatalog ()
     res_file = None
-    # RA      =           243.298750 / (deg) R.A.:  16:13:11.7
-    # DEC     =            54.600278 / Dec.:  54:36:01.0
 
     try:
         res_file = icat.queryCatalog(243.298750, +54.600278, 500, ICatalog.cat_names['2MASS'], 

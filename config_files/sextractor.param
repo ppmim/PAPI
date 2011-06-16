@@ -42,7 +42,7 @@ FLUXERR_AUTO      # parameter needed by SCAMP, do _not_ comment!
 
 #FLUX_BEST
 #FLUXERR_BEST
-#MAG_BEST
+#MAG_BEST       # deprecated 
 #MAGERR_BEST
 
 #KRON_RADIUS
