@@ -82,13 +82,14 @@ def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 )
     else:
         return out   
 
-def generate_phot_comp_plot ( input_catalog, expt = 1.0 , 
+def generate_phot_comp_plot ( input_catalog, filter, expt = 1.0 , 
                               out_filename=None, out_format='pdf'):
     """
     @summary: generate a photometry comparison plot, comparing instrumental magnitude
               versus 2MASS photometry
     
     @param catalog : VOTABLE catalog  having the photometric values (instrumental and 2MASS);
+    @param filter : NIR wavelength filter (J,H,K,Z)
     @param expt : exposure time of original input image; needed to 
                 compute the Instrumental Magnitude (Inst_Mag)  
     @param out_filename: filename where results will be saved;if absent, 
@@ -137,9 +138,9 @@ def generate_phot_comp_plot ( input_catalog, expt = 1.0 ,
                      
     command_line = STILTSwrapper._stilts_pathname + " plot2d " + \
                     " in=" + input + \
-                    " subsetNS='k_snr>0'  lineNS=LinearRegression" + \
-                    " ydata=k_m xdata=Inst_Mag ylabel=\"2MASS K_m / mag\" " + \
-                    " xlabel=\"Instrumental_Mag K / mag\" "
+                    " subsetNS='h_snr>0 && FLAGS==0'  lineNS=LinearRegression" + \
+                    " ydata=%s xdata=MAG_AUTO ylabel=\"2MASS %s / mag\" "%(filter,filter) + \
+                    " xlabel=\"Instrumental_Mag %s/ mag\" "%filter
                                      
     if out_filename :
         command_line += " ofmt=" + out_format + " out=" + out_filename
@@ -157,11 +158,11 @@ def generate_phot_comp_plot ( input_catalog, expt = 1.0 ,
 
 def compute_regresion ( vo_catalog, column_x, column_y ):
     """
-    @summary: Compute the linear regression of two columns of the input vo_catalog
+    @summary: Compute and Plot the linear regression of two columns of the input vo_catalog
     @param column_x: column number for X values of the regression
-    @param column_y: column number for Y values of the regression
+    @param column_y: column number for Y values of the regression ( filter )
     
-    @return: tuple with linear fit parameters 
+    @return: tuple with linear fit parameters and a Plot showing the fit
              a - intercept 
              b - slope of the linear fit
              r - estimated error
@@ -175,10 +176,16 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
         log.error("Canno't read the input table")
         return None
     
+    # ToBeDone
+    ## Filter data by FLAGS=0, FLUX_AUTO>0, ...
+    
+    table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0))
+ 
     #X = table[column_x]
     #Y = -2.5 * numpy.math.log10(table[column_y]/46.0)
-    X = table[column_x]
-    Y = table[column_y]
+    filter = column_y
+    X = table_new[column_x]
+    Y = table_new[column_y]
    
     #remove the NaN values 
     validdata_X = ~numpy.isnan(X)
@@ -198,7 +205,7 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     # Plot the results
     pol = numpy.poly1d(res[0])
     plt.plot(n_X, n_Y, '.', n_X, pol(n_X), '-')
-    plt.title("Poly fit: %f X + %f  r=%f ZP=%f" %(b,a,r,a))
+    plt.title("Filter %s  -- Poly fit: %f X + %f  r=%f ZP=%f" %(filter, b,a,r,a))
     plt.xlabel("Inst_Mag (MAG_AUTO) / mag")
     plt.ylabel("2MASS Mag  / mag")
     plt.show()
@@ -332,6 +339,7 @@ if __name__ == "__main__":
         exptime  = my_fits.expTime()
         ra = my_fits.ra
         dec = my_fits.dec
+        filter = my_fits.getFilter()
         log.debug("EXPTIME = %f"%exptime)
         log.debug("RA = %f"%ra)
         log.debug("DEC = %f"%dec)
@@ -339,6 +347,18 @@ if __name__ == "__main__":
         if ra<0 or dec<0:
             log.debug("Found wrong RA,Dec values")
             sys.exit(0)
+        
+        # Checking Filter    
+        if filter=='J':
+            two_mass_col_name = 'j_m'
+        elif filter=='H':
+            two_mass_col_name = 'h_m'
+        elif filter=='K' or filter=='K-PRIME':
+            two_mass_col_name = 'k_m'   
+        else:
+            log.error("Filter %s not supported" %filter)
+            sys.exit(0)
+            
     except Exception,e:
         log.error("Cannot read properly FITS file : %s:", str(e))
         sys.exit(0)
@@ -367,21 +387,28 @@ if __name__ == "__main__":
         log.error("XMatch failed %s", str(e))
         sys.exit(0)
     
-    log.debug("My Own regression !!!")    
-    #compute_regresion (out_xmatch_file, 'k_m', 'Inst_Mag' )
-    compute_regresion (out_xmatch_file, 'MAG_AUTO', 'j_m' )
-    log.debug("Well DONE !!")
-    #sys.exit(0)
-    
-    
-    ## 3- Generate the plot file with the photometric comparison     
+    ## 3a- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
+    ###### and generate the plot file with the photometric comparison  
+    log.debug("Compute & Plot regression !!!")    
     try:
-        plot_file = generate_phot_comp_plot ( match_cat, exptime, 
+        compute_regresion (out_xmatch_file, 'MAG_AUTO', two_mass_col_name )
+        log.debug("Well DONE !!")
+        #sys.exit(0)
+    except Exeption,e:
+        log.error("Sorry, can't some error while computing linear fit or \
+        ploting the results: %s", str(e))
+        sys.exit(0)
+    
+    ## 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
+    ###### and generate the plot file with the photometric comparison  
+    try:
+        plot_file = generate_phot_comp_plot ( match_cat, two_mass_col_name, exptime, 
                                               options.output_filename, 
                                               out_format='pdf')
         log.debug("Plot file generated : %s", plot_file) 
     except Exception,e:
-        log.error("Sorry, can't generate plot file: %s", str(e))
+        log.error("Sorry, can't some error while computing linear fit or \
+        ploting the results: %s", str(e))
         sys.exit(0)
         
         

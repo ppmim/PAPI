@@ -173,10 +173,10 @@ class MasterDark:
         if f_ncoadds==-1: f_ncoadds=1
         self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
         
-	# Cleanup : Remove old masterdark
+        # Cleanup : Remove old masterdark
         misc.fileUtils.removefiles(self.__output_filename)
-	tmp1=self.__output_file_dir+"/dark_tmp.fits"
-	misc.fileUtils.removefiles(tmp1)
+        tmp1=self.__output_file_dir+"/dark_tmp.fits"
+        misc.fileUtils.removefiles(tmp1)
         
         # Call the noao.imred.ccdred task through PyRAF
         misc.utils.listToFile(good_frames, self.__output_file_dir+"/files.list") 
@@ -188,47 +188,48 @@ class MasterDark:
                         reject='minmax',
                         nlow='0',
                         nhigh='1',
-			nkeep='1',
+                        nkeep='1',
                         scale=scale_str,
                         #expname='EXPTIME'
                         #ParList = _getparlistname('darkcombine')
                         )
         
     
-	if self.m_normalize:
-	    log.debug("Normalizing master dark to 1 sec")
-	    # divide master dark by the TEXP to get a master dark in ADU/s units
-	    texp=datahandler.ClFits(tmp1).expTime()
-	    iraf.mscred.mscarith(operand1 = tmp1,
-				 operand2 = texp,
-				op = '/',
-				result =self.__output_filename,
-				verbose = 'no'
-				)
-	else:
-	    shutil.move(tmp1, self.__output_filename)
-	    
+    	if self.m_normalize:
+    	    log.debug("Normalizing master dark to 1 sec")
+    	    # divide master dark by the TEXP to get a master dark in ADU/s units
+    	    texp=datahandler.ClFits(tmp1).expTime()
+    	    iraf.mscred.mscarith(operand1 = tmp1,
+    				 operand2 = texp,
+    				op = '/',
+    				result =self.__output_filename,
+    				verbose = 'no'
+    				)
+    	else:
+    	    shutil.move(tmp1, self.__output_filename)
+    	    
         darkframe = pyfits.open(self.__output_filename,'update')
-        #darkframe[0].header.add_history('Combined images by averaging (%s files) ' % good_frames)
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.update('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
-        #darkframe[0].header.update('OBJECT','MASTER_DARK')
-        darkframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file    
-
-    
-	
+        if self.m_normalize:
+            darkframe[0].header.update('EXPTIME',1.0)
+            darkframe[0].header.update('ITIME', 1.0)
+            darkframe[0].header.update('NCOADDS',1)
+            
+        darkframe.close(output_verify='ignore') # This ignore any FITS standard violation and allow write/update the FITS file    
+        
         log.debug('Saved master DARK to %s' , self.__output_filename)
         log.debug("createMasterDark' finished %s", t.tac() )
-
-	# Get some stats from master dark (mean/median/rms)
-	print "Stats:"
-	print "----- "
-	values = (iraf.mscstat (images=self.__output_filename,\
-            fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
-	for line in values:
-	    print line
-
         
+    	# Get some stats from master dark (mean/median/rms)
+        print "Stats:"
+        print "----- "
+        values = (iraf.mscstat (images=self.__output_filename,
+                                fields="image,mean,mode,stddev,min,max",
+                                format='yes',Stdout=1))
+        for line in values:
+    	       print line
+            
         return self.__output_filename
         
 

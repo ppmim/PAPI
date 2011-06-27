@@ -88,8 +88,8 @@ class ClFits:
         self.detectorID= ""
         self.date_obs  = ""
         self.time_obs  = ""
-        self._ra        = -1
-        self._dec       = -1
+        self._ra       = -1
+        self._dec      = -1
         self.equinox   = -1
         self.mdj       = -1 # modified julian date of observation
         self.object    = ""
@@ -394,11 +394,11 @@ class ClFits:
                 self._ra = myfits[0].header['RA']
             else:
                 wcs = pywcs.WCS(myfits[0].header)
-                center_pix = np.array([[self.naxis1/2,self.naxis2/2]],np.float_)
-                ar = wcs.wcs_pix2sky(center_pix, 1)[0] # ups, we are supposing naxis1 is RA axis
-                log.debug("Read RA-WCS coordinate")
-        except KeyError:
-            log.warning('RA keyword not found')
+                center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
+                self._ra = wcs.wcs_pix2sky(center_pix, 1)[0][0] # ups, we are supposing naxis1 is RA axis
+                log.debug("Read RA-WCS coordinate =%s", self._ra)
+        except Exception,e:
+            log.warning('Error reading RA keyword ')
             self._ra  = -1
             
         #Dec-coordinate (in degrees)
@@ -407,11 +407,11 @@ class ClFits:
                 self._dec = myfits[0].header['DEC']
             else:
                 wcs = pywcs.WCS(myfits[0].header)
-                center_pix = np.array([[self.naxis1/2,self.naxis2/2]],np.float_)
-                dec = wcs.wcs_pix2sky(center_pix, 1)[1] # ups, we are supposing naxis2 is Declination axis
-                log.debug("Read Dec-WCS coordinate")
-        except KeyError:
-            log.warning('DEC keyword not found')
+                center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
+                self._dec = wcs.wcs_pix2sky(center_pix, 1)[0][1] # ups, we are supposing naxis2 is Declination axis
+                log.debug("Read Dec-WCS coordinate =%s", self._dec)
+        except Exception,e:
+            log.warning('Error reading DEC keyword')
             self._dec  = -1
     
         try:

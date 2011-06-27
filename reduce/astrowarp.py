@@ -404,7 +404,7 @@ class AstroWarp(object):
         ## if we coadded more that one file) to the final coadd)
         ## PENDIENTE: I am not sure if it is needed to do again ?????
         if (len(self.input_files)>1):
-            log.debug("*** Doing final astrometril calibration....")
+            log.debug("*** Doing final astrometric calibration....")
             doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
                          self.coadded_file, self.catalog, 
                          self.config_dict, self.do_votable)

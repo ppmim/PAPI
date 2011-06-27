@@ -437,7 +437,7 @@ class ReductionSet:
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
-        master_dark=self.db.GetFilesT('MASTER_DARK', expTime)
+        master_dark=self.db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark
         master_flat=self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
             master_flat=self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
@@ -1420,11 +1420,11 @@ class ReductionSet:
                             log.info("===> (PARALLEL) Reducting extension %d", n+1)
                             ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                             if dark_ext==[]: mdark = None
-                            else: mdark=dark_ext[n][0] # At the moment, we have the first calibration file for each extension
+                            else: mdark=dark_ext[n][0] # At the moment, we take the first calibration file found for each extension
                             if flat_ext==[]: mflat = None
-                            else: mflat=flat_ext[n][0] # At the moment, we have the first calibration file for each extension
+                            else: mflat=flat_ext[n][0] # At the moment, we take the first calibration file found for each extension
                             if bpm_ext==[]: mbpm = None
-                            else: mbpm = bpm_ext[n][0] # At the moment, we have the first calibration file for each extension
+                            else: mbpm = bpm_ext[n][0] # At the moment, we take the first calibration file found for each extension
                             
                             l_out_dir = self.out_dir + "/Q%02d" % (n+1)
                             if not os.path.isdir(l_out_dir):
@@ -1533,9 +1533,14 @@ class ReductionSet:
         """
         
         log.info("##################################")
-        log.info("#### Starting data reduction #####")
-        log.info("#### MODE = %s  ##", self.red_mode)
-        log.info("#### OUT_DIR = %s ##",out_dir)
+        log.info("#### Starting Object Data Reduction #####")
+        log.info("#### MODE = %s  ", self.red_mode)
+        log.info("#### OUT_DIR = %s ",out_dir)
+        log.info("#### OUT_FILE = %s ", output_file)
+        log.info(" ----------------------------------")
+        log.info("#### MASTER_DARK = %s ", master_dark)
+        log.info("#### MASTER_FLAT = %s ", master_flat)
+        log.info("#### MASTER_BPM = %s ", master_bpm)
         log.info("##################################")
         #print "OBJS =",obj_frames
         
