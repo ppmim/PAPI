@@ -398,7 +398,7 @@ class ClFits:
                 self._ra = wcs.wcs_pix2sky(center_pix, 1)[0][0] # ups, we are supposing naxis1 is RA axis
                 log.debug("Read RA-WCS coordinate =%s", self._ra)
         except Exception,e:
-            log.warning('Error reading RA keyword ')
+            log.warning('Error reading RA keyword :%s',str(e))
             self._ra  = -1
             
         #Dec-coordinate (in degrees)
@@ -411,7 +411,7 @@ class ClFits:
                 self._dec = wcs.wcs_pix2sky(center_pix, 1)[0][1] # ups, we are supposing naxis2 is Declination axis
                 log.debug("Read Dec-WCS coordinate =%s", self._dec)
         except Exception,e:
-            log.warning('Error reading DEC keyword')
+            log.warning('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
     
         try:

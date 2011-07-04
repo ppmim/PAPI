@@ -48,7 +48,7 @@ class ICatalog (object):
         super (ICatalog, self).__init__ (*a, **k)
         
     
-    def queryCatalog(self, ar, dec, sr=0.1, cat_name=None, 
+    def queryCatalog(self, ar, dec, sr=1, cat_name=None, 
                      out_filename=None, out_format='votable'):    
         """
         @summary: Query the catalog and return the output file format selected

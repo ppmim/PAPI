@@ -66,8 +66,10 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
     destripe(imgout, bpm, nx, ny, bkg, type);
 
     for (i = 0; i < nx * ny; i++)              /* set bad pixels to bkg lvl */
-        if (bpm[i] <= 0)
+        if (bpm[i] <= 0){
             imgout[i] = bkg;
+	    /*printf("\n\t FOUND BadPixel, bkg=%f\n", bkg);*/
+	}
 
     return imgout;
 }

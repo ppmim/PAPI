@@ -30,6 +30,7 @@ import atpy
 import matplotlib.pyplot as plt
 import numpy
 import math
+import pylab
 
             
 import catalog_query
@@ -178,11 +179,12 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     
     # ToBeDone
     ## Filter data by FLAGS=0, FLUX_AUTO>0, ...
+    ## SNR = FLUX_AUTO / FLUXERR_AUTO
+    table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
+                             (table.j_snr>10) & (table.FLUX_AUTO/table.FLUXERR_AUTO>10))
     
-    table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0))
  
-    #X = table[column_x]
-    #Y = -2.5 * numpy.math.log10(table[column_y]/46.0)
+    #X = -2.5 * numpy.log10(table_new['FLUX_AUTO']/1.0)
     filter = column_y
     X = table_new[column_x]
     Y = table_new[column_y]
@@ -196,9 +198,9 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
 
     # Compute the polyfit
     res = numpy.polyfit(n_X, n_Y, 1, None, True)
-    a = res[0][1] # intercept
+    a = res[0][1] # intercept == Zero Point
     b = res[0][0] # slope
-    r = res[3][1] # regression coeff
+    r = res[3][1] # regression coeff ??? not exactly
     
     print "Coeffs =", res
     
@@ -208,7 +210,47 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     plt.title("Filter %s  -- Poly fit: %f X + %f  r=%f ZP=%f" %(filter, b,a,r,a))
     plt.xlabel("Inst_Mag (MAG_AUTO) / mag")
     plt.ylabel("2MASS Mag  / mag")
+    plt.savefig("/tmp/linear_fit.pdf")
     plt.show()
+    
+    
+    # Compute the ZP as the median  of all per-star ZP=(Mag_2mass-Mag_Inst)
+    zp = numpy.median(n_Y - n_X)
+    #print "\n===>ZP=%f \n"%zp
+    log.debug("ZERO_POINT = %f"%zp)
+    
+    
+    # Now, compute the histogram of errors
+    m_err = numpy.zeros(len(n_X))
+    #m_err = n_Y - (b * n_X + a) 
+    m_err = n_Y - (n_X + zp) 
+    rms = numpy.sqrt( numpy.mean( (m_err)**2 ) )
+    std = numpy.std(m_err)
+    std2 = numpy.std(m_err[numpy.where(numpy.abs(m_err)<std*2)])
+    log.debug("RMS = %f"%rms)
+    log.debug("STD = %f"%std)
+    log.debug("STD2 = %f"%std2)
+    
+
+    #print m_err
+    # Lo normal es que coincida la RMS con la STD, pues la media de m_err en este caso es 0
+
+    plt.plot((n_X+zp), m_err, '.')
+    plt.xlabel("Inst_Mag")
+    plt.ylabel("2MASS_Mag-Inst_Mag")
+    plt.title("Calibration with 2MASS - STD = %f"%std)
+    #plt.plot((b * n_X + a), m_err, '.')
+    plt.savefig("/tmp/phot_errs.pdf")
+    plt.show()
+    
+    
+    pylab.hist(m_err, bins=50, normed=0)
+    pylab.title("Mag error Histogram - RMS = %f mag STD = %f"%(rms,std))
+    pylab.xlabel("Mag error")
+    pylab.ylabel("Frequency")
+    plt.savefig("/tmp/phot_hist.pdf")
+    pylab.show()
+    
 
     
 class STILTSwrapper (object):
@@ -353,7 +395,7 @@ if __name__ == "__main__":
             two_mass_col_name = 'j_m'
         elif filter=='H':
             two_mass_col_name = 'h_m'
-        elif filter=='K' or filter=='K-PRIME':
+        elif filter=='K' or filter=='K-PRIME' or filter=='KS':
             two_mass_col_name = 'k_m'   
         else:
             log.error("Filter %s not supported" %filter)
@@ -381,27 +423,29 @@ if __name__ == "__main__":
     try:
         match_cat = catalog_xmatch( image_catalog, res_file, 
                                    out_xmatch_file, out_format='votable', 
-                                   error=2.0 ) 
+                                   error=1.0 ) 
         log.debug("XMatch done !")
     except Exception,e:
         log.error("XMatch failed %s", str(e))
         sys.exit(0)
     
     ## 3a- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
-    ###### and generate the plot file with the photometric comparison  
+    ###### and generate the plot file with the photometric comparison
+    ###### 2MASS_Mag = Inst_Mag*b + ZP  
     log.debug("Compute & Plot regression !!!")    
     try:
         compute_regresion (out_xmatch_file, 'MAG_AUTO', two_mass_col_name )
         log.debug("Well DONE !!")
         #sys.exit(0)
-    except Exeption,e:
-        log.error("Sorry, can't some error while computing linear fit or \
+    except Exception,e:
+        log.error("Sorry, can't some error while computing linear fit or\
         ploting the results: %s", str(e))
         sys.exit(0)
     
     ## 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
     ###### and generate the plot file with the photometric comparison  
     try:
+        exptime = 1.0 # SWARP normalize flux to 1 sec
         plot_file = generate_phot_comp_plot ( match_cat, two_mass_col_name, exptime, 
                                               options.output_filename, 
                                               out_format='pdf')
