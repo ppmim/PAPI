@@ -139,7 +139,7 @@ def generate_phot_comp_plot ( input_catalog, filter, expt = 1.0 ,
                      
     command_line = STILTSwrapper._stilts_pathname + " plot2d " + \
                     " in=" + input + \
-                    " subsetNS='h_snr>0 && FLAGS==0'  lineNS=LinearRegression" + \
+                    " subsetNS='h_snr>10 && j_snr>10 && FLAGS==0'  lineNS=LinearRegression" + \
                     " ydata=%s xdata=MAG_AUTO ylabel=\"2MASS %s / mag\" "%(filter,filter) + \
                     " xlabel=\"Instrumental_Mag %s/ mag\" "%filter
                                      
@@ -180,10 +180,19 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     # ToBeDone
     ## Filter data by FLAGS=0, FLUX_AUTO>0, ...
     ## SNR = FLUX_AUTO / FLUXERR_AUTO
+    min_snr = 10
     table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
-                             (table.j_snr>10) & (table.FLUX_AUTO/table.FLUXERR_AUTO>10))
+                             (table.j_snr>min_snr) & (table.h_snr>min_snr) &
+                             (table.k_snr>min_snr) & (table.j_k<1.0) &
+                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
     
- 
+    # If there aren't enough 2MASS objects, don't use color cut
+    if len(table_new)<25:
+        table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
+                             (table.j_snr>min_snr) & (table.h_snr>min_snr) &
+                             (table.k_snr>min_snr) & 
+                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
+        
     #X = -2.5 * numpy.log10(table_new['FLUX_AUTO']/1.0)
     filter = column_y
     X = table_new[column_x]
@@ -193,10 +202,10 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     validdata_X = ~numpy.isnan(X)
     validdata_Y = ~numpy.isnan(Y)
     validdataBoth = validdata_X & validdata_Y
-    n_X = X[validdataBoth]
+    n_X = X[validdataBoth] #- (0.5*0.05) # a row extinction correction
     n_Y = Y[validdataBoth] 
 
-    # Compute the polyfit
+    # Compute the linear fit
     res = numpy.polyfit(n_X, n_Y, 1, None, True)
     a = res[0][1] # intercept == Zero Point
     b = res[0][0] # slope
@@ -212,40 +221,107 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     plt.ylabel("2MASS Mag  / mag")
     plt.savefig("/tmp/linear_fit.pdf")
     plt.show()
+    log.debug("Zero Point (from polyfit) =%f", a)
     
     
     # Compute the ZP as the median  of all per-star ZP=(Mag_2mass-Mag_Inst)
-    zp = numpy.median(n_Y - n_X)
-    #print "\n===>ZP=%f \n"%zp
-    log.debug("ZERO_POINT = %f"%zp)
-    
+    zps = n_Y - n_X 
+    zp = numpy.median(zps)
+    #zp = a
+    log.debug("Initial ZP(median) = %f"%zp)
+    zp_sigma = numpy.std(zps)
+    print "ZPS=",zps
+    # do a kind of sigma-clipping
+    zp_c = numpy.median(zps[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)])
+    log.debug("ZP_sigma=%f"%zp_sigma)
+    log.debug("Clipped ZP = %f"%zp_c)
+    zp = zp_c
+    #zp = a
     
     # Now, compute the histogram of errors
-    m_err = numpy.zeros(len(n_X))
-    #m_err = n_Y - (b * n_X + a) 
-    m_err = n_Y - (n_X + zp) 
+    m_err_for_radial_systematic = n_Y - (n_X + zp)
+    n_X = n_X[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)]
+    n_Y = n_Y[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)]
+    log.debug("Number of points = %d"%len(n_X))
+    #m_err = n_Y - (n_X*b + zp ) 
+    m_err = n_Y - (n_X + zp)
     rms = numpy.sqrt( numpy.mean( (m_err)**2 ) )
+    MAD = numpy.median( numpy.abs(m_err-numpy.median(m_err)))
     std = numpy.std(m_err)
-    std2 = numpy.std(m_err[numpy.where(numpy.abs(m_err)<std*2)])
-    log.debug("RMS = %f"%rms)
-    log.debug("STD = %f"%std)
-    log.debug("STD2 = %f"%std2)
+    #std2 = numpy.std(m_err[numpy.where(numpy.abs(m_err)<std*2)])
+    
+
+    log.debug("ZP = %f"%zp)
+    log.debug("MAD(m_err) = %f"%MAD)
+    log.debug("MEAN(m_err) = %f"%numpy.mean(m_err))
+    log.debug("MEDIAN(m_err) = %f"%numpy.median(m_err))
+    log.debug("STD(m_err) = %f"%std)
+    log.debug("RMS(m_err) = %f"%rms)
+    #log.debug("STD2 = %f"%std2)
+    
+    #my_mag = n_X*b + zp
+    my_mag = n_X + zp
+    #plt.plot( my_mag[numpy.where(m_err<std*2)], m_err[numpy.where(m_err<std*2)], '.')
+    plt.plot( my_mag, m_err, '.')
+    plt.xlabel("Inst_Mag")
+    plt.ylabel("2MASS_Mag-Inst_Mag")
+    plt.title("(1) Calibration with 2MASS - STD = %f"%std)
+    #plt.plot((b * n_X + a), m_err, '.')
+    plt.grid(color='r', linestyle='-', linewidth=1)
+    plt.savefig("/tmp/phot_errs.pdf")
+    plt.show()
+    
+    # Plot radial distance VS m_err
+    radial_distance = numpy.sqrt((table_new['X_IMAGE']-1024)**2 
+                                 + (table_new['Y_IMAGE']-1024)**2)*0.45 #arcsecs
+    
+    plt.plot( radial_distance, m_err_for_radial_systematic, '.')
+    plt.xlabel("Radial distance ('arcsec')")
+    plt.ylabel("2MASS_Mag-Inst_Mag")
+    plt.title("(1) Spatial systematics - STD = %f"%std)
+    plt.savefig("/tmp/espatial_systematics_errs.pdf")
+    plt.show()
+    
+    
+    # Second ZP
+    log.debug("Second iteration")
+    temp = n_Y - n_X 
+    print "LEN1=",len(temp)
+    print "LEN2=",len(temp[numpy.where(numpy.abs(m_err)<std*2)])
+    zp2 = numpy.median( temp[numpy.where(numpy.abs(m_err)<std*2)])
+    m_err2 = n_Y - (n_X + zp2) 
+    rms2 = numpy.sqrt( numpy.mean( (m_err2)**2 ) )
+    std2 = numpy.std(m_err2)
+    MAD2 = numpy.median( numpy.abs(m_err2-numpy.median(m_err2)))
+    MAD2b = numpy.sqrt( numpy.median( (m_err2-numpy.median(m_err2))**2 ) )
+    #std3 = numpy.std(m_err[numpy.where(numpy.abs(m_err2)<std2*2)])
+
+    log.debug("ZP2 = %f"%zp2)
+    log.debug("MAD2(m_err2) = %f"%MAD2)
+    log.debug("MAD2b(m_err2) = %f"%MAD2b)
+    log.debug("MEAN2(m_err2) = %f"%numpy.mean(m_err2))
+    log.debug("STD(m_err2) = %f"%std2)
+    log.debug("RMS(m_err2) = %f"%rms2)
+
+    #log.debug("STD3 = %f"%std3)
+    
+    
     
 
     #print m_err
     # Lo normal es que coincida la RMS con la STD, pues la media de m_err en este caso es 0
-
-    plt.plot((n_X+zp), m_err, '.')
+    my_mag = n_X+zp2
+    plt.plot( my_mag[numpy.where(m_err<std*2)], m_err[numpy.where(m_err<std*2)], '.')
     plt.xlabel("Inst_Mag")
     plt.ylabel("2MASS_Mag-Inst_Mag")
-    plt.title("Calibration with 2MASS - STD = %f"%std)
+    plt.title("(2) Calibration with 2MASS - STD = %f"%std2)
     #plt.plot((b * n_X + a), m_err, '.')
     plt.savefig("/tmp/phot_errs.pdf")
     plt.show()
     
     
-    pylab.hist(m_err, bins=50, normed=0)
-    pylab.title("Mag error Histogram - RMS = %f mag STD = %f"%(rms,std))
+    pylab.hist(m_err2, bins=50, normed=0)
+    pylab.title("Mag error Histogram - RMS = %f mag STD = %f"%(rms2,std2))
     pylab.xlabel("Mag error")
     pylab.ylabel("Frequency")
     plt.savefig("/tmp/phot_hist.pdf")
@@ -386,8 +462,8 @@ if __name__ == "__main__":
         log.debug("RA = %f"%ra)
         log.debug("DEC = %f"%dec)
         log.debug("Filter = %s"%filter)
-        if ra<0 or dec<0:
-            log.debug("Found wrong RA,Dec values")
+        if ra<0 or exptime<0:
+            log.debug("Found wrong RA,DEC,EXPTIME or FILTER value")
             sys.exit(0)
         
         # Checking Filter    
@@ -397,6 +473,8 @@ if __name__ == "__main__":
             two_mass_col_name = 'h_m'
         elif filter=='K' or filter=='K-PRIME' or filter=='KS':
             two_mass_col_name = 'k_m'   
+        elif filter=='OPEN':
+            two_mass_col_name = 'j_m'
         else:
             log.error("Filter %s not supported" %filter)
             sys.exit(0)

@@ -55,27 +55,33 @@ import astromatic.ldac
 
 
 #-----------------------------------------------------------------------
-def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, outputfile="/tmp/out.txt", single_point=False):
-    """DESCRIPTION
-                Create an object mask of the inputfile/s based on SExtractor
+def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, 
+                 outputfile="/tmp/out.txt", single_point=False):
+    """
+        DESCRIPTION
+          Create an object mask of the inputfile/s based on SExtractor
            
-           INPUTS
-                inputfile    it can be a regular expresion or a filename containing a filelist
+        INPUTS
+          inputfile    it can be a regular expresion or a filename 
+                              containing a filelist
                 
-           OPTIONAL INPUTS
+        OPTIONAL INPUTS
                 
-                outputfile   filename of file list with the object file/s created by SExtractor
+          outputfile   filename of file list with the object file/s 
+                       created by SExtractor
                 
-                minarea      SExtractor DETECT_MINAREA (minimun object area)
+          minarea      SExtractor DETECT_MINAREA (minimun object area)
                            
-                threshold    SExtractor DETECT_THRESH
+          threshold    SExtractor DETECT_THRESH
                 
-                saturlevel   Pixel Saturation level 
+          saturlevel   Pixel Saturation level 
                 
-                single_point If true, means the image will be reduced to a single point object mask
+          single_point  If true, means the image will be reduced to a 
+                        single point object mask
                 
-           OUTPUTS
-                outputfile      Filepath containig the list of objects mask files created by SExtractor ending with '.objs' suffix
+       OUTPUTS
+         outputfile   Filepath containig the list of objects mask files 
+                      created by SExtractor ending with '.objs' suffix
               
       """
          
@@ -140,7 +146,9 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, output
         # coordinates specified by its X_IMAGE and Y_IMAGE parameters in the
         # SExtractor catalog. The remaining pixels in the image
         # will be set to zero. Note that, therefore, the 'single-point' mask will
-        # have as many non-zero pixels as objects are in the SExtractor caralog.
+        # have as many non-zero pixels as objects are in the SExtractor catalog.
+        # NOTE:This feature is used to compute the dither offsets, but not for while
+        # object masking in skysubtraction
         if single_point==True:
             # NOTE we update/overwrite the image and don't create a new one
             myfits=pyfits.open(fn+".objs", mode="update")

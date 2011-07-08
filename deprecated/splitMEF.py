@@ -189,7 +189,7 @@ if __name__ == "__main__":
     copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX',\
                      'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS',\
                      'IMAGETYP', 'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS',\
-                     'FILTER2']    
+                     'FILTER','FILTER2']    
     split = SplitMEF(filelist, options.out_suffix, copy_keyword)
     split.run()
         

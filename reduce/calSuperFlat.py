@@ -52,7 +52,8 @@ from iraf import mscred
 
 class SuperSkyFlat:
     """
-    \brief Class used to build a super sky Flat from a dither set of science frames containing objects.
+    \brief Class used to build a super sky Flat from a dither set of science 
+           frames containing objects.
     
     \par Class:
         SuperSkyFlat
@@ -72,7 +73,8 @@ class SuperSkyFlat:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  bpm=None, norm=True):
+    def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  
+                 bpm=None, norm=True):
         """
         Initialization method.
         

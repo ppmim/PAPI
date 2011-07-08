@@ -872,7 +872,8 @@ class ReductionSet:
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
                             
-    def coaddStackImages(self, input='/tmp/stack.pap', gain=None, output=None, type_comb='average'):
+    def coaddStackImages(self, input='/tmp/stack.pap', gain=None, 
+                         output=None, type_comb='average'):
         """
             Register the aligned-stack of dithered FITS images listed in 'input'
             file using offset specified inside, and calculate the mean plane.
@@ -894,22 +895,22 @@ class ReductionSet:
                                                   
         log.info("Start coaddStackImages ...")                                          
         # STEP 1: Define parameters                                          
-        input_file=input
+        input_file = input
         if input_file==None:
             log.error("Bad input file provided !")
             return
         
         if gain==None:
-            gain_file=self.out_dir+"/gain_"+self.m_filter+".fits"
+            gain_file = self.out_dir+"/gain_"+self.m_filter+".fits"
         else:
-            gain_file=gain
+            gain_file = gain
         
         if output==None:
-            output_file=self.out_dir+"/coadd_"+self.m_filter+".fits"     
+            output_file = self.out_dir+"/coadd_"+self.m_filter+".fits"     
         else:
-            output_file=output
+            output_file = output
             
-        weight_file=output_file.replace(".fits",".weight.fits")
+        weight_file = output_file.replace(".fits",".weight.fits")
         
         # STEP 2: Run the coadd                                           
         if type_comb=='average': # (use IRDR::dithercubemean)
@@ -935,7 +936,6 @@ class ReductionSet:
         """
                                                              
         log.info("Start createMasterObjMask....")
-                                                             
         # STEP 1: create mask
         if self.config_dict:
             mask_minarea=self.config_dict['skysub']['mask_minarea']
@@ -953,18 +953,20 @@ class ReductionSet:
             log.debug("New Object mask created : %s", output_master_obj_mask)
             
         # STEP 2: dilate mask (NOT DONE)
-        """
-        log.info("Dilating image ....(NOT DONE by the moment)")
-        prog = self.m_irdr_path+"/dilate "
-        scale = 0.5 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
-        cmd  = prog + " " + input_file + " " + str(scale)
-        
-        e=utils.runCmd( cmd )
-        if e==0:
-            log.debug("Some error while running command %s", cmd)
-        else:
-            log.debug("Succesful ending of createMasterObjMask")
-        """        
+        dilate = False                                                     
+        if dilate:
+            log.info("Dilating image ....")
+            prog = self.m_irdr_path+"/dilate "
+            scale = 1.5 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
+            cmd  = prog + " " + output_master_obj_mask + " " + str(scale)
+            # dilate will overwrite the master object mask
+            
+            e=utils.runCmd( cmd )
+            if e==0:
+                log.debug("Some error while running command %s", cmd)
+            else:
+                log.debug("Succesful ending of createMasterObjMask")
+                
 
         return output_master_obj_mask
                                         
@@ -1566,7 +1568,10 @@ class ReductionSet:
             print "Input files already in output directory!"
             self.m_LAST_FILES=obj_frames
             
-        print "SOURCES TO BE REDUCED =\n",self.m_LAST_FILES
+        print "\nSOURCES TO BE REDUCED:"
+        print   "====================="
+        print self.m_LAST_FILES
+        print   "====================="
         
         ######################################################
         # 0 - Some checks (filter, ....) 
@@ -1596,7 +1601,7 @@ class ReductionSet:
             raise
         
         log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" )
-        log.info( "OBSERVING SEQUENCE DETECTED = %s", self.obs_mode)
+        log.info( "OBSERVING SEQUENCE DETECTED. OBS_MODE= %s", self.obs_mode)
         log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" )
         
         # keep a copy of the original file names
@@ -1657,8 +1662,10 @@ class ReductionSet:
             nxblock=16
             nyblock=16
             nsigma=5
-        g=reduce.calGainMap.GainMap(master_flat, gainmap, bpm=master_bpm, do_normalization=True,
-                                    mingain=mingain, maxgain=maxgain, nxblock=nxblock,
+            
+        g=reduce.calGainMap.GainMap(master_flat, gainmap, bpm=master_bpm, 
+                                    do_normalization=True, mingain=mingain, 
+                                    maxgain=maxgain, nxblock=nxblock,
                                     nyblock=nyblock, nsigma=nsigma)
         g.create() 
            
