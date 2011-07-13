@@ -164,7 +164,8 @@ class MEF (object):
         if copy_keyword == None:
             copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX', 
                     'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
-                    'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'FILTER2']
+                    'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 
+                    'FILTER', 'FILTER1','FILTER2']
                 
         out_filenames = []
         n = 0 
