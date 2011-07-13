@@ -339,7 +339,7 @@ class ClFits:
         #Filter
         try:
             if myfits[0].header['INSTRUME']=='HAWKI': 
-                self.filter = myfits[0].header['FILTER2']
+                self.filter = myfits[0].header['FILTER1']
             else:
                 self.filter  = myfits[0].header['FILTER']
         except KeyError:
