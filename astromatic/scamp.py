@@ -603,20 +603,19 @@ def runCmd( str_cmd, p_shell=True ):
     #to avoid deadlocks due to any of the other OS pipe buffers filling up and 
     #blocking the child process.(Python Ref.doc)
 
-    std_out_std_err = p.communicate()[0]   
-    err = std_out_std_err
-    out = std_out_std_err
-
-
+    (stdoutdata, stderrdata) = p.communicate()
+    err = stdoutdata + " " + stderrdata
 
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
     if err.count('WARNING: Significant inaccuracy'):
         print "Canno't get accuracy astrometric calibration"
         return 2
-    elif (err.count('ERROR') or out.count('error') or err.count("Error") \
+    elif (err.count('ERROR ') or err.count('error ') or err.count("Error ") \
       or err.count('Segmentation fault') or err.count("command not found") \
       or err.count('No source found') \
-      or err.count("No such file or directory")):
+      or err.count("No such file or directory")
+      or err.count('WARNING: Not enough matched detections') # SCAMP
+      or err.count('WARNING: Significant inaccuracy likely to occur in projection')): #SCAMP
         print "An error happened while running command --> %s \n"%err
         return 1
     else:

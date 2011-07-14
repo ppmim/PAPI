@@ -390,26 +390,35 @@ class ClFits:
         
         #RA-coordinate (in degrees)
         try:
-            if myfits[0].header.has_key('RA'):
-                self._ra = myfits[0].header['RA']
-            else:
+            # WCS-coordinates are prefered than RA,DEC
+            if (myfits[0].header.has_key('CTYPE1') 
+                            and myfits[0].header['CTYPE1']=='RA---TAN'):
+                
                 wcs = pywcs.WCS(myfits[0].header)
                 center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
                 self._ra = wcs.wcs_pix2sky(center_pix, 1)[0][0] # ups, we are supposing naxis1 is RA axis
                 log.debug("Read RA-WCS coordinate =%s", self._ra)
+            elif myfits[0].header.has_key('RA'):
+                self._ra = myfits[0].header['RA']
+            else:
+                raise Exception("No valid RA coordinate found")
         except Exception,e:
             log.warning('Error reading RA keyword :%s',str(e))
             self._ra  = -1
             
         #Dec-coordinate (in degrees)
         try:
-            if myfits[0].header.has_key('DEC'):
-                self._dec = myfits[0].header['DEC']
-            else:
+            # WCS-coordinates are prefered than RA,DEC
+            if (myfits[0].header.has_key('CTYPE2') 
+                            and myfits[0].header['CTYPE2']=='DEC--TAN'):
                 wcs = pywcs.WCS(myfits[0].header)
                 center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
                 self._dec = wcs.wcs_pix2sky(center_pix, 1)[0][1] # ups, we are supposing naxis2 is Declination axis
                 log.debug("Read Dec-WCS coordinate =%s", self._dec)
+            elif myfits[0].header.has_key('DEC'):
+                self._dec = myfits[0].header['DEC']
+            else:
+                raise Exception("No valid DEC coordinates found")
         except Exception,e:
             log.warning('Error reading DEC keyword : %s', str(e))
             self._dec  = -1

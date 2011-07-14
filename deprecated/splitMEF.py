@@ -80,7 +80,7 @@ class SplitMEF:
                   copy_keyword = ['DATE','OBJECT','DATE-OBS','RA','DEC',\
                                 'EQUINOX','RADECSYS','UTC','LST','UT','ST',\
                                 'AIRMASS','IMAGETYP','EXPTIME','TELESCOP',\
-                                'INSTRUME','MJD-OBS','FILTER2']):
+                                'INSTRUME','MJD-OBS','FILTER','FILTER1','FILTER2']):
          
         self.input_files = input_files
         self.out_filename_suffix = output_filename_suffix  # suffix 

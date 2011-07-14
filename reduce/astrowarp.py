@@ -242,8 +242,8 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
     #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
     sex.config['CATALOG_TYPE'] = "FITS_LDAC"
     sex.config['CATALOG_NAME'] = input_image + ".ldac"
-    sex.config['DETECT_THRESH'] = config_dict['skysub']['mask_thresh']
-    sex.config['DETECT_MINAREA'] = config_dict['skysub']['mask_minarea']
+    sex.config['DETECT_THRESH'] = config_dict['astrometry']['mask_thresh']
+    sex.config['DETECT_MINAREA'] = config_dict['astrometry']['mask_minarea']
     try:
         sex.run(input_image, updateconfig=True, clean=False)
     except: 
@@ -273,7 +273,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
     swarp.config['CONFIG_FILE'] = config_dict['config_files']['swarp_conf']
     #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME'] = output_image
-    swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS,RA,DEC'
+    swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC'
     swarp.ext_config['WEIGHTOUT_NAME'] = output_image.replace(".fits",".weight.fits")
     swarp.ext_config['HEADER_SUFFIX'] = ".head"
     
@@ -312,7 +312,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
 class AstroWarp(object):
     """ Astrometric warping """
 
-    def __init__(self, input_files, catalog='2MASS', 
+    def __init__(self, input_files, catalog='None', 
                  coadded_file="/tmp/astrowarp.fits", config_dict=None, do_votable=False):
         """ Instantiation method for AstroWarp class
 
@@ -327,7 +327,10 @@ class AstroWarp(object):
             raise Exception("Config dictionary not provided ...")
             
         self.input_files = input_files
-        self.catalog = catalog
+        if catalog!=None:
+            self.catalog = catalog
+        else: 
+            catalog = config_dict['astrometry']['catalog']
         self.coadded_file = coadded_file
         self.config_dict = config_dict # the config dictionary
         self.do_votable = do_votable
@@ -370,9 +373,12 @@ class AstroWarp(object):
             #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
             sex.config['CATALOG_TYPE'] = "FITS_LDAC"
             sex.config['CATALOG_NAME'] = file + ".ldac"
-            sex.config['DETECT_THRESH'] = self.config_dict['skysub']['mask_thresh']
-            sex.config['DETECT_MINAREA'] = self.config_dict['skysub']['mask_minarea']
-            sex.run(file, updateconfig=True, clean=False)
+            sex.config['DETECT_THRESH'] = self.config_dict['astrometry']['mask_thresh']
+            sex.config['DETECT_MINAREA'] = self.config_dict['astrometry']['mask_minarea']
+            try:
+                sex.run(file, updateconfig=True, clean=False)
+            except Exception,e:
+                raise e
                         
         ## STEP 2: Make the multi-astrometric calibration for each file (all overlapped-files together)
         log.debug("*** Doing multi-astrometric calibration ....")
@@ -383,7 +389,11 @@ class AstroWarp(object):
         scamp.ext_config['SOLVE_PHOTOM'] = "N"
         cat_files = [(f + ".ldac") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
-        scamp.run(cat_files, updateconfig=False, clean=False)
+        
+        try:
+            scamp.run(cat_files, updateconfig=False, clean=False)
+        except Exception,e:
+            raise e
         
         
         ## STEP 3: Make the coadding with SWARP, and using .head files created by SCAMP
@@ -392,13 +402,17 @@ class AstroWarp(object):
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf']
         #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
-        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
+        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
         swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
         swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
         if os.path.isfile(self.input_files[0].replace(".fits",".weight.fits")):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
-        swarp.run(self.input_files, updateconfig=False, clean=False)
+        
+        try:
+            swarp.run(self.input_files, updateconfig=False, clean=False)
+        except Exception,e:    
+            raise e
         
         ## STEP 4: Make again the final astrometric calibration (only 
         ## if we coadded more that one file) to the final coadd)
@@ -470,13 +484,13 @@ if __name__ == "__main__":
         except:
             filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file)]
             
-        astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename, config_dict=cfg_options)
+        ##astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename, config_dict=cfg_options)
+        astrowarp = AstroWarp(filelist, catalog="GSC-2.3", coadded_file=options.output_filename, config_dict=cfg_options)
     
         try:
             astrowarp.run()
-        except:
-            log.error("Some error while running Astrowarp....")
-            raise
+        except Exception,e:
+            log.error("Some error while running Astrowarp : %s",str(e))
     else:
         log.error("Source file %s does not exists",options.source_file)
         

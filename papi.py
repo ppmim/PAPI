@@ -183,6 +183,7 @@ def main(arguments = None):
     log.debug("   + source  : %s",general_opts['source'])
     log.debug("   + out_dir : %s",general_opts['output_dir'])
     log.debug("   + reduction_mode: %s",general_opts['reduction_mode'])
+    log.debug("   + Astrometric catalog: %s", options['astrometry']['catalog'])
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     # Create the RS (it works both simple FITS as MEF files)            
@@ -200,7 +201,7 @@ def main(arguments = None):
         print e
     except Exception, e:
         print "Cannot reduce the Data Set, check error log...."
-        print e
+        print str(e)
     else:
         print "Well done (I hope) !!!"
         return 0

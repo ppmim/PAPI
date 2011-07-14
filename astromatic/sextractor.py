@@ -188,7 +188,7 @@ class SExtractor:
         
         "ANALYSIS_THRESH":
         {"comment": "<sigmas> or <threshold>,<ZP> in mag.arcsec-2",
-         "value": 100.0},
+         "value": 5.0},
         
         "FILTER":
         {"comment": 'apply filter for detection ("Y" or "N")',

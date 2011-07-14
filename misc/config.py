@@ -572,6 +572,18 @@ def read_config_file(config_file = default_config_file()):
         
     options["gainmap"] = gainmap    
     
+    ########################## "astrometry" section ################################
+    astrometry = {}
+    
+    astrometry["mask_minarea"] = read_parameter(config, "astrometry", "mask_minarea", int, False, config_file)
+    astrometry["mask_maxarea"] = read_parameter(config, "astrometry", "mask_maxarea", int, False, config_file)
+    astrometry["mask_thresh"] = read_parameter(config, "astrometry", "mask_thresh", float, False, config_file)
+    astrometry["satur_level"] = read_parameter(config, "astrometry", "satur_level", long, False, config_file)
+    astrometry["catalog"] = read_parameter(config, "astrometry", "catalog", str, True, config_file)
+    
+    options["astrometry"] = astrometry  
+    
+    
     ####################### "fits" section #################################
     ## ACTUALIZAR LLAMADAS a read_parameter()
     # This options, although loaded from the configuration file, are not used
