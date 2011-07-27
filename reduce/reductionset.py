@@ -328,7 +328,9 @@ class ReductionSet:
             new_frame_list.append(frame_list)
         else:            
             #Suppose we have MEF files ...
-            kws=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST','UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS','FILTER2']    
+            kws=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
+		'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+		'FILTER', 'FILTER1', 'FILTER2']    
             try:
                 mef = misc.mef.MEF(frame_list)
                 (nExt, sp_frame_list)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)

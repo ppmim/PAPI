@@ -242,12 +242,16 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     X = table_new[column_x]
     Y = table_new[column_y]
    
+   
     #remove the NaN values 
     validdata_X = ~numpy.isnan(X)
     validdata_Y = ~numpy.isnan(Y)
     validdataBoth = validdata_X & validdata_Y
     n_X = X[validdataBoth] #- (0.5*0.05) # a row extinction correction
     n_Y = Y[validdataBoth] 
+
+    if len(n_X)<3 or len(n_Y)<3:
+        raise Exception("Not enought number of data, only %d points found"%len(n_X))
 
     # Compute the linear fit
     res = numpy.polyfit(n_X, n_Y, 1, None, True)

@@ -274,18 +274,23 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
     #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME'] = output_image
     swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC'
-    swarp.ext_config['WEIGHTOUT_NAME'] = output_image.replace(".fits",".weight.fits")
+    basename_o, extension_o = os.path.splitext(output_image)
+    swarp.ext_config['WEIGHTOUT_NAME'] = basename_o + ".weight" + extension_o
     swarp.ext_config['HEADER_SUFFIX'] = ".head"
+    if not os.path.isfile(input_image + ".head"):
+        raise Exception ("Cannot find required .head file")
     
     #Rename the external header produced by SCAMP (.head) to a filename to be looked for by SWARP 
-    #SWARP take into account for re-projection an externar header for file 'xxxxx.ext' if exists 
+    #SWARP take into account for re-projection an external header for file 'xxxxx.ext' if exists 
     #an 'xxxx.head' header ('ext' can be any string, i.e. fits, skysub, ....)
-    shutil.move(input_image+".head", os.path.splitext(input_image)[0]+".head") 
-    # we use explitext() to remove the LAST suffix after, thus 'xxx.fits.skysub' ---> has as extension '.skysub'
-    if (os.path.exists(input_image.replace(".fits",".weight.fits"))):
+    #We use splitext() to remove the LAST suffix after, thus 'xxx.fits.skysub' ---> has as extension '.skysub'
+    # mmmmm, it depends on HEADER_SUFFIX config variable !!!! so, above comments are not completely true
+    basename, extension = os.path.splitext(input_image)
+    shutil.move(input_image+".head", basename +".head")  # very important !!
+    if os.path.isfile(basename + ".weight" + extension):
         swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-        swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
-        swarp.ext_config['WEIGHT_IMAGE'] = input_image.replace(".fits",".weight.fits")
+        swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
+        swarp.ext_config['WEIGHT_IMAGE'] = basename + ".weight" + extension
         
     try:
         swarp.run(input_image, updateconfig=False, clean=False)
@@ -402,12 +407,17 @@ class AstroWarp(object):
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf']
         #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+        swarp.ext_config['HEADER_SUFFIX'] = '.head'  # importante
+        if not os.path.isfile(self.input_files[0]+".head"):
+            raise Exception ("Cannot find required .head file")
+            
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
         swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
-        swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
-        if os.path.isfile(self.input_files[0].replace(".fits",".weight.fits")):
+        basename, extension = os.path.splitext(self.input_files[0])
+        if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-            swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
+            swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
+            swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
         
         try:
             swarp.run(self.input_files, updateconfig=False, clean=False)
@@ -485,7 +495,7 @@ if __name__ == "__main__":
             filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file)]
             
         ##astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename, config_dict=cfg_options)
-        astrowarp = AstroWarp(filelist, catalog="GSC-2.3", coadded_file=options.output_filename, config_dict=cfg_options)
+        astrowarp = AstroWarp(filelist, catalog="2MASS", coadded_file=options.output_filename, config_dict=cfg_options)
     
         try:
             astrowarp.run()

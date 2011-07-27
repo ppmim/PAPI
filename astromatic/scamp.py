@@ -610,7 +610,8 @@ def runCmd( str_cmd, p_shell=True ):
     if err.count('WARNING: Significant inaccuracy'):
         print "Canno't get accuracy astrometric calibration"
         return 2
-    elif (err.count('ERROR ') or err.count('error ') or err.count("Error ") \
+    elif (err.count('ERROR ') or err.count('error ') or err.count("Error ")\
+      or err.count('*Error*')\
       or err.count('Segmentation fault') or err.count("command not found") \
       or err.count('No source found') \
       or err.count("No such file or directory")
