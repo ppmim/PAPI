@@ -20,7 +20,9 @@
 
 
 import sys
-import ConfigParser
+import fileinput
+import pyfits
+from optparse import OptionParser
 import os.path
 
 # PAPI modules
@@ -28,15 +30,15 @@ import style
 
 def create_obs_sequence (filelist, ob_id, ob_pat, suffix='OS', overwrite=False):
     """ Function to modify the FITS headers in order to simulate an 
-    observing sequence of PANIC.
-    The keywords to write are: 
+    observing sequence of PANIC. The keywords to write are:
+     
         - OB_ID (given by the user)
-        - OB_NAME 
+        - OB_NAME (not used)
         - OB_PAT (given by the user)
-        - PAT_NAME 
-        - PAT_EXPN 
-        - PAT_NEXP
-        - END_SEQ
+        - PAT_NAME (not used)
+        - PAT_EXPN (1...N)
+        - PAT_NEXP (N)
+        - END_SEQ (T/F)
         
     If overwrite is True, the files are overwriten, otherwise, a copy of files
     is created with the new keywords values    
@@ -47,7 +49,7 @@ def create_obs_sequence (filelist, ob_id, ob_pat, suffix='OS', overwrite=False):
     pat_nexp = number_files
     
     for file in filelist:
-        hdus = pyfits.open(file)
+        hdus = pyfits.open(file,"update")
         hdus[0].header.update("OB_ID", ob_id, "Observing Block ID (simulated)")
         hdus[0].header.update("OB_NAME", "OB_DEMO", "Observing Block Name (simulated)")
         hdus[0].header.update("OB_PAT", ob_pat, "OB Pattern used (simulated)")
@@ -58,7 +60,10 @@ def create_obs_sequence (filelist, ob_id, ob_pat, suffix='OS', overwrite=False):
             hdus[0].header.update("END_SEQ", "True", "end of dither sequence (simulated)")
         else:
             hdus[0].header.update("END_SEQ", "False", "end of dither sequence (simulated)")
-    
+        
+        hdus.close()
+        pat_expn = pat_expn + 1
+        
         
         
  
@@ -82,13 +87,13 @@ if __name__ == "__main__":
                   help = "suffix added to new out files (default .%02d.fits)")
     
     parser.add_option ("-b", "--ob_id", type="str",
-                  action = "store_true", dest = "ob_id", \
+                  action = "store", dest = "ob_id", \
                   help = "Observing Block ID of sequence" , 
                   default = False)
                                  
     parser.add_option ("-p", "--ob_pat", type="str",
-                  action = "store_true", dest = "ob_pat", \
-                  help = "OB pattern of sequence", default = False)
+                  action = "store", dest = "ob_pat", \
+                  help = "OB pattern of sequence")
     
     parser.add_option("-o", "--overwrite input files",
                   action = "store_true", dest = "overwrite", default = False,
@@ -110,4 +115,4 @@ if __name__ == "__main__":
         
         
     create_obs_sequence(filelist, options.ob_id, options.ob_pat, 
-                        options.suffix, options.overwrite)
+                        options.out_suffix, options.overwrite)
