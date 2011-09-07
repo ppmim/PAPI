@@ -505,13 +505,20 @@ if __name__ == "__main__":
         exptime  = my_fits.expTime()
         ra = my_fits.ra
         dec = my_fits.dec
-        filter = my_fits.getFilter()
-        log.debug("EXPTIME = %f"%exptime)
+	filter = my_fits.getFilter()
+        
+	log.debug("EXPTIME = %f"%exptime)
         log.debug("RA = %f"%ra)
         log.debug("DEC = %f"%dec)
         log.debug("Filter = %s"%filter)
+<<<<<<< .mine
+        
+	if ra<0 or dec<0:
+            log.debug("Found wrong RA,Dec values")
+=======
         if ra<0 or exptime<0:
             log.debug("Found wrong RA,DEC,EXPTIME or FILTER value")
+>>>>>>> .r161
             sys.exit(0)
         
         # Checking Filter    
