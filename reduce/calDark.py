@@ -91,14 +91,17 @@ class MasterDark:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, file_list, output_dir, output_filename="/tmp/mdark.fits", texp_scale=False, bpm=None, normalize=False):
-        self.__file_list=file_list
-        self.__output_file_dir=output_dir
-        self.__output_filename=output_filename  # full filename (path+filename)
-        self.__bpm=bpm
+    def __init__(self, file_list, output_dir, output_filename="/tmp/mdark.fits", 
+                 texp_scale=False, bpm=None, normalize=False):
+        """Constructor"""
+        
+        self.__file_list = file_list
+        self.__output_file_dir = output_dir
+        self.__output_filename = output_filename  # full filename (path+filename)
+        self.__bpm = bpm
         self.m_min_ndarks = 3
         self.m_texp_scale = texp_scale
-	self.m_normalize = normalize
+        self.m_normalize = normalize
 
     def createMaster(self):
       
@@ -152,7 +155,11 @@ class MasterDark:
                 #continue
             else:        
                 # Check EXPTIME, TYPE(dark) and READMODE
-                if ( not self.m_texp_scale and f_expt!=-1 and (int(f.expTime()) != int(f_expt) or  f.getType()!=f_type or f.getNcoadds()!=f_ncoadds or f.getReadMode()!=f_readmode)  ):
+                if ( not self.m_texp_scale and f_expt!=-1 and 
+                     (int(f.expTime()) != int(f_expt) or  
+                      f.getType()!=f_type or 
+                      f.getNcoadds()!=f_ncoadds or 
+                      f.getReadMode()!=f_readmode)  ):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame (%s)with different EXPTIME, NCOADDS or READMODE",iframe)
                     #continue
                     raise Exception("Found a DARK frame with different EXPTIME or NCOADDS or READMODE") 
@@ -170,27 +177,30 @@ class MasterDark:
         else:
             scale_str='none'
         
-        if f_ncoadds==-1: f_ncoadds=1
-        self.__output_filename=self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt,f_ncoadds))
         
         # Cleanup : Remove old masterdark
         misc.fileUtils.removefiles(self.__output_filename)
-        tmp1=self.__output_file_dir+"/dark_tmp.fits"
+        tmp1 = self.__output_file_dir + "/dark_tmp.fits"
         misc.fileUtils.removefiles(tmp1)
+        
+        #Add TEXP and NCOADD to master filename
+        if f_ncoadds==-1: f_ncoadds=1
+        self.__output_filename = self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt, f_ncoadds))
+        
         
         # Call the noao.imred.ccdred task through PyRAF
         misc.utils.listToFile(good_frames, self.__output_file_dir+"/files.list") 
-        iraf.mscred.darkcombine(input="@"+(self.__output_file_dir+"/files.list").replace('//','/'),
-                        output=tmp1.replace('//','/'),
-                        combine='average',
-                        ccdtype='',
-                        process='no',
-                        reject='minmax',
-                        nlow='0',
-                        nhigh='1',
-                        nkeep='1',
-                        scale=scale_str,
-                        #expname='EXPTIME'
+        iraf.mscred.darkcombine(input = "@"+(self.__output_file_dir+"/files.list").replace('//','/'),
+                        output = tmp1.replace('//','/'),
+                        combine = 'average',
+                        ccdtype = '',
+                        process = 'no',
+                        reject = 'minmax',
+                        nlow = '0',
+                        nhigh = '1',
+                        nkeep = '1',
+                        scale = scale_str,
+                        #expname = 'EXPTIME'
                         #ParList = _getparlistname('darkcombine')
                         )
         
@@ -200,7 +210,7 @@ class MasterDark:
     	    # divide master dark by the TEXP to get a master dark in ADU/s units
     	    texp=datahandler.ClFits(tmp1).expTime()
     	    iraf.mscred.mscarith(operand1 = tmp1,
-    				 operand2 = texp,
+    				operand2 = texp,
     				op = '/',
     				result =self.__output_filename,
     				verbose = 'no'

@@ -221,48 +221,6 @@
                     <string>Autocheck for new incoming images</string>
                 </property>
             </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel1</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>7</x>
-                        <y>173</y>
-                        <width>110</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <pointsize>8</pointsize>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>&lt;b&gt;Data List  View&lt;/b&gt;</string>
-                </property>
-            </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel4_2</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>230</x>
-                        <y>152</y>
-                        <width>100</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Class Filter</string>
-                </property>
-            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_outputD</cstring>
@@ -674,45 +632,6 @@
                     <string>Filter data sources list using its class/type</string>
                 </property>
             </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel2_3</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>10</x>
-                        <y>390</y>
-                        <width>72</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Last File :</string>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_last_file</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>70</x>
-                        <y>390</y>
-                        <width>280</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>255</red>
-                        <green>255</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="readOnly">
-                    <bool>true</bool>
-                </property>
-            </widget>
             <widget class="QCheckBox">
                 <property name="name">
                     <cstring>checkBox_process</cstring>
@@ -783,6 +702,87 @@
                 </property>
                 <property name="toolTip" stdset="0">
                     <string>Filter data sources list using its class/type</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel2_3</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>10</x>
+                        <y>390</y>
+                        <width>102</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Last file received:</string>
+                </property>
+            </widget>
+            <widget class="QLineEdit">
+                <property name="name">
+                    <cstring>lineEdit_last_file</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>120</x>
+                        <y>390</y>
+                        <width>520</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>255</red>
+                        <green>255</green>
+                        <blue>137</blue>
+                    </color>
+                </property>
+                <property name="readOnly">
+                    <bool>true</bool>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel4_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>230</x>
+                        <y>152</y>
+                        <width>100</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Class Filter</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel1</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>7</x>
+                        <y>173</y>
+                        <width>110</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <pointsize>8</pointsize>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>&lt;font size="+1"&gt;&lt;b&gt;Data List  View&lt;/b&gt;&lt;/font&gt;</string>
                 </property>
             </widget>
         </widget>

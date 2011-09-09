@@ -284,7 +284,7 @@ class MainGUI(panicQL):
             misc.utils.fits_simple_verify(filename)
             
             if filename in self.read_error_files:
-                log.debug("Second try to read %s successful ! ", filename)
+                log.debug("New try to read %s was successful ! ", filename)
                 #self.read_error_files.remove(filename)
                 del self.read_error_files[filename] 
             temp.close()
@@ -355,7 +355,7 @@ class MainGUI(panicQL):
         
         
         ##################################################################
-        ## If selected, file or sequence processing will start ....Not completelly well designed !
+        ##  If selected, file or sequence processing will start ....Not completelly well designed ! (TODO) 
         ##################################################################
         if self.comboBox_QL_Mode.currentText()=="None":
             return
@@ -390,18 +390,17 @@ class MainGUI(panicQL):
     
     def process(self, obsSequence):
         
-        """Process the observing sequence received according with the QL pipeliene recipes
-           The sequence could be a calib or science sequence.
+        """
+            Process the observing sequence received according with the QL pipeliene recipes
+            The sequence could be a calib or science sequence.
         """
         
-        log.debug("Starting to process the Observation Sequence...")
-        self.textEdit_log.append("<info_tag> ++ Starting to process a new Observation Sequence : </info_tag>")
+        log.debug("Starting to process Observation Sequence...")
+        self.textEdit_log.append("<info_tag> ++ Starting to process Observation Sequence : </info_tag>")
         
         for file in obsSequence:
-            self.textEdit_log.append("   - %s"%file)
+            self.textEdit_log.append("     - %s"%file)
             
-        #self.QL2(filename, self.textEdit_log)
-        
         #Change to working directory
         os.chdir(self.m_tempdir)
         #Change cursor
@@ -415,9 +414,11 @@ class MainGUI(panicQL):
             
             if self._task.isaCalibSet():
                 log.debug("It's a calib sequence what is going to be reduced !")
+                self.textEdit_log.append("<info_tag> It is a CALIBRATION sequence </info_tag>")
                 thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
+                self.textEdit_log.append("<info_tag> It is a SCIENCE sequence </info_tag>")
                 thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
@@ -663,7 +664,7 @@ class MainGUI(panicQL):
         # Read the FITS file
         fits = datahandler.ClFits(filename)
         #only for debug !!
-        log.info("C_FILTER= %s, L_FILTER=%s, C_OB_ID=%s, L_OB_ID=%s",
+        log.info("Current_FILTER= %s, Last_FILTER=%s, Current_OB_ID=%s, Last_OB_ID=%s",
                  fits.getFilter(), self.last_filter, fits.getOBId(), self.last_ob_id )
         #############################################
         # Based on the meta-data provided by the OT
@@ -1066,8 +1067,6 @@ class MainGUI(panicQL):
             
             if len(self.m_popup_l_sel)<5:
                 popUpMenu.setItemEnabled(9, False)
-                
-            
             
         ## Finally, execute the popup
         popUpMenu.exec_loop(QCursor.pos())   
@@ -1094,7 +1093,14 @@ class MainGUI(panicQL):
                                         bpm=None, red_mode="quick", group_by="ot", 
                                         check_data=True, config_dict=self.config_opts)
             
-            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
+            if self._task.isaCalibSet():
+                log.debug("It's a calibration sequence what is going to be reduced !")
+                self.textEdit_log.append("<info_tag> Processing CALIBRATION sequence </info_tag>")
+                thread = reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
+            else:
+                log.debug("It's a science sequence what is going to be reduced !")
+                self.textEdit_log.append("<info_tag> Processing SCIENCE sequence </info_tag>")
+                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor

@@ -293,8 +293,8 @@ class ClFits:
                 keyword_with_frame_type = 'IMAGETYP'
             elif myfits[0].header['INSTRUME']=='Panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
-                    #keyword_with_frame_type = 'IMAGETYP'
-                    keyword_with_frame_type = 'OBJECT'
+                    keyword_with_frame_type = 'IMAGETYP'
+                    #keyword_with_frame_type = 'OBJECT'
                 else:
                     keyword_with_frame_type = 'OBJECT'
             else: keyword_with_frame_type = 'OBJECT' # default, even for 'Panic'    
@@ -305,24 +305,24 @@ class ClFits:
         # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , MASTER_calibration, UNKNOW)     
         try:
             if myfits[0].header.has_key('PAPITYPE'):
-                self.type=myfits[0].header['PAPITYPE']
+                self.type = myfits[0].header['PAPITYPE']
             elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
-                self.type="DARK"
+                self.type = "DARK"
             elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
-                self.type="DOME_FLAT_LAMP_OFF"
+                self.type = "DOME_FLAT_LAMP_OFF"
             elif myfits[0].header[keyword_with_frame_type].lower().count('lamp on'):
-                self.type="DOME_FLAT_LAMP_ON"
+                self.type = "DOME_FLAT_LAMP_ON"
             elif myfits[0].header[keyword_with_frame_type].lower().count('dusk'):
-                self.type="TW_FLAT_DUSK"
+                self.type = "TW_FLAT_DUSK"
             elif myfits[0].header[keyword_with_frame_type].lower().count('dawn'):
-                self.type="TW_FLAT_DAWN"
+                self.type = "TW_FLAT_DAWN"
             elif myfits[0].header[keyword_with_frame_type].lower().count('skyflat') or \
                  myfits[0].header[keyword_with_frame_type].lower().count('flat'): 
-                self.type="SKY_FLAT"
+                self.type = "SKY_FLAT"
             elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
-                self.type="SKY_FOR"
+                self.type = "SKY_FOR"
             elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
-                self.type="SCIENCE"  
+                self.type = "SCIENCE"  
                 #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, 
                 #pero tiene pinta que fue  un despiste del operador !!!
             else:

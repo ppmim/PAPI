@@ -759,8 +759,10 @@ class ReductionSet:
             log.debug("---> creating gain map <----")
             output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
             os.close(output_fd)
+            os.unlink(outfile) # we only need the name
             output_fd, files_list= tempfile.mkstemp(suffix='.list', dir=self.out_dir)
             os.close(output_fd)
+            os.unlink(outfile) # we only need the name
             try:
                 misc.utils.listToFile(near_list, files_list)
                 superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, norm=False)
@@ -830,6 +832,7 @@ class ReductionSet:
         #output_list_file=self.out_dir+"/gpo_objs.pap"
         output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', dir=self.out_dir)
         os.close(output_fd)
+        os.unlink(outfile) # we only need the name
         
         log.debug("Creating OBJECTS images (SExtractor)....")
         
@@ -1090,6 +1093,7 @@ class ReductionSet:
                 # generate a random filename for the master, to ensure we do not overwrite any file
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
+                os.unlink(outfile) # we only need the name
                 # get gainmap parameters
                 if self.config_dict:
                     mingain=self.config_dict['gainmap']['mingain']
@@ -1150,9 +1154,11 @@ class ReductionSet:
                 k+=1
             #create the new master
             try:
-                # generate a random filename for the master, to ensure we do not overwrite any file
+                # Generate (and create the file) a random filename for the master, 
+                # to ensure we do not overwrite any file
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
+                os.unlink(outfile) # we only need the name
                 task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
                 out=task.createMaster()
                 l_mdarks.append(out) # out must be equal to outfile
@@ -1197,6 +1203,7 @@ class ReductionSet:
                 # generate a random filename for the master, to ensure we do not overwrite any file
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
+                os.unlink(outfile) # we only need the name
                 #outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
                 task=reduce.calDomeFlat.MasterDomeFlat(group, os.path.dirname(outfile), outfile, None)
                 out=task.createMaster()
@@ -1238,15 +1245,16 @@ class ReductionSet:
                 group.append(full_flat_list[k][0])
                 k+=1
             try:
-                master_dark=self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
+                master_dark = self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
                 # if required, master_dark will be scaled in MasterTwilightFlat class
                 if len(master_dark)>0:
                     # generate a random filename for the master, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                     os.close(output_fd)
+                    os.unlink(outfile) # we only need the name
                     #outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
-                    task=reduce.calTwFlat.MasterTwilightFlat(group, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
-                    out=task.createMaster()
+                    task = reduce.calTwFlat.MasterTwilightFlat(group, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
+                    out = task.createMaster()
                     l_mflats.append(out) # out must be equal to outfile
                 else:
                     # should we create master dark ??
@@ -1259,8 +1267,8 @@ class ReductionSet:
                 #raise e
             if k<len(full_flat_list):
                 # reset the new group
-                group=[]
-                last_filter=full_flat_list[k][1]
+                group = []
+                last_filter = full_flat_list[k][1]
                 
         # insert products (master twflats) into DB
         for f in l_mflats: self.db.insert(f)
@@ -1293,6 +1301,7 @@ class ReductionSet:
                     # generate a random filename for the master super flat, to ensure we do not overwrite any file
                     output_fd, output_path = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                     os.close(output_fd)
+                    os.unlink(outfile) # we only need the name
                     #outfile = self.out_dir+"/master_superflat_%s.fits"%last_filter # added as suffix (FILTER)
                     superflat = reduce.SuperSkyFlat(seq, output_path, bpm=None, norm=False)
                     out=superflat.create()
