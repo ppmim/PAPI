@@ -676,8 +676,8 @@ class MainGUI(panicQL):
             # General case for OT observations
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1:
                 self.curr_sequence.append(filename)
-                retSeq=self.curr_sequence
-                self.curr_sequence=[]
+                retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects !
+                self.curr_sequence = []
                 endSeq,retSeq = True,retSeq
             else:
                 self.curr_sequence.append(filename)
@@ -694,29 +694,29 @@ class MainGUI(panicQL):
             elif fits.getOBId()!=self.last_ob_id \
                 or fits.getFilter()!= self.last_filter \
                 or fits.getType()!=self.last_img_type:
-                retSeq=self.curr_sequence
+                retSeq = self.curr_sequence[:]  # very important !! Lists are mutable objects !
                 #reset the sequence list
-                self.curr_sequence=[filename]
+                self.curr_sequence = [filename]
                 endSeq,retSeq = True,retSeq
             else:
-                ra_point_distance=self.last_ra-fits.ra
-                dec_point_distance=self.last_dec-fits.dec
+                ra_point_distance = self.last_ra-fits.ra
+                dec_point_distance = self.last_dec-fits.dec
                 dist=math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
                 if dist>self.MAX_POINT_DIST:
-                    retSeq=self.curr_sequence
+                    retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects ! 
                     #reset the sequence list
-                    self.curr_sequence=[filename]
+                    self.curr_sequence = [filename]
                     endSeq,retSeq = True,retSeq
                 else:
                     self.curr_sequence.append(filename)
                     endSeq,retSeq = False,self.curr_sequence
         
         #and finally, before return, update 'last'_values
-        self.last_ra=fits.ra
-        self.last_dec=fits.dec
-        self.last_filter=fits.getFilter()
-        self.last_ob_id=fits.getOBId()
-        self.last_img_type=fits.getType()
+        self.last_ra = fits.ra
+        self.last_dec = fits.dec
+        self.last_filter = fits.getFilter()
+        self.last_ob_id = fits.getOBId()
+        self.last_img_type = fits.getType()
         return endSeq,retSeq
                 
         """
