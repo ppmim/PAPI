@@ -106,9 +106,14 @@ def main(arguments = None):
                   action = "store", dest = "obs_mode", 
                   default = "dither", help = "observing mode (dither|ext_dither|other)")
     
+    """parser.add_option("-p", "--print",
+                  action = "store_true", dest = "print_seq", default = True,
+                  help = "print detected sequences in the Data Set")
+    """
     parser.add_option("-v", "--verbose",
                   action = "store_true", dest = "verbose", default = True,
                   help = "verbose mode [default]")
+    
                   
     # file calibration options
     
@@ -195,8 +200,12 @@ def main(arguments = None):
                           group_by=general_opts['group_by'], check_data=general_opts['check_data'], \
                           config_dict = options \
                         )
-    
-        rs.reduceSet(red_mode=general_opts['reduction_mode'])
+        #if options.print_seq:
+        if True:
+            print "SEQUENCES found:"
+            rs.printSequences()
+        else:    
+            rs.reduceSet(red_mode=general_opts['reduction_mode'])
     except RS.ReductionSetException, e:
         print e
     except Exception, e:

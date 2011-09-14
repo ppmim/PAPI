@@ -181,11 +181,6 @@ void panicQL::start_proc_slot()
 }
 
 
-void panicQL::process_slot()
-{
-
-}
-
 
 void panicQL::filename_filter_slot()
 {

@@ -25,9 +25,11 @@ import fileinput
 import pyfits
 from optparse import OptionParser
 import os.path
+import glob
 
 # PAPI modules
 import style
+import datahandler
 
 def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None, 
                          filter=None, imagetype=None, keyword=None, overwrite=False):
@@ -54,6 +56,9 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
     pat_expn = 1
     pat_nexp = number_files
     
+    # Sort out the input files by MJD
+    filelist = sortFilesMJD(filelist)
+    
     for file in filelist:
         if overwrite == False:
             if suffix == None: suffix = "_os_"
@@ -73,12 +78,20 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
 
         hdus[0].header.update("OBS_TOOL", "OT_v1.0_Simulated", "OT Software (simulated)")
         if instrument!=None: hdus[0].header.update("INSTRUME", instrument, "Instrument name")
-        if ob_id!=None: hdus[0].header.update("OB_ID", ob_id, "Observing Block ID (simulated)")
-        hdus[0].header.update("OB_NAME", "OB_DEMO", "Observing Block Name (simulated)")
-        if ob_pat != None: hdus[0].header.update("OB_PAT", ob_pat, "OB Pattern used (simulated)")
-        hdus[0].header.update("PAT_NAME", "PAT_DEMO", "Pattern name (simulated)")
-        if pat_expn !=None: hdus[0].header.update("PAT_EXPN", pat_expn, "Exposition number of the current (simulated)")
-        if pat_nexp !=None: hdus[0].header.update("PAT_NEXP", pat_nexp, "Total  number of the expositions of current pattern (simulated)")
+        
+        # Only when OB_ID and OB_PAT are given, we set the next values into the header
+        if ob_id!=None and ob_pat != None: 
+            hdus[0].header.update("OB_ID", ob_id, "Observing Block ID (simulated)")
+            hdus[0].header.update("OB_NAME", "OB_DEMO", "Observing Block Name (simulated)")
+            hdus[0].header.update("OB_PAT", ob_pat, "OB Pattern used (simulated)")
+            hdus[0].header.update("PAT_NAME", "PAT_DEMO", "Pattern name (simulated)")
+            hdus[0].header.update("PAT_EXPN", pat_expn, "Exposition number of the current (simulated)")
+            hdus[0].header.update("PAT_NEXP", pat_nexp, "Total  number of the expositions of current pattern (simulated)")
+            if pat_expn==pat_nexp:
+                hdus[0].header.update("END_SEQ", "True", "end of dither sequence (simulated)")
+            else:
+                hdus[0].header.update("END_SEQ", "False", "end of dither sequence (simulated)")
+        
         
         if filter != None:
             hdus[0].header.update("FILTER", filter)
@@ -89,15 +102,33 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
         if options.keyword != None:
             hdus[0].header.update(keyword[0], keyword[1])
             
-        if pat_expn==pat_nexp:
-            hdus[0].header.update("END_SEQ", "True", "end of dither sequence (simulated)")
-        else:
-            hdus[0].header.update("END_SEQ", "False", "end of dither sequence (simulated)")
         
         hdus.close(output_verify='ignore')
         pat_expn = pat_expn + 1
         
-        
+def sortFilesMJD(i_files):
+    """
+    Sort out input data files by MJD
+       
+    """
+    
+    dataset = []
+    
+    for file in i_files:
+        try:
+            fits = datahandler.ClFits(file)
+        except Exception,e:
+            print "Error reading file %s , skipped..."%(file)
+            print str(e)      
+        else:
+            dataset.append((file, fits.getMJD()))
+    
+    dataset = sorted(dataset, key=lambda data_file: data_file[1])          
+    sorted_files = []
+    for tuple in dataset:
+        sorted_files.append(tuple[0])
+
+    return sorted_files        
         
  
 
@@ -156,7 +187,14 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
     if options.input_file_list:
-        filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
+        # Input is a directory
+        if os.path.isdir(options.input_file_list):
+            dirpath = options.input_file_list
+            filelist = [os.path.join(dirpath, s) for s in glob.glob(dirpath+"/"+"*.fits") \
+                     if os.path.isfile(os.path.join(dirpath, s))]
+        # Input is a file listing the input files
+        else:
+            filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
         print filelist
     else:
         parser.print_help()

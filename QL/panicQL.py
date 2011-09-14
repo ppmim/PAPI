@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon Feb 21 12:44:56 2011
+# Created: Tue Sep 13 16:32:06 2011
 #      by: The PyQt User Interface Compiler (pyuic) 3.17.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -10713,8 +10713,11 @@ class panicQL(QMainWindow):
 
         self.setCentralWidget(QWidget(self,"qt_central_widget"))
 
+        self.textLabel1_7_2 = QLabel(self.centralWidget(),"textLabel1_7_2")
+        self.textLabel1_7_2.setGeometry(QRect(14,458,140,20))
+
         self.textEdit_log = QTextEdit(self.centralWidget(),"textEdit_log")
-        self.textEdit_log.setGeometry(QRect(10,471,940,130))
+        self.textEdit_log.setGeometry(QRect(10,478,940,130))
         self.textEdit_log.setTextFormat(QTextEdit.LogText)
         self.textEdit_log.setWordWrap(QTextEdit.WidgetWidth)
 
@@ -10723,29 +10726,9 @@ class panicQL(QMainWindow):
 
         self.tab = QWidget(self.tabWidget3,"tab")
 
-        self.lineEdit_nfiles = QLineEdit(self.tab,"lineEdit_nfiles")
-        self.lineEdit_nfiles.setGeometry(QRect(492,60,60,21))
-        self.lineEdit_nfiles.setPaletteBackgroundColor(QColor(197,255,233))
-        self.lineEdit_nfiles.setAlignment(QLineEdit.AlignRight)
-
-        self.lineEdit_outputD = QLineEdit(self.tab,"lineEdit_outputD")
-        self.lineEdit_outputD.setGeometry(QRect(141,63,290,20))
-        self.lineEdit_outputD.setPaletteBackgroundColor(QColor(255,255,137))
-        self.lineEdit_outputD.setReadOnly(1)
-
-        self.lineEdit_tempD = QLineEdit(self.tab,"lineEdit_tempD")
-        self.lineEdit_tempD.setGeometry(QRect(141,94,290,20))
-        self.lineEdit_tempD.setPaletteBackgroundColor(QColor(255,255,137))
-        self.lineEdit_tempD.setReadOnly(1)
-
         self.checkBox_autocheck = QCheckBox(self.tab,"checkBox_autocheck")
         self.checkBox_autocheck.setGeometry(QRect(440,31,20,20))
         self.checkBox_autocheck.setChecked(0)
-
-        self.lineEdit_sourceD = QLineEdit(self.tab,"lineEdit_sourceD")
-        self.lineEdit_sourceD.setGeometry(QRect(140,30,290,21))
-        self.lineEdit_sourceD.setPaletteBackgroundColor(QColor(255,255,137))
-        self.lineEdit_sourceD.setReadOnly(1)
 
         self.lineEdit_filename_filter = QLineEdit(self.tab,"lineEdit_filename_filter")
         self.lineEdit_filename_filter.setGeometry(QRect(492,30,60,21))
@@ -10755,21 +10738,6 @@ class panicQL(QMainWindow):
 
         self.checkBox_outDir_autocheck = QCheckBox(self.tab,"checkBox_outDir_autocheck")
         self.checkBox_outDir_autocheck.setGeometry(QRect(441,64,20,20))
-
-        self.textLabel1 = QLabel(self.tab,"textLabel1")
-        self.textLabel1.setGeometry(QRect(7,173,110,20))
-        textLabel1_font = QFont(self.textLabel1.font())
-        textLabel1_font.setPointSize(8)
-        self.textLabel1.setFont(textLabel1_font)
-
-        self.textLabel4_2 = QLabel(self.tab,"textLabel4_2")
-        self.textLabel4_2.setGeometry(QRect(230,152,100,20))
-        textLabel4_2_font = QFont(self.textLabel4_2.font())
-        textLabel4_2_font.setBold(1)
-        self.textLabel4_2.setFont(textLabel4_2_font)
-
-        self.pushButton_outputD = QPushButton(self.tab,"pushButton_outputD")
-        self.pushButton_outputD.setGeometry(QRect(19,61,110,23))
 
         self.textLabel1_3 = QLabel(self.tab,"textLabel1_3")
         self.textLabel1_3.setGeometry(QRect(430,10,50,20))
@@ -10791,29 +10759,43 @@ class panicQL(QMainWindow):
         self.pixmapLabel1_2.setPixmap(self.image0)
         self.pixmapLabel1_2.setScaledContents(1)
 
-        self.textLabel4_2_2 = QLabel(self.tab,"textLabel4_2_2")
-        self.textLabel4_2_2.setGeometry(QRect(647,136,80,20))
-        textLabel4_2_2_font = QFont(self.textLabel4_2_2.font())
-        textLabel4_2_2_font.setBold(1)
-        self.textLabel4_2_2.setFont(textLabel4_2_2_font)
-
-        self.pushButton_file_filter = QPushButton(self.tab,"pushButton_file_filter")
-        self.pushButton_file_filter.setGeometry(QRect(566,30,120,23))
-
-        self.textLabel4 = QLabel(self.tab,"textLabel4")
-        self.textLabel4.setGeometry(QRect(565,60,101,20))
-
-        self.pushButton_dataSourceD = QPushButton(self.tab,"pushButton_dataSourceD")
-        self.pushButton_dataSourceD.setGeometry(QRect(19,27,110,23))
-
         self.pushButton_clear = QPushButton(self.tab,"pushButton_clear")
         self.pushButton_clear.setGeometry(QRect(848,390,70,23))
         pushButton_clear_font = QFont(self.pushButton_clear.font())
         pushButton_clear_font.setBold(1)
         self.pushButton_clear.setFont(pushButton_clear_font)
 
+        self.textLabel2_3 = QLabel(self.tab,"textLabel2_3")
+        self.textLabel2_3.setGeometry(QRect(10,390,102,20))
+
+        self.lineEdit_last_file = QLineEdit(self.tab,"lineEdit_last_file")
+        self.lineEdit_last_file.setGeometry(QRect(120,390,520,21))
+        self.lineEdit_last_file.setPaletteBackgroundColor(QColor(255,255,137))
+        self.lineEdit_last_file.setReadOnly(1)
+
+        self.pushButton_dataSourceD = QPushButton(self.tab,"pushButton_dataSourceD")
+        self.pushButton_dataSourceD.setGeometry(QRect(19,27,110,23))
+
+        self.lineEdit_sourceD = QLineEdit(self.tab,"lineEdit_sourceD")
+        self.lineEdit_sourceD.setGeometry(QRect(140,30,290,21))
+        self.lineEdit_sourceD.setPaletteBackgroundColor(QColor(255,255,137))
+        self.lineEdit_sourceD.setReadOnly(1)
+
+        self.lineEdit_outputD = QLineEdit(self.tab,"lineEdit_outputD")
+        self.lineEdit_outputD.setGeometry(QRect(141,63,290,20))
+        self.lineEdit_outputD.setPaletteBackgroundColor(QColor(255,255,137))
+        self.lineEdit_outputD.setReadOnly(1)
+
+        self.lineEdit_tempD = QLineEdit(self.tab,"lineEdit_tempD")
+        self.lineEdit_tempD.setGeometry(QRect(141,94,290,20))
+        self.lineEdit_tempD.setPaletteBackgroundColor(QColor(255,255,137))
+        self.lineEdit_tempD.setReadOnly(1)
+
         self.pushButton_tempD = QPushButton(self.tab,"pushButton_tempD")
         self.pushButton_tempD.setGeometry(QRect(20,93,110,23))
+
+        self.pushButton_outputD = QPushButton(self.tab,"pushButton_outputD")
+        self.pushButton_outputD.setGeometry(QRect(19,61,110,23))
 
         self.listView_dataS = QListView(self.tab,"listView_dataS")
         self.listView_dataS.addColumn(self.__tr("File                                                        "))
@@ -10837,30 +10819,40 @@ class panicQL(QMainWindow):
         self.listView_dataS.setAllColumnsShowFocus(1)
         self.listView_dataS.setRootIsDecorated(1)
 
-        self.pushButton_start_proc = QPushButton(self.tab,"pushButton_start_proc")
-        self.pushButton_start_proc.setGeometry(QRect(777,160,140,23))
-        self.pushButton_start_proc.setPaletteBackgroundColor(QColor(244,156,137))
-
-        self.pushButton_createCalibs = QPushButton(self.tab,"pushButton_createCalibs")
-        self.pushButton_createCalibs.setGeometry(QRect(480,160,140,23))
-        self.pushButton_createCalibs.setPaletteBackgroundColor(QColor(244,156,137))
-
         self.comboBox_QL_Mode = QComboBox(0,self.tab,"comboBox_QL_Mode")
         self.comboBox_QL_Mode.setGeometry(QRect(641,160,110,21))
 
-        self.textLabel2_3 = QLabel(self.tab,"textLabel2_3")
-        self.textLabel2_3.setGeometry(QRect(10,390,72,20))
+        self.textLabel4_2_2 = QLabel(self.tab,"textLabel4_2_2")
+        self.textLabel4_2_2.setGeometry(QRect(647,139,80,20))
+        textLabel4_2_2_font = QFont(self.textLabel4_2_2.font())
+        textLabel4_2_2_font.setBold(1)
+        self.textLabel4_2_2.setFont(textLabel4_2_2_font)
 
-        self.lineEdit_last_file = QLineEdit(self.tab,"lineEdit_last_file")
-        self.lineEdit_last_file.setGeometry(QRect(70,390,280,21))
-        self.lineEdit_last_file.setPaletteBackgroundColor(QColor(255,255,137))
-        self.lineEdit_last_file.setReadOnly(1)
-
-        self.checkBox_process = QCheckBox(self.tab,"checkBox_process")
-        self.checkBox_process.setGeometry(QRect(631,110,290,20))
+        self.pushButton_file_filter = QPushButton(self.tab,"pushButton_file_filter")
+        self.pushButton_file_filter.setGeometry(QRect(566,30,120,23))
 
         self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
-        self.comboBox_classFilter.setGeometry(QRect(220,172,110,21))
+        self.comboBox_classFilter.setGeometry(QRect(490,160,110,21))
+
+        self.pushButton_createCalibs = QPushButton(self.tab,"pushButton_createCalibs")
+        self.pushButton_createCalibs.setGeometry(QRect(778,130,140,23))
+        self.pushButton_createCalibs.setPaletteBackgroundColor(QColor(196,196,196))
+
+        self.pushButton_start_proc = QPushButton(self.tab,"pushButton_start_proc")
+        self.pushButton_start_proc.setGeometry(QRect(777,160,140,23))
+        self.pushButton_start_proc.setPaletteBackgroundColor(QColor(205,64,64))
+
+        self.textLabel4_2 = QLabel(self.tab,"textLabel4_2")
+        self.textLabel4_2.setGeometry(QRect(490,140,110,20))
+        textLabel4_2_font = QFont(self.textLabel4_2.font())
+        textLabel4_2_font.setBold(1)
+        self.textLabel4_2.setFont(textLabel4_2_font)
+
+        self.textLabel4_2_3 = QLabel(self.tab,"textLabel4_2_3")
+        self.textLabel4_2_3.setGeometry(QRect(8,170,110,20))
+        textLabel4_2_3_font = QFont(self.textLabel4_2_3.font())
+        textLabel4_2_3_font.setBold(1)
+        self.textLabel4_2_3.setFont(textLabel4_2_3_font)
         self.tabWidget3.insertTab(self.tab,QString.fromLatin1(""))
 
         self.TabPage = QWidget(self.tabWidget3,"TabPage")
@@ -10994,9 +10986,6 @@ class panicQL(QMainWindow):
 
         self.tab_2 = QWidget(self.tabWidget3,"tab_2")
 
-        self.listBox_darks = QListBox(self.tab_2,"listBox_darks")
-        self.listBox_darks.setGeometry(QRect(10,70,140,190))
-
         self.listBox_SkyF = QListBox(self.tab_2,"listBox_SkyF")
         self.listBox_SkyF.setGeometry(QRect(348,74,140,190))
 
@@ -11092,6 +11081,9 @@ class panicQL(QMainWindow):
         self.pushButton_test1 = QPushButton(self.tab_2,"pushButton_test1")
         self.pushButton_test1.setGeometry(QRect(800,40,108,23))
         self.pushButton_test1.setPaletteBackgroundColor(QColor(244,94,25))
+
+        self.listBox_darks = QListBox(self.tab_2,"listBox_darks")
+        self.listBox_darks.setGeometry(QRect(10,70,140,190))
         self.tabWidget3.insertTab(self.tab_2,QString.fromLatin1(""))
 
         self.TabPage_2 = QWidget(self.tabWidget3,"TabPage_2")
@@ -11130,6 +11122,20 @@ class panicQL(QMainWindow):
         self.checkBox22 = QCheckBox(self.TabPage_2,"checkBox22")
         self.checkBox22.setGeometry(QRect(430,30,280,20))
 
+        self.pushButton26 = QPushButton(self.TabPage_2,"pushButton26")
+        self.pushButton26.setGeometry(QRect(10,344,111,30))
+        self.pushButton26.setPaletteBackgroundColor(QColor(244,205,98))
+
+        self.pushButton10_4 = QPushButton(self.TabPage_2,"pushButton10_4")
+        self.pushButton10_4.setGeometry(QRect(10,380,108,30))
+        self.pushButton10_4.setPaletteBackgroundColor(QColor(244,159,110))
+        pushButton10_4_font = QFont(self.pushButton10_4.font())
+        pushButton10_4_font.setBold(1)
+        self.pushButton10_4.setFont(pushButton10_4_font)
+
+        self.comboBox6 = QComboBox(0,self.TabPage_2,"comboBox6")
+        self.comboBox6.setGeometry(QRect(150,267,120,22))
+
         self.listView_OS = QListView(self.TabPage_2,"listView_OS")
         self.listView_OS.addColumn(self.__tr("File"))
         self.listView_OS.header().setResizeEnabled(0,self.listView_OS.header().count() - 1)
@@ -11150,23 +11156,17 @@ class panicQL(QMainWindow):
         self.listView_OS.setGeometry(QRect(10,70,920,180))
         self.listView_OS.setShowSortIndicator(0)
         self.listView_OS.setRootIsDecorated(1)
-
-        self.pushButton26 = QPushButton(self.TabPage_2,"pushButton26")
-        self.pushButton26.setGeometry(QRect(10,344,111,30))
-        self.pushButton26.setPaletteBackgroundColor(QColor(244,205,98))
-
-        self.pushButton10_4 = QPushButton(self.TabPage_2,"pushButton10_4")
-        self.pushButton10_4.setGeometry(QRect(10,380,108,30))
-        self.pushButton10_4.setPaletteBackgroundColor(QColor(244,159,110))
-        pushButton10_4_font = QFont(self.pushButton10_4.font())
-        pushButton10_4_font.setBold(1)
-        self.pushButton10_4.setFont(pushButton10_4_font)
-
-        self.comboBox6 = QComboBox(0,self.TabPage_2,"comboBox6")
-        self.comboBox6.setGeometry(QRect(150,267,120,22))
         self.tabWidget3.insertTab(self.TabPage_2,QString.fromLatin1(""))
 
         self.TabPage_3 = QWidget(self.tabWidget3,"TabPage_3")
+
+        self.textEdit_log_2 = QTextEdit(self.TabPage_3,"textEdit_log_2")
+        self.textEdit_log_2.setGeometry(QRect(0,29,940,390))
+        self.textEdit_log_2.setTextFormat(QTextEdit.LogText)
+        self.textEdit_log_2.setWordWrap(QTextEdit.WidgetWidth)
+
+        self.textLabel1_7 = QLabel(self.TabPage_3,"textLabel1_7")
+        self.textLabel1_7.setGeometry(QRect(11,8,100,20))
         self.tabWidget3.insertTab(self.TabPage_3,QString.fromLatin1(""))
 
         self.fileOpenAction = QAction(self,"fileOpenAction")
@@ -11276,7 +11276,6 @@ class panicQL(QMainWindow):
 
         self.connect(self.checkBox_autocheck,SIGNAL("clicked()"),self.autocheck_slot)
         self.connect(self.checkBox_outDir_autocheck,SIGNAL("clicked()"),self.checkOutDir_slot)
-        self.connect(self.checkBox_process,SIGNAL("clicked()"),self.process_slot)
         self.connect(self.checkBox_show_imgs,SIGNAL("clicked()"),self.show_images_slot)
         self.connect(self.comboBox_classFilter,SIGNAL("activated(const QString&)"),self.slot_classFilter)
         self.connect(self.editCopyAction,SIGNAL("activated()"),self.editCopy)
@@ -11324,28 +11323,29 @@ class panicQL(QMainWindow):
 
     def languageChange(self):
         self.setCaption(self.__tr("PANIC QuickLook"))
+        self.textLabel1_7_2.setText(self.__tr("<font color=\"#1759ff\">Event log (Time UTC)</font>"))
         self.textEdit_log.setText(QString.null)
-        self.lineEdit_nfiles.setText(self.__tr("0"))
         self.checkBox_autocheck.setText(QString.null)
         QToolTip.add(self.checkBox_autocheck,self.__tr("Autocheck for new incoming images"))
         self.lineEdit_filename_filter.setText(self.__tr("*.fits"))
         self.checkBox_outDir_autocheck.setText(QString.null)
         QToolTip.add(self.checkBox_outDir_autocheck,self.__tr("Autocheck for new incoming images"))
-        self.textLabel1.setText(self.__tr("<b>Data List  View</b>"))
-        self.textLabel4_2.setText(self.__tr("Class Filter"))
-        self.pushButton_outputD.setText(self.__tr("Output Dir"))
         self.textLabel1_3.setText(self.__tr("Check"))
         self.pushButton_remove.setText(self.__tr("Remove"))
         QToolTip.add(self.pushButton_remove,self.__tr("Remove data file from the list view, but keeping on disk","Remove data file from the list view, but keeping on disk"))
         self.pushButton_add.setText(self.__tr("Add..."))
-        self.textLabel4_2_2.setText(self.__tr("QL Mode"))
-        self.pushButton_file_filter.setText(self.__tr("Filename Filter"))
-        self.textLabel4.setText(self.__tr("Files in queue"))
-        self.pushButton_dataSourceD.setText(self.__tr("Input Dir"))
-        QToolTip.add(self.pushButton_dataSourceD,self.__tr("Select a directory or log file as the input source"))
         self.pushButton_clear.setText(self.__tr("Clear All"))
         QToolTip.add(self.pushButton_clear,self.__tr("Clear list view panel, but not files on disk"))
+        self.textLabel2_3.setText(self.__tr("Last file received:"))
+        self.pushButton_dataSourceD.setText(self.__tr("Input Dir"))
+        QToolTip.add(self.pushButton_dataSourceD,self.__tr("Select a directory or log file for received files location"))
+        QToolTip.add(self.lineEdit_sourceD,self.__tr("Received files location"))
+        QToolTip.add(self.lineEdit_outputD,self.__tr("Generated files location"))
+        QToolTip.add(self.lineEdit_tempD,self.__tr("Temporal files location"))
         self.pushButton_tempD.setText(self.__tr("Temporary Dir"))
+        QToolTip.add(self.pushButton_tempD,self.__tr("Browse the temporal file location"))
+        self.pushButton_outputD.setText(self.__tr("Output Dir"))
+        QToolTip.add(self.pushButton_outputD,self.__tr("Browse the output processed files location"))
         self.listView_dataS.header().setLabel(0,self.__tr("File                                                        "))
         self.listView_dataS.header().setLabel(1,self.__tr("Class                            "))
         self.listView_dataS.header().setLabel(2,self.__tr("Filter     "))
@@ -11354,8 +11354,6 @@ class panicQL(QMainWindow):
         self.listView_dataS.header().setLabel(5,self.__tr("Object         "))
         self.listView_dataS.header().setLabel(6,self.__tr("RA                       "))
         self.listView_dataS.header().setLabel(7,self.__tr("Dec                     "))
-        self.pushButton_start_proc.setText(self.__tr("START processing"))
-        self.pushButton_createCalibs.setText(self.__tr("Create Calibrations"))
         self.comboBox_QL_Mode.clear()
         self.comboBox_QL_Mode.insertItem(self.__tr("None"))
         self.comboBox_QL_Mode.insertItem(self.__tr("Lazy"))
@@ -11364,8 +11362,8 @@ class panicQL(QMainWindow):
         self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_2"))
         self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_3"))
         QToolTip.add(self.comboBox_QL_Mode,self.__tr("Filter data sources list using its class/type"))
-        self.textLabel2_3.setText(self.__tr("Last File :"))
-        self.checkBox_process.setText(self.__tr("Process raw images when detected"))
+        self.textLabel4_2_2.setText(self.__tr("QL Mode"))
+        self.pushButton_file_filter.setText(self.__tr("Filename Filter"))
         self.comboBox_classFilter.clear()
         self.comboBox_classFilter.insertItem(self.__tr("ALL"))
         self.comboBox_classFilter.insertItem(self.__tr("DARK"))
@@ -11376,6 +11374,10 @@ class panicQL(QMainWindow):
         self.comboBox_classFilter.insertItem(self.__tr("GROUP"))
         self.comboBox_classFilter.insertItem(self.__tr("OUTS"))
         QToolTip.add(self.comboBox_classFilter,self.__tr("Filter data sources list using its class/type"))
+        self.pushButton_createCalibs.setText(self.__tr("Create Calibrations"))
+        self.pushButton_start_proc.setText(self.__tr("START processing"))
+        self.textLabel4_2.setText(self.__tr("List View Filter"))
+        self.textLabel4_2_3.setText(self.__tr("Data List View"))
         self.tabWidget3.changeTab(self.tab,self.__tr("Main"))
         self.buttonGroup2_2.setTitle(self.__tr("Data Grouping"))
         self.lineEdit_ra_dec_near_offset.setText(self.__tr("150"))
@@ -11427,7 +11429,7 @@ class panicQL(QMainWindow):
         self.comboBox_skyWindow.insertItem(self.__tr("4-frames"))
         self.comboBox_skyWindow.insertItem(self.__tr("5-frames"))
         self.comboBox_skyWindow.setCurrentItem(3)
-        self.tabWidget3.changeTab(self.TabPage,self.__tr("QL Settings"))
+        self.tabWidget3.changeTab(self.TabPage,self.__tr("Setup"))
         self.pushButton_Darks_add.setText(self.__tr("Add..."))
         self.pushButton_DomeF_add.setText(self.__tr("Add..."))
         self.pushButton_SkyF_add.setText(self.__tr("Add..."))
@@ -11482,6 +11484,13 @@ class panicQL(QMainWindow):
         self.textLabel1_6.setText(self.__tr("<font color=\"#2626ff\"><b>Observing Sequences</b></font>"))
         self.pushButton_findOS.setText(self.__tr("Find Obs. Sequences"))
         self.checkBox22.setText(self.__tr("Automatically create dataset from headers"))
+        self.pushButton26.setText(self.__tr("Create DR-File"))
+        self.pushButton10_4.setText(self.__tr("Reduce"))
+        self.comboBox6.clear()
+        self.comboBox6.insertItem(self.__tr("Sparse Field"))
+        self.comboBox6.insertItem(self.__tr("Crowded Field"))
+        self.comboBox6.insertItem(self.__tr("Extended Object (T-S)"))
+        self.comboBox6.insertItem(self.__tr("Extended Object (S-T-S-S-T)"))
         self.listView_OS.header().setLabel(0,self.__tr("File"))
         self.listView_OS.header().setLabel(1,self.__tr("Class"))
         self.listView_OS.header().setLabel(2,self.__tr("Filter"))
@@ -11490,15 +11499,10 @@ class panicQL(QMainWindow):
         self.listView_OS.header().setLabel(5,self.__tr("Object"))
         self.listView_OS.header().setLabel(6,self.__tr("RA"))
         self.listView_OS.header().setLabel(7,self.__tr("Dec"))
-        self.pushButton26.setText(self.__tr("Create DR-File"))
-        self.pushButton10_4.setText(self.__tr("Reduce"))
-        self.comboBox6.clear()
-        self.comboBox6.insertItem(self.__tr("Sparse Field"))
-        self.comboBox6.insertItem(self.__tr("Crowded Field"))
-        self.comboBox6.insertItem(self.__tr("Extended Object (T-S)"))
-        self.comboBox6.insertItem(self.__tr("Extended Object (S-T-S-S-T)"))
         self.tabWidget3.changeTab(self.TabPage_2,self.__tr("Pipeline"))
-        self.tabWidget3.changeTab(self.TabPage_3,self.__tr("Config"))
+        self.textEdit_log_2.setText(QString.null)
+        self.textLabel1_7.setText(self.__tr("<font color=\"#1759ff\">Times in UTC</font>"))
+        self.tabWidget3.changeTab(self.TabPage_3,self.__tr("Logs"))
         self.fileOpenAction.setText(self.__tr("Open"))
         self.fileOpenAction.setMenuText(self.__tr("&Open"))
         self.fileOpenAction.setToolTip(self.__tr("Add new file list"))
@@ -11663,9 +11667,6 @@ class panicQL(QMainWindow):
 
     def start_proc_slot(self):
         print "panicQL.start_proc_slot(): Not implemented yet"
-
-    def process_slot(self):
-        print "panicQL.process_slot(): Not implemented yet"
 
     def filename_filter_slot(self):
         print "panicQL.filename_filter_slot(): Not implemented yet"

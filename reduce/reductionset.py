@@ -71,6 +71,20 @@ class ReductionSetException(Exception):
 
 
 class ReductionSet:
+    """
+    This class implement a set of FITS files from an PANIC observation. There can
+    be calibration or/and science files of any kind, althougt is expected they are
+    compliant with a well-defined observation run with the PANIC OT.
+    
+    Then a Reduction Set (RS) can have:
+        - dark sequences
+        - flat sequences
+        - focus sequences
+        - science sequences
+        - 
+        
+    """
+     
     def __init__(self, rs_filelist, out_dir, out_file, obs_mode="dither", 
                  dark=None, flat=None, bpm=None, red_mode="quick", 
                  group_by="filter", check_data=True, config_dict=None 
@@ -139,7 +153,7 @@ class ReductionSet:
 
         
         #DataBase (in memory)
-        self.db=None
+        self.db = None
         
     
     def __initDB(self):
@@ -152,7 +166,7 @@ class ReductionSet:
         """
         #DataBase (in memory)
         try:
-            self.db=datahandler.dataset.DataSet(self.rs_filelist)
+            self.db = datahandler.dataset.DataSet(self.rs_filelist)
             self.db.createDB()
             self.db.load()
         except Exception,e:
@@ -160,7 +174,7 @@ class ReductionSet:
             raise Exception("Error while data base initialization")
             
         
-        self.m_LAST_FILES=self.rs_filelist # Later properly initialized in reduceObj()
+        self.m_LAST_FILES = self.rs_filelist # Later properly initialized in reduceObj()
         
         if self.master_dark!=None: self.db.insert(self.master_dark)
         if self.master_flat!=None: self.db.insert(self.master_flat)
@@ -439,12 +453,12 @@ class ReductionSet:
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
-        master_dark=self.db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark
-        master_flat=self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+        master_dark = self.db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark
+        master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
             master_flat=self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
             
-        master_bpm =self.db.GetFilesT('MASTER_BPM')
+        master_bpm = self.db.GetFilesT('MASTER_BPM')
         
         log.debug("Found master dark %s", master_dark)
         log.debug("Found master flat %s", master_flat)
@@ -511,40 +525,42 @@ class ReductionSet:
     
     def getObjectSequences(self):
         """
-        Query the DB (data set) to look for object/pointing sequences sorted by
-        MJD; they can be grouped by:
+        Query the DB (data set) to look for (science) object/pointing  sequences 
+        sorted by MJD; they can be grouped by:
         
             a) FILTER, TEXP (it is used when no data set classification can be done)
-            b) OB_ID, OB_PAT, FILTER, TEXP
+            b) OB_ID, OB_PAT, FILTER, TEXP (not sure to be good way to look for ObjSequences ???? 
             
-        Return : a list of list of sequence files belonging to
+        @return: a list of list of sequence files belonging to
         
-        TBD: implement other alternative way of grouping : sort out by MJD and group by FILTER
+        @attention: other alternative way of grouping following OT schema is
+        implemented in getOTSequences()
+        
         """
         
         # group data file (only science) by Filter,TExp 
         if self.group_by=="filter":
-            (seq_par, seq_list)=self.db.GetFilterFiles() # only SCIENCE or SKY_FOR frames
+            (seq_par, seq_list) = self.db.GetFilterFiles() # only SCIENCE or SKY_FOR frames
             # Now, we need to check temporal (bases on MJD) continuty and split a 
             # group if it is discontinued
-            new_seq_list=[]
-            new_seq_par=[]
-            k=0
+            new_seq_list = []
+            new_seq_par = []
+            k = 0
             for seq in seq_list:
-                group=[]
-                mjd_0=datahandler.ClFits(seq[0]).getMJD()
+                group = []
+                mjd_0 = datahandler.ClFits(seq[0]).getMJD()
                 for file in seq:
-                    t=datahandler.ClFits(file).getMJD()
+                    t = datahandler.ClFits(file).getMJD()
                     if math.fabs(t-mjd_0)<self.MAX_MJD_DIFF:
                         group.append(file)
-                        mjd_0=t
+                        mjd_0 = t
                     else:
                         log.debug("Sequence split due to temporal gap between sequence frames")
-                        new_seq_list.append(group)
+                        new_seq_list.append(group[:]) # very important, lists are mutable !
                         new_seq_par.append(seq_par[k])
-                        mjd_0=t
-                        group=[file]
-                new_seq_list.append(group)
+                        mjd_0 = t
+                        group = [file]
+                new_seq_list.append(group[:]) # very important, lists are mutable !
                 new_seq_par.append(seq_par[k])
                 k+=1
                 
@@ -578,11 +594,11 @@ class ReductionSet:
                         mjd_0 = t
                     else:
                         log.debug("Sequence split due to temporal gap between sequence frames")
-                        new_seq_list.append(group)
+                        new_seq_list.append(group[:]) # very important, lists are mutable !
                         new_seq_par.append(seq_par[k])
                         mjd_0 = t
                         group = [file]
-                new_seq_list.append(group)
+                new_seq_list.append(group[:]) # very important, lists are mutable !
                 new_seq_par.append(seq_par[k])
                 k += 1
                 
@@ -619,7 +635,7 @@ class ReductionSet:
         
         
         # Sort out frames by FILTER
-        match_list=sorted(match_list, key=lambda data_file: data_file[1]) 
+        match_list = sorted(match_list, key=lambda data_file: data_file[1]) 
         
         return match_list # a list of tuples as (file,filter)
     
@@ -759,10 +775,10 @@ class ReductionSet:
             log.debug("---> creating gain map <----")
             output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
             os.close(output_fd)
-            os.unlink(outfile) # we only need the name
+            os.unlink(l_gainMap) # we only need the name
             output_fd, files_list= tempfile.mkstemp(suffix='.list', dir=self.out_dir)
             os.close(output_fd)
-            os.unlink(outfile) # we only need the name
+            os.unlink(files_list) # we only need the name
             try:
                 misc.utils.listToFile(near_list, files_list)
                 superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, norm=False)
@@ -802,7 +818,7 @@ class ReductionSet:
         elif len(out_ext)==1:
             shutil.move(out_ext[0], out_filename) 
         else:
-            log.error("Some error while subtracting sky. Any output produced.")
+            log.error("Some error while subtracting sky. No output produced.")
             
         return out_filename
     
@@ -832,7 +848,7 @@ class ReductionSet:
         #output_list_file=self.out_dir+"/gpo_objs.pap"
         output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', dir=self.out_dir)
         os.close(output_fd)
-        os.unlink(outfile) # we only need the name
+        os.unlink(output_list_file) # we only need the name
         
         log.debug("Creating OBJECTS images (SExtractor)....")
         
@@ -871,8 +887,8 @@ class ReductionSet:
                     raise Exception("Wrong overlap correlation fraction for translation offsets")
                     
             except IOError:
-                log.critical("Any offsets read. There may be some problem while computing translation offsets ....")
-                raise Exception("Any offsets read")
+                log.critical("No offsets read. There may be some problem while computing translation offsets ....")
+                raise Exception("No offsets read")
         
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
@@ -1066,7 +1082,7 @@ class ReductionSet:
             raise Exception("Wrong type of master flat specified")
         
         if full_flat_list==None or len(full_flat_list)==0:
-            log.warning("Any master flat field found")
+            log.warning("No master flat field found")
             return []
 
         # 2. Group by filter
@@ -1133,14 +1149,16 @@ class ReductionSet:
         """
         Look for dark files in the data set, group them by DIT,NCOADD and create
         the master darks, as many as found groups
+        
+        @todo: how to process dark series with an increasing TExp ??
         """
         
         log.debug("Creating Master darks...")
-        l_mdarks=[]
+        l_mdarks = []
         # 1. Look for dark frames
-        full_dark_list = self.getDarkFrames()
+        full_dark_list = self.getDarkFrames() # a list of tuples as (file,tExp)
         if len(full_dark_list)<=0:
-            log.warning("Any Dark frames found")
+            log.warning("No Dark frames found")
             return []
     
         # 2. take the first group having the same TEXP
@@ -1159,8 +1177,8 @@ class ReductionSet:
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                task=reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
-                out=task.createMaster()
+                task = reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
+                out = task.createMaster()
                 l_mdarks.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("Some error while creating master dark: %s",str(e))
@@ -1168,8 +1186,8 @@ class ReductionSet:
                 #raise e
             if k<len(full_dark_list):
                 # reset the new group
-                group=[]
-                last_texp=full_dark_list[k][1]
+                group = []
+                last_texp = full_dark_list[k][1]
                 
         # insert products (master darks) into DB
         for f in l_mdarks: self.db.insert(f)
@@ -1187,7 +1205,7 @@ class ReductionSet:
         # 1. Look for domeflat frames
         full_flat_list = self.getDomeFlatFrames()
         if len(full_flat_list)<=0:
-            log.warning("Any DomeFlatField frames found")
+            log.warning("No DomeFlatField frames found")
             return []
             
         # 2. take the first group having the same FILTER
@@ -1233,7 +1251,7 @@ class ReductionSet:
         # 1. Look for twflat frames
         full_flat_list = self.getTwFlatFrames()
         if len(full_flat_list)<=0:
-            log.warning("Any TwFlatField frames found")
+            log.warning("No TwFlatField frames found")
             return []
             
         # 2. take the first group having the same FILTER
@@ -1291,7 +1309,7 @@ class ReductionSet:
         # 1. Look for SCIENCE/SKY frames
         full_file_list = self.getObjectSequences()
         if len(full_file_list)<=0:
-            log.warning("Any sequence science frames found")
+            log.warning("No sequence science frames found")
             return []
             
         l_mflats=[]       
@@ -1301,7 +1319,7 @@ class ReductionSet:
                     # generate a random filename for the master super flat, to ensure we do not overwrite any file
                     output_fd, output_path = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                     os.close(output_fd)
-                    os.unlink(outfile) # we only need the name
+                    os.unlink(outfile_path) # we only need the name
                     #outfile = self.out_dir+"/master_superflat_%s.fits"%last_filter # added as suffix (FILTER)
                     superflat = reduce.SuperSkyFlat(seq, output_path, bpm=None, norm=False)
                     out=superflat.create()
@@ -1316,9 +1334,44 @@ class ReductionSet:
         self.db.ListDataSet()  
         return l_mflats # a list of master super flats created
     
+    def reduceSetB(self):
+        """
+        The main method for full DataSet reduction supposed it was obtained with
+        the PANIC OT. 
+        
+        Main steps:
+        
+         1. Get all OT sequences
+         
+         2. For seq in Sequence
+    
+            ReduceSeq(seq)
+         
+        @return: the number of sequences successfully reduced
+        
+        """
+        
+        sequences = self.getOTSequences()
+        reduces_sequences = 0
+        
+        for seq in sequences:
+            try:
+                self.reduceSeq(seq)
+                reduced_sequences+=1
+            except Exception,e:
+                log.error("Cannot reduce sequence %s"%str(seq))
+    
+        return reduced_sequences
+    
+    def reduceSeq(self, sequence):
+        """
+        Reduce/process a produced OT-sequence of files (calibration, science)
+        """
+        
+                     
     def reduceSet(self, red_mode="quick"):
         """
-        The main method for full set data reduction.
+        The main method for full DataSet reduction.
         
         Main steps:
         
@@ -1329,7 +1382,7 @@ class ReductionSet:
          3. For each object/pointing/filter do :
          
             3.1 c=get_calibration_files (depend on filter/text)
-            3.2 o=reduce_obj()
+            3.2 o = get_objects/pointings()
             3.3 exts=split(c,o)
             3.4 for each extension e do:
                 out+=reduce_obj(o_e, c_e)
@@ -1399,6 +1452,7 @@ class ReductionSet:
         out_ext = [] # it will store the partial extension reduced output filenames
         seq_result_outfile = "" # will store the full-frame out filename of the current reduced sequence  
         seq_outfile_list = [] # will store the full-frame result for each sequence-data-reduction 
+        
         # For each object/sequece, split and reduce de sequence
         for obj_seq in sequences:  #sequences is a list of list, and obj_seq is a list
             log.debug("===> Reduction of obj_seq %d",i)
@@ -1878,4 +1932,67 @@ class ReductionSet:
             for file in seq_list[k]:
                 print file
             k+=1
+            
+    def getOTSequences(self, show=True):
+        """
+        Look for (any type of) sequences in the current data set and print the results
+        The sequences must follow the PANIC Observing Tool schema :
+        
+        OBS_TOOL, OB_ID, OB_PAT, PAT_EXPN, PAT_NEXP, END_SEQ
+         
+        
+        The algorith followed is the next:
+        
+            1. Sort out the data files by MJD
+            2. Do
+                2.1 Look for the first file with OBS_TOOL=True and PAT_EXPN=1
+                    2.1.1 Group all next files upto PAT_EXPN=PAT_NEXP and/or END_SEQ=True
+            3. while (files in DataSet)
+            4. Print files of each Group found 
+            
+        @param show: if True, print out the sequences found in the std output
+             
+        @return: a list of list of sequence files belonging to
+        
+        @attention: this method is an (better) alertenative to getObjectSequences()        
+        """
+        
+        seq_pat_list = [] # list of sequences features (ob_id, ob_pat, filter)
+        seq_list = [] # list of list of sequences filenames
+        k = 0
+        found_first = False # flag to know if we have found the firs file of a sequence
+        
+        if self.db==None: self.__initDB()
+        files = self.db.GetFiles()
+        files = self.sortOutData(files)
+        
+        # Create groups
+        print "**** Analyzing files *****"
+        print "FILENAME                         OB_ID  OB_PAT  PAT_EXPN  PAT_NEXP  END_SEQ"
+        print "---------------------------------------------------------------------------"
+        for file in files:
+            fits = datahandler.ClFits(file)
+            print "%s  %s  %s  %s  %s %s"%(file, fits.getOBId(), fits.getOBPat(), 
+                                           fits.getExpNo(), fits.getNoExp(),
+                                           fits.getExpNo()==fits.getNoExp())
+            if fits.isFromOT() and fits.getExpNo()==1:
+                group = [file]
+                found_first = True # update flag
+            elif found_first and fits.isFromOT(): 
+                group.append(file)
+                if fits.getExpNo()==fits.getNoExp():
+                    #detected end of the sequence
+                    seq_list.append(group[:]) # very important ==> lists are mutable !
+                    group = []
+                    found_first = False  # reset flag
+            else:
+                pass
+            
+        if show:
+            # Print found groups
+            print "*** # Sequences found : %d ***"%len(seq_list) 
+            for i in range(0,len(seq_list)):
+                print "SEQ[%d] - \n %s"%(i,seq_list[i])
+            
+        return seq_list
         

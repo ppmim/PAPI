@@ -24,6 +24,9 @@ import time
 import copy
 import fileinput
 import glob
+
+#PAPI modules
+import datahandler
 		
 #Logging        
 from misc.paLog import log       
@@ -35,25 +38,21 @@ class DataCollector ():
         \brief
         Class that implement the data receiver FITS data files comming from GEIRS  
     """
-    source=""
-    mode="" # file or directory mode
-    filename_filter="*.fits"
-    checkID=""
-    
     
     def __init__(self, mode, source, filename_filter, p_callback_func):
     
-	    self.mode=mode
-	    self.filename_filter = filename_filter
-	    self.source = source
-	    self.callback_func = p_callback_func
+        self.mode = mode
+        self.filename_filter = filename_filter
+        self.source = source
+        self.callback_func = p_callback_func
 		    
-	    self.dirlist = [] 
+        self.dirlist = [] 
 	    # Define the two lists containing the filenames of unprocessed and reduced
 	    # files.
-	    self.newfiles     = []
-	    self.reducedfiles = []
-	    self.stop = False
+        self.newfiles     = []
+        self.reducedfiles = []
+        #Some flags
+        self.stop = False
     
     def check(self):
 	    
@@ -81,25 +80,15 @@ class DataCollector ():
         """
         Automatic checking of new files
         """
-        # Is the autocheck mode is a dir and exists
+        # Is the source is exists (directory or file)
         if os.path.exists(self.source):	    
             # If this is the first time this routine is called, prepare the
-            # directory list.
-            if (self.checkID is None):
-                if self.mode=="dir":
-                    # Store the current contents of the input directory for future reference
-                    #self.dirlist =  [os.path.join(self.source, file) for file in os.listdir(self.source)]
-                    self.dirlist = self.__listFiles(self.source)
-                elif self.mode=="file":
-                    self.dirlist = [line for line in fileinput.input(self.source)]
-                print 'Autochecking started'		
+            # directory list. 
+            # ----> Nothing special to do ????  <------
             # Check for new files in the input directory
             self.findNewFiles()
         else:
-            # Reset the ID of the waiting loop
-            self.checkID = None
-            #messageLog.put('Autochecking stopped', 5)
-            print 'Autochecking stopped'
+            print "Source %s does NOT exists :"%self.source
                 
     def __listFiles(self, dirpath):
         """
@@ -108,10 +97,63 @@ class DataCollector ():
         #a = [os.path.join(dirpath, s) for s in os.listdir(dirpath)
         #    if os.path.isfile(os.path.join(dirpath, s))]
         a = [os.path.join(dirpath, s) for s in glob.glob(dirpath+"/"+self.filename_filter) \
-            if os.path.isfile(os.path.join(dirpath, s))]
+              if os.path.isfile(os.path.join(dirpath, s))]
          
         a.sort(key=lambda s: os.path.getmtime(s))
         return a
+       
+    def __listFilesMJD(self, dirpath):
+        """
+    	Sort out input data files by MJD
+    	
+    	@NOTE: be careful, it could be a heavy routine    
+        """
+        
+        dir_files = [os.path.join(dirpath, s) for s in glob.glob(dirpath+"/"+self.filename_filter) \
+                     if os.path.isfile(os.path.join(dirpath, s))]
+    	
+        dataset = []
+        
+        for file in dir_files:
+            try:
+                fits = datahandler.ClFits(file)
+            except Exception,e:
+                print "Error reading file %s , skipped..."%(file)
+                print str(e)      
+            else:
+                dataset.append((file, fits.getMJD()))
+        
+        dataset = sorted(dataset, key=lambda data_file: data_file[1])          
+        sorted_files = []
+        for tuple in dataset:
+            sorted_files.append(tuple[0])
+    
+    	return sorted_files
+    
+    def __sortFilesMJD(self, i_files):
+        """
+        Sort out input data files by MJD
+        
+        @NOTE: be careful, it could be a heavy routine    
+        """
+        
+        dataset = []
+        
+        for file in i_files:
+            try:
+                fits = datahandler.ClFits(file)
+            except Exception,e:
+                print "Error reading file %s , skipped..."%(file)
+                print str(e)      
+            else:
+                dataset.append((file, fits.getMJD()))
+        
+        dataset = sorted(dataset, key=lambda data_file: data_file[1])          
+        sorted_files = []
+        for tuple in dataset:
+            sorted_files.append(tuple[0])
+    
+        return sorted_files
 
     def findNewFiles(self):
     
@@ -122,7 +164,7 @@ class DataCollector ():
 	    
         # Retrieve the current value of the filename pattern from the widget
         pattern = self.filename_filter
-        contents=[]
+        contents = []
         
         if self.mode=="dir":
             # Read the directory contents
@@ -138,7 +180,6 @@ class DataCollector ():
                 if sline[0]!="#":
                     contents.append(sline[6])
                     #print "FILE = ", sline[6]
-        
                 
 	    
         # Check the obtained list of files agains the existing directory list
@@ -146,7 +187,7 @@ class DataCollector ():
     
 	    # ORDER of if-statements is important!
     
-        iterlist = copy.copy(self.dirlist)
+        iterlist = copy.copy(self.dirlist) # lists are mutables !
         for file in iterlist:
     
             if file not in contents:
@@ -180,6 +221,11 @@ class DataCollector ():
                 # directory (this time).
                 contents.remove(file)
 
+        # ## 2011-09-12S
+        # Before adding to dirlist and process the new files, we sort out by MJD
+        # ## 
+        contents = self.__sortFilesMJD(contents)
+        
         # Now loop over the remaining files
         for file in contents:
 
@@ -195,10 +241,10 @@ class DataCollector ():
             if   ( (not os.path.isdir(file))
 			        and (fnmatch.fnmatch(basename, pattern))
 			        and (file not in self.reducedfiles)    
-			        and (file not in self.newfiles)
+			        and (file not in self.newfiles) 
 			        ):
               
-                print '[DC] Appending file to the queue'
+                #print '[DC] Appending file to the queue'
 			    
                 ## new---
                 

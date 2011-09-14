@@ -15,6 +15,22 @@
     <property name="caption">
         <string>PANIC QuickLook</string>
     </property>
+    <widget class="QLabel">
+        <property name="name">
+            <cstring>textLabel1_7_2</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>14</x>
+                <y>458</y>
+                <width>140</width>
+                <height>20</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>&lt;font color="#1759ff"&gt;Event log (Time UTC)&lt;/font&gt;</string>
+        </property>
+    </widget>
     <widget class="QTextEdit">
         <property name="name">
             <cstring>textEdit_log</cstring>
@@ -22,7 +38,7 @@
         <property name="geometry">
             <rect>
                 <x>10</x>
-                <y>471</y>
+                <y>478</y>
                 <width>940</width>
                 <height>130</height>
             </rect>
@@ -56,78 +72,6 @@
             <attribute name="title">
                 <string>Main</string>
             </attribute>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_nfiles</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>492</x>
-                        <y>60</y>
-                        <width>60</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>197</red>
-                        <green>255</green>
-                        <blue>233</blue>
-                    </color>
-                </property>
-                <property name="text">
-                    <string>0</string>
-                </property>
-                <property name="alignment">
-                    <set>AlignRight</set>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_outputD</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>141</x>
-                        <y>63</y>
-                        <width>290</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>255</red>
-                        <green>255</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="readOnly">
-                    <bool>true</bool>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_tempD</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>141</x>
-                        <y>94</y>
-                        <width>290</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>255</red>
-                        <green>255</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="readOnly">
-                    <bool>true</bool>
-                </property>
-            </widget>
             <widget class="QCheckBox">
                 <property name="name">
                     <cstring>checkBox_autocheck</cstring>
@@ -148,29 +92,6 @@
                 </property>
                 <property name="toolTip" stdset="0">
                     <string>Autocheck for new incoming images</string>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_sourceD</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>140</x>
-                        <y>30</y>
-                        <width>290</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>255</red>
-                        <green>255</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="readOnly">
-                    <bool>true</bool>
                 </property>
             </widget>
             <widget class="QLineEdit">
@@ -219,22 +140,6 @@
                 </property>
                 <property name="toolTip" stdset="0">
                     <string>Autocheck for new incoming images</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_outputD</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>19</x>
-                        <y>61</y>
-                        <width>110</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Output Dir</string>
                 </property>
             </widget>
             <widget class="QLabel">
@@ -318,78 +223,6 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel4_2_2</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>647</x>
-                        <y>136</y>
-                        <width>80</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>QL Mode</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_file_filter</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>566</x>
-                        <y>30</y>
-                        <width>120</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Filename Filter</string>
-                </property>
-            </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel4</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>565</x>
-                        <y>60</y>
-                        <width>101</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Files in queue</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_dataSourceD</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>19</x>
-                        <y>27</y>
-                        <width>110</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Input Dir</string>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Select a directory or log file as the input source</string>
-                </property>
-            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_clear</cstring>
@@ -414,6 +247,142 @@
                     <string>Clear list view panel, but not files on disk</string>
                 </property>
             </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel2_3</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>10</x>
+                        <y>390</y>
+                        <width>102</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Last file received:</string>
+                </property>
+            </widget>
+            <widget class="QLineEdit">
+                <property name="name">
+                    <cstring>lineEdit_last_file</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>120</x>
+                        <y>390</y>
+                        <width>520</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>255</red>
+                        <green>255</green>
+                        <blue>137</blue>
+                    </color>
+                </property>
+                <property name="readOnly">
+                    <bool>true</bool>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_dataSourceD</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>19</x>
+                        <y>27</y>
+                        <width>110</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Input Dir</string>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Select a directory or log file for received files location</string>
+                </property>
+            </widget>
+            <widget class="QLineEdit">
+                <property name="name">
+                    <cstring>lineEdit_sourceD</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>140</x>
+                        <y>30</y>
+                        <width>290</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>255</red>
+                        <green>255</green>
+                        <blue>137</blue>
+                    </color>
+                </property>
+                <property name="readOnly">
+                    <bool>true</bool>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Received files location</string>
+                </property>
+            </widget>
+            <widget class="QLineEdit">
+                <property name="name">
+                    <cstring>lineEdit_outputD</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>141</x>
+                        <y>63</y>
+                        <width>290</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>255</red>
+                        <green>255</green>
+                        <blue>137</blue>
+                    </color>
+                </property>
+                <property name="readOnly">
+                    <bool>true</bool>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Generated files location</string>
+                </property>
+            </widget>
+            <widget class="QLineEdit">
+                <property name="name">
+                    <cstring>lineEdit_tempD</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>141</x>
+                        <y>94</y>
+                        <width>290</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>255</red>
+                        <green>255</green>
+                        <blue>137</blue>
+                    </color>
+                </property>
+                <property name="readOnly">
+                    <bool>true</bool>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Temporal files location</string>
+                </property>
+            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_tempD</cstring>
@@ -428,6 +397,28 @@
                 </property>
                 <property name="text">
                     <string>Temporary Dir</string>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Browse the temporal file location</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_outputD</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>19</x>
+                        <y>61</y>
+                        <width>110</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Output Dir</string>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Browse the output processed files location</string>
                 </property>
             </widget>
             <widget class="QListView">
@@ -540,52 +531,6 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_start_proc</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>777</x>
-                        <y>160</y>
-                        <width>140</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>244</red>
-                        <green>156</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="text">
-                    <string>START processing</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton_createCalibs</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>480</x>
-                        <y>160</y>
-                        <width>140</width>
-                        <height>23</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>244</red>
-                        <green>156</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="text">
-                    <string>Create Calibrations</string>
-                </property>
-            </widget>
             <widget class="QComboBox">
                 <item>
                     <property name="text">
@@ -632,20 +577,41 @@
                     <string>Filter data sources list using its class/type</string>
                 </property>
             </widget>
-            <widget class="QCheckBox">
+            <widget class="QLabel">
                 <property name="name">
-                    <cstring>checkBox_process</cstring>
+                    <cstring>textLabel4_2_2</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>631</x>
-                        <y>110</y>
-                        <width>290</width>
+                        <x>647</x>
+                        <y>139</y>
+                        <width>80</width>
                         <height>20</height>
                     </rect>
                 </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
                 <property name="text">
-                    <string>Process raw images when detected</string>
+                    <string>QL Mode</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_file_filter</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>566</x>
+                        <y>30</y>
+                        <width>120</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>Filename Filter</string>
                 </property>
             </widget>
             <widget class="QComboBox">
@@ -694,8 +660,8 @@
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>220</x>
-                        <y>172</y>
+                        <x>490</x>
+                        <y>160</y>
                         <width>110</width>
                         <height>21</height>
                     </rect>
@@ -704,43 +670,50 @@
                     <string>Filter data sources list using its class/type</string>
                 </property>
             </widget>
-            <widget class="QLabel">
+            <widget class="QPushButton">
                 <property name="name">
-                    <cstring>textLabel2_3</cstring>
+                    <cstring>pushButton_createCalibs</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>10</x>
-                        <y>390</y>
-                        <width>102</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Last file received:</string>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_last_file</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>120</x>
-                        <y>390</y>
-                        <width>520</width>
-                        <height>21</height>
+                        <x>778</x>
+                        <y>130</y>
+                        <width>140</width>
+                        <height>23</height>
                     </rect>
                 </property>
                 <property name="paletteBackgroundColor">
                     <color>
-                        <red>255</red>
-                        <green>255</green>
-                        <blue>137</blue>
+                        <red>196</red>
+                        <green>196</green>
+                        <blue>196</blue>
                     </color>
                 </property>
-                <property name="readOnly">
-                    <bool>true</bool>
+                <property name="text">
+                    <string>Create Calibrations</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_start_proc</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>777</x>
+                        <y>160</y>
+                        <width>140</width>
+                        <height>23</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>205</red>
+                        <green>64</green>
+                        <blue>64</blue>
+                    </color>
+                </property>
+                <property name="text">
+                    <string>START processing</string>
                 </property>
             </widget>
             <widget class="QLabel">
@@ -749,9 +722,9 @@
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>230</x>
-                        <y>152</y>
-                        <width>100</width>
+                        <x>490</x>
+                        <y>140</y>
+                        <width>110</width>
                         <height>20</height>
                     </rect>
                 </property>
@@ -761,28 +734,28 @@
                     </font>
                 </property>
                 <property name="text">
-                    <string>Class Filter</string>
+                    <string>List View Filter</string>
                 </property>
             </widget>
             <widget class="QLabel">
                 <property name="name">
-                    <cstring>textLabel1</cstring>
+                    <cstring>textLabel4_2_3</cstring>
                 </property>
                 <property name="geometry">
                     <rect>
-                        <x>7</x>
-                        <y>173</y>
+                        <x>8</x>
+                        <y>170</y>
                         <width>110</width>
                         <height>20</height>
                     </rect>
                 </property>
                 <property name="font">
                     <font>
-                        <pointsize>8</pointsize>
+                        <bold>1</bold>
                     </font>
                 </property>
                 <property name="text">
-                    <string>&lt;font size="+1"&gt;&lt;b&gt;Data List  View&lt;/b&gt;&lt;/font&gt;</string>
+                    <string>Data List View</string>
                 </property>
             </widget>
         </widget>
@@ -791,7 +764,7 @@
                 <cstring>TabPage</cstring>
             </property>
             <attribute name="title">
-                <string>QL Settings</string>
+                <string>Setup</string>
             </attribute>
             <widget class="QButtonGroup">
                 <property name="name">
@@ -1503,19 +1476,6 @@
             </attribute>
             <widget class="QListBox">
                 <property name="name">
-                    <cstring>listBox_darks</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>10</x>
-                        <y>70</y>
-                        <width>140</width>
-                        <height>190</height>
-                    </rect>
-                </property>
-            </widget>
-            <widget class="QListBox">
-                <property name="name">
                     <cstring>listBox_SkyF</cstring>
                 </property>
                 <property name="geometry">
@@ -1944,6 +1904,19 @@
                     <string>Test1</string>
                 </property>
             </widget>
+            <widget class="QListBox">
+                <property name="name">
+                    <cstring>listBox_darks</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>10</x>
+                        <y>70</y>
+                        <width>140</width>
+                        <height>190</height>
+                    </rect>
+                </property>
+            </widget>
         </widget>
         <widget class="QWidget">
             <property name="name">
@@ -2326,6 +2299,90 @@
                     <string>Automatically create dataset from headers</string>
                 </property>
             </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton26</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>10</x>
+                        <y>344</y>
+                        <width>111</width>
+                        <height>30</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>244</red>
+                        <green>205</green>
+                        <blue>98</blue>
+                    </color>
+                </property>
+                <property name="text">
+                    <string>Create DR-File</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton10_4</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>10</x>
+                        <y>380</y>
+                        <width>108</width>
+                        <height>30</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>244</red>
+                        <green>159</green>
+                        <blue>110</blue>
+                    </color>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>Reduce</string>
+                </property>
+            </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>Sparse Field</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Crowded Field</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Extended Object (T-S)</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Extended Object (S-T-S-S-T)</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox6</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>150</x>
+                        <y>267</y>
+                        <width>120</width>
+                        <height>22</height>
+                    </rect>
+                </property>
+            </widget>
             <widget class="QListView">
                 <column>
                     <property name="text">
@@ -2433,98 +2490,52 @@
                     <bool>true</bool>
                 </property>
             </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton26</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>10</x>
-                        <y>344</y>
-                        <width>111</width>
-                        <height>30</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>244</red>
-                        <green>205</green>
-                        <blue>98</blue>
-                    </color>
-                </property>
-                <property name="text">
-                    <string>Create DR-File</string>
-                </property>
-            </widget>
-            <widget class="QPushButton">
-                <property name="name">
-                    <cstring>pushButton10_4</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>10</x>
-                        <y>380</y>
-                        <width>108</width>
-                        <height>30</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>244</red>
-                        <green>159</green>
-                        <blue>110</blue>
-                    </color>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>Reduce</string>
-                </property>
-            </widget>
-            <widget class="QComboBox">
-                <item>
-                    <property name="text">
-                        <string>Sparse Field</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Crowded Field</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Extended Object (T-S)</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Extended Object (S-T-S-S-T)</string>
-                    </property>
-                </item>
-                <property name="name">
-                    <cstring>comboBox6</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>150</x>
-                        <y>267</y>
-                        <width>120</width>
-                        <height>22</height>
-                    </rect>
-                </property>
-            </widget>
         </widget>
         <widget class="QWidget">
             <property name="name">
                 <cstring>TabPage</cstring>
             </property>
             <attribute name="title">
-                <string>Config</string>
+                <string>Logs</string>
             </attribute>
+            <widget class="QTextEdit">
+                <property name="name">
+                    <cstring>textEdit_log_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>0</x>
+                        <y>29</y>
+                        <width>940</width>
+                        <height>390</height>
+                    </rect>
+                </property>
+                <property name="textFormat">
+                    <enum>LogText</enum>
+                </property>
+                <property name="text">
+                    <string></string>
+                </property>
+                <property name="wordWrap">
+                    <enum>WidgetWidth</enum>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel1_7</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>11</x>
+                        <y>8</y>
+                        <width>100</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="text">
+                    <string>&lt;font color="#1759ff"&gt;Times in UTC&lt;/font&gt;</string>
+                </property>
+            </widget>
         </widget>
     </widget>
 </widget>
@@ -3006,12 +3017,6 @@
         <slot>checkOutDir_slot()</slot>
     </connection>
     <connection>
-        <sender>checkBox_process</sender>
-        <signal>clicked()</signal>
-        <receiver>panicQL</receiver>
-        <slot>process_slot()</slot>
-    </connection>
-    <connection>
         <sender>checkBox_show_imgs</sender>
         <signal>clicked()</signal>
         <receiver>panicQL</receiver>
@@ -3302,7 +3307,6 @@
     <slot>autocheck_slot()</slot>
     <slot>show_images_slot()</slot>
     <slot>start_proc_slot()</slot>
-    <slot>process_slot()</slot>
     <slot>filename_filter_slot()</slot>
     <slot>clear_mainlist_slot()</slot>
     <slot>iraf_console_slot()</slot>

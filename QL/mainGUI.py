@@ -20,11 +20,11 @@
 
 ################################################################################
 #
-# runGUI (run main GUI for PANIC pipeline)
+# mainGUI (implement main GUI functions for PANIC QL-pipeline)
 #
-# runGUI.py
+# mainGUI.py
 #
-# Last update 22/Sep/2009
+# Last update 13/Sep/2011
 #
 ################################################################################
 
@@ -48,6 +48,7 @@ import time
 import math
 import tempfile
 from optparse import OptionParser
+import datetime
 
 # PANIC modules
 from panicQL import *
@@ -121,43 +122,43 @@ class MainGUI(panicQL):
         self.m_masterMask = '/tmp/master_mask.fits'
 
 
-        self._last_cmd=None             # Last external shell command executed or started
-        self._last_cmd_output=None      # Output (file) that last shell command should generate
+        self._last_cmd = None             # Last external shell command executed or started
+        self._last_cmd_output = None      # Output (file) that last shell command should generate
 
         # Stuff to detect end of an observation sequence to know if data reduction could start
         self.curr_sequence = []  # list having the files of the current sequence received
         self.isOTrunning = True
-        self.last_filter=''  # filter name (J,H,Ks, ...) of the last dataframe received
-        self.last_ob_id=-1   # Obseving Block ID (unique) of the last dataframe received
-        self.last_img_type='' # image type (DARK, FLAT, SCIENCE, ...) of last received image
+        self.last_filter = ''  # filter name (J,H,Ks, ...) of the last dataframe received
+        self.last_ob_id = -1   # Obseving Block ID (unique) of the last dataframe received
+        self.last_img_type = '' # image type (DARK, FLAT, SCIENCE, ...) of last received image
         self.last_ra = -1
         self.last_dec = -1
-        self.last_filename=None  # last filename of the FITS received
+        self.last_filename = None  # last filename of the FITS received
         self.MAX_POINT_DIST = 1000 # minimun distance (arcsec) to consider a telescope pointing to a new target
         self.MAX_READ_ERRORS = 5 # maximun number of tries while reading a new detetected FITS files 
         
         # GUI properties
-        self.m_listView_first_item_selected=None #QListViewItem
-        self.m_listView_item_selected='' 
+        self.m_listView_first_item_selected = None #QListViewItem
+        self.m_listView_item_selected = '' 
         self.m_show_imgs = False
-        self.m_proc_imgs = False # not used !!
         self.m_processing = False
+        self.proc_started = False # QL processing activated (True) or deactivated (False)
         self._proc = None # variable to handle QProcess tasks
         self.read_error_files = {} # a dictionary to track the error while reading/detecting FITS files
         
         ## Create log tags
         # Error
-        item =QStyleSheetItem( self.textEdit_log.styleSheet(), "error_tag" )
+        item = QStyleSheetItem( self.textEdit_log.styleSheet(), "error_tag" )
         item.setColor( QColor("red") )
         item.setFontWeight( QFont.Bold )
         item.setFontUnderline( False )
         # Warning
-        item =QStyleSheetItem( self.textEdit_log.styleSheet(), "warning_tag" )
+        item = QStyleSheetItem( self.textEdit_log.styleSheet(), "warning_tag" )
         item.setColor( QColor("blue") )
         item.setFontWeight( QFont.Bold )
         item.setFontUnderline( False )
         # Info
-        item =QStyleSheetItem( self.textEdit_log.styleSheet(), "info_tag" )
+        item = QStyleSheetItem( self.textEdit_log.styleSheet(), "info_tag" )
         item.setColor( QColor("black") )
         item.setFontWeight( QFont.Bold )
         item.setFontUnderline( False )
@@ -170,7 +171,7 @@ class MainGUI(panicQL):
         
             
         
-        self.textEdit_log.append("[INFO] Wellcome to the <info_tag> PANIC QuickLook tool </info_tag>(v1.0) ! ")
+        self.textEdit_log.append(logMsg("Wellcome to the PANIC QuickLook tool v1.0", "INFO") )
         
 
         self.__initializeGUI()
@@ -179,25 +180,25 @@ class MainGUI(panicQL):
         ## -----------------------
         #datahandler.dataset.initDB()
         #DataBase for input files (in memory)
-        self.inputsDB=None
+        self.inputsDB = None
         #DataBase for output files (in memory)
-        self.outputsDB=None
+        self.outputsDB = None
         self.__initDBs()
         
         ## Data Collectors initialization
         ## ------------------------------
         self.file_pattern = str(self.lineEdit_filename_filter.text())
         # Data collector for input files
-        self.dc=datahandler.DataCollector("dir", self.m_sourcedir, self.file_pattern , self.new_file_func)
+        self.dc = datahandler.DataCollector("dir", self.m_sourcedir, self.file_pattern , self.new_file_func)
         # Data collector for output files
-        self.dc_outdir=None # Initialized in checkOutDir_slot()
+        self.dc_outdir = None # Initialized in checkOutDir_slot()
         #datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern, self.new_file_func_out)
         
         ## Task management
         ## ---------------
         self._task = None                       # Pointer to task/thread that is running 
         #self._task_event = threading.Event()    # Event to syncronize ExecTaskThread and ExecTaskThread
-        self._task_info=None
+        self._task_info = None
         self._task_info_list = []               # Queue-list where task status is saved
         
         self._task_timer = QTimer( self )
@@ -235,7 +236,7 @@ class MainGUI(panicQL):
         
         # Inputs DB
         try:
-            self.inputsDB=datahandler.dataset.DataSet(None)
+            self.inputsDB = datahandler.dataset.DataSet(None)
             self.inputsDB.createDB()
             #self.inputsDB.load()
         except Exception,e:
@@ -310,7 +311,8 @@ class MainGUI(panicQL):
                     else: self.dc.remove(filename) 
             return
            
-        self.textEdit_log.append("New file (verified) detected in source-->  " + filename)
+        self.textEdit_log.append(logMsg("New file (verified) detected in source: " + filename))
+        
         ######################
         ## Insert into DB
         ######################
@@ -351,20 +353,21 @@ class MainGUI(panicQL):
         (end_seq, seq)=self.checkEndObsSequence(filename)
         if end_seq:
             log.debug("Detected end of observing sequence")
-            self.textEdit_log.append("<warning_tag> Detected end of observing sequence</warning_tag> ")       
+            self.textEdit_log.append(logMsg("Detected end of observing sequence", "WARNING"))       
         
         
         ##################################################################
         ##  If selected, file or sequence processing will start ....Not completelly well designed ! (TODO) 
         ##################################################################
-        if self.comboBox_QL_Mode.currentText()=="None":
-            return
-        elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
-            self.process(seq)
-            return
-        elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
-            self.processLazy(filename)
-            return
+        if self.proc_started:
+            if self.comboBox_QL_Mode.currentText()=="None":
+                return
+            elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
+                self.processSeq(seq)
+                return
+            elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
+                self.processLazy(filename)
+                return
             
  
  
@@ -375,7 +378,7 @@ class MainGUI(panicQL):
         #QL-Mode: Pre-reduction
         elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
             ## Process
-            self.process(seq)
+            self.processSeq(seq)
             return
         #QL-Mode: UserDef_1
         elif self.comboBox_QL_Mode.currentText().contains("UserDef_1"):
@@ -388,18 +391,22 @@ class MainGUI(panicQL):
             return ## TO BE DONE
         """
     
-    def process(self, obsSequence):
+    def processSeq(self, obsSequence):
         
         """
             Process the observing sequence received according with the QL pipeliene recipes
             The sequence could be a calib or science sequence.
+            
+            @param obsSequence: a list files belonging to the observing sequence
+             
         """
         
         log.debug("Starting to process Observation Sequence...")
-        self.textEdit_log.append("<info_tag> ++ Starting to process Observation Sequence : </info_tag>")
+        self.textEdit_log.append(logMsg("++ Starting to process Observation Sequence :","INFO"))
         
         for file in obsSequence:
-            self.textEdit_log.append("     - %s"%file)
+            self.textEdit_log.append(logMsg("     - " + file))
+            #self.textEdit_log.append(QString("    - %1").arg(file))
             
         #Change to working directory
         os.chdir(self.m_tempdir)
@@ -414,11 +421,11 @@ class MainGUI(panicQL):
             
             if self._task.isaCalibSet():
                 log.debug("It's a calib sequence what is going to be reduced !")
-                self.textEdit_log.append("<info_tag> It is a CALIBRATION sequence </info_tag>")
+                self.textEdit_log.append(logMsg("It is a CALIBRATION sequence","INFO"))
                 thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
-                self.textEdit_log.append("<info_tag> It is a SCIENCE sequence </info_tag>")
+                self.textEdit_log.append(logMsg("It is a SCIENCE sequence","INFO"))
                 thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
@@ -441,7 +448,7 @@ class MainGUI(panicQL):
         if type!="SCIENCE":
             return
 
-        self.textEdit_log.append("<info_tag> ++ Starting to process a las file : </info_tag>")
+        self.textEdit_log.append(logMsg("++ Starting to process a las file :","INFO"))
         
         # ###########################################################################################
         # Depending on what options have been selected by the user, we do a processing or other...
@@ -532,7 +539,7 @@ class MainGUI(panicQL):
         else:
             #dir=str(source[0])
             dir=str(source)
-            self.textEdit_log.append("+Source : " + dir)
+            self.textEdit_log.append(logMsg("+Source : " + dir))
             if (self.m_sourcedir != dir):
                 self.lineEdit_sourceD.setText(dir)
                 self.m_sourcedir = str(dir)
@@ -598,7 +605,7 @@ class MainGUI(panicQL):
             self.checkBox_outDir_autocheck.setChecked(False)
             #Stop the DataCollector timer
             self.timer_dc.stop()
-            print "stoped!!!!"
+            print "*** Stopped DataCollector ***"
             
     def checkOutDir_slot(self):
         """Called when check-button for Output dir is clicked"""
@@ -631,7 +638,7 @@ class MainGUI(panicQL):
                                 #display.showFrame(file)
                                 str_list+=str(file)+"\n"
                             QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
-                            self.textEdit_log.append(QString("<info_tag> >>%1 files created: \n %1</info_tag>").arg(len(self._task_info._return)).arg(str(str_list)))
+                            self.textEdit_log.append(logMsg(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))),"INFO"))
                         elif os.path.isfile(self._task_info._return):
                             #print "PASOOOOOO RETURNED =",self._task_info._return
                             #QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
@@ -644,7 +651,7 @@ class MainGUI(panicQL):
             finally:
                 #Anyway, restore cursor
                 self.setCursor(Qt.arrowCursor)
-                self.m_processing=False
+                self.m_processing = False
                 # Return to the previus working directory
                 os.chdir(self._ini_cwd)
     
@@ -690,14 +697,16 @@ class MainGUI(panicQL):
             log.debug("Checking GEIRS keywords...")
             if self.last_ob_id==-1: # first time 
                 self.curr_sequence.append(filename)
+                log.debug("Adding file to sequence: %s",str(self.curr_sequence))
                 endSeq,retSeq = False,self.curr_sequence
             elif fits.getOBId()!=self.last_ob_id \
                 or fits.getFilter()!= self.last_filter \
                 or fits.getType()!=self.last_img_type:
-                retSeq = self.curr_sequence[:]  # very important !! Lists are mutable objects !
+                retSeq = self.curr_sequence[:]  # very important !! Lists are mutable objects ! or clist = copy.copy(list)
                 #reset the sequence list
                 self.curr_sequence = [filename]
                 endSeq,retSeq = True,retSeq
+                log.debug("EOS-1 detected : %s", str(self.curr_sequence))
             else:
                 ra_point_distance = self.last_ra-fits.ra
                 dec_point_distance = self.last_dec-fits.dec
@@ -707,8 +716,10 @@ class MainGUI(panicQL):
                     #reset the sequence list
                     self.curr_sequence = [filename]
                     endSeq,retSeq = True,retSeq
+                    log.debug("EOS-2 detected : %s", str(self.curr_sequence))
                 else:
                     self.curr_sequence.append(filename)
+                    log.debug("Adding file to sequence: %s",str(self.curr_sequence))
                     endSeq,retSeq = False,self.curr_sequence
         
         #and finally, before return, update 'last'_values
@@ -750,13 +761,6 @@ class MainGUI(panicQL):
             self.dc.check()
             if self.checkBox_outDir_autocheck.isChecked():
                 self.dc_outdir.check()
-            
-    def process_slot(self):
-        """ not USED !!!"""
-        if self.checkBox_process.isChecked():
-            self.m_proc_imgs=True
-        else:
-            self.m_proc_imgs=False
                     
     def show_images_slot(self):
         if self.checkBox_show_imgs.isChecked():
@@ -788,7 +792,7 @@ class MainGUI(panicQL):
         if dir and self.m_outputdir!=str(dir):
             self.lineEdit_outputD.setText(dir)
             self.m_outputdir=str(dir)
-            self.textEdit_log.append("+Output dir : " + self.m_outputdir)
+            self.textEdit_log.append(logMsg("+Output dir : " + self.m_outputdir))
             
             ##Create DataCollector for a path     
             self.file_pattern = str(self.lineEdit_filename_filter.text())
@@ -1095,11 +1099,11 @@ class MainGUI(panicQL):
             
             if self._task.isaCalibSet():
                 log.debug("It's a calibration sequence what is going to be reduced !")
-                self.textEdit_log.append("<info_tag> Processing CALIBRATION sequence </info_tag>")
+                self.textEdit_log.append(logMsg("Processing CALIBRATION sequence","INFO"))
                 thread = reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
-                self.textEdit_log.append("<info_tag> Processing SCIENCE sequence </info_tag>")
+                self.textEdit_log.append(logMsg("Processing SCIENCE sequence","INFO"))
                 thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
@@ -1232,14 +1236,14 @@ class MainGUI(panicQL):
             display.startDisplay()
             
         #os.system("/usr/local/bin/ds9 %s &" %((self.m_listView_item_selected)))
-        self.textEdit_log.append("<info_tag> DS9 launched !!! </info_tag>")
+        self.textEdit_log.append(logMsg("DS9 launched !","INFO"))
         
     def start_aladin_slot(self):
         """Start Aladin tool"""
         
         
         os.system('echo "load %s ;sync; get vizier(2mass)" |/usr/local/bin/aladin -nobanner &' %(self.m_listView_item_selected))
-        self.textEdit_log.append("<info_tag> Aladin launched !!! </info_tag>")
+        self.textEdit_log.append(logMsg("Aladin launched !", "INFO"))
         
         # utils.runCmd does not allow launch in background !!
         #if utils.runCmd("/usr/local/bin/aladin &")==0: # some error
@@ -1681,13 +1685,13 @@ class MainGUI(panicQL):
     def show_stats_slot(self):
         """Show image statistics in the log console of the files selected"""
         
-        self.textEdit_log.append("<info_tag>FILE                            MEAN         MODE       STDDEV       MIN       MAX  </info_tag>")
+        self.textEdit_log.append(logMsg("FILE                            MEAN         MODE       STDDEV       MIN       MAX  ","INFO"))
         for item in self.m_popup_l_sel:
             values = (iraf.mscstat (images=item,
             fields="image,mean,mode,stddev,min,max",format='no',Stdout=1))
             for line in values:
                 #line=os.path.basename(values[0])
-                self.textEdit_log.append(QString(str(line)))
+                self.textEdit_log.append(logMsg(str(QString(str(line)))))
         
     def background_estimation_slot(self):
         """ Give an background estimation of the current selected image """
@@ -1699,14 +1703,14 @@ class MainGUI(panicQL):
             values = (iraf.mscstat (images=img,
             fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
             #file,mean,mode,stddev,min,max=values[0].split()
-            self.textEdit_log.append(QString("<info_tag> Background estimation :</info_tag>"))
+            self.textEdit_log.append(QString(logMsg("Background estimation :","INFO")))
             for line in values:
                 self.textEdit_log.append(str(line))
                 #self.textEdit_log.append(QString("<info_tag> Background estimation MEAN= %1    MODE=%2    STDDEV=%3    MIN=%4         MAX=%5</info_tag>").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
             
             display.showFrame(img)
         except Exception,e:
-            self.textEdit_log.append("<error_tag> ERROR: something wrong while computing background </error_tag>")
+            self.textEdit_log.append(logMsg("ERROR: something wrong while computing background","ERROR"))
             raise e
           
     def fwhm_estimation_slot (self):
@@ -1716,12 +1720,12 @@ class MainGUI(panicQL):
         try:
             fwhm,std=cq.estimateFWHM()
             if fwhm>0:
-                self.textEdit_log.append(QString("<info_tag> FWHM = %1 (pixels) std= %2 </info_tag>").arg(fwhm).arg(std))
+                self.textEdit_log.append(logMsg(str(QString("FWHM = %1 (pixels) std= %2").arg(fwhm).arg(std))),"INFO")
             else:
-                self.textEdit_log.append("<error_tag> ERROR: Cannot estimage FWHM with selected image  </error_tag>")           
+                self.textEdit_log.append(logMsg("ERROR: Cannot estimage FWHM with selected image","ERROR"))           
         
         except Exception,e:
-            self.textEdit_log.append("<error_tag> ERROR: something wrong while computing background </error_tag>")
+            self.textEdit_log.append(logMsg("ERROR: something wrong while computing background","ERROR"))
             raise e
         
     def createStackedFrame_slot(self):
@@ -1855,7 +1859,7 @@ class MainGUI(panicQL):
         #Change cursor
         self.setCursor(Qt.waitCursor) # restored in checkLastTask
         # Call external script (papi)
-        self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
+        self._proc = RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
         self._proc.startCommand()
       
       
@@ -1921,7 +1925,23 @@ class MainGUI(panicQL):
                 raise
         
     def testSlot(self):
-
+        """
+        Methow called when "Start/Stop processing button is clicked
+        """
+        
+        # Change the button color and label
+        if self.proc_started == True:
+            self.proc_started = False
+            self.pushButton_start_proc.setText("Start Processing")
+            self.pushButton_start_proc.setPaletteBackgroundColor(QColor(205,64,64))
+        else:    
+            self.proc_started = True
+            self.pushButton_start_proc.setText("Stop Processing")
+            self.pushButton_start_proc.setPaletteBackgroundColor(QColor(34,139,34))
+            processFiles()
+            
+ 
+        """
         it=QListViewItemIterator (self.listView_OS)
         listViewItem = it.current()
         while listViewItem: 
@@ -1930,7 +1950,7 @@ class MainGUI(panicQL):
                 
             it+=1
             listViewItem = it.current()
-
+        """
         """
         return 
         
@@ -1949,7 +1969,14 @@ class MainGUI(panicQL):
         item.setFontUnderline( True )
         self.textEdit_log.append("HOLA me llamo <mytag> Jose Miguel </mytag>")
         """
-    
+    def processFiles(self):
+        """
+        Process all files the current Source List View (but not output files)
+        """
+        
+        files = self.inputsDB.GetFiles()
+        
+        
     #######################################################################################
     # Quick-Look 2: Preprocess frame. If the frame is  MEF, it will be stripped and
     # processed in parallel. Later, the result frame will be displayed  into DS9 display.
@@ -2129,3 +2156,27 @@ class MainGUI(panicQL):
 
       print "Finalizaron todas las HEBRAS en %f secs !!!" %(time.time()-start)
 
+def logMsg(msg, tag=None):
+    """
+    Format a msg in order to appear as a log message
+    """
+    
+    if tag=="INFO":
+        prefix = "<info_tag>"
+        suffix = "</info_tag>"
+    elif tag=="WARNING":
+        prefix = "<warning_tag>"
+        suffix = "</warning_tag>"
+    elif tag=="ERROR":
+        prefix = "<error_tag>"
+        suffix = "</error_tag>"
+    else:
+        prefix = ""
+        suffix = ""    
+        
+        
+    #s_time = time.strftime("[%Y%m%d-%H:%M:%S] ", time.gmtime())
+    s_time = "["+datetime.datetime.utcnow().isoformat()+"] "
+    prefix += s_time 
+    
+    return prefix + msg + suffix

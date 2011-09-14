@@ -233,7 +233,9 @@ class DataSet:
             return None
 
     ############################################################        
-    def GetFiles( self, detectorId, type, texp, filter, mjd, ra, dec, delta_pos, delta_time, runId=None):
+    def GetFiles( self, detectorId='ANY', type='ANY', texp=-1, filter='ANY', 
+                  mjd=55000, ra=0, dec=0, delta_pos=360*3600/2, 
+                  delta_time=9999999, runId=None):
         """
           \brief Return the filenames (with path) of a data set with specified fields. We can ask for
           any type of file (calib, science, master calib, reduced, ...)
@@ -303,15 +305,15 @@ class DataSet:
             #MJD
             s_mjd="mjd>%s and mjd<%s" %(mjd-delta_time, mjd+delta_time)
             
-            s_select="select filename from dataset where %s and %s and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd)
+            s_select = "select filename from dataset where %s and %s and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd)
             print s_select
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             #cur.execute("select filename from dataset where detector_id=? and  type=? and texp>? and texp<?  and filter=? and date=? and run_id=?",
             #                 (detectorId, type, texp-ROUND, texp+ROUND, filter, date, runId))
             cur.execute(s_select,(detectorId, type, filter,))
             
-            rows=cur.fetchall()
-            res_list=[]
+            rows = cur.fetchall()
+            res_list = []
             if len(rows)>0:
                 res_list = [str(f[0]) for f in rows] # important to apply str() !!
             print "Total rows selected:  %d" %(len(res_list))
@@ -328,7 +330,9 @@ class DataSet:
             If query does not match, then return a empty list []
         """
               
-        return self.GetFiles( "ANY", type, texp, filter, mjd=55000 , ra=0, dec=0, delta_pos=360*3600/2, delta_time=9999999, runId=None)
+        return self.GetFiles( "ANY", type, texp, filter, mjd=55000 , ra=0, 
+                              dec=0, delta_pos=360*3600/2, delta_time=9999999,
+                               runId=None)
           
     def GetOBFiles(self, filter=None):
         """ Get all the files for each Observation Block found. 
@@ -376,23 +380,23 @@ class DataSet:
                  
     def GetFilterFiles(self):
         """ 
-            Get all the SCIENCE files found for each (Filter,TExp); no other keyword is 
-            looked for (OB_ID, OB_PAT, ...) 
+            Get all the SCIENCE files found for each (Filter,TExp) ordered by MJD; 
+            no other keyword is looked for (OB_ID, OB_PAT, ...) 
             
             Return the list of parameter-tuples and list of list,
             having each list the list of files beloging to.
             
         """
         
-        par_list=[] # parameter tuple list (filter,texp)
-        filter_file_list=[] # list of file list (one per each filter)
+        par_list = [] # parameter tuple list (filter,texp)
+        filter_file_list = [] # list of file list (one per each filter)
               
         # First, look for Filters on SCIENCE files
         s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY_FOR' "
         #print s_select
-        cur=self.con.cursor()
+        cur = self.con.cursor()
         cur.execute(s_select,"")
-        rows=cur.fetchall()
+        rows = cur.fetchall()
         if len(rows)>0:
             par_list = [ [f[0],f[1]] for f in rows] # important to apply str() ??
         print "Total rows selected:  %d" %(len(par_list))
@@ -400,12 +404,12 @@ class DataSet:
         
         # Finally, look for files of each Filter
         for par in par_list:
-            s_select="select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY_FOR') order by mjd"    
+            s_select = "select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY_FOR') order by mjd"    
             #print s_select
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             cur.execute(s_select,(par[0],par[1]))
             #print "done !"
-            rows=cur.fetchall()
+            rows = cur.fetchall()
             if len(rows)>0:
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             print "%d files found for Filter %s" %(len(rows), par[0])
@@ -432,31 +436,31 @@ class DataSet:
                    to the sequence.
         """
         
-        seq_pat_list=[] # list of sequences features (ob_id,ob_pat,filter)
-        seq_list=[] # list of list of sequences filenames
+        seq_pat_list = [] # list of sequences features (ob_id,ob_pat,filter)
+        seq_list = [] # list of list of sequences filenames
 
         if filter==None:
-            s_filter="filter>=?"
+            s_filter = "filter>=?"
             filter=""
         else:
-            s_filter="filter=?"
+            s_filter = "filter=?"
               
         if type==None:
-            s_type="type>=''"
+            s_type = "type>=''"
         elif type=="SCIENCE":
-            s_type="type='SCIENCE' or type='SKY_FOR' or type='SKY'"
+            s_type = "type='SCIENCE' or type='SKY_FOR' or type='SKY'"
         elif type=="FLAT":
-            s_type="type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
+            s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
         else:
-            s_type="type='%s'"%(str(type))
+            s_type = "type='%s'"%(str(type))
                       
         # First, look for OB_IDs
         #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
         s_select="select DISTINCT ob_id,ob_pat,filter,texp from dataset where %s and %s order by mjd" %(s_filter,s_type)
         #print s_select
-        cur=self.con.cursor()
+        cur = self.con.cursor()
         cur.execute(s_select,(filter,))
-        rows=cur.fetchall()
+        rows = cur.fetchall()
         if len(rows)>0:
             seq_pat_list = [[f[0], f[1], f[2], f[3]] for f in rows] 
         print "Total rows selected:  %d" %(len(seq_pat_list))
@@ -464,12 +468,12 @@ class DataSet:
         
         # Finally, look for files of each OB_ID
         for seq in seq_pat_list:
-            s_select="select filename from dataset where ob_id=? and ob_pat=? and filter=? and texp=? order by mjd"    
+            s_select = "select filename from dataset where ob_id=? and ob_pat=? and filter=? and texp=? order by mjd"    
             #print s_select
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             cur.execute(s_select,(seq[0],seq[1],seq[2],seq[3]))
             #print "done !"
-            rows=cur.fetchall()
+            rows = cur.fetchall()
             if len(rows)>0:
                 seq_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2])+"_"+str(seq[3]))

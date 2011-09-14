@@ -420,7 +420,7 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
         
       }
      /* ---------------- HAWKI ----------------- */
-      else if (strncmp(instrument,"HAWKI",5)==0 )  { 
+      else if (strcasecmp(instrument,"HAWKI",5)==0 )  { 
 
         fprintf (stderr, "\nHAWKI\n");
         *scale = 0.1064;
@@ -454,7 +454,7 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
         
       }
       /* ---------------- OMEGA2000 ----------------- */
-      else if (strncmp(instrument,"Omega2000",9)==0){
+      else if (strcasecmp(instrument,"Omega2000",9)==0){
 	
 	    fprintf(stderr, "\nOMEGA2000\n");
 	      
@@ -484,6 +484,36 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 	    fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang); 
 
 	}
+    else if (strcasecmp(instrument,"PANIC",9)==0){
+    
+        fprintf(stderr, "\nPANIC\n");
+          
+        if (! hgetra(hdr, "RA", ra)) {
+            fprintf(stderr, "get_wcs: unable to read RA in: %s\n", fn);
+            return -1; 
+        }
+    
+        if (! hgetdec(hdr, "DEC", dec)) {
+            fprintf(stderr, "get_wcs: unable to read DEC in: %s\n", fn);
+            return -1; 
+        }
+    
+        if (hgetr8(hdr, "PIXSCALE", scale)==0) {
+            fprintf(stderr, "get_wcs: unable to read SCALE in: %s\n", fn);
+            free(hdr);
+            return -1; 
+        }
+
+
+        if (hgetr8(hdr, "ROT-RTA" /*"POSANG"*/, posang)==0) {
+            fprintf(stderr, "get_wcs: unable to read POSANG in: %s\n", fn);
+            free(hdr);
+            return -1; 
+        }  
+
+        fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang); 
+
+    }
     /* ---------------- OTHER INSTRUMENT ----------------- */
     else {
 	 fprintf(stderr, "UNKNOWN INSTRUMENT in %s\n", fn);

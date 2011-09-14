@@ -169,19 +169,18 @@ def sortOutData(list):
     Sort out input data files by MJD
     """
     
-    dataset=[]
-    m_list=list
+    dataset = []
         
-    for file in m_list:
+    for file in list:
         try:
-            fits=datahandler.ClFits(file)
+            fits = datahandler.ClFits(file)
         except:
             print "Error reading file %s , skipped..."%(file)      
         else:
             dataset.append((file, fits.getMJD()))
         
-    dataset=sorted(dataset, key=lambda data_file: data_file[1])          
-    sorted_files=[]
+    dataset = sorted(dataset, key=lambda data_file: data_file[1])          
+    sorted_files = []
     for tuple in dataset:
         sorted_files.append(tuple[0])
     
