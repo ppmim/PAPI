@@ -147,7 +147,10 @@ class ClFits:
     def isTwFlat(self):
         return (self.type=="TW_FLAT_DUSK" or self.type=="TW_FLAT_DAWN" 
                 or self.type=="TW_FLAT" or self.type=="SKY_FLAT")
-
+    
+    def isFocusSerie(self):
+        return False # not yet implemented
+    
     def isScience(self):
         return (self.type.count("SCIENCE"))
     

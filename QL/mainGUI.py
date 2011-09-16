@@ -363,7 +363,8 @@ class MainGUI(panicQL):
             if self.comboBox_QL_Mode.currentText()=="None":
                 return
             elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
-                self.processSeq(seq)
+                #self.processSeq(seq)
+                self.processFiles(seq)
                 return
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 self.processLazy(filename)
@@ -398,6 +399,8 @@ class MainGUI(panicQL):
             The sequence could be a calib or science sequence.
             
             @param obsSequence: a list files belonging to the observing sequence
+            
+            @deprecated: can be replaced by processFiles
              
         """
         
@@ -415,7 +418,11 @@ class MainGUI(panicQL):
         self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
         #Create working thread that process the obsSequence
         try:
-            self._task = RS.ReductionSet( obsSequence, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
+            # generate a random filename for the master, to ensure we do not overwrite any file
+            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj', dir=self.m_outputdir)
+            os.close(output_fd)
+            os.unlink(outfilename) # we only need the name
+            self._task = RS.ReductionSet( obsSequence, self.m_outputdir, out_file=outfilename, \
                                             obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
                                             group_by="ot", check_data=True, config_dict=self.config_opts)
             
@@ -1938,7 +1945,7 @@ class MainGUI(panicQL):
             self.proc_started = True
             self.pushButton_start_proc.setText("Stop Processing")
             self.pushButton_start_proc.setPaletteBackgroundColor(QColor(34,139,34))
-            processFiles()
+            self.processFiles()
             
  
         """
@@ -1969,13 +1976,53 @@ class MainGUI(panicQL):
         item.setFontUnderline( True )
         self.textEdit_log.append("HOLA me llamo <mytag> Jose Miguel </mytag>")
         """
-    def processFiles(self):
+        
+    def processFiles(self, files=None):
         """
-        Process all files the current Source List View (but not output files)
+        Process the files provided; otherwise all the files in the current 
+        Source List View (but not output files)
+        
+        @param files: files list to be processed; if None, all the files in the
+        current List View will be used !
+        
         """
         
-        files = self.inputsDB.GetFiles()
+        if files==None:
+            files = self.inputsDB.GetFiles() # all the files in ListView, even the generated output files (but they will not be processed)
         
+        log.debug("Starting to process files...")
+        self.textEdit_log.append(logMsg("++ Starting to process next files :","INFO"))
+        
+        for file in files:
+            self.textEdit_log.append(logMsg("     - " + file))
+            #self.textEdit_log.append(QString("    - %1").arg(file))
+            
+        #Change to working directory
+        os.chdir(self.m_tempdir)
+        #Change cursor
+        self.setCursor(Qt.waitCursor)
+        self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+        #Create working thread that process the files
+        try:
+            # generate a random filename for the master, to ensure we do not overwrite any file
+            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj', dir=self.m_outputdir)
+            os.close(output_fd)
+            os.unlink(outfilename) # we only need the name
+            self._task = RS.ReductionSet( files, self.m_outputdir, out_file=outfilename, \
+                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
+                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+            
+            log.debug("ReductionSet created !")
+            thread = reduce.ExecTaskThread(self._task.reduceSetB, self._task_info_list)
+            thread.start()
+        except Exception,e:
+            #Anyway, restore cursor
+            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+            # thus the ExecTaskThread can't restore the cursor
+            self.setCursor(Qt.arrowCursor) 
+            QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
+            self.m_processing = False
+            raise e
         
     #######################################################################################
     # Quick-Look 2: Preprocess frame. If the frame is  MEF, it will be stripped and

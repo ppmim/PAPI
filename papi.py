@@ -106,10 +106,10 @@ def main(arguments = None):
                   action = "store", dest = "obs_mode", 
                   default = "dither", help = "observing mode (dither|ext_dither|other)")
     
-    """parser.add_option("-p", "--print",
-                  action = "store_true", dest = "print_seq", default = True,
+    parser.add_option("-p", "--print",
+                  action = "store_true", dest = "print_seq", default = False,
                   help = "print detected sequences in the Data Set")
-    """
+
     parser.add_option("-v", "--verbose",
                   action = "store_true", dest = "verbose", default = True,
                   help = "verbose mode [default]")
@@ -201,11 +201,12 @@ def main(arguments = None):
                           config_dict = options \
                         )
         #if options.print_seq:
-        if True:
+        if init_options.print_seq:
             print "SEQUENCES found:"
-            rs.printSequences()
+            rs.getOTSequences()
         else:    
             rs.reduceSet(red_mode=general_opts['reduction_mode'])
+            #rs.reduceSetB()
     except RS.ReductionSetException, e:
         print e
     except Exception, e:

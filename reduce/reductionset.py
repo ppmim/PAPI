@@ -142,7 +142,7 @@ class ReductionSet:
         
         
         # real "variables" holding current reduction status
-        self.m_LAST_FILES = []   # Contain the files as result of the last processing step (science processed frames). Properly initialized in reduceObj()
+        self.m_LAST_FILES = []   # Contain the files as result of the last processing step (science processed frames). Properly initialized in reduceSingleObj()
         self.m_rawFiles = []     # Raw files (originals in the working directory)
         self.m_filter = ""       # Filter of the current data set (m_LAST_FILES)
         self.m_type = ""         # Type (dark, flat, object, ...) of the current data set; should be always object !
@@ -174,7 +174,7 @@ class ReductionSet:
             raise Exception("Error while data base initialization")
             
         
-        self.m_LAST_FILES = self.rs_filelist # Later properly initialized in reduceObj()
+        self.m_LAST_FILES = self.rs_filelist # Later properly initialized in reduceSingleObj()
         
         if self.master_dark!=None: self.db.insert(self.master_dark)
         if self.master_flat!=None: self.db.insert(self.master_flat)
@@ -445,7 +445,9 @@ class ReductionSet:
         return the most appropiate calibration files (master dark,flat,bpm) to
         reduce the sequence.
         
-        Reduce 3-list of calibration files (dark, flat, bpm), even is each one has only 1 file 
+        Reduce 3-list of calibration files (dark, flat, bpm), even is each one has only 1 file
+        
+        @attention: To Be Completed ! 
         """
         obj_frame = datahandler.ClFits(sci_obj_list[0])
         # We take as sample, the first frame in the list, but all frames must
@@ -453,7 +455,7 @@ class ReductionSet:
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
-        master_dark = self.db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark
+        master_dark = self.db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark ???
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
             master_flat=self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
@@ -1351,24 +1353,214 @@ class ReductionSet:
         
         """
         
-        sequences = self.getOTSequences()
-        reduces_sequences = 0
+        log.debug("Dataset reduction process...")
         
-        for seq in sequences:
+        sequences, seq_types = self.getOTSequences()
+        reduced_sequences = 0
+        files_created = []
+        
+        for seq,type in zip(sequences, seq_types):
             try:
-                self.reduceSeq(seq)
+                files_created += self.reduceSeq(seq, type)
                 reduced_sequences+=1
             except Exception,e:
                 log.error("Cannot reduce sequence %s"%str(seq))
+                raise e
     
-        return reduced_sequences
+        return files_created
     
-    def reduceSeq(self, sequence):
+    def reduceSeq(self, sequence, type):
         """
         Reduce/process a produced OT-sequence of files (calibration, science)
+       
+        @param sequence: list of files of the sequence to be reduced
+        @param type: type of sequence (see ClFits.type)
+        
+        @return: filenames created by the reduction proccess
+          
         """
         
-                     
+        files_created = []
+        fits = datahandler.ClFits(sequence[0])
+        
+        if fits.isDark():
+            log.debug("A Dark sequence going is to be reduced: \n"%str(sequence))
+            try:
+                # Generate (and create the file) a random filename for the master, 
+                # to ensure we do not overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDark', dir=self.out_dir)
+                os.close(output_fd)
+                os.unlink(outfile) # we only need the name
+                task = reduce.calDark.MasterDark (sequence, self.out_dir, outfile, texp_scale=False)
+                out = task.createMaster()
+                files_created.append(out) # out must be equal to outfile
+            except Exception,e:
+                log.error("Some error while creating master DARK: %s",str(e))
+                raise e
+        elif fits.isDomeFlat():
+            log.debug("A DomeFlat sequence is going to be reduced: \n%s"%str(sequence))
+            try:
+                # generate a random filename for the master, to ensure we do not overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDFlat', dir=self.out_dir)
+                os.close(output_fd)
+                os.unlink(outfile) # we only need the name
+                task=reduce.calDomeFlat.MasterDomeFlat(sequence, self.out_dir, outfile, None)
+                out=task.createMaster()
+                files_created.append(out) # out must be equal to outfile
+            except Exception,e:
+                log.error("Some error while creating master DomeFlat: %s",str(e))
+                raise e
+        elif fits.isTwFlat():
+            log.debug("A TwFlat sequence is going to be reduced: \n%s"%str(sequence))
+            try:
+                master_dark = self.db.GetFilesT('MASTER_DARK') # could there be > 1 master darks, then use the last(mjd sorted)
+                # if required, master_dark will be scaled in MasterTwilightFlat class
+                if len(master_dark)>0:
+                    # generate a random filename for the master, to ensure we do not overwrite any file
+                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat', dir=self.out_dir)
+                    os.close(output_fd)
+                    os.unlink(outfile) # we only need the name
+                    task = reduce.calTwFlat.MasterTwilightFlat(sequence, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
+                    out = task.createMaster()
+                    files_created.append(out) # out must be equal to outfile
+                else:
+                    # should we create master dark ??
+                    log.error("MASTER_DARK not found. Cannot build master TwFlat")
+                    raise Exception("MASTER_DARK not found")
+            except Exception,e:
+                log.error("Some error while creating master TwFlat: %s",str(e))
+                raise e
+        elif fits.isFocusSerie():
+            log.debug("Not yet implemented")
+            # TODO
+            pass
+        elif fits.isScience():
+            l_out_dir = ''
+            results = None
+            out_ext = []
+            log.debug("===> Reduction of SCIENCE Sequence: \n%s"%str(sequence))
+            if len(sequence)<4:
+                log.info("Found a too SHORT Obs. object sequence. Only %d frames found. Required >4 frames"%len(sequence))
+                raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(sequence))
+            else:
+                #avoid call getCalibFor() when red_mode="quick"
+                if self.red_mode == "quick":
+                    dark,flat,bpm = [],[],[]
+                else:
+                    dark, flat, bpm = self.getCalibFor(sequence)
+                    # return 3 list of calibration frames (dark, flat, bpm), because there might be more than one master dark/flat/bpm
+
+                obj_ext, next = self.split(sequence) # it must return a list of list (one per each extension)
+                dark_ext, cext = self.split(dark)
+                flat_ext, cext = self.split(flat)
+                bpm_ext, cext = self.split(bpm)
+                parallel = self.config_dict['general']['parallel']
+                
+                if parallel==True:
+                    log.info("Entering PARALLEL data reduction ...")
+                    try:
+                        # Map the parallel process
+                        n_cpus = self.config_dict['general']['ncpus']
+                        results = pprocess.Map(limit=n_cpus, reuse=1) 
+                        # IF reuse=0, it block the application !! I don't know why ?? 
+                        # though in pprocess examples it works! 
+                        calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
+                        for n in range(next):
+                            log.info("===> (PARALLEL) Reducting extension %d", n+1)
+                            ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
+                            if dark_ext==[]: mdark = None
+                            else: mdark = dark_ext[n][0] # At the moment, we take the first calibration file found for each extension
+                            if flat_ext==[]: mflat = None
+                            else: mflat = flat_ext[n][0] # At the moment, we take the first calibration file found for each extension
+                            if bpm_ext==[]: mbpm = None
+                            else: mbpm = bpm_ext[n][0] # At the moment, we take the first calibration file found for each extension
+                            
+                            l_out_dir = self.out_dir + "/Q%02d" % (n+1)
+                            if not os.path.isdir(l_out_dir):
+                                try:
+                                    os.mkdir(l_out_dir)
+                                except OSError:
+                                    log.error("Cannot create output directory %s",l_out_dir)
+                            else: self.cleanUpFiles([l_out_dir])
+                            
+                            # async call to procedure
+                            extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
+                            calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
+                        
+                        # Here is where we WAIT (BLOCKING) for the results (iteration is a blocking call)
+                        for result in results:
+                            #print "RESULT=",result
+                            out_ext.append(result)
+
+                        log.critical("DONE PARALLEL REDUCTION ")
+                            
+                        #pool=multiprocessing.Pool(processes=2)
+                        # !! ERROR !!, because multiprocessing.pool.map() does not support class methods
+                        #pool.map(self.reduceSingleObj,[[obj_ext[0], mdark, mflat, mbpm, self.red_mode, self.out_dir+"/out_Q01.fits"],\
+                        #                     [obj_ext[1], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q02.fits"]])
+                            
+                    except Exception,e:
+                        log.error("Error while parallel data reduction ! --> %s",str(e))
+                        raise e
+                    
+                else:
+                    for n in range(next):
+                        log.info("Entering SERIAL science data reduction ...")    
+                        log.info("===> (SERIAL) Reducting extension %d", n+1)
+                        ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
+                        if dark_ext==[]: mdark=None
+                        else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        if flat_ext==[]: mflat=None
+                        else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        if bpm_ext==[]: mbpm=None
+                        else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
+                        try:
+                            out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, self.red_mode, out_dir=self.out_dir,\
+                                                          output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
+                        except Exception,e:
+                            log.error("Some error while reduction of extension %d of object sequence", n+1)
+                            raise e
+        
+            # if all reduction were fine, now join/stich back the extensions in a widther frame
+            seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
+            if len(out_ext) >1:
+                log.debug("*** Creating final output file *WARPING* single output frames....***")
+                #option 1: create a MEF with the results attached, but not warped
+                #mef=misc.mef.MEF(outs)
+                #mef.createMEF(self.out_file)
+                #option 2(current): SWARP resulted images to register the N-extension into one wide-single extension
+                log.debug("*** Coadding/Warping overlapped files....")
+                swarp = astromatic.SWARP()
+                swarp.config['CONFIG_FILE'] = "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_dicts/swarp.conf"
+                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER2,SCALE,MJD-OBS'
+                swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
+                swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")
+                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+                swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
+                swarp.run(out_ext, updateconfig=False, clean=False)
+                
+                files_created.append(seq_result_outfile)
+                log.info("*** Obs. Sequence reduced. File %s created.  ***", 
+                         seq_result_outfile)
+                
+            elif len(out_ext)==1:
+                shutil.move(out_ext[0], seq_result_outfile)
+                
+                files_created.append(seq_result_outfile)
+                log.info("*** Obs. Sequence reduced. File %s created.  ***", 
+                         seq_result_outfile)
+            else:
+                log.error("No output files generated by the current Obj.Seq. \
+                data reduction ....review your logs files")
+            
+            
+                    
+        # Insert all created files into the DB                
+        for file in files_created:
+            self.db.insert(file)
+            
+        return files_created
+ 
     def reduceSet(self, red_mode="quick"):
         """
         The main method for full DataSet reduction.
@@ -1390,9 +1582,10 @@ class ReductionSet:
             3.6 Add objects to catalog (?)
             
          
-        Return a list of N files produced as result of the data reduction of
+        @return: Return a list of N files produced as result of the data reduction of
         the N sequecend found.
         
+        @attention: Must be 
         """
        
         log.info("Starting Reduction of data set ...")
@@ -1482,7 +1675,7 @@ class ReductionSet:
                         results = pprocess.Map(limit=n_cpus, reuse=1) 
                         # IF reuse=0, it block the application !! I don't know why ?? 
                         # though in pprocess examples it works! 
-                        calc = results.manage(pprocess.MakeReusable(self.reduceObj))
+                        calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
                         for n in range(next):
                             log.info("===> (PARALLEL) Reducting extension %d", n+1)
                             ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
@@ -1514,7 +1707,7 @@ class ReductionSet:
                             
                         #pool=multiprocessing.Pool(processes=2)
                         # !! ERROR !!, because multiprocessing.pool.map() does not support class methods
-                        #pool.map(self.reduceObj,[[obj_ext[0], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q01.fits"],\
+                        #pool.map(self.reduceSingleObj,[[obj_ext[0], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q01.fits"],\
                         #                     [obj_ext[1], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q02.fits"]])
                             
                     except Exception,e:
@@ -1536,7 +1729,7 @@ class ReductionSet:
                         if bpm_ext==[]: mbpm=None
                         else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                         try:
-                            out_ext.append(self.reduceObj(obj_ext[n], mdark, mflat, mbpm, red_mode, out_dir=self.out_dir,\
+                            out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, red_mode, out_dir=self.out_dir,\
                                                           output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
                         except Exception,e:
                             log.error("Some error while reduction of extension %d of object sequence %d", n+1, i)
@@ -1589,9 +1782,9 @@ class ReductionSet:
         
         return seq_outfile_list
         
-    def reduceObj(self, obj_frames, master_dark, master_flat, master_bpm, 
+    def reduceSingleObj(self, obj_frames, master_dark, master_flat, master_bpm, 
                   red_mode, out_dir, output_file):
-        """ Given a set of object(sci) frames and (optional) master calibration files,
+        """ Given a set of object(science) frames and (optionally) master calibration files,
             run the data reduction of the observing object sequence, producing an reduced
             ouput frame if no error; otherwise return None or raise exception.
             
@@ -1953,12 +2146,13 @@ class ReductionSet:
         @param show: if True, print out the sequences found in the std output
              
         @return: a list of list of sequence files belonging to
+                 a list with the types of the sequences 
         
         @attention: this method is an (better) alertenative to getObjectSequences()        
         """
         
-        seq_pat_list = [] # list of sequences features (ob_id, ob_pat, filter)
-        seq_list = [] # list of list of sequences filenames
+        seq_list = [] # list of list of sequence filenames
+        seq_types = [] # list of types of sequence (dark, dflat, sflat, focus, science, ....)
         k = 0
         found_first = False # flag to know if we have found the firs file of a sequence
         
@@ -1983,6 +2177,7 @@ class ReductionSet:
                 if fits.getExpNo()==fits.getNoExp():
                     #detected end of the sequence
                     seq_list.append(group[:]) # very important ==> lists are mutable !
+                    seq_types.append(fits.getType())
                     group = []
                     found_first = False  # reset flag
             else:
@@ -1994,5 +2189,5 @@ class ReductionSet:
             for i in range(0,len(seq_list)):
                 print "SEQ[%d] - \n %s"%(i,seq_list[i])
             
-        return seq_list
+        return seq_list,seq_types
         
