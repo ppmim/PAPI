@@ -87,7 +87,8 @@ import numpy
 class MainGUI(panicQL):
 
             
-    def __init__(self, source_dir="/tmp/data", output_dir='/tmp/out', temp_dir='/tmp', config_opts=None):               
+    def __init__(self, source_dir="/tmp/data", output_dir='/tmp/out', 
+                 temp_dir='/tmp', config_opts=None):               
         
         panicQL.__init__(self)
         
@@ -105,13 +106,16 @@ class MainGUI(panicQL):
         self.m_tempdir = temp_dir
         self._ini_cwd = os.getcwd()
         
+        # Create LoggingConsole
+        self.logConsole = LoggingConsole(self.textEdit_log, self.textEdit_log_2)
+        
         # check we have R/W access to temp and out directories
         if not os.access(self.m_tempdir,os.R_OK|os.W_OK):
             log.error("Directory %s has not R/W access",self.m_tempdir)
-            self.textEdit_log.append(QString("<error_tag>[WARNING]</error_tag> Directory %1 has not R/W access").arg(self.m_tempdir))
+            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access").arg(self.m_tempdir)))
         if not os.access(self.m_outputdir,os.R_OK|os.W_OK):
             log.error("Directory %s has not R/W access",self.outputdir)
-            self.textEdit_log.append(QString("<error_tag>[WARNING]</error_tag> Directory %1 has not R/W access").arg(self.outputdir))
+            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access").arg(self.outputdir)))
             
     
         self.m_frameList_dark = ''
@@ -146,22 +150,6 @@ class MainGUI(panicQL):
         self._proc = None # variable to handle QProcess tasks
         self.read_error_files = {} # a dictionary to track the error while reading/detecting FITS files
         
-        ## Create log tags
-        # Error
-        item = QStyleSheetItem( self.textEdit_log.styleSheet(), "error_tag" )
-        item.setColor( QColor("red") )
-        item.setFontWeight( QFont.Bold )
-        item.setFontUnderline( False )
-        # Warning
-        item = QStyleSheetItem( self.textEdit_log.styleSheet(), "warning_tag" )
-        item.setColor( QColor("blue") )
-        item.setFontWeight( QFont.Bold )
-        item.setFontUnderline( False )
-        # Info
-        item = QStyleSheetItem( self.textEdit_log.styleSheet(), "info_tag" )
-        item.setColor( QColor("black") )
-        item.setFontWeight( QFont.Bold )
-        item.setFontUnderline( False )
         
         # Default run mode
         if  self.config_opts['quicklook']['run_mode']=="None": self.comboBox_QL_Mode.setCurrentItem(0)
@@ -171,7 +159,7 @@ class MainGUI(panicQL):
         
             
         
-        self.textEdit_log.append(logMsg("Wellcome to the PANIC QuickLook tool v1.0", "INFO") )
+        self.logConsole.info("Wellcome to the PANIC QuickLook tool v1.0" )
         
 
         self.__initializeGUI()
@@ -301,7 +289,7 @@ class MainGUI(panicQL):
                 if self.read_error_files[filename]>self.MAX_READ_ERRORS:
                     #definitely, we discard the file
                     log.error("Definitely discarted file %s", filename)
-                    self.textEdit_log.append(QString("<error_tag> File %1 corrupted and discarted</error_tag>").arg(filename))
+                    self.logConsole.error(str(QString("File %1 corrupted and discarted").arg(filename)))
                     del self.read_error_files[filename] # could be interesting to have a list of discarted files ??
                     #self.read_error_files.remove(filename)
                 else:
@@ -311,7 +299,7 @@ class MainGUI(panicQL):
                     else: self.dc.remove(filename) 
             return
            
-        self.textEdit_log.append(logMsg("New file (verified) detected in source: " + filename))
+        self.logConsole.append("New file (verified) detected in source: " + filename)
         
         ######################
         ## Insert into DB
@@ -353,7 +341,7 @@ class MainGUI(panicQL):
         (end_seq, seq)=self.checkEndObsSequence(filename)
         if end_seq:
             log.debug("Detected end of observing sequence")
-            self.textEdit_log.append(logMsg("Detected end of observing sequence", "WARNING"))       
+            self.logConsole.warning("Detected end of observing sequence")       
         
         
         ##################################################################
@@ -394,7 +382,8 @@ class MainGUI(panicQL):
     
     def processSeq(self, obsSequence):
         
-        """
+        """ DEPRECATED !!!
+        
             Process the observing sequence received according with the QL pipeliene recipes
             The sequence could be a calib or science sequence.
             
@@ -405,11 +394,11 @@ class MainGUI(panicQL):
         """
         
         log.debug("Starting to process Observation Sequence...")
-        self.textEdit_log.append(logMsg("++ Starting to process Observation Sequence :","INFO"))
+        self.logConsole.info("++ Starting to process Observation Sequence :")
         
         for file in obsSequence:
-            self.textEdit_log.append(logMsg("     - " + file))
-            #self.textEdit_log.append(QString("    - %1").arg(file))
+            self.logConsole.info("     - " + file)
+            #self.logConsole.info(QString("    - %1").arg(file))
             
         #Change to working directory
         os.chdir(self.m_tempdir)
@@ -419,7 +408,7 @@ class MainGUI(panicQL):
         #Create working thread that process the obsSequence
         try:
             # generate a random filename for the master, to ensure we do not overwrite any file
-            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj', dir=self.m_outputdir)
+            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj_', dir=self.m_outputdir)
             os.close(output_fd)
             os.unlink(outfilename) # we only need the name
             self._task = RS.ReductionSet( obsSequence, self.m_outputdir, out_file=outfilename, \
@@ -428,11 +417,11 @@ class MainGUI(panicQL):
             
             if self._task.isaCalibSet():
                 log.debug("It's a calib sequence what is going to be reduced !")
-                self.textEdit_log.append(logMsg("It is a CALIBRATION sequence","INFO"))
+                self.logConsole.info("It is a CALIBRATION sequence")
                 thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
-                self.textEdit_log.append(logMsg("It is a SCIENCE sequence","INFO"))
+                self.logConsole.info("It is a SCIENCE sequence")
                 thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
@@ -455,7 +444,7 @@ class MainGUI(panicQL):
         if type!="SCIENCE":
             return
 
-        self.textEdit_log.append(logMsg("++ Starting to process a las file :","INFO"))
+        self.logConsole.info("++ Starting to process a las file :")
         
         # ###########################################################################################
         # Depending on what options have been selected by the user, we do a processing or other...
@@ -506,9 +495,9 @@ class MainGUI(panicQL):
             display.showFrame(filename)
             
         
-#####################################################
-### SLOTS ###########################################
-#####################################################
+    #####################################################
+    ### SLOTS ###########################################
+    #####################################################
 
     def findOS_slot(self):
         """ ONLY FOR A TEST - to be removed """
@@ -546,7 +535,7 @@ class MainGUI(panicQL):
         else:
             #dir=str(source[0])
             dir=str(source)
-            self.textEdit_log.append(logMsg("+Source : " + dir))
+            self.logConsole.info("+Source : " + dir)
             if (self.m_sourcedir != dir):
                 self.lineEdit_sourceD.setText(dir)
                 self.m_sourcedir = str(dir)
@@ -645,11 +634,11 @@ class MainGUI(panicQL):
                                 #display.showFrame(file)
                                 str_list+=str(file)+"\n"
                             QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
-                            self.textEdit_log.append(logMsg(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))),"INFO"))
+                            self.logConsole.info(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
                         elif os.path.isfile(self._task_info._return):
                             #print "PASOOOOOO RETURNED =",self._task_info._return
                             #QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
-                            self.textEdit_log.append(QString("<info_tag> >>Output file %1 created </info_tag>").arg(self._task_info._return))
+                            self.logConsole.info(str(QString(">>Output file %1 created ").arg(self._task_info._return)))
                             display.showFrame(self._task_info._return)
                 else:
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
@@ -799,7 +788,7 @@ class MainGUI(panicQL):
         if dir and self.m_outputdir!=str(dir):
             self.lineEdit_outputD.setText(dir)
             self.m_outputdir=str(dir)
-            self.textEdit_log.append(logMsg("+Output dir : " + self.m_outputdir))
+            self.logConsole.info("+Output dir : " + self.m_outputdir)
             
             ##Create DataCollector for a path     
             self.file_pattern = str(self.lineEdit_filename_filter.text())
@@ -901,8 +890,46 @@ class MainGUI(panicQL):
         
         if self.comboBox_classFilter.currentText()=="GROUP":
             self.listView_dataS.clear()
+            files = self.inputsDB.GetFiles()
+            sequences = []
+            seq_types = []
+            try:
+                rs = RS.ReductionSet( files, self.m_outputdir, out_file=None, \
+                                            obs_mode="dither", dark=None, 
+                                            flat=None, bpm=None, red_mode="quick", \
+                                            group_by=self.config_opts['general']['group_by'], 
+                                            check_data=True, config_dict=self.config_opts)
+                
+                sequences, seq_types = rs.getSequences()
+                del rs # we do not need anymore
+            except Exception, e:
+                log.error("Error while creating Reduction set")
+                raise e
+            k = 0
+            for seq in sequences:
+                elem = QListViewItem( self.listView_dataS )
+                #elem.setText(0, "TYPE="+str(seq_types[k]))
+                #elem.setText(0, "OB_ID="+str(seq[0])+" ** OB_PAT="+str(seq[1])+" ** FILTER="+str(seq[2]) + " ** #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
+                for file in seq:
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object) = self.inputsDB.GetFileInfo(file)
+                    if file==seq[0]:
+                        #the first time, fill the "tittle" of the group 
+                        elem.setText(0, "TYPE="+str(seq_types[k]) + "  ** FILTER="+str(filter) + "  ** TEXP="+str(texp))
+                    e_child = QListViewItem(elem)
+                    e_child.setText (0, str(file))
+                    e_child.setText (1, str(type))
+                    e_child.setText (2, str(filter))
+                    e_child.setText (3, str(texp))
+                    e_child.setText (4, str(date)+"::"+str(ut_time))
+                    e_child.setText (5, str(object))
+                    e_child.setText (6, str(ra))
+                    e_child.setText (7, str(dec))
+                k+=1
+                
+        elif self.comboBox_classFilter.currentText()=="GROUP_OLD":
+            self.listView_dataS.clear()
             parList,fileList = self.inputsDB.GetSeqFiles()
-            k=0
+            k = 0
             for seq in parList:
                 # create the father
                 elem = QListViewItem( self.listView_dataS )
@@ -910,7 +937,7 @@ class MainGUI(panicQL):
                 #elem.setText (1, str(seq[1])) # OB_PAT
                 #elem.setText (2, str(seq[2])) # FILTER
                 for file in fileList[k]:
-                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(file)
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object) = self.inputsDB.GetFileInfo(file)
                     e_child = QListViewItem(elem)
                     e_child.setText (0, str(file))
                     e_child.setText (1, str(type))
@@ -1106,11 +1133,11 @@ class MainGUI(panicQL):
             
             if self._task.isaCalibSet():
                 log.debug("It's a calibration sequence what is going to be reduced !")
-                self.textEdit_log.append(logMsg("Processing CALIBRATION sequence","INFO"))
+                self.logConsole.info("Processing CALIBRATION sequence")
                 thread = reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
-                self.textEdit_log.append(logMsg("Processing SCIENCE sequence","INFO"))
+                self.logConsole.info("Processing SCIENCE sequence")
                 thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
@@ -1160,7 +1187,7 @@ class MainGUI(panicQL):
             except Exception,e:
                 log.debug("Cannot split file %s. Maybe it's not a MEF file",str(e))
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file"%(file))
-                #self.textEdit_log.append(QString(str(line)))
+                #self.logConsole.info(QString(str(line)))
     
     def joinMEF_slot(self):
         """Join/stitch a MEF file to stitch them together
@@ -1243,14 +1270,14 @@ class MainGUI(panicQL):
             display.startDisplay()
             
         #os.system("/usr/local/bin/ds9 %s &" %((self.m_listView_item_selected)))
-        self.textEdit_log.append(logMsg("DS9 launched !","INFO"))
+        self.logConsole.info("DS9 launched !")
         
     def start_aladin_slot(self):
         """Start Aladin tool"""
         
         
         os.system('echo "load %s ;sync; get vizier(2mass)" |/usr/local/bin/aladin -nobanner &' %(self.m_listView_item_selected))
-        self.textEdit_log.append(logMsg("Aladin launched !", "INFO"))
+        self.logConsole.info("Aladin launched !")
         
         # utils.runCmd does not allow launch in background !!
         #if utils.runCmd("/usr/local/bin/aladin &")==0: # some error
@@ -1258,7 +1285,7 @@ class MainGUI(panicQL):
             #raise Exception("Error executing command Aladin")
             #QMessageBox.warning(self,"Error","Error starting Alading application")
         #else:    
-            #self.textEdit_log.append("<info_tag> Aladin launched !!! </info_tag>")
+            #self.logConsole.info("Aladin launched !!!")
 
     def pushB_sel_masteDark_slot(self):
         source=QFileDialog.getOpenFileName( self.m_default_data_dir, "Master file (*.fit*)",  self, "Source Dialog","select master")
@@ -1431,7 +1458,7 @@ class MainGUI(panicQL):
 
     def do_quick_reduction_slot_V1(self):
         # Run quick-reduction mode with the
-        self.QL2(self.m_popup_l_sel[0], self.textEdit_log)
+        self.QL2(self.m_popup_l_sel[0], self.logConsole)
     
     def do_quick_reduction_slot(self):
         """ Do a quick reduction of the user selected files in the list view panel"""
@@ -1565,7 +1592,7 @@ class MainGUI(panicQL):
             self.setCursor(Qt.waitCursor) # restored checkLastTask
             #Call external script (papi)
             self.m_processing = True
-            self._proc=RunQtProcess(cmd, self.textEdit_log, self._task_info_list, out_file)      
+            self._proc=RunQtProcess(cmd, self.logConsole, self._task_info_list, out_file)      
             self._proc.startCommand()
 
             """
@@ -1692,13 +1719,13 @@ class MainGUI(panicQL):
     def show_stats_slot(self):
         """Show image statistics in the log console of the files selected"""
         
-        self.textEdit_log.append(logMsg("FILE                            MEAN         MODE       STDDEV       MIN       MAX  ","INFO"))
+        self.logConsole.info("FILE                            MEAN         MODE       STDDEV       MIN       MAX  ")
         for item in self.m_popup_l_sel:
             values = (iraf.mscstat (images=item,
             fields="image,mean,mode,stddev,min,max",format='no',Stdout=1))
             for line in values:
                 #line=os.path.basename(values[0])
-                self.textEdit_log.append(logMsg(str(QString(str(line)))))
+                self.logConsole.info(str(QString(str(line))))
         
     def background_estimation_slot(self):
         """ Give an background estimation of the current selected image """
@@ -1710,14 +1737,14 @@ class MainGUI(panicQL):
             values = (iraf.mscstat (images=img,
             fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
             #file,mean,mode,stddev,min,max=values[0].split()
-            self.textEdit_log.append(QString(logMsg("Background estimation :","INFO")))
+            self.logConsole.info(str(QString(logMsg("Background estimation :"))))
             for line in values:
-                self.textEdit_log.append(str(line))
-                #self.textEdit_log.append(QString("<info_tag> Background estimation MEAN= %1    MODE=%2    STDDEV=%3    MIN=%4         MAX=%5</info_tag>").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
+                self.logConsole.info(str(line))
+                #self.logConsole.info(QString("Background estimation MEAN= %1   MODE=%2    STDDEV=%3    MIN=%4         MAX=%5").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
             
             display.showFrame(img)
         except Exception,e:
-            self.textEdit_log.append(logMsg("ERROR: something wrong while computing background","ERROR"))
+            self.logConsole.error("ERROR: something wrong while computing background")
             raise e
           
     def fwhm_estimation_slot (self):
@@ -1727,12 +1754,12 @@ class MainGUI(panicQL):
         try:
             fwhm,std=cq.estimateFWHM()
             if fwhm>0:
-                self.textEdit_log.append(logMsg(str(QString("FWHM = %1 (pixels) std= %2").arg(fwhm).arg(std))),"INFO")
+                self.logConsole.info(str(QString("FWHM = %1 (pixels) std= %2").arg(fwhm).arg(std)))
             else:
-                self.textEdit_log.append(logMsg("ERROR: Cannot estimage FWHM with selected image","ERROR"))           
+                self.logConsole.error("ERROR: Cannot estimage FWHM with selected image")           
         
         except Exception,e:
-            self.textEdit_log.append(logMsg("ERROR: something wrong while computing background","ERROR"))
+            self.logConsole.error("ERROR: something wrong while computing background")
             raise e
         
     def createStackedFrame_slot(self):
@@ -1866,7 +1893,7 @@ class MainGUI(panicQL):
         #Change cursor
         self.setCursor(Qt.waitCursor) # restored in checkLastTask
         # Call external script (papi)
-        self._proc = RunQtProcess(cmd, self.textEdit_log, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
+        self._proc = RunQtProcess(cmd, self.logConsole, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
         self._proc.startCommand()
       
       
@@ -1989,13 +2016,16 @@ class MainGUI(panicQL):
         
         if files==None:
             files = self.inputsDB.GetFiles() # all the files in ListView, even the generated output files (but they will not be processed)
+
+        if len(files)==0:
+            return
         
         log.debug("Starting to process files...")
-        self.textEdit_log.append(logMsg("++ Starting to process next files :","INFO"))
+        self.logConsole.info("++ Starting to process next files :")
         
         for file in files:
-            self.textEdit_log.append(logMsg("     - " + file))
-            #self.textEdit_log.append(QString("    - %1").arg(file))
+            self.logConsole.info("     - " + file)
+            #self.logConsole.info(QString("    - %1").arg(file))
             
         #Change to working directory
         os.chdir(self.m_tempdir)
@@ -2005,7 +2035,7 @@ class MainGUI(panicQL):
         #Create working thread that process the files
         try:
             # generate a random filename for the master, to ensure we do not overwrite any file
-            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj', dir=self.m_outputdir)
+            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj_', dir=self.m_outputdir)
             os.close(output_fd)
             os.unlink(outfilename) # we only need the name
             self._task = RS.ReductionSet( files, self.m_outputdir, out_file=outfilename, \
@@ -2013,7 +2043,7 @@ class MainGUI(panicQL):
                                             group_by="ot", check_data=True, config_dict=self.config_opts)
             
             log.debug("ReductionSet created !")
-            thread = reduce.ExecTaskThread(self._task.reduceSetB, self._task_info_list)
+            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list)
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -2203,27 +2233,90 @@ class MainGUI(panicQL):
 
       print "Finalizaron todas las HEBRAS en %f secs !!!" %(time.time()-start)
 
-def logMsg(msg, tag=None):
-    """
-    Format a msg in order to appear as a log message
-    """
+
+class LoggingConsole (object):
     
-    if tag=="INFO":
-        prefix = "<info_tag>"
-        suffix = "</info_tag>"
-    elif tag=="WARNING":
-        prefix = "<warning_tag>"
-        suffix = "</warning_tag>"
-    elif tag=="ERROR":
-        prefix = "<error_tag>"
-        suffix = "</error_tag>"
-    else:
-        prefix = ""
-        suffix = ""    
+    def __init__ (self, textEdit1=None, textEdit2=None, *a, **k):
         
+        super (LoggingConsole, self).__init__ (*a, **k)
+
+        self.textEdit_w1 = textEdit1
+        self.textEdit_w2 = textEdit2
         
-    #s_time = time.strftime("[%Y%m%d-%H:%M:%S] ", time.gmtime())
-    s_time = "["+datetime.datetime.utcnow().isoformat()+"] "
-    prefix += s_time 
+        ## Create log tags
+        if self.textEdit_w1 is not None:
+            # Error
+            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "error_tag" )
+            item.setColor( QColor("red") )
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
+            # Warning
+            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "warning_tag" )
+            item.setColor( QColor("blue") )
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
+            # Info
+            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "info_tag" )
+            item.setColor( QColor("black") )
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
+        
+        if self.textEdit_w2 is not None:
+            # Error
+            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "error_tag" )
+            item.setColor( QColor("red") )
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
+            # Warning
+            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "warning_tag" )
+            item.setColor( QColor("blue") )
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
+            # Info
+            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "info_tag" )
+            item.setColor( QColor("black") )
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
+        
+
+    def append(self, message='', tag=None):
+        
+        if self.textEdit_w1 is not None: 
+            self.textEdit_w1.append(self.logMsg(message,tag))
+        if self.textEdit_w2 is not None:
+            self.textEdit_w2.append(self.logMsg(message,tag))
     
-    return prefix + msg + suffix
+    def info(self, message):
+        self.append(message, "INFO")
+    
+    def warning(self, message):
+        self.append(message, "WARNING")           
+
+    def error(self, message):
+        self.append(message, "ERRROR")
+
+    
+    def logMsg(self, msg, tag=None):
+        """
+        Format a msg in order to appear as a log message
+        """
+        
+        if tag=="INFO":
+            prefix = "<info_tag>"
+            suffix = "</info_tag>"
+        elif tag=="WARNING":
+            prefix = "<warning_tag>"
+            suffix = "</warning_tag>"
+        elif tag=="ERROR":
+            prefix = "<error_tag>"
+            suffix = "</error_tag>"
+        else:
+            prefix = ""
+            suffix = ""    
+            
+            
+        #s_time = time.strftime("[%Y%m%d-%H:%M:%S] ", time.gmtime())
+        s_time = "["+datetime.datetime.utcnow().isoformat()+"] "
+        prefix += s_time 
+        
+        return prefix + msg + suffix

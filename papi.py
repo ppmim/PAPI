@@ -203,10 +203,9 @@ def main(arguments = None):
         #if options.print_seq:
         if init_options.print_seq:
             print "SEQUENCES found:"
-            rs.getOTSequences()
+            rs.getSequences()
         else:    
             rs.reduceSet(red_mode=general_opts['reduction_mode'])
-            #rs.reduceSetB()
     except RS.ReductionSetException, e:
         print e
     except Exception, e:
