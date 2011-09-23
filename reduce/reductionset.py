@@ -1157,8 +1157,9 @@ class ReductionSet(object):
             mask_minarea=25
             mask_thresh=0.4
             satur_level=300000
-                                                             
-        makeObjMask( input_file+"*", mask_minarea, mask_thresh, satur_level, \
+                               
+        # BUG ! -> input_file+"*" as first parameter to makeObjMask ! (2011-09-23)                                                               
+        makeObjMask( input_file, mask_minarea, mask_thresh, satur_level, \
                     outputfile=self.out_dir+"/objmask_file.txt", single_point=False)
         if os.path.exists(input_file+".objs"): 
             shutil.move(input_file+".objs", output_master_obj_mask)
@@ -1715,7 +1716,7 @@ class ReductionSet(object):
                             
                     except Exception,e:
                         log.error("[reduceSeq] Error while parallel data reduction ! --> %s",str(e))
-                        #####raise e
+                        raise e
                     
                 else:
                     for n in range(next):
@@ -1733,7 +1734,7 @@ class ReductionSet(object):
                                                           output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
                         except Exception,e:
                             log.error("[reduceSeq] Some error while reduction of extension %d of object sequence", n+1)
-                            #####raise e
+                            raise e
         
             # if all reduction were fine, now join/stich back the extensions in a widther frame
             seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
