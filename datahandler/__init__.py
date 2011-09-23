@@ -1,3 +1,3 @@
 from datacollector import *
-from dataclassifier import *
+from clfits import *
 from dataset import *
