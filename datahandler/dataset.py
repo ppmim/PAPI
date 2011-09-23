@@ -31,7 +31,8 @@ class DataSet:
     \brief
     Class used to define a data set of frames load from a local directory or a Data Base  
     """
-    TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, filename, date, ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
+    TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
+                    ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
 
     ############################################################
     def __init__( self , source ):
@@ -41,8 +42,8 @@ class DataSet:
         \param source : can be a 'directory' name, a 'filename' containing the
                         list file or python list havind the files of the DataSet
         """
-        self.con=None #connection
-        self.source=source
+        self.con = None #connection
+        self.source = source
         self.id = 0
 
     ############################################################    
@@ -65,7 +66,7 @@ class DataSet:
 
         """
 
-        if source==None: source=self.source
+        if source==None: source = self.source
         
         # 1. Load the source
         if type(source)==type(list()): contents = source 
@@ -105,16 +106,19 @@ class DataSet:
         if filename==None: return 0
         
         try:
-            fitsf=datahandler.ClFits ( filename )
+            fitsf = datahandler.ClFits ( filename )
         except:
             log.exception( "Unexpected error reading FITS file %s" %filename )
             raise
         
-        data = (self.id, fitsf.runID, fitsf.obID, fitsf.obPat, filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, fitsf.filter, \
-                fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object, fitsf.detectorID) 
+        data = (self.id, fitsf.runID, fitsf.obID, fitsf.obPat, fitsf.pat_expno, fitsf.pat_noexp, 
+                filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, 
+                fitsf.filter, fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object,
+                fitsf.detectorID) 
         cur = self.con.cursor()
         try:
-            cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +"values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
+            cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +
+                        "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
             self.con.commit()
 
         except sqlite.DatabaseError:
@@ -173,8 +177,8 @@ class DataSet:
     ############################################################        
     def GetFile( self, detectorId, type, texp, filter, date, runId=None):
         """
-          \brief Return the filename (with path) of a data frame with specified fields. We can ask for
-          any type of file (calib, science, master calib, reduced, ...)
+          \brief Return the filename/s (with path) from the data frames with specified fields. 
+          We can ask for any type of file (calib, science, master calib, reduced, ...)
 
           \param detectorId
           \param type
@@ -237,8 +241,9 @@ class DataSet:
                   mjd=55000, ra=0, dec=0, delta_pos=360*3600/2, 
                   delta_time=9999999, runId=None):
         """
-          \brief Return the filenames (with path) of a data set with specified fields. We can ask for
-          any type of file (calib, science, master calib, reduced, ...)
+          \brief Return the filenames (with path) from the data set with specified 
+          fields. We can ask for any type of file (calib, science, master calib, 
+          reduced, ...). The files are ascending sorted by the MJD. 
 
           \param detectorId
           \param type
@@ -251,10 +256,11 @@ class DataSet:
           \param delta_time    secs for data-time obs search time window
           \param runId
 
-          \return A list with the filenames that match the specified fields, otherwise an empty list []
+          \return A MJD ascending sorted list with the filenames that match the 
+                  specified fields, otherwise an empty list []
         """
 
-        
+        res_list = []
         try:
             # NOT USED !!! RUN_ID !!! NOT USED 
             #RUNID: The run id may no be specified
@@ -418,22 +424,26 @@ class DataSet:
                          
     def GetSeqFiles(self, filter=None, type=None):
         """ 
-            Get all the files for each Observing Sequence (OS) found. 
-            By OS we mean a set of files with common features that make them
-            capable to be reduced.
+        Get all the files for each Observing Sequence (OS) found. 
+        By OS we mean a set of files with the next common features:
+        
+            (OB_ID, OB_PAT, FILTER, TEXP)
             
-            INPUTS:
-              filter:  filter can be specified to restrict the search
-              
-              type: it can be SCIENCE, DARKs,FLATs  (None=any type)
-              
-              NOTE: this method is thought to work fine for SCIENCE sequences;
-              for calibration sequences need improvements
+        INPUTS
+        @param filter:  filter can be specified to restrict the search
+          
+        @param type: it can be SCIENCE, DARKs,FLATs  (None=any type)
+          
+        @note: this method is thought to work fine for SCIENCE sequences;
+        for calibration sequences need improvements
+        
+        @return: two lists:
+             - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
+             - a of list, having each list the list of files beloging 
+               to the sequence.
+    
+        @see: GetSeqFilesB()
             
-            Return two lists:
-                 - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
-                 - a of list, having each list the list of files beloging 
-                   to the sequence.
         """
         
         seq_pat_list = [] # list of sequences features (ob_id,ob_pat,filter)
@@ -479,6 +489,81 @@ class DataSet:
             print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2])+"_"+str(seq[3]))
             
         return seq_pat_list, seq_list
+    
+    
+    def GetSeqFilesB(self, filter=None, type=None):
+        """ 
+        Get all the files for each Observing Sequence (OS) found. 
+        By OS we mean a set of files with the next common features:
+        
+            - start with PAT_EXPN=1 and end with the PAT_EXPN=PAT_NEXP
+            
+        INPUTS
+        @param filter:  filter can be specified to restrict the search
+          
+        @param type: it can be SCIENCE, DARKs,FLATs  (None=any type)
+          
+        @note: this method is thought to work fine for SCIENCE sequences;
+        for calibration sequences need improvements
+        
+        @return: two lists:
+             - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
+             - a of list, having each list the list of files beloging 
+               to the sequence.
+    
+        @see: GetSeqFiles()
+            
+        """
+        
+        if filter==None:
+            s_filter = "filter>=?"
+            filter=""
+        else:
+            s_filter = "filter=?"
+              
+        if type==None:
+            s_type = "type>=''"
+        elif type=="SCIENCE":
+            s_type = "type='SCIENCE' or type='SKY_FOR' or type='SKY'"
+        elif type=="FLAT":
+            s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
+        else:
+            s_type = "type='%s'"%(str(type))
+                      
+        # First, look for OB_IDs
+        #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
+        s_select="select filename, ob_id, ob_pat, expn, nexp, filter,texp \
+                from dataset where %s and %s order by mjd" %(s_filter,s_type)
+        #print s_select
+        cur = self.con.cursor()
+        cur.execute(s_select,(filter,))
+        rows = cur.fetchall()
+        
+        found_firs = False
+        group = []
+        seq_list = [] # list of lists of files from each sequence
+        seq_types =[] # list of types for each sequence
+        for fits in rows:
+            print "%s  %s  %s  %s  %s %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
+                                       fits[3], fits[4], fits[5], fits[6], # expn, nexp, filter, texp
+                                       fits[3]==fits[4]) # true/false
+            if fits[3]==1:
+                group = [str(fits[0])] #filename
+                found_first = True # update flag
+            elif found_first: 
+                group.append(str(fits[0]))
+                if fits[3]==fits[4]:
+                    #detected end of the sequence
+                    seq_list.append(group[:]) # very important ==> lists are mutable !
+                    seq_types.append(str(type))
+                    group = []
+                    found_first = False  # reset flag
+            else:
+                pass
+        
+        print "[dataset.GetSeqFilesB] OS's found :\n ", seq_list
+        
+        return seq_list, seq_types
                        
     ############################################################    
     def GetFileInfo( self, filename ):

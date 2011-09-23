@@ -100,21 +100,21 @@ class MasterTwilightFlat:
   
     """
     def __init__(self, flat_files, master_dark, output_filename="/tmp/mtwflat.fits", \
-                lthr=1000, hthr=100000, bpm=None, normal=True):
+                lthr=1000, hthr=100000, bpm=None, normal=True, temp_dir="/tmp/"):
         
         """Initialization method"""
         
         self.__input_files = flat_files
         self.__master_dark = master_dark # if fact, it should be a dark model ???
-        self.__output_file_dir = os.path.dirname(output_filename)
         self.__output_filename = output_filename  # full filename (path+filename)
-        self.__bpm=bpm
-        self.__normal=normal
+        self.__bpm = bpm
+        self.__normal = normal
+        self.__temp_dir = temp_dir #temporal dir used for temporal/intermediate files
         
-        self.m_MIN_N_GOOD=3
-        self.m_lthr=lthr
-        self.m_hthr=hthr
-        self.m_min_flats=5
+        self.m_MIN_N_GOOD = 3
+        self.m_lthr = lthr
+        self.m_hthr = hthr
+        self.m_min_flats = 5
         
     
     def createMaster(self):
@@ -259,7 +259,7 @@ class MasterTwilightFlat:
         fileList = []
         for iframe in good_frames:
             # Remove old dark subtracted flat frames
-            my_frame = self.__output_file_dir+"/"+os.path.basename(iframe.replace(".fits","_D.fits"))
+            my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits","_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
             # Build master dark with proper (scaled) EXPTIME and subtract (???? I don't know how good is this method of scaling !!!)
@@ -292,11 +292,11 @@ class MasterTwilightFlat:
         # STEP 3: Make the combine of dark subtracted Flat frames scaling by 'mode'
         # - Build the frame list for IRAF
         log.debug("Combining dark subtracted Twilight flat frames...")
-        comb_flat_frame=(self.__output_file_dir+"/comb_tw_flats.fits").replace("//","/")
+        comb_flat_frame = (self.__temp_dir + "/comb_tw_flats.fits").replace("//","/")
         misc.fileUtils.removefiles(comb_flat_frame)
-        misc.utils.listToFile(fileList, self.__output_file_dir+"/twflat_d.list") 
+        misc.utils.listToFile(fileList, self.__temp_dir + "/twflat_d.list") 
         # - Call IRAF task
-        iraf.mscred.flatcombine(input="@"+self.__output_file_dir+"/twflat_d.list",
+        iraf.mscred.flatcombine(input="@"+self.__temp_dir+"/twflat_d.list",
                         output=comb_flat_frame,
                         combine='median',
                         ccdtype='',
@@ -318,13 +318,13 @@ class MasterTwilightFlat:
         if self.__normal:
             log.debug("Normalizing master flat frame...")
             if next>0:
-                chip=1 # normalize wrt to mode of chip 1
+                chip = 1 # normalize wrt to mode of chip 1
             else:
-                chip=0
-            f=pyfits.open(comb_flat_frame, ignore_missing_end=True)
-            mode=3*numpy.median(f[chip].data)-2*numpy.mean(f[chip].data)
+                chip = 0
+            f = pyfits.open(comb_flat_frame, ignore_missing_end=True)
+            mode = 3*numpy.median(f[chip].data)-2*numpy.mean(f[chip].data)
             f.close()        
-        else: mode=1            
+        else: mode = 1            
         
         # Cleanup: Remove temporary files
         misc.fileUtils.removefiles(self.__output_filename)

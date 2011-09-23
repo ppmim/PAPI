@@ -85,9 +85,10 @@ class ReductionSet(object):
         
     """
      
-    def __init__(self, rs_filelist, out_dir, out_file, obs_mode="dither", 
+    def __init__(self, rs_filelist, out_dir=None, out_file=None, obs_mode="dither", 
                  dark=None, flat=None, bpm=None, red_mode="quick", 
-                 group_by="filter", check_data=True, config_dict=None, 
+                 group_by="ot", check_data=True, config_dict=None, 
+                 external_db_files=None, temp_dir = None,
                  *a, **k):
         """ Init function """
         
@@ -96,31 +97,50 @@ class ReductionSet(object):
         
         if not config_dict:
             raise Exception("Config dictionary not provided ...")
-            
+        else:
+            # dictionary with all sections (general, darks, dflats, 
+            # twflats, skysub, fits, keywords, config_dicts) and their values
+            self.config_dict = config_dict 
+
         if len(rs_filelist) <= 0:
             log.error("Empy file list, no files to reduce ...")
             raise ReductionSetException ("Empy file list, no files to reduce ...")
-        #elif len(rs_filelist)<=3:
-        #    log.error("ReductionSet files are so few to be reduced")
-        #    raise Exception("ReductionSet #files are so few to be reduced")
         else:
-            right_extension = True
             for f in rs_filelist:
                 if not os.path.exists(f) or not os.path.splitext(f)[1] == ".fits":
                     log.error("File %s does not exists or not has '.fits' extension", f)
                     raise ReductionSetException ("File %s does not exist or \
                     has not '.fits' extension"%f)
                     
-        # Input values
+        # Main directories
         self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
-        self.out_dir = out_dir   # directory where all output will be written
-        self.out_file = ''
+        # Temporal directory for temporal files created during the data reduction process
+        if temp_dir == None:
+            if config_dict !=None:
+                self.temp_dir = self.config_dict['general']['temp_dir']
+            else:
+                self.temp_dir = "/tmp/"
+        else:
+            self.temp_dir = temp_dir
+
+        # Output directory for the results of the data reduction process            
+        if out_dir == None:
+            if config_dict !=None:
+                self.out_dir = self.config_dict['general']['output_dir']
+            else:
+                self.out_dir = "/tmp/"
+        else:
+            self.out_dir = out_dir
+        
+        # Main output file resulted from the data reduction process
         if out_file==None: # if no filename, we choose a random filename
             output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', prefix='red_set_', dir=self.out_dir)
             os.close(output_fd)
             os.unlink(self.out_file) # we only need the name
         else:    
             self.out_file = out_file  # final reduced data file (out)
+            
+        
         self.obs_mode = obs_mode  # observing mode (dither, dither_on_off, dither_off_on....)
         self.master_dark = dark # master dark to use (input)
         self.master_flat = flat # master flat to use (input)
@@ -128,7 +148,6 @@ class ReductionSet(object):
         self.red_mode = red_mode # reduction mode (quick=for QL, science=for science) 
         self.group_by = group_by.lower() # flag to decide how classification will be done, by OT (OB_ID, OB_PAT, FILTER and TEXP kws) or by FILTER (FILTER kw)
         self.check_data = check_data # flat to indicate if data checking need to be done (see checkData() method)
-        self.config_dict = config_dict # dictionary with all sections (general, darks, dflats, twflats, skysub, fits, keywords, config_dicts) and their values
          
         
         if self.config_dict:
@@ -158,29 +177,50 @@ class ReductionSet(object):
         self.m_expt = 0.0        # Exposition Time of the current data set files
         self.m_ncoadd = 0        # Number of coadds of the current data set files
         self.m_itime  = 0.0      # Integration Time of the currenct data set files
-        self.m_n_files = ""      # Number of file in the data set
 
         
-        #DataBase (in memory)
+        ##Local DataBase (in memory)
         self.db = None
         
-    
+        ##External DataBase (in memory) - optional
+        # It is an optional external database provided when creating a ReductionSet 
+        # instance and mainly can have calibration files required for the reduction 
+        # of the current data set. It will be used during the on-line QL 
+        # data reduction,e.g., tw_flats require a master dark than can be in other RS    
+        self.ext_db = None
+        
+        # (optional) file list to build the external DB. We proceed this way, because
+        # if we pass a DB connection to the ReductionSet class instead of a list of files,
+        # we can have problems because SQLite3 does not support access from multiple 
+        # threads, and the RS.reduceSet() can be executed from other thread than 
+        # it was created.
+        # Further info: http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency  
+        #               http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
+        if external_db_files!=None:
+            self.ext_db_files = external_db_files 
+        else:
+            self.ext_db_files = []
+             
     def __initDB(self):
         """
-        Initialize the data base, loading the full frame list
+        @summary: Initialize the Data Bases (local and external), loading the full frame list.
         
-        NOTE: If we init the DB in the constructor __init__(), we will have problems
-        if we use the DB from any method of ReductionSet and then from other thread.
+        @attention: 
+        If we initialize the DB in the constructor __init__(), we will have problems
+        if we use the DB from any method of ReductionSet and then from other thread,
+        i.e.,sqlite3 do not support access from multiple threads.
         For more info, see http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency
+                           http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         """
-        #DataBase (in memory)
+        #Local DataBase (in memory)
+        log.info("Initializing Local DataBase")
         try:
             self.db = datahandler.dataset.DataSet(self.rs_filelist)
             self.db.createDB()
             self.db.load()
         except Exception,e:
-            log.error("Error while data base initialization: \n %s"%str(e))
-            raise Exception("Error while data base initialization")
+            log.error("Error while LOCAL data base initialization: \n %s"%str(e))
+            raise Exception("Error while LOCAL data base initialization")
             
         
         self.m_LAST_FILES = self.rs_filelist # Later properly initialized in reduceSingleObj()
@@ -191,10 +231,26 @@ class ReductionSet(object):
         
         self.db.ListDataSet()
         
+        #External DataBase (in memory)
+        if len(self.ext_db_files)>0:
+            log.info("Initializing External DataBase")
+            try:
+                self.ext_db = datahandler.dataset.DataSet(self.ext_db_files)
+                self.ext_db.createDB()
+                self.ext_db.load()
+            except Exception,e:
+                log.error("Error while EXTERNAL data base initialization: \n %s"%str(e))
+                raise Exception("Error while EXTERNAL data base initialization")
+
+            self.ext_db.ListDataSet()
+        else:
+            self.ext_db = None
+                
+        
     def checkData(self, chk_filter=True, chk_type=True, chk_expt=True, chk_itime=True, \
                   chk_ncoadd=True, chk_cont=True):
         """
-        Return true is all files in file have the same filter and/or type and/or
+        @return: Return true is all files in file have the same filter and/or type and/or
         expt; false otherwise.
         Also check the temporal continuity (distant between two consecutive frames),
         if exceeded raise an exception 
@@ -311,21 +367,21 @@ class ReductionSet(object):
                  
     def sortOutData(self, list=None):
         """
-        Sort out input data files by MJD
+        Ascending sort of input data files by MJD
         """
         
-        dataset=[]
+        dataset = []
         if list==None:
-            m_list=self.m_LAST_FILES
+            m_list = self.m_LAST_FILES
         else:
-            m_list=list
+            m_list = list
             
         for file in m_list:
-            fits=datahandler.ClFits(file) 
+            fits = datahandler.ClFits(file) 
             dataset.append((file, fits.getMJD()))
             
-        dataset=sorted(dataset, key=lambda data_file: data_file[1])          
-        sorted_files=[]
+        dataset = sorted(dataset, key=lambda data_file: data_file[1])          
+        sorted_files = []
         for tuple in dataset:
             sorted_files.append(tuple[0])
         
@@ -379,7 +435,7 @@ class ReductionSet(object):
             - dither (T-T-T-T-T- ....)
             - dither_on_off (T-S-T-S-T-S-T-S-T-....)
             - dither_off_on (S-T-S-T-S-T-S-T-S-....)
-            - other  (non defined sequence,unknown) (i.e,  T-S-T-T-S-T-T-S-T-....)
+            - other  (non defined sequence,unknown) (e.g,  T-S-T-T-S-T-T-S-T-....)
             
             NOTE: To find out the dither/observing sequence then OBJECT keyword will be checked (see ClFits class)
         """
@@ -450,27 +506,46 @@ class ReductionSet(object):
 
     def getCalibFor(self, sci_obj_list):
         """
-        Given a list of frames belonging to a observing sequence for a given object (star, galaxi, whatever),
-        return the most appropiate calibration files (master dark,flat,bpm) to
-        reduce the sequence.
+        @summary: Given a list of frames belonging to a observing sequence for 
+        a given object (star, galaxy, whatever),return the most calibration 
+        files (master dark,flat,bpm) to reduce the sequence.
+        The search of the calibration files is done, firstly in the local DB, but
+        if no results, then in the external DB if it was provided.
+          
+        Reduce 3-list of calibration files (dark, flat, bpm), even if each one 
+        has only 1 file.
         
-        Reduce 3-list of calibration files (dark, flat, bpm), even is each one has only 1 file
-        
-        @attention: To Be Completed ! 
+        @todo: To Be Completed ! 
         """
+        
+        master_dark = [] # we'll get a list of master dark candidates
+        master_flat = [] # we'll get a list of master flat candidates
+        master_bpm = [] # we'll get a list of master flat candidates
+        
         obj_frame = datahandler.ClFits(sci_obj_list[0])
         # We take as sample, the first frame in the list, but all frames must
         # have the same features (expT,filter,ncoadda, readout-mode, ...)
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
+        #DARK
         master_dark = self.db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark ???
+        if len(master_dark)==0 and self.ext_db!=None:
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark ???
+        #FLATS
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
-            master_flat=self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
-            
+            master_flat = self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
+        if len(master_flat)==0 and self.ext_db!=None:
+            master_flat = self.ext_db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+            if len(master_flat)==0:
+                master_flat=self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
+
+        #BPM                
         master_bpm = self.db.GetFilesT('MASTER_BPM')
-        
+        if len(master_bpm)==0 and self.ext_db!=None:
+            master_bpm = self.ext_db.GetFilesT('MASTER_BPM')
+
         log.debug("Found master dark %s", master_dark)
         log.debug("Found master flat %s", master_flat)
         log.debug("Found master bpm %s", master_bpm)
@@ -593,17 +668,20 @@ class ReductionSet(object):
         
         seq_list = [] # list of list of sequence filenames
         seq_types = [] # list of types of sequence (dark, dflat, sflat, focus, science, ....)
-        k = 0
-        found_first = False # flag to know if we have found the firs file of a sequence
         
         if self.db==None: self.__initDB()
-        files = self.db.GetFiles()
-        files = self.sortOutData(files)
+        seq_list, seq_types = self.db.GetSeqFilesB() # much more quick than read again the FITS files
+    
+        """ 
+        files = self.db.GetFiles() # MJD ascending sorted 
+        #files = self.sortOutData(files) # not required, because GetFiles do it !
         
         # Create groups
         print "**** Analyzing files *****"
         print "FILENAME                         OB_ID  OB_PAT  PAT_EXPN  PAT_NEXP  END_SEQ"
         print "---------------------------------------------------------------------------"
+        k = 0
+        found_first = False # flag to know if we have found the firs file of a sequence
         for file in files:
             fits = datahandler.ClFits(file)
             print "%s  %s  %s  %s  %s %s"%(file, fits.getOBId(), fits.getOBPat(), 
@@ -622,14 +700,16 @@ class ReductionSet(object):
                     found_first = False  # reset flag
             else:
                 pass
-            
+        """    
         if show:
             # Print found groups
+            print "\n\n"
             print "*** # Sequences found : %d ***"%len(seq_list) 
             for i in range(0,len(seq_list)):
                 print "SEQ[%d] - \n %s"%(i,seq_list[i])
-            
+        
         return seq_list,seq_types
+        
     
     def getObjectSequences(self):
         """
@@ -776,7 +856,7 @@ class ReductionSet(object):
         
     def skyFilter( self, list_file, gain_file, mask='nomask', obs_mode='dither' ):
         """
-            For 'each' (really not each, depend on dither pattern, i.e., extended sources) input image,
+            For 'each' (really not each, depend on dither pattern, e.g., extended sources) input image,
             a sky frame is computed by combining a certain number of the closest images, 
             then this sky frame is subtracted to the image and the result is divided by the master flat; 
                          
@@ -837,7 +917,7 @@ class ReductionSet(object):
             ##
             
             # Sort-out data files by obs-data (actually not required when obs_mode='dither')
-            out_files=self.sortOutData(out_files) 
+            out_files = self.sortOutData(out_files) 
             
             return out_files
         else:
@@ -892,7 +972,7 @@ class ReductionSet(object):
             os.unlink(files_list) # we only need the name
             try:
                 misc.utils.listToFile(near_list, files_list)
-                superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, norm=False)
+                superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, norm=False, temp_dir=self.temp_dir)
                 superflat.create()
             except Exception,e:
                 log.error("Error while creating gain map : %s", str(e))
@@ -1261,6 +1341,8 @@ class ReductionSet(object):
         Look for dark files in the data set, group them by DIT,NCOADD and create
         the master darks, as many as found groups
         
+        @return: A list of the master darks created
+         
         @todo: how to process dark series with an increasing TExp ??
         """
         
@@ -1288,7 +1370,7 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                task = reduce.calDark.MasterDark (group, self.out_dir, outfile, texp_scale=False)
+                task = reduce.calDark.MasterDark (group, self.temp_dir, outfile, texp_scale=False)
                 out = task.createMaster()
                 l_mdarks.append(out) # out must be equal to outfile
             except Exception,e:
@@ -1308,7 +1390,10 @@ class ReductionSet(object):
     def buildMasterDomeFlats(self):
         """
         Look for DOME FLATS files in the data set, group them by FILTER and create
-        the master DomeFlat, as many as found groups (i.e., filters)
+        the master DomeFlat, as many as found groups,i.e., filters.
+        
+        @return: A list of the master Dome Flats created
+        
         """
         
         log.debug("Building Master DomeFlats...")
@@ -1334,7 +1419,7 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 #outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
-                task=reduce.calDomeFlat.MasterDomeFlat(group, os.path.dirname(outfile), outfile, None)
+                task = reduce.calDomeFlat.MasterDomeFlat(group, self.temp_dir, outfile, None)
                 out=task.createMaster()
                 l_mflats.append(out) # out must be equal to outfile
             except Exception,e:
@@ -1354,7 +1439,9 @@ class ReductionSet(object):
     def buildMasterTwFlats(self):
         """
         Look for TwFlats files in the data set, group them by FILTER and create
-        the master twflat, as many as found groups
+        the master twflat, as many as found groups.
+        
+        @return: A list of the master TwFlats created
         """
         
         log.debug("Building Master TwFlats...")
@@ -1386,14 +1473,13 @@ class ReductionSet(object):
                     out = task.createMaster()
                     l_mflats.append(out) # out must be equal to outfile
                 else:
-                    # should we create master dark ??
-                    log.error("MASTER_DARK not found. Cannot build master twflat")
-                    log.error("but, proceding with next twflat group ...")
-                    #raise Exception("MASTER_DARK not found")
+                    log.error("MASTER_DARK not found. Cannot build master TwFlat")
+                    raise Exception("MASTER_DARK not found. Cannot build master TwFlat.")
             except Exception,e:
                 log.error("Some error while creating master TwFlat: %s",str(e))
                 log.error("but, proceding with next twflat group ...")
-                #raise e
+                raise Exception("Cannot build master TwFlat: %s"%(str(e)))
+            
             if k<len(full_flat_list):
                 # reset the new group
                 group = []
@@ -1401,7 +1487,8 @@ class ReductionSet(object):
                 
         # insert products (master twflats) into DB
         for f in l_mflats: self.db.insert(f)
-        self.db.ListDataSet()  
+        self.db.ListDataSet()
+          
         return l_mflats
     
     def buildMasterSuperFlats(self):
@@ -1410,9 +1497,9 @@ class ReductionSet(object):
         temporal proximity and then create the master superFlats, as many as
         found groups.
         
-        Return: the list of master superflat created
+        Return: A list of master SuperFlat created
         
-        TODO: need to be tested 
+        @todo: need to be tested 
         """
         
         log.debug("Building Master SuperFlats...")
@@ -1432,7 +1519,7 @@ class ReductionSet(object):
                     os.close(output_fd)
                     os.unlink(outfile_path) # we only need the name
                     #outfile = self.out_dir+"/master_superflat_%s.fits"%last_filter # added as suffix (FILTER)
-                    superflat = reduce.SuperSkyFlat(seq, output_path, bpm=None, norm=False)
+                    superflat = reduce.SuperSkyFlat(seq, output_path, bpm=None, norm=False, temp_dir=self.temp_dir)
                     out=superflat.create()
                     l_mflats.append(out)
                 except Exception,e:
@@ -1457,6 +1544,8 @@ class ReductionSet(object):
          2. For seq in Sequence
     
             ReduceSeq(seq)
+            
+         3. Insert the results into the local DB 
          
         @param red_mode: reduction mode (quick, science)  
         @return: the number of sequences successfully reduced
@@ -1507,7 +1596,7 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDark_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                task = reduce.calDark.MasterDark (sequence, self.out_dir, outfile, texp_scale=False)
+                task = reduce.calDark.MasterDark (sequence, self.temp_dir, outfile, texp_scale=False)
                 out = task.createMaster()
                 files_created.append(out) # out must be equal to outfile
             except Exception,e:
@@ -1520,7 +1609,7 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDFlat_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                task=reduce.calDomeFlat.MasterDomeFlat(sequence, self.out_dir, outfile, None)
+                task = reduce.calDomeFlat.MasterDomeFlat(sequence, self.temp_dir, outfile, None)
                 out=task.createMaster()
                 files_created.append(out) # out must be equal to outfile
             except Exception,e:
@@ -1529,14 +1618,23 @@ class ReductionSet(object):
         elif fits.isTwFlat():
             log.debug("[reduceSeq] A TwFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
+                #Look for the required MasterDark (any ExpTime);first in the Local DB (current RS), 
+                #and if anyone found, then in the External DB
+                #Local (ExpTime is not a constraint)
                 master_dark = self.db.GetFilesT('MASTER_DARK') # could there be > 1 master darks, then use the last(mjd sorted)
+                #External (ExpTime is not a constraint)
+                if len(master_dark)==0 and self.ext_db!=None:
+                    master_dark = self.ext_db.GetFilesT('MASTER_DARK') # could there be > 1 master darks, then use the last(mjd sorted)
                 # if required, master_dark will be scaled in MasterTwilightFlat class
                 if len(master_dark)>0:
                     # generate a random filename for the master, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
-                    task = reduce.calTwFlat.MasterTwilightFlat(sequence, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
+                    task = reduce.calTwFlat.MasterTwilightFlat(sequence, master_dark[-1], 
+                                                               outfile, lthr=1000, hthr=100000, 
+                                                               bpm=None,
+                                                               temp_dir=self.temp_dir)
                     out = task.createMaster()
                     files_created.append(out) # out must be equal to outfile
                 else:
@@ -1617,7 +1715,7 @@ class ReductionSet(object):
                             
                     except Exception,e:
                         log.error("[reduceSeq] Error while parallel data reduction ! --> %s",str(e))
-                        raise e
+                        #####raise e
                     
                 else:
                     for n in range(next):
@@ -1635,7 +1733,7 @@ class ReductionSet(object):
                                                           output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
                         except Exception,e:
                             log.error("[reduceSeq] Some error while reduction of extension %d of object sequence", n+1)
-                            raise e
+                            #####raise e
         
             # if all reduction were fine, now join/stich back the extensions in a widther frame
             seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
@@ -1923,7 +2021,7 @@ class ReductionSet(object):
         #print "OBJS =",obj_frames
         
         # set the reduction mode
-        if red_mode != None: self.red_mode=red_mode
+        if red_mode != None: self.red_mode = red_mode
         
         dark_flat = False
         
@@ -1963,8 +2061,9 @@ class ReductionSet(object):
         ######################################################
         # 00 - Sort out data by MJD (self.m_LAST_FILES)
         ######################################################
+        # in principle, it is suppossed they are already ascending sorter, but...
         try:
-            self.m_LAST_FILES=self.sortOutData()
+            self.m_LAST_FILES = self.sortOutData() 
         except:
             raise
         
@@ -2003,14 +2102,14 @@ class ReductionSet(object):
                 if self.obs_mode=="dither":
                     log.debug("---> dither sequece <----")
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", master_flat, bpm=None, norm=False)
+                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", master_flat, bpm=None, norm=False, temp_dir=self.temp_dir)
                     superflat.create()
                 elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
                     log.debug("----> EXTENDED SOURCE !!! <----")
                     sky_list=self.getSkyFrames()
                     print "SKY_LIST=",sky_list
                     misc.utils.listToFile(sky_list, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", master_flat, bpm=None, norm=False)
+                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", master_flat, bpm=None, norm=False, temp_dir=self.temp_dir)
                     superflat.create()                            
                 else:
                     log.error("Dither mode not supported")
@@ -2173,10 +2272,9 @@ class ReductionSet(object):
         #########################################
         # X1 - Compute field distortion (SCAMP internal stats)
         #########################################
-        _astrowarp=True
+        _astrowarp = True
         if _astrowarp:
-            log.info("**** Astrometric calibration and stack of individual \
-            frames to field distortion correction ****")
+            log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, 
                                             coadded_file=output_file, 
                                             config_dict=self.config_dict,

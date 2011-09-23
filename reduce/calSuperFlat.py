@@ -74,7 +74,7 @@ class SuperSkyFlat:
         
     """
     def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  
-                 bpm=None, norm=True):
+                 bpm=None, norm=True, temp_dir="/tmp/"):
         """
         Initialization method.
         
@@ -96,7 +96,7 @@ class SuperSkyFlat:
         else:
             raise Exception("Cannot read source files")
            
-        self.output_file_dir = os.path.dirname(output_filename)
+        self.temp_dir = os.path.dirname(output_filename)
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
         self.norm = norm # if true, the flat field will be normalized
@@ -129,12 +129,12 @@ class SuperSkyFlat:
             raise Exception("Found a data integrity error")
         
           
-        tmp1=(self.output_file_dir+"/tmp_sf.fits").replace('//','/')
+        tmp1=(self.temp_dir + "/tmp_sf.fits").replace('//','/')
         misc.fileUtils.removefiles(tmp1)
         log.info("Combining images...")
-        misc.utils.listToFile(m_filelist, self.output_file_dir+"/files.txt") 
+        misc.utils.listToFile(m_filelist, self.temp_dir + "/files.txt") 
         # Combine the images to find out the super Flat using sigma-clip algorithm
-        iraf.mscred.combine(input=("'"+"@"+self.output_file_dir+"/files.txt"+"'").replace('//','/'),
+        iraf.mscred.combine(input=("'"+"@"+self.temp_dir+"/files.txt"+"'").replace('//','/'),
                     output=tmp1,
                     combine='median',
                     offset='none',

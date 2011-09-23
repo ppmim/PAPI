@@ -59,10 +59,13 @@ class MasterDarkModel:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, input_files, output_dir, output_filename="/tmp/mdarkmodel.fits", bpm=None):
-        self.__input_files=input_files
-        self.__output_file_dir=output_dir
-        self.__output_filename=output_filename  # full filename (path+filename)
+    def __init__(self, input_files, temp_dir, 
+                 output_filename="/tmp/mdarkmodel.fits", 
+                 bpm=None):
+        
+        self.__input_files = input_files
+        self.__temp_dir = output_dir # actually, not used
+        self.__output_filename = output_filename  # full filename (path+filename)
         self.__bpm=bpm
     
     def createDarkModel(self):
@@ -233,7 +236,7 @@ if __name__ == "__main__":
     filelist=[line.replace( "\n", "") for line in fileinput.input(source_file_list)]
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
     print "Files:",filelist
-    mDark = MasterDarkModel(filelist,"/tmp",output_filename)
+    mDark = MasterDarkModel(filelist, "/tmp", output_filename)
     mDark.createDarkModel()
     
         

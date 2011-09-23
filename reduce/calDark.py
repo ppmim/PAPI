@@ -91,17 +91,18 @@ class MasterDark:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, file_list, output_dir, output_filename="/tmp/mdark.fits", 
+    def __init__(self, file_list, temp_dir, output_filename="/tmp/mdark.fits", 
                  texp_scale=False, bpm=None, normalize=False):
         """Constructor"""
         
         self.__file_list = file_list
-        self.__output_file_dir = output_dir
         self.__output_filename = output_filename  # full filename (path+filename)
+        self.__temp_dir = temp_dir #temporal dir used for temporal/intermediate files
         self.__bpm = bpm
         self.m_min_ndarks = 3
         self.m_texp_scale = texp_scale
         self.m_normalize = normalize
+        
 
     def createMaster(self):
       
@@ -180,7 +181,7 @@ class MasterDark:
         
         # Cleanup : Remove old masterdark
         misc.fileUtils.removefiles(self.__output_filename)
-        tmp1 = self.__output_file_dir + "/dark_tmp.fits"
+        tmp1 = self.__temp_dir + "/dark_tmp.fits"
         misc.fileUtils.removefiles(tmp1)
         
         #Add TEXP and NCOADD to master filename
@@ -189,8 +190,8 @@ class MasterDark:
         
         
         # Call the noao.imred.ccdred task through PyRAF
-        misc.utils.listToFile(good_frames, self.__output_file_dir+"/files.list") 
-        iraf.mscred.darkcombine(input = "@"+(self.__output_file_dir+"/files.list").replace('//','/'),
+        misc.utils.listToFile(good_frames, self.__temp_dir+"/files.list") 
+        iraf.mscred.darkcombine(input = "@"+(self.__temp_dir+"/files.list").replace('//','/'),
                         output = tmp1.replace('//','/'),
                         combine = 'average',
                         ccdtype = '',

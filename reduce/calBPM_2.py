@@ -64,8 +64,8 @@ import misc.utils as utils
 class BadPixelMask:
     """
     \brief
-        Make a bad pixel mask (hot and cold pixels) from a set of images ( lamp_on and lamp_off frames and darks)
-        using iraf.ccdmask task 
+        Make a bad pixel mask (hot and cold pixels) from a set of images 
+        ( lamp_on and lamp_off frames and darks) using iraf.ccdmask task 
             
     \par Class:
          BadPixelMask   
@@ -94,16 +94,23 @@ class BadPixelMask:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, i_file_list, master_dark, output_file, lsigma=4, hsigma=4):
+    def __init__(self, i_file_list, master_dark, output_file=None, lsigma=4, 
+                 hsigma=4, temp_dir="/tmp"):
         
-        self.i_file_list=i_file_list
+        self.i_file_list = i_file_list
         self.master_dark = master_dark
         # Default parameters values
         self.lsigma = float(lsigma)
         self.hsigma = float(hsigma)
-        self.output_file=output_file
-        self.verbose= False
-        self.outputdir="/tmp/"
+        self.temp_dir = temp_dir
+        
+        if output_file==None:
+            dt = datetime.datetime.now()
+            self.output_file = self.temp_dir + 'BadPixMask'+dt.strftime("-%Y%m%d%H%M%S")
+        else:
+            self.output_file = output_file
+                
+        self.verbose = False
     
     def create(self):
         self.create_IRAF()
@@ -176,12 +183,12 @@ class BadPixelMask:
         
         #STEP 4: Combine dome dark subtracted flats (off)
         
-        flat_off_comb=self.outputdir+"flats_comb_off.fits"
+        flat_off_comb = self.temp_dir + "flats_comb_off.fits"
         misc.fileUtils.removefiles(flat_off_comb)
         # Due a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument
         # we need to build again a text file with the files
-        flats="/tmp/flats_off.txt"
-        ftemp=open(flats,"w")
+        flats = self.temp_dir + "/flats_off.txt"
+        ftemp = open(flats,"w")
         for flat in flats_off_frames:
             ftemp.write(flat+"\n")
         ftemp.close()       
@@ -201,9 +208,9 @@ class BadPixelMask:
         #misc.fileUtils.removefiles(flats)
         
         
-        flat_on_comb=self.outputdir + "flats_comb_on.fits"
+        flat_on_comb = self.temp_dir + "flats_comb_on.fits"
         misc.fileUtils.removefiles(flat_on_comb)
-        flats="/tmp/flats_on.txt"
+        flats = self.temp_dir + "flats_on.txt"
         ftemp=open(flats,"w")
         for flat in flats_on_frames:
             ftemp.write(flat+"\n")
@@ -225,7 +232,7 @@ class BadPixelMask:
         #misc.fileUtils.removefiles(flats)
                                     
         #STEP 5: Compute flat_low/flat_high
-        flat_ratio = self.outputdir + 'flat_ratio.fits'
+        flat_ratio = self.temp_dir + 'flat_ratio.fits'
         misc.fileUtils.removefiles(flat_ratio)
         log.debug( 'Computing FlatRatio')
         iraf.imarith(operand1=flat_off_comb,
@@ -237,15 +244,10 @@ class BadPixelMask:
                      
         #STEP 6: Create BPM
         log.debug( 'Now, computing bad pixel mask')
-        dt = datetime.datetime.now()
-        if self.output_file==None:
-            outF = self.outputdir + 'BadPixMask'+dt.strftime("-%Y%m%d%H%M%S")
-        else:
-            outF = self.output_file
-        
-        misc.fileUtils.removefiles(outF+".pl")
+        misc.fileUtils.removefiles(self.output_file + ".pl")
+
         iraf.ccdmask(image=flat_ratio,
-                 mask=outF,
+                 mask=self.output_file,
                  lsigma=self.lsigma,
                  hsigma=self.hsigma,
                  )
@@ -266,10 +268,10 @@ class BadPixelMask:
         # Change back to the original working directory
         iraf.chdir()
         
-        log.info('Bad pixel mask created : %s', outF+".pl")
+        log.info('Bad pixel mask created : %s', self.output_file+".pl")
         log.debug("Time elapsed : [%s]" , t.tac() )
 
-        return outF+".pl"
+        return self.output_file + ".pl"
         
     def create_simple(self):
         
@@ -341,11 +343,11 @@ class BadPixelMask:
         
         #STEP 4: Combine dome dark subtracted flats (off & on)
         
-        flat_off_comb=self.outputdir+"flats_comb_off.fits"
+        flat_off_comb = self.temp_dir + "flats_comb_off.fits"
         misc.fileUtils.removefiles(flat_off_comb)
         # Due to a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument
         # we need to build again a text file with the files
-        flats="/tmp/flats_off.txt"
+        flats = self.temp_dir + "/flats_off.txt"
         ftemp=open(flats,"w")
         for flat in flats_off_frames:
             ftemp.write(flat+"\n")
@@ -366,10 +368,10 @@ class BadPixelMask:
         #misc.fileUtils.removefiles(flats)
         
         
-        flat_on_comb=self.outputdir + "flats_comb_on.fits"
+        flat_on_comb = self.temp_dir + "flats_comb_on.fits"
         misc.fileUtils.removefiles(flat_on_comb)
-        flats="/tmp/flats_on.txt"
-        ftemp=open(flats,"w")
+        flats = self.temp_dir + "/flats_on.txt"
+        ftemp = open(flats,"w")
         for flat in flats_on_frames:
             ftemp.write(flat+"\n")
         ftemp.close()       
@@ -390,7 +392,7 @@ class BadPixelMask:
         #misc.fileUtils.removefiles(flats)
                                     
         #STEP 5: Compute flat_low/flat_high
-        flat_ratio = self.outputdir + 'flat_ratio.fits'
+        flat_ratio = self.temp_dir + 'flat_ratio.fits'
         misc.fileUtils.removefiles(flat_ratio)
         log.debug( 'Computing FlatRatio')
         iraf.imarith(operand1=flat_off_comb,
@@ -402,13 +404,7 @@ class BadPixelMask:
                      
         #STEP 6: Create BPM
         log.debug( 'Now, computing bad pixel mask')
-        dt = datetime.datetime.now()
-        if self.output_file==None:
-            outF = self.outputdir + 'BadPixMask'+dt.strftime("-%Y%m%d%H%M%S")
-        else:
-            outF = self.output_file
-        
-        misc.fileUtils.removefiles(outF)
+        misc.fileUtils.removefiles(self.output_file)
         
         fr=pyfits.open(flat_ratio)
         
@@ -428,7 +424,7 @@ class BadPixelMask:
         hdu.scale('int16') # importat to set first data type
         hdulist = pyfits.HDUList([hdu])
         hdu.header.update('PAPITYPE','MASTER_BPM')
-        hdulist.writeto(outF)
+        hdulist.writeto(self.output_file)
         hdulist.close(output_verify='ignore')
         
         # Clean up tmp files
@@ -436,10 +432,10 @@ class BadPixelMask:
         # Change back to the original working directory
         iraf.chdir()
         
-        log.info('Bad pixel mask created : %s', outF)
+        log.info('Bad pixel mask created : %s', self.output_file)
         log.debug("Time elapsed : [%s]" , t.tac() )
 
-        return outF
+        return self.output_file
 #-----------------------------------------------------------------------
  
 def usage():
@@ -493,7 +489,7 @@ if __name__ == "__main__":
     
     # Read command line parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:d:o:l:h:v',['file=','dark=','out=','lsig=','hsig=','verbose'])
+        opts, args = getopt.getopt(sys.argv[1:], 'f:d:o:l:h:t:v',['file=','dark=','out=','lsig=','hsig=','temp_dir=','verbose'])
     except getopt.GetoptError:
         usage()
         sys.exit(1)
@@ -514,20 +510,23 @@ if __name__ == "__main__":
             
     for option, par in opts:
         if option in ("-f", "--file"):
-            inputfile=par
+            inputfile = par
             print "inputfile=", inputfile
         if option in ("-d", "--dark"):
-            dark=par
+            dark = par
             print "dark=", dark
         if option in ("-o", "--out"):
-            outputfile=par
+            outputfile = par
             print "outputfile=",outputfile
         if option in ("-l", "--lsig"):
-            lthr=par
+            lthr = par
             print "lsig=", lsig
         if option in ("-h", "--hsig"):
-            hthr=par
+            hthr = par
             print "hsig=",hsig
+        if option in ("-t", "--temp_dir"):
+            temp_dir = par
+            print "temp_dir=",temp_dir
         if option in ('-v','--verbose'):      # verbose debugging output
             verbose = True
             print "Verbose true"
@@ -540,7 +539,7 @@ if __name__ == "__main__":
     
     print '...reading', inputfile
     
-    bpm = BadPixelMask(inputfile, dark, outputfile, lsig, hsig)
+    bpm = BadPixelMask(inputfile, dark, outputfile, lsig, hsig, temp_dir)
     #bpm.create()
     bpm.create_simple()
     

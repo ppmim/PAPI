@@ -201,6 +201,7 @@ def main(arguments = None):
                           config_dict = options \
                         )
         #if options.print_seq:
+        print "RED_MODE=",general_opts['reduction_mode']
         if init_options.print_seq:
             print "SEQUENCES found:"
             rs.getSequences()

@@ -121,7 +121,7 @@ class LogSheet:
 # main
 ################################################################################
 if __name__ == "__main__":
-    print 'Start MasterDark....'
+    print 'Start Log Sheet generator....'
     # Get and check command-line options
     
     

@@ -83,14 +83,14 @@ class BadPixelMask:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, input_file, output, lthr=1.0, hthr=3.0, verbose=False):
+    def __init__(self, input_file, outputfile, lthr=1.0, hthr=3.0, temp_dir="/tmp"):
         
-        self.input_file=input_file
+        self.input_file = input_file # file with the list of files to read and process 
         # Default parameters values
         self.lthr = float(lthr)
         self.hthr = float(hthr)
-        self.output=output
-        self.verbose= False
+        self.output = outputfile
+        self.temp_dir = temp_dir
         
     
     def create(self):
@@ -143,17 +143,17 @@ class BadPixelMask:
         # Due a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument
         # we need to build again a text file with the good_files
         if len(good_flats)!=len(filelist):
-            ftemp=open("/tmp/flats.txt","w")
+            flats = self.temp_dir + "/flats.txt"
+            ftemp = open(flats,"w")
             for flat in good_flats:
                 ftemp.write(flat+"\n")
             ftemp.close()       
-            flats="/tmp/flats.txt"
-        else: flats=self.input_file
+        else: flats = self.input_file
              
         # STEP 1: Make the combine of dome Flat frames
         # - Build the frame list for IRAF
         log.debug("Combining Flat frames...")
-        flat_comb='/tmp/flatcomb.fits'
+        flat_comb = self.temp_dir + '/flatcomb.fits'
         misc.fileUtils.removefiles(flat_comb)
         # Call IRAF task
         iraf.flatcombine(input='@'+flats.replace('//','/'), 
@@ -180,32 +180,32 @@ class BadPixelMask:
                     result=flat_comb,
                     )
                     
-        f=pyfits.open(flat_comb)
-        nx1=f[0].header['NAXIS1']
-        nx2=f[0].header['NAXIS1']
+        f = pyfits.open(flat_comb)
+        nx1 = f[0].header['NAXIS1']
+        nx2 = f[0].header['NAXIS1']
         f.close()
                     
         # STEP 3: Create and zero the rejection mask
-        bpm=numpy.zeros([nx1, nx2])
+        bpm = numpy.zeros([nx1, nx2])
         
         # STEP 4: Loop for all input images and divide each by the master
-        mflat=pyfits.open(flat_comb)
-        tmpf=numpy.zeros([nx1, nx2])
+        mflat = pyfits.open(flat_comb)
+        tmpf = numpy.zeros([nx1, nx2])
         for flat in  good_flats:
-            f_i=pyfits.open(flat)
+            f_i = pyfits.open(flat)
             #ceros=(mflat[0].data==0).sum()
             #print "CEROS=", ceros
-            mydata=numpy.where(mflat[0].data==0, 0.0001, mflat[0].data) # to avoid zero division error
-            tmpf=f_i[0].data/mydata
-            std=numpy.std(tmpf)
-            tmpf.shape=nx1*nx2
-            median=numpy.median(tmpf)
+            mydata = numpy.where(mflat[0].data==0, 0.0001, mflat[0].data) # to avoid zero division error
+            tmpf = f_i[0].data/mydata
+            std = numpy.std(tmpf)
+            tmpf.shape = nx1*nx2
+            median = numpy.median(tmpf)
             
             print "MEDIAN=",median
             print "STD=",std
             
             log.debug("Divide each flatted flat by its median")
-            tmpf=tmpf/median
+            tmpf = tmpf/median
             
             low = 1.0 - self.lthr*std/median
             high = 1.0 + self.hthr*std/median
@@ -214,18 +214,19 @@ class BadPixelMask:
             print "HIGH=", high
             
             #STEP 4.3 Define the bad pixels
-            tmpf.shape=nx1,nx2
+            tmpf.shape = nx1,nx2
             bpm[ (tmpf < low) | (tmpf > high)]+=1
             log.debug("BPM updated with current flat %s", flat)
             f_i.close()
             
         mflat.close()
+        
         # STEP 5: Go through the rejection mask and if a pixel has been marked bad 
         # more than a set number of times, then it is defined as bad
-        nbmax=numpy.max(2, len(good_flats)/4)
+        nbmax = numpy.max(2, len(good_flats)/4)
             
-        bpm=numpy.where(bpm>nbmax,1,0) # bad pixel set to 1
-        nbad=(bpm==1).sum()
+        bpm = numpy.where(bpm>nbmax,1,0) # bad pixel set to 1
+        nbad = (bpm==1).sum()
         
         badfrac = float(nbad)/float(nx1*nx2)
         print "# bad pixels", nbad
@@ -235,7 +236,7 @@ class BadPixelMask:
         misc.fileUtils.removefiles( self.output )               
         hdu = pyfits.PrimaryHDU()
         hdu.scale('int16') # importat to set first data type
-        hdu.data=bpm     
+        hdu.data = bpm     
         hdulist = pyfits.HDUList([hdu])
         hdu.header.update('PAPITYPE','MASTER_BPM')
         hdu.header.add_history('BPM created from %s' % good_flats)
@@ -319,6 +320,9 @@ if __name__ == "__main__":
         if option in ("-h", "--hthr"):
             hthr=par
             print "hthr=",hthr
+        if option in ("-t", "--temp_dir"):
+            temp_dir = par
+            print "temp_dir=",temp_dir
         if option in ('-v','--verbose'):      # verbose debugging output
             verbose = True
             print "Verbose true"
@@ -331,7 +335,7 @@ if __name__ == "__main__":
     
     print '...reading', inputfile
     
-    bpm = BadPixelMask(inputfile, outputfile, lthr, hthr, verbose)
+    bpm = BadPixelMask(inputfile, outputfile, lthr, hthr, temp_dir)
     bpm.create()
     
     print 'ending BPM....'

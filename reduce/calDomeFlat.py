@@ -91,11 +91,12 @@ class MasterDomeFlat:
   
     """
     
-    def __init__(self, input_files, output_dir, output_filename="/tmp/mdflat.fits", normal=True):
+    def __init__(self, input_files, temp_dir="/tmp/", output_filename="/tmp/mdflat.fits", 
+                 normal=True):
         """ Initialization method """
         
         self.__input_files = input_files
-        self.__output_file_dir = output_dir
+        self.__temp_dir = temp_dir
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__normal = normal
         self.MIN_FLATS = 4
@@ -199,11 +200,11 @@ class MasterDomeFlat:
         # STEP 2: Make the combine of Flat LAMP-ON frames
         # - Build the frame list for IRAF
         log.debug("Combining Flat LAMP-ON frames...")
-        flat_lampon=self.__output_file_dir + "/flat_lampON.fits"
+        flat_lampon = self.__temp_dir + "/flat_lampON.fits"
         misc.fileUtils.removefiles(flat_lampon)
-        misc.utils.listToFile(domelist_lampon, self.__output_file_dir+"/files_on.list") 
+        misc.utils.listToFile(domelist_lampon, self.__temp_dir+"/files_on.list") 
         # - Call IRAF task
-        iraf.mscred.flatcombine(input="@"+(self.__output_file_dir+"/files_on.list").replace('//','/'),
+        iraf.mscred.flatcombine(input="@"+(self.__temp_dir+"/files_on.list").replace('//','/'),
                         output=flat_lampon,
                         combine='median',
                         ccdtype='',
@@ -220,11 +221,11 @@ class MasterDomeFlat:
         # STEP 3: Make the combine of Flat LAMP-OFF frames
         # - Build the frame list for IRAF
         log.debug("Combining Flat LAMP-OFF frames...")    
-        flat_lampoff=self.__output_file_dir + "/flat_lampOFF.fits"
+        flat_lampoff = self.__temp_dir + "/flat_lampOFF.fits"
         misc.fileUtils.removefiles(flat_lampoff)
-        misc.utils.listToFile(domelist_lampoff, self.__output_file_dir+"/files_off.list") 
+        misc.utils.listToFile(domelist_lampoff, self.__temp_dir+"/files_off.list") 
         # - Call IRAF task
-        iraf.mscred.flatcombine(input="@"+(self.__output_file_dir+"/files_off.list").replace('//','/'),
+        iraf.mscred.flatcombine(input="@"+(self.__temp_dir+"/files_off.list").replace('//','/'),
                         output=flat_lampoff,
                         combine='median',
                         ccdtype='',
@@ -239,7 +240,7 @@ class MasterDomeFlat:
                         )
     
         # STEP 4 : Subtract lampON-lampOFF (implicit dark subtraction)
-        flat_diff=self.__output_file_dir+"/flat_lampON_OFF.fits"
+        flat_diff = self.__temp_dir+"/flat_lampON_OFF.fits"
         log.debug("Subtracting Flat ON-OFF frames...%s", flat_diff) 
         # Remove an old masternormflat
         misc.fileUtils.removefiles(flat_diff)
@@ -270,13 +271,16 @@ class MasterDomeFlat:
             else: mode=1
             
             # Compute normalized flat wrt chip 0
-            self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
+            self.__output_filename = self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
             misc.fileUtils.removefiles(self.__output_filename)
             iraf.mscred.mscarith(operand1=flat_diff,
                         operand2=mode,
                         op='/',
                         result=self.__output_filename,
                         )
+        #    
+        # Single FITS (not MEF)
+        #
         else:
             iraf.imarith(operand1 = flat_lampon,
                     operand2 = flat_lampoff,
@@ -322,8 +326,8 @@ class MasterDomeFlat:
         # Cleanup: Remove temporary files
         misc.fileUtils.removefiles(flat_lampoff, flat_lampon, flat_diff)
         #Remove temp list files
-        misc.fileUtils.removefiles(self.__output_file_dir+"/files_off.list")
-        misc.fileUtils.removefiles(self.__output_file_dir+"/files_on.list")
+        misc.fileUtils.removefiles(self.__temp_dir+"/files_off.list")
+        misc.fileUtils.removefiles(self.__temp_dir+"/files_on.list")
         #todo
             
         log.debug(t.tac() )
@@ -377,7 +381,7 @@ if __name__ == "__main__":
 
     print "Files:",filelist
     tmp_dir = os.path.dirname(options.output_filename)
-    mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, options.normalize)
+    mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, options.normalize,"/tmp")
     mDFlat.createMaster()
     
         

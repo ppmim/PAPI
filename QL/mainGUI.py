@@ -233,7 +233,7 @@ class MainGUI(panicQL):
         
         # Outputs DB
         try:
-            self.outputsDB=datahandler.dataset.DataSet(None)
+            self.outputsDB = datahandler.dataset.DataSet(None)
             self.outputsDB.createDB()
             #self.outputsDB.load()
         except Exception,e:
@@ -338,10 +338,11 @@ class MainGUI(panicQL):
         ## Check if end of observing sequence (science or calibration), then start processing
         end_seq=False
         seq=[]
-        (end_seq, seq)=self.checkEndObsSequence(filename)
+        seqType=''
+        (end_seq, seq, seqType)=self.checkEndObsSequence(filename)
         if end_seq:
-            log.debug("Detected end of observing sequence")
-            self.logConsole.warning("Detected end of observing sequence")       
+            log.debug("Detected end of observing sequence: [%s]"%(seqType))
+            self.logConsole.warning("Detected end of observing sequence [%s]"%(seqType))       
         
         
         ##################################################################
@@ -660,10 +661,18 @@ class MainGUI(panicQL):
         no reduction can still be done.
         
         Note: It even works for calibration frame sequences (dark, flats, ...)
+
+        @return: a triplet as follow:
+            - True if EOS was found, otherwise False
+            - if True, the list of files of the sequence
+            - if True, the type of sequence (DARK, FLAT, SCIENCE, etc ...)
+            
         """
         
         endSeq=False
         retSeq=[]
+        typeSeq=''
+        
         # Read the FITS file
         fits = datahandler.ClFits(filename)
         #only for debug !!
@@ -681,10 +690,11 @@ class MainGUI(panicQL):
                 self.curr_sequence.append(filename)
                 retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects !
                 self.curr_sequence = []
-                endSeq,retSeq = True,retSeq
+                endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
+                log.debug("EOS-0 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
                 self.curr_sequence.append(filename)
-                endSeq,retSeq = False,self.curr_sequence
+                endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         # ############################################
         # We suppose data is obtained using GEIRS+MIDAS_scripts observations
         # POINT_NO, DITH_NO, EXPO_NO keyword will be checked for sequece detection
@@ -694,29 +704,29 @@ class MainGUI(panicQL):
             if self.last_ob_id==-1: # first time 
                 self.curr_sequence.append(filename)
                 log.debug("Adding file to sequence: %s",str(self.curr_sequence))
-                endSeq,retSeq = False,self.curr_sequence
+                endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
             elif fits.getOBId()!=self.last_ob_id \
                 or fits.getFilter()!= self.last_filter \
                 or fits.getType()!=self.last_img_type:
                 retSeq = self.curr_sequence[:]  # very important !! Lists are mutable objects ! or clist = copy.copy(list)
                 #reset the sequence list
                 self.curr_sequence = [filename]
-                endSeq,retSeq = True,retSeq
-                log.debug("EOS-1 detected : %s", str(self.curr_sequence))
+                endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
+                log.debug("EOS-1 %s detected : %s"%(typeSeq, str(self.retSeq)))
             else:
                 ra_point_distance = self.last_ra-fits.ra
                 dec_point_distance = self.last_dec-fits.dec
-                dist=math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
+                dist = math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
                 if dist>self.MAX_POINT_DIST:
                     retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects ! 
                     #reset the sequence list
                     self.curr_sequence = [filename]
-                    endSeq,retSeq = True,retSeq
-                    log.debug("EOS-2 detected : %s", str(self.curr_sequence))
+                    endSeq,retSeq,typeSeq = True,retSeq,fits.getType()
+                    log.debug("EOS-2 %s detected : %s"%(typeSeq, str(self.retSeq)))
                 else:
                     self.curr_sequence.append(filename)
                     log.debug("Adding file to sequence: %s",str(self.curr_sequence))
-                    endSeq,retSeq = False,self.curr_sequence
+                    endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         
         #and finally, before return, update 'last'_values
         self.last_ra = fits.ra
@@ -724,7 +734,8 @@ class MainGUI(panicQL):
         self.last_filter = fits.getFilter()
         self.last_ob_id = fits.getOBId()
         self.last_img_type = fits.getType()
-        return endSeq,retSeq
+        
+        return endSeq,retSeq,typeSeq
                 
         """
         # next option for sequence detection is based on FILTER and OB_ID
@@ -890,9 +901,12 @@ class MainGUI(panicQL):
         
         if self.comboBox_classFilter.currentText()=="GROUP":
             self.listView_dataS.clear()
-            files = self.inputsDB.GetFiles()
             sequences = []
             seq_types = []
+            """
+            files = self.inputsDB.GetFiles()
+            # Now, we instantiate a ReductionSet, only to get the sequences, but
+            # not for data reduction purposes. 
             try:
                 rs = RS.ReductionSet( files, self.m_outputdir, out_file=None, \
                                             obs_mode="dither", dark=None, 
@@ -905,6 +919,8 @@ class MainGUI(panicQL):
             except Exception, e:
                 log.error("Error while creating Reduction set")
                 raise e
+            """
+            sequences, seq_types = self.inputsDB.GetSeqFilesB() # much more quick than creating the RS!
             k = 0
             for seq in sequences:
                 elem = QListViewItem( self.listView_dataS )
@@ -1110,7 +1126,10 @@ class MainGUI(panicQL):
         popUpMenu.exec_loop(QCursor.pos())   
     
     def reduceSequence_slot(self):
-        """Run the data reduction of the current group/sequence selected"""
+        """
+        Run the data reduction of the current grouped-sequence selected in the
+        ListView when the GROUP view is selected.
+        """
         
         group_files = []
         child = self.m_listView_first_item_selected.firstChild()
@@ -1126,19 +1145,13 @@ class MainGUI(panicQL):
         #Create working thread that compute sky-frame
         try:
             self._task = RS.ReductionSet (group_files, self.m_outputdir, 
-                                        out_file=self.m_outputdir+"/red_result.fits",
+                                        out_file=None,
                                         obs_mode="dither", dark=None, flat=None, 
                                         bpm=None, red_mode="quick", group_by="ot", 
-                                        check_data=True, config_dict=self.config_opts)
+                                        check_data=True, config_dict=self.config_opts,
+                                        external_db_files=self.outputsDB.GetFiles())
             
-            if self._task.isaCalibSet():
-                log.debug("It's a calibration sequence what is going to be reduced !")
-                self.logConsole.info("Processing CALIBRATION sequence")
-                thread = reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
-            else:
-                log.debug("It's a science sequence what is going to be reduced !")
-                self.logConsole.info("Processing SCIENCE sequence")
-                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
+            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -1323,9 +1336,9 @@ class MainGUI(panicQL):
         fo.write(file+"\n")
       fo.close()
                              
-#####################################################################################################
-############# PROCESSING STAFF ######################################################################
-#####################################################################################################
+    ############################################################################
+    ############# PROCESSING STAFF #############################################
+    ############################################################################
         
     def subtractFrames_slot(self):
         """This method is called to subtract two images selected from the File List View"""
@@ -1446,8 +1459,8 @@ class MainGUI(panicQL):
             try:
                 texp_scale=False
                 self.setCursor(Qt.waitCursor)
-                self._task=reduce.calDark.MasterDark(self.m_popup_l_sel, "/tmp", str(outfileName), texp_scale)
-                thread=reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
+                self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, self.m_tempdir, str(outfileName), texp_scale)
+                thread = reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
                 thread.start()
             except Exception, e:
                 self.setCursor(Qt.arrowCursor)
@@ -1456,12 +1469,12 @@ class MainGUI(panicQL):
         else:
             pass
 
-    def do_quick_reduction_slot_V1(self):
-        # Run quick-reduction mode with the
-        self.QL2(self.m_popup_l_sel[0], self.logConsole)
     
     def do_quick_reduction_slot(self):
-        """ Do a quick reduction of the user selected files in the list view panel"""
+        """ 
+        Run a quick reduction of the current user selected science files 
+        in the list view panel.
+        """
             
         if len(self.m_popup_l_sel)<5:
             QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>=5) !")
@@ -1473,9 +1486,12 @@ class MainGUI(panicQL):
         self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         try:
-            self._task = RS.ReductionSet( self.m_popup_l_sel, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick",\
-                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+            self._task = RS.ReductionSet( self.m_popup_l_sel, self.m_outputdir, 
+                                          out_file=None,
+                                          obs_mode="dither", dark=None, 
+                                          flat=None, bpm=None, red_mode="quick",
+                                          group_by="ot", check_data=True, 
+                                          config_dict=self.config_opts)
                                             
             thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
@@ -1496,7 +1512,7 @@ class MainGUI(panicQL):
             if not outfileName.isEmpty():
                 try:
                     self.setCursor(Qt.waitCursor)
-                    self._task = reduce.calDomeFlat.MasterDomeFlat (self.m_popup_l_sel, "/tmp", str(outfileName))
+                    self._task = reduce.calDomeFlat.MasterDomeFlat (self.m_popup_l_sel, self.m_tempdir , str(outfileName))
                     thread=reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
                     thread.start()
                 except:
@@ -1548,7 +1564,9 @@ class MainGUI(panicQL):
         if not outfileName.isEmpty():
             try:
                 self.setCursor(Qt.waitCursor)
-                self._task = reduce.calGainMap.SkyGainMap(self.m_popup_l_sel, str(outfileName), None)
+                self._task = reduce.calGainMap.SkyGainMap(self.m_popup_l_sel, 
+                                                          str(outfileName), 
+                                                          None, self.m_tempdir)
                 thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                 thread.start()
             except Exception, e:
@@ -1704,7 +1722,7 @@ class MainGUI(panicQL):
                     lsig = 10
                     hsig = 10
                     self.setCursor(Qt.waitCursor)
-                    self._task = reduce.calBPM_2.BadPixelMask( "/tmp/bpm.list", dark, str(outfileName), lsig, hsig)
+                    self._task = reduce.calBPM_2.BadPixelMask( "/tmp/bpm.list", dark, str(outfileName), lsig, hsig, self.m_tempdir)
                     thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
                 except:
@@ -2007,10 +2025,15 @@ class MainGUI(panicQL):
     def processFiles(self, files=None):
         """
         Process the files provided; otherwise all the files in the current 
-        Source List View (but not output files)
+        Source List View (but not the output files)
         
         @param files: files list to be processed; if None, all the files in the
         current List View will be used !
+        
+        @note: When the RS object is created, we provide the outputDB as the 
+        external DB for the RS; this way fomer master calibration files can be
+        used for the current data reduction (e.g., TwFlats who need a master dark)
+        
         
         """
         
@@ -2038,9 +2061,13 @@ class MainGUI(panicQL):
             output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj_', dir=self.m_outputdir)
             os.close(output_fd)
             os.unlink(outfilename) # we only need the name
-            self._task = RS.ReductionSet( files, self.m_outputdir, out_file=outfilename, \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
-                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+            self._task = RS.ReductionSet( files, self.m_outputdir, out_file=outfilename,
+                                            obs_mode="dither", dark=None, 
+                                            flat=None, bpm=None, red_mode="quick",
+                                            group_by="ot", check_data=True,
+                                            config_dict=self.config_opts,
+                                            external_db_files=self.outputsDB.GetFiles()) 
+            # provide the outputDB files as the external calibration files for the RS 
             
             log.debug("ReductionSet created !")
             thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list)
@@ -2054,184 +2081,8 @@ class MainGUI(panicQL):
             self.m_processing = False
             raise e
         
-    #######################################################################################
-    # Quick-Look 2: Preprocess frame. If the frame is  MEF, it will be stripped and
-    # processed in parallel. Later, the result frame will be displayed  into DS9 display.
-    #######################################################################################
-    def QL2 ( self, frame_to_reduce, clog ):
-
-        n_ext = 0
-        mef_filenames = []
-        result_frames = []
-
-        if ( frame_to_reduce.endswith(".fits") ):
-            clog.append('Start QuickLook-2 processing for frame: %s' %frame_to_reduce )
-            f=datahandler.ClFits(frame_to_reduce)
-            clog.append("Frame Type=%s" %f.type )
-
-            # A SCIENCE frame
-            if (f.type=="SCIENCE"):
-                # A MEF SCIENCE frame
-                if f.mef:
-                    # Split the Multi-Extension FITS file
-                    n_ext = misc.fileUtils.splitMEF( frame_to_reduce, mef_filenames  )
-                    par = True # for tests
-                    #############################
-                    #Execute PARALLEL reduction
-                    #############################
-                    if par:
-                        #Synchronous call to parallel reduction
-                        result_frames=self.do_parallel_reduc_MEF ( mef_filenames )
-
-                    ##############################
-                    #Execute SEQUENTIAL reduction
-                    ##############################
-                    else:
-                        #Synchronous call to parallel reduction
-                        result_frames=self.do_seq_reduc_MEF ( mef_filenames )
-                    ###############################
-                    #Finaly, DISPLAY the frames
-                    ###############################
-                    display.showSingleFrames( result_frames )
-                #A Single Frame
-                else:
-                    # Single reduction
-                    r=reduce.SimpleReduce()
-                    #source_frame = '/disk-a/caha/panic/DATA/data_mat/QL1/orion0021_x4_1.fits'
-                    #master_dark  = '/disk-a/caha/panic/DATA/data_mat/out/master_dark.fits'
-                    #master_flat  = '/disk-a/caha/panic/DATA/data_mat/out/master_normflat.fits'
-                    #out_dir      =  '/disk-a/caha/panic/DATA/data_mat/out/'
-                    
-                    appMask = False
-                    try:
-                        frame_out = r.run( frame_to_reduce, self.m_masterDark, self.m_masterFlat, self.m_outputdir+'/result.fits', self.m_tempdir, appPixMask=False )
-                        #Finaly, display the frame
-                        display.showFrame (frame_out)
-                    except:
-                        log.error("Error while quick reduction")
-                        QMessageBox.critical(self, "Error", "Error while quick reduction of selected frame")
-                        
-                    #frame_out = frame_to_reduce.replace(".fits","_D_F_S.fits")
-                    #threadsmod.ReduceThread(i, filenames[i-1], dark_frame, flat_frame, out_frame)
-                    #prep = tasks.subtractSky1( frame, False)
-                    #prep  = tasks.test2( frame, frame , True)
-            # Not is a SCIENCE frame, it is a calibration, then show it directly
-            else:
-                clog.append('------>Frame is not a science frame, then it only will be displayed' )
-                # Multi-Extension FITS file
-                if f.mef:
-                    #ds9 -zscale 'foo.fits[1]' 'foo.fits[2]' 'foo.fits[3]' foo.fits[4]' -tile
-                    display.showFrame(frame_to_reduce)
-                # Single FITS file
-                else:
-                    display.showFrame(frame_to_reduce)
-
       
-    ################################################################################
-    def do_parallel_reduc_MEF( self, filenames ):
-      """Do a parallel reduction of a MEF file launching one thread for each extension"""
-    
-      log.debug("Start do_parallel_reduc_MEF")
-
-      start = time.time()
-      threads = []
-      source_frames = ['/disk-a/caha/panic/DATA/data_mat/orion0021.fits','/disk-a/caha/panic/DATA/data_mat/orion0022.fits', '/disk-a/caha/panic/DATA/data_mat/orion0023.fits','/disk-a/caha/panic/DATA/data_mat/orion0024.fits']
-
-      #self.m_masterDark   = '/disk-a/caha/panic/DATA/data_mat/out/master_dark.fits'
-      #self.m_flat_frame   = '/disk-a/caha/panic/DATA/data_mat/out/master_normflat.fits'
-      #self.out_frame    = '/disk-a/caha/panic/DATA/data_mat/out/prueba1.fits'
-      appMask      = True
-      result_frames=[]
-
-      for i in range(1, len(filenames)+1):
-        result_frames.append( filenames[i-1].replace(".fits", "_out.fit"))
-        threads.append( reduce.ReduceThread(i, filenames[i-1], self.m_masterDark, self.m_masterFlat, result_frames[i-1], self.m_outputdir) )
-        threads[i-1].start()
-
-      for t in threads:
-          t.join()
-
-      print "Finalizaron todas las HEBRAS en %f secs !!!" %(time.time()-start)
-      print "RESULT_FRAMES=", result_frames
-      return result_frames
-
-
-    ################################################################################
-    def do_seq_reduc_MEF(self, filenames ):
-      """ Therically not used anymore !!! DEPRECATED """
-      
-      start = time.time()
-
-      threads = []
-
-      #dark_frame   = '/disk-a/caha/panic/DATA/data_mat/out/master_dark.fits'
-      #flat_frame   = '/disk-a/caha/panic/DATA/data_mat/out/master_normflat.fits'
-      #out_frame    = '/disk-a/caha/panic/DATA/data_mat/out/prueba1.fits'
-      #appMask      = True
-      result_frames = []
-      
-      for i in range(1, len(filenames)+1):
-        result_frames.append( filenames[i-1].replace(".fits", "_out.fit"))
-        t=reduce.ReduceThread(i, filenames[i-1], self.m_masterDark, self.m_masterFlat, result_frames[i-1], self.m_outputdir)
-        t.start()
-        t.join()
-
-      print "Finalizaron todas las HEBRAS (secuencialmente) en %f secs !!!" %(time.time()-start)
-      print "RESULT_FRAMES=", result_frames
-
-      return result_frames
-
-    ################################################################################
-
-    def do_parallel_reduc_MEF_2( self, filenames ):
-      """ Therically not used anymore !!! DEPRECATED"""
-      
-      # Doing Asynchronous callback with Pyro!! NOT USED !!! only for a test  !!
-
-      import Pyro.naming, Pyro.core
-      from Pyro.errors import NamingError
-
-      start = time.time()
-
-      objs = []
-
-      source_frames = ['/disk-a/caha/panic/DATA/data_mat/orion0021.fits','/disk-a/caha/panic/DATA/data_mat/orion0022.fits', '/disk-a/caha/panic/DATA/data_mat/orion0023.fits','/disk-a/caha/panic/DATA/data_mat/orion0024.fits']
-      dark_frame   = '/disk-a/caha/panic/DATA/data_mat/out/master_dark.fits'
-      flat_frame   = '/disk-a/caha/panic/DATA/data_mat/out/master_normflat.fits'
-      out_frame    = '/disk-a/caha/panic/DATA/data_mat/out/prueba1.fits'
-      appMask      = False
-
-      # locate the NS
-      locator = Pyro.naming.NameServerLocator()
-      #print 'Searching Name Server...',
-      ns = locator.getNS()
-
-      for i in range(1, len(source_frames)+1):
-
-        # resolve the Pyro object
-        #print 'finding object'
-        try:
-          name='sreduce_%d' %i
-          URI=ns.resolve(name)
-        #print 'URI:',URI
-        except NamingError,x:
-          print 'Couldn\'t find object, nameserver says:',x
-          self.error=1
-          raise
-
-        # create a proxy for the Pyro object, and return that
-        obj = Pyro.core.getProxyForURI(URI)
-        obj._setOneway('run') # Make asynchronous callback 'run'
-        error = obj.run ( source_frames[i-1], dark_frame, flat_frame, out_frame, False)
-        objs.append(obj)
-
-
-      #for i in range(1, len(filenames)+1):
-      #  while objs[i-1].run_status!=1:
-      #    pass
-
-
-      print "Finalizaron todas las HEBRAS en %f secs !!!" %(time.time()-start)
+################################################################################
 
 
 class LoggingConsole (object):

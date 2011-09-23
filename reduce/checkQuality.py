@@ -53,17 +53,18 @@ class CheckQuality:
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge=200, pixsize=0.45, write=False, verbose=False, bpm=None):
+    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge=200, 
+                 pixsize=0.45, write=False, verbose=False, bpm=None):
         
-        self.input_file=input_file
-        self.bpm=bpm
+        self.input_file = input_file
+        self.bpm = bpm
         # Default parameters values
         self.isomin = float(isomin)
         self.ellipmax = float(ellipmax)
         self.edge = int(edge)
-        self.pixsize= float(pixsize)
-        self.write= False
-        self.verbose= False
+        self.pixsize = float(pixsize)
+        self.write = False
+        self.verbose = False
         self.MIN_NUMBER_GOOD_STARS = 5
         
     
@@ -83,8 +84,8 @@ class CheckQuality:
         # Sextractor config
 
         
-        sex_exe= os.environ['TERAPIX']+"/sex"
-        sex_cnf= os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
+        sex_exe = os.environ['TERAPIX']+"/sex"
+        sex_cnf = os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
         
         ## Sextractor Catalog columns
         #0  NUMBER
@@ -103,7 +104,7 @@ class CheckQuality:
         #13 FLUX_APER
         #14 FLUXERR_APER
         
-        catalog_file="test.cat"
+        catalog_file = "test.cat"
         
         sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
         " -CATALOG_TYPE ASCII -CATALOG_NAME  " + catalog_file
@@ -117,22 +118,22 @@ class CheckQuality:
             log.error("Some error while runCmd")
             raise e
         
-        source_file=catalog_file
+        source_file = catalog_file
         
         try:
-            if self.write: fits_file=pyfits.open(self.input_file, 'update')
-            else: fits_file=pyfits.open(self.input_file, 'readonly')
+            if self.write: fits_file = pyfits.open(self.input_file, 'update')
+            else: fits_file = pyfits.open(self.input_file, 'readonly')
         except Exception,e:
             log.error("Error while openning file %s",self.input_file)
             raise e
         
         try:
             if len(fits_file)>1: # is a MEF
-                naxis1=fits_file[1].header['NAXIS1']
-                naxis2=fits_file[1].header['NAXIS2']
+                naxis1 = fits_file[1].header['NAXIS1']
+                naxis2 = fits_file[1].header['NAXIS2']
             else:  # is a simple FITS      
-                naxis1=fits_file[0].header['NAXIS1']
-                naxis2=fits_file[0].header['NAXIS2']
+                naxis1 = fits_file[0].header['NAXIS1']
+                naxis2 = fits_file[0].header['NAXIS2']
         except KeyError,e:
             log.error("Error while reading FITS header NAXIS keywords :%s",str(e))
             raise Exception("Error while reading FITS header NAXIS keywords")
@@ -141,24 +142,24 @@ class CheckQuality:
         #fwhm_world=[float(line.split()[7]) for line in fileinput.input(source_file)]
         #matrix=[line.split() for line in fileinput.input(source_file)]
         #b=numpy.array(matrix)
-        a=numpy.loadtxt(source_file)
+        a = numpy.loadtxt(source_file)
         
-        good_stars=[]
+        good_stars = []
         # Select 'best' stars for the estimation
-        std=numpy.std(a[:,8])
+        std = numpy.std(a[:,8])
         print "STD=",std
         for i in range(0, a.shape[0]):
-            x=a[i,1]
-            y=a[i,2]
-            isoarea=a[i,6]
-            ellipticity=a[i,7]
-            fwhm=a[i,8]
-            flux=a[i,10]
-            flux_err=a[i,11]
-            flags=a[i,12]
+            x = a[i,1]
+            y = a[i,2]
+            isoarea = a[i,6]
+            ellipticity = a[i,7]
+            fwhm = a[i,8]
+            flux = a[i,10]
+            flux_err = a[i,11]
+            flags = a[i,12]
             #fa=a[i,13]
             #fea=a[i,14]
-            snr=flux/flux_err
+            snr = flux/flux_err
             if x>self.edge and x<naxis1-self.edge and y>self.edge and y<naxis2-self.edge \
                and ellipticity<self.ellipmax and fwhm>0.1 and fwhm<20 and flags==0  \
                and isoarea>float(self.isomin) and snr>20.0: # and fwhm<5*std it does not work many times
@@ -173,14 +174,14 @@ class CheckQuality:
                 print "  ELLIP=", ellipticity
                 """
         
-        m_good_stars=numpy.array(good_stars)
+        m_good_stars = numpy.array(good_stars)
         
         print "Found <%d> GOOD stars"%len(m_good_stars)
         
         if len(m_good_stars)>self.MIN_NUMBER_GOOD_STARS:
-            std=numpy.std(m_good_stars[:,8])
+            std = numpy.std(m_good_stars[:,8])
             print "STD2=",std
-            efwhm=numpy.median(m_good_stars[:,8])
+            efwhm = numpy.median(m_good_stars[:,8])
             print "best-FWHM-median(pixels)", efwhm
             print "FLUX_RADIUS (as mentioned in Terapix T0004 explanatory table) =", numpy.median(m_good_stars[:,9])
             print "Masked-mean=", ma.masked_outside(m_good_stars[:,8], 0.01, 3*std).mean()
@@ -212,8 +213,8 @@ class CheckQuality:
         
         # Sextractor config
 
-        sex_exe= os.environ['TERAPIX']+"/sex "
-        sex_cnf= os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
+        sex_exe = os.environ['TERAPIX']+"/sex "
+        sex_cnf = os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
         background_image = output_file
         
         sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
@@ -276,32 +277,32 @@ if __name__ == "__main__":
     isomin = 10
     ellipmax = 0.3
     edge = 200
-    pixsize=0.45
-    write= False
-    verbose= False
-    inputfile=''
+    pixsize =0.45
+    write = False
+    verbose = False
+    inputfile =''
             
     for option, par in opts:
         if option in ('-v','--verbose'):      # verbose debugging output
             verbose = True
             print "Verbose true"
         if option in ("-f", "--file"):
-            inputfile=par
+            inputfile = par
             print "inputfile=", inputfile
         if option in ("-i", "--isomin"):
-            isomin=par
+            isomin = par
             print "isomin=", isomin
         if option in ("-e", "--ellipmax"):
-            ellipmax=par
+            ellipmax = par
             print "ellipmax=",ellipmax
         if option in ("-d", "--edge"):
-            edge=par
+            edge = par
             print "edge=", edge
         if option in ("-p", "--pixsize"):
-            pixsize=par
+            pixsize = par
             print "pixsize=",pixsize
         if option in ("-w", "--write"):
-            write=True
+            write = True
             print "write=", write
                 
     
@@ -319,8 +320,5 @@ if __name__ == "__main__":
         raise
     
     print 'ending application....'
-
-
-
 
     

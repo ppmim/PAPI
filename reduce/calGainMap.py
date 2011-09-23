@@ -41,11 +41,13 @@ from misc.paLog import log
 
 class SkyGainMap:
     """ Compute the gain map from a list of sky frames """
-    def __init__(self, filelist,  output_filename="/tmp/superFlat.fits",  bpm=None):
+    def __init__(self, filelist,  output_filename="/tmp/superFlat.fits",  
+                 bpm=None, temp_dir="/tmp/"):
         """ """
         self.framelist = filelist
         self.output = output_filename
         self.bpm = bpm
+        self.temp_dir = temp_dir
         
     def create(self):
         """ Creation of the Gain map"""
@@ -56,7 +58,8 @@ class SkyGainMap:
             os.close(output_fd)
             superflat = reduce.calSuperFlat.SuperSkyFlat(self.framelist, 
                                                          tmp_output_path, 
-                                                         self.bpm, norm=False)
+                                                         self.bpm, norm=False,
+                                                         temp_dir=self.temp_dir)
             superflat.create()
         except Exception,e:
             log.error("Error while creating super sky flat: %s", str(e))
@@ -89,7 +92,7 @@ class DomeGainMap:
         try:
             output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
             os.close(output_fd)
-            domeflat = reduce.calDomeFlat.MasterDomeFlat(self.framelist, output_dir="/tmp", output_filename=tmp_output_path)
+            domeflat = reduce.calDomeFlat.MasterDomeFlat(self.framelist, temp_dir="/tmp", output_filename=tmp_output_path)
             domeflat.create()
         except Exception,e:
             log.error("Error while creating master dome flat: %s", str(e))
