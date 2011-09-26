@@ -532,7 +532,7 @@ class DataSet:
                       
         # First, look for OB_IDs
         #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
-        s_select="select filename, ob_id, ob_pat, expn, nexp, filter,texp \
+        s_select="select filename, ob_id, ob_pat, expn, nexp, filter, texp, type \
                 from dataset where %s and %s order by mjd" %(s_filter,s_type)
         #print s_select
         cur = self.con.cursor()
@@ -544,8 +544,8 @@ class DataSet:
         seq_list = [] # list of lists of files from each sequence
         seq_types =[] # list of types for each sequence
         for fits in rows:
-            print "%s  %s  %s  %s  %s %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
-                                       fits[3], fits[4], fits[5], fits[6], # expn, nexp, filter, texp
+            print "%s  %s  %s  %s  %s %s  %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
+                                       fits[3], fits[4], fits[5], fits[6], fits[7], # expn, nexp, filter, texp, type
                                        fits[3]==fits[4]) # true/false
             if fits[3]==1:
                 group = [str(fits[0])] #filename
@@ -555,7 +555,7 @@ class DataSet:
                 if fits[3]==fits[4]:
                     #detected end of the sequence
                     seq_list.append(group[:]) # very important ==> lists are mutable !
-                    seq_types.append(str(type))
+                    seq_types.append(str(fits[7]))
                     group = []
                     found_first = False  # reset flag
             else:

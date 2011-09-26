@@ -511,6 +511,7 @@ if __name__ == "__main__":
         log.debug("RA = %f"%ra)
         log.debug("DEC = %f"%dec)
         log.debug("Filter = %s"%filter)
+        
         if ra<0 or exptime<0:
             log.debug("Found wrong RA,DEC,EXPTIME or FILTER value")
             sys.exit(0)

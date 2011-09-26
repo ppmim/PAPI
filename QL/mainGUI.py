@@ -930,7 +930,7 @@ class MainGUI(panicQL):
                     (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object) = self.inputsDB.GetFileInfo(file)
                     if file==seq[0]:
                         #the first time, fill the "tittle" of the group 
-                        elem.setText(0, "TYPE="+str(seq_types[k]) + "  ** FILTER="+str(filter) + "  ** TEXP="+str(texp))
+                        elem.setText(0, "TYPE="+str(seq_types[k]) + "  ** FILTER="+str(filter) + "  ** TEXP="+str(texp) + " ** #imgs="+str(len(seq)))
                     e_child = QListViewItem(elem)
                     e_child.setText (0, str(file))
                     e_child.setText (1, str(type))

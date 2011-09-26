@@ -1739,6 +1739,9 @@ class ReductionSet(object):
                         else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
                         if bpm_ext==[]: mbpm=None
                         else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
+                        
+                        if n==2: return # only for a TEST !!!
+                        
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, self.red_mode, out_dir=self.out_dir,\
                                                           output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
