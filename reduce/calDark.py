@@ -110,8 +110,7 @@ class MasterDark:
         \brief Create a master DARK from the dark file list
         """   
         log.debug("Start createMaster")
-        start_time = time.time()
-        t=utils.clock()
+        t = utils.clock()
         t.tic()
         
         

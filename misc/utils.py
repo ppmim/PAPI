@@ -174,10 +174,9 @@ def isaFITS(filepath):
     """
     Check if a given filepath is a FITS file
     """
-    
     if os.path.exists(filepath):
         try:
-            fd=pyfits.open(filepath)
+            fd = pyfits.open(filepath, ignore_missing_end=True)
             if fd[0].header['SIMPLE']==True:
                 return True
             else:
@@ -189,39 +188,38 @@ def isaFITS(filepath):
         return False
 
 def fits_simple_verify(fitsfile):
+    """
+    Performs 2 simple checks on the input fitsfile, which is a string
+    containing a path to a FITS file.  First, it checks that the first card is
+    SIMPLE, and second it checks that the file 2880 byte aligned.
     
-        """
-        Performs 2 simple checks on the input fitsfile, which is a string
-        containing a path to a FITS file.  First, it checks that the first card is
-        SIMPLE, and second it checks that the file 2880 byte aligned.
-        
-        This function is useful for performing quick verification of FITS files.
-        
-        Raises:
-          ValueError:  if either of the 2 checks fails
-          IOError:     if fitsfile doesn't exist
-        """
-        
-        if not os.path.exists(fitsfile):
-            raise IOError("file '%s' doesn't exist" % fitsfile)
+    This function is useful for performing quick verification of FITS files.
     
+    Raises:
+      ValueError:  if either of the 2 checks fails
+      IOError:     if fitsfile doesn't exist
+    """
     
-        f = open(fitsfile,"readonly")
-    
-        FITS_BLOCK_SIZE = 2880
-        try:
-            # check first card name
-            card = f.read(len("SIMPLE"))
-            if card != "SIMPLE":
-                raise ValueError("input file is not a FITS file")
-    
-    
-            # check file size
-            stat_result = os.stat(fitsfile)
-            file_size = stat_result.st_size
-            if file_size % FITS_BLOCK_SIZE != 0:
-                log.warning("FITS file is not 2880 byte aligned (corrupted?)")
-                raise ValueError("FITS file is not 2880 byte aligned (corrupted?)")
-        finally:
-            f.close()
+    if not os.path.exists(fitsfile):
+        raise IOError("file '%s' doesn't exist" % fitsfile)
+
+
+    f = open(fitsfile,"readonly")
+
+    FITS_BLOCK_SIZE = 2880
+    try:
+        # check first card name
+        card = f.read(len("SIMPLE"))
+        if card != "SIMPLE":
+            raise ValueError("input file is not a FITS file")
+
+
+        # check file size
+        stat_result = os.stat(fitsfile)
+        file_size = stat_result.st_size
+        if file_size % FITS_BLOCK_SIZE != 0:
+            log.warning("FITS file is not 2880 byte aligned (corrupted?)")
+            raise ValueError("FITS file is not 2880 byte aligned (corrupted?)")
+    finally:
+        f.close()
             

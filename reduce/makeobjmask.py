@@ -101,7 +101,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
     """
     
     files = []       
-    # Check if inputfile is FITS file        
+    # Check if inputfile is FITS file 
     if utils.isaFITS(inputfile)==True:
         files=[inputfile]
     # or a text file having the list of files to be masked
@@ -115,7 +115,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
     f_out = open(outputfile,"w")
     
     sex = astromatic.SExtractor()
-    n=0
+    n = 0
     for fn in files:
         if not os.path.exists(fn):      # check whether input file exists
             log.error( 'File %s does not exist', fn)

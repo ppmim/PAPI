@@ -79,6 +79,7 @@ class ClFits:
         self.obPat     = -1 # Observation (dither) Pattern 
         self.pat_expno = -1 # Exposure number within (dither) pattern
         self.pat_noexp = -1 # Number of exposures within pattern
+        self.instrument = ""
         self.processed = False
         self.exptime   = -1
         self.filter    = ""
@@ -328,12 +329,15 @@ class ClFits:
                 self.type = "SCIENCE"  
                 #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, 
                 #pero tiene pinta que fue  un despiste del operador !!!
+            elif myfits[0].header[keyword_with_frame_type].lower().count('science'):
+                self.type = "SCIENCE"
             else:
-                self.type="SCIENCE"
-            ###log.debug("Image type: %s", self.type)
+                self.type = "SCIENCE"
+                #log.debug("DEFAULT Image type: %s"%self.type)
         except KeyError:
-            log.warning('OBJECT keyword not found')
-            self.type='UNKNOW'
+            log.error('OBJECT/IMAGETYP keyword not found')
+            self.type = 'UNKNOW'
+            raise Exception("Cannot classify (dark,flat, science) FITS image")
         
         #Is pre-reduced the image ? by default, no
         self.processed=False

@@ -54,12 +54,17 @@ from misc.paLog import log
 #PAPI packages 
 import reduce.reductionset as RS
 import misc.config
+import misc.utils as utils
 
 ################################################################################
 # main
 ################################################################################
 def main(arguments = None):
     
+    # Clock to measure the CPU time used
+    t = utils.clock()
+    t.tic()
+        
     if arguments is None:
         arguments = sys.argv[1:] # ignore argv[0], the script name
     
@@ -201,11 +206,10 @@ def main(arguments = None):
                           config_dict = options \
                         )
         #if options.print_seq:
-        print "RED_MODE=",general_opts['reduction_mode']
         if init_options.print_seq:
             print "SEQUENCES found:"
             rs.getSequences()
-        else:    
+        else:
             rs.reduceSet(red_mode=general_opts['reduction_mode'])
     except RS.ReductionSetException, e:
         print e
@@ -213,7 +217,7 @@ def main(arguments = None):
         print "Cannot reduce the Data Set, check error log...."
         print str(e)
     else:
-        print "Well done (I hope) !!!"
+        print "Well done (I hope) -  %s!!!"%t.tac()
         return 0
     
 ######################################################################
