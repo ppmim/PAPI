@@ -72,23 +72,23 @@ int main(int argc, char *argv[])
 
     if (hwid > MAXHWID) {
       hwid=MAXHWID;
-      printf("HALFNSKY reduced to %d \n", hwid);
+      printf("[skyfilter] HALFNSKY reduced to %d \n", hwid);
     }
 
-    /* maxwid = nplanes/2;
-    if (hwid > maxwid) {
-      hwid=maxwid;
-      printf("HALFNSKY reduced to %d \n", hwid);
-    } */
 
-    /* if (hwid > MAXHWID || (2 * hwid + 1) > nplanes)
-      eprintf("hwid %d, MAXHWID %d, nplanes %d\n", hwid, MAXHWID, nplanes); */
+    if (hwid > MAXHWID || (2 * hwid + 1) > nplanes){
+      eprintf("[skyfilter] Found wrong number of sky frames --> hwid %d, MAXHWID %d, nplanes %d\n", hwid, MAXHWID, nplanes);
+      return -1;
+    }
 
 
+    /* Read the initial sliding window */
     for (i = 0; i < (2 * hwid + 1); i++)  {
 	    /* printf("Nplanes: %d  i: %d \n", nplanes, i);*/
 	    if (i<nplanes) readdata(i, usemask);
 	}
+
+    printf("\nPASO 2");
 
     for (i = 0, skybeg = 0; i < nplanes; i++) {
         int j, nsky = 0, skyend = skybeg + 2 * hwid;
@@ -111,6 +111,11 @@ int main(int argc, char *argv[])
         }
 	    printf (" \n");
 
+        if (nsky==0) {
+            eprintf("[skyfilter] Error, not enought number of sky frames");
+            return -1;
+        }
+        
         avgscale /= (float) nsky;
 
         for (j = 0; j < nsky; j++){

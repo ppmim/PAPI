@@ -54,7 +54,7 @@ def initWCS( input_image ):
     except Exception,e:
         raise e
     
-    fits_file=pyfits.open(input_image, 'update')
+    fits_file=pyfits.open(input_image, 'update', ignore_missing_end=True)
 
     if f.isMEF(): # is a MEF
         raise Exception("Sorry, currently this function only works with simple FITS files with no extensions")
@@ -212,7 +212,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
                     for the photometry calibration 
     """
     
-    log.debug("*** Start Astrometric calibration ***")
+    log.debug("[doAstrometry] *** Start Astrometric calibration ***")
     
     if not config_dict:
             raise Exception("Config dictionary not provided ...")
@@ -224,7 +224,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
 
     ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
     #initwcs also converts to J2000.0 EQUINOX
-    log.debug("***Doing WCS-header initialization ...")
+    log.debug("[doAstrometry] ***Doing WCS-header initialization ...")
     initWCS(input_image)
     """
     initwcs_path=config_dict['config_files']['irdr_bin']+"/initwcs" #os.environ['PAPI_HOME']+'/irdr/bin/initwcs'

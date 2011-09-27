@@ -1740,7 +1740,7 @@ class ReductionSet(object):
                         if bpm_ext==[]: mbpm=None
                         else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                         
-                        if n==2: return # only for a TEST !!!
+                        #if n==1: return None,None# only for a TEST !!!
                         
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, self.red_mode, out_dir=self.out_dir,\
@@ -2182,7 +2182,7 @@ class ReductionSet(object):
         log.info("**** 1st Sky subtraction (without object mask) ****")
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
         # return only filtered images; in exteded-sources, sky frames  are not included 
-        self.m_LAST_FILES=self.skyFilter(out_dir+"/skylist1.list", gainmap, 'nomask', self.obs_mode)       
+        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list", gainmap, 'nomask', self.obs_mode)       
                         
         #########################################
         # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
@@ -2243,7 +2243,7 @@ class ReductionSet(object):
              
             log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
-            log.info("##### End of SINGLE data reduction ######")
+            log.info("##### End of QUICK data reduction ######")
             log.info("#########################################")
             return output_file 
         

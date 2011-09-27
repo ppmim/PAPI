@@ -116,6 +116,7 @@ int main(int argc, char *argv[])
         last_post=-1;
         nsky=0;
         avgscale = 0.0;
+        
         if (isTarget(i))
         {
             printf("\nImage: %d   Sky: ", i);
@@ -124,7 +125,7 @@ int main(int argc, char *argv[])
             {             
                 if (isSky(j))
                 {
-                    printf (" %d", j);
+                    printf ("backward search %d", j);
                     dbuf[nsky]=data[j]; /* doesn't mind the order in which skies are stored ??? */
                     
                     if (usemask)
@@ -141,7 +142,7 @@ int main(int argc, char *argv[])
             {
                 if (isSky(j))
                 {
-                    printf(" %d", j);
+                    printf("forward search : %d", j);
                     dbuf[nsky]=data[j];
                     
                     if (usemask)
@@ -157,12 +158,13 @@ int main(int argc, char *argv[])
             /* SECOND PASS: Check whether all skies are found */
             if ( nskies_pre<hwid || nskies_post<hwid)
             {
+                printf("[debug] second pass");
                 /*complete pre-frames using post-frames*/
                 for (j=last_post+1;j<nplanes && nskies_pre<hwid; j++)
                 {
                     if (isSky(j))
                     {
-                        printf(" %d", j);
+                        printf("[debug] 2-forward search %d", j);
                         dbuf[nsky]=data[j];
                         if (usemask)
                             wbuf[nsky] = wdata[j];
@@ -176,7 +178,7 @@ int main(int argc, char *argv[])
                 {
                     if (isSky(j))
                     {
-                        printf(" %d", j);    
+                        printf("[debug] 2-backward search : %d", j);    
                         dbuf[nsky]=data[j];
                         if (usemask)
                             wbuf[nsky] = wdata[j];
@@ -189,11 +191,12 @@ int main(int argc, char *argv[])
                 }
             }
                 
-            printf (" \n");
+            printf ("\n**End of sky/target search -> NSKIES_PRE=%d, NSKIES_POST=%d HWID=%d **\n", nskies_pre, nskies_post, hwid);
 
             if (nskies_pre<hwid || nskies_post<hwid)
             {   
-                printf("WARNING: not found enought sky frames required. Only found: %d frames but needed: %s", nskies_pre+nskies_post, 2*hwid);
+                printf("ERROR: not found enought sky frames required. Only found: %d frames but needed: %d\n", nskies_pre+nskies_post, 2*hwid);
+                return -1;
             }
             
             avgscale /= (float) nsky;
@@ -262,15 +265,23 @@ static void readdata(int i, int usemask)
 /* read data type from header keyword (OBJECT) (sky or target) */
 static short readSkyTarget( char *fn)
 {
-    char *str = get_key_str(fn, "OBJECT");
+    char *str1 = NULL; /* OBJECT key */
+    char *str2 = NULL; /* IMAGETYP key */
+    
     int i=0;
     
-    if (str == NULL)
-        return -1;
-    /* Convert string to upper case. */
-    for( i = 0 ; (str[i] = toupper(str[i])) != '\0' ; i++);
+    str1 = get_key_str(fn, "OBJECT");
+    str2 = get_key_str(fn, "IMAGETYP");
     
-    if (strstr(str,"SKY")!=NULL) return 0; /* sky */ 
+    
+    if (str1==NULL && str2==NULL )
+        return -1; /* Neither sky nor object ! */
+        
+    /* Convert string to upper case. */
+    for( i = 0 ; (str1[i] = toupper(str1[i])) != '\0' ; i++);
+    for( i = 0 ; (str2[i] = toupper(str2[i])) != '\0' ; i++);
+    
+    if (strstr(str1,"SKY")!=NULL || strstr(str2,"SKY")!=NULL ) return 0; /* sky */ 
     else return 1; /* target */
 
 }

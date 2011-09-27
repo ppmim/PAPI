@@ -291,10 +291,12 @@ class ClFits:
             
         # Some temporal to allow work with diff instrument data files
         try:
-            if myfits[0].header['INSTRUME']=='Omega2000':
+            if myfits[0].header['INSTRUME']=='Omega2000' and myfits[0].header.has_key('OBJECT'):
                 keyword_with_frame_type = 'OBJECT'
-            elif myfits[0].header['INSTRUME']=='HAWKI':
+            elif myfits[0].header['INSTRUME']=='HAWKI' and myfits[0].header.has_key('IMAGETYP'):
                 keyword_with_frame_type = 'IMAGETYP'
+            elif myfits[0].header['INSTRUME']=='HAWKI' and myfits[0].header.has_key('OBJECT'):
+                keyword_with_frame_type = 'OBJECT'
             elif myfits[0].header['INSTRUME']=='Panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
                     keyword_with_frame_type = 'IMAGETYP'
@@ -308,8 +310,8 @@ class ClFits:
             
         # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , MASTER_calibration, UNKNOW)     
         try:
-            if myfits[0].header.has_key('PAPITYPE'):
-                self.type = myfits[0].header['PAPITYPE']
+            if myfits[0].header.has_key('IMAGETYP'):
+                self.type = myfits[0].header['IMAGETYP']
             elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
                 self.type = "DARK"
             elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
@@ -345,9 +347,14 @@ class ClFits:
         #print "File :"+ self.pathname
         #Filter
         try:
-            if myfits[0].header['INSTRUME']=='HAWKI': 
-                self.filter = myfits[0].header['FILTER1']
-            else:
+            if myfits[0].header['INSTRUME']=='HAWKI':
+                if myfits[0].header.has_key('ESO INS FILT1 NAME'): 
+                    self.filter = myfits[0].header['ESO INS FILT1 NAME']
+                elif myfits[0].header.has_key('FILTER1'):
+                    self.filter = myfits[0].header['FILTER1']
+                elif myfits[0].header.has_key('FILTER2'):
+                    self.filter = myfits[0].header['FILTER2']
+            else: # PANIC, O2000, ...
                 self.filter  = myfits[0].header['FILTER']
         except KeyError:
             log.warning('FILTER keyword not found')
