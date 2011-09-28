@@ -52,7 +52,7 @@ class ClFits:
          DOME_FLAT_LAMP_OFF,
          DOME_FLAT_LAMP_ON,
          FOCUS,
-         SKY_FOR,              # Sky for extended objects during dither sequence
+         SKY,              # Sky for extended objects during dither sequence
          SCIENCE, (RAW)
          MASTER_DARK,
          MASTER_SKY_FLAT,
@@ -153,7 +153,7 @@ class ClFits:
         return False # not yet implemented
     
     def isScience(self):
-        return (self.type.count("SCIENCE"))
+        return (self.type.count("SCIENCE") or self.count("STD"))
     
     def isRawScience(self):
         return (self.type=="SCIENCE_RAW")
@@ -165,7 +165,7 @@ class ClFits:
         return (self.type=="MASTER_DARK")
     
     def isSky(self):
-        return (self.type=="SKY_FOR")
+        return (self.type=="SKY")
     
     def isObject(self):
         return (self.isScience())
@@ -275,12 +275,12 @@ class ClFits:
         # INSTRUMENT
         try:
             if myfits[0].header.has_key('INSTRUME'):
-                self.instrument=myfits[0].header['INSTRUME']
+                self.instrument = myfits[0].header['INSTRUME']
             else:
-                self.instrument="Unknown"
+                self.instrument = "Unknown"
         except Exception,e:
             log.warning("INSTRUME keyword not found")
-            self.instrument="Unknown"
+            self.instrument = "Unknown"
         
         # Find out the how data file were"observed"
         if myfits[0].header.has_key('OBS_TOOL') or self.instrument=='HAWKI':
@@ -309,37 +309,63 @@ class ClFits:
             keyword_with_frame_type = 'OBJECT' #default
             
         # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , MASTER_calibration, UNKNOW)     
-        try:
-            if myfits[0].header.has_key('IMAGETYP'):
-                self.type = myfits[0].header['IMAGETYP']
-            elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
-                self.type = "DARK"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
-                self.type = "DOME_FLAT_LAMP_OFF"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('lamp on'):
-                self.type = "DOME_FLAT_LAMP_ON"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('dusk'):
-                self.type = "TW_FLAT_DUSK"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('dawn'):
-                self.type = "TW_FLAT_DAWN"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('skyflat') or \
-                 myfits[0].header[keyword_with_frame_type].lower().count('flat'): 
-                self.type = "SKY_FLAT"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
-                self.type = "SKY_FOR"
-            elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
-                self.type = "SCIENCE"  
-                #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, 
-                #pero tiene pinta que fue  un despiste del operador !!!
-            elif myfits[0].header[keyword_with_frame_type].lower().count('science'):
-                self.type = "SCIENCE"
-            else:
-                self.type = "SCIENCE"
-                #log.debug("DEFAULT Image type: %s"%self.type)
-        except KeyError:
-            log.error('OBJECT/IMAGETYP keyword not found')
-            self.type = 'UNKNOW'
-            raise Exception("Cannot classify (dark,flat, science) FITS image")
+        panic_types = {'dark':'DARK', 
+                       'lamp_on_flat':'DOME_FLAT_LAMP_ON', 
+                       'lamp_off_flat':'DOME_FLAT_LAMP_OFF',
+                       'tw_flat_dawn':'TW_FLAT_DAWN', 
+                       'tw_flat_dusk':'TW_FLAT_DUSK', 
+                       'sky_flat':'SKY_FLAT',
+                       'sky': 'SKY',
+                       'science': 'SCIENCE',
+                       'std':'STD',
+                       'focus':'FOCUS'
+                       }
+        #IMAGETYP = [DARK, LAMP_ON_FLAT, LAMP_OFF_FLAT, TW_FLAT_DUSK, TW_FLAT_DAWN, SKY_FLAT, SCIENCE, SKY, STD, FOCUS ]
+        #FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
+        if self.instrument.lower() =='panic':
+            try:
+                if myfits[0].header.has_key('IMAGETYP'):
+                    ltype = myfits[0].header['IMAGETYP'].lower()
+                else: 
+                    ltype = myfits[0].header[keyword_with_frame_type].lower()
+                self.type = panic_types[ltype]
+                
+            except KeyError:
+                log.error('OBJECT/IMAGETYP keyword not found')
+                self.type = 'UNKNOW'
+                raise Exception("Cannot classify (dark,flat, science) FITS image")
+        else: #o2000, hawk-i?
+            try:
+                if myfits[0].header.has_key('IMAGETYP'):
+                    self.type = myfits[0].header['IMAGETYP']
+                elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
+                    self.type = "DARK"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
+                    self.type = "DOME_FLAT_LAMP_OFF"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('lamp on'):
+                    self.type = "DOME_FLAT_LAMP_ON"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('dusk'):
+                    self.type = "TW_FLAT_DUSK"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('dawn'):
+                    self.type = "TW_FLAT_DAWN"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('sky_flat') or \
+                     myfits[0].header[keyword_with_frame_type].lower().count('flat'): 
+                    self.type = "SKY_FLAT"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
+                    self.type = "SKY"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
+                    self.type = "SCIENCE"  
+                    #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, 
+                    #pero tiene pinta que fue  un despiste del operador !!!
+                elif myfits[0].header[keyword_with_frame_type].lower().count('science'):
+                    self.type = "SCIENCE"
+                else:
+                    self.type = "SCIENCE"
+                    #log.debug("DEFAULT Image type: %s"%self.type)
+            except KeyError:
+                log.error('OBJECT/IMAGETYP keyword not found')
+                self.type = 'UNKNOW'
+                raise Exception("Cannot classify (dark,flat, science) FITS image")
         
         #Is pre-reduced the image ? by default, no
         self.processed=False

@@ -716,7 +716,7 @@ class ReductionSet(object):
             print "\n\n"
             print "*** # Sequences found : %d ***"%len(seq_list) 
             for i in range(0,len(seq_list)):
-                print "SEQ[%d] - \n %s"%(i,seq_list[i])
+                print "SEQ[%d] - [%s] \n\n %s"%(i,seq_types[i],seq_list[i])
         
         return seq_list,seq_types
         
@@ -741,7 +741,7 @@ class ReductionSet(object):
         
         # group data file (only science) by Filter,TExp 
         if self.group_by=="filter":
-            (seq_par, seq_list) = self.db.GetFilterFiles() # return a list of SCIENCE (or SKY_FOR) frames grouped by FILTER
+            (seq_par, seq_list) = self.db.GetFilterFiles() # return a list of SCIENCE (or SKY) frames grouped by FILTER
             # Now, we need to check temporal (bases on MJD) continuity and split a 
             # group if it is temporally discontinued
             new_seq_list = []
@@ -846,7 +846,7 @@ class ReductionSet(object):
         """
         filelist = self.db.GetFilesT(type="SCIENCE", texp=-1, filter="ANY")
         filelist+= self.db.GetFilesT(type="SKY", texp=-1, filter="ANY")
-        filelist+= self.db.GetFilesT(type="SKY_FOR", texp=-1, filter="ANY")
+        filelist+= self.db.GetFilesT(type="SKY", texp=-1, filter="ANY")
         
         if len(filelist)>0:
             return False
@@ -1054,13 +1054,13 @@ class ReductionSet(object):
         log.debug("Creating OBJECTS images (SExtractor)....")
         
         if self.config_dict:
-            mask_minarea=self.config_dict['offsets']['mask_minarea']
-            mask_thresh=self.config_dict['offsets']['mask_thresh']
-            satur_level=self.config_dict['offsets']['satur_level']
+            mask_minarea = self.config_dict['offsets']['mask_minarea']
+            mask_thresh = self.config_dict['offsets']['mask_thresh']
+            satur_level = self.config_dict['offsets']['satur_level']
         else:
-            mask_minarea=25
-            mask_thresh=2.0
-            satur_level=300000
+            mask_minarea = 25
+            mask_thresh = 2.0
+            satur_level = 300000
             
         if images_in==None: # then we use the images ending with suffing in the output directory
             makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, satur_level, \
@@ -1588,7 +1588,7 @@ class ReductionSet(object):
         Reduce/process a produced OT-sequence of files (calibration, science)
        
         @param sequence: list of files of the sequence to be reduced
-        @param type: type of sequence (see ClFits.type)
+        @param type: type of sequence (see ClFits.type) (currently not used !) 
         
         @return: filenames created by the reduction proccess
           
@@ -1740,7 +1740,7 @@ class ReductionSet(object):
                         if bpm_ext==[]: mbpm=None
                         else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                         
-                        #if n==1: return None,None# only for a TEST !!!
+                        if n==1: return None,None# only for a TEST !!!
                         
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, self.red_mode, out_dir=self.out_dir,\

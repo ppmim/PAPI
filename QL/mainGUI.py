@@ -920,7 +920,25 @@ class MainGUI(panicQL):
                 log.error("Error while creating Reduction set")
                 raise e
             """
+            #look for sequences
             sequences, seq_types = self.inputsDB.GetSeqFilesB() # much more quick than creating the RS!
+            #look for un-groupped files
+            temp = set([])
+            for lista in sequences:
+                temp = temp.union(set(lista))
+            un_groupped = set(self.inputsDB.GetFiles()) - temp
+            """    
+            for file in self.inputsDB.GetFiles():
+                for lista in sequences:
+                    if file in lista:
+                        temp.add(file)
+                #temp.union( set([file for lista in sequences if file in lista]) )
+            un_groupped = set(self.inputsDB.GetFiles()) - temp
+            """
+            if len(un_groupped)>0:
+                sequences.append(list(un_groupped))
+                seq_types.append("UNKNOWN")
+            
             k = 0
             for seq in sequences:
                 elem = QListViewItem( self.listView_dataS )
@@ -941,7 +959,6 @@ class MainGUI(panicQL):
                     e_child.setText (6, str(ra))
                     e_child.setText (7, str(dec))
                 k+=1
-                
         elif self.comboBox_classFilter.currentText()=="GROUP_OLD":
             self.listView_dataS.clear()
             parList,fileList = self.inputsDB.GetSeqFiles()

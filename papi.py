@@ -217,7 +217,7 @@ def main(arguments = None):
         print "Cannot reduce the Data Set, check error log...."
         print str(e)
     else:
-        print "Well done (I hope) -  %s!!!"%t.tac()
+        print "\n\nWell done (I hope) -  %s!!!"%t.tac()
         return 0
     
 ######################################################################

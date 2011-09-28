@@ -398,7 +398,7 @@ class DataSet:
         filter_file_list = [] # list of file list (one per each filter)
               
         # First, look for Filters on SCIENCE files
-        s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY_FOR' "
+        s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' "
         #print s_select
         cur = self.con.cursor()
         cur.execute(s_select,"")
@@ -410,7 +410,7 @@ class DataSet:
         
         # Finally, look for files of each Filter
         for par in par_list:
-            s_select = "select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY_FOR') order by mjd"    
+            s_select = "select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY') order by mjd"    
             #print s_select
             cur = self.con.cursor()
             cur.execute(s_select,(par[0],par[1]))
@@ -458,7 +458,7 @@ class DataSet:
         if type==None:
             s_type = "type>=''"
         elif type=="SCIENCE":
-            s_type = "type='SCIENCE' or type='SKY_FOR' or type='SKY'"
+            s_type = "type='SCIENCE' or type='SKY'"
         elif type=="FLAT":
             s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
         else:
@@ -524,7 +524,7 @@ class DataSet:
         if type==None:
             s_type = "type>=''"
         elif type=="SCIENCE":
-            s_type = "type='SCIENCE' or type='SKY_FOR' or type='SKY'"
+            s_type = "type='SCIENCE' or type='SKY'"
         elif type=="FLAT":
             s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
         else:
