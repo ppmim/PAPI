@@ -282,8 +282,8 @@ class MEF (object):
                            out_dir = None, copy_keyword = []):
         """ 
         @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) 
-        having a 4-detector-frame to 1-MEF with
-        a 4-extension FITS, one per each frame.
+        having a 4-detector-frame to 1-MEF with a 4-extension FITS, 
+        one per each frame.
 
         @attention: it is NOT valid for cubes of data, by the moment
         
@@ -335,8 +335,11 @@ class MEF (object):
             out_filenames.append (new_filename)
             
             # Read all image sections (n_ext frames) and create the associated HDU
-            pix_centers = numpy.array ([[1024, 1024], [3072, 1024], 
-                                        [3072, 3072], [1024, 3072]], numpy.float_)
+            #pix_centers = numpy.array ([[1024, 1024], [3072, 1024], 
+            #                            [3072, 3072], [1024, 3072]], numpy.float_)
+            pix_centers = numpy.array ([[1024, 1025], [1024, 3072], [3072, 1024], 
+                                        [3072, 3072] ], numpy.float_)
+            
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i + j))
@@ -358,10 +361,10 @@ class MEF (object):
                         new_wcs = pywcs.WCS(primaryHeader)
                         new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2, primaryHeader['NAXIS2']/2]  
                         new_wcs.wcs.crval =  [ primaryHeader['RA'], primaryHeader['DEC'] ]
-                        new_wcs.wcs.ctype = ['RA-TAN', 'DEC-TAN']
+                        new_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
                         new_wcs.wcs.cunit = ['deg', 'deg']
                         pix_scale = 0.45 # arcsec per pixel
-                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], [pix_scale/3600.0, 0]]
+                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], [0, pix_scale/3600.0]]
 
                         new_pix_center = new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
                         
@@ -377,8 +380,8 @@ class MEF (object):
                         hdu_i.header.update ('CD1_2', 0, "Axis rotation & scaling matrix")
                         hdu_i.header.update ('CD2_1', 0, "Axis rotation & scaling matrix")
                         hdu_i.header.update ('CD2_2', pix_scale/3600.0, "Axis rotation & scaling matrix")
-                        hdu_i.header.update ('CTYPE1' , 'RA-TAN') 
-                        hdu_i.header.update ('CTYPE2' , 'DEC-TAN')
+                        hdu_i.header.update ('CTYPE1' , 'RA---TAN') 
+                        hdu_i.header.update ('CTYPE2' , 'DEC--TAN')
                         hdu_i.header.update ('CUNIT1', 'deg')
                         hdu_i.header.update ('CUNIT2', 'deg')
                         
@@ -409,16 +412,13 @@ class MEF (object):
     def splitGEIRSToSimple( self, out_filename_suffix = ".Q%02d.fits", out_dir = None):
         """ 
         @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) 
-        having a 4-detector-frame to 4 single 
-        FITS files with a frame per file. 
+        having a 4-detector-frame to 4 single FITS files with a frame per file. 
 
         @param out_filename_suffix: suffix added to the original input filename
         @param out_dir: directory where the new output file will be created
         @return: the list of output files (MEFs) created
         
         @attention: it is NOT valid for cubes of data, by the moment                           
-        
-        @bug: ar,dec need to be recalculated !!!!!
         
         @author: jmiguel@iaa.es
         """
@@ -447,8 +447,10 @@ class MEF (object):
             
             # Read all image sections (4 frames) and create the associated 4-single FITS files
             n_ext = 4
-            pix_centers = numpy.array ([[1024, 1025], [3072, 1024], 
-                                        [3072, 3072], [1024, 3072]], numpy.float_)
+            #pix_centers = numpy.array ([[1024, 1025], [3072, 1024], 
+            #                            [3072, 3072], [1024, 3072]], numpy.float_)
+            pix_centers = numpy.array ([[1024, 1025], [1024, 3072], [3072, 1024], 
+                                        [3072, 3072] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i*2 + j))
@@ -475,12 +477,14 @@ class MEF (object):
                         new_wcs = pywcs.WCS(primaryHeader)
                         new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2, primaryHeader['NAXIS2']/2]  
                         new_wcs.wcs.crval =  [ primaryHeader['RA'], primaryHeader['DEC'] ]
-                        new_wcs.wcs.ctype = ['RA-TAN', 'DEC-TAN']
+                        new_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
                         new_wcs.wcs.cunit = ['deg', 'deg']
                         pix_scale = 0.45 # arcsec per pixel
-                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], [pix_scale/3600.0, 0]]
+                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], [0, pix_scale/3600.0]]
 
                         new_pix_center = new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
+                        print "Pix Center = ",pix_centers[i*2+j]
+                        print "New Pix Centers = ", new_pix_center, new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
                         
                         prihdu.header.update ('RA', new_pix_center[0][0])
                         prihdu.header.update ('DEC', new_pix_center[0][1])
@@ -490,8 +494,8 @@ class MEF (object):
                         prihdu.header.update ('CRPIX2', 1024)
                         prihdu.header.update ('CRVAL1', new_pix_center[0][0])
                         prihdu.header.update ('CRVAL2', new_pix_center[0][1])
-                        prihdu.header.update ('CTYPE1' , 'RA-TAN') 
-                        prihdu.header.update ('CTYPE2' , 'DEC-TAN')
+                        prihdu.header.update ('CTYPE1' , 'RA---TAN') 
+                        prihdu.header.update ('CTYPE2' , 'DEC--TAN')
                         prihdu.header.update ('CUNIT1', 'deg')
                         prihdu.header.update ('CUNIT2', 'deg')
                         prihdu.header.update ('CD1_1', -pix_scale/3600.0, "Axis rotation & scaling matrix")
@@ -500,7 +504,7 @@ class MEF (object):
                         prihdu.header.update ('CD2_2', pix_scale/3600.0, "Axis rotation & scaling matrix")
                         
                     
-                    prihdu.header.update ('PA_QUAD', (i*2)+j, "PANIC Quadrant number [0,1,2,3]")
+                    prihdu.header.update ('CHIP_NO', (i*2)+j, "PANIC Chip number [0,1,2,3]")
                     
                     out_hdulist.append (prihdu)    
                     out_hdulist.verify ('ignore')
