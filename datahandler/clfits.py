@@ -100,6 +100,7 @@ class ClFits:
         self.readmode  = ""
         self.my_header = None
         self.obs_tool  = False
+        self._softwareVer = ''
         
         
         self.recognize()
@@ -186,6 +187,9 @@ class ClFits:
     @property
     def dec(self):
         return self._dec
+    @property
+    def softwareVer(self):
+        return self._softwareVer
     
     #def getRA(self):
     #    return self.ra
@@ -288,16 +292,21 @@ class ClFits:
         else:
             self.obs_tool=False
         
+        #Software Version (GEIRS Version)
+        if myfits[0].header.has_key('SOFTWARE'):
+            self._softwareVer = myfits[0].header['SOFTWARE']
+        
             
         # Some temporal to allow work with diff instrument data files
+        inst = myfits[0].header['INSTRUME'].lower()
         try:
-            if myfits[0].header['INSTRUME']=='Omega2000' and myfits[0].header.has_key('OBJECT'):
+            if inst=='omega2000' and myfits[0].header.has_key('OBJECT'):
                 keyword_with_frame_type = 'OBJECT'
-            elif myfits[0].header['INSTRUME']=='HAWKI' and myfits[0].header.has_key('IMAGETYP'):
+            elif inst=='hawki' and myfits[0].header.has_key('IMAGETYP'):
                 keyword_with_frame_type = 'IMAGETYP'
-            elif myfits[0].header['INSTRUME']=='HAWKI' and myfits[0].header.has_key('OBJECT'):
+            elif inst=='hawki' and myfits[0].header.has_key('OBJECT'):
                 keyword_with_frame_type = 'OBJECT'
-            elif myfits[0].header['INSTRUME']=='Panic': # current ID in GEIRS for PANIC
+            elif inst=='panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
                     keyword_with_frame_type = 'IMAGETYP'
                     #keyword_with_frame_type = 'OBJECT'
@@ -322,14 +331,16 @@ class ClFits:
                        }
         #IMAGETYP = [DARK, LAMP_ON_FLAT, LAMP_OFF_FLAT, TW_FLAT_DUSK, TW_FLAT_DAWN, SKY_FLAT, SCIENCE, SKY, STD, FOCUS ]
         #FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
-        if self.instrument.lower() =='panic':
+        if inst =='panic':
             try:
                 if myfits[0].header.has_key('IMAGETYP'):
                     ltype = myfits[0].header['IMAGETYP'].lower()
-                else: 
+                else:
                     ltype = myfits[0].header[keyword_with_frame_type].lower()
-                self.type = panic_types[ltype]
-                
+                try:
+                    self.type = panic_types[ltype]
+                except KeyError:
+                    log.error("Frame type '%s' does not match any kind !"%ltype)
             except KeyError:
                 log.error('OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
@@ -368,7 +379,7 @@ class ClFits:
                 raise Exception("Cannot classify (dark,flat, science) FITS image")
         
         #Is pre-reduced the image ? by default, no
-        self.processed=False
+        self.processed = False
         
         #print "File :"+ self.pathname
         #Filter
@@ -518,7 +529,7 @@ class ClFits:
             else:
                 self.obID = -1
         except Exception,e:
-            log.error("Cannot find OB_ID keyword : %s:",str(e))
+            log.warning("Cannot find OB_ID keyword : %s:",str(e))
             self.obID = -1
                
         #OB_PAT : Observation Block Pattern

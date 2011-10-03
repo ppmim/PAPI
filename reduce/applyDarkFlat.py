@@ -156,6 +156,7 @@ class ApplyDarkFlat:
                 flat_time = cflat.expTime()
                 flat_filter = cflat.getFilter()
                 #flat_data=flat[0].data
+                #MEF
                 if len(flat)>1:
                     fmef = True
                     if len(dark) != len(flat):
@@ -281,7 +282,7 @@ def usage ():
     print 'SYNOPSIS'
     print '       applyDarkFlat.py [options]\n'
     print 'DESCRIPTION'
-    print '       Subtract a master dark file or divide by a'
+    print '       Subtract a master dark file or divide by and a'
     print '       master flat field (or both) a list of science files.' 
     print '       Input Flat will be normalized before dividing by, so it must NOT be normalized'
     print ' '

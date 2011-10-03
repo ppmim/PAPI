@@ -294,6 +294,26 @@ class MEF (object):
         @return: the number of extensions per MEF and the list of output files (MEFs) created                               
 
         @author: jmiguel@iaa.es
+        @note: For an image of the sky, the coordinate system representation 
+        might be something like: 
+
+            CTYPE1 = `RA---TAN'   ! r.a. in tangent plane projection
+            CTYPE2 = `DEC--TAN'   ! dec. in tangent plane projection
+            CRPIX1 = 400.0        ! reference pixel on first axis 
+            CRPIX2 = 400.0        ! reference pixel on second axis 
+            CRVAL1 = 180.01234    ! r.a. at pixel (400,400) in degrees 
+            CRVAL2 = 30.98765     ! dec. at pixel (400,400) in degrees 
+            CD1_1  = -2.777778E-4 ! change in RA per pixel along first
+                                  ! axis evaluated at reference pixel (pix. scale)
+            CD1_2 = 0.0           ! change in RA per pixel along second
+                                  ! axis evaluated at reference pixel
+            CD2_1 = 0.0           ! change in dec per pixel along first
+                                  !axis evaluated at reference pixel
+            CD2_2 = 2.777778E-4   ! change in dec per pixel along second
+                                  ! axis evaluated at reference pixel
+        
+        @todo : header is not well formed
+        
         """
         
         log.info("Starting convertGEIRSToMEF")
@@ -326,7 +346,15 @@ class MEF (object):
             prihdu = pyfits.PrimaryHDU(data=None, header = primaryHeader)
             # Start by updating PRIMARY header keywords...
             prihdu.header.update ('EXTEND', pyfits.TRUE, after = 'NAXIS')
-            prihdu.header.update ('NEXTEND', n_ext)
+            prihdu.header.update ('NEXTEND', n_ext, after = 'EXTEND')
+            prihdu.header.update ('NEXTEND', n_ext, after = 'EXTEND')
+            #In the Primary Header we do not need the WCS keywords, only RA,DEC
+            keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2','CTYPE1','CTYPE2']
+            for key in keys_to_del: del prihdu.header[key]
+            #
+            #prihdu.header.update ('RA', new_pix_center[0][0])
+            #prihdu.header.update ('DEC', new_pix_center[0][1])
+                        
             out_hdulist.append (prihdu)
             
             new_filename = file.replace(".fits", out_filename_suffix)
@@ -368,8 +396,6 @@ class MEF (object):
 
                         new_pix_center = new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
                         
-                        prihdu.header.update ('RA', new_pix_center[0][0])
-                        prihdu.header.update ('DEC', new_pix_center[0][1])
                         
                         # Now update the new-wcs for the new subframe header
                         hdu_i.header.update ('CRPIX1', 1024)
@@ -384,6 +410,8 @@ class MEF (object):
                         hdu_i.header.update ('CTYPE2' , 'DEC--TAN')
                         hdu_i.header.update ('CUNIT1', 'deg')
                         hdu_i.header.update ('CUNIT2', 'deg')
+                        hdu_i.header.update ('CHIP_NO', 2*i+j, "PANIC Chip number [0,1,2,3]")
+                        
                         
                     # now, copy extra keywords required
                     for key in copy_keyword:
@@ -421,6 +449,15 @@ class MEF (object):
         @attention: it is NOT valid for cubes of data, by the moment                           
         
         @author: jmiguel@iaa.es
+        
+        @note: The enumeration order of the quadrants read is:
+        
+        |------------|
+        |  1  |   3  |
+        | ----|------|
+        |  0  |   2  |
+        |-----|------|
+        
         """
         
         log.info("Starting splitGEIRSToSimple")
@@ -567,7 +604,7 @@ if __name__ == "__main__":
    
     parser.add_option ("-g", "--geirs-convert",
                   action = "store_true", dest = "geirs_convert", \
-                  help = "convert a GEIRS-v0 file (with N extensions) to a \
+                  help = "convert a GEIRS-v0 file (with 1 extension) to a \
                   MEF FITS file with 4 extensions", default = False)
                   
     

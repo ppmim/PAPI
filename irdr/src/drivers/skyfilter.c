@@ -88,7 +88,6 @@ int main(int argc, char *argv[])
 	    if (i<nplanes) readdata(i, usemask);
 	}
 
-    printf("\nPASO 2");
 
     for (i = 0, skybeg = 0; i < nplanes; i++) {
         int j, nsky = 0, skyend = skybeg + 2 * hwid;
@@ -139,6 +138,17 @@ int main(int argc, char *argv[])
             fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
                                    argv[5]);
         }
+
+        /* Apply master flat: divide by gainmap */
+        int flat=0;
+        int ind=0;
+        if (flat)
+        {
+            for (ind = 0; ind< nx*ny; ind++)
+                if (gainmap[ind]>0)
+                    fimg[ind] = fimg[ind] / gainmap[ind];
+                else fimg[ind] = 0;
+        }        
 
         /*skysubimg = longint(fimg, nx, ny);*/
         /* For PANIC, we need 32 bits images, so we write  -32 (float) FITS*/

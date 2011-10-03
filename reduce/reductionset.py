@@ -409,23 +409,35 @@ class ReductionSet(object):
             #Suppose we have MEF files ...
             if datahandler.ClFits(frame_list[0]).getInstrument()=="HAWKI":
                 
-                kws=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',\
+                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',\
 		  'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',\
 		  'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", "HIERARCH ESO TPL NEXP"\
             ]   
             else: # PANIC
-                kws=['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',\
+                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',\
           'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',\
           'FILTER', 'FILTER1', 'FILTER2', "OBS_TOOL", "OB_ID", "OB_PAT",\
           "PAT_EXPN", "PAT_NEXP", "END_SEQ"\
             ]
-                    
-            try:
-                mef = misc.mef.MEF(frame_list)
-                (nExt, sp_frame_list)=mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws)
-            except Exception,e:
-                log.debug("Some error while splitting data set ...%s",str(e))
-                raise
+            
+            if datahandler.ClFits(frame_list[0]).softwareVer.count("Panic_r"):
+                log.debug("Splitting GEIRS data files")
+                try:
+                    mef = misc.mef.MEF(frame_list)
+                    (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
+                                                                   out_dir=self.out_dir)
+                except Exception,e:
+                    log.debug("Some error while splitting GEIRS data set. %s",str(e))
+                    raise
+            else:
+                log.debug("Splitting data files")
+                try:
+                    mef = misc.mef.MEF(frame_list)
+                    (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws_to_cp)
+                except Exception,e:
+                    log.debug("Some error while splitting data set. %s",str(e))
+                    raise
+            
             # now, generate the new output filenames        
             for n in range(1,nExt+1):
                 new_frame_list.append([self.out_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
@@ -2087,7 +2099,7 @@ class ReductionSet(object):
         # 000 - Find out dither mode
         ######################################################
         try:
-            self.obs_mode=self.getObsMode()  # overwrite initial given observing mode
+            self.obs_mode = self.getObsMode()  # overwrite initial given observing mode
         except:
             raise
         
@@ -2103,7 +2115,7 @@ class ReductionSet(object):
         ######################################
         if master_dark!=None and master_flat!=None:
             log.info("**** Applying dark and Flat ****")
-            dark_flat=True
+            dark_flat = True
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, master_dark, master_flat, out_dir)
             self.m_LAST_FILES = res.apply()
         
@@ -2122,7 +2134,7 @@ class ReductionSet(object):
                     superflat.create()
                 elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
                     log.debug("----> EXTENDED SOURCE !!! <----")
-                    sky_list=self.getSkyFrames()
+                    sky_list = self.getSkyFrames()
                     print "SKY_LIST=",sky_list
                     misc.utils.listToFile(sky_list, out_dir+"/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir+"/files.list", master_flat, bpm=None, norm=False, temp_dir=self.temp_dir)
@@ -2142,19 +2154,19 @@ class ReductionSet(object):
         gainmap = out_dir+'/gain_'+self.m_filter+'.fits'
         # get gainmap parameters
         if self.config_dict:
-            mingain=self.config_dict['gainmap']['mingain']
-            maxgain=self.config_dict['gainmap']['maxgain']
-            nxblock=self.config_dict['gainmap']['nxblock']
-            nyblock=self.config_dict['gainmap']['nyblock']
-            nsigma=self.config_dict['gainmap']['nsigma']
+            mingain = self.config_dict['gainmap']['mingain']
+            maxgain = self.config_dict['gainmap']['maxgain']
+            nxblock = self.config_dict['gainmap']['nxblock']
+            nyblock = self.config_dict['gainmap']['nyblock']
+            nsigma = self.config_dict['gainmap']['nsigma']
         else:
-            mingain=0.5
-            maxgain=1.5
-            nxblock=16
-            nyblock=16
-            nsigma=5
+            mingain = 0.5
+            maxgain = 1.5
+            nxblock = 16
+            nyblock = 16
+            nsigma = 5
             
-        g=reduce.calGainMap.GainMap(master_flat, gainmap, bpm=master_bpm, 
+        g = reduce.calGainMap.GainMap(master_flat, gainmap, bpm=master_bpm, 
                                     do_normalization=True, mingain=mingain, 
                                     maxgain=maxgain, nxblock=nxblock,
                                     nyblock=nyblock, nsigma=nsigma)
@@ -2183,6 +2195,11 @@ class ReductionSet(object):
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
         # return only filtered images; in exteded-sources, sky frames  are not included 
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list", gainmap, 'nomask', self.obs_mode)       
+
+        #########################################
+        # 4.1 - Divide by the master flat ! (some people think it is better do it now ...)
+        #########################################
+        # T O D O 
                         
         #########################################
         # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
@@ -2256,6 +2273,11 @@ class ReductionSet(object):
         #########################################
         log.info("**** Master object mask creation ****")
         obj_mask=self.__createMasterObjMask(out_dir+'/coadd1.fits', out_dir+'/masterObjMask.fits')  
+
+        ###################################################################
+        # 8.5 - Re-compute the gainmap taking into account the object mask
+        ###################################################################
+        # T O D O 
         
         ###########################################################
         # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK

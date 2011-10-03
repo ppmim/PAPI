@@ -539,7 +539,7 @@ class DataSet:
         cur.execute(s_select,(filter,))
         rows = cur.fetchall()
         
-        found_firs = False
+        found_first = False
         group = []
         seq_list = [] # list of lists of files from each sequence
         seq_types =[] # list of types for each sequence
