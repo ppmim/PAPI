@@ -31,8 +31,10 @@ import pyfits
 
 
 # PAPI modules
-import astromatic 
+import astromatic
+import astromatic.ldac
 import datahandler
+
 # Logging
 from misc.paLog import log
 import misc.config
@@ -248,7 +250,11 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
         sex.run(input_image, updateconfig=True, clean=False)
     except: 
         raise
-                
+    
+    # A test to apply single point mask
+    #filter_area(input_image + ".ldac",100)
+    ## end of test
+    
     ## STEP 2: Make astrometric calibration 
     log.debug("Doing astrometric calibration....")
     scamp = astromatic.SCAMP()
@@ -316,6 +322,59 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
         
     return output_image 
 
+def filter_area(cat_filename, max_size=200):
+    """
+    @summary: Filter the input catalog dropping out the objects with an area
+    bigger than max_size
+
+    @param cat_name: filename of the LDAC catalog
+    @param max_size: maximun area size of objects; objects with a higher value
+    are removed.
+    
+    @requires: the input catalog must be a LDAC catalog (SExtractor FITS_LDAC)
+    LDAC = Leiden Data Analysis Center
+    
+    @note: the input filename will be overwritten
+    
+    @return: filename of the new catalog, otherwise None or exception
+    
+    @todo: test if works fine   ! not yet tested 
+    
+    """
+    
+    log.debug("Filtering catalog by ISOAREA_IMAGE")
+
+    import numpy
+    try:
+        hdus = pyfits.open(cat_filename, "update")
+        #mask = hdus[2].data.field('ISOAREA_IMAGE')<max_size
+        mask = numpy.logical_and( hdus[2].data.field('ISOAREA_IMAGE')<max_size,
+                                  hdus[2].data.field('FLAGS')==0)
+        
+        hdus[2].data = hdus[2].data[mask]
+        hdus.writeto(cat_filename,output_verify='warn', clobber=True)
+    except Exception,e:
+        raise Exception("Error while filtering Catalog %s  : %s"%(cat_filename,str(e)))
+
+    log.debug("Catalog filtered by Area (isoarea_image). File  : %s",cat_filename)
+    
+    return cat_filename
+
+    """
+    try:
+        cat = astromatic.ldac.openObjectFile(cat_filename, table='LDAC_OBJECTS')
+        mask = cat['ISOAREA_IMAGE']<max_size
+        new_cat = cat.filter(mask)
+        new_cat.saveas(cat_filename, clobber=True)
+    except Exception,e:
+        raise Exception("Error while filtering Catalog %s  : %s"%(cat_filename,str(e)))
+
+    log.debug("Catalog filtered by Area (isoarea_image). File  : %s",cat_filename)
+    
+    return cat_filename
+    """
+
+    
 class AstroWarp(object):
     """ Astrometric warping """
 
@@ -389,6 +448,9 @@ class AstroWarp(object):
                 sex.run(file, updateconfig=True, clean=False)
             except Exception,e:
                 raise e
+
+            
+            #filter_area(file + ".ldac")    
                         
         ## STEP 2: Make the multi-astrometric calibration for each file (all overlapped-files together)
         log.debug("*** Doing multi-astrometric calibration ....")

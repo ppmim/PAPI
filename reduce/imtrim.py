@@ -36,7 +36,7 @@ def usage():
     print 'NAME'
     print '       imtrim.py - Cut/crop edges of the input image\n'
     print 'SYNOPSIS'
-    print '       imtrim.py file.fits\n'
+    print '       imtrim.py -i file.fits\n'
     print 'DESCRIPTION'
     print '       Crop/cut the edges of the input image'
     print ' '
@@ -56,7 +56,7 @@ def imgTrim (inputfile):
                 Crop/cut the input image edges
            
            INPUTS
-                inputfile       input FITS file to trim
+                -i inputfile       input FITS file to trim
                 
            OPTIONAL INPUTS
                 
@@ -72,7 +72,7 @@ def imgTrim (inputfile):
         
         
         try:
-            indata = pyfits.open(file)
+            indata = pyfits.open(file, ignore_missing_end=True)
             indata[0].verify()
         except:
             print('Could not open frame - something wrong with input data')

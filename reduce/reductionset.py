@@ -146,6 +146,7 @@ class ReductionSet(object):
         self.master_flat = flat # master flat to use (input)
         self.master_bpm = bpm # master Bad Pixel Mask to use (input)
         self.red_mode = red_mode # reduction mode (quick=for QL, science=for science) 
+        log.debug("GROUP_BY = %s"%group_by)
         self.group_by = group_by.lower() # flag to decide how classification will be done, by OT (OB_ID, OB_PAT, FILTER and TEXP kws) or by FILTER (FILTER kw)
         self.check_data = check_data # flat to indicate if data checking need to be done (see checkData() method)
          
@@ -688,11 +689,13 @@ class ReductionSet(object):
         @attention: this method is an (better) alertenative to getObjectSequences()        
         """
         
+        log.debug("[getOTSequences] Looking for OT generated Data Sequences into the DataSet")
+        
         seq_list = [] # list of list of sequence filenames
         seq_types = [] # list of types of sequence (dark, dflat, sflat, focus, science, ....)
         
         if self.db==None: self.__initDB()
-        seq_list, seq_types = self.db.GetSeqFilesB() # much more quick than read again the FITS files
+        seq_list, seq_types = self.db.GetSequences(group_by='ot') # much more quick than read again the FITS files
     
         """ 
         files = self.db.GetFiles() # MJD ascending sorted 
@@ -728,7 +731,7 @@ class ReductionSet(object):
             print "\n\n"
             print "*** # Sequences found : %d ***"%len(seq_list) 
             for i in range(0,len(seq_list)):
-                print "SEQ[%d] - [%s] \n\n %s"%(i,seq_types[i],seq_list[i])
+                print "SEQUENCE #[%d] - [%s] \n\n %s"%(i,seq_types[i],seq_list[i])
         
         return seq_list,seq_types
         
@@ -746,89 +749,34 @@ class ReductionSet(object):
         @attention: other alternative way of grouping following OT schema is
         implemented in getOTSequences()
         
+        @note: Only SCIENCE sequences are looked for !
+        @todo: Look for CALIBRATION sequences as well !
         """
+        
+        log.debug("[getObjectSequences] Looking for GEIRS/MIDAS generated Data Sequences into the DataSet")
         
         # Init the DB    
         if self.db==None: self.__initDB()
         
         # group data file (only science) by Filter,TExp 
+        seq_list = []
+        seq_par = []
         if self.group_by=="filter":
-            (seq_par, seq_list) = self.db.GetFilterFiles() # return a list of SCIENCE (or SKY) frames grouped by FILTER
-            # Now, we need to check temporal (bases on MJD) continuity and split a 
-            # group if it is temporally discontinued
-            new_seq_list = []
-            new_seq_par = []
-            k = 0
-            for seq in seq_list:
-                group = []
-                mjd_0 = datahandler.ClFits(seq[0]).getMJD()
-                for file in seq:
-                    t = datahandler.ClFits(file).getMJD()
-                    if math.fabs(t-mjd_0)<self.MAX_MJD_DIFF:
-                        group.append(file)
-                        mjd_0 = t
-                    else:
-                        log.debug("Sequence split due to temporal gap between sequence frames")
-                        new_seq_list.append(group[:]) # very important, lists are mutable !
-                        new_seq_par.append(seq_par[k])
-                        mjd_0 = t
-                        group = [file]
-                new_seq_list.append(group[:]) # very important, lists are mutable !
-                new_seq_par.append(seq_par[k])
-                k+=1
+            (seq_list, seq_par) = self.db.GetSequences(group_by='filter') # return a list of SCIENCE (or SKY) frames grouped by FILTER
                 
             # Print out the found groups
             k=0
-            for par in new_seq_par:
-                print "\nFILTER = %s  TEXP = %s   #files = %d " \
-                        %(par[0], par[1], len(new_seq_list[k]))
+            for par in seq_par:
+                print "\nSEQUENCE #[%d]  - FILTER = %s  TEXP = %s   #files = %d " \
+                        %(k,par[0], par[1], len(seq_list[k]))
                 print "-------------------------------------------------------\
                 ------------------------------------------\n"
-                for file in new_seq_list[k]:
+                for file in seq_list[k]:
                     print file
                 k+=1
-            log.debug("Found %d groups of SCI files", len(new_seq_par))
+            log.debug("Found %d groups of SCI files", len(seq_par))
         
-        # group data files by meta-data given by the OT (OB_ID, OB_PAT, FILTER, TEXP)
-        else:
-            (seq_par, seq_list)=self.db.GetSeqFiles(filter=None, type='SCIENCE') # return a list of SCIENCE frames grouped by {OB_ID, OB_PAT, FILTER, TEXP}
-            # Now, we need to check temporal (based on MJD) continuity and 
-            # split a group if it is discontinued
-            new_seq_list = []
-            new_seq_par = []
-            k = 0
-            for seq in seq_list:
-                group = []
-                mjd_0 = datahandler.ClFits(seq[0]).getMJD()
-                for file in seq:
-                    t = datahandler.ClFits(file).getMJD()
-                    if math.fabs(t-mjd_0)<self.MAX_MJD_DIFF:
-                        group.append(file)
-                        mjd_0 = t
-                    else:
-                        log.debug("Sequence split due to temporal gap between sequence frames")
-                        new_seq_list.append(group[:]) # very important, lists are mutable !
-                        new_seq_par.append(seq_par[k])
-                        mjd_0 = t
-                        group = [file]
-                new_seq_list.append(group[:]) # very important, lists are mutable !
-                new_seq_par.append(seq_par[k])
-                k += 1
-                
-            # Print out the found groups
-            k = 0
-            for par in new_seq_par:
-                print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s, \
-                TEXP=%s  #files=%d" % (par[0],par[1],par[2],par[3], len(new_seq_list[k]))
-                print "---------------------------------------------------------\
-                ---------------------------------------------------------\n"
-                for file in new_seq_list[k]:
-                    print file
-                k += 1
-        
-            log.debug("Found ** %d ** groups of SCI files ", len(new_seq_par))
-        
-        return new_seq_list
+        return seq_list
     
     def getDomeFlatFrames(self):
         """
@@ -1070,8 +1018,8 @@ class ReductionSet(object):
             mask_thresh = self.config_dict['offsets']['mask_thresh']
             satur_level = self.config_dict['offsets']['satur_level']
         else:
-            mask_minarea = 25
-            mask_thresh = 2.0
+            mask_minarea = 5
+            mask_thresh = 1.5
             satur_level = 300000
             
         if images_in==None: # then we use the images ending with suffing in the output directory
@@ -1176,8 +1124,8 @@ class ReductionSet(object):
             mask_thresh=self.config_dict['skysub']['mask_thresh']
             satur_level=self.config_dict['skysub']['satur_level']
         else:
-            mask_minarea=25
-            mask_thresh=0.4
+            mask_minarea=5
+            mask_thresh=1.5
             satur_level=300000
                                
         # BUG ! -> input_file+"*" as first parameter to makeObjMask ! (2011-09-23)                                                               
@@ -1555,10 +1503,10 @@ class ReductionSet(object):
         self.db.ListDataSet()  
         return l_mflats # a list of master super flats created
     
-    def reduceSet(self, red_mode=None):
+    def reduceSet(self, red_mode=None, seqs_to_reduce=None):
         """
-        The main method for full DataSet reduction supposed it was obtained with
-        the PANIC OT. 
+        @summary: This is the main method for full DataSet reduction supposed 
+        it was obtained with the PANIC OT. 
         
         Main steps:
         
@@ -1570,7 +1518,11 @@ class ReductionSet(object):
             
          3. Insert the results into the local DB 
          
-        @param red_mode: reduction mode (quick, science)  
+        @param red_mode: reduction mode (quick, science); default mode is 'quick'
+        
+        @param seqs_to_reduce: list of sequence number [0,N-1] to be reduced;
+        default (None), all sequences found will be reduced.
+           
         @return: the number of sequences successfully reduced
         
         """
@@ -1584,14 +1536,19 @@ class ReductionSet(object):
         sequences, seq_types = self.getSequences()
         reduced_sequences = 0
         files_created = []
-        
+        if seqs_to_reduce==None:
+            seqs_to_reduce=range(len(sequences))    
+
+        k = 0
         for seq,type in zip(sequences, seq_types):
-            try:
-                files_created += self.reduceSeq(seq, type)
-                reduced_sequences+=1
-            except Exception,e:
-                log.error("[reduceSet] Cannot reduce sequence %s"%str(seq))
-                raise e
+            if k in seqs_to_reduce:
+                try:
+                    files_created += self.reduceSeq(seq, type)
+                    reduced_sequences+=1
+                except Exception,e:
+                    log.error("[reduceSet] Cannot reduce sequence %s"%str(seq))
+                    raise e
+            k = k + 1
     
         return files_created
     
@@ -2070,10 +2027,10 @@ class ReductionSet(object):
             print "Input files already in output directory!"
             self.m_LAST_FILES=obj_frames
             
-        print "\nSOURCES TO BE REDUCED:"
-        print   "====================="
-        print self.m_LAST_FILES
-        print   "====================="
+        #print "\nSOURCES TO BE REDUCED:"
+        #print   "====================="
+        #print self.m_LAST_FILES
+        #print   "====================="
         
         ######################################################
         # 0 - Some checks (filter, ....) 
@@ -2173,7 +2130,7 @@ class ReductionSet(object):
         g.create() 
            
         ########################################
-        # Add external Bad Pixel Map to gainmap
+        # Add external Bad Pixel Map to gainmap (maybe from master DARKS,FLATS ?)
         ########################################     
         if master_bpm !=None:
             if not os.path.exists( master_bpm ):
@@ -2208,6 +2165,8 @@ class ReductionSet(object):
         log.info("**** Quality Assessment **** (TBD)")                   
 
         ## -- una prueba con astrowarp : no va mal, a simple vista da resultados parecidos, y en CPU tambien =, por tanto, opcion a considerar !!---
+        # 6b - Computer dither offsets and coadd
+        ########################################
         """
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration and  coaddition result frame ****")
@@ -2249,6 +2208,7 @@ class ReductionSet(object):
         fs.close()    
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd1.fits','average')
     
+    
         ## END OF SINGLE REDUCTION  ##
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
@@ -2272,7 +2232,7 @@ class ReductionSet(object):
         # 8 - Create master object mask
         #########################################
         log.info("**** Master object mask creation ****")
-        obj_mask=self.__createMasterObjMask(out_dir+'/coadd1.fits', out_dir+'/masterObjMask.fits')  
+        obj_mask=self.__createMasterObjMask(out_dir+'/coadd1.fits', out_dir+'/masterObjMask.fits') 
 
         ###################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask

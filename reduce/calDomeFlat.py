@@ -71,12 +71,15 @@ class MasterDomeFlat:
             
          1. Check the EXPTIME , TYPE(dome) and FILTER of each Flat frame
          2. Separate lamp ON/OFF dome flats
-         3. Make the combine of Flat LAMP-OFF frames
+         3. Make the combine of Flat LAMP-OFF frames 
          4. Make the combine of Flat LAMP-ON frames
          5. Subtract lampON-lampOFF (implicit dark subtraction)
-         6. Normalize the flat-field
+         6. (optionally) Normalize the flat-field
             
-         # NOTE : We do not subtract any MASTER_DARK, it is not required for DOME FLATS (it is done implicitly)   
+         # NOTE : We do NOT subtract any MASTER_DARK, it is not required for 
+         DOME FLATS (it is done implicitly because both are taken with the
+         same Exposition Time)    
+         
     
     \par Language:
         PyRaf
@@ -91,8 +94,8 @@ class MasterDomeFlat:
   
     """
     
-    def __init__(self, input_files, temp_dir="/tmp/", output_filename="/tmp/mdflat.fits", 
-                 normal=True):
+    def __init__(self, input_files, temp_dir="/tmp/", 
+                 output_filename="/tmp/mdflat.fits", normal=True):
         """ Initialization method """
         
         self.__input_files = input_files

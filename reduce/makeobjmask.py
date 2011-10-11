@@ -167,9 +167,12 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
                     cat = astromatic.ldac.openObjectFile(fn+".ldac", table='LDAC_OBJECTS')
                     if len(cat)<=0: continue
                     for star in cat:
-                        if star['X_IMAGE']<x_size and star['Y_IMAGE']<y_size:
+                        if round(star['X_IMAGE'])<x_size and round(star['Y_IMAGE'])<y_size:
                             data[round(star['Y_IMAGE']),round(star['X_IMAGE'])]=1 # Note: be careful with X,Y coordinates position
                 except Exception,e:
+                    print "Y_IMAGE=",star['Y_IMAGE']
+                    print "X_IMAGE=",star['X_IMAGE']
+                    
                     myfits.close(output_verify='ignore')
                     raise Exception("Error while creating single point object mask :%s",str(e))
                 
@@ -181,7 +184,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         n+=1
         f_out.write(fn+".objs"+"\n")
             
-    sex.clean(config=True, catalog=True, check=False)
+    sex.clean(config=False, catalog=True, check=False)
     f_out.close()
     log.debug("Succesful ending of makeObjMask => %d object mask files created", n)
     

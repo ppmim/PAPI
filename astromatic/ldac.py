@@ -98,11 +98,11 @@ class LDACCat(object):
             self.current += 1
             return self.hdu.data[self.current -1]
 
-    def saveas(self, file):
-        self.hdu.writeto(file)
+    def saveas(self, file, clobber=False):
+        self.hdu.writeto(file, output_verify='warn', clobber=clobber)
 
 
-def openObjects(hdulist, table='OBJECTS'):
+def openObjects(hdulist, table='LDAC_OBJECTS'):
 
     for hdu in hdulist:
         try:
@@ -114,7 +114,7 @@ def openObjects(hdulist, table='OBJECTS'):
     return None
     
 
-def openObjectFile(filename, table='OBJECTS'):
+def openObjectFile(filename, table='LDAC_OBJECTS'):
     hdulist = pyfits.open(filename)
     if hdulist is None:
         return None

@@ -157,6 +157,7 @@ class MainGUI(panicQL):
         elif self.config_opts['quicklook']['run_mode']=="PreReduction": self.comboBox_QL_Mode.setCurrentItem(2)
         else: self.comboBox_QL_Mode.setCurrentItem(0)
         
+        self.group_by = self.config_opts['general']['group_by']
             
         
         self.logConsole.info("Wellcome to the PANIC QuickLook tool v1.0" )
@@ -308,7 +309,7 @@ class MainGUI(panicQL):
         if fromOutput: self.outputsDB.insert(filename)
         else: self.inputsDB.insert(filename)
         ## Query DB
-        #(date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(filename)
+        #(date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=self.inputsDB.GetFileInfo(filename)
         #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
         #print "FILEINFO= ", fileinfo
         
@@ -414,7 +415,7 @@ class MainGUI(panicQL):
             os.unlink(outfilename) # we only need the name
             self._task = RS.ReductionSet( obsSequence, self.m_outputdir, out_file=outfilename, \
                                             obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
-                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+                                            group_by=self.group_by, check_data=True, config_dict=self.config_opts)
             
             if self._task.isaCalibSet():
                 log.debug("It's a calib sequence what is going to be reduced !")
@@ -439,7 +440,7 @@ class MainGUI(panicQL):
         
         log.debug("Starting to process the file %s",filename)
         
-        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(filename)
+        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=self.inputsDB.GetFileInfo(filename)
         
         # ONLY SCIENCE frames will be processed 
         if type!="SCIENCE":
@@ -512,7 +513,7 @@ class MainGUI(panicQL):
             #elem.setText (1, str(seq[1])) # OB_PAT
             #elem.setText (2, str(seq[2])) # FILTER
             for file in fileList[k]:
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=self.inputsDB.GetFileInfo(file)
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=self.inputsDB.GetFileInfo(file)
                 e_child = QListViewItem(elem)
                 e_child.setText (0, str(file))
                 e_child.setText (1, str(type))
@@ -573,7 +574,7 @@ class MainGUI(panicQL):
         for filename in filelist:
             #print "FILENAME= " , filename
             self.inputsDB.insert(str(dir)+"/"+filename)
-            (date, ut_time, type, filter, texp, detector_id, run_id)=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
+            (date, ut_time, type, filter, texp, detector_id, run_id, mjd)=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
             #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
             #print "FILEINFO= ", fileinfo
             elem = QListViewItem( self.listView_dataS )
@@ -712,7 +713,7 @@ class MainGUI(panicQL):
                 #reset the sequence list
                 self.curr_sequence = [filename]
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
-                log.debug("EOS-1 %s detected : %s"%(typeSeq, str(self.retSeq)))
+                log.debug("EOS-1 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
                 ra_point_distance = self.last_ra-fits.ra
                 dec_point_distance = self.last_dec-fits.dec
@@ -921,7 +922,9 @@ class MainGUI(panicQL):
                 raise e
             """
             #look for sequences
-            sequences, seq_types = self.inputsDB.GetSeqFilesB() # much more quick than creating the RS!
+            sequences, seq_types = self.inputsDB.GetSequences(self.config_opts['general']['group_by']) 
+            #self.inputsDB.GetSeqFilesB() # much more quick than creating the RS!
+            
             #look for un-groupped files
             temp = set([])
             for lista in sequences:
@@ -945,7 +948,7 @@ class MainGUI(panicQL):
                 #elem.setText(0, "TYPE="+str(seq_types[k]))
                 #elem.setText(0, "OB_ID="+str(seq[0])+" ** OB_PAT="+str(seq[1])+" ** FILTER="+str(seq[2]) + " ** #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
                 for file in seq:
-                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object) = self.inputsDB.GetFileInfo(file)
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
                     if file==seq[0]:
                         #the first time, fill the "tittle" of the group 
                         elem.setText(0, "TYPE="+str(seq_types[k]) + "  ** FILTER="+str(filter) + "  ** TEXP="+str(texp) + " ** #imgs="+str(len(seq)))
@@ -970,7 +973,7 @@ class MainGUI(panicQL):
                 #elem.setText (1, str(seq[1])) # OB_PAT
                 #elem.setText (2, str(seq[2])) # FILTER
                 for file in fileList[k]:
-                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object) = self.inputsDB.GetFileInfo(file)
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
                     e_child = QListViewItem(elem)
                     e_child.setText (0, str(file))
                     e_child.setText (1, str(type))
@@ -1006,7 +1009,7 @@ class MainGUI(panicQL):
             elem=None
             for file in fileList:
                 elem = QListViewItem( self.listView_dataS )
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object)=db.GetFileInfo(file)
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=db.GetFileInfo(file)
                 elem.setText (0, str(file))
                 elem.setText (1, str(type))
                 elem.setText (2, str(filter))
@@ -1164,7 +1167,7 @@ class MainGUI(panicQL):
             self._task = RS.ReductionSet (group_files, self.m_outputdir, 
                                         out_file=None,
                                         obs_mode="dither", dark=None, flat=None, 
-                                        bpm=None, red_mode="quick", group_by="ot", 
+                                        bpm=None, red_mode="quick", group_by=self.group_by, 
                                         check_data=True, config_dict=self.config_opts,
                                         external_db_files=self.outputsDB.GetFiles())
             
@@ -1507,7 +1510,7 @@ class MainGUI(panicQL):
                                           out_file=None,
                                           obs_mode="dither", dark=None, 
                                           flat=None, bpm=None, red_mode="quick",
-                                          group_by="ot", check_data=True, 
+                                          group_by=self.group_by, check_data=True, 
                                           config_dict=self.config_opts)
                                             
             thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
@@ -1714,7 +1717,7 @@ class MainGUI(panicQL):
                                                 out_file=self.m_outputdir+"/skysub.fits", \
                                                 obs_mode="dither", dark=None, flat=self.m_masterFlat, \
                                                 bpm=None, red_mode="quick",\
-                                                group_by="ot", check_data=True, config_dict=self.config_opts)
+                                                group_by=self.group_by, check_data=True, config_dict=self.config_opts)
                 
                 thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list, self._task.rs_filelist, file_n)
                 thread.start()
@@ -1875,7 +1878,7 @@ class MainGUI(panicQL):
             try:
                 self._task = RS.ReductionSet( file_list, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
                                             obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
-                                            group_by="ot", check_data=True, config_dict=self.config_opts)
+                                            group_by=self.group_by, check_data=True, config_dict=self.config_opts)
                 
                 thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
                 thread.start()
@@ -1981,7 +1984,7 @@ class MainGUI(panicQL):
             try:
                 self._task = RS.ReductionSet( fileList, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
                                             obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick",\
-                                            group_by="ot", check_data=True, config_dict=self.config_opts )
+                                            group_by=self.group_by, check_data=True, config_dict=self.config_opts )
                 
                 thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
                 thread.start()
@@ -2081,7 +2084,7 @@ class MainGUI(panicQL):
             self._task = RS.ReductionSet( files, self.m_outputdir, out_file=outfilename,
                                             obs_mode="dither", dark=None, 
                                             flat=None, bpm=None, red_mode="quick",
-                                            group_by="ot", check_data=True,
+                                            group_by=self.group_by, check_data=True,
                                             config_dict=self.config_opts,
                                             external_db_files=self.outputsDB.GetFiles()) 
             # provide the outputDB files as the external calibration files for the RS 

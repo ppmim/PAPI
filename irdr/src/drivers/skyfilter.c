@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
 
     if (nplanes < 1)
-        eprintf("%s: no valid image planes", argv[0]);
+        eprintf("[%s] Error: no valid image planes", argv[0]);
 
     gainmap = readfits(argv[2], &nx, &ny, NULL, NULL);
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
 
     if (hwid > MAXHWID || (2 * hwid + 1) > nplanes){
-      eprintf("[skyfilter] Found wrong number of sky frames --> hwid %d, MAXHWID %d, nplanes %d\n", hwid, MAXHWID, nplanes);
+      eprintf("[skyfilter] Error: found wrong number of sky frames --> hwid %d, MAXHWID %d, nplanes %d\n", hwid, MAXHWID, nplanes);
       return -1;
     }
 
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 	    printf (" \n");
 
         if (nsky==0) {
-            eprintf("[skyfilter] Error, not enought number of sky frames");
+            eprintf("[skyfilter] Error: not enought number of sky frames");
             return -1;
         }
         
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
                                    argv[5]);
         }
 
-        /* Apply master flat: divide by gainmap */
+        /* UNA PRUEBA !!!! Apply master flat: divide by gainmap */
         int flat=0;
         int ind=0;
         if (flat)
@@ -177,7 +177,7 @@ static void readdata(int i, int usemask)
     data[i] = readfits(fn[i], &nx, &ny, &bkgs[i], &sigs[i]);  /* image plane */
 
     if (bkgs[i] <= 0 || sigs[i] <= 0)
-        eprintf("readdata: ERR %s, bkg %f, sig %f\n", fn[i], bkgs[i], sigs[i]);
+        eprintf("[skyfilter::readdata] Error: file %s, bkg %f, sig %f\n", fn[i], bkgs[i], sigs[i]);
 
     if (usemask) {
         float *wmap = getwmap(fn[i], nx, ny, gainmap, sigs[i]);

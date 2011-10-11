@@ -115,6 +115,12 @@ def main(arguments = None):
                   action = "store_true", dest = "print_seq", default = False,
                   help = "print detected sequences in the Data Set")
 
+    parser.add_option("-S", "--seq_to_reduce", type = "str",
+                  action = "store", dest = "seq_to_reduce", 
+                  default = "all", help = "Sequence number to reduce. \
+                  Be default, all sequences found will be reduced.")
+    
+
     parser.add_option("-v", "--verbose",
                   action = "store_true", dest = "verbose", default = True,
                   help = "verbose mode [default]")
@@ -192,6 +198,8 @@ def main(arguments = None):
     log.debug(">> Starting PAPI....")
     log.debug("   + source  : %s",general_opts['source'])
     log.debug("   + out_dir : %s",general_opts['output_dir'])
+    log.debug("   + Master Dark : %s",general_opts['master_dark'])
+    log.debug("   + Master Flat : %s",general_opts['master_flat'])
     log.debug("   + reduction_mode: %s",general_opts['reduction_mode'])
     log.debug("   + Astrometric catalog: %s", options['astrometry']['catalog'])
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
@@ -210,7 +218,12 @@ def main(arguments = None):
             print "SEQUENCES found:"
             rs.getSequences()
         else:
-            rs.reduceSet(red_mode=general_opts['reduction_mode'])
+            if init_options.seq_to_reduce=='all':
+                rs.reduceSet(red_mode=general_opts['reduction_mode'])
+            else:
+                rs.reduceSet(red_mode=general_opts['reduction_mode'], 
+                             seqs_to_reduce=[int(init_options.seq_to_reduce)])
+                
     except RS.ReductionSetException, e:
         print e
     except Exception, e:

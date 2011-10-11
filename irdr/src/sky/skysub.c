@@ -23,7 +23,7 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
 
     skybkg = histcalcf(sky, nx, ny, -1, -1, NULL);
     
-    printf ("\nSKYSUB ---skybkg== %f\n", skybkg);
+    /*printf ("\nSKYSUB ---skybkg== %f\n", skybkg);*/
 
     /* subtract out sky structure where sky image is valid (weight > 0) */
 
@@ -69,11 +69,13 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
             imgout[i] = bkg;  /* set bad pixels to bkg lvl */
     	
     	else{
-            /*imgout[i] = img[i] + (skybkg - sky[i]);*/
-            imgout[i] = img[i] - sky[i]; /*jmiguel-test */
+            imgout[i] = img[i] + (skybkg - sky[i]);
+            /*imgout[i] = img[i] - sky[i];*/ /*jmiguel-test */
                 
+    	    /* only for debug !
     	    if (skybkg-sky[i]<0)
     	       printf("\n IMG= %f  skbkg= %f SKY= %f (d=%f)", img[i],  skybkg, sky[i], skybkg-sky[i]);
+    	    */
     	}
     }
     

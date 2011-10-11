@@ -496,7 +496,7 @@ if __name__ == "__main__":
     try:
         sex.run(options.input_image, updateconfig=True, clean=False)
     except Exception,e:
-        log.errro("Canno't create SExtractor catalog : %s", str(e)) 
+        log.error("Canno't create SExtractor catalog : %s", str(e)) 
         sys.exit(0)
     
     ## 0.1 - Read the RA,Dec and TEXP values from the input image

@@ -66,9 +66,10 @@ def removefiles(*patterns):
 
 ################################################################################
 
-def splitMEF(fnameMEF, out_filenames):
+def splitMEF_deprecated(fnameMEF, out_filenames):
 
  """
+ 
    Split a MEF file into individual files (one per extension).
    The name of the output files will be given in 'output_filenames'
    The new output filename will be 'filenameorig_N.fits' where N goes 1 to NEXTENSIONS
@@ -78,6 +79,9 @@ def splitMEF(fnameMEF, out_filenames):
    Output
       out_filenames : list of output filenames 
       Return: the number of extension extracted to outputfiles
+ 
+ 
+    @deprecated: actually not used anymore ! now we use mef.py module
  """
 
  next = 0
@@ -123,7 +127,8 @@ def linkSourceFiles( source, dest ):
         #we suppose is a list
         for file in source:
             #print "FILE=", file
-            os.symlink(file, dest+"/"+os.path.basename(file))
+            if not os.path.exists(dest+"/"+os.path.basename(file)):
+                os.symlink(file, dest+"/"+os.path.basename(file))
     elif (os.path.isfile(source)):
         #We have a source-file with absolute path for the data files
         file=open(source, 'r')
@@ -133,11 +138,13 @@ def linkSourceFiles( source, dest ):
                 line=line.replace('\n','')
             print
             #print "DEST=", dest+"/"+os.path.basename(line)
-            os.symlink(line, dest+"/"+os.path.basename(line))
+            if not os.path.exists(dest+"/"+os.path.basename(line)):
+                os.symlink(line, dest+"/"+os.path.basename(line))
     elif (os.path.isdir(source)):
         #We have a source-directory as input data
         for file in glob.glob(source+"*.fits"):
             print "FILE=", file
-            os.symlink(file, dest+"/"+os.path.basename(file))
+            if not os.path.exists(dest+"/"+os.path.basename(file)):
+                os.symlink(file, dest+"/"+os.path.basename(file))
     else:
         print "Error reading source; cannot indentify the type of input"

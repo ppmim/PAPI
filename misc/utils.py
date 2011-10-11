@@ -155,8 +155,10 @@ def runCmd( str_cmd, p_shell=True ):
     (stdoutdata, stderrdata) = p.communicate()
     err = stdoutdata + " " + stderrdata
 
+    print "STDOUT + STDERR", err
+    
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
-    if (err.count('ERROR ') or err.count("Error ") or err.count("Error*")
+    if (err.lower().count('error ') or err.lower().count('error:') 
       or err.count('Segmentation fault') or err.count("command not found")
       or err.count('No source found')
       or err.count("No such file or directory")

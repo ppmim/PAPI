@@ -19,6 +19,7 @@ from pysqlite2 import dbapi2 as sqlite
 import datahandler
 import os
 import sys
+import math
 
 ###### Enable logging
 from misc.paLog import log
@@ -33,7 +34,9 @@ class DataSet:
     """
     TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
                     ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
-
+                
+    MAX_MJD_DIFF = 6.95e-3 # Maximun seconds (10min=600secs aprox) of temporal 
+                           # distant allowed between two consecutive frames (1/86400.0)*10*60
     ############################################################
     def __init__( self , source ):
         """
@@ -66,6 +69,8 @@ class DataSet:
 
         """
 
+        log.debug("Loading DB ...")
+        
         if source==None: source = self.source
         
         # 1. Load the source
@@ -102,7 +107,7 @@ class DataSet:
           \return 0 if all was successful, otherwise <0
         """
 
-        log.debug("Inserting file %s into dataset" % filename)
+        #log.debug("Inserting file %s into dataset" % filename)
         if filename==None: return 0
         
         try:
@@ -384,15 +389,24 @@ class DataSet:
             
         return ob_id_list, ob_file_list
                  
-    def GetFilterFiles(self):
+    def GetFilterFiles(self, max_mjd_diff=None ):
         """ 
-            Get all the SCIENCE files found for each (Filter,TExp) ordered by MJD; 
-            no other keyword is looked for (OB_ID, OB_PAT, ...) 
-            
-            Return the list of parameter-tuples and list of list,
-            having each list the list of files beloging to.
+        @summary: Get all the SCIENCE group files found for each (Filter,TExp) 
+        ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
+        
+        In addition, MJD is checked in order to look for time gaps into a (Filter,TExp) 
+        sequence. It will be quite useful for data grouping when the OT was not used 
+        during the observing run.
+        
+        @param max_mjd_diff: Maximun seconds of temporal distant allowed between 
+        two consecutive frames
+         
+        @return: the list of parameter-tuples and list of list,
+        having each list the list of files beloging to.
             
         """
+        
+        if max_mjd_diff==None: max_mjd_diff=DataSet.MAX_MJD_DIFF
         
         par_list = [] # parameter tuple list (filter,texp)
         filter_file_list = [] # list of file list (one per each filter)
@@ -404,26 +418,67 @@ class DataSet:
         cur.execute(s_select,"")
         rows = cur.fetchall()
         if len(rows)>0:
-            par_list = [ [f[0],f[1]] for f in rows] # important to apply str() ??
+            par_list = [ [str(f[0]),f[1]] for f in rows] # important to apply str() ??
         print "Total rows selected:  %d" %(len(par_list))
         print "Filters found :\n ", par_list
         
         # Finally, look for files of each Filter
         for par in par_list:
             s_select = "select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY') order by mjd"    
-            #print s_select
             cur = self.con.cursor()
             cur.execute(s_select,(par[0],par[1]))
-            #print "done !"
             rows = cur.fetchall()
             if len(rows)>0:
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             print "%d files found for Filter %s" %(len(rows), par[0])
+
+        # Now, look for temporal gap inside the current sequences were found
+        new_seq_list = []
+        new_seq_par = []
+        k = 0
+        for seq in filter_file_list:
+            group = []
+            mjd_0 = self.GetFileInfo(seq[0])[10]
+            for file in seq:
+                t = self.GetFileInfo(file)[10]
+                if math.fabs(t-mjd_0)<max_mjd_diff:
+                    group.append(file)
+                    mjd_0 = t
+                else:
+                    log.debug("Sequence split due to temporal gap between sequence frames")
+                    new_seq_list.append(group[:]) # very important, lists are mutable !
+                    new_seq_par.append(par_list[k])
+                    mjd_0 = t
+                    group = [file]
+            new_seq_list.append(group[:]) # very important, lists are mutable !
+            new_seq_par.append(par_list[k])
+            k+=1    
             
-        return par_list, filter_file_list
+        return  new_seq_list, new_seq_par
                          
+    def GetSequences(self, group_by='ot'):
+        """
+        @summary: General function to look for Sequences in the current data base of files
+        
+        @param group_by: parameter to decide what kind of data grouping will be done;
+        if 'ot', OT keywords will be used, otherwise ('filter'), Filter and TExp will be
+        taken into account for the data grouping.
+        
+        @return: two lists:
+             - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
+             - a of list, having each list the list of files beloging 
+               to the sequence.
+        """   
+        
+        if group_by=='ot': 
+            return self.GetSeqFilesB()
+        else:
+            return self.GetFilterFiles()
+        
     def GetSeqFiles(self, filter=None, type=None):
-        """ 
+        """
+        TO BE DEPRECATED ?
+         
         Get all the files for each Observing Sequence (OS) found. 
         By OS we mean a set of files with the next common features:
         
@@ -443,6 +498,8 @@ class DataSet:
                to the sequence.
     
         @see: GetSeqFilesB()
+        
+        @deprecated: currently GetSeqFilesB() is used, following PAT_EXPN=PAT_NEXP datagrouping rule 
             
         """
         
@@ -572,11 +629,12 @@ class DataSet:
 
           \param filename
 
-          \return A list with database fields (date, ut_time, type, filter, texp, detector_id, run_id, object)
+          \return A list with database fields (date, ut_time, type, filter, 
+                  texp, detector_id, run_id, object, mjd)
         """
 
         try:
-            s_select="select date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object from dataset where filename=?"
+            s_select="select date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd from dataset where filename=?"
             cur=self.con.cursor()
             cur.execute(s_select, (filename,))
             
@@ -594,7 +652,6 @@ class DataSet:
         except sqlite.DatabaseError:
             log.exception("Error in DataSet.GetFile function...")
             raise
-            return None
 
      ############################################################    
     def GetMasterDark( self, detectorId, texp, date, create=False, runId=None):

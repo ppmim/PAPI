@@ -296,6 +296,8 @@ class ClFits:
         if myfits[0].header.has_key('SOFTWARE'):
             self._softwareVer = myfits[0].header['SOFTWARE']
         
+        
+        # IMAGE TYPE
             
         # Some temporal to allow work with diff instrument data files
         inst = myfits[0].header['INSTRUME'].lower()
@@ -333,21 +335,26 @@ class ClFits:
         #FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
         if inst =='panic':
             try:
-                if myfits[0].header.has_key('IMAGETYP'):
-                    ltype = myfits[0].header['IMAGETYP'].lower()
+                if myfits[0].header.has_key('PAPITYPE'):
+                    self.type = myfits[0].header['PAPITYPE']
                 else:
-                    ltype = myfits[0].header[keyword_with_frame_type].lower()
-                try:
-                    self.type = panic_types[ltype]
-                except KeyError:
-                    log.error("Frame type '%s' does not match any kind !"%ltype)
+                    if myfits[0].header.has_key('IMAGETYP'):
+                        ltype = myfits[0].header['IMAGETYP'].lower()
+                    else:
+                        ltype = myfits[0].header[keyword_with_frame_type].lower()
+                    try:
+                        self.type = panic_types[ltype]
+                    except KeyError:
+                        log.error("Frame type '%s' does not match any kind !"%ltype)
             except KeyError:
-                log.error('OBJECT/IMAGETYP keyword not found')
+                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
                 raise Exception("Cannot classify (dark,flat, science) FITS image")
         else: #o2000, hawk-i?
             try:
-                if myfits[0].header.has_key('IMAGETYP'):
+                if myfits[0].header.has_key('PAPITYPE'):
+                    self.type = myfits[0].header['PAPITYPE']
+                elif myfits[0].header.has_key('IMAGETYP'):
                     self.type = myfits[0].header['IMAGETYP']
                 elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
                     self.type = "DARK"
@@ -374,7 +381,7 @@ class ClFits:
                     self.type = "SCIENCE"
                     #log.debug("DEFAULT Image type: %s"%self.type)
             except KeyError:
-                log.error('OBJECT/IMAGETYP keyword not found')
+                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
                 raise Exception("Cannot classify (dark,flat, science) FITS image")
         
@@ -546,7 +553,7 @@ class ClFits:
             else:
                 self.obPat = -1
         except Exception,e:
-            log.error("Cannot find keyword : %s:",str(e))
+            log.warning("Cannot find keyword : %s:",str(e))
             self.obPat = -1
                    
         #PAT_EXPN : Pattern Exposition Number (expono of noexp)
@@ -563,7 +570,7 @@ class ClFits:
             else:
                 self.pat_expno = -1
         except Exception,e:
-            log.error("Cannot find keyword : %s:",str(e))
+            log.warning("Cannot find keyword : %s:",str(e))
             self.pat_expno = -1
             
         #PAT_NEXP : Number of Expositions of Pattern (expono of noexp)
@@ -581,7 +588,7 @@ class ClFits:
             else:
                 self.pat_noexp = -1
         except Exception,e:
-            log.error("Cannot find keyword : %s:",str(e))
+            log.warning("Cannot find keyword : %s:",str(e))
             self.pat_noexp = -1
             
         # To Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers

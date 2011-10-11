@@ -56,7 +56,7 @@ FLUX_MAX
 
 ISOAREAF_IMAGE  # Isophotal area (filtered) above Detection threshold (Pix^2)
 ISOAREAF_WORLD  # Isophotal area (filtered) above Detection threshold (Deg^2)
-
+ISOAREA_IMAGE
 
 #XMIN_IMAGE
 #YMIN_IMAGE
