@@ -132,7 +132,8 @@ int main(int argc, char *argv[])
             fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
                             wdata[i], argv[5]);
         } else {
-            sky = cube_median(dbuf, nsky, nx, ny, scale, 1); 
+            /*sky = cube_mean_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);*/
+            sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
             /* ORIGINAL sky = cube_median(dbuf, nsky, nx, ny, scale, 1); */
             /*DEBUG*/
             strcpy(aux,"/tmp/sky_");
@@ -144,7 +145,7 @@ int main(int argc, char *argv[])
                                    argv[5]);
         }
 
-        /* UNA PRUEBA !!!! Apply master flat: divide by gainmap */
+        /* UNA PRUEBA !!!! Apply master flat: divide by gainmap ===>NO DA BUEN RESULTADO !!!!!!*/
         int flat=0;
         int ind=0;
         if (flat)
@@ -152,13 +153,18 @@ int main(int argc, char *argv[])
             for (ind = 0; ind< nx*ny; ind++)
                 if (gainmap[ind]>0)
                     fimg[ind] = fimg[ind] / gainmap[ind];
-                else fimg[ind] = 0;
+                /*else , we do not correct */
         }        
 
         /*skysubimg = longint(fimg, nx, ny);*/
         /* For PANIC, we need 32 bits images, so we write  -32 (float) FITS*/
         writefits(outfn(fn[i]), fn[i], (char*)fimg, -32, nx, ny);
-
+        
+        /* Add HISTORY to header */
+        if (usemask) put_key_str(outfn(fn[i]), "HISTORY", "Sky subtracted with object mask");
+        else put_key_str(outfn(fn[i]), "HISTORY", "Sky subtracted with NO object mask");
+        
+        /* free memory */
         free(sky);  /*free(skysubimg);*/  free(fimg);
 
         if (skyw != NULL)

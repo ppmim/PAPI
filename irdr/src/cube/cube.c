@@ -241,3 +241,47 @@ cube_sigma(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
     return sigplane;
 }
+
+/* 
+ * cube_mean_min: find mean value of the N-smallest values of the sorted plane of cube 
+ */
+
+extern float *
+cube_mean_min(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale, 
+            int offset, int N)
+{
+    int i, j;
+    static float buf[MAXNPLANES];      /* values of a pixel in all planes */
+    float *meanplane, mean=0;
+    int n=0;
+    
+    meanplane = (float *) emalloc(nx * ny * sizeof(float));
+
+    if (offset) {                          /* zero offset to normalize */
+        for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
+            mean = 0;
+            for (j = 0; j < np; j++)
+                buf[j] = *(planes[j] + i) + scale[j];
+
+            for (n=0; n< N; n++)
+                mean+= kselect(buf, np, n );   
+                            
+            meanplane[i] = mean/N;
+        }
+    } else {
+        for (i = 0; i < nx * ny; i++) {   /* mult. scale to normalize */
+            mean = 0;
+            for (j = 0; j < np; j++)
+                buf[j] = *(planes[j] + i) * scale[j];
+
+            for (n=0; n< N; n++)
+                mean+= kselect(buf, np, n );   
+                            
+            meanplane[i] = mean/N;
+
+        }
+    }
+
+    return meanplane;
+}
+

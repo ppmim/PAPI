@@ -73,7 +73,6 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
     	
     	else{
             imgout[i] = img[i] + (skybkg - sky[i]); /* add constant (skybkg) to preserve original count level */
-            /*imgout[i] = img[i] - sky[i];*/ /*jmiguel-test */
                 
     	    /* only for debug !
     	    if (skybkg-sky[i]<0)
