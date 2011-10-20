@@ -249,7 +249,7 @@ class ApplyDarkFlat:
                 if dark_time != None: 
                     f[0].header.add_history('Dark subtracted %s' %self.__mdark)
                 if flat_time != None: 
-                    f[0].header.add_history('Flat-Fielding with %s' %self.__mflat)        
+                    f[0].header.add_history('Flat-Field with %s' %self.__mflat)        
                             
                 # Write output to outframe (data object actually still points 
                 # to input data)

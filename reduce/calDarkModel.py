@@ -166,8 +166,8 @@ class MasterDarkModel:
         #out=numpy.where(out==0, numpy.polyfit(times, temp, deg=1), 0)   
         
         #Get the median value of the dark current                 
-        median_dark_current=numpy.mean(slopes)    #numpy.median(out[0,:,:])
-        median_bias=numpy.mean(bias)
+        median_dark_current = numpy.mean(slopes)    #numpy.median(out[0,:,:])
+        median_bias = numpy.mean(bias)
         print "MEDIAN_DARK_CURRENT=", median_dark_current
         print "MEDIAN BIAS=", median_bias    
         
@@ -175,9 +175,9 @@ class MasterDarkModel:
         # Write result in a FITS
         hdu = pyfits.PrimaryHDU()
         hdu.scale('float32') # importat to set first data type
-        hdu.data=out     
+        hdu.data = out     
         hdulist = pyfits.HDUList([hdu])
-        hdu.header.update('OBJECT','MASTER_DARK_CURRENT')
+        hdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
         hdu.header.add_history('Dark model based on %s' % framelist)
         hdulist.writeto(self.__output_filename)
         hdulist.close(output_verify='ignore')

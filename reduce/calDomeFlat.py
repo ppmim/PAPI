@@ -322,7 +322,6 @@ class MasterDomeFlat:
         flatframe[0].header.add_history('lamp_off files: %s' %domelist_lampoff )
         #Add a new keyword-->PAPITYPE
         flatframe[0].header.update('PAPITYPE','MASTER_DOME_FLAT','TYPE of PANIC Pipeline generated file')
-        #flatframe[0].header.update('OBJECT','MASTER_DOME_FLAT')
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         
         

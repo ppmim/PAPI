@@ -95,7 +95,7 @@ def dimgTrim (inputfile):
             if lasti==i:
                 std=1.0
             else:
-                print "FILE =", file+"["+str(i)+",*]"
+                #print "FILE =", file+"["+str(i)+",*]"
                 std= float(iraf.imstat (
                     images=file+"["+str(i)+",*]",
                     fields='stddev', format='no', Stdout=1)[0])
@@ -119,7 +119,7 @@ def dimgTrim (inputfile):
             print "No data in file " , file
             sys.exit()
         
-        print "XMIN= ", xmin
+        #print "XMIN= ", xmin
         
         #### 2nd loop ###############################  
         
@@ -131,7 +131,7 @@ def dimgTrim (inputfile):
             if (lasti==i):
                 std=1.0
             else:
-                print "DEBUG (i,std,lasti):" , i, std, lasti
+                #print "DEBUG (i,std,lasti):" , i, std, lasti
                 std= float(iraf.imstat (
                     images=file+"["+str(i)+",*]",
                     fields='stddev',format='no',Stdout=1)[0])
@@ -153,7 +153,7 @@ def dimgTrim (inputfile):
                 pass
             i-=step    
             
-        print "XMAX= ", xmax
+        #print "XMAX= ", xmax
         ##### 3rd loop  ####################  
         
         lasti = 0
@@ -167,7 +167,7 @@ def dimgTrim (inputfile):
                 std= float(iraf.imstat (
                     images=file+"[*,"+str(i)+"]",
                     fields='stddev',format='no',Stdout=1)[0])
-                print "debud --> I, STD, LASTI", i, std, lasti
+                #print "debud --> I, STD, LASTI", i, std, lasti
             
             if (std!=0.0):
                 if (i==1):
@@ -185,7 +185,7 @@ def dimgTrim (inputfile):
                 pass
             i+=step
         
-        print "YMIN= ", ymin
+        #print "YMIN= ", ymin
         ##### 4th loop  ####################  
         
         lasti = 0
@@ -196,7 +196,7 @@ def dimgTrim (inputfile):
             if (lasti==i):
                 std=1.0
             else:
-                print "debud --> I, STD, LASTI", i, std, lasti
+                #print "debud --> I, STD, LASTI", i, std, lasti
                 std= float(iraf.imstat (
                     images=file+"[*,"+str(i)+"]",
                     fields='stddev',format='no',Stdout=1)[0])
@@ -217,9 +217,7 @@ def dimgTrim (inputfile):
                 pass
             i-=step
                 
-        print "YMAX= ", ymax          
-        
-        
+        #print "YMAX= ", ymax          
         
         xmin+=10
         ymin+=15

@@ -95,6 +95,7 @@ class ReductionSet(object):
         super (ReductionSet, self).__init__ (*a, **k)
         
         
+        # CONFIG dictionary
         if not config_dict:
             raise Exception("Config dictionary not provided ...")
         else:
@@ -102,6 +103,7 @@ class ReductionSet(object):
             # twflats, skysub, fits, keywords, config_dicts) and their values
             self.config_dict = config_dict 
 
+        # Input files
         if len(rs_filelist) <= 0:
             log.error("Empy file list, no files to reduce ...")
             raise ReductionSetException ("Empy file list, no files to reduce ...")
@@ -145,6 +147,7 @@ class ReductionSet(object):
         self.master_dark = dark # master dark to use (input)
         self.master_flat = flat # master flat to use (input)
         self.master_bpm = bpm # master Bad Pixel Mask to use (input)
+        self.apply_dark_flat = self.config_dict['general']['apply_dark_flat'] # 0=no, 1=before, 2=after
         self.red_mode = red_mode # reduction mode (quick=for QL, science=for science) 
         log.debug("GROUP_BY = %s"%group_by)
         self.group_by = group_by.lower() # flag to decide how classification will be done, by OT (OB_ID, OB_PAT, FILTER and TEXP kws) or by FILTER (FILTER kw)
@@ -191,7 +194,7 @@ class ReductionSet(object):
         self.ext_db = None
         
         # (optional) file list to build the external DB. We proceed this way, because
-        # if we pass a DB connection to the ReductionSet class instead of a list of files,
+        # if we give a DB connection to the ReductionSet class instead of a list of files,
         # we can have problems because SQLite3 does not support access from multiple 
         # threads, and the RS.reduceSet() can be executed from other thread than 
         # it was created.
@@ -1639,10 +1642,13 @@ class ReductionSet(object):
             else:
                 #avoid call getCalibFor() when red_mode="quick"
                 if self.red_mode == "quick":
-                    dark,flat,bpm = [],[],[]
+                    #dark,flat,bpm = [],[],[]
+                    if self.apply_dark_flat==1: 
+                        dark, flat, bpm = self.getCalibFor(sequence)
                 else:
                     dark, flat, bpm = self.getCalibFor(sequence)
-                    # return 3 list of calibration frames (dark, flat, bpm), because there might be more than one master dark/flat/bpm
+                    # Return 3 list of calibration frames (dark, flat, bpm), 
+                    # because there might be more than one master dark/flat/bpm
 
                 obj_ext, next = self.split(sequence) # it must return a list of list (one per each extension)
                 dark_ext, cext = self.split(dark)
@@ -2008,7 +2014,6 @@ class ReductionSet(object):
         # set the reduction mode
         if red_mode != None: self.red_mode = red_mode
         
-        dark_flat = False
         
         # Clean old files 
         #self.cleanUpFiles()
@@ -2021,11 +2026,9 @@ class ReductionSet(object):
         # and Initialize self.m_LAST_FILES
         if not os.path.dirname(obj_frames[0])==out_dir:
             misc.fileUtils.linkSourceFiles(obj_frames, out_dir)
-            #files1=[line.replace( "\n", "") for line in fileinput.input(self.list_file)]
-            self.m_LAST_FILES=[out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
+            self.m_LAST_FILES = [out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
         else:
-            print "Input files already in output directory!"
-            self.m_LAST_FILES=obj_frames
+            self.m_LAST_FILES = obj_frames
             
         #print "\nSOURCES TO BE REDUCED:"
         #print   "====================="
@@ -2036,10 +2039,11 @@ class ReductionSet(object):
         # 0 - Some checks (filter, ....) 
         ######################################################
         # TODO : it could/should be done in reduceSeq, to avoid the spliting ...??
-        log.info("**** Data ckecking ****")
+        log.info("**** Data Validation ****")
         if self.check_data:
             try:
-                self.checkData(chk_filter=True, chk_type=False, chk_expt=True, chk_itime=True, chk_ncoadd=True)
+                self.checkData(chk_filter=True, chk_type=False, chk_expt=True, 
+                               chk_itime=True, chk_ncoadd=True)
             except Exception,e:
                 raise e
         
@@ -2070,31 +2074,35 @@ class ReductionSet(object):
         ######################################
         # 1 - Apply dark, flat to ALL files 
         ######################################
-        if master_dark!=None and master_flat!=None:
+        if self.apply_dark_flat==1 and master_dark!=None and master_flat!=None:
             log.info("**** Applying dark and Flat ****")
-            dark_flat = True
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, master_dark, master_flat, out_dir)
             self.m_LAST_FILES = res.apply()
         
         ######################################    
-        # 2 - Compute Super Sky Flat-Field 
+        # 2 - Compute Super Sky Flat-Field --> GainMap
         ######################################    
         if master_flat==None:
             try:
                 # - Find out what kind of observing mode we have (dither, ext_dither, ...)
                 log.info('**** Computing Super-Sky Flat-Field ****')
-                master_flat=out_dir+"/superFlat.fits"
+                master_flat = out_dir+"/superFlat.fits"
                 if self.obs_mode=="dither":
                     log.debug("---> dither sequece <----")
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", master_flat, bpm=None, norm=False, temp_dir=self.temp_dir)
+                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                                                    master_flat, bpm=None, 
+                                                    norm=False, 
+                                                    temp_dir=self.temp_dir)
                     superflat.create()
                 elif self.obs_mode=="dither_on_off" or self.obs_mode=="dither_off_on" or self.obs_mode=="other":
                     log.debug("----> EXTENDED SOURCE !!! <----")
                     sky_list = self.getSkyFrames()
-                    print "SKY_LIST=",sky_list
                     misc.utils.listToFile(sky_list, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", master_flat, bpm=None, norm=False, temp_dir=self.temp_dir)
+                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                                                    master_flat, bpm=None, 
+                                                    norm=False, 
+                                                    temp_dir=self.temp_dir)
                     superflat.create()                            
                 else:
                     log.error("Dither mode not supported")
@@ -2107,7 +2115,7 @@ class ReductionSet(object):
         ######################################    
         # 3 - Compute Gain map and apply BPM
         ######################################
-        log.info("**** Computing gain-map ****")
+        log.info("**** Computing gain-map from ****")
         gainmap = out_dir+'/gain_'+self.m_filter+'.fits'
         # get gainmap parameters
         if self.config_dict:
@@ -2151,7 +2159,8 @@ class ReductionSet(object):
         log.info("**** 1st Sky subtraction (without object mask) ****")
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
         # return only filtered images; in exteded-sources, sky frames  are not included 
-        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list", gainmap, 'nomask', self.obs_mode)       
+        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
+                                           gainmap, 'nomask', self.obs_mode)       
 
         #########################################
         # 4.1 - Divide by the master flat ! (some people think it is better do it now ...)
@@ -2162,7 +2171,7 @@ class ReductionSet(object):
         # 5 - Quality assessment (FWHM, background, sky transparency, ellipticity, PSF quality)  
         #########################################
                             
-        log.info("**** Quality Assessment **** (TBD)")                   
+        log.info("**** Data Quality Assessment **** (TBD)")                   
 
         ## -- una prueba con astrowarp : no va mal, a simple vista da resultados parecidos, y en CPU tambien =, por tanto, opcion a considerar !!---
         # 6b - Computer dither offsets and coadd
@@ -2248,7 +2257,7 @@ class ReductionSet(object):
         i=0
         j=0
         for file in self.m_rawFiles:
-            if dark_flat: 
+            if self.apply_dark_flat==1: 
                 line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " " + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             else:
                 line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])

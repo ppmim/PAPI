@@ -129,7 +129,7 @@ class SuperSkyFlat:
             raise Exception("Found a data integrity error")
         
   
-        tmp1=(self.temp_dir + "/tmp_sf.fits").replace('//','/')
+        tmp1 = (self.temp_dir + "/tmp_sf.fits").replace('//','/')
         misc.fileUtils.removefiles(tmp1)
         log.info("Combining images...(images are scaled to have the same median)")
         misc.utils.listToFile(m_filelist, self.temp_dir + "/files.txt") 
@@ -163,7 +163,7 @@ class SuperSkyFlat:
         #        )
         
         # (optional) Normalize the wrt chip 1        
-        if (self.norm):        
+        if self.norm:        
             log.info("Normalizing flat field (wrt extension 1 when applicable)...")
             f=pyfits.open(tmp1)
             if len(f)>1: # is a MEF 
@@ -184,7 +184,11 @@ class SuperSkyFlat:
         shutil.move(out, self.output_filename)
         
         # Update FITS header 
-        f=pyfits.open(self.output_filename,'update')
+        f = pyfits.open(self.output_filename,'update')
+        if self.norm: 
+            f[0].header.add_history("[calSuperFlat] Normalized Super-Flat created from : %s"%str(m_filelist))
+        else:
+            f[0].header.add_history("[calSuperFlat] Non-Normalized Super-Flat created from : %s"%str(m_filelist))
         f[0].header.update('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         f.close(output_verify='ignore')
                                                            

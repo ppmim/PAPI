@@ -344,7 +344,7 @@ class MasterTwilightFlat:
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master twilight flat')
         else: 
-            flatframe[0].header.add_history('Computed master twilight flat')
+            flatframe[0].header.add_history('Computed master (not normalized) twilight flat')
         
         flatframe[0].header.add_history('Twilight files: %s' %framelist )
         #Add a new keyword-->PAPI_TYPE

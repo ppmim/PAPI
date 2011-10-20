@@ -143,7 +143,8 @@ class MEF (object):
                 # TODO: deduce RA,DEC pointing coordinates 
             except KeyError:
                 print 'Warning, some key cannot not be copied'
-                            
+            
+            hdu[0].header.add_history("[MEF.doJoin] MEF created with files %s"%str(self.input_files))                            
             hdu.writeto(out_filename, output_verify = 'ignore', clobber = True)
             hdu.close(output_verify = 'ignore')
             del hdu
@@ -208,6 +209,8 @@ class MEF (object):
                         # extension should have CRVAL/CRPIX values!!
                     except KeyError:
                         print 'Warning, key %s cannot not be copied, is not in the header' % (key)
+                
+                out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
                 del out_hdulist[0].header['EXTNAME']                
                 out_hdulist.writeto (out_filenames[n], output_verify = 'ignore', clobber = True)
@@ -269,6 +272,7 @@ class MEF (object):
             n_ext += 1
        
         prihdu.header.update ('NEXTEND', n_ext)
+        prihdu.header.add_history("[MEF.createMEF] MEF created with files %s"%str(self.input_files))
         misc.fileUtils.removefiles (output_file)
         fo.writeto (output_file, output_verify ='ignore')
         fo.close (output_verify = 'ignore')
@@ -348,6 +352,8 @@ class MEF (object):
             prihdu.header.update ('EXTEND', pyfits.TRUE, after = 'NAXIS')
             prihdu.header.update ('NEXTEND', n_ext, after = 'EXTEND')
             prihdu.header.update ('NEXTEND', n_ext, after = 'EXTEND')
+            prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
+            
             #In the Primary Header we do not need the WCS keywords, only RA,DEC
             keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2','CTYPE1','CTYPE2']
             for key in keys_to_del: del prihdu.header[key]
@@ -411,7 +417,6 @@ class MEF (object):
                         hdu_i.header.update ('CUNIT1', 'deg')
                         hdu_i.header.update ('CUNIT2', 'deg')
                         hdu_i.header.update ('CHIP_NO', 2*i+j, "PANIC Chip number [0,1,2,3]")
-                        
                         
                     # now, copy extra keywords required
                     for key in copy_keyword:
@@ -539,6 +544,7 @@ class MEF (object):
                         prihdu.header.update ('CD1_2', 0, "Axis rotation & scaling matrix")
                         prihdu.header.update ('CD2_1', 0,  "Axis rotation & scaling matrix")
                         prihdu.header.update ('CD2_2', pix_scale/3600.0, "Axis rotation & scaling matrix")
+                        prihdu.header.add_history("[MEF.splitGEIRSToSimple] File created from %s"%file)
                         
                     
                     prihdu.header.update ('CHIP_NO', (i*2)+j, "PANIC Chip number [0,1,2,3]")
