@@ -8,7 +8,7 @@
 #include "mean.h"
 #include "cube.h"
 
-#define NSIG 5.0                       /* clipping threshold */
+#define NSIG 2.0   /* clipping threshold */
 
 /* influye bastante en el modo skyfilter_on_off/off_on 
 #define NSIG 2.0
@@ -26,7 +26,8 @@ cube_median_cl(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
     static float buf[MAXNPLANES];      /* values of a pixel in all planes */
     float *medplane;
     float med, sig, lcut, hcut,a=0;
-    int k,p,nsig = 5;
+    int k,p;
+    int nsig = (int) NSIG;
     static float buf2[MAXNPLANES];
 
     medplane = (float *) emalloc(nx * ny * sizeof(float));

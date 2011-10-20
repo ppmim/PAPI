@@ -124,11 +124,16 @@ int main(int argc, char *argv[])
         
         if (usemask) {
             sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
-            /*DEBUG writefits("/tmp/sky_2nd.fits", fn[i], (char*)sky, -32, nx, ny);*/
+            /* DEBUG */
+            strcpy(aux,"/tmp/sky_");
+            strcat(aux, basename(fn[i]));
+            writefits(aux, fn[i], (char*)sky, -32, nx, ny);
+            /* END_DEBUG */
             fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
                             wdata[i], argv[5]);
         } else {
-            sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
+            sky = cube_median(dbuf, nsky, nx, ny, scale, 1); 
+            /* ORIGINAL sky = cube_median(dbuf, nsky, nx, ny, scale, 1); */
             /*DEBUG*/
             strcpy(aux,"/tmp/sky_");
             strcat(aux, basename(fn[i]));

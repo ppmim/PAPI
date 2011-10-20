@@ -847,9 +847,9 @@ class ReductionSet(object):
         """               
         
         # Skyfilter parameters
-        halfnsky=2  # TODO: get value from config file !!!!
-        destripe='none'
-        out_files=[]
+        halfnsky = self.HWIDTH  # value from config file [skysub.hwidth]
+        destripe = 'none'
+        out_files = []
             
         if obs_mode=='dither':
             skyfilter_cmd=self.m_irdr_path+'/skyfilter '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe 
@@ -2159,7 +2159,7 @@ class ReductionSet(object):
         # T O D O 
                         
         #########################################
-        # 5 - Quality assessment (FWHM, background, ellipticity, PSF quality)  
+        # 5 - Quality assessment (FWHM, background, sky transparency, ellipticity, PSF quality)  
         #########################################
                             
         log.info("**** Quality Assessment **** (TBD)")                   
@@ -2232,7 +2232,7 @@ class ReductionSet(object):
         # 8 - Create master object mask
         #########################################
         log.info("**** Master object mask creation ****")
-        obj_mask=self.__createMasterObjMask(out_dir+'/coadd1.fits', out_dir+'/masterObjMask.fits') 
+        obj_mask  = self.__createMasterObjMask(out_dir+'/coadd1.fits', out_dir+'/masterObjMask.fits') 
 
         ###################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
@@ -2258,9 +2258,9 @@ class ReductionSet(object):
             elif self.obs_mode=='dither':
                 j=j+1
             i=i+1
-                
         fs.close()
-        self.m_LAST_FILES=self.skyFilter(out_dir+"/skylist2.pap", gainmap, 'mask', self.obs_mode)      
+        #call IRDR::skyfilter()
+        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 'mask', self.obs_mode)      
     
         #### EXIT ########
         #log.info("Sucessful end of Pipeline (I hope!)")

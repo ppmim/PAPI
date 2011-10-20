@@ -12,7 +12,7 @@
 #include "mean.h"
 
 #define BLANK 0.0
-#define MINCLIP 5               /* need MINCLIP or more points for clipping */
+#define MINCLIP 1.5               /* need MINCLIP or more points for clipping */
 
 /* mean_nw: calculate robust mean of array (no weights) */
 extern float mean_nw(float *arr, int n, float nsig)

@@ -142,8 +142,8 @@ class SuperSkyFlat:
                     combine='median',
                     offset='none',
                     reject='sigclip',
-                    lsigma=2.5,
-                    hsigma=2.5,
+                    lsigma=1.5,
+                    hsigma=1.5,
                     scale='median',
                     zero='none'
                     #masktype='none'
