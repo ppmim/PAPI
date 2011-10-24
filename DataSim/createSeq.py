@@ -28,7 +28,6 @@ import os.path
 import glob
 
 # PAPI modules
-import style
 import datahandler
 
 def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None, 
@@ -65,19 +64,25 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
             new_file = file.replace(".fits", "." + suffix + ".fits")
             try:
                 shutil.copy(file, new_file)
-            except IOError:
-                print '\n**** Error coping file %s ****\n'%file
+                os.chmod(new_file, 0644)
+            except IOError,e:
+                print '\n**** Error coping file %s ****\n %s'%(file,str(e))
                 sys.exit(1)
         else:
             new_file = file
+            
         try:
             hdus = pyfits.open(new_file,"update")
         except IOError:
-            print '\n**** Error opening file %s ****\n'%file
+            print '\n**** Error opening file %s ****\n'%new_file
             sys.exit(1)
 
+        #OBS_TOOL
         hdus[0].header.update("OBS_TOOL", "OT_v1.0_Simulated", "OT Software (simulated)")
+        
+        #INSTRUME
         if instrument!=None: hdus[0].header.update("INSTRUME", instrument, "Instrument name")
+        else: hdus[0].header.update("INSTRUME", "PANIC", "Instrument name")
         
         # Only when OB_ID and OB_PAT are given, we set the next values into the header
         if ob_id!=None and ob_pat != None: 
@@ -117,10 +122,14 @@ def sortFilesMJD(i_files):
     for file in i_files:
         try:
             fits = datahandler.ClFits(file)
+        except datahandler.FitsTypeError:
+            print "File `%s`  with unknown type will be updated "%(file)
+            dataset.append((file, fits.getMJD()))
         except Exception,e:
             print "Error reading file %s , skipped..."%(file)
             print str(e)      
         else:
+            print "File `%s` read "%(file)
             dataset.append((file, fits.getMJD()))
     
     dataset = sorted(dataset, key=lambda data_file: data_file[1])          
@@ -138,6 +147,9 @@ if __name__ == "__main__":
     
     # Get and check command-line options
     usage = "usage: %prog [options] arg1 arg2"
+    usage+="\n\nThis tool allow the creation of PANIC-OT like sequences with \n\
+the required keywords in order to be understand correctly by the PAPI"
+    
     parser = OptionParser (usage)
     
     
@@ -164,7 +176,9 @@ if __name__ == "__main__":
     
     parser.add_option("-t", "--imagetype", type = "str", default = None,
                   action = "store", dest = "imagetype",
-                  help = "Image type (dark, flat, skyflat, focus, science, etc) to set to input files")
+                  help = "Image type (dark, lamp_on_flat, lamp_off_flat, skyflat,\
+                  focus, tw_flat_dawn, tw_flat_dusk, sky_flat, sky, std, science) \
+                  to set to input files")
  
     parser.add_option("-I", "--instrument", type = "str", default = None,
                   action = "store", dest = "instrument",

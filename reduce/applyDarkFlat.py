@@ -108,8 +108,11 @@ class ApplyDarkFlat:
     def apply(self):
       
         """
-        \brief Apply masters to science file list
+        @summary: Apply masters DARK and/or FLAT to science file list. 
+        Both master DARK and FLAT are optional,i.e., each one can be applied 
+        even the other is not present. 
         """   
+
         log.debug("Start applyDarkFlat")
         
         start_time = time.time()
@@ -139,8 +142,10 @@ class ApplyDarkFlat:
                     n_ext = len(dark)-1
                     log.debug("Dark MEF file with %d extensions", n_ext)
                 out_suffix = out_suffix.replace(".fits","_D.fits")
-        # No master dark privided, then no dark subtracted
+                log.debug("Master DARK to be subtracted : %s"%self.__mdark)
+        # No master dark provided, then no dark to subtract
         else:
+            log.debug("No master dark to be subtracted !")
             dark_data = 0
             dark_time = None
             
@@ -180,7 +185,9 @@ class ApplyDarkFlat:
                            median, mean, mode)
                 log.debug("Flat-field will be normalized by MODE ( %f ) value", mode)
                 out_suffix = out_suffix.replace(".fits","_F.fits")
+                log.debug("Found master FLAT to divide into: %s"%self.__mflat)
         else:
+            log.debug("No master flat to be divided into")
             flat_data = 1.0
             flat_time = None
             flat_filter = None
@@ -195,7 +202,7 @@ class ApplyDarkFlat:
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
         n_removed = 0
         
-        # List of files generared as result of this procedure and that will be returned
+        # List of files generated as result of this procedure and that will be returned
         result_file_list = [] 
             
         for iframe in framelist:
@@ -206,6 +213,7 @@ class ApplyDarkFlat:
             cf = datahandler.ClFits (iframe)
             log.debug("Science frame %s EXPTIME= %f TYPE= %s FILTER= %s"\
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter()))
+            
             # Check FILTER
             if ( flat_filter != None and cf.getFilter() != flat_filter):
                 log.error("Error: Task 'applyDarkFlat' found a frame with \
@@ -223,22 +231,29 @@ class ApplyDarkFlat:
                 newpathname = (self.__out_dir + "/" + \
                              name.replace(".fits", out_suffix)).replace("//","/")
                 misc.fileUtils.removefiles(newpathname)
+                
+                # Scale master DARK
                 i_time = float(cf.expTime()) # all extension have the same TEXP
-                time_scale = float(i_time / dark_time)
-                                
+                if dark_time!=None:
+                    time_scale = float(i_time / dark_time)
+                else: time_scale = 1
+                
                 for chip in range (0, n_ext):
                     if n_ext > 1: # it means, MEF
-                        dark_data = dark[chip+1].data
-                        flat_data = flat[chip+1].data/mode # normalization wrt chip 0
+                        if dark_time!=None: dark_data = dark[chip+1].data
+                        else: dark_data = 0
+                        if flat_time!=None: flat_data = flat[chip+1].data/mode # normalization wrt chip 0
+                        else: flat_data = 1
                         sci_data = f[chip+1].data 
                     else:
-                        dark_data = dark[0].data
-                        flat_data = flat[0].data/mode  # normalization
+                        if dark_time!=None: dark_data = dark[0].data
+                        else: dark_data = 0
+                        if flat_time!=None: flat_data = flat[0].data/mode  # normalization
+                        else: flat_time = 1     
                         sci_data = f[0].data 
                                                                
                     # STEP 2.1: Check EXPTIME and apply master DARK and master FLAT
-                    if time_scale != 1.0: 
-                        log.debug("Scaling master dark ...")
+                    if time_scale != 1.0: log.debug("Scaling master dark ...")
                     sci_data = (sci_data - dark_data*time_scale) / flat_data
                     #store back the new values
                     if n_ext > 1: # it means, MEF

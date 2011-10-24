@@ -130,8 +130,9 @@ class GainMap:
         JMIbanez, IAA-CSIC
         
     """
-    def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  bpm=None, \
-                do_normalization=True, mingain=0.5, maxgain=1.5, nxblock=16, nyblock=16, nsigma=5):
+    def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  
+                 bpm=None, do_normalization=True, mingain=0.5, maxgain=1.5, 
+                 nxblock=16, nyblock=16, nsigma=5):
          
         self.flat = flatfield  # Flat-field image (normalized or not, because optionaly, normalization can be done here)
         self.output_file_dir = os.path.dirname(output_filename)
@@ -159,14 +160,14 @@ class GainMap:
         if os.path.exists(self.output_filename): os.remove(self.output_filename)
 
         # Check if we have a MEF file
-        f=datahandler.ClFits ( self.flat )
-        isMEF=f.mef
+        f = datahandler.ClFits ( self.flat )
+        isMEF = f.mef
         if (not isMEF): nExt=1
         else: nExt=f.next
         
-        naxis1=f.naxis1
-        naxis2=f.naxis2
-        nbad=0
+        naxis1 = f.naxis1
+        naxis2 = f.naxis2
+        nbad = 0
         
         gain=np.zeros([nExt, naxis1, naxis2], dtype=np.float32)
         myflat=pyfits.open(self.flat)
@@ -174,27 +175,27 @@ class GainMap:
             log.debug("Operating in CHIP %d", chip+1)
             if isMEF:
                 #flatM=np.reshape(myflat[chip+1].data, naxis1*naxis2)
-                flatM=myflat[chip+1].data                            
+                flatM = myflat[chip+1].data                            
             else:
-                flatM=myflat[0].data
+                flatM = myflat[0].data
             
             # ##############################################################################
             # Normalize the flat (if MEF, all extension is normlized wrt extension/chip 1) #
             # ##############################################################################
             if chip==0:
                 if self.do_norm:
-                    median=np.median(flatM[200:naxis1-200, 200:naxis2-200])
-                    mean=np.mean(flatM[200:naxis1-200, 200:naxis2-200])
-                    mode=3*median-2*mean
+                    median = np.median(flatM[200:naxis1-200, 200:naxis2-200])
+                    mean = np.mean(flatM[200:naxis1-200, 200:naxis2-200])
+                    mode = 3*median-2*mean
                     log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
                     log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
-                else: median=1.0 # maybe normalization is already done...
-            flatM=flatM/median   
+                else: median = 1.0 # maybe normalization is already done...
+            flatM = flatM/median   
             
             # Check for bad pixel 
-            gain[chip]=np.where( (flatM<self.m_MINGAIN) | (flatM>self.m_MAXGAIN), 0.0, flatM)
-            m_bpm=np.where(gain[chip]==0.0, 1, 0) # bad pixel set to 1
-            nbad=(m_bpm==1).sum()
+            gain[chip] = np.where( (flatM<self.m_MINGAIN) | (flatM>self.m_MAXGAIN), 0.0, flatM)
+            m_bpm = np.where(gain[chip]==0.0, 1, 0) # bad pixel set to 1
+            nbad = (m_bpm==1).sum()
             log.debug("Initial number of Bad Pixels : %d ", nbad)
                         
             # local dev map to find out pixel deviating > NSIGMA from local median
@@ -204,9 +205,9 @@ class GainMap:
             # Foreach image block
             for i in range(0, naxis1, self.m_NYBLOCK):
                 for j in range(0, naxis2, self.m_NXBLOCK):
-                    box=gain[chip][i:i+self.m_NXBLOCK, j:j+self.m_NYBLOCK]
-                    p=np.where(box>0.0)
-                    buf=box[p]
+                    box = gain[chip][i:i+self.m_NXBLOCK, j:j+self.m_NYBLOCK]
+                    p = np.where(box>0.0)
+                    buf = box[p]
                     if len(buf)>0: med = np.median(buf)
                     else: med = 0.0
                     dev[i:i+self.m_NXBLOCK, j:j+self.m_NYBLOCK] = np.where(box>0, (box - med), 0)
@@ -240,13 +241,13 @@ class GainMap:
             #log.debug("MED=%f LO=%f HI=%f SIGMA=%f", med, lo, hi, sig)                    
                                 
             # Find more badpix by local dev
-            p=np.where( (dev<lo) | (dev>hi))
-            gain[chip][p]=0.0
+            p = np.where( (dev<lo) | (dev>hi))
+            gain[chip][p] = 0.0
             log.debug("Final number of Bad Pixel = %d", (gain[chip]==0.0).sum())
             
                  
         # Now, write result in a (MEF/single)-FITS file             
-        output=self.output_filename
+        output = self.output_filename
         log.debug('Generating output file: %s', output)
         prihdr = myflat[0].header.copy()
         prihdr.update('PAPITYPE','MASTER_GAINMAP','TYPE of PANIC Pipeline generated file')
@@ -254,7 +255,7 @@ class GainMap:
         fo = pyfits.HDUList()
         # Add primary header to output file...
         if isMEF: 
-            prihdu=pyfits.PrimaryHDU(None,prihdr)
+            prihdu = pyfits.PrimaryHDU(None,prihdr)
             fo.append(prihdu)
             # Add each extension
             for chip in range(0, nExt):
@@ -264,7 +265,7 @@ class GainMap:
                 fo.append(hdu)
                 del hdu
         else: 
-            prihdu=pyfits.PrimaryHDU(gain[0],prihdr)
+            prihdu = pyfits.PrimaryHDU(gain[0],prihdr)
             fo.append(prihdu)
         
         fo.writeto(output,output_verify='ignore')

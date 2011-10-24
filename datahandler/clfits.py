@@ -1,4 +1,3 @@
-################################################################################
 #
 # PANICtool
 #
@@ -33,10 +32,13 @@ from misc.paLog import log
 
 
 ################################################################################
+class FitsTypeError(ValueError):
+    """Raised when trying to classify a FITS file which is
+    not supported or a special file (e.g. a non PANIC generated file)"""
+
 
 ################################################################################
-
-class ClFits:
+class ClFits (object):
 
     """
       Represents a Classified FITS of PANIC
@@ -63,11 +65,13 @@ class ClFits:
     """
 
     # Class initialization
-    def __init__(self, full_pathname ):
+    def __init__(self, full_pathname, *a,**k):
       
         """
-        \param pathname The full filename of the fits file to classify
+        @param: pathname The full filename of the fits file to classify
         """
+        
+        super (ClFits, self).__init__ (*a,**k)
       
         self.pathname  = full_pathname # path_name + root_name
         self.filename  = os.path.basename(self.pathname)  # root_name
@@ -246,11 +250,15 @@ class ClFits:
         # Open the file            
         try:
             myfits = pyfits.open(self.pathname, 
-                                 ignore_missing_end=True) # since some problems with O2k files                                
+                                 ignore_missing_end=True) # since some problems with O2k files                               
+            
+            if myfits[0].header['SIMPLE']!=True:
+                raise ValueError('Found a not FITS file.')
+
             #myfits = pyfits.open(self.pathname, 'update')
             #myfits[0].verify()
         except Exception,e:
-            log.error('Could not open frame %s - something wrong with input data : %s',self.pathname, str(e))
+            log.error("Could not open frame %s . Error in with input data : %s"%(self.pathname, str(e)))
             raise e
         
         #Check if is a MEF file 
@@ -279,7 +287,7 @@ class ClFits:
         # INSTRUMENT
         try:
             if myfits[0].header.has_key('INSTRUME'):
-                self.instrument = myfits[0].header['INSTRUME']
+                self.instrument = myfits[0].header['INSTRUME'].lower()
             else:
                 self.instrument = "Unknown"
         except Exception,e:
@@ -287,7 +295,7 @@ class ClFits:
             self.instrument = "Unknown"
         
         # Find out the how data file were"observed"
-        if myfits[0].header.has_key('OBS_TOOL') or self.instrument=='HAWKI':
+        if myfits[0].header.has_key('OBS_TOOL') or self.instrument=='hawki':
             self.obs_tool=True
         else:
             self.obs_tool=False
@@ -298,17 +306,14 @@ class ClFits:
         
         
         # IMAGE TYPE
-            
-        # Some temporal to allow work with diff instrument data files
-        inst = myfits[0].header['INSTRUME'].lower()
         try:
-            if inst=='omega2000' and myfits[0].header.has_key('OBJECT'):
+            if self.instrument=='omega2000' and myfits[0].header.has_key('OBJECT'):
                 keyword_with_frame_type = 'OBJECT'
-            elif inst=='hawki' and myfits[0].header.has_key('IMAGETYP'):
+            elif self.instrument=='hawki' and myfits[0].header.has_key('IMAGETYP'):
                 keyword_with_frame_type = 'IMAGETYP'
-            elif inst=='hawki' and myfits[0].header.has_key('OBJECT'):
+            elif self.instrument=='hawki' and myfits[0].header.has_key('OBJECT'):
                 keyword_with_frame_type = 'OBJECT'
-            elif inst=='panic': # current ID in GEIRS for PANIC
+            elif self.instrument=='panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
                     keyword_with_frame_type = 'IMAGETYP'
                     #keyword_with_frame_type = 'OBJECT'
@@ -333,7 +338,7 @@ class ClFits:
                        }
         #IMAGETYP = [DARK, LAMP_ON_FLAT, LAMP_OFF_FLAT, TW_FLAT_DUSK, TW_FLAT_DAWN, SKY_FLAT, SCIENCE, SKY, STD, FOCUS ]
         #FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
-        if inst =='panic':
+        if self.instrument =='panic':
             try:
                 if myfits[0].header.has_key('PAPITYPE'):
                     self.type = myfits[0].header['PAPITYPE']
@@ -346,10 +351,10 @@ class ClFits:
                         self.type = panic_types[ltype]
                     except KeyError:
                         log.error("Frame type '%s' does not match any kind !"%ltype)
+                        self.type = 'UNKNOW'
             except KeyError:
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
-                raise Exception("Cannot classify (dark,flat, science) FITS image")
         else: #o2000, hawk-i?
             try:
                 if myfits[0].header.has_key('PAPITYPE'):
@@ -383,7 +388,6 @@ class ClFits:
             except KeyError:
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
-                raise Exception("Cannot classify (dark,flat, science) FITS image")
         
         #Is pre-reduced the image ? by default, no
         self.processed = False
@@ -391,7 +395,7 @@ class ClFits:
         #print "File :"+ self.pathname
         #Filter
         try:
-            if myfits[0].header['INSTRUME']=='HAWKI':
+            if self.instrument=='hawki':
                 if myfits[0].header.has_key('ESO INS FILT1 NAME'): 
                     self.filter = myfits[0].header['ESO INS FILT1 NAME']
                 elif myfits[0].header.has_key('FILTER1'):
@@ -510,7 +514,7 @@ class ClFits:
         
         #DetectorID
         try:
-            if myfits[0].header['INSTRUME']=='HAWKI': 
+            if self.instrument=='hawki': 
                 self.detectorID=myfits[0].header['HIERARCH ESO DET CHIP NAME']
             else: 
                 self.detectorID='O2k'
@@ -523,11 +527,11 @@ class ClFits:
         
         #OB_ID : Observation Block Id
         try:
-            if myfits[0].header['INSTRUME']=='HAWKI':
+            if self.instrument=='hawki':
                 self.obID = myfits[0].header['HIERARCH ESO OBS ID']
-            elif myfits[0].header['INSTRUME']=='Omega2000':
+            elif self.instrument=='omega2000':
                 self.obID = myfits[0].header['POINT_NO'] # for O2000
-            elif myfits[0].header['INSTRUME']=='Panic':
+            elif self.instrument=='panic':
                 # check how was observed
                 if self.obs_tool:
                     self.obID = myfits[0].header['OB_ID'] # for PANIC using OT
@@ -541,11 +545,11 @@ class ClFits:
                
         #OB_PAT : Observation Block Pattern
         try:
-            if myfits[0].header['INSTRUME']=='HAWKI':
+            if self.instrument=='hawki':
                 self.obPat = myfits[0].header['HIERARCH ESO TPL ID']
-            elif myfits[0].header['INSTRUME']=='Omega2000':
+            elif self.instrument=='omega2000':
                 self.obPat = myfits[0].header['POINT_NO'] # for O2000
-            elif myfits[0].header['INSTRUME']=='Panic':
+            elif self.instrument=='panic':
                 if self.obs_tool:
                     self.obPat = myfits[0].header['OB_PAT'] # for PANIC using OT
                 else:
@@ -558,11 +562,11 @@ class ClFits:
                    
         #PAT_EXPN : Pattern Exposition Number (expono of noexp)
         try:
-            if myfits[0].header['INSTRUME']=='HAWKI':
+            if self.instrument=='hawki':
                 self.pat_expno = myfits[0].header['HIERARCH ESO TPL EXPNO']
-            elif myfits[0].header['INSTRUME']=='Omega2000':
+            elif self.instrument=='omega2000':
                 self.pat_expno = myfits[0].header['DITH_NO']
-            elif myfits[0].header['INSTRUME']=='Panic':
+            elif self.instrument=='panic':
                 if self.obs_tool:
                     self.pat_expno = myfits[0].header['PAT_EXPN'] # for PANIC using OT
                 else:
@@ -575,11 +579,11 @@ class ClFits:
             
         #PAT_NEXP : Number of Expositions of Pattern (expono of noexp)
         try:
-            if myfits[0].header['INSTRUME']=='HAWKI':
+            if self.instrument=='hawki':
                 self.pat_noexp = myfits[0].header['HIERARCH ESO TPL NEXP']
-            elif myfits[0].header['INSTRUME']=='Omega2000':
+            elif self.instrument=='omega2000':
                 self.pat_noexp = -1 # not available
-            elif myfits[0].header['INSTRUME']=='Panic':
+            elif self.instrument=='panic':
                 if self.obs_tool:
                     self.pat_noexp = myfits[0].header['PAT_NEXP'] # for PANIC using OT
                 else:
@@ -593,7 +597,7 @@ class ClFits:
             
         # To Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers
         try:
-            if myfits[0].header['INSTRUME']=='Omega2000':
+            if self.instrument=='omega2000':
                 myfits[0].header.update('PRESS1', 0.0)
                 myfits[0].header.update('PRESS2', 0.0)
         except Exception,e:

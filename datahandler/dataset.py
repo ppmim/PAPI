@@ -401,7 +401,7 @@ class DataSet:
         @param max_mjd_diff: Maximun seconds of temporal distant allowed between 
         two consecutive frames
          
-        @return: the list of parameter-tuples and list of list,
+        @return: the list of parameter-tuples [filter, texp] and list of list,
         having each list the list of files beloging to.
             
         """
