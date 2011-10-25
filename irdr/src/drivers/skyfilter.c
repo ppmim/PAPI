@@ -42,12 +42,14 @@ static void usage(void);
 int main(int argc, char *argv[])
 {
     int i, nx, ny, nplanes;
+    int skymodel = 1; /* 1= median/mean, 2= minimun */
     int hwid, skybeg, usemask = 0;
     unsigned int *skysubimg = NULL;
     float *sky = NULL, *skyw = NULL, *fimg;
     char aux[256];
     
-    if (argc != 6)
+
+    if (argc < 6)
         usage();
 
     if (!strcmp(argv[4], "mask"))
@@ -56,6 +58,16 @@ int main(int argc, char *argv[])
         usemask = 0;
     else
         usage();
+
+    if (argc==7) /* skymodel is an optional argument */
+        if (!strcmp(argv[6], "median"))
+            skymodel = 1;
+        else if (!strcmp(argv[6], "min"))
+            skymodel = 2;
+        else
+            usage();
+    else skymodel = 1;    
+
 
     if (usemask)
         nplanes = readlist(argv[1], fn, mfn, xshift, yshift, MAXNPLANES);
@@ -123,7 +135,11 @@ int main(int argc, char *argv[])
         }
         
         if (usemask) {
-            sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
+            if (skymodel==1)
+                sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
+            else
+                sky = cube_mean_min_w(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1, nsky/2);
+
             /* DEBUG */
             strcpy(aux,"/tmp/sky_");
             strcat(aux, basename(fn[i]));
@@ -132,9 +148,12 @@ int main(int argc, char *argv[])
             fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
                             wdata[i], argv[5]);
         } else {
-            /*sky = cube_mean_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);*/
-            sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
-            /* ORIGINAL sky = cube_median(dbuf, nsky, nx, ny, scale, 1); */
+            if (skymodel==1) 
+                sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
+            else 
+                /*sky = cube_mean_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);*/
+                sky = cube_median_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);
+                 
             /*DEBUG*/
             strcpy(aux,"/tmp/sky_");
             strcat(aux, basename(fn[i]));
@@ -229,7 +248,7 @@ static void usage(void)
     static char *usage = "\n"
     "skyfilter - do running sky frame subtraction\n\n"
     "usage: skyfilter listfn gainfn hwidth mask|nomask "
-    "row|col|rowcol|colrow|none\n\n"
+    "row|col|rowcol|colrow|none skymode\n\n"
     "where listfn - if object masking is used, then listfn should contain:\n"
     "               img_filename objmask_filename dither_x_off dither_y_off\n"
     "               where objmask is the master object mask per dither set\n"
@@ -250,6 +269,9 @@ static void usage(void)
     "               rowcol for row offsets then column offsets,\n"
     "               colrow for column offsets then row offsets,\n"
     "               none for no correction\n\n"
+    "     skymodel- sky background model to use (optional, defaul=mean)"
+    "               median/mean for normal/sparse fields"
+    "               min for crowded fields"   
     "example: skyfilter filelist gain.fits 4 mask rowcol\n\n";
 
     printf("%s", usage);

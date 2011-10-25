@@ -22,3 +22,11 @@ extern float *cube_sigma(float *planes[MAXNPLANES], int np, int nx, int ny,
 
 extern float * cube_mean_min(float *planes[MAXNPLANES], int np, int nx, int ny,
                            float *scale, int offset, int N);
+
+extern float * cube_mean_min_w(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES],
+         int np, int nx, int ny, float **wplanesum, float *scale, int offset, int N);
+
+extern float * cube_median_min(float *planes[MAXNPLANES], int np, int nx, int ny,
+                           float *scale, int offset, int N);
+
+
