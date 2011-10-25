@@ -26,7 +26,7 @@ from misc.paLog import log
 
 
 ############################################################
-class DataSet:  
+class DataSet(object):  
 
     """
     \brief

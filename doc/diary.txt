@@ -1,0 +1,53 @@
+PAPI DEVELOPER DIARY
+====================
+
+2011-10-24
+----------
+
+
+2011-10-25
+----------
+- Implemented in cube.c the next sky models:
+
+     cube_median_min ( N )
+     cube_mean_min ( N )
+     cube_mean_min_w ( N )  weighted
+
+ and modified the skyfilter.c routine in order to accept a new (optional)
+ parameter 'skymodel' for the skyfiltering stage. The current accepted values
+ for skymodel are:
+     
+     median : median/mean skymodel (normal or sparse fields)
+     min : minimal sky model (for crowded fields)
+
+
+- Al reducir la el DS de 13-Julio-2011-Matilde de O2k en el filtro Z
+  (18:25:15+00:10:15) de 5 imágenes, observo que hay una reflejo que parece
+  originado fuera del campo; le pregunto a Matilde, y buscando en 
+http://archive.stsci.edu/cgi-bin/dss_form comprobamos que se debe a una
+  estrella muy brillante que hay cerca del campo, y aunque no cae en el
+  detector, lo que estamos viendo probablemente sean los arcos de difracción
+  que genera la luz de la estrella en la óptica del telescopio/instrumento y
+  que son vistos por el detector.
+  
+  Según Matilde, a priori, no sabe o no cree que eso se pueda eliminar
+  facilmente, así que no habrá que preocuparse de momento por eso. 
+
+  De todas formas, yo creo que con los skyflats(superflats) debería de haberse
+  eliminado, no ?? pues están observando la misma zona del cielo...pero noooo,
+  pues están cayendo sobre distintos píxeles, por lo que no hay nada que
+  hacer, no ?? de todas formas tendría que ver si con alguna técnica de
+  fringing removal se podría hacer algo ....
+
+- Modificado genLogsheet para que pueda mostrar un subconjuto de filas y que
+  además se pueda omitir la cabecera; todo esto con el objetivo de poder crear
+  ficheros que puedan leer datasimy.py y createSeq.py
+
+
+
+ 
+
+
+
+     
+    

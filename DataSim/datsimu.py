@@ -106,20 +106,22 @@ def run(args):
         sys.exit(2)
         
     # read source files
-    list_s=[]    
+    list_s = []    
     if os.path.isfile(source):
         for file in fileinput.input(source):
-            file=file.replace( "\n", "")
-            print "parsing file ->",file
+            file = file.replace( "\n", "")
+            print "[file] parsing file ->",file
             if file.endswith(".fits") or file.endswith(".fit"):
                 list_s.append(file)
                 print "MY_FILE",file
+            else: print "Algo pasa......"
     elif os.path.isdir(source):
         for file in dircache.listdir(source):
-            print "parsing file ->",file
+            print "[dir] parsing file ->",file
             if file.endswith(".fits") or file.endswith(".fit"):
                 list_s.append(source+"/"+file)           
-    
+                print "File added to list..."
+ 
     print "to sort out ...",list_s
     # sort out files
     list_s=sortOutData(list_s)
@@ -160,7 +162,8 @@ def run(args):
                 # Only a test
                 else:
                     print 'Test to copy  %s file to %s' %(frame,dest_path)
-        
+        else:
+	    print "File not ending in [.fit|.fits]" 
           
     print "END the Data Simulator"
     

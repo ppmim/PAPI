@@ -479,7 +479,7 @@ class AstroWarp(object):
         if not os.path.isfile(self.input_files[0]+".head"):
             raise Exception ("Cannot find required .head file")
             
-        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
+        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY'
         swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'

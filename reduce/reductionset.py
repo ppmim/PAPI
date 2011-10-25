@@ -715,8 +715,10 @@ class ReductionSet(object):
         if show:
             k=0
             for type in seq_types:
-                print "\nSEQUENCE #[%d]  - TYPE= %s   #files = %d " \
-                        %(k,type, len(seq_list[k]))
+                print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
+                        %(k,type, self.db.GetFileInfo(seq_list[k][0])[3], 
+                          self.db.GetFileInfo(seq_list[k][0])[4], 
+                          len(seq_list[k]))
                 print "-------------------------------------------------------\
                 ------------------------------------------\n"
                 for file in seq_list[k]:
