@@ -423,7 +423,7 @@ class BadPixelMask:
         hdu.data=bpm2     
         hdu.scale('int16') # importat to set first data type
         hdulist = pyfits.HDUList([hdu])
-        hdu.header.update('PAPITYPE','MASTER_BPM')
+        hdu.header.update('PAPITYPE','MASTER_BPM', 'TYPE of PANIC Pipeline generated file')
         hdulist.writeto(self.output_file)
         hdulist.close(output_verify='ignore')
         

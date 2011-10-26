@@ -351,8 +351,13 @@ class MasterTwilightFlat:
         flatframe[0].header.update('PAPITYPE',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file')
-        
-        flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
+        flatframe[0].header.update('IMAGETYP',
+                                   'MASTER_TW_FLAT',
+                                   'TYPE of PANIC Pipeline generated file') 
+        flatframe[0].header.update('PAT_NEXP',
+                                   1,
+                                   'Number of positions into the current dither pattern')
+	flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         
         log.debug(t.tac())
         log.debug('Saved master TW_FLAT to %s', self.__output_filename )

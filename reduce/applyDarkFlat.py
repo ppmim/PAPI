@@ -185,9 +185,9 @@ class ApplyDarkFlat:
                            median, mean, mode)
                 log.debug("Flat-field will be normalized by MODE ( %f ) value", mode)
                 out_suffix = out_suffix.replace(".fits","_F.fits")
-                log.debug("Found master FLAT to divide into: %s"%self.__mflat)
+                log.debug("Found master FLAT to divide by: %s"%self.__mflat)
         else:
-            log.debug("No master flat to be divided into")
+            log.debug("No master flat to be divided by")
             flat_data = 1.0
             flat_time = None
             flat_filter = None
@@ -221,7 +221,7 @@ class ApplyDarkFlat:
                 f.close()
                 n_removed = n_removed+1
             else:
-                # check Number of Extension
+                # check Number of Extension 
                 if (len(f)>1 and (len(f)-1) != n_ext) or len(f) != n_ext:
                     raise Exception("File %s does not match the number of \
                     extensions (%d)", iframe, n_ext)
@@ -234,21 +234,20 @@ class ApplyDarkFlat:
                 
                 # Scale master DARK
                 i_time = float(cf.expTime()) # all extension have the same TEXP
-                if dark_time!=None:
+                if self.__mdark != None and dark_time!=None:
                     time_scale = float(i_time / dark_time)
                 else: time_scale = 1
-                
                 for chip in range (0, n_ext):
                     if n_ext > 1: # it means, MEF
-                        if dark_time!=None: dark_data = dark[chip+1].data
+                        if self.__mdark != None: dark_data = dark[chip+1].data
                         else: dark_data = 0
-                        if flat_time!=None: flat_data = flat[chip+1].data/mode # normalization wrt chip 0
+                        if self.__mflat!=None: flat_data = flat[chip+1].data/mode # normalization wrt chip 0
                         else: flat_data = 1
                         sci_data = f[chip+1].data 
                     else:
-                        if dark_time!=None: dark_data = dark[0].data
+                        if self.__mdark != None: dark_data = dark[0].data
                         else: dark_data = 0
-                        if flat_time!=None: flat_data = flat[0].data/mode  # normalization
+                        if self.__mflat!=None: flat_data = flat[0].data/mode  # normalization
                         else: flat_time = 1     
                         sci_data = f[0].data 
                                                                
@@ -260,10 +259,9 @@ class ApplyDarkFlat:
                         f[chip+1].data = sci_data
                     else:
                         f[0].data = sci_data        
-               
-                if dark_time != None: 
+                if self.__mdark != None: 
                     f[0].header.add_history('Dark subtracted %s' %self.__mdark)
-                if flat_time != None: 
+                if self.__mflat != None: 
                     f[0].header.add_history('Flat-Field with %s' %self.__mflat)        
                             
                 # Write output to outframe (data object actually still points 

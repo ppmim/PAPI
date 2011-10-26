@@ -45,8 +45,52 @@ http://archive.stsci.edu/cgi-bin/dss_form comprobamos que se debe a una
 
 
 
- 
+2011-10-26
+----------
 
+- Me suscribo a 3 listas de python, una de ellas en español ! para intentar
+  estar un poco más actualizado del mundo Python. 
+
+- Me pongo a buscar el bug que encontré al ejecutar el Test#23;
+  Encotrado BUG sintáctico, estaba en ClFits.isScience()
+ 
+- Me encuentro con otro/s bug/s a la hora de agrupar los datos:
+
+     1) los master creados tienen un PAT_NEXP != N, y PAT_EXPN=1, con lo cual
+     son confundidos/mezclados con los datos agrupados, provocando además que
+     se queden fuera algunos ficheros que tendrían que ser agrupados.
+     Para solucionar esto hago lo siguiente:
+
+     	  - modifico las rutinas de creación de master para que actualicen el
+                 valor de PAT_NEXP=1
+	  - modifico en dataset.GetSeqFilesB() para que no tenga en cuenta a
+                 la hora de agrupar los ficheros de tipo MASTER_XXXXX
+		      
+
+     2) En las rutinas de creación de masters, no se actualiza la keyword
+     IMAGETYP, con lo cual PAPITYPE dice una cosa y IMAGETYP dice otro. Aunque
+     PAPITYPE tiene prioridad, lo arreglo para que ambas digan lo mismo,
+     aunque lo correcto sería eliminar IMAGETYP....
+
+  
+- Me surge la duda siguiente: ¿ qué debe tener más prioridad, un master dado
+  de forma externa o uno creado por el propio pipeline como resultado de la
+  reducción de la secuencia correspondiente ?
+  Yo creo que debería tener prioridad el que reciba de forma externa ...pero
+  tampoco lo tengo muy claro. Ahora el problema está en como implementar esa
+  prioridad ....
+  Se me ocurre, que vamos a tomar aquel que sea más reciente, mirando para
+  ello la MJD --> usando el índice -1 de Python es sencillo.
+  Para ello modifico RS.getCalibFor() de forma que devuelva el último elemento
+  de la lista de master encontrados, que se supone será el más reciente.
+
+- Modificación en el QL para que si no se ha activado la checkBox del outDir,
+  se añadan las salidas generadas durante el procesamiento de los distintos
+  datasets, básicamente para posibilitar que un science-DS pueda usar los
+  master de calibración que hayan podido encontrarse y creado anteriormente.
+  Para ello se modificó : MainGUI::checkLastTask()
+
+ 
 
 
      

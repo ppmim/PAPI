@@ -31,7 +31,8 @@ import glob
 import datahandler
 
 def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None, 
-                         filter=None, imagetype=None, keyword=None, overwrite=False):
+                         filter=None, imagetype=None, keyword=None, 
+                         overwrite=False, mjd=None):
     """ Function to modify the FITS headers in order to simulate an 
     observing sequence of PANIC. The keywords to write are:
      
@@ -92,6 +93,8 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
             hdus[0].header.update("PAT_NAME", "PAT_DEMO", "Pattern name (simulated)")
             hdus[0].header.update("PAT_EXPN", pat_expn, "Exposition number of the current (simulated)")
             hdus[0].header.update("PAT_NEXP", pat_nexp, "Total  number of the expositions of current pattern (simulated)")
+            #simulate the MJD; used to create arificial data
+            if mjd!=None: hdus[0].header.update("MJD-OBS", mjd + 0.002*pat_expn, "MJD (simulated)")
             if pat_expn==pat_nexp:
                 hdus[0].header.update("END_SEQ", "True", "end of dither sequence (simulated)")
             else:
@@ -184,7 +187,6 @@ the required keywords in order to be understand correctly by the PAPI"
                   action = "store", dest = "instrument",
                   help = "Instrument name (INSTRUME)to set to input files")
  
-    
     parser.add_option("-k", "--keyword", type = "str", nargs = 2,
                   action = "store", dest = "keyword", default = None,
                   help = "Keyword and Value (string) to set to input files; ex. -k OBSERVER foo")
@@ -192,6 +194,10 @@ the required keywords in order to be understand correctly by the PAPI"
     parser.add_option("-o", "--overwrite",
                   action = "store_true", dest = "overwrite", default = False,
                   help = "overwrite input files (false)")
+
+    parser.add_option ("-m", "--mjd", type="float", default = None,
+                  action = "store", dest = "mjd", \
+                  help = "Simulate Mean Julian Date into the sequence, adding 0.002 each frame")
     
     parser.add_option("-v", "--verbose",
                   action = "store_true", dest = "verbose", default = False,
@@ -223,9 +229,10 @@ the required keywords in order to be understand correctly by the PAPI"
     print "KEYWORD  =", options.keyword
     print "Overwrite=", options.overwrite
     print "FILES    =", filelist
+    print "MJD      =", options.mjd
         
     create_obs_sequence(filelist, options.instrument, 
                         options.ob_id, options.ob_pat, 
                         options.out_suffix, options.filter, 
                         options.imagetype, options.keyword,
-                        options.overwrite)
+                        options.overwrite, options.mjd)

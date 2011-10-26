@@ -158,7 +158,7 @@ class ClFits (object):
         return False # not yet implemented
     
     def isScience(self):
-        return (self.type.count("SCIENCE") or self.count("STD"))
+        return (self.type.count("SCIENCE") or self.type.count("STD"))
     
     def isRawScience(self):
         return (self.type=="SCIENCE_RAW")
@@ -180,6 +180,12 @@ class ClFits (object):
     
     def isFromOT(self):
         return (self.obs_tool)
+    
+    def isFromGEIRS(self):
+        if self.softwareVer.count("Panic_r"):
+            return True
+        else:
+            return False
     
     def expTime(self):
         return (self.exptime)
@@ -459,7 +465,7 @@ class ClFits (object):
                 wcs = pywcs.WCS(myfits[0].header)
                 center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
                 self._ra = wcs.wcs_pix2sky(center_pix, 1)[0][0] # ups, we are supposing naxis1 is RA axis
-                log.debug("Read RA-WCS coordinate =%s", self._ra)
+                #log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif myfits[0].header.has_key('RA'):
                 self._ra = myfits[0].header['RA']
             else:
@@ -476,7 +482,7 @@ class ClFits (object):
                 wcs = pywcs.WCS(myfits[0].header)
                 center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
                 self._dec = wcs.wcs_pix2sky(center_pix, 1)[0][1] # ups, we are supposing naxis2 is Declination axis
-                log.debug("Read Dec-WCS coordinate =%s", self._dec)
+                #log.debug("Read Dec-WCS coordinate =%s", self._dec)
             elif myfits[0].header.has_key('DEC'):
                 self._dec = myfits[0].header['DEC']
             else:

@@ -157,7 +157,7 @@ class MainGUI(panicQL):
         elif self.config_opts['quicklook']['run_mode']=="PreReduction": self.comboBox_QL_Mode.setCurrentItem(2)
         else: self.comboBox_QL_Mode.setCurrentItem(0)
         
-        self.group_by = self.config_opts['general']['group_by']
+        self.group_by = self.config_opts['general']['group_by'].lower()
             
         
         self.logConsole.info("Wellcome to the PANIC QuickLook tool v1.0" )
@@ -252,7 +252,7 @@ class MainGUI(panicQL):
         
         
         ####################################################
-        ### Check if it's deleted file from source directory
+        ### Check if deleted file is from source directory
         if filename.endswith("__deleted__"):
             log.debug("File %s disappeared from source directory. Deleted from DB"%filename.replace("__deleted__",""))
             try:
@@ -401,6 +401,7 @@ class MainGUI(panicQL):
         for file in obsSequence:
             self.logConsole.info("     - " + file)
             #self.logConsole.info(QString("    - %1").arg(file))
+        self.logConsole.info("... processing sequence ...")
             
         #Change to working directory
         os.chdir(self.m_tempdir)
@@ -446,17 +447,17 @@ class MainGUI(panicQL):
         if type!="SCIENCE":
             return
 
-        self.logConsole.info("++ Starting to process a las file :")
+        self.logConsole.info(" ... processing file %s..."%filename)
         
         # ###########################################################################################
-        # Depending on what options have been selected by the user, we do a processing or other...
+        # According to what options have been selected by the user, we do a processing or other...
         if self.checkBox_subDark.isChecked() or self.checkBox_appFlat.isChecked():
             #Change to working directory
             os.chdir(self.m_tempdir)  # -- required ???
             #Create working thread that process the file
             try:
-                master_dark=self.inputsDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
-                master_flat=self.inputsDB.GetFilesT('MASTER_TW_FLAT',-1, filter) # could be > 1 master darks, then use the last(mjd sorted)
+                master_dark = self.inputsDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
+                master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT',-1, filter) # could be > 1 master darks, then use the last(mjd sorted)
                 if len(master_dark)>0 and len(master_flat)>0:
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
@@ -624,24 +625,40 @@ class MainGUI(panicQL):
         """
         if len(self._task_info_list)>0:      
             try:
-                self._task_info=self._task_info_list.pop()
+                self._task_info = self._task_info_list.pop()
                 if self._task_info._exit_status == 0: # EXIT_SUCCESS, all was OK
                     if self._task_info._return!=None:
                         if type(self._task_info._return)==type(list()): 
-                            str_list=""
-                            print "FILES CREATED=",self._task_info._return
-                            #QMessageBox.information(self,"Info", QString("%1 files created").arg(len(self._task_info._return)))
+                            str_list = ""
+                            #print "FILES CREATED=",self._task_info._return
                             display.showFrame(self._task_info._return) #_return is a file list
                             for file in self._task_info._return:
                                 #display.showFrame(file)
                                 str_list+=str(file)+"\n"
+                                #!!! keep up-date the out DB for future calibrations !!!
+                                # Because some science sequences could neen the
+                                # master calibration created by a former reduction,
+                                # and only if apply_master_dark flat is activated,
+                                # the last produced file is inserted into the output DB
+                                # However, in order to avoid twice insert into
+                                # outputDB (although I think it should not be a
+                                # problem), if the checkBox for the outputs is 
+                                # activated on the GUI, the DB insertion will be 
+                                # done there (I hope), and not here !
+                                if not self.checkBox_outDir_autocheck.isChecked():   
+                                    self.outputsDB.insert(file)
+                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                             QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
-                            self.logConsole.info(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
+                            self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
                         elif os.path.isfile(self._task_info._return):
-                            #print "PASOOOOOO RETURNED =",self._task_info._return
-                            #QMessageBox.information(self,"Info", QString("File %1 created").arg(self._task_info._return))
-                            self.logConsole.info(str(QString(">>Output file %1 created ").arg(self._task_info._return)))
+                            #QMessageBox.information(self,"Info", QString("New file %1 created").arg(self._task_info._return))
+                            self.logConsole.debug(str(QString(">>New file %1 created ").arg(self._task_info._return)))
                             display.showFrame(self._task_info._return)
+                            #!!! keep up-date the out DB for future calibrations
+                            # See comments above
+                            if not self.checkBox_outDir_autocheck.isChecked():
+                                self.outputsDB.insert(file)
+                            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 else:
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
             except Exception,e:
@@ -922,8 +939,7 @@ class MainGUI(panicQL):
                 raise e
             """
             #look for sequences
-            sequences, seq_types = self.inputsDB.GetSequences(self.config_opts['general']['group_by']) 
-            #self.inputsDB.GetSeqFilesB() # much more quick than creating the RS!
+            sequences, seq_types = self.inputsDB.GetSequences(self.group_by) 
             
             #look for un-groupped files
             temp = set([])
@@ -2058,23 +2074,25 @@ class MainGUI(panicQL):
         """
         
         if files==None:
-            files = self.inputsDB.GetFiles() # all the files in ListView, even the generated output files (but they will not be processed)
+            # All the files in ListView, even the generated output 
+            # files (but they will not be processed)
+            files = self.inputsDB.GetFiles() 
 
         if len(files)==0:
             return
         
         log.debug("Starting to process files...")
         self.logConsole.info("++ Starting to process next files :")
-        
         for file in files:
             self.logConsole.info("     - " + file)
             #self.logConsole.info(QString("    - %1").arg(file))
+        self.logConsole.info("... processing sequence ...")
             
         #Change to working directory
         os.chdir(self.m_tempdir)
         #Change cursor
         self.setCursor(Qt.waitCursor)
-        self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+        self.m_processing = False    # Pause autochecking for coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
         #Create working thread that process the files
         try:
             # generate a random filename for the master, to ensure we do not overwrite any file
@@ -2086,7 +2104,7 @@ class MainGUI(panicQL):
                                             flat=None, bpm=None, red_mode="quick",
                                             group_by=self.group_by, check_data=True,
                                             config_dict=self.config_opts,
-                                            external_db_files=self.outputsDB.GetFiles()) 
+                                            external_db_files=self.outputsDB.GetFiles())
             # provide the outputDB files as the external calibration files for the RS 
             
             log.debug("ReductionSet created !")
@@ -2131,6 +2149,11 @@ class LoggingConsole (object):
             item.setColor( QColor("black") )
             item.setFontWeight( QFont.Bold )
             item.setFontUnderline( False )
+            # Debug
+            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "debug_tag" )
+            item.setColor( QColor("#1C731C") ) # dark green
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
         
         if self.textEdit_w2 is not None:
             # Error
@@ -2146,6 +2169,11 @@ class LoggingConsole (object):
             # Info
             item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "info_tag" )
             item.setColor( QColor("black") )
+            item.setFontWeight( QFont.Bold )
+            item.setFontUnderline( False )
+            # Debug
+            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "debug_tag" )
+            item.setColor( QColor("#1C731C") ) # dark green
             item.setFontWeight( QFont.Bold )
             item.setFontUnderline( False )
         
@@ -2164,8 +2192,11 @@ class LoggingConsole (object):
         self.append(message, "WARNING")           
 
     def error(self, message):
-        self.append(message, "ERRROR")
+        self.append(message, "ERROR")
 
+    def debug(self, message):
+        self.append(message, "DEBUG")
+    
     
     def logMsg(self, msg, tag=None):
         """
@@ -2181,6 +2212,9 @@ class LoggingConsole (object):
         elif tag=="ERROR":
             prefix = "<error_tag>"
             suffix = "</error_tag>"
+        elif tag=="DEBUG":
+            prefix = "<debug_tag>"
+            suffix = "</debug_tag>"
         else:
             prefix = ""
             suffix = ""    

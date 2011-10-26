@@ -67,9 +67,11 @@ class MEF (object):
     @author: JMIbannez, IAA-CSIC
         
     """
-    def __init__(self,  input_files ):
+    def __init__(self,  input_files , *a, **k):
         """ class initialization """
                  
+        super (MEF, self).__init__ (*a,**k)         
+        
         self.input_files = input_files
             
     def doJoin(self, output_filename_suffix = ".join.fits", output_dir = None):
@@ -470,7 +472,8 @@ class MEF (object):
         out_filenames = []
 
         # Iterate over the whole input file list 
-        for file in self.input_files:        
+        for file in self.input_files:
+            log.debug("Splitting file %s"%file)        
             try:
                 in_hdulist = pyfits.open(file)
             except IOError:
@@ -564,7 +567,8 @@ class MEF (object):
                     log.info ("FITS file %s created" % (out_filenames[n]))
                     n += 1
         
-        return out_filenames
+        log.debug("End of [splitGEIRSToSimple]")
+        return n_ext,out_filenames
                                   
 ################################################################################
 # main

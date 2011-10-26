@@ -402,11 +402,12 @@ class ReductionSet(object):
         
         new_frame_list=[] # a list of N list, where N=number of extension of the MEF 
         nExt=0
-        if frame_list==None or len(frame_list)==0:
+        if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
             return [],0
             
         # First, we need to check if we have MEF files
-        if not datahandler.ClFits( frame_list[0] ).isMEF():
+        if not datahandler.ClFits( frame_list[0] ).isMEF() and \
+            not datahandler.ClFits( frame_list[0] ).isFromGEIRS():
             nExt = 1
             new_frame_list.append(frame_list)
         else:            
@@ -424,8 +425,7 @@ class ReductionSet(object):
           "PAT_EXPN", "PAT_NEXP", "END_SEQ"\
             ]
             
-            if datahandler.ClFits(frame_list[0]).softwareVer.count("Panic_r"):
-                log.debug("Splitting GEIRS data files")
+            if datahandler.ClFits(frame_list[0]).isFromGEIRS():
                 try:
                     mef = misc.mef.MEF(frame_list)
                     (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
@@ -533,15 +533,15 @@ class ReductionSet(object):
     def getCalibFor(self, sci_obj_list):
         """
         @summary: Given a list of frames belonging to a observing sequence for 
-        a given object (star, galaxy, whatever),return the most calibration 
-        files (master dark,flat,bpm) to reduce the sequence.
+        a given object (star, galaxy, whatever),return the most recently created 
+        calibration files (master dark,flat,bpm) in order to reduce the sequence.
         The search of the calibration files is done, firstly in the local DB, but
         if no results, then in the external DB if it was provided.
           
-        Reduce 3-list of calibration files (dark, flat, bpm), even if each one 
-        has only 1 file.
-        
-        @todo: To Be Completed ! 
+        @return:  3 calibration files (dark, flat, bpm); If more than one master
+        were found, the most recently created (according to MJD) is returned.
+        If some master were not found, None is returned.
+    
         """
         
         log.debug("Looking for calibration files into DB")
@@ -574,11 +574,19 @@ class ReductionSet(object):
         if len(master_bpm)==0 and self.ext_db!=None:
             master_bpm = self.ext_db.GetFilesT('MASTER_BPM')
 
-        log.debug("Found master dark %s", master_dark)
-        log.debug("Found master flat %s", master_flat)
-        log.debug("Found master bpm %s", master_bpm)
+        log.debug("Master Darks found %s", master_dark)
+        log.debug("Master Flats found %s", master_flat)
+        log.debug("Master BPMs  found %s", master_bpm)
         
-        return master_dark, master_flat, master_bpm
+        # Return the most recently created (according to MJD)
+        if len(master_dark)>0: r_dark = master_dark[-1]
+        else: r_dark = None
+        if len(master_flat)>0: r_flat = master_flat[-1]
+        else: r_flat = None
+        if len(master_bpm)>0: r_bpm = master_bpm[-1]
+        else: r_bpm = None
+        
+        return r_dark, r_flat, r_bpm
         
     def getDarkFrames(self):
         """
@@ -1539,11 +1547,12 @@ class ReductionSet(object):
                     files_created += self.reduceSeq(seq, type)
                     reduced_sequences+=1
                 except Exception,e:
-                    log.error("[reduceSet] Cannot reduce sequence %s"%str(seq))
-                    raise e
+                    log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
+                    log.warning("[reduceSet] Procceding to next sequence...")
+                    #raise e
             k = k + 1
     
-        log.debug("*** Set successful reduced and generated the next files: ***")
+        log.debug("*** [reduceSet] End of Sequences. Files generated # %d #: ***"%len(files_created))
         for r_file in files_created: log.debug("    - %s"%r_file)
         
         return files_created
@@ -1565,7 +1574,7 @@ class ReductionSet(object):
         fits = datahandler.ClFits(sequence[0])
         
         if fits.isDark():
-            log.debug("[reduceSeq] A Dark sequence going is to be reduced: \n%s"%str(sequence))
+            log.debug("[reduceSeq] A Dark sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Generate (and create the file) a random filename for the master, 
                 # to ensure we do not overwrite any file
@@ -1633,20 +1642,19 @@ class ReductionSet(object):
                 log.info("[reduceSeq] Found a too SHORT Obs. object sequence. Only %d frames found. Required >4 frames"%len(sequence))
                 raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(sequence))
             else:
-                #avoid call getCalibFor() when red_mode="quick"
+                # Get calibration files
+                dark, flat, bpm = None, None, None
                 if self.red_mode == "quick":
-                    #dark,flat,bpm = [],[],[]
                     if self.apply_dark_flat==1: 
                         dark, flat, bpm = self.getCalibFor(sequence)
                 else:
                     dark, flat, bpm = self.getCalibFor(sequence)
-                    # Return 3 list of calibration frames (dark, flat, bpm), 
-                    # because there might be more than one master dark/flat/bpm
+                    # Return 3 filenames of master calibration frames (dark, flat, bpm), 
 
                 obj_ext, next = self.split(sequence) # it must return a list of list (one per each extension)
-                dark_ext, cext = self.split(dark)
-                flat_ext, cext = self.split(flat)
-                bpm_ext, cext = self.split(bpm)
+                dark_ext, cext = self.split([dark])
+                flat_ext, cext = self.split([flat])
+                bpm_ext, cext = self.split([bpm])
                 parallel = self.config_dict['general']['parallel']
                 
                 if parallel==True:
@@ -1855,14 +1863,14 @@ class ReductionSet(object):
             else:
                 #avoid call getCalibFor() when red_mode="quick"
                 if red_mode == "quick":
-                    dark,flat,bpm = [],[],[]
+                    dark,flat,bpm = None,None,None
                 else:
                     dark, flat, bpm = self.getCalibFor(obj_seq)
-                    # return 3 list of calibration frames (dark, flat, bpm), because there might be more than one master dark/flat/bpm
+                    # return 3 filenames of master calibration frames (dark, flat, bpm)
                 obj_ext, next = self.split(obj_seq) # it must return a list of list (one per each extension)
-                dark_ext, cext = self.split(dark)
-                flat_ext, cext = self.split(flat)
-                bpm_ext, cext = self.split(bpm)
+                dark_ext, cext = self.split([dark])
+                flat_ext, cext = self.split([flat])
+                bpm_ext, cext = self.split([bpm])
                 parallel=self.config_dict['general']['parallel']
                 
                 if parallel==True:

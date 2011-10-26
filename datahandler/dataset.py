@@ -470,7 +470,7 @@ class DataSet(object):
                to the sequence.
         """   
         
-        if group_by=='ot': 
+        if group_by.lower()=='ot': 
             return self.GetSeqFilesB()
         else:
             return self.GetFilterFiles()
@@ -604,7 +604,10 @@ class DataSet(object):
             print "%s  %s  %s  %s  %s %s  %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
                                        fits[3], fits[4], fits[5], fits[6], fits[7], # expn, nexp, filter, texp, type
                                        fits[3]==fits[4]) # true/false
-            if fits[3]==1:
+            if fits[7].count('MASTER'): 
+                print "--------> Found a MASTER calibration file; it will not be grouped !!!<----------"
+                continue
+            if fits[3]==1: #expn == 1 ?
                 group = [str(fits[0])] #filename
                 found_first = True # update flag
             elif found_first: 
