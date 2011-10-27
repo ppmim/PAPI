@@ -90,6 +90,7 @@ http://archive.stsci.edu/cgi-bin/dss_form comprobamos que se debe a una
   master de calibración que hayan podido encontrarse y creado anteriormente.
   Para ello se modificó : MainGUI::checkLastTask()
 
+- 
  
 
 
