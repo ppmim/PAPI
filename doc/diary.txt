@@ -92,7 +92,77 @@ http://archive.stsci.edu/cgi-bin/dss_form comprobamos que se debe a una
 
 - 
  
+- Realizo los test #23-#30; destaco el test 30 que incluye a datos según el
+  formato de GEIRS, que tienen que ser "convertidos" a 4 x (simple FITS) que
+  puedan luego ser procesados por PAPI. Parece que de momento la cosa va bien,
+  aunque aún queda por comprobar con datos reales si la astrometría de las
+  nuevas imágenes creadas al partir el fichero original de GEIRS es correcta o
+  no....
+
+2011-10-27
+----------
 
 
-     
+- Ejecutando el test #31, que fue bien, me doy cuenta de que por ejemplo, si
+  para reducir una secuencia necesita alguna calibración con MJD posterior, la
+  ordenación y ejecución de la reducción de secuencias no funcionaria, pues no
+  la habría reducido todavía cuando es necesitada por una secuencia en
+  cuestión. Es decir, sin en el test #31, los darks son posteriores a los
+  twflats, da un ERROR diciendo que no encuentra el master dark necesario y
+  que por tanto no puede crear el master TWFlat.
+
+  Una posible solución que se me ocurre: que la ordenación de secuencias a
+  procesar siga el criterio siguiente:
+
+  	   	1- ordenar por MJD
+		2- ordenar por DARK, DOME_FLATS, TW_FLATS, SCIENCE
+
+  Para implementar esta solución añadi la funcion RS:reorder_sequences(), que
+  hace justamente eso. La probé con el test #32 y funcionó correctamente. No
+  obstante, llamo a esta función de reordenación a la hora de la reducción del
+  RS, pero no cuando se muestra en la consola las Seqs encuentradas, más que
+  nada para poder verlas ordenadas temporalmente.
+
+  Obviamente, esto no es válido para el QL, pues en el QL se reducen las
+  imágenes según van llegando...aunque pensandolo bien, también se podría usar
+  cuando el usuario selecciona manualmente una sequencia de SCI y quiere que
+  esté disponibles las calibraciones posteriores. Pero pensandolo mejor, es
+  preferible que el usuario tenga que marcar/seleccionar todos aquellos
+  ficheros que quiera tener en cuenta para la reducción o bien, indique
+  explicitamente qué masterDark,masterFlat quiere usar.
+
+- A raiz del tema de la ordenación de las sequencias y los problemas que puede
+  dar en el QL si para reducir un SkyFlat no se han reducido aún los dark
+  correspondientes, hago una modificación en QL para que avise también cuando
+  no pueda reducir una secuencia, pues hasta ahora sólo avisava por la
+  consola; ahora también muestra el mensaje en el Log de la GUI.
+  Esto se puede probar con el test #32.
+
+
+
+
+PROXIMAS TAREAS PARA EL OSN 
+===========================
+
+- Implementar en ACS (Albireo Control System)  nueva solución para los ERL que
+  se van a diseñar.
+- Migración de ACS al SO openSuSE11.4-x86_64bit, en la nueva máquina para TCS2
+- Migración de BCS (Bonnette Control System) al SO openSuSE11.4-x86_64.
+- Implementación de nueva aplicación de Autoguiado para TCS2, pues la actual
+  solución de guiado con el software comercial MaxIm/DL no es muy práctica
+  (según los operadores), sobre todo de cara a Albireo.
+- Finalizar la migración de la nueva Web del OSN; básicamente quedan algunos
+  scripts y aplicaciones para la meteorología.
+ 
+ 
+
+
+BCS2.0
+======
+La nueva versión se desarrollará para openSuSE11.4-x86_64bit, con el entorno
+de desarrollo que trae por defecto Kdevelop4.2.
+
+
+
+    
     

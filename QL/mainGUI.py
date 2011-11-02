@@ -425,7 +425,7 @@ class MainGUI(panicQL):
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
                 self.logConsole.info("It is a SCIENCE sequence")
-                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
+                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -627,8 +627,10 @@ class MainGUI(panicQL):
             try:
                 self._task_info = self._task_info_list.pop()
                 if self._task_info._exit_status == 0: # EXIT_SUCCESS, all was OK
+                    self.logConsole.info("...process successful finished  !")
                     if self._task_info._return!=None:
-                        if type(self._task_info._return)==type(list()): 
+                        if type(self._task_info._return)==type(list()) and \
+                            len(self._task_info._return)>0: 
                             str_list = ""
                             #print "FILES CREATED=",self._task_info._return
                             display.showFrame(self._task_info._return) #_return is a file list
@@ -648,11 +650,11 @@ class MainGUI(panicQL):
                                 if not self.checkBox_outDir_autocheck.isChecked():   
                                     self.outputsDB.insert(file)
                                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
                             self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
+                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
                         elif os.path.isfile(self._task_info._return):
-                            #QMessageBox.information(self,"Info", QString("New file %1 created").arg(self._task_info._return))
                             self.logConsole.debug(str(QString(">>New file %1 created ").arg(self._task_info._return)))
+                            #QMessageBox.information(self,"Info", QString("New file %1 created").arg(self._task_info._return))
                             display.showFrame(self._task_info._return)
                             #!!! keep up-date the out DB for future calibrations
                             # See comments above
@@ -660,6 +662,7 @@ class MainGUI(panicQL):
                                 self.outputsDB.insert(file)
                             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 else:
+                    self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
             except Exception,e:
                 raise Exception("Error while checking _task_info_list: %s", str(e))
@@ -1529,7 +1532,7 @@ class MainGUI(panicQL):
                                           group_by=self.group_by, check_data=True, 
                                           config_dict=self.config_opts)
                                             
-            thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
+            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             thread.start()
         except Exception,e:
             #Anyway, restore cursor
@@ -1896,7 +1899,7 @@ class MainGUI(panicQL):
                                             obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
                                             group_by=self.group_by, check_data=True, config_dict=self.config_opts)
                 
-                thread=reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
+                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
                 thread.start()
             except:
                 #Anyway, restore cursor

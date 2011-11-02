@@ -615,7 +615,11 @@ class DataSet(object):
                 if fits[3]==fits[4]:
                     #detected end of the sequence
                     seq_list.append(group[:]) # very important ==> lists are mutable !
-                    seq_types.append(str(fits[7]))
+                    # Set the 'nice' type
+                    if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
+                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    else: my_type = str(fits[7])
+                    seq_types.append(my_type)
                     group = []
                     found_first = False  # reset flag
             else:

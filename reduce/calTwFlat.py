@@ -52,7 +52,7 @@ import Pyro.naming
 # Logging
 from misc.paLog import log
 
-class MasterTwilightFlat:
+class MasterTwilightFlat (object):
     """
     \brief Class used to build and manage a master calibration twilight flat
     \par Class:
@@ -168,19 +168,19 @@ class MasterTwilightFlat:
         # STEP 1: Check the  TYPE(twilight) and FILTER,READEMODE of each Flat frame
         # If any frame on list missmatch the FILTER, then the master twflat will be aborted
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
-        f_expt=-1
-        f_type=''
-        f_filter=''
-        f_ncoadds=-1
-        f_readmode=''
-        good_frames=[]
+        f_expt = -1
+        f_type = ''
+        f_filter = ''
+        f_ncoadds = -1
+        f_readmode = ''
+        good_frames = []
         
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
             log.debug("Checking data compatibility (filter, texp, type)")
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
             #Compute the mean count value in chip to find out good frames (enought check ??)
-            mean=0
+            mean = 0
             myfits = pyfits.open(iframe, ignore_missing_end=True)
             if f.mef==True:
                 log.debug("Found a MEF file")
@@ -230,13 +230,13 @@ class MasterTwilightFlat:
             raise Exception("Error, not enought good flat frames")
                 
         #Clobber existing output images
-        iraf.clobber='yes'
+        iraf.clobber = 'yes'
         
         # STEP 2: We subtract a proper MASTER_DARK, it is required for TWILIGHT
         # FLATS because they might have diff EXPTIMEs
         # Prepare input list on IRAF string format
             
-        log.debug("Start Dark subtraction")    
+        log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark)   
         #Open DARK
         try:
             cdark = datahandler.ClFits ( self.__master_dark )
@@ -251,29 +251,30 @@ class MasterTwilightFlat:
             mdark.close()
             raise Exception("Type mismatch with MEF files")
         if f.mef:
-            next=f.next # number of extension
+            next = f.next # number of extension
         else:
-            next=0
+            next = 0
                 
-        t_dark=cdark.expTime()
+        t_dark = cdark.expTime()
         fileList = []
         for iframe in good_frames:
             # Remove old dark subtracted flat frames
             my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits","_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
+            log.debug("Scaling master dark to")
             # Build master dark with proper (scaled) EXPTIME and subtract (???? I don't know how good is this method of scaling !!!)
             f = pyfits.open(iframe, ignore_missing_end=True)
-            t_flat=datahandler.ClFits ( iframe ).expTime()
+            t_flat = datahandler.ClFits ( iframe ).expTime()
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
             if next>0:
                 for i in range(1,next+1):
                     f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
-                    f[i].header.add_history('Dark subtracted %s (interpolated)'
+                    f[i].header.add_history('Dark subtracted %s (scaled)'
                                              %os.path.basename(self.__master_dark))
             else:
                 f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
-                f[0].header.add_history('Dark subtracted %s (interpolated)' 
+                f[0].header.add_history('Dark subtracted %s (scaled)' 
                                         %os.path.basename(self.__master_dark))    
             
             #a=numpy.reshape(f[0].data, (2048*2048,))

@@ -652,7 +652,10 @@ class ReductionSet(object):
         
         @param show: if True, print out in std output the found sequences
         
-        @return: a list of lists of sequence files
+        @return: a list of lists of sequence files and their types (DARK, TW_FLAT, 
+                DOME_FLAT, SCIENCE) ; see ClFits class for further details)
+        
+                In case of group_by, only 'SCIENCE' type is returned
         
         @attention: if group_by FILTER, only science sequences will be found
         
@@ -724,7 +727,7 @@ class ReductionSet(object):
             k=0
             for type in seq_types:
                 print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
-                        %(k,type, self.db.GetFileInfo(seq_list[k][0])[3], 
+                        %(k, type, self.db.GetFileInfo(seq_list[k][0])[3], 
                           self.db.GetFileInfo(seq_list[k][0])[4], 
                           len(seq_list[k]))
                 print "-------------------------------------------------------\
@@ -734,7 +737,7 @@ class ReductionSet(object):
                 k+=1
             log.debug("Found %d groups of files", len(seq_types))
         
-        return seq_list,seq_types
+        return seq_list, seq_types
         
     
     def getObjectSequences(self):
@@ -1529,16 +1532,25 @@ class ReductionSet(object):
         """
         
         log.debug("[reduceSet] Dataset reduction process...")
+
+        reduced_sequences = 0
+        files_created = []
         
         # set the reduction mode
         if red_mode is not None:
             self.red_mode = red_mode
             
+        # Look for the sequences     
         sequences, seq_types = self.getSequences()
-        reduced_sequences = 0
-        files_created = []
+        # Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE
+        # This is required because some calibration sequence could be created 
+        # after the science sequence, and might happen no other calibration is 
+        # available to process the current sequence.
+        sequences, seq_types = self.reorder_sequences ( sequences, seq_types)
+        
+        # Check which sequeces are required to reduce (-S command line param) 
         if seqs_to_reduce==None:
-            seqs_to_reduce=range(len(sequences))    
+            seqs_to_reduce = range(len(sequences))    
 
         k = 0
         for seq,type in zip(sequences, seq_types):
@@ -1547,16 +1559,57 @@ class ReductionSet(object):
                     files_created += self.reduceSeq(seq, type)
                     reduced_sequences+=1
                 except Exception,e:
+                    # If an error happen while proecessing a sequence, we 
+                    # do NOT STOP, but continue with the next ones. 
+                    # However, if there is only one sequence, raise the exception,
+                    # what it is very useful for the QL
                     log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
                     log.warning("[reduceSet] Procceding to next sequence...")
-                    #raise e
+                    if len(sequences)==1: 
+                        raise e
             k = k + 1
     
-        log.debug("*** [reduceSet] End of Sequences. Files generated # %d #: ***"%len(files_created))
-        for r_file in files_created: log.debug("    - %s"%r_file)
-        
+        # print out the results
+        failed_sequences = len(sequences)-reduced_sequences
+        log.debug("[reduceSet] End of Sequences. \n\tFiles generated # %d #: ***"%len(files_created))
+        for r_file in files_created: log.debug("\t    - %s"%r_file)
+        log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
+
         return files_created
-    
+   
+    def reorder_sequences (self, sequences, seq_types):
+        """
+        Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE
+        This is required because some calibration sequence could be created 
+        after the science sequence, and might happen no other calibration is 
+        available to process the current sequence.
+        
+        @param sequences: list of filename list for each sequence
+        @param seq_types: list of types (DARK, DOME_FLAT, TW_FLAT, SCIENCE) of
+        each sequence of the first parameter.
+        
+        @return: two lists:
+                - a list of lists of sequence files belonging to
+                - a list with the types of the sequences (DARK, TW_FLAT, 
+                DOME_FLAT, SCIENCE) ; see ClFits class for further details)
+        
+        """
+
+        log.debug("[reorder_sequences] start ...")
+        
+        req_types_order = ['DARK', 'DOME_FLAT', 'TW_FLAT', 'SKY_FLAT', 'SCIENCE']
+        new_sequences = []
+        new_seq_types = []
+        
+        for r_type in req_types_order:
+            for i,type in enumerate(seq_types):
+                if type == r_type:
+                    new_sequences.append(sequences[i])
+                    new_seq_types.append(type)
+            
+
+        return new_sequences, new_seq_types
+        
     def reduceSeq(self, sequence, type):
         """
         Reduce/process a produced OT-sequence of files (calibration, science)
@@ -1612,7 +1665,8 @@ class ReductionSet(object):
                     master_dark = self.ext_db.GetFilesT('MASTER_DARK') # could there be > 1 master darks, then use the last(mjd sorted)
                 # if required, master_dark will be scaled in MasterTwilightFlat class
                 if len(master_dark)>0:
-                    # generate a random filename for the master, to ensure we do not overwrite any file
+                    log.debug("[reduceSeq] MASTER_DARK found --> %s"%master_dark[-1])
+                    # generate a random filename for the masterTw, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name

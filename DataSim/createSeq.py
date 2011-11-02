@@ -56,6 +56,9 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
     pat_expn = 1
     pat_nexp = number_files
     
+    if len(filelist)==0:
+        print "\nAny files found."
+        
     # Sort out the input files by MJD
     filelist = sortFilesMJD(filelist)
     
@@ -105,7 +108,8 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
             hdus[0].header.update("FILTER", filter)
     
         if imagetype != None:
-            hdus[0].header.update("IMAGETYP", imagetype, "Image type (dark, flat, science, etc)")
+            hdus[0].header.update("IMAGETYP", imagetype, 
+                                  "Image type (dark, flat, science, etc)")
         
         if options.keyword != None:
             hdus[0].header.update(keyword[0], keyword[1])
@@ -215,12 +219,13 @@ the required keywords in order to be understand correctly by the PAPI"
         # Input is a file listing the input files
         else:
             filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
-        print filelist
     else:
         parser.print_help()
         parser.error("incorrect number of arguments " )
     
+    print "\n"
     print "*** OS SETUP ***"
+    print "----------------"
     print "OB_ID    =", options.ob_id
     print "OB_PAT   =", options.ob_pat
     print "FILTER   =", options.filter    
@@ -228,9 +233,9 @@ the required keywords in order to be understand correctly by the PAPI"
     print "SUFFIX   =", options.out_suffix
     print "KEYWORD  =", options.keyword
     print "Overwrite=", options.overwrite
-    print "FILES    =", filelist
     print "MJD      =", options.mjd
-        
+    print "FILES    =", filelist
+    print "---------------\n"
     create_obs_sequence(filelist, options.instrument, 
                         options.ob_id, options.ob_pat, 
                         options.out_suffix, options.filter, 
