@@ -262,7 +262,7 @@ class MasterTwilightFlat (object):
             my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits","_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
-            log.debug("Scaling master dark to")
+            log.debug("Scaling master dark")
             # Build master dark with proper (scaled) EXPTIME and subtract (???? I don't know how good is this method of scaling !!!)
             f = pyfits.open(iframe, ignore_missing_end=True)
             t_flat = datahandler.ClFits ( iframe ).expTime()
@@ -276,7 +276,8 @@ class MasterTwilightFlat (object):
                 f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
                 f[0].header.add_history('Dark subtracted %s (scaled)' 
                                         %os.path.basename(self.__master_dark))    
-            
+                log.debug("Dark subtraction (scaled) done")
+                
             #a=numpy.reshape(f[0].data, (2048*2048,))
             #print "MODE=", 3*numpy.median(a)-2*numpy.mean(a)
             #print "MEAN=" , numpy.mean(a)
@@ -310,7 +311,7 @@ class MasterTwilightFlat (object):
                         #expname='EXPTIME'
                         #ParList = _getparlistname ('flatcombine')
                         )
-        
+        log.debug("Dark subtracted Twilight flat frames COMBINED")
         # Remove the dark subtracted frames
         for ftr in fileList: misc.fileUtils.removefiles(ftr)
         
@@ -330,6 +331,7 @@ class MasterTwilightFlat (object):
         # Cleanup: Remove temporary files
         misc.fileUtils.removefiles(self.__output_filename)
         # Compute normalized flat
+        log.debug("Doing normalization ...")
         iraf.mscred.mscarith(operand1=comb_flat_frame,
                     operand2=mode,
                     op='/',

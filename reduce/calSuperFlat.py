@@ -125,7 +125,7 @@ class SuperSkyFlat:
         #print "LISTA =", m_filelist
             
         if not datahandler.checkDataProperties( m_filelist ):
-            log.error("Data integrity ERROR, some files not having same properties")
+            log.error("Data integrity ERROR, some files not having same properties (FILTER, EXPTIME, NCOADDS or READMODE)")
             raise Exception("Found a data integrity error")
         
   
@@ -232,8 +232,9 @@ if __name__ == "__main__":
         print "reading %s ..." % options.source_file_list
     
     filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    superflat = SuperSkyFlat(filelist, options.output_filename, options.bpm, options.norm)
-    superflat.create()
+    try:
+	superflat = SuperSkyFlat(filelist, options.output_filename, options.bpm, options.norm)
+    	superflat.create()
+    except Exception,e:
+	log.error("Error: %s"%str(e))
           
-        
-        

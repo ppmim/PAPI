@@ -2223,9 +2223,13 @@ class ReductionSet(object):
                                            gainmap, 'nomask', self.obs_mode)       
 
         ########################################################################
-        # 4.1 - Divide by the master flat ! 
+        # 4.1 - Divide by the master flat after sky subtraction ! 
         # some people think it is better do it now (M.J.Irwing, CASU)
-        # In case, dark is not applied, as it was implicity done when sky subtr.
+        # But, dark is not applied/required, as it was implicity done when sky subtr.
+        # However, it does not produce good results, it looks like if we undo the 
+        # sky subtraction, because sky subtraction is quite related with flatfielding
+        # For further details, check TN and Wei-Hao (SIMPLE) mails. 
+        # So, it is implemented here only for academic purposes !
         ########################################################################
         if self.apply_dark_flat==2 and master_flat!=None:
             log.info("**** Applying Flat AFTER sky subtraction ****")
@@ -2324,10 +2328,10 @@ class ReductionSet(object):
         # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK
         ########################################################################
         log.info("**** Sky subtraction with 2nd object mask ****")
-        #Compound masked sky list
-        fs=open(out_dir+"/skylist2.pap","w+")
-        i=0
-        j=0
+        # 9.1 Compound masked sky file list as input to IRDR::skyfilter()
+        fs = open(out_dir+"/skylist2.pap","w+")
+        i = 0
+        j = 0
         for file in self.m_rawFiles:
             if self.apply_dark_flat==1: 
                 line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " " + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
@@ -2340,14 +2344,20 @@ class ReductionSet(object):
                 j=j+1
             i=i+1
         fs.close()
-        #call IRDR::skyfilter()
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 'mask', self.obs_mode)      
     
-        #### EXIT ########
-        #log.info("Sucessful end of Pipeline (I hope!)")
-        #sys.exit()
-        ##################
-        
+        ########################################################################
+        # 9.2 - Divide by the master flat after sky subtraction ! (see notes above)
+        # (the same task as above 4.2)
+        ########################################################################
+        if self.apply_dark_flat==2 and master_flat!=None:
+            log.info("**** Applying Flat AFTER sky subtraction ****")
+            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
+                                       None,  
+                                       master_flat, 
+                                       out_dir)
+            self.m_LAST_FILES = res.apply()
+            
         ########################################################################
         # X1 - Compute field distortion (SCAMP internal stats)
         ########################################################################
@@ -2366,10 +2376,6 @@ class ReductionSet(object):
             log.info("Sucessful end of Pipeline (I hope!)")
             return output_file
         
-        #### EXIT ########
-        #log.info("Sucessful end of Pipeline (I hope!)")
-        #sys.exit()
-        ##################
             
         ########################################################################
         # X2 - Remove field distortion from individual images (SWARP)-regriding 

@@ -688,7 +688,7 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, c_n
                 print 'READMODE=',f.getReadMode()
             
             if (  (c_type and m_type!=f.getType()) or (c_filter and m_filter!=f.getFilter()) or (c_texp and m_texp!=f.expTime()) or (c_ncoadds and m_ncoadds!=f.getNcoadds()) or (c_readmode and m_readmode!=f.getReadMode())):
-                log.debug("Missmath on some property")
+                log.debug("Missmath on some property (FILTER, EXPTIME, NCOADDS or  READMODE)")
                 return False
         
     log.debug("Successful properties checking")
