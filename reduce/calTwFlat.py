@@ -296,21 +296,21 @@ class MasterTwilightFlat (object):
         log.debug("Combining dark subtracted Twilight flat frames...")
         comb_flat_frame = (self.__temp_dir + "/comb_tw_flats.fits").replace("//","/")
         misc.fileUtils.removefiles(comb_flat_frame)
-        misc.utils.listToFile(fileList, self.__temp_dir + "/twflat_d.list") 
+        misc.utils.listToFile(fileList, self.__temp_dir + "/twflat_d.list")
         # - Call IRAF task
-        iraf.mscred.flatcombine(input="@"+self.__temp_dir+"/twflat_d.list",
+        iraf.mscred.flatcombine(input=("'"+"@"+self.__temp_dir+"/twflat_d.list"+"'").replace('//','/'),
                         output=comb_flat_frame,
                         combine='median',
                         ccdtype='',
                         process='no',
                         reject='sigclip',
                         subset='no',
-                        scale='mode',
+                        scale='mode')
                         #verbose='yes'
                         #scale='exposure',
                         #expname='EXPTIME'
                         #ParList = _getparlistname ('flatcombine')
-                        )
+                        #)
         log.debug("Dark subtracted Twilight flat frames COMBINED")
         # Remove the dark subtracted frames
         for ftr in fileList: misc.fileUtils.removefiles(ftr)
@@ -357,7 +357,8 @@ class MasterTwilightFlat (object):
         flatframe[0].header.update('IMAGETYP',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file') 
-        flatframe[0].header.update('PAT_NEXP',
+        if flatframe[0].header.has_key('PAT_NEXP'):
+            flatframe[0].header.update('PAT_NEXP',
                                    1,
                                    'Number of positions into the current dither pattern')
 	flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file

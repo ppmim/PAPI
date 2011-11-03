@@ -1548,13 +1548,15 @@ class ReductionSet(object):
         # available to process the current sequence.
         sequences, seq_types = self.reorder_sequences ( sequences, seq_types)
         
-        # Check which sequeces are required to reduce (-S command line param) 
+        
+        # Check which sequences are required to reduce (-S command line param) 
         if seqs_to_reduce==None:
             seqs_to_reduce = range(len(sequences))    
 
         k = 0
         for seq,type in zip(sequences, seq_types):
             if k in seqs_to_reduce:
+                log.debug("A Sequence is going to be reduced ... ")
                 try:
                     files_created += self.reduceSeq(seq, type)
                     reduced_sequences+=1
@@ -1603,9 +1605,12 @@ class ReductionSet(object):
         
         for r_type in req_types_order:
             for i,type in enumerate(seq_types):
-                if type == r_type:
+                #log.debug("S_TYPE=%s  R_TYPE=%s"%(type,r_type))
+                if type == r_type.lower():
                     new_sequences.append(sequences[i])
                     new_seq_types.append(type)
+                else:
+                    log.debug("[reorder_sequences]: Any sequence of type [%s]"%(r_type.lower()))
             
 
         return new_sequences, new_seq_types
@@ -2275,7 +2280,8 @@ class ReductionSet(object):
         ########################################################################
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
         try:
-            offset_mat=self.getPointingOffsets(out_dir+"/files_skysub.list", out_dir+'/offsets1.pap')                
+            offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
+                                                 out_dir+'/offsets1.pap')                
         except Exception,e:
             log.error("Erron while getting pointing offsets. Cannot continue with data reduction...")
             raise e
@@ -2284,10 +2290,10 @@ class ReductionSet(object):
         # 7 - First pass coaddition using offsets
         ########################################################################
         log.info("**** Initial coaddition of sky subtracted frames ****")
-        fo=open(out_dir+'/offsets1.pap',"r")
-        fs=open(out_dir+'/stack1.pap','w+')
+        fo = open(out_dir+'/offsets1.pap',"r")
+        fs = open(out_dir+'/stack1.pap','w+')
         for line in fo:
-          n_line = line.replace(".skysub.fits.objs", ".skysub.fits") 
+          n_line = line.replace(".fits.objs", ".fits") 
           fs.write( n_line )
         fo.close()
         fs.close()    

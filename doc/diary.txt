@@ -155,6 +155,55 @@ PROXIMAS TAREAS PARA EL OSN
   scripts y aplicaciones para la meteorología.
  
  
+2011-11-02
+----------
+
+- Instalación de MV con openSuSE-11.1-64bit. Me dió bastantes problemas,
+  entre:
+	* primero de todo, al intentar instalar un SO guest de 64 bit,
+  VirtualBox me avisa que tengo que habilitar en el BIOS del host principal el
+  modo VT-x/AMD-v; no lo encontré en mi bios (DELL 390), pero había algo de
+  virtualización y lo activé. A partir de ahí, VB me dejó instalar el SO 64bit.
+	* me avisa de que el display del host es de 32 bit, pero que el guest
+  está configurado con 16 bit--> eso no pasa nada, simplemente que para
+  mejorar las prestaciones gráficas hay que instalar las GuestAdditions.
+  	* Se me quedaba colgado al inicio de la instalación, y no sabía de qué
+  podia ser; en un principio pensaba que era debido al mensaje de los 32/16
+  bits del display, así que probé en modo texto (y seguia dicho mensaje), y
+  fué cuando me di cuenta de que daba un error por el famoso ACPI. Para
+  intentar solucionar esto desactivé en la definición de la máquina virtual la
+  opción de ACPI. Con esto, ya me dejó instalar sin problemas.
+  	* bueno, también se me quedó un par de veces colgada la instalación
+por que no podía leer el DVD (incluso tampoco lo podia leer elwindowsXP), 
+así que limpié varias veces el DVD hasta que volvió a leerlo sin problemas 
+y pude instalar el openSuSE11.164bit.
+
+
+ 
+- Implementación de apply_dark_flat=2
+- Encontrado problema al ejecutar calTwFlat.py
+
+2011-11-03
+----------
+
+- Encontrado y solucionado bug en calTwFlat.py --> el problema estaba en el
+  parámetro input del mscred.flatcombine() que no estaba bien formado por el
+  tema de la barra doble "//" que no acepta IRAF en los pathnames.
+
+- Tras implementar el modo apply_dark_flat=2, hice las pruebas
+  correspondientes y me dí cuenta de que tenía un error a la hora de crear el
+  fichero stack1.pap en la llamada a coaddStackImages(). Tras solucinar dicho
+  bug, todo parecía ir bien, aunque el test con datos de ALHAMBRA demostró que
+  el FF después del skysubtraction (apply_dark_flat=2) es "como" (o sin el
+  como) deshacer el skysubtraction, cosa que ya había comprobado en día
+  anteriores y que coincide con lo que me decía Wei-Hao (SIMPLE).
+  Por eso, realmente no le veo sentido a implementar dicho modo
+  (apply_dark_flat=2), pero bueno, por si acaso...ya está implementado.
+
+- Repito el test anterior (#32) con red_mode='science'
+
+
+
 
 
 BCS2.0

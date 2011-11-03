@@ -192,7 +192,7 @@ class BadPixelMask:
         for flat in flats_off_frames:
             ftemp.write(flat+"\n")
         ftemp.close()       
-        iraf.flatcombine(input="@"+flats,
+        iraf.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_off_comb,
                         combine='median',
                         ccdtype='none',
