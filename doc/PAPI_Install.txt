@@ -1,0 +1,275 @@
+=====================================
+PAPI INSTALLATION INSTRUCTIONS 
+=====================================
+
+
+1-Python v2.6 : default in 11.1
+===============
+1.1 python-devel 
+
+>zypper install python-devel
+
+1.2 IPython 0.8.4
+
+> zypper install ipython
+
+
+2-Astromatic
+============
+2.1 Sextractor v2.8.6: from astromatic get rpm for 64 bit
+
+2.2 SCAMP v1.7.0 !!! ---> PROBLEM !!!
+
+   > hard dependende of libplplot !!
+
+
+2.3 SWAP v2.19.1 : from astromatic.net get rpm
+
+3. Numpy v1.6.1
+===============
+- pre-requisite: gfortran 
+>  zypper install gcc-fortran
+
+- download v1.6.1 from http://new.scipy.org/download.html --> sourceforge
+ 
+> python setup.py build --fcompiler=gnu95 install
+
+NOTA: the binaryx86_64 rpm's files can not be installed, a lot of failed
+dependences (python 2.7 , ....) 
+
+4.Scipy v0.10.0b2 :
+===================
+
+- pre-requisites : atlas3
+
+
+PROBLEM with atlas !!!
+
+
+5. Matplotlib v.1.1.0
+=====================
+
+- download from homepage : matplotlib.sourceforge
+
+> untar
+> python setup.py install (as root)
+
+
+
+6. PyQt3 
+========
+* Homepage : http://www.riverbankcomputing.co.uk/software/pyqt/download3
+* Dependences:
+
+ - qt3-devel
+ - SIP : sip-4.13.tar.gz 
+ - PyQt : PyQt-x11-gpl-3.18.1.tar.gz
+
+* qt3-devel
+
+> zypper install qt3-devel
+
+* SIP : 
+
+> untar
+> python configure.py
+> make
+> make install
+
+* PyQt
+
+>export QTDIR=/usr/lib64/qt3
+>python configure.py
+>make
+>make install
+
+7. PySqlite2
+============
+Home: http://trac.edgewall.org/wiki/PySqlite
+- Requirements: sqlite3, sqlite-devel
+> zypper install sqlite3 sqlite3-devel
+
+> download PySqlite v.2.6.3
+>unpack tar.gz
+>python setup.py build_static install 
+
+8. DS9 + XPA
+============
+- download from http://hea-www.harvard.edu/RD/ds9/
+- ds9 v6.2 binary 64bit
+- xpa v2.1.13 binary 64 bit
+ 
+
+> unpack
+> cp ds9 /usr/local/bin
+> cp xpa* /usr/local/bin
+ 
+note: optionally, xpa source can also be compiled and installed
+
+9. WCSTools (v3.8.4)
+====================
+- download from http://tdc-www.harvard.edu/wcstools/
+> unpack
+> make all
+> mkdir -p /usr/local/wcstools/bin
+> cp bin/* /usr/local/wcstools/bin
+
+10. PyWCS (v.1.10-4.7)
+=================
+- download from https://trac.assembla.com/astrolib
+- PyFITS is required, but PyWCS can be installed without it
+> unpack source tar.gz
+> python setup.py install
+
+
+11. VO.table + ATpy
+===================
+- vo.table v.0.7.2 from http://stsdas.stsci.edu/astrolib/vo-0.7.2.tar.gz
+- atpy v.0.9.5.4 from http://atpy.github.com/
+
+vo.table
+--------
+> unpack .tar.gz
+> python setup.py install
+
+ATpy 
+----
+> unpack .tar.gz
+> python setup.py install
+
+12. PProcess 
+============
+- download from http://www.boddie.org.uk/python/downloads/pprocess-0.5.tar.gz
+
+> unpack .tar.gz
+> python setup.py install
+
+
+13. STSCI_PYTHON
+================
+
+1) Install Pmw v.1.3.2 
+-----------------------
+From: http://sourceforge.net/projects/pmw/files/Pmw/Pmw.1.3.2/
+
+> unpack 
+> python setup.py install
+
+
+2) IRAF (v.2.14)
+----------------
+- Follow the intallation instructions from :
+http://www.hgt.es/web/index.php?option=com_content&task=view&id=102#whatyouneed
+
+"INSTALLING IRAF 2.12 OVER openSUSE 10.x and 11.x"
+
+that are also valid for v2.14 over openSUSE11.1-64bit
+  
+
+
+2.1) STSDAS & TABLES (v.3.14)
+--------------------------
+Download birany from : http://www.stsci.edu/resources/software_hardware/stsdas/download
+
+> cp stsci_iraf-3.14.linux.tar.gz /iraf/extern
+> cd /iraf/extern
+> tar zxf stsci_iraf-3.14.linux.tar.gz
+> cd stsci_iraf-3.14
+> ./install_helper
+ 
+This script will show you the name of your iraf extern.pkg file and several
+lines of configuration. Copy/paste ALL of these lines into extern.pkg, even
+if you do not need all of them.
+
+If you do not have write access to hlib$extern.pkg, you can place these lines
+in your login.cl
+
+If your extern.pkg file already contains definitions for STSDAS, TABLES, or
+STECF, remove them. 
+
+2.2) mscred 5.04 
+----------------
+- This external IRAF package is not required by stsci_python, but PAPI for MEF processing
+- Download source and binary package from ftp://iraf.noao.edu/iraf/extern/
+- Follow the installation instructions from README file (basically, as usual
+extenal IRAF packages)
+
+2.3) nmisc v05-06-2003 (mm/dd/yyyy)
+-----------------------------------
+- Include starfocus & psfmeasure tasks
+- Download src and birary packages:
+>wget ftp://iraf.noao.edu/iraf/extern-v214/nmisc.tar.Z
+>wget ftp://iraf.noao.edu/iraf/extern-v214/nmisc-bin.redhat.tgz
+
+- Follow installation instruction of README file
+
+> mkdir /iraf/extern/nmisc
+> cd /iraf/extern/nmisc
+> tar -xvzf nmisc.tar.Z
+> tar -xvzf nmisc-bin.redhat.tgz
+
+- Set appropiate links:
+
+> ln -s bin.redhat bin.linux
+> ln -s bin.redhat bin 
+
+- Edit the $hlib/extern.pkg file and add the next lines:
+
+reset nmisc = /iraf/extern/nmisc
+task nmisc = nmisc$nmisc.cl
+
+
+3) stsci_python 2.12
+--------------------
+-Download source package from
+http://www.stsci.edu/resources/software_hardware/stsci_python/current/download
+
+and follow the installation instructions from
+http://www.stsci.edu/resources/software_hardware/stsci_python/Installation/#installing-from-source
+
+> unpack .tar.gz
+> python setup.py install
+
+
+
+
+14. MIDAS (for CL environment)
+==============================
+
+
+15. PAPI source code
+====================
+
+svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk papi
+
+
+ENVIRONMENT CONFIGURATION
+=========================
+- .bashrc 
+
+PYTHONPATH=/home/panic/DEVELOP/PIPELINE/PANIC/trunk
+PAPI_HOME=/home/panic/DEVELOP/PIPELINE/PANIC/trunk
+TERAPIX=/usr/bin
+# IRDR_BIN it is only required for debuging and testint purposes
+IRDR_BIN=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/irdr/bin/
+
+
+export PYTHONPATH PAPI_HOME TERAPIX
+
+alias xg='/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 80x29 -bg grey -fg black -e cl'
+alias panic='cd /home/panic/DEVELOP/PIPELINE/PANIC/trunk'
+alias data='cd /data/'
+# PANIC-MIDAS PROCEDURES
+
+
+GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
+CA_FFLTEST=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha/ffltest
+AUPLAY=/usr/bin/play
+GEIRS_DIR=/home/panic/GEIRS
+FLAT_COMMAND=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha/flats
+TECS_SCRIPT=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha
+PANIC_UTIL=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
+PANIC_SCI=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
+PATH=$PATH:$HOME/GEIRS/scripts
+export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
+
