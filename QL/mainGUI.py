@@ -114,8 +114,8 @@ class MainGUI(panicQL):
             log.error("Directory %s has not R/W access",self.m_tempdir)
             self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access").arg(self.m_tempdir)))
         if not os.access(self.m_outputdir,os.R_OK|os.W_OK):
-            log.error("Directory %s has not R/W access",self.outputdir)
-            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access").arg(self.outputdir)))
+            log.error("Directory %s has not R/W access",self.m_outputdir)
+            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access").arg(self.m_outputdir)))
             
     
         self.m_frameList_dark = ''

@@ -12,8 +12,6 @@
 
 # Import requered modules
 
-import Pyro.naming, Pyro.core
-from Pyro.errors import NamingError
 import threading
 import time
 
@@ -24,50 +22,6 @@ import misc.display as display
 #######################################
 lock = threading.Lock()
 
-class ReduceThread(threading.Thread):  
-
-    """
-    Main threaded Client class to execute the call to the remote object for reduction  
-    """
- 
-    def __init__(self, resource_id, source_frame, dark_frame, flat_frame, out_frame, output_dir='/tmp/' ):
-        threading.Thread.__init__(self)
-        
-        self.resource_id  = resource_id 
-        self.source_frame = source_frame
-        self.dark_frame   = dark_frame
-        self.flat_frame   = flat_frame
-        self.out_frame    = out_frame
-        self.output_dir   = output_dir
-        self.error        = 0
-        
-    def run(self):  
-        print "[ReduceThread]:Soy el hilo cliente ", self.resource_id
-        
-        # locate the NS
-        locator = Pyro.naming.NameServerLocator()
-        #print 'Searching Name Server...',
-        ns = locator.getNS()
-        
-        # resolve the Pyro object
-        #print 'finding object'
-        try:
-            name='sreduce_%d' %self.resource_id
-            URI=ns.resolve(name)
-            print 'URI:',URI
-        except NamingError,x:
-            print 'Couldn\'t find object, nameserver says:',x
-            self.error=1
-            raise
-	
-        # create a proxy for the Pyro object, and return that
-        obj = Pyro.core.getProxyForURI(URI)
-        #obj._setOneway('run')-->it would enable asynchronous call
-        # Synchonous call to 'run'
-        self.error = obj.run (self.source_frame, self.dark_frame, self.flat_frame, self.out_frame, self.output_dir, False)
-
-        print "Thread::Run return", self.out_frame
-        
 class ExecTaskThread(threading.Thread):
     """ 
     Thread to execute a task and then signal with a event to a waiting thread about the result of the task
