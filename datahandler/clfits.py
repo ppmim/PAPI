@@ -361,7 +361,30 @@ class ClFits (object):
             except KeyError:
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
-        else: #o2000, hawk-i?
+        elif self.instrument=='hawki':
+            try:
+                if myfits[0].header[keyword_with_frame_type].lower().count('dark') :
+                    self.type = "DARK"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
+                    self.type = "DOME_FLAT_LAMP_OFF"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('lamp on'):
+                    self.type = "DOME_FLAT_LAMP_ON"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('dusk'):
+                    self.type = "TW_FLAT_DUSK"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('dawn'):
+                    self.type = "TW_FLAT_DAWN"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('sky_flat') or \
+                     myfits[0].header[keyword_with_frame_type].lower().count('flat'): 
+                    self.type = "SKY_FLAT"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
+                    self.type = "SKY"
+                elif myfits[0].header[keyword_with_frame_type].lower().count('object'):
+                    self.type = "SCIENCE"
+            except KeyError:
+                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
+                self.type = 'UNKNOW'
+                
+        else: #o2000, or ??
             try:
                 if myfits[0].header.has_key('PAPITYPE'):
                     self.type = myfits[0].header['PAPITYPE']
@@ -389,6 +412,7 @@ class ClFits (object):
                 elif myfits[0].header[keyword_with_frame_type].lower().count('science'):
                     self.type = "SCIENCE"
                 else:
+                    #By default, the image is classified as SCIENCE object
                     self.type = "SCIENCE"
                     #log.debug("DEFAULT Image type: %s"%self.type)
             except KeyError:
@@ -399,7 +423,7 @@ class ClFits (object):
         self.processed = False
         
         #print "File :"+ self.pathname
-        #Filter
+        #FILTER
         try:
             if self.instrument=='hawki':
                 if myfits[0].header.has_key('ESO INS FILT1 NAME'): 

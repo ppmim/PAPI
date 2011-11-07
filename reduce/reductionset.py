@@ -677,15 +677,14 @@ class ReductionSet(object):
         if show:
             k=0
             print "\n ========================================================="
-            print " =========== SEQUENCES FOUND (%s)========================="%self.group_by
+            print " =========== GROUPPED SEQUENCES (by %s) =============="%self.group_by
             print " ========================================================="
             for type in seq_types:
                 print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
                         %(k, type, self.db.GetFileInfo(seqs[k][0])[3], 
                           self.db.GetFileInfo(seqs[k][0])[4], 
                           len(seqs[k]))
-                print "-------------------------------------------------------\
-                ------------------------------------------\n"
+                print "-------------------------------------------------------------------"
                 for file in seqs[k]:
                     print file + " type= %s"%self.db.GetFileInfo(file)[2]
                 k+=1
@@ -1549,6 +1548,7 @@ class ReductionSet(object):
 
         reduced_sequences = 0
         files_created = []
+        failed_sequences = 0
         
         # set the reduction mode
         if red_mode is not None:
@@ -1563,7 +1563,6 @@ class ReductionSet(object):
         # available to process the current sequence.
         sequences, seq_types = self.reorder_sequences( sequences, seq_types)
         
-        print "ORD_SEQ=",sequences
         
         # Check which sequences are required to reduce (-S command line param)
         # If no sequence number was specified, all seqs will be processed 
@@ -1582,6 +1581,7 @@ class ReductionSet(object):
                     # do NOT STOP, but continue with the next ones. 
                     # However, if there is only one sequence, raise the exception,
                     # what it is very useful for the QL
+                    failed_sequences +=1
                     log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
                     log.warning("[reduceSet] Procceding to next sequence...")
                     if len(sequences)==1: 
@@ -1589,8 +1589,9 @@ class ReductionSet(object):
             k = k + 1
     
         # print out the results
-        failed_sequences = len(sequences)-reduced_sequences
-        log.debug("[reduceSet] End of Sequences. \n\tFiles generated # %d #: ***"%len(files_created))
+        #failed_sequences = len(seqs_to_reduce)-reduced_sequences
+        log.debug("[reduceSet] All sequences processed.")
+        log.debug("[reduceSet] Files generated # %d #: ***"%len(files_created))
         for r_file in files_created: log.debug("\t    - %s"%r_file)
         log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
 
@@ -1792,7 +1793,7 @@ class ReductionSet(object):
                         if bpm_ext==[]: mbpm=None
                         else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                         
-                        if n==1: return None,None# only for a TEST !!!
+                        #if n==1: return None,None# only for a TEST !!!
                         
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, self.red_mode, out_dir=self.out_dir,\

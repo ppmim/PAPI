@@ -40,6 +40,9 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 - Hard dependende of libplplot9. We have to get libplplot9 rpm build for :
   OpenSuSE from :
   ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/home:/makoenig:/science/openSUSE_Factory/x86_64/libplplot9-5.7.1-1.2.x86_64.rpm
+  
+  * libgfortran is required by libplot9. It must be installed from openSuSE reposotory with zypper install libgfortran43
+
 
 > rpm -ivl libplplot9-5.7.1-1.2.x86_64.rpm 
 
