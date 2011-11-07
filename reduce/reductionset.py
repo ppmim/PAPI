@@ -669,10 +669,29 @@ class ReductionSet(object):
             seqs, seq_types = self.getOTSequences(show)
         elif self.group_by=='filter':
             seqs = self.getObjectSequences() # only look for science sequences !
-            seq_types = ['science']*len(seqs)
+            seq_types = ['SCIENCE']*len(seqs)
         else:
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
+
+        if show:
+            k=0
+            print "\n ========================================================="
+            print " =========== SEQUENCES FOUND (%s)========================="%self.group_by
+            print " ========================================================="
+            for type in seq_types:
+                print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
+                        %(k, type, self.db.GetFileInfo(seqs[k][0])[3], 
+                          self.db.GetFileInfo(seqs[k][0])[4], 
+                          len(seqs[k]))
+                print "-------------------------------------------------------\
+                ------------------------------------------\n"
+                for file in seqs[k]:
+                    print file + " type= %s"%self.db.GetFileInfo(file)[2]
+                k+=1
+            log.debug("Found %d groups of files", len(seq_types))
+        
+
             
         return seqs, seq_types
     
@@ -713,16 +732,8 @@ class ReductionSet(object):
         if self.db==None: self.__initDB()
         seq_list, seq_types = self.db.GetSequences(group_by='ot') # much more quick than read again the FITS files
         
-        """
-        if show:
-            # Print found groups
-            print "\n\n"
-            print "*** # Sequences found : %d ***"%len(seq_list) 
-            for i in range(0,len(seq_list)):
-                print "SEQUENCE #[%d] - [%s] \n\n %s"%(i,seq_types[i],seq_list[i])
-        
-        """
         # Print out the found groups
+        """
         if show:
             k=0
             for type in seq_types:
@@ -737,6 +748,7 @@ class ReductionSet(object):
                 k+=1
             log.debug("Found %d groups of files", len(seq_types))
         
+        """
         return seq_list, seq_types
         
     
@@ -765,21 +777,23 @@ class ReductionSet(object):
         # group data file (only science) by Filter,TExp 
         seq_list = []
         seq_par = []
+        
         if self.group_by=="filter":
             (seq_list, seq_par) = self.db.GetSequences(group_by='filter') # return a list of SCIENCE (or SKY) frames grouped by FILTER
                 
             # Print out the found groups
+            """
             k=0
             for par in seq_par:
-                print "\nSEQUENCE #[%d]  - FILTER = %s  TEXP = %s   #files = %d " \
-                        %(k,par[0], par[1], len(seq_list[k]))
+                print "\nSEQUENCE #[%d]  - TYPE= %s  FILTER = %s  TEXP = %s   #files = %d " \
+                        %(k, "SCIENCE", par[0], par[1], len(seq_list[k]))
                 print "-------------------------------------------------------\
                 ------------------------------------------\n"
                 for file in seq_list[k]:
                     print file + " type= %s"%self.db.GetFileInfo(file)[2]
                 k+=1
             log.debug("Found %d groups of SCI files", len(seq_par))
-        
+            """   
         return seq_list
     
     def getDomeFlatFrames(self):
@@ -1542,14 +1556,17 @@ class ReductionSet(object):
             
         # Look for the sequences     
         sequences, seq_types = self.getSequences()
+        
         # Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE
         # This is required because some calibration sequence could be created 
         # after the science sequence, and might happen no other calibration is 
         # available to process the current sequence.
-        sequences, seq_types = self.reorder_sequences ( sequences, seq_types)
+        sequences, seq_types = self.reorder_sequences( sequences, seq_types)
         
+        print "ORD_SEQ=",sequences
         
-        # Check which sequences are required to reduce (-S command line param) 
+        # Check which sequences are required to reduce (-S command line param)
+        # If no sequence number was specified, all seqs will be processed 
         if seqs_to_reduce==None:
             seqs_to_reduce = range(len(sequences))    
 
@@ -1605,8 +1622,8 @@ class ReductionSet(object):
         
         for r_type in req_types_order:
             for i,type in enumerate(seq_types):
-                #log.debug("S_TYPE=%s  R_TYPE=%s"%(type,r_type))
-                if type == r_type.lower():
+                log.debug("TYPE=%s  R_TYPE=%s"%(type,r_type))
+                if type == r_type:
                     new_sequences.append(sequences[i])
                     new_seq_types.append(type)
                 else:

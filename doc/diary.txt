@@ -139,21 +139,6 @@ http://archive.stsci.edu/cgi-bin/dss_form comprobamos que se debe a una
   Esto se puede probar con el test #32.
 
 
-
-
-PROXIMAS TAREAS PARA EL OSN 
-===========================
-
-- Implementar en ACS (Albireo Control System)  nueva solución para los ERL que
-  se van a diseñar.
-- Migración de ACS al SO openSuSE11.4-x86_64bit, en la nueva máquina para TCS2
-- Migración de BCS (Bonnette Control System) al SO openSuSE11.4-x86_64.
-- Implementación de nueva aplicación de Autoguiado para TCS2, pues la actual
-  solución de guiado con el software comercial MaxIm/DL no es muy práctica
-  (según los operadores), sobre todo de cara a Albireo.
-- Finalizar la migración de la nueva Web del OSN; básicamente quedan algunos
-  scripts y aplicaciones para la meteorología.
- 
  
 2011-11-02
 ----------
@@ -203,15 +188,29 @@ y pude instalar el openSuSE11.164bit.
 - Repito el test anterior (#32) con red_mode='science'
 
 
+2011-11-04
+==========
 
+- Termino de instalar todo el software de PAPI en la Maquina Virtual (MV) de
+  openSuSE que he creado eleborar el documento de instalación. 
+  Al instalar la VBoxAdditions, me da un aviso de que parace que ya están
+  instaladas en el SO guest, y que es mejor que no las re-instale, pero como
+  tengo algunos problemas con el ratón y no tengo el FS para el mount.vboxfs
+  para poder compartir carpetas con entre el host y el guest, pues no hago
+  caso al aviso y dedido instalarlas. Después de un rato, re-compilando
+  algunos módulos para el kernel y tal, pues todo parece terminar bien y
+  funcionar correctamente. Veremos ....:-D
 
+- Consigo finalmente instalar el binario (64bit) de SCAMPv1.7 y su dichosa
+  dependencia de la libraria libplplot9; finalmente encuentro el RPM
+  libplplot9-5.7.1-1.2.x86_64.rpm que se instala sin problemas.
 
-BCS2.0
-======
-La nueva versión se desarrollará para openSuSE11.4-x86_64bit, con el entorno
-de desarrollo que trae por defecto Kdevelop4.2.
+2011-11-07
+==========
 
-
-
+- Videoconf PANIC: en cuanto al SW, aunque AGS dice que no está preparado y
+  que prefiere postponer el viaje, JF insiste y dice que no se puede mover,
+  así que finalmente iremos en el semana 47 como estaba previsto.
     
-    
+
+- Muevo el RS::reorder_sequences() al método  RS::getSequences  

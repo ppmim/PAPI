@@ -1,10 +1,20 @@
-=====================================
-PAPI INSTALLATION INSTRUCTIONS 
-=====================================
+========================================
+PANIC SOFTWARE INSTALLATION INSTRUCTIONS 
+========================================
+
+The next are the installation instructions for the PANIC software on the
+openSuSE 11.1-64 bit.
+ 
+** OT **
 
 
-1-Python v2.6 : default in 11.1
+
+** PIPELINE **
+
+
+1-Python v2.6 : (default in openSuSE11.1)
 ===============
+
 1.1 python-devel 
 
 >zypper install python-devel
@@ -16,14 +26,35 @@ PAPI INSTALLATION INSTRUCTIONS
 
 2-Astromatic
 ============
-2.1 Sextractor v2.8.6: from astromatic get rpm for 64 bit
+2.1 SExtractor v2.8.6: from astromatic get rpm for 64 bit
+----------------------
+- Download from astromatic.net -->
+http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 
-2.2 SCAMP v1.7.0 !!! ---> PROBLEM !!!
-
-   > hard dependende of libplplot !!
+> rpm -ivl sextractor-2.8.6-1.x86_64.rpm
 
 
-2.3 SWAP v2.19.1 : from astromatic.net get rpm
+2.2 SCAMP v1.7.0 
+----------------
+
+- Hard dependende of libplplot9. We have to get libplplot9 rpm build for :
+  OpenSuSE from :
+  ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/home:/makoenig:/science/openSUSE_Factory/x86_64/libplplot9-5.7.1-1.2.x86_64.rpm
+
+> rpm -ivl libplplot9-5.7.1-1.2.x86_64.rpm 
+
+- Download SCAMP v.1.7.0 from Astromatic.net --->scamp-1.7.0-1.x86_64.rpm
+
+>rpm -ivl scamp-1.7.0-1.x86_64.rpm
+
+
+
+2.3 SWARP v2.19.1 : 
+------------------
+- Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.19.1-1.x86_64.rpm
+
+> rpm -ivl swarp-2.19.1-1.x86_64.rpm
+
 
 3. Numpy v1.6.1
 ===============
@@ -51,7 +82,7 @@ PROBLEM with atlas !!!
 
 - download from homepage : matplotlib.sourceforge
 
-> untar
+> unpack
 > python setup.py install (as root)
 
 
@@ -71,7 +102,7 @@ PROBLEM with atlas !!!
 
 * SIP : 
 
-> untar
+> tar -xvzf sip-4.13.tar.gz
 > python configure.py
 > make
 > make install
@@ -79,6 +110,7 @@ PROBLEM with atlas !!!
 * PyQt
 
 >export QTDIR=/usr/lib64/qt3
+>tar -xvzf PyQt-x11-gpl-3.18.1.tar.gz
 >python configure.py
 >make
 >make install
@@ -237,15 +269,10 @@ http://www.stsci.edu/resources/software_hardware/stsci_python/Installation/#inst
 ==============================
 
 
-15. PAPI source code
-====================
-
-svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk papi
-
 
 ENVIRONMENT CONFIGURATION
 =========================
-- .bashrc 
+- .bashrc
 
 PYTHONPATH=/home/panic/DEVELOP/PIPELINE/PANIC/trunk
 PAPI_HOME=/home/panic/DEVELOP/PIPELINE/PANIC/trunk
@@ -272,4 +299,5 @@ PANIC_UTIL=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
 PANIC_SCI=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
 PATH=$PATH:$HOME/GEIRS/scripts
 export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
+
 
