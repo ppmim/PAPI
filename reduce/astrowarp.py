@@ -81,9 +81,9 @@ def initWCS( input_image ):
                 WCS_B1950 = 2  #B1950(FK4) right ascension and declination
                 #[new_ra, new_dec]=wcscon.wcscon(WCS_J2000, WCS_J2000, equinox0, 2000.0, ra, dec, 0)
                 # Find out PIXSCALE
-                if header.has_key("PIXSCALE"):
-                    scale=header['PIXSCALE']
-                    degscale=scale/3600.0
+                if "PIXSCALE" in header:
+                    scale = header['PIXSCALE']
+                    degscale = scale/3600.0
                 else:
                     log.error("Cannot find out the PIXSCALE for the image")
                     fits_file.close()
@@ -110,9 +110,9 @@ def initWCS( input_image ):
                 #header.update("EQUINOX", 2000.0, "Standard FK5(years)")
                 
                 # clean imcompatible CDi_j and CDELT matrices
-                if header.has_key("CDELT1"):
+                if "CDELT1" in header:
                     del header["CDELT1"]
-                if header.has_key("CDELT2"):
+                if "CDELT2" in header:
                     del header["CDELT2"]
                 
                 log.debug("Successful WCS header created !")
@@ -153,12 +153,12 @@ def checkWCS( header ):
     
     # Every header must have these keywords.
     for kw in keywords_to_check:
-        if not header.has_key(kw):
+        if kw not in header:
             log.debug("Keyword %s not found",kw)
             raise Exception("Keyword %s not found",kw)
     
     # Check for the equinox, which can be specified in more than 1 way.
-    if not header.has_key('EPOCH') and not header.has_key('EQUINOX'):
+    if 'EPOCH' not in header and 'EQUINOX' not in header:
         log.debug("Missing keyword EPOCH or EQUINOX")
         raise Exception("Missing keyword EPOCH or EQUINOX")
         
@@ -171,9 +171,9 @@ def checkWCS( header ):
     # CDELT matrix : Here we should probably be more rigorous and check
     # for a full PC matrix or CROTA value, but for now
     # this is pretty good.
-    if not header.has_key('CD1_1') or not header.has_key('CD1_2') \
-        or not header.has_key('CD2_1') or not header.has_key('CD2_2'):
-            if not header.has_key('CDELT1') or not header.has_key("CDELT2"):
+    if 'CD1_1' not in header or 'CD1_2' not in header \
+        or 'CD2_1' not in header or 'CD2_2' not in header:
+            if 'CDELT1' not in header or 'CDELT2' not in header:
                 log.debug("Couldn't find a complete set of CDi_j matrix or CDELT")
                 raise Exception("Couldn't find a complete set of CDi_j matrix or CDELT")
                 

@@ -292,7 +292,7 @@ class ClFits (object):
          
         # INSTRUMENT
         try:
-            if myfits[0].header.has_key('INSTRUME'):
+            if 'INSTRUME' in myfits[0].header:
                 self.instrument = myfits[0].header['INSTRUME'].lower()
             else:
                 self.instrument = "Unknown"
@@ -301,23 +301,23 @@ class ClFits (object):
             self.instrument = "Unknown"
         
         # Find out the how data file were"observed"
-        if myfits[0].header.has_key('OBS_TOOL') or self.instrument=='hawki':
+        if 'OBS_TOOL' in myfits[0].header or self.instrument=='hawki':
             self.obs_tool=True
         else:
             self.obs_tool=False
         
         #Software Version (GEIRS Version)
-        if myfits[0].header.has_key('SOFTWARE'):
+        if 'SOFTWARE' in myfits[0].header:
             self._softwareVer = myfits[0].header['SOFTWARE']
         
         
         # IMAGE TYPE
         try:
-            if self.instrument=='omega2000' and myfits[0].header.has_key('OBJECT'):
+            if self.instrument=='omega2000' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
-            elif self.instrument=='hawki' and myfits[0].header.has_key('IMAGETYP'):
+            elif self.instrument=='hawki' and 'IMAGETYP' in myfits[0].header:
                 keyword_with_frame_type = 'IMAGETYP'
-            elif self.instrument=='hawki' and myfits[0].header.has_key('OBJECT'):
+            elif self.instrument=='hawki' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
             elif self.instrument=='panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
@@ -346,10 +346,10 @@ class ClFits (object):
         #FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
         if self.instrument =='panic':
             try:
-                if myfits[0].header.has_key('PAPITYPE'):
+                if 'PAPITYPE' in myfits[0].header:
                     self.type = myfits[0].header['PAPITYPE']
                 else:
-                    if myfits[0].header.has_key('IMAGETYP'):
+                    if 'IMAGETYP' in myfits[0].header:
                         ltype = myfits[0].header['IMAGETYP'].lower()
                     else:
                         ltype = myfits[0].header[keyword_with_frame_type].lower()
@@ -386,9 +386,9 @@ class ClFits (object):
                 
         else: #o2000, or ??
             try:
-                if myfits[0].header.has_key('PAPITYPE'):
+                if 'PAPITYPE' in myfits[0].header:
                     self.type = myfits[0].header['PAPITYPE']
-                elif myfits[0].header.has_key('IMAGETYP'):
+                elif 'IMAGETYP' in myfits[0].header:
                     self.type = myfits[0].header['IMAGETYP']
                 elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
                     self.type = "DARK"
@@ -426,11 +426,11 @@ class ClFits (object):
         #FILTER
         try:
             if self.instrument=='hawki':
-                if myfits[0].header.has_key('ESO INS FILT1 NAME'): 
+                if 'ESO INS FILT1 NAME' in myfits[0].header.: 
                     self.filter = myfits[0].header['ESO INS FILT1 NAME']
-                elif myfits[0].header.has_key('FILTER1'):
+                elif 'FILTER1' in myfits[0].header:
                     self.filter = myfits[0].header['FILTER1']
-                elif myfits[0].header.has_key('FILTER2'):
+                elif 'FILTER2' in myfits[0].header:
                     self.filter = myfits[0].header['FILTER2']
             else: # PANIC, O2000, ...
                 self.filter  = myfits[0].header['FILTER']
@@ -483,14 +483,14 @@ class ClFits (object):
         #RA-coordinate (in degrees)
         try:
             # WCS-coordinates are prefered than RA,DEC
-            if (myfits[0].header.has_key('CTYPE1') 
+            if ('CTYPE1' in myfits[0].header: 
                             and myfits[0].header['CTYPE1']=='RA---TAN'):
                 
                 wcs = pywcs.WCS(myfits[0].header)
                 center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
                 self._ra = wcs.wcs_pix2sky(center_pix, 1)[0][0] # ups, we are supposing naxis1 is RA axis
                 #log.debug("Read RA-WCS coordinate =%s", self._ra)
-            elif myfits[0].header.has_key('RA'):
+            elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA']
             else:
                 raise Exception("No valid RA coordinate found")
@@ -501,13 +501,13 @@ class ClFits (object):
         #Dec-coordinate (in degrees)
         try:
             # WCS-coordinates are prefered than RA,DEC
-            if (myfits[0].header.has_key('CTYPE2') 
+            if ('CTYPE2' in myfits[0].header 
                             and myfits[0].header['CTYPE2']=='DEC--TAN'):
                 wcs = pywcs.WCS(myfits[0].header)
                 center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
                 self._dec = wcs.wcs_pix2sky(center_pix, 1)[0][1] # ups, we are supposing naxis2 is Declination axis
                 #log.debug("Read Dec-WCS coordinate =%s", self._dec)
-            elif myfits[0].header.has_key('DEC'):
+            elif 'DEC' in myfits[0].header:
                 self._dec = myfits[0].header['DEC']
             else:
                 raise Exception("No valid DEC coordinates found")

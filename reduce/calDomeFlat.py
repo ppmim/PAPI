@@ -323,8 +323,10 @@ class MasterDomeFlat:
         #Add a new keyword-->PAPITYPE
         flatframe[0].header.update('PAPITYPE','MASTER_DOME_FLAT','TYPE of PANIC Pipeline generated file')
         flatframe[0].header.update('IMAGETYP','MASTER_DOME_FLAT','TYPE of PANIC Pipeline generated file')
-        if flatframe[0].header.has_key('PAT_NEXP'):
-		flatframe[0].header.update('PAT_NEXP', 1,'# of positions into dither pattern')
+        if 'PAT_NEXP' in flatframe[0].header:
+		          flatframe[0].header.update('PAT_NEXP', 
+                                             1,
+                                             '# of positions into dither pattern')
 
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         

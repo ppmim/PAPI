@@ -191,7 +191,7 @@ class SuperSkyFlat:
             f[0].header.add_history("[calSuperFlat] Non-Normalized Super-Flat created from : %s"%str(m_filelist))
         f[0].header.update('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
 	#
-	if f[0].header.has_key('PAT_NEXP'):
+	if 'PAT_NEXP' in f[0].header:
 		f[0].header.update('PAT_NEXP', 1, 'Number of Positions into the dither pattern')
 	f[0].header.update('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         f.close(output_verify='ignore')

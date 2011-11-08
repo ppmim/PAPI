@@ -69,7 +69,7 @@ def modFits(files, keyword, value, ext=0):
             continue
         
         try:
-            if hdulist[ext].header.has_key(keyword):
+            if keyword in hdulist[ext].header:
                 hdulist[ext].header.update(keyword,value)
                 hdulist.writeto(file,clobber=True)
                 n+=1

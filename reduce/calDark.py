@@ -222,7 +222,7 @@ class MasterDark:
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.update('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
 	darkframe[0].header.update('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
-	if darkframe[0].header.has_key('PAT_NEXP'):
+	if 'PAT_NEXP' in darkframe[0].header:
 		darkframe[0].header.update('PAT_NEXP',1,'Number of position into the current dither pattern')
         if self.m_normalize:
             darkframe[0].header.update('EXPTIME',1.0)

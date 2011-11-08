@@ -354,7 +354,7 @@ class MasterTwilightFlat (object):
         flatframe[0].header.update('IMAGETYP',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file') 
-        if flatframe[0].header.has_key('PAT_NEXP'):
+        if 'PAT_NEXP' in flatframe[0].header:
             flatframe[0].header.update('PAT_NEXP',
                                    1,
                                    'Number of positions into the current dither pattern')

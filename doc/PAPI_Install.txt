@@ -5,12 +5,27 @@ PANIC SOFTWARE INSTALLATION INSTRUCTIONS
 The next are the installation instructions for the PANIC software on the
 openSuSE 11.1-64 bit.
  
+********
 ** OT **
+********
+
+1-Java Development Kit 7
+========================
+- As root, you must download and install the next package:
+
+http://download.oracle.com/otn-pub/java/jdk/7u1-b08/jdk-7u1-linux-x64.rpm
 
 
+2-NetBeans IDE 7.0.1
+====================
+- It is not required for the execution of the OT, but for the debuging and development is advised.
+- As root or panic user, you must download and install the next package:
+http://download.netbeans.org/netbeans/7.0.1/final/bundles/netbeans-7.0.1-ml-javase-linux.sh
 
+
+**************
 ** PIPELINE **
-
+**************
 
 1-Python v2.6 : (default in openSuSE11.1)
 ===============
@@ -19,7 +34,7 @@ openSuSE 11.1-64 bit.
 
 >zypper install python-devel
 
-1.2 IPython 0.8.4
+1.2 IPython 0.8.4 (optional)
 
 > zypper install ipython
 
@@ -61,23 +76,23 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 
 3. Numpy v1.6.1
 ===============
+
 - pre-requisite: gfortran 
 >  zypper install gcc-fortran
 
-- download v1.6.1 from http://new.scipy.org/download.html --> sourceforge
+- download Numpy v1.6.1 from http://new.scipy.org/download.html --> sourceforge
  
 > python setup.py build --fcompiler=gnu95 install
 
-NOTA: the binaryx86_64 rpm's files can not be installed, a lot of failed
-dependences (python 2.7 , ....) 
+NOTE: the binaryx86_64 rpm's files can not be installed, a lot of failed
+dependences (python 2.7 , etc....) 
 
 4.Scipy v0.10.0b2 :
 ===================
 
 - pre-requisites : atlas3
 
-
-PROBLEM with atlas !!!
+To Be Completed ! PROBLEM with atlas lib !!!
 
 
 5. Matplotlib v.1.1.0
@@ -270,8 +285,16 @@ http://www.stsci.edu/resources/software_hardware/stsci_python/Installation/#inst
 
 14. MIDAS (for CL environment)
 ==============================
+To Be completed !
 
 
+15. OTHER SYSTEM LIBS REQUIRED
+==============================
+
+- libcurl4-32bit (and maybe this link : usr/lib/libcurl.so.3 ->
+- libcurl.so.4.1.0, required by IRAF::imcombine)
+- libgfortran
+- libreadline3
 
 ENVIRONMENT CONFIGURATION
 =========================
