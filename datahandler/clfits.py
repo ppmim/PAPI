@@ -426,7 +426,7 @@ class ClFits (object):
         #FILTER
         try:
             if self.instrument=='hawki':
-                if 'ESO INS FILT1 NAME' in myfits[0].header.: 
+                if 'ESO INS FILT1 NAME' in myfits[0].header: 
                     self.filter = myfits[0].header['ESO INS FILT1 NAME']
                 elif 'FILTER1' in myfits[0].header:
                     self.filter = myfits[0].header['FILTER1']
@@ -483,7 +483,7 @@ class ClFits (object):
         #RA-coordinate (in degrees)
         try:
             # WCS-coordinates are prefered than RA,DEC
-            if ('CTYPE1' in myfits[0].header: 
+            if ('CTYPE1' in myfits[0].header 
                             and myfits[0].header['CTYPE1']=='RA---TAN'):
                 
                 wcs = pywcs.WCS(myfits[0].header)
