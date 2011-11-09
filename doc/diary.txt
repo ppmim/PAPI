@@ -214,3 +214,24 @@ y pude instalar el openSuSE11.164bit.
     
 
 - Muevo el RS::reorder_sequences() al método  RS::getSequences  
+
+
+2011-11-09
+==========
+- Defino algunos test para empezar las pruebas con AGS
+
+- Asisto reunión convocada por Julio sobre HEXA
+
+- Repito el test 18 con el Set HAWK-I-5, y obtengo un stitch final muy mal;
+  miro los cuandrantes individiales Q0N y ninguno tiene la astrometría bien.
+  Depurando, me doy cuenta de que SCAMP se queja (linea roja), y por eso no
+  hace bien la astrometría con GSC-2.3.
+  Cambio a 2MASS, y ahora la astrometría es buena !!! por qué ?? será que
+  habré cambiado algún parámetro (NSIG en skyfilter, DETECT_THRESH, ...) ?
+  La imagen final de los cuatro cuadrantes (stiched) está más o menos bien,
+  con poca marca de la noise-cross-shape central.
+
+- Inicio de pruebas integración OT-QL
+  
+
+

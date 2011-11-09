@@ -164,7 +164,7 @@ class CheckQuality:
                and ellipticity<self.ellipmax and fwhm>0.1 and fwhm<20 and flags==0  \
                and isoarea>float(self.isomin) and snr>20.0: # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
-                print "%s SNR_APER= %s " %(i, snr)
+                #print "%s SNR_APER= %s " %(i, snr)
             else:
                 """
                 print "START #%s"%i

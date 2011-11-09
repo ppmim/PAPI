@@ -677,7 +677,7 @@ class ReductionSet(object):
         if show:
             k=0
             print "\n ========================================================="
-            print " =========== GROUPPED SEQUENCES (by %s) =============="%self.group_by
+            print " =========== GROUPED SEQUENCES (by %s) =============="%self.group_by
             print " ========================================================="
             for type in seq_types:
                 print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
@@ -1170,25 +1170,6 @@ class ReductionSet(object):
 
         return output_master_obj_mask
                                         
-    def makeAstrometry( self, input_file, catalog='2mass', re_grid=False):
-        """
-        Compute the astrometry of the given input_file
-        (not used, DEPRECATED !!!)
-        """
-                                 
-        raise RuntimeError("makeAstrometry is Deprecated !")
-        
-        if re_grid: regrid_str='regrid'
-        else: regrid_str='noregrid'
-                                            
-        astrometry_cmd=self.m_irdr_path+'/astrometry_scamp.pl '+ catalog + '  ' + regrid_str + ' ' + input_file
-        if misc.utils.runCmd( astrometry_cmd )==0:
-            log.error ("Some error while computing Astrometry")
-            return 0
-        else:
-            return 1
-                                            
-        
     
     def cleanUpFiles(self, list_dirs):
         """Clean up files from the working directory, probably from the last execution"""
@@ -1812,7 +1793,7 @@ class ReductionSet(object):
                 #option 2(current): SWARP resulted images to register the N-extension into one wide-single extension
                 log.debug("*** Coadding/Warping overlapped files....")
                 swarp = astromatic.SWARP()
-                swarp.config['CONFIG_FILE'] = "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_dicts/swarp.conf"
+                swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
                 swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")
@@ -2029,7 +2010,7 @@ class ReductionSet(object):
                 #option 2(current): SWARP resulted images to register the N-extension into one wide-single extension
                 log.debug("*** Coadding/Warping overlapped files....")
                 swarp = astromatic.SWARP()
-                swarp.config['CONFIG_FILE'] = "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_dicts/swarp.conf"
+                swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
                 swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")

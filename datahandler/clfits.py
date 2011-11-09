@@ -380,6 +380,9 @@ class ClFits (object):
                     self.type = "SKY"
                 elif myfits[0].header[keyword_with_frame_type].lower().count('object'):
                     self.type = "SCIENCE"
+                else:
+                    #By default, the image is classified as SCIENCE object
+                    self.type = "SCIENCE"
             except KeyError:
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
