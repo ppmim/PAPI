@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
+# Copyright (c) 2009-2011 Jose M. Ibanez. All rights reserved.
 # Institute of Astrophysics of Andalusia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
