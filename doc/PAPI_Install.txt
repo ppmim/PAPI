@@ -52,18 +52,27 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 2.2 SCAMP v1.7.0 
 ----------------
 
-- Hard dependende of libplplot9. We have to get libplplot9 rpm build for :
+- Hard dependende of libplplot9. We have to get libplplot9 rpm build for
   OpenSuSE from :
   ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/home:/makoenig:/science/openSUSE_Factory/x86_64/libplplot9-5.7.1-1.2.x86_64.rpm
   
   * libgfortran is required by libplot9. It must be installed from openSuSE reposotory with zypper install libgfortran43
 
-
 > rpm -ivl libplplot9-5.7.1-1.2.x86_64.rpm 
+
+- CDSclient package 
+
+> wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz
+> tar xvfz cdsclient.tar.gz
+> cd cdsclient-V.vv
+> ./configure
+> make
+> make install
+
 
 - Download SCAMP v.1.7.0 from Astromatic.net --->scamp-1.7.0-1.x86_64.rpm
 
->rpm -ivl scamp-1.7.0-1.x86_64.rpm
+> rpm -ivl scamp-1.7.0-1.x86_64.rpm
 
 
 
@@ -89,10 +98,19 @@ dependences (python 2.7 , etc....)
 
 4.Scipy v0.10.0b2 :
 ===================
+- Currently only used in applyDistort.py , but  not required for PAPI
+- pre-requisites : blas3 lapack3
 
-- pre-requisites : atlas3
+BLAS/Lapack
+~~~~~~~~~~~
 
-To Be Completed ! PROBLEM with atlas lib !!!
+ > zypper install blas libblas3
+ > zypper install lapack liblapack3
+
+- download scipy-0.10.0b2.tar.gz
+
+ > unpack .tar.gz
+ > python setup.py install
 
 
 5. Matplotlib v.1.1.0
@@ -288,6 +306,7 @@ http://www.stsci.edu/resources/software_hardware/stsci_python/Installation/#inst
 To Be completed !
 
 
+
 15. OTHER SYSTEM LIBS REQUIRED
 ==============================
 
@@ -295,6 +314,18 @@ To Be completed !
 - libcurl.so.4.1.0, required by IRAF::imcombine)
 - libgfortran
 - libreadline3
+
+
+PAPI SOURCES
+============
+
+> svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk/ papi
+
+> cd papi/irdr
+> cd make all
+
+- edit .bashrc and set environment variables (see environment configuration)
+
 
 ENVIRONMENT CONFIGURATION
 =========================
