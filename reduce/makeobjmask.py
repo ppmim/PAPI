@@ -119,7 +119,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
     for fn in files:
         if not os.path.exists(fn):      # check whether input file exists
             log.error( 'File %s does not exist', fn)
-            raise Exception ("File %s does not exist",fn) 
+            raise Exception ("File %s does not exist"%fn) 
      
         log.debug("*** Creating SExtractor object mask for file %s....", fn)
         #sex.config['CONFIG_FILE']=sex_config
@@ -139,7 +139,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
             sex.run(fn, updateconfig=True, clean=False)
         except Exception,e: 
             log.debug("Some error while running SExtractor : %s", str(e))
-            raise Exception("Some error while running SExtractor : %s",str(e))
+            raise Exception("Some error while running SExtractor : %s"%str(e))
         
         # Reduce the object mask to a single point mask, in which each object
         # is represented by a single, one-valued pixel, located at the
@@ -174,7 +174,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
                     print "X_IMAGE=",star['X_IMAGE']
                     
                     myfits.close(output_verify='ignore')
-                    raise Exception("Error while creating single point object mask :%s",str(e))
+                    raise Exception("Error while creating single point object mask :%s"%str(e))
                 
             myfits.close(output_verify='ignore')
             log.debug("Object mask (single_point) file created for file : %s",fn)

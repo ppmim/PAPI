@@ -155,7 +155,7 @@ def checkWCS( header ):
     for kw in keywords_to_check:
         if kw not in header:
             log.debug("Keyword %s not found",kw)
-            raise Exception("Keyword %s not found",kw)
+            raise Exception("Keyword %s not found"%kw)
     
     # Check for the equinox, which can be specified in more than 1 way.
     if 'EPOCH' not in header and 'EQUINOX' not in header:

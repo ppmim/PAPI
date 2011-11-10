@@ -11,9 +11,12 @@ import optparse
 import sys
 import os
 
+import matplotlib.pyplot as plt
+
+
 import checkQuality
 
-class EvalFocusSerie:
+class EvalFocusSerie(object):
     """
     @summary:  
         Class used to estimate the best focus value of a focus esposures 
@@ -23,7 +26,12 @@ class EvalFocusSerie:
         
     """
     
-    def __init__(self, input_files):
+    def __init__(self, input_files, *a, **k):
+        """
+        Init method
+        """
+        
+        super (EvalFocusSerie, self).__init__ (*a,**k)
         self.input_files = input_files
 
     def eval_serie(self):
@@ -39,13 +47,29 @@ class EvalFocusSerie:
                 cq = CheckQuality(file)
                 fwhm_values.append(fwhm)
                 fwhm = cq.extimateFWHM()
-                focus = ClFits(file).getFocus()
+                focus = self.get_t_focus(file)
             except Exception,e:
-                sys.stderr.writhe("Some error in CheckQuality")
+                sys.stderr.write("Some error in computing FWHM in file %s"%self.input_files)
                 #log.debug("Some error happened") 
+    
+        # Fit the the values to a 
+        z = np.polyfit(fwhm_values, y, 2)
+       
+    def get_t_focus(self, file):
+        """
+        @summary: Look for the focus value into the FITS header
+        """ 
                 
-                
-
+        focus = -1           
+        try:
+            fits = pyfits.open(file,"rb")
+            if "T-FOCUS" in f[0].header:
+                focus = f[0].header["T-FOCUS"]
+        except Exception,e:
+            sys.stderr.write("Cannot find the T-FOCUS value in file %s"%file)
+            raise e
+        
+        
 def check_python_env():
     """    
     check for Python 2.X with X >= 5; the 'optparse' module needs

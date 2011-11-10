@@ -987,7 +987,7 @@ class ReductionSet(object):
                 out_ext.append(fname)  
             else:
                 log.error("Some error while subtracting sky in extension #%d# ", n+1)
-                raise Exception("Some error while subtracting sky in extension #%d# ", n+1)
+                raise Exception("Some error while subtracting sky in extension #%d# "%(n+1))
         
         # 3. Package results back from each extension into a MEF file (only if nExt>1)
         if len(out_ext)>1:
@@ -1698,7 +1698,7 @@ class ReductionSet(object):
             log.debug("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
             if len(sequence)<4:
                 log.info("[reduceSeq] Found a too SHORT Obs. object sequence. Only %d frames found. Required >4 frames"%len(sequence))
-                raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(sequence))
+                raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames" %len(sequence))
             else:
                 # Get calibration files
                 dark, flat, bpm = None, None, None

@@ -224,7 +224,7 @@ class ApplyDarkFlat:
                 # check Number of Extension 
                 if (len(f)>1 and (len(f)-1) != n_ext) or len(f) != n_ext:
                     raise Exception("File %s does not match the number of \
-                    extensions (%d)", iframe, n_ext)
+                    extensions (%d)"%( iframe, n_ext))
                 
                 # Delete old files
                 (path, name) = os.path.split(iframe)
