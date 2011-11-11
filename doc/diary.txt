@@ -231,7 +231,71 @@ y pude instalar el openSuSE11.164bit.
   La imagen final de los cuatro cuadrantes (stiched) está más o menos bien,
   con poca marca de la noise-cross-shape central.
 
-- Inicio de pruebas integración OT-QL
+- Inicio de pruebas integración OT-QL:
+
+
   
+2011-11-10
+==========
+
+- Continuo pruebas de QL y depurando.
+- Implemento eval_focus_serie.py, que basandose en checkQuality.py, calcula el
+  mejor foco de una serie de foco. Lo pruebo con el ejemplo  de O2k que me
+  pasó Ulli y funciona bien !!! Para el caso de PANIC, debería funcionar
+  también sobre las imágnes 4kx4k, a pesar de la cruceta, pues SExtractor es
+  robusto a eso...lo mejor sería simularlo y probarlo. 
+
+- Por la tarde, hacemos algunas pruebas AGS y yo con el OT y el QL (ver
+  documento manuscrito). Encontramos varios BUGS tanto en OT como QL.
+  
+  En OT: básicamente que no enumera bien las secuencias con el instrument
+  iterator
+  En QL: que no avisa de que un conjunto de ficheros no tiene ninguna
+  secuencia, dando una exception "TypeError". (lo solucioné al día siguiente).
+
+ 
+
+
+2011-11-11
+==========
+
+- Encuetro el bug del día anterior.
+- Encuentro otro bug en eval_focus_serie, pues en los nuevos ficheros de PANIC
+  el kw de foco telescopio se llama T_FOCUS en lugar de T-FOCUS. Modifico
+  convenientemente la rutina.
+
+- Comienzo diseño de DEMO PAPI/QL (papi_demo.txt)
+
+- Tarde: AGS y yo continuamos con las pruebas de OT-QL:
+
+  Basicamente hicimos un recorrido por el documento "WhatWeNeed.doc" de JF, y
+  los principales fallos/problemas encontrados fueron:
+
+      1) domeflats no tiene el orden on/off correcto, pues mezcla con los
+      filtros. Lo correcto para una secuencia de 1-N sería
+      on-on-on-off-off-off y seguir con el siguiente filtro.
+
+      2) skyflats : no los podemos probar, pues no los tiene completamente
+      implementados, pues el OT no tiene simulado el incremento artificial del
+      número de cuentas.
+
+      3) focur series: no implementado en OT, pero le doy el .prg y la idea de
+      cómo hay que hacerlo. Intentará implementarlo para HD.
+
+      4) simple exposure: no funciona ese caso particular
+
+      5) nodding pattern: no implementado, pero le paso el sky_pointing.prg y
+      cómo lo podría implementar. No cree que pueda tenerlo para HD.
+
+      6) Pause: no está en OT, pero cree que lo podrá implementar, no es muy
+      dificil.
+
+  En cuanto al QL, no encontré errores, sólo lo siguientes comentarios:
+
+      1) ver que nodding pattern puede contemplar PAPI ( y el OT) según las
+      sugerencias de Ulli.
+
+      2) ver que hace el QL/PAPI cuando encuentra dos PAT_EXPN=1 en una
+      secuencia ????
 
 

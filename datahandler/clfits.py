@@ -346,18 +346,42 @@ class ClFits (object):
         #FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
         if self.instrument =='panic':
             try:
+                # Self-typed file, created by PAPI
                 if 'PAPITYPE' in myfits[0].header:
                     self.type = myfits[0].header['PAPITYPE']
                 else:
+                    #
                     if 'IMAGETYP' in myfits[0].header:
                         ltype = myfits[0].header['IMAGETYP'].lower()
                     else:
                         ltype = myfits[0].header[keyword_with_frame_type].lower()
+                        
+                    if ltype.count('dark') :
+                        self.type = "DARK"
+                    elif ltype.count('lamp_off'):
+                        self.type = "DOME_FLAT_LAMP_OFF"
+                    elif ltype.count('lamp_on'):
+                        self.type = "DOME_FLAT_LAMP_ON"
+                    elif ltype.count('dusk'):
+                        self.type = "TW_FLAT_DUSK"
+                    elif ltype.count('dawn'):
+                        self.type = "TW_FLAT_DAWN"
+                    elif ltype.count('sky_flat') or ltype.count('flat'): 
+                        self.type = "SKY_FLAT"
+                    elif ltype.count('sky'):
+                        self.type = "SKY"
+                    elif ltype.count('object'):
+                        self.type = "SCIENCE"
+                    else:
+                        #By default, the image is classified as SCIENCE object
+                        self.type = "SCIENCE"
+                    """        
                     try:
                         self.type = panic_types[ltype]
                     except KeyError:
                         log.error("Frame type '%s' does not match any kind !"%ltype)
                         self.type = 'UNKNOW'
+                    """
             except KeyError:
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'

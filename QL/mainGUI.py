@@ -627,32 +627,36 @@ class MainGUI(panicQL):
             try:
                 self._task_info = self._task_info_list.pop()
                 if self._task_info._exit_status == 0: # EXIT_SUCCESS, all was OK
-                    self.logConsole.info("...process successful finished  !")
+                    self.logConsole.info("Process successful finished  !")
                     if self._task_info._return!=None:
-                        if type(self._task_info._return)==type(list()) and \
-                            len(self._task_info._return)>0: 
-                            str_list = ""
-                            #print "FILES CREATED=",self._task_info._return
-                            display.showFrame(self._task_info._return) #_return is a file list
-                            for file in self._task_info._return:
-                                #display.showFrame(file)
-                                str_list+=str(file)+"\n"
-                                #!!! keep up-date the out DB for future calibrations !!!
-                                # Because some science sequences could neen the
-                                # master calibration created by a former reduction,
-                                # and only if apply_master_dark flat is activated,
-                                # the last produced file is inserted into the output DB
-                                # However, in order to avoid twice insert into
-                                # outputDB (although I think it should not be a
-                                # problem), if the checkBox for the outputs is 
-                                # activated on the GUI, the DB insertion will be 
-                                # done there (I hope), and not here !
-                                if not self.checkBox_outDir_autocheck.isChecked():   
-                                    self.outputsDB.insert(file)
-                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                            self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
-                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
-                        elif os.path.isfile(self._task_info._return):
+                        if type(self._task_info._return)==type(list()):
+                            if len(self._task_info._return)==0:
+                                self.logConsole.info(str(QString("Any value returned")))
+                                QMessageBox.information(self, "Info", "Any value returned")
+                            else:
+                                str_list = ""
+                                #print "FILES CREATED=",self._task_info._return
+                                display.showFrame(self._task_info._return) #_return is a file list
+                                for file in self._task_info._return:
+                                    #display.showFrame(file)
+                                    str_list+=str(file)+"\n"
+                                    #!!! keep up-date the out DB for future calibrations !!!
+                                    # Because some science sequences could neen the
+                                    # master calibration created by a former reduction,
+                                    # and only if apply_master_dark flat is activated,
+                                    # the last produced file is inserted into the output DB
+                                    # However, in order to avoid twice insert into
+                                    # outputDB (although I think it should not be a
+                                    # problem), if the checkBox for the outputs is 
+                                    # activated on the GUI, the DB insertion will be 
+                                    # done there (I hope), and not here !
+                                    if not self.checkBox_outDir_autocheck.isChecked():   
+                                        self.outputsDB.insert(file)
+                                    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
+                                QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
+                        elif type(self._task_info._return)==type(str) and \
+                                    os.path.isfile(self._task_info._return):
                             self.logConsole.debug(str(QString(">>New file %1 created ").arg(self._task_info._return)))
                             #QMessageBox.information(self,"Info", QString("New file %1 created").arg(self._task_info._return))
                             display.showFrame(self._task_info._return)
@@ -665,7 +669,7 @@ class MainGUI(panicQL):
                     self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
             except Exception,e:
-                raise Exception("Error while checking _task_info_list: %s", str(e))
+                raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:
                 #Anyway, restore cursor
                 self.setCursor(Qt.arrowCursor)
@@ -1064,17 +1068,17 @@ class MainGUI(panicQL):
         
         #### Get items selected in the ListView
         self.m_popup_l_sel = []
-        it=QListViewItemIterator (self.listView_dataS)
+        it = QListViewItemIterator (self.listView_dataS)
         listViewItem = it.current()
-        father=None
+        father = None
         while listViewItem: 
             if listViewItem.isSelected():
                 self.m_popup_l_sel.append(str(listViewItem.text(0)))
                 # if a parent of the group, no popup to show 
                 if (self.comboBox_classFilter.currentText()=="GROUP" and \
                     listViewItem.firstChild()!=None): # is a parent of a group
-                    father=listViewItem
-                    self.m_listView_first_item_selected=father
+                    father = listViewItem
+                    self.m_listView_first_item_selected = father
                     break
             it+=1
             listViewItem = it.current()
@@ -1090,11 +1094,11 @@ class MainGUI(panicQL):
             popUpMenu.insertItem("Reduce Obs. Sequece", self.reduceSequence_slot, 0, 1 )
             popUpMenu.insertItem("Copy files to clipboard", self.copy_files_slot, 0, 2 )
                
-            group_files=[]
-            child=father.firstChild()
+            group_files = []
+            child = father.firstChild()
             while child:
                 group_files.append(str(child.text(0)))
-                child=child.nextSibling()
+                child = child.nextSibling()
             #print "CHILDS=",group_files
         else:
             #### Create the Files Popup menu 

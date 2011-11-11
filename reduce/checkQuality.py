@@ -1,4 +1,24 @@
 #!/usr/bin/env python
+
+# Copyright (c) 2011 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Institute of Astrophysics of Andalusia, IAA-CSIC
+#
+# This file is part of PAPI (PANIC Pipeline)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ################################################################################
 #
 # PANICtool
@@ -9,9 +29,6 @@
 # Last update: 23/06/2009    jmiguel@iaa.es
 #              17/09/2010    jmiguel@iaa.es - Added support to MEF files
 #              22/10/2010    jmiguel@iaa.es - Updated the way to find out MEF files
-################################################################################
-
-
 ################################################################################
 # Import necessary modules
 
@@ -32,7 +49,7 @@ import misc.utils as utils
 
 from misc.paLog import log
 
-class CheckQuality:
+class CheckQuality(object):
     """
     \brief 
         Class used to estimate the image quality values using SExtractor 
@@ -70,6 +87,7 @@ class CheckQuality:
     
     def estimateFWHM(self):
         """ 
+        @summary: 
          FWHM estimation
          --------------- 
          Generating a ascii text catalog with Sextractor, we can read the FWHM values 
@@ -79,6 +97,9 @@ class CheckQuality:
          with a suitable value. In other case, we won't get any value for FWHM. 
         
          SNR estimation as FLUX_AUTO/FLUXERR_AUTO or FLUX_APER/FLUXERR_APER
+        
+        @return: a couple of values (fwhm,std) 
+    
         """
         
         # Sextractor config
@@ -106,7 +127,8 @@ class CheckQuality:
         
         catalog_file = "test.cat"
         
-        sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
+        sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + \
+        " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " + "-CHECKIMAGE_TYPE NONE" + \
         " -CATALOG_TYPE ASCII -CATALOG_NAME  " + catalog_file
         
         # SExtractor execution
@@ -200,6 +222,9 @@ class CheckQuality:
         print "\n----------"
         
         fits_file.close(output_verify='ignore')
+        
+        # cleanup files
+        os.unlink(catalog_file)
         
         return efwhm,std
       

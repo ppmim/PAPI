@@ -99,7 +99,7 @@ if __name__ == "__main__":
                   help="Source file list of data frames. It has to be a fullpath file name")
                   
     parser.add_option("-k", "--key_value",
-                  action="store", dest="keyword_value", nargs=2
+                  action="store", dest="keyword", nargs=2,
                   help="Extension number in which to look for 'keyword'")
                   
     parser.add_option("-v", "--value",

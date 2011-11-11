@@ -23,6 +23,12 @@ http://download.oracle.com/otn-pub/java/jdk/7u1-b08/jdk-7u1-linux-x64.rpm
 http://download.netbeans.org/netbeans/7.0.1/final/bundles/netbeans-7.0.1-ml-javase-linux.sh
 
 
+3-OT Sources
+============
+
+> svn co svn://arch.osn.iaa.es/PANIC/PANICObservationTool OT
+
+
 **************
 ** PIPELINE **
 **************
@@ -319,7 +325,8 @@ To Be completed !
 PAPI SOURCES
 ============
 
-> svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk/ papi
+#> svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk/ papi
+> svn co svn://arch.osn.iaa.es/PANIC/PAPI/trunk papi
 
 > cd papi/irdr
 > cd make all
@@ -327,8 +334,8 @@ PAPI SOURCES
 - edit .bashrc and set environment variables (see environment configuration)
 
 
-ENVIRONMENT CONFIGURATION
-=========================
+PAPI ENVIRONMENT CONFIGURATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - .bashrc
 
 PYTHONPATH=/home/panic/DEVELOP/PIPELINE/PANIC/trunk

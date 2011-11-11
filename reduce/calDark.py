@@ -69,7 +69,7 @@ import pyfits
 # Logging
 from misc.paLog import log
 
-class MasterDark:
+class MasterDark(object):
     """
     \brief Class used to build and manage a master calibration dark 
     
@@ -141,13 +141,13 @@ class MasterDark:
     
         
         # STEP 1: Check the EXPTIME, TYPE(dark) of each frame
-        f_expt=-1.0
-        f_type=''
-        f_ncoadds=-1
-        f_readmode=-1
-        good_frames=[]
+        f_expt = -1.0
+        f_type = ''
+        f_ncoadds = -1
+        f_readmode = -1
+        good_frames = []
         for iframe in framelist:
-            f=datahandler.ClFits ( iframe )
+            f = datahandler.ClFits ( iframe )
             log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" %(iframe, f.expTime(), f.getType(), f.getNcoadds(), f.getReadMode() )) 
             if not f.isDark():
                 log.error("Error: Task 'createMasterDark' finished. Frame %s is not 'DARK'",iframe)
@@ -165,8 +165,8 @@ class MasterDark:
                     raise Exception("Found a DARK frame with different EXPTIME or NCOADDS or READMODE") 
                 else: 
                     f_expt  = f.expTime()
-                    f_ncoadds= f.getNcoadds()
-                    f_type  = f.getType()
+                    f_ncoadds = f.getNcoadds()
+                    f_type = f.getType()
                     f_readmode = f.getReadMode()
                     good_frames.append(iframe.replace("//","/"))
                                         
@@ -221,9 +221,9 @@ class MasterDark:
         darkframe = pyfits.open(self.__output_filename,'update')
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.update('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
-	darkframe[0].header.update('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
-	if 'PAT_NEXP' in darkframe[0].header:
-		darkframe[0].header.update('PAT_NEXP',1,'Number of position into the current dither pattern')
+        darkframe[0].header.update('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
+        if 'PAT_NEXP' in darkframe[0].header:
+		          darkframe[0].header.update('PAT_NEXP',1,'Number of position into the current dither pattern')
         if self.m_normalize:
             darkframe[0].header.update('EXPTIME',1.0)
             darkframe[0].header.update('ITIME', 1.0)

@@ -1,0 +1,125 @@
+PAPI DEMO
+=========
+
+
+Dark calibration
+~~~~~~~~~~~~~~~~
+1) Dark serie with fixed EXPT
+
+OT> ok
+PL> calDark.py -s ./darks_O2k.txt -o /tmp/masterDark.fits -n
+QL> TBT
+ 
+2) Dark serie with increasing EXPT 
+
+OT> ok
+PL1> calDarkModel.py -s ./darkserie_O2k.txt -o /tmp/
+PL2> Macro to evaluate this (linearity test, derive CCD equation, gain map) -
+TBD ???
+QL> TBD
+
+
+Dome Flat
+~~~~~~~~~
+
+1) Take domeflats with fixed EXPT, turn flat lamps on/off
+
+OT> TBT
+PL> calDomeFlat.py -s ./domeFlatsKS_O2k.txt -o /tmp/masterDFlat.fits
+QL> TBT
+ 
+
+Sky Flat
+~~~~~~~~
+
+1) Skyflats with **Fixed EXPT** (automatically begins and stops when certain
+lower/upper level are reached)
+
+OT> TBT
+PL> calTwFlat.py -s ./skyflatsKs_O2k.txt -o /tmp/masterSkyFlat.fits -d /tmp/masterDark_46_23.fits
+    calGainMap.py -s /tmp/masterSkyFlat.fits -o /tmp/gain_O2k.fits
+QL> TBT
+
+2) Skyflat with **fixed exposition_level** (automatically begins and stops
+when certain lower/upper levels are reached)
+
+OT > TBT
+PL > calTwFlat.py -s ./skyflatsKs_O2k.txt -o /tmp/masterSkyFlat.fits -d /tmp/masterDark_46_23.fits
+     calGainMap.py -s /tmp/masterSkyFlat.fits -o /tmp/gain_O2k.fits
+
+QL > TBT
+
+Gain Map
+~~~~~~~~
+OT> Not Applicable
+PL> calGainMap.py -s /tmp/masterFlat.fits -o /tmp/gain_map.fits
+QL> TBT
+
+
+Focus series
+~~~~~~~~~~~~
+1) Simplest : click on 1 star 
+
+OT> TBC
+PL> IRAF_task : starfocus
+QL> IRAF_task : starfocus
+
+See Technical Note: PANIC focusing
+
+2) Comfort : automatic, display whole field
+OT> TBC
+PL> eval_focus_serie.py -i ./focus_serie_O2k.txt -o /tmp/out.jpg
+QL> TBC
+
+
+Science exposures
+~~~~~~~~~~~~~~~~~
+1) simple, without moving telescope (=dither off)
+
+OT> TBT
+PL> Not applicable, no way
+QL> Not applicable, but self sky-subtraction supported ---> TBT
+
+2) with dither pattern a la O2k/dither. Dither amplitud modifiable by a scale
+factor
+
+OT> TBT
+PL> papi.py -c config_files/papi_portatil.cfg -s /data/raw_sources -r [quick|science] 
+QL> select files or group in group_view and run reduction
+
+
+3) Nodding pattern a la O2k/sky_point. Dither applitude modifiable by a scale
+factor
+
+OT> TBT
+PL> papi.py -c config_files/papi_portatil.cfg -s ./sci_ext_M51J-1.txt -r quick -g filter
+QL> select files or group in group_view and run reduction; ext sources is
+automatically detected
+
+Remarks:
+	- Only implemented "quick" mode
+	- Need to be tested with PANIC data
+
+
+
+Photometry
+~~~~~~~~~~
+
+PL> photometry.py -i ./reduced_SEQ.fits
+
+
+
+
+Simulation of mage distortion & correction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+(see TN)
+ 
+PL> applyDistort.py 
+
+
+
+Miscelaneus
+~~~~~~~~~~~
+
+>genLogSheet.py
+>

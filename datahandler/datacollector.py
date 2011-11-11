@@ -32,7 +32,7 @@ import datahandler
 from misc.paLog import log       
 
         
-class DataCollector ():
+class DataCollector (object):
 	
     """
         \brief

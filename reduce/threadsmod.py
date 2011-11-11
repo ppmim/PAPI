@@ -29,8 +29,8 @@ class ExecTaskThread(threading.Thread):
     def __init__(self, task, task_info_list, *args):
     
         threading.Thread.__init__(self)
-        self._task=task
-        self._args=args
+        self._task = task
+        self._args = args
         #self._event=event # not used
         self._task_info = TaskInfo()
         self._task_info_list = task_info_list
@@ -42,6 +42,7 @@ class ExecTaskThread(threading.Thread):
             self._task_info._curr_status = "INITIATED"
             self._task_info._return      = self._task(*self._args)  # Execute the task
             self._task_info._exit_status = 0             # EXIT_SUCCESS, all was OK
+            self._task_info._exc = None
         except Exception, e:
             self._task_info._curr_status = "FINISHED"
             self._task_info._return      = None

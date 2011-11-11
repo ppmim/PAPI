@@ -1538,18 +1538,20 @@ class ReductionSet(object):
         # Look for the sequences     
         sequences, seq_types = self.getSequences()
         
-        # Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE
-        # This is required because some calibration sequence could be created 
-        # after the science sequence, and might happen no other calibration is 
-        # available to process the current sequence.
-        sequences, seq_types = self.reorder_sequences( sequences, seq_types)
-        
         
         # Check which sequences are required to reduce (-S command line param)
         # If no sequence number was specified, all seqs will be processed 
         if seqs_to_reduce==None:
             seqs_to_reduce = range(len(sequences))    
-
+            # Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE
+            # This is required because some calibration sequence could be created 
+            # after the science sequence, and might happen no other calibration is 
+            # available to process the current sequence.
+            sequences, seq_types = self.reorder_sequences( sequences, seq_types)
+        
+        if len(sequences)==0:
+            raise Exception("Any well-defined sequence to process was found")
+        
         k = 0
         for seq,type in zip(sequences, seq_types):
             if k in seqs_to_reduce:
@@ -2298,8 +2300,9 @@ class ReductionSet(object):
         fs.close()    
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd1.fits','average')
     
-    
-        ## END OF SINGLE REDUCTION  ##
+        ########################################################################
+        # End of first cycle: SINGLE REDUCTION
+        ########################################################################
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
            
@@ -2314,15 +2317,17 @@ class ReductionSet(object):
             log.info("#########################################")
             return output_file 
         
-        log.info("************************")
-        log.info(" START SECOND PASS      ")
-        log.info("************************")
-        
         ########################################################################
         # 8 - Create master object mask
         ########################################################################
+
+        log.info("************************")
+        log.info(" START SECOND PASS      ")
+        log.info("************************")
+
         log.info("**** Master object mask creation ****")
-        obj_mask  = self.__createMasterObjMask(out_dir+'/coadd1.fits', out_dir+'/masterObjMask.fits') 
+        obj_mask  = self.__createMasterObjMask(out_dir+'/coadd1.fits', 
+                                               out_dir+'/masterObjMask.fits') 
 
         ########################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
@@ -2364,11 +2369,15 @@ class ReductionSet(object):
             self.m_LAST_FILES = res.apply()
             
         ########################################################################
-        # X1 - Compute field distortion (SCAMP internal stats)
+        # 10a - Compute field distortion and final stack:
+        #       1-Remove field distortion from individual images (SCAMP+SWARP)
+        #       2-Coaddition of corrected field distortion images (SWARP)
+        #       3-Final Astrometric calibration (SCAMP) of the coadded image
         ########################################################################
-        _astrowarp = False
+        _astrowarp = True
         if _astrowarp:
-            log.info("**** Astrometric calibration and stack of individual frames to field distortion correction ****")
+            log.info("**** Astrometric calibration and stack of individual \
+            frames to field distortion correction ****")
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, 
                                             coadded_file=output_file, 
                                             config_dict=self.config_dict,
@@ -2382,20 +2391,9 @@ class ReductionSet(object):
             return output_file
         
             
-        ########################################################################
-        # X2 - Remove field distortion from individual images (SWARP)-regriding 
-        ########################################################################
-        
-        ########################################################################
-        # X3 - Coaddition of field distortion removed images (SWARP) 
-        ########################################################################
     
         ########################################################################
-        # X4 - Final Astrometric calibration (SCAMP) of the coadded image 
-        ########################################################################
-    
-        ########################################################################
-        # 9 - Create second coadded image of the dithered stack using new sky 
+        # 10b.1 - Create second coadded image of the dithered stack using new sky 
         # subtracted frames (using the same offsets)
         ########################################################################
         log.info("**** Coadding image free distorion frames ****")
@@ -2403,7 +2401,7 @@ class ReductionSet(object):
         reduce.imtrim.imgTrim(out_dir+'/coadd2.fits')
         
         ########################################################################
-        # 10 - Make Astrometry
+        # 10b.2 - Make Astrometry
         ########################################################################
         log.info("**** Computing Astrometric calibration of coadded (2nd) result frame ****")
         reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
