@@ -670,6 +670,12 @@ class ReductionSet(object):
         elif self.group_by=='filter':
             seqs = self.getObjectSequences() # only look for science sequences !
             seq_types = ['SCIENCE']*len(seqs)
+        elif self.group_by=='none':
+            if self.db==None: self.__initDB()
+            seqs, seq_types = self.db.GetSequences(group_by='none')
+            print "DONEEE!"
+            print seqs
+            print seq_types
         else:
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
@@ -1540,7 +1546,8 @@ class ReductionSet(object):
         
         
         # Check which sequences are required to reduce (-S command line param)
-        # If no sequence number was specified, all seqs will be processed 
+        # If no sequence number was specified, all seqs will be re-ordered and
+        # processed 
         if seqs_to_reduce==None:
             seqs_to_reduce = range(len(sequences))    
             # Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE

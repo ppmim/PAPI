@@ -31,6 +31,7 @@ import optparse
 import sys
 import os
 import dircache
+import fileinput
 
 import numpy as np
 import pyfits

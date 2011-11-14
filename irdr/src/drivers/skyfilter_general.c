@@ -1,4 +1,15 @@
-/* skyfilter_general.c -- given a list of FITS files do running sky subtraction for any sky-target sequence*/
+/* skyfilter_general.c -- given a list of FITS files do running sky subtraction 
+   for any sky-target sequence.
+
+   Examples:
+        T-S-T-S-T-S-T-S-T-S-....
+        S-T-S-T-S-T-S-T-S-T-....
+        S-T-T-S-T-T-S-T-T-S-....
+        T-S-T-T-S-T-T-S-T-T-...
+        S-S-T-T-S-S-T-T-S-S-....
+        T-T-S-S-T-T-S-S-T-T-....
+        
+*/
 
 /*
  * Procedure:
@@ -11,7 +22,8 @@
  * coadded dither set, and xshift,yshift are the dither offsets per frame.
  * If the nomask option is selected then the filelist should contain: imagefn.
  
- * TODO: Check the temporal distant between the first and the last frame, to avoid using far frames in sky subtraction
+ * TODO: Check the temporal distant between the first and the last frame, 
+         to avoid using far frames in sky subtraction
  
  */
 
@@ -82,12 +94,13 @@ int main(int argc, char *argv[])
     if (nplanes < 1)
         eprintf("%s: no valid image planes", argv[0]);
 
+
     gainmap = readfits(argv[2], &nx, &ny, NULL, NULL);
 
     hwid = atoi(argv[3]);
 
     if (hwid > MAXHWID) {
-      hwid=MAXHWID;
+      hwid = MAXHWID;
       printf("HALFNSKY reduced to %d \n", hwid);
     }
 
@@ -100,10 +113,17 @@ int main(int argc, char *argv[])
     /* if (hwid > MAXHWID || (2 * hwid + 1) > nplanes)
       eprintf("hwid %d, MAXHWID %d, nplanes %d\n", hwid, MAXHWID, nplanes); */
 
-    /* READ into MEMORY ¿¿ ALL ?? THE FRAMES (S and T), because we don't know how many are Sky or Target (unknown pattern) */
+
+
+    /* READ into MEMORY ¿¿ ALL ?? THE FRAMES (S and T), because we don't know 
+       how many are Sky or Target (unknown pattern) 
+    */
+
+    
     for (i = 0; i < nplanes; i++)  {
-	    /* printf("Nplanes: %d  i: %d \n", nplanes, i);*/
+	    /*printf("DEBUG Nplanes: %d  i: %d \n", nplanes, i);*/
 	    readdata(i, usemask);
+	    
 	}
 
     /* NEW CODE */
@@ -125,7 +145,7 @@ int main(int argc, char *argv[])
             {             
                 if (isSky(j))
                 {
-                    printf ("backward search %d", j);
+                    printf ("backward search <%d> ", j);
                     dbuf[nsky]=data[j]; /* doesn't mind the order in which skies are stored ??? */
                     
                     if (usemask)
@@ -142,7 +162,7 @@ int main(int argc, char *argv[])
             {
                 if (isSky(j))
                 {
-                    printf("forward search : %d", j);
+                    printf("forward search : <%d> ", j);
                     dbuf[nsky]=data[j];
                     
                     if (usemask)
@@ -158,13 +178,13 @@ int main(int argc, char *argv[])
             /* SECOND PASS: Check whether all skies are found */
             if ( nskies_pre<hwid || nskies_post<hwid)
             {
-                printf("[debug] second pass");
+                printf(" [second pass] ");
                 /*complete pre-frames using post-frames*/
                 for (j=last_post+1;j<nplanes && nskies_pre<hwid; j++)
                 {
                     if (isSky(j))
                     {
-                        printf("[debug] 2-forward search %d", j);
+                        printf(" 2nd-forward search <%d> ", j);
                         dbuf[nsky]=data[j];
                         if (usemask)
                             wbuf[nsky] = wdata[j];
@@ -178,7 +198,7 @@ int main(int argc, char *argv[])
                 {
                     if (isSky(j))
                     {
-                        printf("[debug] 2-backward search : %d", j);    
+                        printf(" 2nd-backward search : <%d>", j);    
                         dbuf[nsky]=data[j];
                         if (usemask)
                             wbuf[nsky] = wdata[j];
@@ -205,7 +225,11 @@ int main(int argc, char *argv[])
                 scale[j] = avgscale - scale[j];
                 printf("\nSCALE[%d]=%f", j, scale[j]);
             }
-            /* TODO: here, we should check the temporal distant between the first and the last frame, to avoid using far frames in sky subtraction*/ 
+
+            /* TODO: here, we should check the temporal distant between the 
+               first and the last frame, to avoid using far frames in sky 
+               subtraction
+            */ 
             if (usemask) {
                 sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
                 /*DEBUG writefits("/tmp/sky_2nd.fits", fn[i], (char*)sky, -32, nx, ny);*/
@@ -248,6 +272,7 @@ static void readdata(int i, int usemask)
 {
     int nx, ny;
 
+    
     data[i] = readfits(fn[i], &nx, &ny, &bkgs[i], &sigs[i]);  /* image plane */
     data_type[i] = readSkyTarget( fn[i] ); /* return 0 (sky) or 1 (target) */
     
@@ -270,18 +295,24 @@ static short readSkyTarget( char *fn)
     
     int i=0;
     
+
     str1 = get_key_str(fn, "OBJECT");
     str2 = get_key_str(fn, "IMAGETYP");
     
+    /*if (str1!=NULL) printf("\nOBJECT=%s",str1);
+    if (str2!=NULL) printf("\nIMAGETYP=%s",str2);
+    else printf("\n IMAGETYP es NULL");
+    */
     
     if (str1==NULL && str2==NULL )
         return -1; /* Neither sky nor object ! */
+    
         
     /* Convert string to upper case. */
-    for( i = 0 ; (str1[i] = toupper(str1[i])) != '\0' ; i++);
-    for( i = 0 ; (str2[i] = toupper(str2[i])) != '\0' ; i++);
+    for( i = 0 ; str1 && (str1[i] = toupper(str1[i])) != '\0' ; i++);
+    for( i = 0 ; str2 && (str2[i] = toupper(str2[i])) != '\0' ; i++);
     
-    if (strstr(str1,"SKY")!=NULL || strstr(str2,"SKY")!=NULL ) return 0; /* sky */ 
+    if ( (str1 && strstr(str1,"SKY")!=NULL) || (str2 && strstr(str2,"SKY")!=NULL) ) return 0; /* sky */ 
     else return 1; /* target */
 
 }
@@ -324,8 +355,8 @@ static char *outfn(char *fn)
 static void usage(void)
 {
     static char *usage = "\n"
-    "skyfilter - do running sky frame subtraction\n\n"
-    "usage: skyfilter listfn gainfn hwidth mask|nomask "
+    "skyfilter_general - do running sky frame subtraction\n\n"
+    "usage: skyfilter_general listfn gainfn hwidth mask|nomask "
     "row|col|rowcol|colrow|none\n\n"
     "where listfn - if object masking is used, then listfn should contain:\n"
     "               img_filename objmask_filename dither_x_off dither_y_off\n"
@@ -347,7 +378,7 @@ static void usage(void)
     "               rowcol for row offsets then column offsets,\n"
     "               colrow for column offsets then row offsets,\n"
     "               none for no correction\n\n"
-    "example: skyfilter filelist gain.fits 4 mask rowcol\n\n";
+    "example: skyfilter_general filelist gain.fits 4 mask rowcol\n\n";
 
     printf("%s", usage);
     exit(0);

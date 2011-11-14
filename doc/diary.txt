@@ -214,6 +214,12 @@ y pude instalar el openSuSE11.164bit.
     
 
 - Muevo el RS::reorder_sequences() al método  RS::getSequences  
+  y ahora el reoder_sequences sólo se ejecuta si queremos reducir todo el DS,
+  pero si hemos especificado una secuencia específica, no se reordenan pues no
+  hace falta; con esto nos evitamos el problema de la altereación del número
+  de secuencia mostrado según el ordernamiento MJD y el que le correspondería
+  según el ordenamiento DARK, FLAT, SCIENCE, etc que hacer reorder_sequences
+
 
 
 2011-11-09
@@ -298,4 +304,46 @@ y pude instalar el openSuSE11.164bit.
       2) ver que hace el QL/PAPI cuando encuentra dos PAT_EXPN=1 en una
       secuencia ????
 
+
+2011-11-14
+==========
+
+- Pruebas O2k objetos extenso, secuencia T-S-T-T-S-T-T-....(NGC5866). 
+  Encuentro&Soluciono BUG en skyfilter_general, en la funcion que lee el IMAGETYP, pues
+  no contenplaba bien los NULL.
+
+- Reduciendo la serie anterior, SExtractor da el mensaje :
+
+
+WARNING: Pixel stack overflow at position 
+
+
+que según E.Bertin es debido a :
+
+"""
+Hi.
+Given the fairly large size of your image, different memory settings (and/or aperture settings) can lead to a different number of sources. This may seem like a bug but it isn't (in principle!). The reason is that the SExtractor engine was originally written at a time when computer memory was scarse (a good workstation had ~16MB of memory back then, and SExtractor was meant to work with 1.8 GB Schmidt plate scans). Hence memory usage had to be kept under strict control, which explains the buffer limit settings. These limits may be reached if your image is populated with many and/or very large objects and/or if some measurements require large apertures. In that case, SExtractor has to make choices: change the order in which objects are extracted and/or measured, change details about the cleaning of spurious sources around bright sources, and, for the most critical cases, give up on extracting and/or deblending and/or measuring objects. Obviously, decisions of statistical significance are accompanied by a proper flagging of the detections involved (see the SExtractor documentation). Most of the time, this will concern bright, saturated stars or large image artifacts (halos, bad columns, satellite trails, etc.). It may however affect "normal" sources if inappropriate detection parameters are used: exceedingly low detection thresholds and/or unsuitable background mapping parameters (the detection algorithm has to percolate through the background noise and deblend large "empty" areas), exceedly high deblending contrast in very crowded fields...
+In suspicious cases, I would recommend checking SEGMENTATION check-images and
+source FLAGS to verify that SExtractor is operating in the intended regime.
+
+"""
+
+Ese mismo warning ya lo he visto en otras ocasiones, pero nunca le he hecho
+caso. Habría que ver como afecta a la reducción....
+
+
+
+- DUDA en eval_focus_serie.py habría que ordenar los frames por MJD
+  antes de evaluarlos ???
+  Realmente el orden va a dar igual, pues para el ajuste no afecta para nada.
+
+- DUDA a resolver : en eval_focus_serie.py habría que hacerles algún tipo de
+  procesamiento (Dark, Flat, Sky....) antes de evaluar el FWHM ?
+  Pues en teoria se obtendrían mejores resultados...habría que hacer algunas
+  pruebas.
+
+- BUG resuelto: faltaba en db.getFilterFiles() en el primer select un "order
+  by MJD"
+
+- Pruebas OT-QL
 

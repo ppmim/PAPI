@@ -412,7 +412,7 @@ class DataSet(object):
         filter_file_list = [] # list of file list (one per each filter)
               
         # First, look for Filters on SCIENCE files
-        s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' "
+        s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' order by mjd"
         #print s_select
         cur = self.con.cursor()
         cur.execute(s_select,"")
@@ -472,8 +472,21 @@ class DataSet(object):
         
         if group_by.lower()=='ot': 
             return self.GetSeqFilesB()
-        else:
+        elif group_by.lower()=='filter':
             return self.GetFilterFiles()
+        elif group_by.lower()=='none':
+            seqs = []
+            seq_types = []
+            seqs = self.GetFiles()
+            print "vamos 111"
+            if len(seqs)>0:
+                print "Seq = ", seqs[0]
+                print "File info=", self.GetFileInfo(seqs[0])[2]
+                seq_types = [str(self.GetFileInfo(seqs[0])[2])]*len(seqs)
+            else: print "VACIO !"
+            return seqs, seq_types
+        else:
+            return [],[]
         
     def GetSeqFiles(self, filter=None, type=None):
         """
