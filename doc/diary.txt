@@ -214,11 +214,14 @@ y pude instalar el openSuSE11.164bit.
     
 
 - Muevo el RS::reorder_sequences() al método  RS::getSequences  
-  y ahora el reoder_sequences sólo se ejecuta si queremos reducir todo el DS,
+  y ahora reoder_sequences() sólo se ejecuta si queremos reducir todo el DS,
   pero si hemos especificado una secuencia específica, no se reordenan pues no
   hace falta; con esto nos evitamos el problema de la altereación del número
   de secuencia mostrado según el ordernamiento MJD y el que le correspondería
-  según el ordenamiento DARK, FLAT, SCIENCE, etc que hacer reorder_sequences
+  según el ordenamiento DARK, FLAT, SCIENCE, etc que hacer reorder_sequences.
+  
+  Es decir, NO hay problema de identificación del número de secuencia al
+  especificar una secuencia a reducir en lugar de todo el DS.
 
 
 
@@ -345,5 +348,20 @@ caso. Habría que ver como afecta a la reducción....
 - BUG resuelto: faltaba en db.getFilterFiles() en el primer select un "order
   by MJD"
 
-- Pruebas OT-QL
+- Pruebas OT-QL:
 
+  * domeflat : sigue el problema de la numeración de secuencias
+  * single exposure + telescope interator : no contemplado
+  * single exposute + cycles = 2 : no enumera bien las secuencias
+  * skyflats : no terminados de implementar
+  
+
+2011-11-15
+==========
+
+- Añadido nuevo tipo de agrupamiento --> "none" , que hace que no se agrupe y
+  que simplemente considere todos los ficheros como pertenecientes a un mismo
+  grupo.
+
+- 
+  

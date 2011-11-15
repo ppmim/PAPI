@@ -42,7 +42,7 @@ static void usage(void);
 int main(int argc, char *argv[])
 {
     int i, nx, ny, nplanes;
-    int skymodel = 1; /* 1= median/mean, 2= minimun */
+    int skymodel = 1; /* 1= median&mean, 2= minimun */
     int hwid, skybeg, usemask = 0;
     unsigned int *skysubimg = NULL;
     float *sky = NULL, *skyw = NULL, *fimg;

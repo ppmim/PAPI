@@ -648,7 +648,7 @@ class ReductionSet(object):
     def getSequences(self, show=True):
         """
         Look for sequences (calib,science) in the current data set following the
-        grouping criteria given by self.group_by
+        grouping criteria given by self.group_by and orderted by MJD
         
         @param show: if True, print out in std output the found sequences
         
@@ -673,13 +673,11 @@ class ReductionSet(object):
         elif self.group_by=='none':
             if self.db==None: self.__initDB()
             seqs, seq_types = self.db.GetSequences(group_by='none')
-            print "DONEEE!"
-            print seqs
-            print seq_types
         else:
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
 
+        # Print out the groups
         if show:
             k=0
             print "\n ========================================================="
@@ -737,23 +735,6 @@ class ReductionSet(object):
         if self.db==None: self.__initDB()
         seq_list, seq_types = self.db.GetSequences(group_by='ot') # much more quick than read again the FITS files
         
-        # Print out the found groups
-        """
-        if show:
-            k=0
-            for type in seq_types:
-                print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
-                        %(k, type, self.db.GetFileInfo(seq_list[k][0])[3], 
-                          self.db.GetFileInfo(seq_list[k][0])[4], 
-                          len(seq_list[k]))
-                print "-------------------------------------------------------\
-                ------------------------------------------\n"
-                for file in seq_list[k]:
-                    print file + " type= %s"%self.db.GetFileInfo(file)[2]
-                k+=1
-            log.debug("Found %d groups of files", len(seq_types))
-        
-        """
         return seq_list, seq_types
         
     
@@ -786,19 +767,6 @@ class ReductionSet(object):
         if self.group_by=="filter":
             (seq_list, seq_par) = self.db.GetSequences(group_by='filter') # return a list of SCIENCE (or SKY) frames grouped by FILTER
                 
-            # Print out the found groups
-            """
-            k=0
-            for par in seq_par:
-                print "\nSEQUENCE #[%d]  - TYPE= %s  FILTER = %s  TEXP = %s   #files = %d " \
-                        %(k, "SCIENCE", par[0], par[1], len(seq_list[k]))
-                print "-------------------------------------------------------\
-                ------------------------------------------\n"
-                for file in seq_list[k]:
-                    print file + " type= %s"%self.db.GetFileInfo(file)[2]
-                k+=1
-            log.debug("Found %d groups of SCI files", len(seq_par))
-            """   
         return seq_list
     
     def getDomeFlatFrames(self):
@@ -1705,9 +1673,13 @@ class ReductionSet(object):
             results = None
             out_ext = []
             log.debug("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
-            if len(sequence)<4:
-                log.info("[reduceSeq] Found a too SHORT Obs. object sequence. Only %d frames found. Required >4 frames"%len(sequence))
-                raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames" %len(sequence))
+            if len(sequence)<self.config_dict['general']['min_frames']:
+                log.info("[reduceSeq] Found a too SHORT Obs. object sequence.\n\
+                 Only %d frames found. Required >%d frames"%(len(sequence),
+                                                             self.config_dict['general']['min_frames']))
+                raise Exception("Found a short Obs. object sequence. \n\
+                Only %d frames found. Required >%d frames" %(len(sequence),
+                                                            self.config_dict['general']['min_frames']))
             else:
                 # Get calibration files
                 dark, flat, bpm = None, None, None

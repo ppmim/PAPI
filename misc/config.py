@@ -421,6 +421,7 @@ def read_config_file(config_file = default_config_file()):
     general["obs_mode"] = read_parameter(config, "general", "obs_mode", str, False, config_file)
     general["reduction_mode"] = read_parameter(config, "general", "reduction_mode", str, False, config_file)
     general["check_data"] = read_parameter(config, "general", "check_data", bool, False, config_file)
+    general["min_frames"] = read_parameter(config, "general", "min_frames", int, False, config_file)
     general["group_by"] = read_parameter(config, "general", "group_by", str, False, config_file)
     
     general["max_mjd_diff"] = read_parameter(config, "general", "max_mjd_diff", float, False, config_file)
@@ -533,6 +534,7 @@ def read_config_file(config_file = default_config_file()):
     skysub["mask_minarea"] = read_parameter(config, "skysub", "mask_minarea", int, False, config_file)
     skysub["mask_thresh"] = read_parameter(config, "skysub", "mask_thresh", float, False, config_file)
     skysub["satur_level"] = read_parameter(config, "skysub", "satur_level", long, False, config_file)
+    skysub["skymodel"] = read_parameter(config, "skysub", "skymodel", str, False, config_file)
     
     area_width = read_parameter(config, "skysub", "area_width", int, True, config_file)
     if not area_width > 1:

@@ -69,6 +69,9 @@ See Technical Note: PANIC focusing
 2) Comfort : automatic, display whole field
 OT> TBC
 PL> eval_focus_serie.py -i ./focus_serie_O2k.txt -o /tmp/out.jpg
+    Examples: O2k/datos_Herve/070506
+    	      O2k/Foco
+
 QL> TBC
 
 
@@ -85,6 +88,7 @@ factor
 
 OT> TBT
 PL> papi.py -c config_files/papi_portatil.cfg -s /data/raw_sources -r [quick|science] 
+    Examples: O2k/
 QL> select files or group in group_view and run reduction
 
 
@@ -93,8 +97,12 @@ factor
 
 OT> TBT
 PL> papi.py -c config_files/papi_portatil.cfg -s ./sci_ext_M51J-1.txt -r quick -g filter
+    Examples: /data/O2K/EXT_S_TT_S_
+    	      /data/HAWK-I-2/ [nebulosa tarantula]
+
 QL> select files or group in group_view and run reduction; ext sources is
 automatically detected
+	     
 
 Remarks:
 	- Only implemented "quick" mode

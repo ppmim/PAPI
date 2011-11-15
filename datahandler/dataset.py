@@ -465,9 +465,9 @@ class DataSet(object):
         taken into account for the data grouping.
         
         @return: two lists:
-             - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
              - a of list, having each list the list of files beloging 
                to the sequence.
+             - a list of list of parameters for each list found (OB_ID, OB_PAT, FILTER, TEXP)
         """   
         
         if group_by.lower()=='ot': 
@@ -477,13 +477,9 @@ class DataSet(object):
         elif group_by.lower()=='none':
             seqs = []
             seq_types = []
-            seqs = self.GetFiles()
-            print "vamos 111"
+            seqs = [self.GetFiles()]
             if len(seqs)>0:
-                print "Seq = ", seqs[0]
-                print "File info=", self.GetFileInfo(seqs[0])[2]
-                seq_types = [str(self.GetFileInfo(seqs[0])[2])]*len(seqs)
-            else: print "VACIO !"
+                seq_types = [str(self.GetFileInfo(seqs[0][0])[2])]*len(seqs)
             return seqs, seq_types
         else:
             return [],[]
@@ -577,9 +573,9 @@ class DataSet(object):
         for calibration sequences need improvements
         
         @return: two lists:
-             - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
-             - a of list, having each list the list of files beloging 
+             - a list of list, having each list the list of files beloging 
                to the sequence.
+             - a list of parameters for each list found (OB_ID, OB_PAT, FILTER, TEXP)
     
         @see: GetSeqFiles()
             
@@ -623,6 +619,17 @@ class DataSet(object):
             if fits[3]==1: #expn == 1 ?
                 group = [str(fits[0])] #filename
                 found_first = True # update flag
+                # special case of only-one-file sequences
+                if fits[3]==fits[4]:
+                    #detected end of the sequence
+                    seq_list.append(group[:]) # very important ==> lists are mutable !
+                    # Set the 'nice' type
+                    if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
+                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    else: my_type = str(fits[7])
+                    seq_types.append(my_type)
+                    group = []
+                    found_first = False  # reset flag
             elif found_first: 
                 group.append(str(fits[0]))
                 if fits[3]==fits[4]:
