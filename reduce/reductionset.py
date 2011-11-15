@@ -181,7 +181,7 @@ class ReductionSet(object):
         self.m_expt = 0.0        # Exposition Time of the current data set files
         self.m_ncoadd = 0        # Number of coadds of the current data set files
         self.m_itime  = 0.0      # Integration Time of the currenct data set files
-
+        self.m_readmode = ""     # readout mode (must be the same for all data files)
         
         ##Local DataBase (in memory)
         self.db = None
@@ -251,13 +251,14 @@ class ReductionSet(object):
             self.ext_db = None
                 
         
-    def checkData(self, chk_filter=True, chk_type=True, chk_expt=True, chk_itime=True, \
-                  chk_ncoadd=True, chk_cont=True):
+    def checkData(self, chk_filter=True, chk_type=True, chk_expt=True,
+                  chk_itime=True, chk_ncoadd=True, chk_cont=True,
+                  chk_readmode=True):
         """
-        @return: Return true is all files in file have the same filter and/or type and/or
-        expt; false otherwise.
-        Also check the temporal continuity (distant between two consecutive frames),
-        if exceeded raise an exception 
+        @return: True is all files in file have the same filter and/or 
+        type and/or expt; False otherwise.
+        @note : Also is checked the temporal continuity (distant between two 
+        consecutive frames),if exceeded raise an exception 
         """
         
         f = datahandler.ClFits(self.m_LAST_FILES[0])
@@ -267,19 +268,23 @@ class ReductionSet(object):
         expt_0 = f.expTime()
         itime_0 = f.getItime()
         ncoadd_0 = f.getNcoadds()
+        readmode_0 = f.getReadMode()
         
         self.m_filter = filter_0
         self.m_type = type_0
         self.m_expt = expt_0
         self.m_itime = itime_0
         self.m_ncoadd = ncoadd_0
+        self.m_readmode = readmode_0
         
-        mismatch_filter=False
-        mismatch_type=False
-        mismatch_expt=False
-        mismatch_itime=False
-        mismatch_ncoadd=False
-        mismatch_cont=False
+        
+        mismatch_filter = False
+        mismatch_type = False
+        mismatch_expt = False
+        mismatch_itime = False
+        mismatch_ncoadd = False
+        mismatch_cont = False
+        mismatch_readmode = False
         
         prev_MJD=-1
         for file in self.m_LAST_FILES:
@@ -311,6 +316,11 @@ class ReductionSet(object):
                     log.debug("File %s does not match file NCOADD", file)
                     mismatch_ncoadd=True
                     break
+            if chk_readmode and not mismatch_readmode: 
+                if fi.getReadMode() != readmode_0:
+                    log.debug("File %s does not match file READMODE", file)
+                    mismatch_readmode=True
+                    break
             if chk_cont and not mismatch_cont:
                 if prev_MJD!=-1 and (fi.getMJD()-prev_MJD)>self.MAX_MJD_DIFF:
                     log.error("Maximmun time distant between two consecutives frames exceeded !!")
@@ -319,7 +329,8 @@ class ReductionSet(object):
                 else:
                     prev_MJD=fi.getMJD()
                     
-        if mismatch_filter or mismatch_type or mismatch_expt or  mismatch_itime or mismatch_ncoadd or mismatch_cont:
+        if mismatch_filter or mismatch_type or mismatch_expt or  \
+            mismatch_itime or mismatch_ncoadd or mismatch_cont:
             log.error("Data checking found a mismatch....check your data files....")
             raise Exception("Error while checking data (filter, type, ExpT, Itime, NCOADDs, MJD)")
             #return False             
@@ -815,43 +826,67 @@ class ReductionSet(object):
         return True
         
         
-    def skyFilter( self, list_file, gain_file, mask='nomask', obs_mode='dither' ):
+    def skyFilter( self, list_file, gain_file, mask='nomask', 
+                   obs_mode='dither', skymodel=None ):
         """
-            For 'each' (really not each, depend on dither pattern, e.g., extended sources) input image,
-            a sky frame is computed by combining a certain number of the closest images, 
-            then this sky frame is subtracted to the image and the result is divided by the master flat; 
+        @summary: For 'each' (really not each, depend on dither pattern, e.g., 
+        extended sources) input image, a sky frame is computed by combining a 
+        certain number of the closest images, then this sky frame is subtracted
+        to the image and the result is divided by the master flat; 
                          
-            This function is a wrapper for skyfilter.c (IRDR)              
-            
-            INPUT
-                list_file : a text file containing the suited structure in function of the observing_mode (the list shall be sorted by obs-date)
-            
-            OUTPUT
-                The function generate a set of sky subtrated images (*.skysub.fits) and
-                Return ONLY filtered images; when extended-source-mode ,sky frames are not included in the returned file list. 
-                The out-file-list is previously ordered by obs-data.             
-            
-            VERSION
-                1.0, 20090909 by jmiguel@iaa.es
+        This function is a wrapper for skyfilter.c (IRDR)              
         
-            TODO: extended objects !!!!
+        @param list_file: a text file containing the suited structure in 
+        function of the observing_mode (the list shall be sorted by obs-date)
+
+        @param gain_file: gain map file used as bad pixel mask
+        
+        @param mask: [mask|nomask] flag used to indicate if a object mask was 
+        especified into the 'list_file'
+        
+        @param obs_mode: [dither|other] dither or other(e.g., nodding) pattern 
+        to process
+          
+        @param skymodel: [median|min] sky model used for sky subtraction. Only 
+        required if obs_mode=dither. (median=coarse fields, min=crowded fields)
+           
+        @return: 
+        The function generate a set of sky subtrated images (*.skysub.fits) and
+        Return ONLY filtered images; when extended-source-mode ,sky 
+        frames are not included in the returned file list. 
+        The out-file-list is previously ordered by obs-data.             
+    
+        @version: 1.0, 20090909 by jmiguel@iaa.es
+    
+        @todo: extended objects !!
         """               
         
         # Skyfilter parameters
         halfnsky = self.HWIDTH  # value from config file [skysub.hwidth]
         destripe = 'none'
         out_files = []
+        
+        # get the skymodel
+        if skymodel==None:
+            skymodel = self.config_dict['skysub']['skymodel']
             
         if obs_mode=='dither':
-            skyfilter_cmd=self.m_irdr_path+'/skyfilter '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe 
-        elif obs_mode=='dither_on_off':
-            skyfilter_cmd=self.m_irdr_path+'/skyfilteronoff '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
-        #elif obs_mode=='dither_on_off':
-        #    skyfilter_cmd=self.m_irdr_path+'/skyfilteronoff '+ '/tmp/skylist_prueba.list' + '  ' + gain_file +' '+ str(halfnsky)+' '+ 'mask' + '  ' + destripe
-        elif obs_mode=='dither_off_on':
-            skyfilter_cmd=self.m_irdr_path+'/skyfilteroffon '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+            # It comprises any dithering pattern for point-like objects
+            skyfilter_cmd = self.m_irdr_path + '/skyfilter '+ list_file + \
+            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' +  \
+            destripe + '  ' + skymodel
         elif obs_mode=='other':
-            skyfilter_cmd=self.m_irdr_path+'/skyfilter_general '+ list_file + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+            # It comprises nodding pattern for extended objects 
+            skyfilter_cmd = self.m_irdr_path+'/skyfilter_general '+ list_file \
+            + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+        elif obs_mode=='dither_on_off': 
+            # actually not used
+            skyfilter_cmd = self.m_irdr_path + '/skyfilteronoff ' + list_file + \
+            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe 
+        elif obs_mode=='dither_off_on':
+            # actually not used 
+            skyfilter_cmd = self.m_irdr_path + '/skyfilteroffon ' + list_file +\
+            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe
         else:
             log.error("Observing mode not supported")
             raise
@@ -1673,7 +1708,7 @@ class ReductionSet(object):
             results = None
             out_ext = []
             log.debug("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
-            if len(sequence)<self.config_dict['general']['min_frames']:
+            if len(sequence) < self.config_dict['general']['min_frames']:
                 log.info("[reduceSeq] Found a too SHORT Obs. object sequence.\n\
                  Only %d frames found. Required >%d frames"%(len(sequence),
                                                              self.config_dict['general']['min_frames']))
@@ -1755,11 +1790,18 @@ class ReductionSet(object):
                         if bpm_ext==[]: mbpm=None
                         else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                         
+                        # Debug&Test
                         #if n==1: return None,None# only for a TEST !!!
+                        #if n!=1: continue
+                        # 
                         
                         try:
-                            out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, self.red_mode, out_dir=self.out_dir,\
-                                                          output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
+                            out_ext.append(self.reduceSingleObj(obj_ext[n], 
+                                                                mdark, mflat, 
+                                                                mbpm, self.red_mode, 
+                                                                out_dir=self.out_dir,
+                                                                output_file = self.out_dir + \
+                                                                "/out_Q%02d.fits"%(n+1)))
                         except Exception,e:
                             log.error("[reduceSeq] Some error while reduction of extension %d of object sequence", n+1)
                             raise e
@@ -2083,7 +2125,7 @@ class ReductionSet(object):
         if self.check_data:
             try:
                 self.checkData(chk_filter=True, chk_type=False, chk_expt=True, 
-                               chk_itime=True, chk_ncoadd=True)
+                               chk_itime=True, chk_ncoadd=True, chk_readmode=True)
             except Exception,e:
                 raise e
         
@@ -2240,7 +2282,8 @@ class ReductionSet(object):
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration and  coaddition result frame ****")
             #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", coadded_file=output_file, config_dict=self.config_dict)
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", 
+            coadded_file=output_file, config_dict=self.config_dict)
             try:
                 aw.run()
             except Exception,e:
@@ -2323,17 +2366,21 @@ class ReductionSet(object):
         j = 0
         for file in self.m_rawFiles:
             if self.apply_dark_flat==1: 
-                line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " " + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+                line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
+                + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             else:
-                line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+                line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
+                " " + str(offset_mat[j][1])
             fs.write(line+"\n")
-            if (self.obs_mode=='dither_on_off' or self.obs_mode=='dither_off_on') and i%2:
+            if (self.obs_mode=='dither_on_off' or 
+                self.obs_mode=='dither_off_on') and i%2:
                 j=j+1
             elif self.obs_mode=='dither':
                 j=j+1
             i=i+1
         fs.close()
-        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 'mask', self.obs_mode)      
+        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
+                                           'mask', self.obs_mode)      
     
         ########################################################################
         # 9.2 - Divide by the master flat after sky subtraction ! (see notes above)

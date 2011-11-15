@@ -363,5 +363,8 @@ caso. Habría que ver como afecta a la reducción....
   que simplemente considere todos los ficheros como pertenecientes a un mismo
   grupo.
 
-- 
+- Añadida al config file skysub.skymodel y modificada la función
+  RS::skyfilter() para que admita dicho parámetro.
+  
+- Hago el primer esquema del proceso de reducción de PAPI; queda pasarlo a limpio.
   

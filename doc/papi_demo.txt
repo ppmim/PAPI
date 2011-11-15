@@ -26,6 +26,8 @@ Dome Flat
 
 OT> TBT
 PL> calDomeFlat.py -s ./domeFlatsKS_O2k.txt -o /tmp/masterDFlat.fits
+    Examples:
+	- O2K
 QL> TBT
  
 
@@ -97,8 +99,9 @@ factor
 
 OT> TBT
 PL> papi.py -c config_files/papi_portatil.cfg -s ./sci_ext_M51J-1.txt -r quick -g filter
-    Examples: /data/O2K/EXT_S_TT_S_
-    	      /data/HAWK-I-2/ [nebulosa tarantula]
+    Examples: /data/O2K/EXT_S_TT_S_ 
+    	      /data/HAWK-I-2/ S7 [nebulosa tarantula] --> no va bien !!!
+	      /data/HAWK-I-3/ S0
 
 QL> select files or group in group_view and run reduction; ext sources is
 automatically detected
@@ -128,6 +131,20 @@ PL> applyDistort.py
 
 Miscelaneus
 ~~~~~~~~~~~
-
 >genLogSheet.py
 >
+
+
+
+QUESTIONS
+=========
+
+[0] reset in Dark series ?
+
+[1] readout modes available and meaning and concerns to the data reduction
+
+[2] would be interesting to have a "real-time" sky-subtraction taking into
+account the last N-frames received ?  and show information about seeing, sky
+background ?
+
+

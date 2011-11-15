@@ -474,21 +474,21 @@ class ClFits (object):
 
         #Integration Time
         try:
-            self.itime=myfits[0].header['ITIME']
+            self.itime = myfits[0].header['ITIME']
         except KeyError:
             log.warning('ITIME keyword not found')
             self.itime  = -1
             
         #Number of coadds
         try:
-            self.ncoadds=myfits[0].header['NCOADDS']
+            self.ncoadds = myfits[0].header['NCOADDS']
         except KeyError:
             log.warning('NCOADDS keyword not found')
-            self.ncoadda  = -1
+            self.ncoadds  = -1
                  
         #Read-Mode
         try:
-            self.readmode=myfits[0].header['READMODE']
+            self.readmode = myfits[0].header['READMODE']
         except KeyError:
             log.warning('READMODE keyword not found')
             self.readmode  = ""
