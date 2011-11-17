@@ -43,7 +43,7 @@ import checkQuality
 class FocusSerie(object):
     """
     @summary:  
-        Class used to estimate the best focus value of a focus esposures 
+        Class used to estimate the best focus value of a focus exposures 
     
     @author: 
         JMIbannez, IAA-CSIC - 2011

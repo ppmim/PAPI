@@ -237,7 +237,7 @@ http://www.hgt.es/web/index.php?option=com_content&task=view&id=102#whatyouneed
 
 "INSTALLING IRAF 2.12 OVER openSUSE 10.x and 11.x"
 
-that are also valid for v2.14 over openSUSE11.1-64bit
+they are also valid for v2.14 over openSUSE11.1-64bit
   
 
 
@@ -307,10 +307,16 @@ http://www.stsci.edu/resources/software_hardware/stsci_python/Installation/#inst
 
 
 
-14. MIDAS (for CL environment)
-==============================
-To Be completed !
+14. MIDAS 10SEPpl1.1 (for CL environment)
+=========================================
+See: http://www.eso.org/sci/software/esomidas/
 
+Note: Some patches must be done to the MIDAS 10SEPpl1.1 concerning a
+BUG in the catalog routines (see gmail from Klaus Banse at ESO for more details)
+Files to patch:
+      - midfct.c
+      - midcat.c
+      - scc.c
 
 
 15. OTHER SYSTEM LIBS REQUIRED
@@ -365,3 +371,93 @@ PATH=$PATH:$HOME/GEIRS/scripts
 export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
 
 
+
+
+IRAF
+====
+
+Make directories:
+~~~~~~~~~~~~~~~~
+sudo mkdir /iraf
+sudo chgrp root /iraf
+
+[['root' is in my case. add instead what is your username. Normally It should work with 'root'.]]
+
+sudo chown $USER /iraf 
+
+[['USER' means whatever is your username.]]
+
+mkdir /iraf/tar
+mkdir /iraf/iraf
+mkdir /iraf/irafbin
+mkdir /iraf/irafbin/bin.suse
+mkdir /iraf/irafbin/noao.bin.suse
+
+cd /iraf/tar
+# all sources (generic stuff)
+wget http://iraf.noao.edu/iraf/ftp/iraf/v212/PCIX/as.pcix.gen.gz
+# iraf binaries
+wget http://iraf.noao.edu/iraf/ftp/iraf/v212/PCIX/ib.suse.x86.gz
+# noao binaries
+wget http://iraf.noao.edu/iraf/ftp/iraf/v212/PCIX/nb.suse.x86.gz
+
+install:
+~~~~~~~~
+cd /iraf/iraf
+tar xfzp /iraf/tar/as.pcix.gen.gz
+cd /iraf/irafbin/bin.suse
+tar xfzp /iraf/tar/ib.suse.x86.gz
+cd /iraf/irafbin/noao.bin.suse
+tar xfzp /iraf/tar/nb.suse.x86.gz
+
+Now basic functionality is available. But you probably want more…
+
+Download and install extra’s:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd /iraf/tar
+
+ecl (replaces cl):
+~~~~~~~~~~~~~~~~~
+This thing uses termcap. Use ‘sudo yast -i’ to install it.
+
+wget http://iraf.noao.edu/iraf/ftp/pub/ecl_install_linux.csh
+sudo ecl_install_linux.csh
+
+x11iraf (xgterm):
+~~~~~~~~~~~~~~~~
+mkdir x11iraf
+cd x11iraf
+wget http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v1.3.1-bin.suse.tar.gz
+tar xfz x11iraf-v1.3.1-bin.suse.tar.gz
+sudo ./install
+
+ds9:
+~~~
+wget http://hea-www.harvard.edu/saord/download/ds9/linux/ds9.linux.4.13.tar.gz
+tar xfz ds9.linux.4.13.tar.gz
+sudo cp ds9 /usr/local/bin
+
+x11iraf (xgterm):
+~~~~~~~~~~~~~~~~
+mkdir x11iraf
+cd x11iraf
+wget http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v1.3.1-bin.suse.tar.gz
+tar xfz x11iraf-v1.3.1-bin.suse.tar.gz
+sudo ./install
+
+Settings Usable for all users:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sudo tcsh
+cd /iraf/iraf/unix/hlib
+setenv iraf /iraf/iraf/
+chmod 755 irafuser.csh
+source ./irafuser.csh
+./install
+exit
+
+Change the ownership to iraf:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sudo chown -R /iraf . # change dir owner
+cd $hbin # go to HSI bin dir
+sudo chown 0 alloc.e # fix alloc.e ownership
+sudo chmod 4755 alloc.e # fix permissions

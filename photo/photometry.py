@@ -41,7 +41,8 @@ import misc.utils
 import astromatic
 import datahandler
 
-class CmdException(Exception): pass
+class CmdException(Exception): 
+    pass
 
 
 ##################################
@@ -199,7 +200,8 @@ def generate_phot_comp_plot ( input_catalog, filter, expt = 1.0 ,
         else: return 'stdout'
 
 
-def compute_regresion ( vo_catalog, column_x, column_y ):
+def compute_regresion ( vo_catalog, column_x, column_y , 
+                        output_filename="/tmp/linear_fit.pdf"):
     """
     @summary: Compute and Plot the linear regression of two columns of the input vo_catalog
     @param column_x: column number for X values of the regression
@@ -267,7 +269,7 @@ def compute_regresion ( vo_catalog, column_x, column_y ):
     plt.title("Filter %s  -- Poly fit: %f X + %f  r=%f ZP=%f" %(filter, b,a,r,a))
     plt.xlabel("Inst_Mag (MAG_AUTO) / mag")
     plt.ylabel("2MASS Mag  / mag")
-    plt.savefig("/tmp/linear_fit.pdf")
+    plt.savefig(output_filename)
     plt.show()
     log.debug("Zero Point (from polyfit) =%f", a)
     
@@ -437,6 +439,128 @@ class STILTSwrapper (object):
         ./stilts plot2d in=match_S_b.vot subsetNS='j_k<=1.0 & k_snr>10' lineNS=LinearRegression xdata=k_m ydata=MyMag_k xlabel="2MASS k_m / mag" ylabel="PAPI k_m / mag"
         """
 
+def doPhotometry(input_image, catalog, output_filename):
+    """
+    @summary: Run the rough photometric calibraiton
+    
+    @param input_image: reduced science image
+    
+    @param catalog: photometric catalog to compare to
+    
+    @param output_filename: file where output figure will be saved  
+    """
+    
+    
+    ## 0.1 - Read the RA,Dec and TEXP values from the input image
+    log.debug("Reading FITS file EXPT, RA, Dec & FILTER values ...")
+    try:
+        my_fits = datahandler.ClFits(input_image)
+        exptime  = my_fits.expTime()
+        ra = my_fits.ra
+        dec = my_fits.dec
+        filter = my_fits.getFilter()
+        
+        log.debug("EXPTIME = %f"%exptime)
+        log.debug("RA = %f"%ra)
+        log.debug("DEC = %f"%dec)
+        log.debug("Filter = %s"%filter)
+        
+        if ra<0 or exptime<0:
+            log.debug("Found wrong RA,DEC,EXPTIME or FILTER value")
+            raise Exception("Found wrong RA,Dec,EXPTIME or FILTER value.")
+        
+        # Checking Filter    
+        if filter=='J':
+            two_mass_col_name = 'j_m'
+        elif filter=='H':
+            two_mass_col_name = 'h_m'
+        elif filter=='K' or filter=='K-PRIME' or filter=='KS':
+            two_mass_col_name = 'k_m'   
+        #elif filter=='OPEN':
+        #    two_mass_col_name = 'j_m'
+        else:
+            log.error("Filter %s not supported" %filter)
+            raise Exception("Filter %s not supported"%filter)
+            
+    except Exception,e:
+        log.error("Cannot read properly FITS file : %s:", str(e))
+        raise e
+    
+    ## 0.2 - Generate image catalog (VOTable) -> SExtractor
+    log.debug("*** Creating SExtractor VOTable catalog ....")
+    
+    #tmp_fd, tmp_name = tempfile.mkstemp(suffix='.xml', dir=os.getcwd())
+    #os.close(tmp_fd)
+    image_catalog = os.path.splitext(input_image)[0]  + ".xml"
+    
+    sex = astromatic.SExtractor()
+    sex.ext_config['CHECKIMAGE_TYPE'] = "NONE"
+    sex.config['CATALOG_TYPE'] = "ASCII_VOTABLE"
+    sex.config['CATALOG_NAME'] = image_catalog
+    sex.config['DETECT_THRESH'] = 1.5
+    sex.config['DETECT_MINAREA'] = 5
+    
+    try:
+        sex.run(input_image, updateconfig=True, clean=False)
+    except Exception,e:
+        log.error("Canno't create SExtractor catalog : %s", str(e))
+        raise e 
+            
+    ## 1 - Generate region of base catalog
+    icat = catalog_query.ICatalog ()
+    out_base_catalog = os.getcwd() + "/catalog_region.xml"
+    sr = 500 # arcsec
+    try:
+        res_file = icat.queryCatalog(ra, dec, sr, 
+                                     catalog_query.ICatalog.cat_names['2MASS'], 
+                                     out_base_catalog, 'votable')[0]
+        log.debug("Output file generated : %s", res_file) 
+    except Exception,e:
+        log.error("Sorry, cann't solve the query to ICatalog: %s", str(e))
+        raise e
+
+    ## 2- XMatch the catalogs (image_catalog VS just base_catalog generated)          
+    out_xmatch_file = os.getcwd() + "/xmatch.xml"
+    try:
+        match_cat = catalog_xmatch( image_catalog, res_file, 
+                                   out_xmatch_file, out_format='votable', 
+                                   error=1.0 ) 
+        log.debug("XMatch done !")
+    except Exception,e:
+        log.error("XMatch failed %s", str(e))
+        raise e
+    
+    ## 3a- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
+    ###### and generate the plot file with the photometric comparison
+    ###### 2MASS_Mag = Inst_Mag*b + ZP  
+    log.debug("Compute & Plot regression !!!")    
+    try:
+        compute_regresion (out_xmatch_file, 'MAG_AUTO', 
+                           two_mass_col_name, output_filename )
+        log.debug("Well DONE !!")
+        #sys.exit(0)
+    except Exception,e:
+        log.error("Sorry, some error while computing linear fit or\
+        ploting the results: %s", str(e))
+        raise e
+    
+    ## 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
+    ###### and generate the plot file with the photometric comparison  
+    try:
+        exptime = 1.0 # SWARP normalize flux to 1 sec
+        file_ext = output_filename.split(".")[1]
+        output_filename_2 = output_filename.replace("."+file_ext,"_2."+file_ext) 
+        plot_file = generate_phot_comp_plot ( match_cat, two_mass_col_name, exptime, 
+                                              output_filename_2, 
+                                              out_format='pdf')
+        log.debug("Plot file generated : %s", plot_file) 
+    except Exception,e:
+        log.error("Sorry, some error while computing linear fit or \
+        ploting the results: %s", str(e))
+        raise e
+
+    return output_filename
+
 ################################################################################
 # main
 ################################################################################
@@ -455,12 +579,13 @@ if __name__ == "__main__":
                   
     parser.add_option("-c", "--base_catalog (2MASS, USNO-B)",
                   action="store", dest="base_catalog",
-                  help="Name of base catalog to compare with (2MASS, USNO-B) -- not used !!!")
-    
+                  help="Name of base catalog to compare with (2MASS, USNO-B) -- not used !!! (default = %default)",
+                  default="2MASS")
     
     parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", help="output plot filename")
-    
+                  action="store", dest="output_filename", 
+                  help="output plot filename (default = %default)",
+                  default="photometry.pdf")
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
@@ -482,106 +607,10 @@ if __name__ == "__main__":
         log.error ("Input image %s does not exist", options.input_image)
         sys.exit(0)
         
-    ## 0 - Generate image catalog (VOTable) -> SExtractor
-    log.debug("*** Creating SExtractor VOTable catalog ....")
-    #tmp_fd, tmp_name = tempfile.mkstemp(suffix='.xml', dir=os.getcwd())
-    #os.close(tmp_fd)
-    image_catalog = os.path.splitext(options.input_image)[0]  + ".xml"
-    sex = astromatic.SExtractor()
-    sex.ext_config['CHECKIMAGE_TYPE'] = "NONE"
-    sex.config['CATALOG_TYPE'] = "ASCII_VOTABLE"
-    sex.config['CATALOG_NAME'] = image_catalog
-    sex.config['DETECT_THRESH'] = 1.5
-    sex.config['DETECT_MINAREA'] = 5
     try:
-        sex.run(options.input_image, updateconfig=True, clean=False)
+        catalog = "2MASS"
+        doPhotometry(options.input_image, catalog, options.output_filename)
     except Exception,e:
-        log.error("Canno't create SExtractor catalog : %s", str(e)) 
+        log.info("Some error while running photometric calibration: %s"%str(e))
         sys.exit(0)
-    
-    ## 0.1 - Read the RA,Dec and TEXP values from the input image
-    try:
-        my_fits = datahandler.ClFits(options.input_image)
-        exptime  = my_fits.expTime()
-        ra = my_fits.ra
-        dec = my_fits.dec
-	filter = my_fits.getFilter()
-        
-	log.debug("EXPTIME = %f"%exptime)
-        log.debug("RA = %f"%ra)
-        log.debug("DEC = %f"%dec)
-        log.debug("Filter = %s"%filter)
-        
-        if ra<0 or exptime<0:
-            log.debug("Found wrong RA,DEC,EXPTIME or FILTER value")
-            sys.exit(0)
-        
-        # Checking Filter    
-        if filter=='J':
-            two_mass_col_name = 'j_m'
-        elif filter=='H':
-            two_mass_col_name = 'h_m'
-        elif filter=='K' or filter=='K-PRIME' or filter=='KS':
-            two_mass_col_name = 'k_m'   
-        #elif filter=='OPEN':
-        #    two_mass_col_name = 'j_m'
-        else:
-            log.error("Filter %s not supported" %filter)
-            sys.exit(0)
-            
-    except Exception,e:
-        log.error("Cannot read properly FITS file : %s:", str(e))
-        sys.exit(0)
-            
-    ## 1 - Generate region of base catalog
-    icat = catalog_query.ICatalog ()
-    out_base_catalog = os.getcwd() + "/catalog_region.xml"
-    sr = 500 # arcsec
-    try:
-        res_file = icat.queryCatalog(ra, dec, sr, 
-                                     catalog_query.ICatalog.cat_names['2MASS'], 
-                                     out_base_catalog, 'votable')[0]
-        log.debug("Output file generated : %s", res_file) 
-    except Exception,e:
-        log.error("Sorry, cann't solve the query to ICatalog: %s", str(e))
-        sys.exit(0)
-
-    ## 2- XMatch the catalogs (image_catalog VS just base_catalog generated)          
-    out_xmatch_file = os.getcwd() + "/xmatch.xml"
-    try:
-        match_cat = catalog_xmatch( image_catalog, res_file, 
-                                   out_xmatch_file, out_format='votable', 
-                                   error=1.0 ) 
-        log.debug("XMatch done !")
-    except Exception,e:
-        log.error("XMatch failed %s", str(e))
-        sys.exit(0)
-    
-    ## 3a- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
-    ###### and generate the plot file with the photometric comparison
-    ###### 2MASS_Mag = Inst_Mag*b + ZP  
-    log.debug("Compute & Plot regression !!!")    
-    try:
-        compute_regresion (out_xmatch_file, 'MAG_AUTO', two_mass_col_name )
-        log.debug("Well DONE !!")
-        #sys.exit(0)
-    except Exception,e:
-        log.error("Sorry, can't some error while computing linear fit or\
-        ploting the results: %s", str(e))
-        sys.exit(0)
-    
-    ## 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
-    ###### and generate the plot file with the photometric comparison  
-    try:
-        exptime = 1.0 # SWARP normalize flux to 1 sec
-        plot_file = generate_phot_comp_plot ( match_cat, two_mass_col_name, exptime, 
-                                              options.output_filename, 
-                                              out_format='pdf')
-        log.debug("Plot file generated : %s", plot_file) 
-    except Exception,e:
-        log.error("Sorry, can't some error while computing linear fit or \
-        ploting the results: %s", str(e))
-        sys.exit(0)
-        
-        
         

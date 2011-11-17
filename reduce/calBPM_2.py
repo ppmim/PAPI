@@ -28,7 +28,7 @@
 #              19/04/2010    jmiguel@iaa.es - added master dark checking
 #
 # TODO:
-#  - escalar el master dark a restar !!!!
+#  - escalar el master dark antes de restar !!!!
 ################################################################################
 
 
@@ -61,7 +61,11 @@ import datahandler
 import misc.fileUtils
 import misc.utils as utils
 
-class BadPixelMask:
+class ExError(Exception):
+    pass
+
+
+class BadPixelMask(object):
     """
     \brief
         Make a bad pixel mask (hot and cold pixels) from a set of images 
@@ -78,7 +82,7 @@ class BadPixelMask:
          1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
             and and check whether there are enought calib frames
          2: Check the master dark (Texp)
-         3: Subtrac the master dark to each dome flat
+         3: Substrac the master dark to each dome flat
          4: Combine dome dark subtracted flats (on/off)
          5: Compute flat_low/flat_high
          6: Create BPM (iraf.ccdmask)
@@ -131,10 +135,10 @@ class BadPixelMask:
             f = datahandler.ClFits(self.master_dark)
             if not f.getType()=='MASTER_DARK':
                 log.error("File %s does not look a MASTER_DARK! Check your data.", self.master_dark)
-                raise ExError, "File does not look a MASTER_DARK! Check your data."              
+                raise ExError("File does not look a MASTER_DARK! Check your data.")              
         else:
             log.error("File %s does not exist", self.master_dark)
-            raise ExError, "File does not exist"    
+            raise ExError("File does not exist")    
         
         # Read the file list
         filelist=[line.replace( "\n", "").replace("//","/") for line in fileinput.input(self.i_file_list)]
@@ -155,7 +159,7 @@ class BadPixelMask:
         #Check whether there are enought calib frames
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10):
             log.error("There are not enought calib frames to create BPM !!")
-            raise ExError, "Not enought calib frames"
+            raise ExError("Not enought calib frames")
         
         
         #STEP 3: Subtrac the master dark to each dome flat
@@ -289,10 +293,10 @@ class BadPixelMask:
             f = datahandler.ClFits(self.master_dark)
             if not f.getType()=='MASTER_DARK':
                 log.error("File %s does not look a MASTER_DARK! Check your data.", self.master_dark)
-                raise ExError, "File does not look a MASTER_DARK! Check your data."              
+                raise ExError("File does not look a MASTER_DARK! Check your data.")              
         else:
             log.error("File %s does not exist", self.master_dark)
-            raise ExError, "File does not exist"    
+            raise ExError("File does not exist")    
         
         
         # Read the file list
@@ -315,7 +319,7 @@ class BadPixelMask:
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10 
             or self.master_dark==None):
             log.error("There are not enought calib frames for create BPM !!")
-            raise ExError, "Not enought calib frames"
+            raise ExError("Not enought calib frames")
         
         
         #STEP 3: Subtrac the master dark to each dome flat

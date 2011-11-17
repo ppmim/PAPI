@@ -48,6 +48,10 @@ import Pyro.naming
 # Logging
 from misc.paLog import log
 
+
+class ExError(Exception):
+    pass
+
 class MasterSuperFlat:
     """
     \brief Class used to build and manage a master calibration super flat from a list of night SCIENCE frames
@@ -128,7 +132,7 @@ class MasterSuperFlat:
             return False
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
-            raise ExError, 'Directory of combined FLAT frame does not exist'
+            raise ExError('Directory of combined FLAT frame does not exist')
         if not self.__output_filename :
             raise ExError('Combined FLAT frame not defined')
     

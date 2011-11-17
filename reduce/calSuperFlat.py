@@ -50,7 +50,7 @@ from iraf import noao
 #from iraf import ccdred
 from iraf import mscred
 
-class SuperSkyFlat:
+class SuperSkyFlat(object):
     """
     \brief Class used to build a super sky Flat from a dither set of science 
            frames containing objects.
@@ -102,13 +102,13 @@ class SuperSkyFlat:
         self.norm = norm # if true, the flat field will be normalized
         
         # Some default parameter values
-        self.m_MIN_N_GOOD=2
-        self.m_min_flats=5
-        self.m_MINGAIN=0.5    #pixels with sensitivity < MINGAIN are assumed bad 
-        self.m_MAXGAIN=1.5    #pixels with sensitivity > MAXGAIN are assumed bad 
-        self.m_NXBLOCK=16     #image size should be multiple of block size 
-        self.m_NYBLOCK=16
-        self.m_NSIG=5.0       #badpix if sensitivity > NSIG sigma from local bkg
+        self.m_MIN_N_GOOD = 2
+        self.m_min_flats = 5
+        self.m_MINGAIN = 0.5    #pixels with sensitivity < MINGAIN are assumed bad 
+        self.m_MAXGAIN = 1.5    #pixels with sensitivity > MAXGAIN are assumed bad 
+        self.m_NXBLOCK = 16     #image size should be multiple of block size 
+        self.m_NYBLOCK = 16
+        self.m_NSIG = 5.0       #badpix if sensitivity > NSIG sigma from local bkg
 
             
     def create(self):

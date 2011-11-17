@@ -49,6 +49,9 @@ import pyfits
 # Logging
 from misc.paLog import log
 
+class ExError(Exception):
+    pass
+
 class MasterTwilightFlat (object):
     """
     \brief Class used to build and manage a master calibration twilight flat
@@ -59,17 +62,18 @@ class MasterTwilightFlat (object):
     \par Description:
         
         1. Check the  TYPE(twilight) and FILTER of each Flat frame
-           If any frame on list missmatch the FILTER, then the master 
-           twflat will skip this frame and contiune with then next ones.
-           EXPTIME do not need be the same, so EXPTIME scaling with 'mode' will be done
+        If any frame on list missmatch the FILTER, then the master 
+        twflat will skip this frame and contiune with then next ones.
+        EXPTIME do not need be the same, so EXPTIME scaling with 'mode' will be 
+        done
            
            1.1: Check either over or under exposed frames
         
-        2. We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS because 
-           they might have diff EXPTIMEs
+        2. We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS 
+        because they might have diff EXPTIMEs
         
-        3. Make the combine (with sigclip rejection) of dark subtracted Flat frames 
-           scaling by 'mode'
+        3. Make the combine (with sigclip rejection) of dark subtracted Flat 
+        frames scaling by 'mode'
         
         4. Normalize the tw-flat dividing by the mean value
         
@@ -117,7 +121,7 @@ class MasterTwilightFlat (object):
     def createMaster(self):
       
         """
-        \brief Create a master Tw FLAT from the flat file list
+        @summary: Create a master Tw FLAT from the flat file list
         """   
         log.debug("Start createMasterTwilightFlat")
         
@@ -151,7 +155,7 @@ class MasterTwilightFlat (object):
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
             log.error('Directory of combined FLAT frame does not exist')
-            raise ExError, 'Directory of combined FLAT frame does not exist'
+            raise ExError('Directory of combined FLAT frame does not exist')
         if not self.__output_filename :
             log.error('Combined FLAT frame not defined')
             raise ExError('Combined FLAT frame not defined')

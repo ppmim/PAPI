@@ -413,6 +413,8 @@ class DataSet(object):
               
         # First, look for Filters on SCIENCE files
         s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' order by mjd"
+        #s_select="select DISTINCT filter,texp from dataset  order by mjd"
+
         #print s_select
         cur = self.con.cursor()
         cur.execute(s_select,"")
@@ -424,7 +426,8 @@ class DataSet(object):
         
         # Finally, look for files of each Filter
         for par in par_list:
-            s_select = "select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY') order by mjd"    
+            s_select = "select filename from dataset where filter=? and texp=? and (type='SCIENCE' or type='SKY') order by mjd"
+            #s_select = "select filename from dataset where filter=? and texp=?  order by mjd"    
             cur = self.con.cursor()
             cur.execute(s_select,(par[0],par[1]))
             rows = cur.fetchall()
@@ -652,16 +655,20 @@ class DataSet(object):
     ############################################################    
     def GetFileInfo( self, filename ):
         """
-          \brief Return the database fields of a specified filaname.
+          @summary: query the database fields of a specified filaname.
 
-          \param filename
+          @param filename: filename to query
 
-          \return A list with database fields (date, ut_time, type, filter, 
+          @return: a list with database fields (date, ut_time, type, filter, 
                   texp, detector_id, run_id, object, mjd)
         """
 
         try:
-            s_select="select date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd from dataset where filename=?"
+            # CAUTION: if we modify the query values in the SELECT, it will 
+            # affect a lot of code in PAPI !!!! need to be re-writed !!
+            s_select="select date, ut_time, type, filter, texp, detector_id,\
+             run_id, ra, dec, object, mjd from dataset where filename=?"
+             
             cur=self.con.cursor()
             cur.execute(s_select, (filename,))
             

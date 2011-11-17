@@ -589,7 +589,7 @@ class ReductionSet(object):
         log.debug("Master Flats found %s", master_flat)
         log.debug("Master BPMs  found %s", master_bpm)
         
-        # Return the most recently created (according to MJD)
+        # Return the most recently created (according to MJD order)
         if len(master_dark)>0: r_dark = master_dark[-1]
         else: r_dark = None
         if len(master_flat)>0: r_flat = master_flat[-1]

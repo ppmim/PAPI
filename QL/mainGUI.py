@@ -64,6 +64,7 @@ import misc.mef
 import datahandler
 import misc.display as display
 import astromatic
+import photo.photometry
 from runQtProcess import *
 #Log
 import misc.paLog
@@ -95,6 +96,7 @@ class MainGUI(panicQL):
         self.config_opts = config_opts
               
         ## Init member variables
+        self.timer_dc = None
         # Init main directories
         if source_dir!= None:
             self.m_default_data_dir = source_dir
@@ -178,7 +180,8 @@ class MainGUI(panicQL):
         ## ------------------------------
         self.file_pattern = str(self.lineEdit_filename_filter.text())
         # Data collector for input files
-        self.dc = datahandler.DataCollector("dir", self.m_sourcedir, self.file_pattern , self.new_file_func)
+        self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
+                                            self.file_pattern , self.new_file_func)
         # Data collector for output files
         self.dc_outdir = None # Initialized in checkOutDir_slot()
         #datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern, self.new_file_func_out)
@@ -337,17 +340,18 @@ class MainGUI(panicQL):
             return 
 
         ## Check if end of observing sequence (science or calibration), then start processing
-        end_seq=False
-        seq=[]
-        seqType=''
-        (end_seq, seq, seqType)=self.checkEndObsSequence(filename)
+        end_seq = False
+        seq = []
+        seqType = ''
+        (end_seq, seq, seqType) = self.checkEndObsSequence(filename)
         if end_seq:
             log.debug("Detected end of observing sequence: [%s]"%(seqType))
             self.logConsole.warning("Detected end of observing sequence [%s]"%(seqType))       
         
         
         ##################################################################
-        ##  If selected, file or sequence processing will start ....Not completelly well designed ! (TODO) 
+        ##  If selected, file or sequence processing will start ....
+        #   TODO : !! Not completelly well designed !!!
         ##################################################################
         if self.proc_started:
             if self.comboBox_QL_Mode.currentText()=="None":
@@ -441,7 +445,8 @@ class MainGUI(panicQL):
         
         log.debug("Starting to process the file %s",filename)
         
-        (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=self.inputsDB.GetFileInfo(filename)
+        (date, ut_time, type, filter, texp, detector_id, 
+         run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(filename)
         
         # ONLY SCIENCE frames will be processed 
         if type!="SCIENCE":
@@ -458,12 +463,19 @@ class MainGUI(panicQL):
             try:
                 master_dark = self.inputsDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
                 master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT',-1, filter) # could be > 1 master darks, then use the last(mjd sorted)
-                if len(master_dark)>0 and len(master_flat)>0:
+                # Both master_dark and master_flat are optional
+                if len(master_dark)>0 or len(master_flat)>0:
+                    if len(master_dark)>0: mDark = master_dark[-1] # most recently
+                    else: mDark = None
+                    if len(master_flat)>0: mFlat = master_flat[-1] # most recently
+                    else: mFlat = None
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
                     self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    self._task = reduce.ApplyDarkFlat([filename], master_dark[0], master_flat[0], self.m_outputdir)
-                    thread=reduce.ExecTaskThread(self._task.apply, self._task_info_list)
+                    self._task = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
+                                                      self.m_outputdir)
+                    thread = reduce.ExecTaskThread(self._task.apply, 
+                                                 self._task_info_list)
                     thread.start()
                 else:
                     QMessageBox.critical(self, "Error", "Error, cannot find the master calibration files")
@@ -478,14 +490,19 @@ class MainGUI(panicQL):
             os.chdir(self.m_tempdir)  # -- required ???
             #Create working thread that process the file
             try:
-                ltemp=self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
+                ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
                 if len(ltemp)>1:
-                    last_file=ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
+                    last_file = ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
                     self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list,  [filename, last_file],'-',None)
+                    self._task = self.mathOp
+                    thread = reduce.ExecTaskThread(self._task, 
+                                                   self._task_info_list,  
+                                                   [filename, last_file],
+                                                   '-',None)
                     thread.start()
+                    
                 else:
                     log.debug("Cannot find the previous file to subtract by")
             except:
@@ -527,8 +544,13 @@ class MainGUI(panicQL):
             k+=1    
     
     def setDataSourceDir_slot(self):
-        #dir=""
-        source=QFileDialog.getExistingDirectory( self.m_default_data_dir, self,"get existing directory", "Choose a directory",True )
+        """
+        Slot function called when the "Input Dir" button is clicked
+        """
+        
+        source = QFileDialog.getExistingDirectory( self.m_default_data_dir, 
+                                                 self,"get existing directory", 
+                                                 "Choose a directory",True )
         
         #source=QFileDialog.getOpenFileNames( "Source log (*.log)", self.m_default_data_dir, self, "Source Dialog","select source")
         ## NOTE: 'dir' can be a file or a directory
@@ -537,9 +559,9 @@ class MainGUI(panicQL):
             return
         else:
             #dir=str(source[0])
-            dir=str(source)
+            dir = str(source)
             self.logConsole.info("+Source : " + dir)
-            if (self.m_sourcedir != dir):
+            if (self.m_sourcedir != dir and self.m_outputdir!=dir):
                 self.lineEdit_sourceD.setText(dir)
                 self.m_sourcedir = str(dir)
                 ##Create DataCollector for a path     
@@ -552,9 +574,13 @@ class MainGUI(panicQL):
                 ## Activate the autochecking of new files
                 self.checkBox_autocheck.setChecked(True)
                 ##Create QTimer for the data collector
-                self.timer_dc = QTimer( self )
-                self.connect( self.timer_dc, SIGNAL("timeout()"), self.checkFunc )
-                self.timer_dc.start( 1500, False ) ## 1 seconds single-shoot timer
+                if self.timer_dc !=None and self.timer_dc.isActive():
+                    # Already created in a former user action 
+                    pass
+                else:
+                    self.timer_dc = QTimer( self )
+                    self.connect( self.timer_dc, SIGNAL("timeout()"), self.checkFunc )
+                    self.timer_dc.start( 1500, False ) ## 1 seconds single-shoot timer
                     
             else:
                 #The same dir, nothing to do
@@ -596,10 +622,14 @@ class MainGUI(panicQL):
         
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_autocheck.isChecked():
-            ##Create QTimer for the data collector
-            self.timer_dc = QTimer( self )
-            self.connect( self.timer_dc, SIGNAL("timeout()"), self.checkFunc )
-            self.timer_dc.start( 1500, False ) ## 1 seconds single-shot timer
+            if self.timer_dc !=None and not self.timer_dc.isActive():
+                # Already created in a former user action 
+                self.timer_dc.start(1500, False)
+            else:
+                ##Create QTimer for the data collector
+                self.timer_dc = QTimer( self )
+                self.connect( self.timer_dc, SIGNAL("timeout()"), self.checkFunc )
+                self.timer_dc.start( 1500, False ) ## 1 seconds single-shot timer
         else:
             self.checkBox_outDir_autocheck.setChecked(False)
             #Stop the DataCollector timer
@@ -612,7 +642,10 @@ class MainGUI(panicQL):
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_outDir_autocheck.isChecked():
             if self.dc_outdir==None:
-                self.dc_outdir=datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern, self.new_file_func_out)
+                self.dc_outdir = datahandler.DataCollector("dir", 
+                                                           self.m_outputdir, 
+                                                           self.file_pattern, 
+                                                           self.new_file_func_out)
             # Source dir check is required 
             if not self.checkBox_autocheck.isChecked():
                 self.checkBox_autocheck.setChecked(True)
@@ -623,7 +656,9 @@ class MainGUI(panicQL):
         Receiver function signaled by QTimer 'self._task_timer' object.
         Funtion called periodically (every 1 sec) to check last task results.
         """
-        if len(self._task_info_list)>0:      
+        
+        if len(self._task_info_list)>0:
+            self.logConsole.debug("Task finished")
             try:
                 self._task_info = self._task_info_list.pop()
                 if self._task_info._exit_status == 0: # EXIT_SUCCESS, all was OK
@@ -651,20 +686,26 @@ class MainGUI(panicQL):
                                     # activated on the GUI, the DB insertion will be 
                                     # done there (I hope), and not here !
                                     if not self.checkBox_outDir_autocheck.isChecked():   
+                                        log.debug("Updating DB...")
                                         self.outputsDB.insert(file)
                                     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                 self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
                                 QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
-                        elif type(self._task_info._return)==type(str) and \
+                        elif type(self._task_info._return)==type("") and \
                                     os.path.isfile(self._task_info._return):
                             self.logConsole.debug(str(QString(">>New file %1 created ").arg(self._task_info._return)))
-                            #QMessageBox.information(self,"Info", QString("New file %1 created").arg(self._task_info._return))
-                            display.showFrame(self._task_info._return)
-                            #!!! keep up-date the out DB for future calibrations
+                            if self._task_info._return.endswith(".fits"):
+                                display.showFrame(self._task_info._return)
+                            # Keep updated the out-DB for future calibrations
                             # See comments above
                             if not self.checkBox_outDir_autocheck.isChecked():
-                                self.outputsDB.insert(file)
+                                log.debug("Updating DB...")
+                                self.outputsDB.insert(self._task_info._return)
                             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        else:
+                            # Cannot identify the type of the results...for sure
+                            # something was wrong...
+                            self.logConsole.error("Any processing results obtained")
                 else:
                     self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
@@ -676,7 +717,65 @@ class MainGUI(panicQL):
                 self.m_processing = False
                 # Return to the previus working directory
                 os.chdir(self._ini_cwd)
-    
+                #Good moment to update the master calibration files    
+                self._update_master_calibrations()
+
+            
+        
+    def _update_master_calibrations(self):
+        """
+        Query the **outputsDB** to update the master calibrations files with the last 
+        calibration files received, and then update: 
+            
+            self.m_masterDark
+            self.m_masterFlat
+            self.m_masterMask
+            
+        and display them on the "Calibrations" view Panel
+        """
+        
+        log.debug("Updating master calibration files")
+        
+        master_dark = [] # we'll get a list of master dark candidates
+        master_flat = [] # we'll get a list of master flat candidates
+        master_bpm = [] # we'll get a list of master flat candidates
+        
+        filter = 'ANY'
+        
+        # DARK
+        # Do NOT require equal EXPTIME Master Dark ???
+        master_dark = self.outputsDB.GetFilesT('MASTER_DARK', -1) 
+        # FLATS (for any filter)
+        master_flat = self.outputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+        if master_flat==[]:
+            master_flat = self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
+        # BPM                
+        master_bpm = self.outputsDB.GetFilesT('MASTER_BPM')
+        
+        """
+        log.debug("Master Darks found %s", master_dark)
+        log.debug("Master Flats found %s", master_flat)
+        log.debug("Master BPMs  found %s", master_bpm)
+        """
+        # Return the most recently created (according to MJD order)
+        if len(master_dark)>0: 
+            self.m_masterDark = master_dark[-1]
+            self.lineEdit_masterDark.setText(QString(self.m_masterDark))
+        #else: self.m_masterDark = None
+        if len(master_flat)>0: 
+            self.m_masterFlat = master_flat[-1]
+            self.lineEdit_masterFlat.setText(QString(self.m_masterFlat))
+            filter = self.outputsDB.GetFileInfo(self.m_masterFlat)[3]
+            self.lineEdit_masterFlat_Filter.setText(QString(filter))
+        #else: self.m_masterFlat = None
+        if len(master_bpm)>0: 
+            self.m_masterMask = master_bpm[-1]
+            self.lineEdit_masterMask.setText(QString(self.m_masterMask))
+        #else: self.m_masterMask = None
+                
+
+        
+         
     def checkEndObsSequence(self, filename):
         """
         Check if the given filename is the end of an observing sequence (calib or science),
@@ -821,7 +920,8 @@ class MainGUI(panicQL):
         dir=QFileDialog.getExistingDirectory( self.m_outputdir, self,
                                              "get existing directory", "Choose a directory",True )
         
-        if dir and self.m_outputdir!=str(dir):
+        # CAREFUL: <sourcedir> must be DISTINT  to <outputdir>, infinite loop
+        if dir and self.m_outputdir!=str(dir) and self.m_sourcedir!=str(dir):
             self.lineEdit_outputD.setText(dir)
             self.m_outputdir=str(dir)
             self.logConsole.info("+Output dir : " + self.m_outputdir)
@@ -829,7 +929,10 @@ class MainGUI(panicQL):
             ##Create DataCollector for a path     
             self.file_pattern = str(self.lineEdit_filename_filter.text())
             if os.path.isdir(self.m_outputdir):
-                self.dc_outdir = datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern , self.new_file_func_out)
+                self.dc_outdir = datahandler.DataCollector("dir", 
+                                                           self.m_outputdir, 
+                                                           self.file_pattern , 
+                                                           self.new_file_func_out)
             
             ## Activate the autochecking of new files
             self.checkBox_outDir_autocheck.setChecked(True)
@@ -839,9 +942,12 @@ class MainGUI(panicQL):
             pass
         
     def setTempDir_slot(self):
-        dir=QFileDialog.getExistingDirectory( self.m_default_data_dir, self,
-                                             "get existing directory", "Choose a directory",True )
-        if dir:
+        """Select Temp Directory for temporal files while processing"""
+        dir = QFileDialog.getExistingDirectory( self.m_default_data_dir, self,
+                                             "get existing directory", 
+                                             "Choose a directory",True )
+        # CAREFUL: <sourcedir> must be DISTINT  to <tempdir>, infinite loop
+        if dir and self.m_sourcedir!=dir:
             self.lineEdit_tempD.setText(dir)
             self.m_tempdir=str(dir)
 
@@ -863,7 +969,10 @@ class MainGUI(panicQL):
 
     def setDFlats_slot(self):
         
-        filenames=QFileDialog.getOpenFileNames( "FITS files (*.fit*)", self.m_default_data_dir, self, "FileDialog","select files")
+        filenames=QFileDialog.getOpenFileNames( "FITS files (*.fit*)", 
+                                                self.m_default_data_dir, 
+                                                self, "FileDialog", 
+                                                "select files")
 
         if not filenames.isEmpty():
             for file in filenames:
@@ -880,8 +989,14 @@ class MainGUI(panicQL):
 
     def add_slot(self):
       
-        """Add a new file to the main list panel, but not to the DataCollector list (dc), so it might be already inside """     
-        filenames=QFileDialog.getOpenFileNames( "FITS files (*.fit*)", self.m_default_data_dir, self, "FileDialog","select files")
+        """
+        Add a new file to the main list panel, but not to the DataCollector 
+        list (dc), so it might be already inside 
+        """     
+        filenames = QFileDialog.getOpenFileNames( "FITS files (*.fit*)", 
+                                                  self.m_default_data_dir, 
+                                                  self, "FileDialog",
+                                                  "select files")
 
         if not filenames.isEmpty():
             for file in filenames:
@@ -889,7 +1004,10 @@ class MainGUI(panicQL):
         
     def del_slot(self):
         
-        """ Delete the current selected file from the main list view panel, but we do not remote from the DataCollector neither file system"""
+        """ 
+        Delete the current selected file from the main list view panel, 
+        but we do not remote from the DataCollector neither file system
+        """
         
         self.m_popup_l_sel = []
         it=QListViewItemIterator(self.listView_dataS)
@@ -1120,26 +1238,29 @@ class MainGUI(panicQL):
             #popUpMenu.insertItem("Build super-Mosaic", self.createSuperMosaic_slot, 0, 11)
             popUpMenu.setItemEnabled(12, False)
             popUpMenu.insertSeparator()
-            popUpMenu.insertItem("Raw astrometry", self.do_raw_astrometry, 0, 13)
             popUpMenu.insertSeparator()
-            popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 14 )
-            popUpMenu.insertItem("FWHM estimation", self.fwhm_estimation_slot, 0, 15 )
-            popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 16 )
-            popUpMenu.insertItem("Imexam", self.imexam_slot, 0, 17 )
+            popUpMenu.insertItem("Rough Astrometry", self.do_raw_astrometry, 0, 13)
+            popUpMenu.insertItem("Rough Photometry", self.do_raw_photometry, 0, 14)
+            popUpMenu.insertSeparator()
+            popUpMenu.insertSeparator()
+            popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 15 )
+            popUpMenu.insertItem("FWHM estimation", self.fwhm_estimation_slot, 0, 16 )
+            popUpMenu.insertItem("Background estimation", self.background_estimation_slot, 0, 17 )
+            popUpMenu.insertItem("Imexam", self.imexam_slot, 0, 18 )
             popUpMenu.insertSeparator()
             # Math sub-menu
             subPopUpMenu = QPopupMenu()
             subPopUpMenu.insertItem("Substract Frames", self.subtractFrames_slot, 0, 1 )
             subPopUpMenu.insertItem("Sum Frames", self.sumFrames_slot, 0, 2 )
             subPopUpMenu.insertItem("Divide Frames", self.divideFrames_slot, 0, 3 )
-            popUpMenu.insertItem("Math", subPopUpMenu, 0, 18 )
+            popUpMenu.insertItem("Math", subPopUpMenu, 0, 19 )
             # Fits sub-menu
             subPopUpMenu2 = QPopupMenu()
             subPopUpMenu2.insertItem("Split MEF file", self.splitMEF_slot, 0, 1 )
             subPopUpMenu2.insertItem("Join MEF file", self.joinMEF_slot, 0, 2 )
             #subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
             #subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
-            popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 19 )
+            popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 20 )
             
     
             ## Disable some menu items depeding of the number of item selected in the list view
@@ -1351,17 +1472,24 @@ class MainGUI(panicQL):
             self.m_masterDark=str(source)
 
     def pushB_sel_masterFlat_slot(self):
+        """
+        @summary: to be done
+        """
         source=QFileDialog.getOpenFileName( self.m_default_data_dir, "Master file (*.fit*)",  self, "Source Dialog","select master")
 
         if str(source):
             fits = datahandler.ClFits(str(source))
-            if fits.getType()!='MASTER_SKY_FLAT' or fits.getType()!='MASTER_DOME_FLAT' or fits.getType()!='MASTER_TW_FLAT':
-                res=QMessageBox.information(self, "Info", QString("Selected frame does not look an MASTER FLAT.\n Continue anyway?"), QMessageBox.Ok, QMessageBox.Cancel)
+            if fits.getType()!='MASTER_SKY_FLAT' or \
+                fits.getType()!='MASTER_DOME_FLAT' or \
+                fits.getType()!='MASTER_TW_FLAT':
+                res = QMessageBox.information(self, "Info", 
+                                            QString("Selected frame does not look an MASTER FLAT.\n Continue anyway?"), 
+                                            QMessageBox.Ok, QMessageBox.Cancel)
                 if res==QMessageBox.Cancel:
                     return
             self.lineEdit_masterFlat.setText(source)
             self.lineEdit_masterFlat_Filter.setText(fits.getFilter())
-            self.m_masterFlat=str(source)
+            self.m_masterFlat = str(source)
                
 
     def pushB_sel_masterMask_slot(self):
@@ -1411,47 +1539,45 @@ class MainGUI(panicQL):
             os.close(output_fd)
 
         if operator!='+' and operator!='-' and operator!='/':
-            log.error("Math operation not allowed")
+            log.error("Math operation not supported")
             return None
 
-        # Remove an old output file (might it happen ?)
-        misc.fileUtils.removefiles(outputFile)
-        ## MATH operation '+'
-        if (operator=='+' and len(files)>2):
-            log.debug("Frame list to combine = [%s]", files )
-            misc.utils.listToFile(files, self.m_outputdir+"/files.tmp") 
-            iraf.mscred.combine(input=("@"+(self.m_outputdir+"/files.tmp").replace('//','/')),
-                     output=outputFile,
-                     combine='average',
-                     ccdtype='',
-                     reject='sigclip',
-                     lsigma=3,
-                     hsigma=3,
-                     subset='no',
-                     scale='mode'
-                     #masktype='none'
-                     #verbose='yes'
-                     #scale='exposure',
-                     #expname='EXPTIME'
-                     #ParList = _getparlistname ('flatcombine')
-                     )
-        ## MATH operation '-,/,*'
-        else:
-            """iraf.mscarith(operand1=files[0],
-                      operand2=files[1],
-                      op=operator,
-                      result=outputFile,
-                      extname="",
-                      verbose='yes'
-                      )
-            """
-            iraf.mscarith(operand1=files[0],
-                      operand2=files[1],
-                      op=operator,
-                      result=outputFile,
-                      verbose='yes'
-                      )
-            
+        try:
+            # Remove an old output file (might it happen ?)
+            misc.fileUtils.removefiles(outputFile)
+            ## MATH operation '+'
+            if (operator=='+' and len(files)>2):
+                log.debug("Frame list to combine = [%s]", files )
+                misc.utils.listToFile(files, self.m_outputdir+"/files.tmp") 
+                iraf.mscred.combine(input=("@"+(self.m_outputdir+"/files.tmp").replace('//','/')),
+                         output=outputFile,
+                         combine='average',
+                         ccdtype='',
+                         reject='sigclip',
+                         lsigma=3,
+                         hsigma=3,
+                         subset='no',
+                         scale='mode'
+                         #masktype='none'
+                         #verbose='yes'
+                         #scale='exposure',
+                         #expname='EXPTIME'
+                         #ParList = _getparlistname ('flatcombine')
+                         )
+            ## MATH operation '-,/,*'
+            else:
+                iraf.mscarith(operand1=files[0],
+                          operand2=files[1],
+                          op=operator,
+                          result=outputFile,
+                          verbose='yes'
+                          )
+        except Exception,e:
+            log.error("[mathOp] An erron happened while math operation with FITS files")
+            raise e
+        
+        log.debug("mathOp result : %s"%outputFile)
+        
         return outputFile
         
     def sumFrames_slot(self):
@@ -1466,7 +1592,7 @@ class MainGUI(panicQL):
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
                     self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'+', str(outFilename))
+                    thread = reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'+', str(outFilename))
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while adding files")
@@ -1500,7 +1626,7 @@ class MainGUI(panicQL):
         outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/master_dark.fits", "*.fits", self, "Save File dialog")
         if not outfileName.isEmpty():
             try:
-                texp_scale=False
+                texp_scale = False
                 self.setCursor(Qt.waitCursor)
                 self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, self.m_tempdir, str(outfileName), texp_scale)
                 thread = reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
@@ -1605,17 +1731,47 @@ class MainGUI(panicQL):
                                                    "*.fits", self, 
                                                    "Save File dialog")
         if not outfileName.isEmpty():
-            try:
-                self.setCursor(Qt.waitCursor)
-                self._task = reduce.calGainMap.SkyGainMap(self.m_popup_l_sel, 
-                                                          str(outfileName), 
-                                                          None, self.m_tempdir)
-                thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
-                thread.start()
-            except Exception, e:
-                self.setCursor(Qt.arrowCursor)
-                QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
-                raise e
+            flat_type = self.inputsDB.GetFileInfo(self.m_popup_l_sel[0])[2]
+            if flat_type.count("SCIENCE"):
+                try:
+                    self.setCursor(Qt.waitCursor)
+                    self._task = reduce.calGainMap.SkyGainMap(self.m_popup_l_sel, 
+                                                              str(outfileName), 
+                                                              None, self.m_tempdir)
+                    thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
+                    thread.start()
+                except Exception, e:
+                    self.setCursor(Qt.arrowCursor)
+                    QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
+                    raise e
+            elif flat_type.count("DOME_FLAT"):
+                try:
+                    self.setCursor(Qt.waitCursor)
+                    self._task = reduce.calGainMap.DomeGainMap(self.m_popup_l_sel, 
+                                                              str(outfileName), 
+                                                              None)
+                    thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
+                    thread.start()
+                except Exception, e:
+                    self.setCursor(Qt.arrowCursor)
+                    QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
+                    raise e
+            elif flat_type.count("SKY_FLAT"):
+                try:
+                    self.setCursor(Qt.waitCursor)
+                    self._task = reduce.calGainMap.TwlightGainMap(self.m_popup_l_sel,
+                                                              self.m_masterDark, 
+                                                              str(outfileName), 
+                                                              None, self.m_tempdir)
+                    thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
+                    thread.start()
+                except Exception, e:
+                    self.setCursor(Qt.arrowCursor)
+                    QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
+                    raise e
+            else:
+                QMessageBox.information(self,"Info","Cannot build GainMap, image type not supported.")
+                log.error("Cannot build GainMap, image type <%s> not supported."%str(flat_type))
         else:
             pass                     
                 
@@ -1960,9 +2116,16 @@ class MainGUI(panicQL):
       
     def do_raw_astrometry(self):
         """
-          Compute an astrometric solution for the selected file in the main list view panel
+        @summary: Compute an astrometric solution for the selected file in the 
+        main list view panel.
+        Basically, it is SCAMP is called and compared to 2MASS catalog 
+        (or GSC2.3, USNO-B) to compute astrometric calibration. 
+        A new WCS is added to the header.
+        
+        @return: None, but produce an astrometrically calibrated image.
           
-          TODO: We should check the image is pre-reduced or at least, with enought objects 
+        @todo: we should check the image is pre-reduced or at least, with 
+        enought objects 
         """
         
         if len(self.m_popup_l_sel)==1:
@@ -1982,9 +2145,12 @@ class MainGUI(panicQL):
                 self.setCursor(Qt.waitCursor)
                 #Create working thread that compute sky-frame
                 try:
-                    thread=reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, self._task_info_list, \
-                                                #args of the doAstrometry function
-                                                self.m_listView_item_selected, out_file, catalog, self.config_opts)
+                    thread = reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, 
+                                                   self._task_info_list,
+                                                   #args of the doAstrometry function
+                                                   self.m_listView_item_selected, 
+                                                   out_file, catalog, 
+                                                   self.config_opts)
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while subtracting near sky")
@@ -1992,6 +2158,50 @@ class MainGUI(panicQL):
             else:
                 QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
         
+    def do_raw_photometry(self):
+        """
+        @summary: Compute an rough photometric solution for the selected file 
+        in the main list view panel.
+        Basically, It is compared to 2MASS catalog (or other) to compute photometric
+        calibration, and obtain a zero-point estimation.
+
+        @return: None, but produce an photometric fitting curve and a Zero point
+        estimation.
+          
+        @todo: we should check the image is pre-reduced or at least, with 
+        enought objects 
+        """
+        
+        if len(self.m_popup_l_sel)==1:
+            fits = datahandler.ClFits(self.m_listView_item_selected)
+            if fits.getType()=='SCIENCE': 
+                ## Run astrometry parameters
+                out_file = self.m_outputdir+"/" + \
+                    os.path.basename(self.m_listView_item_selected.replace(".fits","_photo.pdf"))
+                # Catalog
+                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): catalog="2MASS"
+                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): catalog="USNO-B1"
+                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): catalog="GSC-2.2"
+                else: catalog="2MASS"
+                
+                #Change to working directory
+                os.chdir(self.m_tempdir)
+                #Change cursor
+                self.setCursor(Qt.waitCursor)
+                #Create working thread that compute sky-frame
+                try:
+                    thread = reduce.ExecTaskThread(photo.photometry.doPhotometry,
+                                                   self._task_info_list,
+                                                   #args of the doPhotometry function
+                                                   self.m_listView_item_selected,
+                                                   catalog,
+                                                   out_file)
+                    thread.start()
+                except:
+                    QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                    raise
+            else:
+                QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
     
     def createCalibs_slot(self):
         
@@ -2018,10 +2228,16 @@ class MainGUI(panicQL):
                 self.setCursor(Qt.arrowCursor) 
                 QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
                 raise
-        
+    
     def testSlot(self):
         """
-        Methow called when "Start/Stop processing button is clicked
+        Not implemeted
+        """
+        pass
+    
+    def pushB_start_stop_slot(self):
+        """
+        Method called when "Start/Stop-processing button is clicked
         """
         
         # Change the button color and label
@@ -2033,7 +2249,18 @@ class MainGUI(panicQL):
             self.proc_started = True
             self.pushButton_start_proc.setText("Stop Processing")
             self.pushButton_start_proc.setPaletteBackgroundColor(QColor(34,139,34))
-            self.processFiles()
+            
+            # Ask if we with to process only the next files coming or also the
+            # current ones in the source_dir and then the new ones
+            res = QMessageBox.information(self, "Info", 
+                                QString("Process also the current files in the \
+                                source directory (If no, only the new ones coming \
+                                will be processed) ?"), 
+                                QMessageBox.Ok, QMessageBox.Cancel)
+            if res==QMessageBox.Cancel:
+                return
+            else:
+                self.processFiles()
             
  
         """
@@ -2067,8 +2294,9 @@ class MainGUI(panicQL):
         
     def processFiles(self, files=None):
         """
-        Process the files provided; otherwise all the files in the current 
-        Source List View (but not the output files)
+        @summary: Process the files provided; if any files were given, all the files 
+        in the current Source List View (but not the output files) will be
+        processed.
         
         @param files: files list to be processed; if None, all the files in the
         current List View will be used !

@@ -27,7 +27,8 @@ Dome Flat
 OT> TBT
 PL> calDomeFlat.py -s ./domeFlatsKS_O2k.txt -o /tmp/masterDFlat.fits
     Examples:
-	- O2K
+	- O2K/SIMU_PANIC_1/14-Ene-09
+	- O2k/SIMU_PANIC_1/15-Ene-09
 QL> TBT
  
 
@@ -73,6 +74,7 @@ OT> TBC
 PL> eval_focus_serie.py -i ./focus_serie_O2k.txt -o /tmp/out.jpg
     Examples: O2k/datos_Herve/070506
     	      O2k/Foco
+	      O2k/SIMU_PANIC_1/15-Ene-09	
 
 QL> TBC
 
@@ -131,7 +133,7 @@ PL> applyDistort.py
 
 Miscelaneus
 ~~~~~~~~~~~
->genLogSheet.py
+> genLogSheet.py
 >
 
 
@@ -139,12 +141,32 @@ Miscelaneus
 QUESTIONS
 =========
 
-[0] reset in Dark series ?
+[0] reset in Dark/Flat series ?
 
 [1] readout modes available and meaning and concerns to the data reduction
 
 [2] would be interesting to have a "real-time" sky-subtraction taking into
 account the last N-frames received ?  and show information about seeing, sky
 background ?
+
+[3] how does the EXPtimes work ?
+
+[4] what are the Flat series (in calibration series) for ? are they sky or 
+dome flats ? 
+
+[5] JF req : create gainmap with "skyflat_high_level - skyflat_low_level" (and dithered);
+what kind of skyflat are they ? skyflats with fixed EXP_TIME or fixed EXP_LEVEL ?
+
+[6] How to process dark series (lineal, log) in the QL ? DarkModel is too heavy ??
+
+[7] would it be interesting to implement in the saving mode the option of save 
+from frame N1 to N2 (save -r N1 N2) ?
+
+TO BE DONE
+==========
+[1] better grouping when OT is not used (group_by=filter)
+[2] second pass sky-subtraction when extended_objects
+[3] compute the distortion matrix (external to SCAMP)
+ 
 
 

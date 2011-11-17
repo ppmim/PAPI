@@ -288,3 +288,9 @@ void panicQL::createCalibs_slot()
 {
 
 }
+
+
+void panicQL::pushB_start_stop_slot()
+{
+
+}

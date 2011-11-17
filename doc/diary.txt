@@ -366,5 +366,12 @@ caso. Habría que ver como afecta a la reducción....
 - Añadida al config file skysub.skymodel y modificada la función
   RS::skyfilter() para que admita dicho parámetro.
   
-- Hago el primer esquema del proceso de reducción de PAPI; queda pasarlo a limpio.
+- Hago el primer esquema del proceso de reducción de PAPI; queda pasarlo a
+  limpio.
+
+2011-11-16
+==========
+
+- Bug resuelto en QL: había un bug en la creación del QTimer cuando se
+  especifica un directorio a "monitorizar" que afectaba a mainGUI.py
   

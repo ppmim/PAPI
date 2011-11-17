@@ -39,11 +39,11 @@ import reduce.calSuperFlat
 # Logging
 from misc.paLog import log
 
-class SkyGainMap:
+class SkyGainMap(object):
     """ Compute the gain map from a list of sky frames """
-    def __init__(self, filelist,  output_filename="/tmp/superFlat.fits",  
+    def __init__(self, filelist,  output_filename="/tmp/gainmap.fits",  
                  bpm=None, temp_dir="/tmp/"):
-        """ """
+
         self.framelist = filelist
         self.output = output_filename
         self.bpm = bpm
@@ -67,7 +67,7 @@ class SkyGainMap:
         
         # Secondly, we create the proper gainmap
         try:
-            g=GainMap(tmp_output_path, self.output)
+            g = GainMap(tmp_output_path, self.output)
             g.create()   
         except Exception,e:
             log.error("Error while creating gain map: %s", str(e))
@@ -75,8 +75,52 @@ class SkyGainMap:
         
         os.remove(tmp_output_path)
         return self.output      
+
+class TwlightGainMap(object):
+    """ Compute the gain map from a list of twlight frames """
+    
+    def __init__(self, flats_filelist, master_dark, 
+                 output_filename="/tmp/gainmap.fits",  
+                 bpm=None, temp_dir="/tmp/"):
+
+        self.framelist = flats_filelist
+        self.master_dark = master_dark
+        self.output = output_filename
+        self.bpm = bpm
+        self.temp_dir = temp_dir
+        
+    def create(self):
+        """ Creation of the Gain map"""
+        
+        #First, we create the Twlight Sky Flat
+        try:
+            output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
+            os.close(output_fd)
+                
+            twflat = reduce.calTwFlat.MasterTwilightFlat (self.framelist,
+                                                            self.master_dark, 
+                                                            tmp_output_path)
+            twflat.createMaster()
+        except Exception,e:
+            log.error("Error while creating twlight flat: %s", str(e))
+            raise e
+        
+        # Secondly, we create the gainmap
+        try:
+            g = GainMap(tmp_output_path, self.output)
+            g.create()   
+        except Exception,e:
+            log.error("Error while creating gain map: %s", str(e))
+            raise e
+        
+        # Clean-up
+        os.remove(tmp_output_path)
+        
+        return self.output      
                
-class DomeGainMap:
+
+               
+class DomeGainMap(object):
     """ Compute the gain map from a list of dome (lamp-on,lamp-off) frames """
     
     def __init_(self, filelist,  output_filename="/tmp/domeFlat.fits",  bpm=None):
@@ -100,7 +144,7 @@ class DomeGainMap:
         
         # Secondly, we create the proper gainmap
         try:
-            g=GainMap(tmp_output_path, self.output)
+            g = GainMap(tmp_output_path, self.output)
             g.create()   
         except Exception,e:
             log.error("Error while creating gain map: %s", str(e))
@@ -108,9 +152,10 @@ class DomeGainMap:
         os.remove(tmp_output_path)
         return self.output 
                  
-class GainMap:
+class GainMap(object):
     """
-    \brief Class used to build a Gain Map from a Flat Field image (dome, twilight, science-sky)  
+    \brief Class used to build a Gain Map from a Flat Field image (dome, 
+    twilight, science-sky)  
     
     \par Class:
         GainMap
@@ -145,15 +190,15 @@ class GainMap:
         self.m_MAXGAIN = maxgain #pixels with sensitivity > MAXGAIN are assumed bad 
         self.m_NXBLOCK = nxblock #image size should be multiple of block size 
         self.m_NYBLOCK = nyblock
-        self.m_NSIG    = nsigma  #badpix if sensitivity > NSIG sigma from local bkg
-        self.m_BPM     = bpm   #external BadPixelMap to take into account   
+        self.m_NSIG = nsigma  #badpix if sensitivity > NSIG sigma from local bkg
+        self.m_BPM = bpm   #external BadPixelMap to take into account   
                 
                
     def create(self):
         
         """
-        \brief Given a NOT normalized flat field, compute the gain map taking into account the input 
-               parameters and an optional Bad Pixel Map (bpm)
+        @sumary: Given a NOT normalized flat field, compute the gain map taking 
+        into account the input parameters and an optional Bad Pixel Map (bpm)
         """
         
         log.debug("Start creating Gain Map for file: %s", self.flat) 
@@ -169,8 +214,8 @@ class GainMap:
         naxis2 = f.naxis2
         nbad = 0
         
-        gain=np.zeros([nExt, naxis1, naxis2], dtype=np.float32)
-        myflat=pyfits.open(self.flat)
+        gain = np.zeros([nExt, naxis1, naxis2], dtype=np.float32)
+        myflat = pyfits.open(self.flat)
         for chip in range(0,nExt):
             log.debug("Operating in CHIP %d", chip+1)
             if isMEF:
@@ -325,18 +370,21 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
      
-    if not options.source_file or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    # args is the leftover positional arguments after all options have been processed 
+    if not options.source_file or not options.output_filename or len(args)!=0: 
         parser.print_help()
         parser.error("incorrect number of arguments " )
-    
    
-    
-    gainmap = GainMap(options.source_file, options.output_filename, options.bpm, \
-                      do_normalization=options.normal, \
-                      mingain=options.mingain, maxgain=options.maxgain, nxblock=options.nxblock, \
-                      nyblock=options.nyblock, nsigma=options.nsigma )
+    try:
+        gainmap = GainMap(options.source_file, options.output_filename, options.bpm,
+                      do_normalization=options.normal,
+                      mingain=options.mingain, maxgain=options.maxgain, 
+                      nxblock=options.nxblock, nyblock=options.nyblock, 
+                      nsigma=options.nsigma )
                       
-    gainmap.create()
+        gainmap.create()
+    except Exception,e:
+        log.error("Some kind of problem happened %s"%str(e))
           
         
         

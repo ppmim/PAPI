@@ -258,13 +258,13 @@ class ClFits (object):
             myfits = pyfits.open(self.pathname, 
                                  ignore_missing_end=True) # since some problems with O2k files                               
             
-            if myfits[0].header['SIMPLE']!=True:
-                raise ValueError('Found a not FITS file.')
+            if len(myfits)==0 or 'SIMPLE' not in myfits[0].header or myfits[0].header['SIMPLE']!=True:
+                raise ValueError('Found a not compliant FITS file.')
 
             #myfits = pyfits.open(self.pathname, 'update')
             #myfits[0].verify()
         except Exception,e:
-            log.error("Could not open frame %s . Error in with input data : %s"%(self.pathname, str(e)))
+            log.error("Could not open frame %s. Error in file : %s"%(self.pathname, str(e)))
             raise e
         
         #Check if is a MEF file 

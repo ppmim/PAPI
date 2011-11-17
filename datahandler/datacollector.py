@@ -51,6 +51,10 @@ class DataCollector (object):
 	    # files.
         self.newfiles     = []
         self.reducedfiles = []
+        # next variable will include the files that was not able to read, in order
+        # to avoid re-read again
+        self.bad_files_found = []
+
         #Some flags
         self.stop = False
     
@@ -62,8 +66,9 @@ class DataCollector (object):
     
     def Clear(self):
         self.dirlist = [] 
-        self.newfiles     = []
+        self.newfiles = []
         self.reducedfiles = []
+        self.bad_files_found = []
         
     def remove(self, pathname):
         """
@@ -118,8 +123,9 @@ class DataCollector (object):
             try:
                 fits = datahandler.ClFits(file)
             except Exception,e:
-                print "Error reading file %s , skipped..."%(file)
-                print str(e)      
+                print "[__listFilesMJD] Error reading file %s , skipped..."%(file)
+                print str(e)
+                self.bad_files_found.append(file)      
             else:
                 dataset.append((file, fits.getMJD()))
         
@@ -140,13 +146,16 @@ class DataCollector (object):
         dataset = []
         
         for file in i_files:
-            try:
-                fits = datahandler.ClFits(file)
-            except Exception,e:
-                print "Error reading file %s , skipped..."%(file)
-                print str(e)      
-            else:
-                dataset.append((file, fits.getMJD()))
+        	# filter out files already detected as bad files
+        	if file not in self.bad_files_found:
+	            try:
+	                fits = datahandler.ClFits(file)
+	            except Exception,e:
+	                print "[__sortFilesMJD] Error reading file %s , skipped..."%(file)
+	                print str(e)
+	                self.bad_files_found.append(file)      
+	            else:
+	                dataset.append((file, fits.getMJD()))
         
         dataset = sorted(dataset, key=lambda data_file: data_file[1])          
         sorted_files = []
@@ -211,7 +220,7 @@ class DataCollector (object):
                 if file in self.reducedfiles: self.reducedfiles.remove(file)
                 
                 # Is this file already in the list of unprocessed files?
-                if file in self.newfiles:     self.newfiles.remove(file)
+                if file in self.newfiles: self.newfiles.remove(file)
 	            
 				
             if file in contents:
@@ -220,8 +229,9 @@ class DataCollector (object):
                 # the remaining files are those that are the new files in the input
                 # directory (this time).
                 contents.remove(file)
-
-        # ## 2011-09-12S
+			
+				
+        # ## 2011-09-12
         # Before adding to dirlist and process the new files, we sort out by MJD
         # ## 
         contents = self.__sortFilesMJD(contents)
