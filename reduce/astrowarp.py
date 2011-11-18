@@ -462,6 +462,7 @@ class AstroWarp(object):
         cat_files = [(f + ".ldac") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         
+        print "CATFILES = ",cat_files
         try:
             scamp.run(cat_files, updateconfig=False, clean=False)
         except Exception,e:

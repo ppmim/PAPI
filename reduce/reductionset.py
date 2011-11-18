@@ -2405,6 +2405,8 @@ class ReductionSet(object):
         ########################################################################
         _astrowarp = True
         if _astrowarp:
+            print "astrowarp--->LAST_FILES=",self.m_LAST_FILES
+            
             log.info("**** Astrometric calibration and stack of individual \
             frames to field distortion correction ****")
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, 

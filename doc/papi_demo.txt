@@ -96,7 +96,7 @@ PL> papi.py -c config_files/papi_portatil.cfg -s /data/raw_sources -r [quick|sci
 QL> select files or group in group_view and run reduction
 
 
-3) Nodding pattern a la O2k/sky_point. Dither applitude modifiable by a scale
+3) Nodding pattern a la O2k/sky_point. Dither amplitude modifiable by a scale
 factor
 
 OT> TBT
