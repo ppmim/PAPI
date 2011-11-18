@@ -128,9 +128,6 @@ class MainGUI(panicQL):
         self.m_masterMask = '/tmp/master_mask.fits'
 
 
-        self._last_cmd = None             # Last external shell command executed or started
-        self._last_cmd_output = None      # Output (file) that last shell command should generate
-
         # Stuff to detect end of an observation sequence to know if data reduction could start
         self.curr_sequence = []  # list having the files of the current sequence received
         self.isOTrunning = True
@@ -333,7 +330,7 @@ class MainGUI(panicQL):
         """
         ## Update Last frame widget
         self.lineEdit_last_file.setText(str(os.path.basename(filename)))
-        self.last_filename=filename
+        self.last_filename = filename
 
         if fromOutput:
             #nothing else to do ...
@@ -409,9 +406,14 @@ class MainGUI(panicQL):
             
         #Change to working directory
         os.chdir(self.m_tempdir)
+        
         #Change cursor
         self.setCursor(Qt.waitCursor)
-        self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+        
+        # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a 
+        # mutex in thread !!!!
+        self.m_processing = False    
+        
         #Create working thread that process the obsSequence
         try:
             # generate a random filename for the master, to ensure we do not overwrite any file
@@ -425,7 +427,8 @@ class MainGUI(panicQL):
             if self._task.isaCalibSet():
                 log.debug("It's a calib sequence what is going to be reduced !")
                 self.logConsole.info("It is a CALIBRATION sequence")
-                thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
+                #thread = reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
+                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
             else:
                 log.debug("It's a science sequence what is going to be reduced !")
                 self.logConsole.info("It is a SCIENCE sequence")
@@ -441,7 +444,26 @@ class MainGUI(panicQL):
             raise e
 
     def processLazy(self, filename):
-        """Do some  operations to the last file detected """
+        """
+        Do some  operations to the last file detected. It depend on:
+        
+            - checkBox_show_imgs
+            - checkBox_subDark
+            - checkBox_appFlat
+            - checkBox_subLastFrame
+            
+            ToDo:
+            - checkBox_appBPM
+            - checkBox_subSky
+            - checkBox_appSAstrom
+            
+            Other:
+            - checkBox_data_grouping
+            - checkBox_doRegrig
+            - comboBox_AstromCatalog
+            - comboBox_skyWindow
+            
+        """
         
         log.debug("Starting to process the file %s",filename)
         
@@ -461,8 +483,11 @@ class MainGUI(panicQL):
             os.chdir(self.m_tempdir)  # -- required ???
             #Create working thread that process the file
             try:
-                master_dark = self.inputsDB.GetFilesT('MASTER_DARK', texp) # could be > 1 master darks, then use the last(mjd sorted)
-                master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT',-1, filter) # could be > 1 master darks, then use the last(mjd sorted)
+                # Master dark with ANY EXPT, and scaled later
+                # could be > 1 master darks, but used the last(mjd sorted)
+                master_dark = self.inputsDB.GetFilesT('MASTER_DARK', -1) 
+                # could be > 1 master flat (tw,dome), but used the last(mjd sorted)
+                master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT',-1, filter) 
                 # Both master_dark and master_flat are optional
                 if len(master_dark)>0 or len(master_flat)>0:
                     if len(master_dark)>0: mDark = master_dark[-1] # most recently
@@ -510,6 +535,14 @@ class MainGUI(panicQL):
                 self.m_processing = False
                 self.setCursor(Qt.arrowCursor)
                 raise e
+        # ##########################################################################################
+        elif self.checkBox_subSky.isChecked():
+            print "QUE PASSSSSSSS !!!!"
+            try:
+                self.subtract_nearSky_slot(True)    
+            except Exception,e:
+                self.m_processing = False # ANY MORE REQUIRED ?,
+                raise e    
         # ########################################################################################
         elif self.checkBox_show_imgs.isChecked():
             display.showFrame(filename)
@@ -531,7 +564,8 @@ class MainGUI(panicQL):
             #elem.setText (1, str(seq[1])) # OB_PAT
             #elem.setText (2, str(seq[2])) # FILTER
             for file in fileList[k]:
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=self.inputsDB.GetFileInfo(file)
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
+                 dec, object, mjd) = self.inputsDB.GetFileInfo(file)
                 e_child = QListViewItem(elem)
                 e_child.setText (0, str(file))
                 e_child.setText (1, str(type))
@@ -601,7 +635,8 @@ class MainGUI(panicQL):
         for filename in filelist:
             #print "FILENAME= " , filename
             self.inputsDB.insert(str(dir)+"/"+filename)
-            (date, ut_time, type, filter, texp, detector_id, run_id, mjd)=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
+            (date, ut_time, type, filter, texp, detector_id, run_id, 
+             mjd) = self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
             #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
             #print "FILEINFO= ", fileinfo
             elem = QListViewItem( self.listView_dataS )
@@ -1089,10 +1124,15 @@ class MainGUI(panicQL):
                 #elem.setText(0, "TYPE="+str(seq_types[k]))
                 #elem.setText(0, "OB_ID="+str(seq[0])+" ** OB_PAT="+str(seq[1])+" ** FILTER="+str(seq[2]) + " ** #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
                 for file in seq:
-                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
+                    (date, ut_time, type, filter, texp, detector_id, run_id, 
+                     ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
                     if file==seq[0]:
                         #the first time, fill the "tittle" of the group 
-                        elem.setText(0, "TYPE="+str(seq_types[k]) + "  ** FILTER="+str(filter) + "  ** TEXP="+str(texp) + " ** #imgs="+str(len(seq)))
+                        elem.setText(0, "TYPE="+str(seq_types[k]) + 
+                                     "  ** FILTER="+str(filter) + 
+                                     "  ** TEXP="+str(texp) + 
+                                     " ** #imgs="+str(len(seq)))
+                        
                     e_child = QListViewItem(elem)
                     e_child.setText (0, str(file))
                     e_child.setText (1, str(type))
@@ -1110,11 +1150,15 @@ class MainGUI(panicQL):
             for seq in parList:
                 # create the father
                 elem = QListViewItem( self.listView_dataS )
-                elem.setText(0, "OB_ID="+str(seq[0])+" ** OB_PAT="+str(seq[1])+" ** FILTER="+str(seq[2]) + " ** #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
+                # OB_ID + OB_PAT + FILTER
+                elem.setText(0, "OB_ID="+str(seq[0]) + " ** OB_PAT=" + 
+                             str(seq[1])+" ** FILTER=" + str(seq[2]) + 
+                             " ** #imgs="+str(len(fileList[k])) ) 
                 #elem.setText (1, str(seq[1])) # OB_PAT
                 #elem.setText (2, str(seq[2])) # FILTER
                 for file in fileList[k]:
-                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
+                    (date, ut_time, type, filter, texp, detector_id, 
+                     run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
                     e_child = QListViewItem(elem)
                     e_child.setText (0, str(file))
                     e_child.setText (1, str(type))
@@ -1392,22 +1436,40 @@ class MainGUI(panicQL):
         
         try:
             #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-            thread=reduce.ExecTaskThread(self.run_imexam, self._task_info_list, self.m_popup_l_sel[0] )
+            thread = reduce.ExecTaskThread(self.run_imexam, self._task_info_list, self.m_popup_l_sel[0] )
             thread.start()
-        except:
+        except Exception,e:
             QMessageBox.critical(self, "Error", "Error while Imexam with image %s"%(self.m_popup_l_sel[0]))
-            raise
+            raise e
         
     def run_imexam(self, filename):
-        """ Run Imexam the currect filename. First we start the DS9 display  """
+        """ 
+        Run Imexam the currect filename. First we start the DS9 display  
+        
+        DOES NOT WORK !!!
+        
+        Console error
+        ~~~~~~~~~~~~~
+        "
+        DS9 not running
+        display frame (1:) (3): error in background error handler:
+        out of stack space (infinite loop?)
+        while executing
+        "::tcl::Bgerror {out of stack space (infinite loop?)} {-code 1 -level 0 -errorcode NONE -errorinfo {out of stack space (infinite loop?)
+        while execu..."
+        DS9 not running
+        "
+        
+        """
         
         display.startDisplay()
         try:
-            iraf.imexam(filename) # it's a sync call, i mean, a blocking call that doesn't return until is finished
-        except:
+            # It's a sync call, i mean, a blocking call that doesn't return 
+            # until is finished
+            iraf.imexam(filename) 
+        except Exception,e:
             log.error("Error while Imexam with image %s",filename)
-        finally:
-            return None
+            raise e
             
         
     ######### End Pup-Up ########################################################    
@@ -1523,7 +1585,10 @@ class MainGUI(panicQL):
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
                     self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'-', str(outFilename))
+                    thread = reduce.ExecTaskThread(self.mathOp, 
+                                                   self._task_info_list, 
+                                                   self.m_popup_l_sel,'-', 
+                                                   str(outFilename))
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", "Error while subtracting files")
@@ -1843,7 +1908,7 @@ class MainGUI(panicQL):
             log.error("Sorry, selected file does not look a science file  ")
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             
                          
-    def subtract_nearSky_slot(self):
+    def subtract_nearSky_slot(self, last_files=False):
         """ Subtract nearest sky using skyfiler from IRDR package"""
       
         if self.checkBox_data_grouping.isChecked():
@@ -1851,62 +1916,96 @@ class MainGUI(panicQL):
             QMessageBox.information(self, "Info", "Sorry, data grouping with POINT_NO, DITH_NO, EXPO_NO not yet implemented ")
             return
         
-        # ###################
-        # Search-radius mode
-        # ###################
-        # Compute search-radius of nearest frames
-        ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
-        time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
-        print "RA_DEC_OFFSET", ra_dec_near_offset
-        print "TIME_NEAR_OFFSET", time_near_offset
-      
-        # Look for near science files
-        if self.m_listView_item_selected:
-            fits = datahandler.ClFits(self.m_listView_item_selected)
-            if fits.getType()=='SCIENCE':
-                near_list = self.inputsDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
-                # For the moment, the minimun number of nearest is >0
-                if len(near_list)==0:
-                    QMessageBox.information(self, "Info", "Not enought science frames found")  
+        # #####################################
+        # Look for files in search-radius mode
+        # #####################################
+        if not last_files:
+            # Compute search-radius of nearest frames
+            ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
+            time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
+            print "RA_DEC_OFFSET", ra_dec_near_offset
+            print "TIME_NEAR_OFFSET", time_near_offset
+          
+            # Look for NEAREST science files
+            if self.m_listView_item_selected:
+                fits = datahandler.ClFits(self.m_listView_item_selected)
+                if fits.getType()=='SCIENCE':
+                    near_list = self.inputsDB.GetFiles('ANY', 'SCIENCE', -1, 
+                                                       fits.filter, fits.mjd, 
+                                                       fits.ra, fits.dec,  
+                                                       ra_dec_near_offset*2, 
+                                                       time_near_offset, runId=0)
+                    # For the moment, the minimun number of nearest is >0
+                    if len(near_list)==0:
+                        QMessageBox.information(self, "Info", "Not enought science frames found")  
+                        return
+                else:
+                    QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
                     return
-            else:
-                QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
-                return
-                   
-            #Create master list of nearest frames (ar,dec,mjd) to the current selected science file
-            p=1
-            file_n=-1
-            my_list=""
-            for file in near_list:
-                my_list = my_list + file + "\n"
-                if (file==self.m_listView_item_selected): file_n=p
-                else: p+=1
-            
-            res=QMessageBox.information(self, "Info", QString("Selected near frames are:\n %1").arg(my_list), QMessageBox.Ok, QMessageBox.Cancel)
-            if res==QMessageBox.Cancel:
-                return     
-            
-            #Change to working directory
-            os.chdir(self.m_tempdir)
-            #Change cursor
-            self.setCursor(Qt.waitCursor)
-            #Create working thread that compute sky-frame
-            try:
-                self._task = RS.ReductionSet( [str(item) for item in near_list], self.m_outputdir, \
-                                                out_file=self.m_outputdir+"/skysub.fits", \
-                                                obs_mode="dither", dark=None, flat=self.m_masterFlat, \
-                                                bpm=None, red_mode="quick",\
-                                                group_by=self.group_by, check_data=True, config_dict=self.config_opts)
+                       
+                #Create master list of nearest frames (ar,dec,mjd) to the current selected science file
+                p = 1
+                file_n = -1
+                my_list = ""
+                for file in near_list:
+                    my_list = my_list + file + "\n"
+                    if (file==self.m_listView_item_selected): file_n=p
+                    else: p+=1
                 
-                thread=reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list, self._task.rs_filelist, file_n)
-                thread.start()
-            except:
-                #Anyway, restore cursor
-                # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
-                # thus the ExecTaskThread can't restore the cursor
-                self.setCursor(Qt.arrowCursor) 
-                QMessageBox.critical(self, "Error", "Error while subtracting near sky")
-                raise 
+                # Ask user validation
+                res = QMessageBox.information(self, "Info", 
+                                              QString("Selected near frames are:\n %1").arg(my_list), 
+                                              QMessageBox.Ok, QMessageBox.Cancel)
+                if res==QMessageBox.Cancel:
+                    return
+                     
+        # ##################################    
+        # Take the lastest N-files received
+        # ##################################
+        else:
+            (type , filter) = self.inputsDB.GetFileInfo(self.last_filename)[2:4]
+            if type != 'SCIENCE':
+                #only SCIENCE frames are processed
+                pass
+            ltemp = self.inputsDB.GetFilesT('SCIENCE',-1, filter) # (mjd sorted)
+            if len(ltemp)>4:
+                #get the last 5 files (included the current one)
+                near_list = ltemp[-5:] # actually, the last in the list is the current one (filename=ltemp[-1])
+                file_n = len(near_list)
+            else:
+                self.logConsole.info("Not enought files for sky subtraction (>4)")
+                log.debug("Not enought files for sky subtraction (>5)")
+                return
+
+        # ##################################    
+        # Now, compute the sky-subtraction
+        # ##################################
+                            
+        #Change to working directory
+        os.chdir(self.m_tempdir)
+        #Change cursor
+        self.setCursor(Qt.waitCursor)
+        #Create working thread that compute sky-frame
+        try:
+            self._task = RS.ReductionSet( [str(item) for item in near_list], 
+                                          self.m_outputdir,
+                                          out_file=self.m_outputdir+"/skysub.fits",
+                                          obs_mode="dither", dark=None, 
+                                          flat=self.m_masterFlat,
+                                          bpm=None, red_mode="quick",
+                                          group_by=self.group_by, 
+                                          check_data=True, 
+                                          config_dict=self.config_opts)
+            
+            thread = reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list, self._task.rs_filelist, file_n)
+            thread.start()
+        except:
+            #Anyway, restore cursor
+            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+            # thus the ExecTaskThread can't restore the cursor
+            self.setCursor(Qt.arrowCursor) 
+            QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+            raise 
               
     def createBPM_slot(self):
         """ Create a Bad Pixel Mask from a set of selected files (flats)
@@ -1921,8 +2020,13 @@ class MainGUI(panicQL):
                     lsig = 10
                     hsig = 10
                     self.setCursor(Qt.waitCursor)
-                    self._task = reduce.calBPM_2.BadPixelMask( "/tmp/bpm.list", dark, str(outfileName), lsig, hsig, self.m_tempdir)
-                    thread=reduce.ExecTaskThread(self._task.create, self._task_info_list)
+                    self._task = reduce.calBPM_2.BadPixelMask( "/tmp/bpm.list", 
+                                                               dark, 
+                                                               str(outfileName), 
+                                                               lsig, hsig, 
+                                                               self.m_tempdir)
+                    thread = reduce.ExecTaskThread(self._task.create, 
+                                                   self._task_info_list)
                     thread.start()
                 except:
                     #Restore cursor
@@ -1954,7 +2058,7 @@ class MainGUI(panicQL):
             values = (iraf.mscstat (images=img,
             fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
             #file,mean,mode,stddev,min,max=values[0].split()
-            self.logConsole.info(str(QString(logMsg("Background estimation :"))))
+            self.logConsole.info(str(QString("Background estimation :")))
             for line in values:
                 self.logConsole.info(str(line))
                 #self.logConsole.info(QString("Background estimation MEAN= %1   MODE=%2    STDDEV=%3    MIN=%4         MAX=%5").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
@@ -1987,7 +2091,7 @@ class MainGUI(panicQL):
             that here we can look for the files to be reduced in automatic way or use the ones selected  by the user (as in do_quick_reduction_slot)
         """
         
-        file_n=0 # really, not used for the moment
+        file_n = 0 # really, not used for the moment
         file_list=[]
         
         ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0

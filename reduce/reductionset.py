@@ -1000,7 +1000,7 @@ class ReductionSet(object):
         
         # 3. Package results back from each extension into a MEF file (only if nExt>1)
         if len(out_ext)>1:
-            mef=misc.mef.MEF(out_ext)
+            mef = misc.mef.MEF(out_ext)
             mef.createMEF(out_filename)
         elif len(out_ext)==1:
             shutil.move(out_ext[0], out_filename) 
@@ -1326,6 +1326,7 @@ class ReductionSet(object):
         
         log.debug("Creating Master darks...")
         l_mdarks = []
+        
         # 1. Look for dark frames
         full_dark_list = self.getDarkFrames() # a list of tuples as (file,tExp)
         if len(full_dark_list)<=0:
@@ -1639,7 +1640,9 @@ class ReductionSet(object):
         
         log.debug("[reduceSeq] Starting ...")
         files_created = []
-        # Take the first file of the sequence in order to find out the type of the sequence
+        
+        # Take the first file of the sequence in order to find out the type of 
+        # the sequence
         fits = datahandler.ClFits(sequence[0])
         
         if fits.isDark():

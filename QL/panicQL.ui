@@ -919,6 +919,273 @@
             </widget>
             <widget class="QGroupBox">
                 <property name="name">
+                    <cstring>groupBox1</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>350</x>
+                        <y>130</y>
+                        <width>560</width>
+                        <height>280</height>
+                    </rect>
+                </property>
+                <property name="title">
+                    <string>Pre-reduction Mode</string>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>textLabel3</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>21</x>
+                            <y>141</y>
+                            <width>130</width>
+                            <height>16</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string># sky nearest frames</string>
+                    </property>
+                </widget>
+                <widget class="QButtonGroup">
+                    <property name="name">
+                        <cstring>buttonGroup2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>200</x>
+                            <y>140</y>
+                            <width>310</width>
+                            <height>120</height>
+                        </rect>
+                    </property>
+                    <property name="title">
+                        <string>Build Stacked Image</string>
+                    </property>
+                    <widget class="QRadioButton">
+                        <property name="name">
+                            <cstring>radioButton25_2</cstring>
+                        </property>
+                        <property name="geometry">
+                            <rect>
+                                <x>10</x>
+                                <y>63</y>
+                                <width>200</width>
+                                <height>20</height>
+                            </rect>
+                        </property>
+                        <property name="text">
+                            <string>Grouping using OT keywords</string>
+                        </property>
+                    </widget>
+                    <widget class="QRadioButton">
+                        <property name="name">
+                            <cstring>radioButton25</cstring>
+                        </property>
+                        <property name="geometry">
+                            <rect>
+                                <x>10</x>
+                                <y>41</y>
+                                <width>260</width>
+                                <height>20</height>
+                            </rect>
+                        </property>
+                        <property name="text">
+                            <string>Automatic grouping (ra,dec,mjd, filter, ...)</string>
+                        </property>
+                    </widget>
+                    <widget class="QRadioButton">
+                        <property name="name">
+                            <cstring>radioButton26</cstring>
+                        </property>
+                        <property name="geometry">
+                            <rect>
+                                <x>11</x>
+                                <y>20</y>
+                                <width>60</width>
+                                <height>20</height>
+                            </rect>
+                        </property>
+                        <property name="text">
+                            <string>No</string>
+                        </property>
+                        <property name="checked">
+                            <bool>true</bool>
+                        </property>
+                    </widget>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox7_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>24</x>
+                            <y>30</y>
+                            <width>140</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Substract dark</string>
+                    </property>
+                    <property name="checked">
+                        <bool>false</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>24</x>
+                            <y>56</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Apply Master Flat</string>
+                    </property>
+                    <property name="checked">
+                        <bool>false</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8_2_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>24</x>
+                            <y>81</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Apply SuperFlat</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QComboBox">
+                    <item>
+                        <property name="text">
+                            <string>1-Current frame</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>2-frames</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>3-frames</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>4-frames</string>
+                        </property>
+                    </item>
+                    <item>
+                        <property name="text">
+                            <string>5-frames</string>
+                        </property>
+                    </item>
+                    <property name="name">
+                        <cstring>comboBox_skyWindow</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>21</x>
+                            <y>161</y>
+                            <width>118</width>
+                            <height>21</height>
+                        </rect>
+                    </property>
+                    <property name="currentItem">
+                        <number>3</number>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>pushButton22</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>20</x>
+                            <y>230</y>
+                            <width>130</width>
+                            <height>20</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>More Settings...</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8_2_3_2_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>190</x>
+                            <y>80</y>
+                            <width>290</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Quality measurements  (background, psf, ....)</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8_2_3_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>190</x>
+                            <y>54</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Compute distortion map</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8_2_3</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>190</x>
+                            <y>30</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Make Astrometry</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+            </widget>
+            <widget class="QGroupBox">
+                <property name="name">
                     <cstring>groupBox4</cstring>
                 </property>
                 <property name="geometry">
@@ -1079,7 +1346,48 @@
                 </property>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox8_3</cstring>
+                        <cstring>checkBox_show_imgs</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>31</x>
+                            <y>26</y>
+                            <width>170</width>
+                            <height>20</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Only display image</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox_subDark</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>32</x>
+                            <y>58</y>
+                            <width>160</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Substract dark</string>
+                    </property>
+                    <property name="checked">
+                        <bool>false</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox_appBPM</cstring>
+                    </property>
+                    <property name="enabled">
+                        <bool>false</bool>
                     </property>
                     <property name="geometry">
                         <rect>
@@ -1095,31 +1403,12 @@
                 </widget>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox_subDark</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>30</x>
-                            <y>60</y>
-                            <width>160</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Substract dark</string>
-                    </property>
-                    <property name="checked">
-                        <bool>false</bool>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
                         <cstring>checkBox_appFlat</cstring>
                     </property>
                     <property name="geometry">
                         <rect>
-                            <x>31</x>
-                            <y>111</y>
+                            <x>30</x>
+                            <y>110</y>
                             <width>180</width>
                             <height>19</height>
                         </rect>
@@ -1129,57 +1418,6 @@
                     </property>
                     <property name="checked">
                         <bool>false</bool>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox_subSky</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>171</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Subtract nearest sky</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox_appAstrom_1</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>212</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Apply 'static' Astrometry</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox_show_imgs</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>31</x>
-                            <y>26</y>
-                            <width>250</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Only show new images when detected</string>
-                    </property>
-                    <property name="checked">
-                        <bool>true</bool>
                     </property>
                 </widget>
                 <widget class="QCheckBox">
@@ -1198,271 +1436,42 @@
                         <string>Subtract last frame (science)</string>
                     </property>
                 </widget>
-            </widget>
-            <widget class="QGroupBox">
-                <property name="name">
-                    <cstring>groupBox1</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>350</x>
-                        <y>130</y>
-                        <width>560</width>
-                        <height>280</height>
-                    </rect>
-                </property>
-                <property name="title">
-                    <string>Pre-reduction Mode</string>
-                </property>
-                <widget class="QLabel">
-                    <property name="name">
-                        <cstring>textLabel3</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>21</x>
-                            <y>141</y>
-                            <width>130</width>
-                            <height>16</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string># sky nearest frames</string>
-                    </property>
-                </widget>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox8_2_3</cstring>
+                        <cstring>checkBox_appSAstrom</cstring>
                     </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>190</x>
-                            <y>30</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Make Astrometry</string>
-                    </property>
-                    <property name="checked">
-                        <bool>true</bool>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>pushButton22</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>230</y>
-                            <width>130</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>More Settings...</string>
-                    </property>
-                </widget>
-                <widget class="QButtonGroup">
-                    <property name="name">
-                        <cstring>buttonGroup2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>200</x>
-                            <y>140</y>
-                            <width>310</width>
-                            <height>120</height>
-                        </rect>
-                    </property>
-                    <property name="title">
-                        <string>Build Stacked Image</string>
-                    </property>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>radioButton25_2</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>63</y>
-                                <width>200</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Grouping using OT keywords</string>
-                        </property>
-                    </widget>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>radioButton26</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>11</x>
-                                <y>20</y>
-                                <width>60</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>No</string>
-                        </property>
-                        <property name="checked">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                    <widget class="QRadioButton">
-                        <property name="name">
-                            <cstring>radioButton25</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>41</y>
-                                <width>260</width>
-                                <height>20</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Automatic grouping (ra,dec,mjd, filter, ...)</string>
-                        </property>
-                    </widget>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox7_2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>24</x>
-                            <y>30</y>
-                            <width>140</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Substract dark</string>
-                    </property>
-                    <property name="checked">
+                    <property name="enabled">
                         <bool>false</bool>
                     </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox8_2</cstring>
-                    </property>
                     <property name="geometry">
                         <rect>
-                            <x>24</x>
-                            <y>56</y>
+                            <x>31</x>
+                            <y>212</y>
                             <width>180</width>
                             <height>19</height>
                         </rect>
                     </property>
                     <property name="text">
-                        <string>Apply Master Flat</string>
-                    </property>
-                    <property name="checked">
-                        <bool>false</bool>
+                        <string>Apply 'static' Astrometry</string>
                     </property>
                 </widget>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox8_2_2</cstring>
+                        <cstring>checkBox_subSky</cstring>
                     </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>24</x>
-                            <y>81</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Apply SuperFlat</string>
-                    </property>
-                    <property name="checked">
+                    <property name="enabled">
                         <bool>true</bool>
                     </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox8_2_3_2_2</cstring>
-                    </property>
                     <property name="geometry">
                         <rect>
-                            <x>190</x>
-                            <y>80</y>
-                            <width>290</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Quality measurements  (background, psf, ....)</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox8_2_3_2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>190</x>
-                            <y>54</y>
+                            <x>30</x>
+                            <y>170</y>
                             <width>180</width>
                             <height>19</height>
                         </rect>
                     </property>
                     <property name="text">
-                        <string>Compute distortion map</string>
-                    </property>
-                    <property name="checked">
-                        <bool>true</bool>
-                    </property>
-                </widget>
-                <widget class="QComboBox">
-                    <item>
-                        <property name="text">
-                            <string>1-Current frame</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>2-frames</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>3-frames</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>4-frames</string>
-                        </property>
-                    </item>
-                    <item>
-                        <property name="text">
-                            <string>5-frames</string>
-                        </property>
-                    </item>
-                    <property name="name">
-                        <cstring>comboBox_skyWindow</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>21</x>
-                            <y>161</y>
-                            <width>118</width>
-                            <height>21</height>
-                        </rect>
-                    </property>
-                    <property name="currentItem">
-                        <number>3</number>
+                        <string>Subtract nearest sky</string>
                     </property>
                 </widget>
             </widget>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Thu Nov 17 19:59:07 2011
+# Created: Fri Nov 18 16:39:36 2011
 #      by: The PyQt User Interface Compiler (pyuic) 3.17.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -10885,6 +10885,54 @@ class panicQL(QMainWindow):
         self.checkBox_data_grouping.setGeometry(QRect(18,80,270,19))
         self.checkBox_data_grouping.setChecked(0)
 
+        self.groupBox1 = QGroupBox(self.TabPage,"groupBox1")
+        self.groupBox1.setGeometry(QRect(350,130,560,280))
+
+        self.textLabel3 = QLabel(self.groupBox1,"textLabel3")
+        self.textLabel3.setGeometry(QRect(21,141,130,16))
+
+        self.buttonGroup2 = QButtonGroup(self.groupBox1,"buttonGroup2")
+        self.buttonGroup2.setGeometry(QRect(200,140,310,120))
+
+        self.radioButton25_2 = QRadioButton(self.buttonGroup2,"radioButton25_2")
+        self.radioButton25_2.setGeometry(QRect(10,63,200,20))
+
+        self.radioButton25 = QRadioButton(self.buttonGroup2,"radioButton25")
+        self.radioButton25.setGeometry(QRect(10,41,260,20))
+
+        self.radioButton26 = QRadioButton(self.buttonGroup2,"radioButton26")
+        self.radioButton26.setGeometry(QRect(11,20,60,20))
+        self.radioButton26.setChecked(1)
+
+        self.checkBox7_2 = QCheckBox(self.groupBox1,"checkBox7_2")
+        self.checkBox7_2.setGeometry(QRect(24,30,140,19))
+        self.checkBox7_2.setChecked(0)
+
+        self.checkBox8_2 = QCheckBox(self.groupBox1,"checkBox8_2")
+        self.checkBox8_2.setGeometry(QRect(24,56,180,19))
+        self.checkBox8_2.setChecked(0)
+
+        self.checkBox8_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_2")
+        self.checkBox8_2_2.setGeometry(QRect(24,81,180,19))
+        self.checkBox8_2_2.setChecked(1)
+
+        self.comboBox_skyWindow = QComboBox(0,self.groupBox1,"comboBox_skyWindow")
+        self.comboBox_skyWindow.setGeometry(QRect(21,161,118,21))
+
+        self.pushButton22 = QPushButton(self.groupBox1,"pushButton22")
+        self.pushButton22.setGeometry(QRect(20,230,130,20))
+
+        self.checkBox8_2_3_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2_2")
+        self.checkBox8_2_3_2_2.setGeometry(QRect(190,80,290,19))
+
+        self.checkBox8_2_3_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2")
+        self.checkBox8_2_3_2.setGeometry(QRect(190,54,180,19))
+        self.checkBox8_2_3_2.setChecked(1)
+
+        self.checkBox8_2_3 = QCheckBox(self.groupBox1,"checkBox8_2_3")
+        self.checkBox8_2_3.setGeometry(QRect(190,30,180,19))
+        self.checkBox8_2_3.setChecked(1)
+
         self.groupBox4 = QGroupBox(self.TabPage,"groupBox4")
         self.groupBox4.setGeometry(QRect(16,10,200,111))
 
@@ -10911,77 +10959,32 @@ class panicQL(QMainWindow):
         self.groupBox_lazyMode = QGroupBox(self.TabPage,"groupBox_lazyMode")
         self.groupBox_lazyMode.setGeometry(QRect(11,130,330,280))
 
-        self.checkBox8_3 = QCheckBox(self.groupBox_lazyMode,"checkBox8_3")
-        self.checkBox8_3.setGeometry(QRect(31,86,200,19))
+        self.checkBox_show_imgs = QCheckBox(self.groupBox_lazyMode,"checkBox_show_imgs")
+        self.checkBox_show_imgs.setGeometry(QRect(31,26,170,20))
+        self.checkBox_show_imgs.setChecked(1)
 
         self.checkBox_subDark = QCheckBox(self.groupBox_lazyMode,"checkBox_subDark")
-        self.checkBox_subDark.setGeometry(QRect(30,60,160,19))
+        self.checkBox_subDark.setGeometry(QRect(32,58,160,19))
         self.checkBox_subDark.setChecked(0)
 
+        self.checkBox_appBPM = QCheckBox(self.groupBox_lazyMode,"checkBox_appBPM")
+        self.checkBox_appBPM.setEnabled(0)
+        self.checkBox_appBPM.setGeometry(QRect(31,86,200,19))
+
         self.checkBox_appFlat = QCheckBox(self.groupBox_lazyMode,"checkBox_appFlat")
-        self.checkBox_appFlat.setGeometry(QRect(31,111,180,19))
+        self.checkBox_appFlat.setGeometry(QRect(30,110,180,19))
         self.checkBox_appFlat.setChecked(0)
-
-        self.checkBox_subSky = QCheckBox(self.groupBox_lazyMode,"checkBox_subSky")
-        self.checkBox_subSky.setGeometry(QRect(31,171,180,19))
-
-        self.checkBox_appAstrom_1 = QCheckBox(self.groupBox_lazyMode,"checkBox_appAstrom_1")
-        self.checkBox_appAstrom_1.setGeometry(QRect(31,212,180,19))
-
-        self.checkBox_show_imgs = QCheckBox(self.groupBox_lazyMode,"checkBox_show_imgs")
-        self.checkBox_show_imgs.setGeometry(QRect(31,26,250,20))
-        self.checkBox_show_imgs.setChecked(1)
 
         self.checkBox_subLastFrame = QCheckBox(self.groupBox_lazyMode,"checkBox_subLastFrame")
         self.checkBox_subLastFrame.setGeometry(QRect(30,134,190,19))
 
-        self.groupBox1 = QGroupBox(self.TabPage,"groupBox1")
-        self.groupBox1.setGeometry(QRect(350,130,560,280))
+        self.checkBox_appSAstrom = QCheckBox(self.groupBox_lazyMode,"checkBox_appSAstrom")
+        self.checkBox_appSAstrom.setEnabled(0)
+        self.checkBox_appSAstrom.setGeometry(QRect(31,212,180,19))
 
-        self.textLabel3 = QLabel(self.groupBox1,"textLabel3")
-        self.textLabel3.setGeometry(QRect(21,141,130,16))
-
-        self.checkBox8_2_3 = QCheckBox(self.groupBox1,"checkBox8_2_3")
-        self.checkBox8_2_3.setGeometry(QRect(190,30,180,19))
-        self.checkBox8_2_3.setChecked(1)
-
-        self.pushButton22 = QPushButton(self.groupBox1,"pushButton22")
-        self.pushButton22.setGeometry(QRect(20,230,130,20))
-
-        self.buttonGroup2 = QButtonGroup(self.groupBox1,"buttonGroup2")
-        self.buttonGroup2.setGeometry(QRect(200,140,310,120))
-
-        self.radioButton25_2 = QRadioButton(self.buttonGroup2,"radioButton25_2")
-        self.radioButton25_2.setGeometry(QRect(10,63,200,20))
-
-        self.radioButton26 = QRadioButton(self.buttonGroup2,"radioButton26")
-        self.radioButton26.setGeometry(QRect(11,20,60,20))
-        self.radioButton26.setChecked(1)
-
-        self.radioButton25 = QRadioButton(self.buttonGroup2,"radioButton25")
-        self.radioButton25.setGeometry(QRect(10,41,260,20))
-
-        self.checkBox7_2 = QCheckBox(self.groupBox1,"checkBox7_2")
-        self.checkBox7_2.setGeometry(QRect(24,30,140,19))
-        self.checkBox7_2.setChecked(0)
-
-        self.checkBox8_2 = QCheckBox(self.groupBox1,"checkBox8_2")
-        self.checkBox8_2.setGeometry(QRect(24,56,180,19))
-        self.checkBox8_2.setChecked(0)
-
-        self.checkBox8_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_2")
-        self.checkBox8_2_2.setGeometry(QRect(24,81,180,19))
-        self.checkBox8_2_2.setChecked(1)
-
-        self.checkBox8_2_3_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2_2")
-        self.checkBox8_2_3_2_2.setGeometry(QRect(190,80,290,19))
-
-        self.checkBox8_2_3_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2")
-        self.checkBox8_2_3_2.setGeometry(QRect(190,54,180,19))
-        self.checkBox8_2_3_2.setChecked(1)
-
-        self.comboBox_skyWindow = QComboBox(0,self.groupBox1,"comboBox_skyWindow")
-        self.comboBox_skyWindow.setGeometry(QRect(21,161,118,21))
+        self.checkBox_subSky = QCheckBox(self.groupBox_lazyMode,"checkBox_subSky")
+        self.checkBox_subSky.setEnabled(1)
+        self.checkBox_subSky.setGeometry(QRect(30,170,180,19))
         self.tabWidget3.insertTab(self.TabPage,QString.fromLatin1(""))
 
         self.tab_2 = QWidget(self.tabWidget3,"tab_2")
@@ -11388,6 +11391,26 @@ class panicQL(QMainWindow):
         self.textLabel4_3_2.setText(self.__tr("Time offsets"))
         self.checkBox_data_grouping.setText(self.__tr("Header (POINT_NO, DITH_NO, EXPO_NO)"))
         QToolTip.add(self.checkBox_data_grouping,self.__tr("Use header keywords POINT_NO, DITH_NO, EXPO_NO for data grouping"))
+        self.groupBox1.setTitle(self.__tr("Pre-reduction Mode"))
+        self.textLabel3.setText(self.__tr("# sky nearest frames"))
+        self.buttonGroup2.setTitle(self.__tr("Build Stacked Image"))
+        self.radioButton25_2.setText(self.__tr("Grouping using OT keywords"))
+        self.radioButton25.setText(self.__tr("Automatic grouping (ra,dec,mjd, filter, ...)"))
+        self.radioButton26.setText(self.__tr("No"))
+        self.checkBox7_2.setText(self.__tr("Substract dark"))
+        self.checkBox8_2.setText(self.__tr("Apply Master Flat"))
+        self.checkBox8_2_2.setText(self.__tr("Apply SuperFlat"))
+        self.comboBox_skyWindow.clear()
+        self.comboBox_skyWindow.insertItem(self.__tr("1-Current frame"))
+        self.comboBox_skyWindow.insertItem(self.__tr("2-frames"))
+        self.comboBox_skyWindow.insertItem(self.__tr("3-frames"))
+        self.comboBox_skyWindow.insertItem(self.__tr("4-frames"))
+        self.comboBox_skyWindow.insertItem(self.__tr("5-frames"))
+        self.comboBox_skyWindow.setCurrentItem(3)
+        self.pushButton22.setText(self.__tr("More Settings..."))
+        self.checkBox8_2_3_2_2.setText(self.__tr("Quality measurements  (background, psf, ....)"))
+        self.checkBox8_2_3_2.setText(self.__tr("Compute distortion map"))
+        self.checkBox8_2_3.setText(self.__tr("Make Astrometry"))
         self.groupBox4.setTitle(self.__tr("Common settings"))
         self.checkBox7_2_2.setText(self.__tr("Check header"))
         self.checkBox7_2_2_2.setText(self.__tr("Create Log file"))
@@ -11402,33 +11425,13 @@ class panicQL(QMainWindow):
         self.comboBox_AstromCatalog.insertItem(self.__tr("UCAC-2"))
         self.comboBox_AstromCatalog.insertItem(self.__tr("FILE"))
         self.groupBox_lazyMode.setTitle(self.__tr("Lazy Mode"))
-        self.checkBox8_3.setText(self.__tr("Apply Bad Pixel Mask (BPM)"))
+        self.checkBox_show_imgs.setText(self.__tr("Only display image"))
         self.checkBox_subDark.setText(self.__tr("Substract dark"))
+        self.checkBox_appBPM.setText(self.__tr("Apply Bad Pixel Mask (BPM)"))
         self.checkBox_appFlat.setText(self.__tr("Flat-Field"))
-        self.checkBox_subSky.setText(self.__tr("Subtract nearest sky"))
-        self.checkBox_appAstrom_1.setText(self.__tr("Apply 'static' Astrometry"))
-        self.checkBox_show_imgs.setText(self.__tr("Only show new images when detected"))
         self.checkBox_subLastFrame.setText(self.__tr("Subtract last frame (science)"))
-        self.groupBox1.setTitle(self.__tr("Pre-reduction Mode"))
-        self.textLabel3.setText(self.__tr("# sky nearest frames"))
-        self.checkBox8_2_3.setText(self.__tr("Make Astrometry"))
-        self.pushButton22.setText(self.__tr("More Settings..."))
-        self.buttonGroup2.setTitle(self.__tr("Build Stacked Image"))
-        self.radioButton25_2.setText(self.__tr("Grouping using OT keywords"))
-        self.radioButton26.setText(self.__tr("No"))
-        self.radioButton25.setText(self.__tr("Automatic grouping (ra,dec,mjd, filter, ...)"))
-        self.checkBox7_2.setText(self.__tr("Substract dark"))
-        self.checkBox8_2.setText(self.__tr("Apply Master Flat"))
-        self.checkBox8_2_2.setText(self.__tr("Apply SuperFlat"))
-        self.checkBox8_2_3_2_2.setText(self.__tr("Quality measurements  (background, psf, ....)"))
-        self.checkBox8_2_3_2.setText(self.__tr("Compute distortion map"))
-        self.comboBox_skyWindow.clear()
-        self.comboBox_skyWindow.insertItem(self.__tr("1-Current frame"))
-        self.comboBox_skyWindow.insertItem(self.__tr("2-frames"))
-        self.comboBox_skyWindow.insertItem(self.__tr("3-frames"))
-        self.comboBox_skyWindow.insertItem(self.__tr("4-frames"))
-        self.comboBox_skyWindow.insertItem(self.__tr("5-frames"))
-        self.comboBox_skyWindow.setCurrentItem(3)
+        self.checkBox_appSAstrom.setText(self.__tr("Apply 'static' Astrometry"))
+        self.checkBox_subSky.setText(self.__tr("Subtract nearest sky"))
         self.tabWidget3.changeTab(self.TabPage,self.__tr("Setup"))
         self.pushButton_Darks_add.setText(self.__tr("Add..."))
         self.pushButton_DomeF_add.setText(self.__tr("Add..."))
