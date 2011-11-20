@@ -2368,8 +2368,11 @@ class ReductionSet(object):
         i = 0
         j = 0
         for file in self.m_rawFiles:
-            if self.apply_dark_flat==1: 
+            if self.apply_dark_flat==1 and master_flat!=None and master_dark!=None:
                 line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
+                + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+            elif self.apply_dark_flat==1 and master_flat!=None:
+                line = file.replace(".fits","_F.fits") + " " + obj_mask + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             else:
                 line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
