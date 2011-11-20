@@ -2169,17 +2169,20 @@ class ReductionSet(object):
         
         ########################################################################
         # 2 - Compute Super Sky Flat-Field --> GainMap
+        #      The 'local_master_flat' is ONLY used to build the GainMap, and
+        #      can come from the 'master_flat' provided by the user or from the 
+        #      just created 'super_flat' with sci images 
         ########################################################################
         if master_flat==None:
             try:
                 # - Find out what kind of observing mode we have (dither, ext_dither, ...)
-                log.info('**** Computing Super-Sky Flat-Field ****')
-                master_flat = out_dir+"/superFlat.fits"
+                log.info('**** Computing Super-Sky Flat-Field (local_master_flat) ****')
+                local_master_flat = out_dir+"/superFlat.fits"
                 if self.obs_mode=="dither":
                     log.debug("---> dither sequece <----")
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
-                                                    master_flat, bpm=None, 
+                                                    local_master_flat, bpm=None, 
                                                     norm=False, 
                                                     temp_dir=self.temp_dir)
                     superflat.create()
@@ -2190,7 +2193,7 @@ class ReductionSet(object):
                     sky_list = self.getSkyFrames()
                     misc.utils.listToFile(sky_list, out_dir+"/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
-                                                    master_flat, bpm=None, 
+                                                    local_master_flat, bpm=None, 
                                                     norm=False, 
                                                     temp_dir=self.temp_dir)
                     superflat.create()                            
@@ -2200,8 +2203,9 @@ class ReductionSet(object):
             except Exception,e:
                 raise e    
         else:
+            local_master_flat = master_flat 
             log.info("Using the given (dome or twlight) master flat")
-              
+                 
         ########################################################################
         # 3 - Compute Gain map and apply BPM
         ########################################################################
@@ -2221,7 +2225,7 @@ class ReductionSet(object):
             nyblock = 16
             nsigma = 5
             
-        g = reduce.calGainMap.GainMap(master_flat, gainmap, bpm=master_bpm, 
+        g = reduce.calGainMap.GainMap(local_master_flat, gainmap, bpm=master_bpm, 
                                     do_normalization=True, mingain=mingain, 
                                     maxgain=maxgain, nxblock=nxblock,
                                     nyblock=nyblock, nsigma=nsigma)
