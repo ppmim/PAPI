@@ -182,12 +182,21 @@ class DataCollector (object):
         elif self.mode=="file":
             # Read the file contents
             contents = [line for line in fileinput.input(self.source)]
-        elif self.mode=="geirs-file":
+        # To read ~/GEIRS/log/save_CA2.2m.log
+	elif self.mode=="geirs-file":
             # Read the file contents from a generated GEIRS file
             for line in fileinput.input(self.source):
                 sline = string.split(line)
                 if sline[0]!="#":
                     contents.append(sline[6])
+                    #print "FILE = ", sline[6]
+	# To read ~/tmp/fitsfiles.corrected
+        elif self.mode=="geirs-file2":
+            # Read the file contents from a generated GEIRS file
+            for line in fileinput.input(self.source):
+                sline = string.split(line)
+                if sline[0]!="#" and sline[1]!="ERROR":
+                    contents.append(sline[1])
                     #print "FILE = ", sline[6]
                 
 	    
@@ -277,8 +286,10 @@ class DataCollector (object):
 	
     
 if __name__ == "__main__":
+    def imprime_fichero(un_fichero):
+        print un_fichero
     print 'DataCollector sample started ...'	 
-    dr = DataCollector("geirs-file", "/disk-a/caha/panic/GEIRS/log/save_CA2.2m.log", "*.fits", 0)
+    dr = DataCollector("geirs-file", "/home/panicmgr/GEIRS/log/save_CA2.2m.log", "*.fits", imprime_fichero)
     dr.check()
     print 'Datacollector sample finished successful'
     

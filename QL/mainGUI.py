@@ -177,7 +177,7 @@ class MainGUI(panicQL):
         ## ------------------------------
         self.file_pattern = str(self.lineEdit_filename_filter.text())
         # Data collector for input files
-        self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
+        self.dc = datahandler.DataCollector("geirs-file2", self.m_sourcedir, 
                                             self.file_pattern , self.new_file_func)
         # Data collector for output files
         self.dc_outdir = None # Initialized in checkOutDir_slot()
@@ -604,7 +604,7 @@ class MainGUI(panicQL):
                     self.dc = datahandler.DataCollector("geirs-file", str(dir), self.file_pattern , self.new_file_func)  
                 elif os.path.isdir(dir):
                     self.dc = datahandler.DataCollector("dir", str(dir), self.file_pattern , self.new_file_func)
-                
+                    #self.dc = datahandler.DataCollector("geirs-file2", str(dir), self.file_pattern , self.new_file_func)	
                 ## Activate the autochecking of new files
                 self.checkBox_autocheck.setChecked(True)
                 ##Create QTimer for the data collector
