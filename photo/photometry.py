@@ -384,14 +384,15 @@ class STILTSwrapper (object):
     """
     
     cat_names = {'2MASS':'fp_psc', 
-                     'USNOB1': 'usno_b1',
-                     'IRAS': 'iraspsc'
+                'USNOB1': 'usno_b1',
+                'IRAS': 'iraspsc'
                      }
     outfmt = {'votable': 3,
               'ascii': 1
               }
     
-    _stilts_pathname = "/home/panic/SOFTWARE/STILTS/stilts"
+    #_stilts_pathname = "/home/panic/SOFTWARE/STILTS/stilts"
+    _stilts_pathname = "/home/panicmgr/PAPI/downloads/STILTS/stilts"
     
     def __init__(self, *a, **k):
         """ The constructor """

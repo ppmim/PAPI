@@ -32,9 +32,6 @@ import misc.utils as utils
 import pyfits
 import datahandler
 
-# Import Pyro core
-import Pyro.core
-import Pyro.naming
 
 # Logging
 from misc.paLog import log

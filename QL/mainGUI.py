@@ -828,9 +828,9 @@ class MainGUI(panicQL):
             
         """
         
-        endSeq=False
-        retSeq=[]
-        typeSeq=''
+        endSeq = False
+        retSeq = []
+        typeSeq = ''
         
         # Read the FITS file
         fits = datahandler.ClFits(filename)
@@ -844,15 +844,19 @@ class MainGUI(panicQL):
         log.info("EXPNO= %s, NOEXPO= %s", fits.getExpNo(), fits.getNoExp())
         if fits.isFromOT():
             log.debug("Checking OT keywords...")
+            self.curr_sequence.append(filename)
             # General case for OT observations
+            if fits.getExpNo()==1:
+                #Start of sequence
+                endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
+                log.debug("Start OS-0 %s detected : %s"%(typeSeq, str(retSeq)))
+                self.logConsole.warning("Start of observing sequence [%s]"%(typeSeq))  
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1:
-                self.curr_sequence.append(filename)
                 retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects !
                 self.curr_sequence = []
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
                 log.debug("EOS-0 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
-                self.curr_sequence.append(filename)
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         # ############################################
         # We suppose data is obtained using GEIRS+MIDAS_scripts observations
@@ -2358,8 +2362,7 @@ class MainGUI(panicQL):
             # current ones in the source_dir and then the new ones
             res = QMessageBox.information(self, "Info", 
                                 QString("Process also the current files in the \
-                                source directory (If no, only the new ones coming \
-                                will be processed) ?"), 
+source directory (If no, only the new ones coming will be processed) ?"), 
                                 QMessageBox.Ok, QMessageBox.Cancel)
             if res==QMessageBox.Cancel:
                 return

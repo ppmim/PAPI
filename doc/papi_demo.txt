@@ -162,6 +162,22 @@ what kind of skyflat are they ? skyflats with fixed EXP_TIME or fixed EXP_LEVEL 
 [7] would it be interesting to implement in the saving mode the option of save 
 from frame N1 to N2 (save -r N1 N2) ?
 
+
+[8] flat on/off command --> CS: not implemented yet, but could be 'tele flat on/off' 
+[9] windows command
+[10] cold-stop mask --> se puede mover desde GEIRS, pero parece que GEIRS no la mueve 
+automaticamente al seleccionar el telescopio al iniciar GEIRS. CS dice que habrá una máquina 
+para cada telescopio. Pero en cualquier caso se puede mover con el comando filter.
+
+ 
+
+Q to JF
+=======
+- should PAPI process cubes or individual saved data files ? currently not supported
+- how to proceed with dark serial (lineal, log ,etc ) ? it takes long time to compute
+- diff between flats in calibrations series and fixed exp. time
+
+
 TO BE DONE
 ==========
 [1] better grouping when OT is not used (group_by=filter)

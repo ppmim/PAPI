@@ -327,8 +327,8 @@ class DataSet(object):
             res_list = []
             if len(rows)>0:
                 res_list = [str(f[0]) for f in rows] # important to apply str() !!
-            print "Total rows selected:  %d" %(len(res_list))
-            print "Files found :\n ", res_list
+            #print "Total rows selected:  %d" %(len(res_list))
+            #print "Files found :\n ", res_list
             return res_list
                              
         except sqlite.DatabaseError,e:
@@ -385,7 +385,7 @@ class DataSet(object):
             rows=cur.fetchall()
             if len(rows)>0:
                 ob_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
-            print "%d files found in OB %d" %(len(rows), int(ob_id))
+            #print "%d files found in OB %d" %(len(rows), int(ob_id))
             
         return ob_id_list, ob_file_list
                  
@@ -433,7 +433,7 @@ class DataSet(object):
             rows = cur.fetchall()
             if len(rows)>0:
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
-            print "%d files found for Filter %s" %(len(rows), par[0])
+            #print "%d files found for Filter %s" %(len(rows), par[0])
 
         # Now, look for temporal gap inside the current sequences were found
         new_seq_list = []
@@ -555,7 +555,7 @@ class DataSet(object):
             rows = cur.fetchall()
             if len(rows)>0:
                 seq_list.append([str(f[0]) for f in rows]) # important to apply str() !!
-            print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2])+"_"+str(seq[3]))
+            #print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2])+"_"+str(seq[3]))
             
         return seq_pat_list, seq_list
     
@@ -718,8 +718,8 @@ class DataSet(object):
             rows=cur.fetchall()
             if len(rows)>0:
                 res_list = [str(f[0]) for f in rows] # important to apply str() !!
-            print "Total rows selected:  %d" %(len(res_list))
-            print "Files found :\n ", res_list
+            #print "Total rows selected:  %d" %(len(res_list))
+            #print "Files found :\n ", res_list
             return res_list
                 
         except sqlite.DatabaseError:

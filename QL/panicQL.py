@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon Nov 21 18:39:01 2011
+# Created: Wed Nov 23 12:05:20 2011
 #      by: The PyQt User Interface Compiler (pyuic) 3.18.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -10713,14 +10713,6 @@ class panicQL(QMainWindow):
 
         self.setCentralWidget(QWidget(self,"qt_central_widget"))
 
-        self.textLabel1_7_2 = QLabel(self.centralWidget(),"textLabel1_7_2")
-        self.textLabel1_7_2.setGeometry(QRect(14,458,140,20))
-
-        self.textEdit_log = QTextEdit(self.centralWidget(),"textEdit_log")
-        self.textEdit_log.setGeometry(QRect(10,478,940,130))
-        self.textEdit_log.setTextFormat(QTextEdit.LogText)
-        self.textEdit_log.setWordWrap(QTextEdit.WidgetWidth)
-
         self.tabWidget3 = QTabWidget(self.centralWidget(),"tabWidget3")
         self.tabWidget3.setGeometry(QRect(10,0,940,460))
 
@@ -11172,6 +11164,14 @@ class panicQL(QMainWindow):
         self.textLabel1_7.setGeometry(QRect(11,8,100,20))
         self.tabWidget3.insertTab(self.TabPage_3,QString.fromLatin1(""))
 
+        self.textLabel1_7_2 = QLabel(self.centralWidget(),"textLabel1_7_2")
+        self.textLabel1_7_2.setGeometry(QRect(14,458,220,22))
+
+        self.textEdit_log = QTextEdit(self.centralWidget(),"textEdit_log")
+        self.textEdit_log.setGeometry(QRect(10,488,940,130))
+        self.textEdit_log.setTextFormat(QTextEdit.LogText)
+        self.textEdit_log.setWordWrap(QTextEdit.WidgetWidth)
+
         self.fileOpenAction = QAction(self,"fileOpenAction")
         self.fileOpenAction.setIconSet(QIconSet(self.image1))
         self.fileDirAction = QAction(self,"fileDirAction")
@@ -11326,8 +11326,6 @@ class panicQL(QMainWindow):
 
     def languageChange(self):
         self.setCaption(self.__tr("PANIC QuickLook"))
-        self.textLabel1_7_2.setText(self.__tr("<font color=\"#1759ff\">Event log (Time UTC)</font>"))
-        self.textEdit_log.setText(QString.null)
         self.checkBox_autocheck.setText(QString.null)
         QToolTip.add(self.checkBox_autocheck,self.__tr("Autocheck for new incoming images"))
         self.lineEdit_filename_filter.setText(self.__tr("*.fits"))
@@ -11506,6 +11504,8 @@ class panicQL(QMainWindow):
         self.textEdit_log_2.setText(QString.null)
         self.textLabel1_7.setText(self.__tr("<font color=\"#1759ff\">Times in UTC</font>"))
         self.tabWidget3.changeTab(self.TabPage_3,self.__tr("Logs"))
+        self.textLabel1_7_2.setText(self.__tr("<font color=\"#1759ff\">Event log (Time UTC)</font>"))
+        self.textEdit_log.setText(QString.null)
         self.fileOpenAction.setText(self.__tr("Open"))
         self.fileOpenAction.setMenuText(self.__tr("&Open"))
         self.fileOpenAction.setToolTip(self.__tr("Add new file list"))

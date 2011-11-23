@@ -2410,7 +2410,7 @@ class ReductionSet(object):
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         ########################################################################
-        _astrowarp = True
+        _astrowarp = False
         if _astrowarp:
             print "astrowarp--->LAST_FILES=",self.m_LAST_FILES
             
