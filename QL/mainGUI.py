@@ -274,7 +274,7 @@ class MainGUI(panicQL):
             misc.utils.fits_simple_verify(filename)
             
             if filename in self.read_error_files:
-                log.debug("New try to read %s was successful ! ", filename)
+                log.debug("New try to read %s was successful at last! ", filename)
                 #self.read_error_files.remove(filename)
                 del self.read_error_files[filename] 
             temp.close()
@@ -697,12 +697,12 @@ class MainGUI(panicQL):
             try:
                 self._task_info = self._task_info_list.pop()
                 if self._task_info._exit_status == 0: # EXIT_SUCCESS, all was OK
-                    self.logConsole.info("Process successful finished  !")
+                    self.logConsole.info("Process successfully finished  !")
                     if self._task_info._return!=None:
                         if type(self._task_info._return)==type(list()):
                             if len(self._task_info._return)==0:
-                                self.logConsole.info(str(QString("Any value returned")))
-                                QMessageBox.information(self, "Info", "Any value returned")
+                                self.logConsole.info(str(QString("No value returned")))
+                                QMessageBox.information(self, "Info", "No value returned")
                             else:
                                 str_list = ""
                                 #print "FILES CREATED=",self._task_info._return
@@ -740,7 +740,7 @@ class MainGUI(panicQL):
                         else:
                             # Cannot identify the type of the results...for sure
                             # something was wrong...
-                            self.logConsole.error("Any processing results obtained")
+                            self.logConsole.error("No processing results obtained")
                 else:
                     self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))

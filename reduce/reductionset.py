@@ -1561,7 +1561,7 @@ class ReductionSet(object):
             sequences, seq_types = self.reorder_sequences( sequences, seq_types)
         
         if len(sequences)==0:
-            raise Exception("Any well-defined sequence to process was found")
+            raise Exception("No well-defined sequence to process was found")
         
         k = 0
         for seq,type in zip(sequences, seq_types):

@@ -57,7 +57,7 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
     pat_nexp = number_files
     
     if len(filelist)==0:
-        print "\nAny files found."
+        print "\nNo files found."
         
     # Sort out the input files by MJD
     filelist = sortFilesMJD(filelist)

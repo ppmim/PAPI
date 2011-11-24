@@ -141,9 +141,10 @@ Miscelaneus
 QUESTIONS
 =========
 
-[0] reset in Dark/Flat series ?
+[0] reset in Dark/Flat series ? en principio no seria necesario, pero podemos dejar para ver que pasa en commissioning
 
-[1] readout modes available and meaning and concerns to the data reduction
+[1] readout modes available and meaning and concerns to the data reduction --> CS nos dio los principales, aunque no se sabrá
+cual es el que mejor funciona hasta el commissioning
 
 [2] would be interesting to have a "real-time" sky-subtraction taking into
 account the last N-frames received ?  and show information about seeing, sky
@@ -173,9 +174,12 @@ para cada telescopio. Pero en cualquier caso se puede mover con el comando filte
 
 Q to JF
 =======
-- should PAPI process cubes or individual saved data files ? currently not supported
-- how to proceed with dark serial (lineal, log ,etc ) ? it takes long time to compute
+- should PAPI process cubes or individual saved data files ? currently not supported -> si, imnplementar, puede ser necesario
+- how to proceed with dark serial (lineal, log ,etc ) ? it takes long time to compute --> OK, QL no necesario, sólo lo básico
+Me comentó que lo normal es tomar DARKs con el mismo EXPT y NCOADDS que las imágenes de ciencia
+
 - diff between flats in calibrations series and fixed exp. time
+- dither pattern for extended objects (
 
 
 TO BE DONE
@@ -183,6 +187,47 @@ TO BE DONE
 [1] better grouping when OT is not used (group_by=filter)
 [2] second pass sky-subtraction when extended_objects
 [3] compute the distortion matrix (external to SCAMP)
+ 
+
+
+NOTES FROM THE VISIT
+====================
+- Prepare a list things we need and should be implemented into GEIRS by CS
+
+*) OT
+~~~~~
+- In principle, the supported readout modes are the double correlated (lir, rrr-mpia), but
+the final desicion will be taken during the commissioning. 
+- Because GEIRS will not implement the dome flat lamps control (on/off), the OT will 
+command and control them via the shell commands supported by CA (E.Guindos)
+- The filter wheel software is not completed in GEIRS, so we run the tests with the 
+filter wheel in simulation mode.
+- cold-stop filter wheel possition could be moved by OT with the filter command, but 
+in principle it will not be done by the OT; it will be done by GEIRS. That filter wheel
+has a not very long life-time, so it is better do not move too much.
+- In principle, reset in Dark/Flat series is not required but cnad    
+    
+*) QL
+~~~~~
+- Must be possible to check the photometry of a specific star in selected in the display. 
+In principle, imexam or qphot can be good options, taking into accound the ZP computed.
+- In principles, the QL will not support dark series, so the dark model routine will not 
+be launched with that kind of series.  
+*) PL
+~~~~~
+- Should be possible to modify some of the pipeline tasks parameters (iraf config, SExtractor, etc) 
+and run again the data reducion with the new setup
+- In principle, all the readout modes (rrr-mpia, lir, etc) will be processed in the same way, 
+no special differences for PAPI.
+- Should be available some routines for health-check of the instrument, so they can be executed
+periodically and the results stored into a DB for historical review. JF will provided his MIDAS 
+routines than can be used (and translated to Python) for this purpose.
+- A list with the main pipeline routines and a brief explanation of what they do.
+- Review the FITS headers in order the ask CS what new keywords are needed.
+- The science sequences files must have the same readout and saving features (readmode, EXPT, 
+NCOADD,etc),and the mask dark should match with them as well.   
+- should be supported the data proccessing of data when they are saved as cubes or individual; 
+currently only integrated mode is supported. It means changes in all the routines.
  
 
 

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Wed Nov 23 12:05:20 2011
+# Created: Wed Nov 23 19:10:08 2011
 #      by: The PyQt User Interface Compiler (pyuic) 3.18.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -10713,6 +10713,14 @@ class panicQL(QMainWindow):
 
         self.setCentralWidget(QWidget(self,"qt_central_widget"))
 
+        self.textLabel1_7_2 = QLabel(self.centralWidget(),"textLabel1_7_2")
+        self.textLabel1_7_2.setGeometry(QRect(14,458,220,22))
+
+        self.textEdit_log = QTextEdit(self.centralWidget(),"textEdit_log")
+        self.textEdit_log.setGeometry(QRect(10,488,940,130))
+        self.textEdit_log.setTextFormat(QTextEdit.LogText)
+        self.textEdit_log.setWordWrap(QTextEdit.WidgetWidth)
+
         self.tabWidget3 = QTabWidget(self.centralWidget(),"tabWidget3")
         self.tabWidget3.setGeometry(QRect(10,0,940,460))
 
@@ -10955,20 +10963,9 @@ class panicQL(QMainWindow):
         self.checkBox_show_imgs.setGeometry(QRect(31,26,170,20))
         self.checkBox_show_imgs.setChecked(1)
 
-        self.checkBox_subDark = QCheckBox(self.groupBox_lazyMode,"checkBox_subDark")
-        self.checkBox_subDark.setGeometry(QRect(32,58,160,19))
-        self.checkBox_subDark.setChecked(0)
-
         self.checkBox_appBPM = QCheckBox(self.groupBox_lazyMode,"checkBox_appBPM")
         self.checkBox_appBPM.setEnabled(0)
         self.checkBox_appBPM.setGeometry(QRect(31,86,200,19))
-
-        self.checkBox_appFlat = QCheckBox(self.groupBox_lazyMode,"checkBox_appFlat")
-        self.checkBox_appFlat.setGeometry(QRect(30,110,180,19))
-        self.checkBox_appFlat.setChecked(0)
-
-        self.checkBox_subLastFrame = QCheckBox(self.groupBox_lazyMode,"checkBox_subLastFrame")
-        self.checkBox_subLastFrame.setGeometry(QRect(30,134,190,19))
 
         self.checkBox_appSAstrom = QCheckBox(self.groupBox_lazyMode,"checkBox_appSAstrom")
         self.checkBox_appSAstrom.setEnabled(0)
@@ -10977,6 +10974,17 @@ class panicQL(QMainWindow):
         self.checkBox_subSky = QCheckBox(self.groupBox_lazyMode,"checkBox_subSky")
         self.checkBox_subSky.setEnabled(1)
         self.checkBox_subSky.setGeometry(QRect(30,170,180,19))
+
+        self.checkBox_subDark = QCheckBox(self.groupBox_lazyMode,"checkBox_subDark")
+        self.checkBox_subDark.setGeometry(QRect(32,58,160,19))
+        self.checkBox_subDark.setChecked(0)
+
+        self.checkBox_appFlat = QCheckBox(self.groupBox_lazyMode,"checkBox_appFlat")
+        self.checkBox_appFlat.setGeometry(QRect(30,110,180,19))
+        self.checkBox_appFlat.setChecked(0)
+
+        self.checkBox_subLastFrame = QCheckBox(self.groupBox_lazyMode,"checkBox_subLastFrame")
+        self.checkBox_subLastFrame.setGeometry(QRect(30,134,190,19))
         self.tabWidget3.insertTab(self.TabPage,QString.fromLatin1(""))
 
         self.tab_2 = QWidget(self.tabWidget3,"tab_2")
@@ -11164,14 +11172,6 @@ class panicQL(QMainWindow):
         self.textLabel1_7.setGeometry(QRect(11,8,100,20))
         self.tabWidget3.insertTab(self.TabPage_3,QString.fromLatin1(""))
 
-        self.textLabel1_7_2 = QLabel(self.centralWidget(),"textLabel1_7_2")
-        self.textLabel1_7_2.setGeometry(QRect(14,458,220,22))
-
-        self.textEdit_log = QTextEdit(self.centralWidget(),"textEdit_log")
-        self.textEdit_log.setGeometry(QRect(10,488,940,130))
-        self.textEdit_log.setTextFormat(QTextEdit.LogText)
-        self.textEdit_log.setWordWrap(QTextEdit.WidgetWidth)
-
         self.fileOpenAction = QAction(self,"fileOpenAction")
         self.fileOpenAction.setIconSet(QIconSet(self.image1))
         self.fileDirAction = QAction(self,"fileDirAction")
@@ -11326,6 +11326,8 @@ class panicQL(QMainWindow):
 
     def languageChange(self):
         self.setCaption(self.__tr("PANIC QuickLook"))
+        self.textLabel1_7_2.setText(self.__tr("<font color=\"#1759ff\">Event log (Time UTC)</font>"))
+        self.textEdit_log.setText(QString.null)
         self.checkBox_autocheck.setText(QString.null)
         QToolTip.add(self.checkBox_autocheck,self.__tr("Autocheck for new incoming images"))
         self.lineEdit_filename_filter.setText(self.__tr("*.fits"))
@@ -11424,12 +11426,12 @@ class panicQL(QMainWindow):
         self.comboBox_AstromCatalog.insertItem(self.__tr("FILE"))
         self.groupBox_lazyMode.setTitle(self.__tr("Lazy Mode"))
         self.checkBox_show_imgs.setText(self.__tr("Only display image"))
-        self.checkBox_subDark.setText(self.__tr("Substract dark"))
         self.checkBox_appBPM.setText(self.__tr("Apply Bad Pixel Mask (BPM)"))
-        self.checkBox_appFlat.setText(self.__tr("Flat-Field"))
-        self.checkBox_subLastFrame.setText(self.__tr("Subtract last frame (science)"))
         self.checkBox_appSAstrom.setText(self.__tr("Apply 'static' Astrometry"))
         self.checkBox_subSky.setText(self.__tr("Subtract nearest sky"))
+        self.checkBox_subDark.setText(self.__tr("Dark subtraction"))
+        self.checkBox_appFlat.setText(self.__tr("Flat-Fielding"))
+        self.checkBox_subLastFrame.setText(self.__tr("Subtract last frame (science)"))
         self.tabWidget3.changeTab(self.TabPage,self.__tr("Setup"))
         self.pushButton_Darks_add.setText(self.__tr("Add..."))
         self.pushButton_DomeF_add.setText(self.__tr("Add..."))
@@ -11504,8 +11506,6 @@ class panicQL(QMainWindow):
         self.textEdit_log_2.setText(QString.null)
         self.textLabel1_7.setText(self.__tr("<font color=\"#1759ff\">Times in UTC</font>"))
         self.tabWidget3.changeTab(self.TabPage_3,self.__tr("Logs"))
-        self.textLabel1_7_2.setText(self.__tr("<font color=\"#1759ff\">Event log (Time UTC)</font>"))
-        self.textEdit_log.setText(QString.null)
         self.fileOpenAction.setText(self.__tr("Open"))
         self.fileOpenAction.setMenuText(self.__tr("&Open"))
         self.fileOpenAction.setToolTip(self.__tr("Add new file list"))

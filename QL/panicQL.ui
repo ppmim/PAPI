@@ -15,6 +15,44 @@
     <property name="caption">
         <string>PANIC QuickLook</string>
     </property>
+    <widget class="QLabel">
+        <property name="name">
+            <cstring>textLabel1_7_2</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>14</x>
+                <y>458</y>
+                <width>220</width>
+                <height>22</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>&lt;font color="#1759ff"&gt;Event log (Time UTC)&lt;/font&gt;</string>
+        </property>
+    </widget>
+    <widget class="QTextEdit">
+        <property name="name">
+            <cstring>textEdit_log</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>10</x>
+                <y>488</y>
+                <width>940</width>
+                <height>130</height>
+            </rect>
+        </property>
+        <property name="textFormat">
+            <enum>LogText</enum>
+        </property>
+        <property name="text">
+            <string></string>
+        </property>
+        <property name="wordWrap">
+            <enum>WidgetWidth</enum>
+        </property>
+    </widget>
     <widget class="QTabWidget">
         <property name="name">
             <cstring>tabWidget3</cstring>
@@ -1327,25 +1365,6 @@
                 </widget>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox_subDark</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>32</x>
-                            <y>58</y>
-                            <width>160</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Substract dark</string>
-                    </property>
-                    <property name="checked">
-                        <bool>false</bool>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
                         <cstring>checkBox_appBPM</cstring>
                     </property>
                     <property name="enabled">
@@ -1361,41 +1380,6 @@
                     </property>
                     <property name="text">
                         <string>Apply Bad Pixel Mask (BPM)</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox_appFlat</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>30</x>
-                            <y>110</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Flat-Field</string>
-                    </property>
-                    <property name="checked">
-                        <bool>false</bool>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox_subLastFrame</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>30</x>
-                            <y>134</y>
-                            <width>190</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Subtract last frame (science)</string>
                     </property>
                 </widget>
                 <widget class="QCheckBox">
@@ -1434,6 +1418,60 @@
                     </property>
                     <property name="text">
                         <string>Subtract nearest sky</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox_subDark</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>32</x>
+                            <y>58</y>
+                            <width>160</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Dark subtraction</string>
+                    </property>
+                    <property name="checked">
+                        <bool>false</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox_appFlat</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>30</x>
+                            <y>110</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Flat-Fielding</string>
+                    </property>
+                    <property name="checked">
+                        <bool>false</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox_subLastFrame</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>30</x>
+                            <y>134</y>
+                            <width>190</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Subtract last frame (science)</string>
                     </property>
                 </widget>
             </widget>
@@ -2508,44 +2546,6 @@
                 </property>
             </widget>
         </widget>
-    </widget>
-    <widget class="QLabel">
-        <property name="name">
-            <cstring>textLabel1_7_2</cstring>
-        </property>
-        <property name="geometry">
-            <rect>
-                <x>14</x>
-                <y>458</y>
-                <width>220</width>
-                <height>22</height>
-            </rect>
-        </property>
-        <property name="text">
-            <string>&lt;font color="#1759ff"&gt;Event log (Time UTC)&lt;/font&gt;</string>
-        </property>
-    </widget>
-    <widget class="QTextEdit">
-        <property name="name">
-            <cstring>textEdit_log</cstring>
-        </property>
-        <property name="geometry">
-            <rect>
-                <x>10</x>
-                <y>488</y>
-                <width>940</width>
-                <height>130</height>
-            </rect>
-        </property>
-        <property name="textFormat">
-            <enum>LogText</enum>
-        </property>
-        <property name="text">
-            <string></string>
-        </property>
-        <property name="wordWrap">
-            <enum>WidgetWidth</enum>
-        </property>
     </widget>
 </widget>
 <menubar>
