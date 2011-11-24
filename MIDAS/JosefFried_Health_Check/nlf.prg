@@ -1,0 +1,21 @@
+DEFI/PAR P1 E3C48 C "input file=?"
+DEFI/PAR P2 M33C48 C "weight file=?"
+DEFI/PAR P3 M23C48 C "scaled image=?"
+DEFI/PAR P4 ? C "output file=?"
+DEFI/PAR P5 ? C "function=? [PL,GA,DG,LO,HS,VS,ES,PS,HF,VF,EF,VV,EV,GG,PV,SC]"
+DEFI/PAR P6 ? N " parameters=?"
+DEFI/PAR P7 1 N "IFAIL=?"
+DEFI/PAR P8 .8,.65,45.06,44.95,1.77,1.85,1.79,8.00,7.48 N "b/a,PA,xc,yc=?"
+DEFI/PAR P8 2.3,2.3,3.4,90,154
+WRITE/KEYW IN_A/C/1/20 'P1'
+WRITE/KEYW IN_B/C/1/20 'P2'
+WRITE/KEYW IN_C/C/1/20 'P3'
+WRITE/KEYW OUT_A/C/1/20 'P4'
+WRITE/KEYW INPUTC/C/1/40 'P5'
+WRITE/KEYW INA/D/1/40 'P6'
+WRITE/KEYW INPUTI/I/1/1 'P7'
+WRITE/KEYW INPUTD/D/5/9 2.3,2.3,3.4,90,154
+! enable logging
+!wk action/c/1/2 ON
+run FMP:nlf
+!copy/dd {p1},* {p4}

@@ -1,0 +1,26 @@
+#############################################################
+#                                                           #
+# prozedur zum compilieren +linken von midas programmen     #
+#                                                           #
+#                  jwf aug. 1991                            #
+#  mod.       dec 93, oct95, mar 2004, sep2009              #
+#                                                           #
+#############################################################
+
+# use as ./ml program_name
+
+#
+# mar 2004 without naglib
+#
+
+#Feb2010
+
+setenv MID_LIB /midas/11SEP/lib
+#f77 -o {$argv[1]}.exe {$argv[1]}.f -L$MID_LIB -lmidas
+gfortran -o {$argv[1]}.exe {$argv[1]}.f -ffree-line-length-none -L$MID_LIB -lmidas
+
+#aug2006
+
+#setenv MID_LIB /usr/local2/misc/midasSep05/05SEPpl1.2/lib
+#f77 {$argv[1]}.f -L$MID_LIB -lmidas
+

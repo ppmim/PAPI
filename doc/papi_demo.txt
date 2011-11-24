@@ -221,7 +221,8 @@ and run again the data reducion with the new setup
 no special differences for PAPI.
 - Should be available some routines for health-check of the instrument, so they can be executed
 periodically and the results stored into a DB for historical review. JF will provided his MIDAS 
-routines than can be used (and translated to Python) for this purpose.
+routines than can be used (and translated to Python) for this purpose. In addition, CA has a sytem
+for that store that values, so we should integrate with their system.
 - A list with the main pipeline routines and a brief explanation of what they do.
 - Review the FITS headers in order the ask CS what new keywords are needed.
 - The science sequences files must have the same readout and saving features (readmode, EXPT, 
