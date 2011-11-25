@@ -141,10 +141,12 @@ Miscelaneus
 QUESTIONS
 =========
 
-[0] reset in Dark/Flat series ? en principio no seria necesario, pero podemos dejar para ver que pasa en commissioning
+[0] reset in Dark/Flat series ? en principio no seria necesario, pero podemos 
+dejar para ver que pasa en commissioning
 
-[1] readout modes available and meaning and concerns to the data reduction --> CS nos dio los principales, aunque no se sabrá
-cual es el que mejor funciona hasta el commissioning
+[1] readout modes available and meaning and concerns to the data reduction --> 
+CS nos dio los principales, aunque no se sabrá cual es el que mejor funciona 
+hasta el commissioning
 
 [2] would be interesting to have a "real-time" sky-subtraction taking into
 account the last N-frames received ?  and show information about seeing, sky
@@ -155,8 +157,9 @@ background ?
 [4] what are the Flat series (in calibration series) for ? are they sky or 
 dome flats ? 
 
-[5] JF req : create gainmap with "skyflat_high_level - skyflat_low_level" (and dithered);
-what kind of skyflat are they ? skyflats with fixed EXP_TIME or fixed EXP_LEVEL ?
+[5] JF req : create gainmap with "skyflat_high_level - skyflat_low_level" (and 
+dithered); what kind of skyflat are they ? skyflats with fixed EXP_TIME or 
+fixed EXP_LEVEL ?
 
 [6] How to process dark series (lineal, log) in the QL ? DarkModel is too heavy ??
 
@@ -166,17 +169,21 @@ from frame N1 to N2 (save -r N1 N2) ?
 
 [8] flat on/off command --> CS: not implemented yet, but could be 'tele flat on/off' 
 [9] windows command
-[10] cold-stop mask --> se puede mover desde GEIRS, pero parece que GEIRS no la mueve 
-automaticamente al seleccionar el telescopio al iniciar GEIRS. CS dice que habrá una máquina 
-para cada telescopio. Pero en cualquier caso se puede mover con el comando filter.
+[10] cold-stop mask --> se puede mover desde GEIRS, pero parece que GEIRS no 
+la mueve automaticamente al seleccionar el telescopio al iniciar GEIRS. CS 
+dice que habrá una máquina para cada telescopio. Pero en cualquier caso se 
+puede mover con el comando filter.
 
  
 
 Q to JF
 =======
-- should PAPI process cubes or individual saved data files ? currently not supported -> si, imnplementar, puede ser necesario
-- how to proceed with dark serial (lineal, log ,etc ) ? it takes long time to compute --> OK, QL no necesario, sólo lo básico
-Me comentó que lo normal es tomar DARKs con el mismo EXPT y NCOADDS que las imágenes de ciencia
+- should PAPI process cubes or individual saved data files ? currently not 
+supported -> si, imnplementar, puede ser necesario
+- how to proceed with dark serial (lineal, log ,etc ) ? it takes long time 
+to compute --> OK, QL no necesario, sólo lo básico
+Me comentó que lo normal es tomar DARKs con el mismo EXPT y NCOADDS que las 
+imágenes de ciencia
 
 - diff between flats in calibrations series and fixed exp. time
 - dither pattern for extended objects (
@@ -192,43 +199,105 @@ TO BE DONE
 
 NOTES FROM THE VISIT
 ====================
-- Prepare a list things we need and should be implemented into GEIRS by CS
+- All the software (OT, QL, PL) was installed in the irws2 workstation during
+the first day.
+
+- JF ask to us to prepare a list things we need and should be implemented into 
+GEIRS by CS
 
 *) OT
 ~~~~~
-- In principle, the supported readout modes are the double correlated (lir, rrr-mpia), but
-the final desicion will be taken during the commissioning. 
-- Because GEIRS will not implement the dome flat lamps control (on/off), the OT will 
-command and control them via the shell commands supported by CA (E.Guindos)
-- The filter wheel software is not completed in GEIRS, so we run the tests with the 
-filter wheel in simulation mode.
-- cold-stop filter wheel possition could be moved by OT with the filter command, but 
-in principle it will not be done by the OT; it will be done by GEIRS. That filter wheel
-has a not very long life-time, so it is better do not move too much.
-- In principle, reset in Dark/Flat series is not required but cnad    
-    
+- In principle, the supported readout modes are the double correlated (lir, 
+rrr-mpia), but the final desicion will be taken during the commissioning. 
+- Because GEIRS will not implement the dome flat lamps control (on/off), the OT
+ will command and control them via the shell commands supported by CA (E.Guindos)
+- The filter wheel software is not completed in GEIRS, so we run the tests with 
+the filter wheel in simulation mode.
+- cold-stop filter wheel possition could be moved by OT with the filter command, 
+but in principle it will not be done by the OT; it will be done by GEIRS. That 
+filter wheel has a not very long life-time, so it is better do not move too much.
+- In principle, reset in Dark/Flat series is not required but because they are 
+implemented in OT, we can be keep them.
+- New way to specify the Total exposition time ( 3+2 boxes, Total Exp.Time, 
+single exp. time, IT, and to be calculated #coadds and #dither positions)
+- Add the option for reading a .txt file (target, exp.times, readout, dither 
+patt) in order to create automatycally the OBs required in the OT.
+- Must be possible to stop and re-start the execution of any OB at a given 
+position.
+- OT should show the Total Exposure time of OB and the total time required 
+for the execution (lap time taking into accound the overheads)
+- Some sounds in OT are required in order to follow its work & status
+
+- Concerning the Nodding procedures (S-T-T-S-T-S- etc) JF has not a clear idea
+how to procedd, and suggest ask to CA staff (Ana Guijarro, Ulli, etc) to find
+out the best patterns.
+ 
 *) QL
 ~~~~~
-- Must be possible to check the photometry of a specific star in selected in the display. 
-In principle, imexam or qphot can be good options, taking into accound the ZP computed.
-- In principles, the QL will not support dark series, so the dark model routine will not 
-be launched with that kind of series.  
+- Must be possible to check the photometry of a specific star in selected in 
+the display. 
+In principle, imexam or qphot can be good options, taking into accound the ZP 
+computed.
+- In principles, the QL will not support dark series, so the dark model routine 
+will not be launched with that kind of series.  
+
 *) PL
 ~~~~~
-- Should be possible to modify some of the pipeline tasks parameters (iraf config, SExtractor, etc) 
-and run again the data reducion with the new setup
-- In principle, all the readout modes (rrr-mpia, lir, etc) will be processed in the same way, 
-no special differences for PAPI.
-- Should be available some routines for health-check of the instrument, so they can be executed
-periodically and the results stored into a DB for historical review. JF will provided his MIDAS 
-routines than can be used (and translated to Python) for this purpose. In addition, CA has a sytem
-for that store that values, so we should integrate with their system.
+- current implementations for focusing evaluation (iraf.starfocus & 
+eval_focus_serie) look like good for JF 
+- Should be possible to modify some of the pipeline tasks parameters (iraf 
+config, SExtractor, etc) and run again the data reducion with the new setup
+- In principle, all the readout modes (rrr-mpia, lir, etc) will be processed 
+in the same way, no special differences for PAPI.
+- Should be available some routines for health-check of the instrument, so they 
+can be executed periodically and the results stored into a DB for historical 
+review. JF will provided his MIDAS routines than can be used (and translated 
+to Python) for this purpose. In addition, CA has a sytem for that store that 
+values, so we should integrate with their system.
 - A list with the main pipeline routines and a brief explanation of what they do.
 - Review the FITS headers in order the ask CS what new keywords are needed.
-- The science sequences files must have the same readout and saving features (readmode, EXPT, 
-NCOADD,etc),and the mask dark should match with them as well.   
-- should be supported the data proccessing of data when they are saved as cubes or individual; 
-currently only integrated mode is supported. It means changes in all the routines.
- 
+- The science sequences files must have the same readout and saving features 
+(readmode, EXPT, NCOADD,etc),and the mask dark should match with them as well.   
+- should be supported the data proccessing of data when they are saved as cubes
+or individual; currently only integrated mode is supported. It means changes 
+in all the routines.
+- Because must be possible to stop and re-start the execution of any OB at a 
+given position, the PL should have some tool to try to fix the OT-headers 
+keys in order to set a new sequence numbering to allow the automatic processing.
 
+- Data processing in parallel was successfully tested; a improvement of a 
+factor of 3 is achieved
+
+- In principle, no problems running GEIRS-OT-QL-PL in the same computer 
+(2xquad core CPU with 32GB RAM) --> well, we got some error running read in 
+GEIRS while all process were running ( GEIRS, OT, PL with HAWK-I-3 S3, QL); CS
+thinkg it could be related with the CPU load. We repeat the test after reboot
+the workstation and got again the same error in the 'read' command (well, OT get
+the error during the 'sync' command, but all point and CS that the problem was
+in the readout) 
+ 
+- Photometric estimation routine was shown to JF with a data set from ALHAMBRA; 
+he think the procedure is OK and enought, but the difference value between 
+ZP_intercept and ZP_median is too big, they should be the same, and the slope 
+must be 1, and not 0.9. He does not like too much to see the fit plot with the
+fitting values and the negative values in the InstMag. The only thing the
+astronomer what to see is the ZP and/or the magnitude of each star.
+He confirm that the STD is the precission of the photometry.  
+JF suggest that review the SExtractor parameters (aperture values) because the
+error might be flux computation (some flux is lost)
+In addition, JF suggest that run the photometry routine in the individual images
+ and check that the ZP is consistent (the same value for each image).  
+
+Todo
+
+ITEMS for Clemens
+=================
+- dome flat lamp on/off 
+- Fix bug in 'lir' mode that set IT to 5615secs
+- subwindow commands
+- filter wheel software not completelly finished
+- some FITS keywords would be needed (SAVEMODE, DETECTOR parameters, ...)
+- better way to know if GEIRS is running in order to avoid a bad initialization
+- Give JF the extra keywords required by the OT/PL
+- median command should return the values instead of read them from a text file
 

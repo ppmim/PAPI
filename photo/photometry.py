@@ -26,12 +26,18 @@ Module to do some photometry functionalities
 from optparse import OptionParser
 import sys
 import os
-import atpy 
-import matplotlib.pyplot as plt
-import numpy
 import math
-import pylab
 
+import atpy 
+import numpy
+
+import matplotlib
+matplotlib.use('TkAgg')
+
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+import matplotlib.cm as cm
+import pylab
             
 import catalog_query
 
@@ -203,9 +209,11 @@ def generate_phot_comp_plot ( input_catalog, filter, expt = 1.0 ,
 def compute_regresion ( vo_catalog, column_x, column_y , 
                         output_filename="/tmp/linear_fit.pdf"):
     """
-    @summary: Compute and Plot the linear regression of two columns of the input vo_catalog
-    @param column_x: column number for X values of the regression
-    @param column_y: column number for Y values of the regression ( filter )
+    @summary: Compute and Plot the linear regression of two columns of the 
+              input vo_catalog
+    @param column_x: column number for X values of the regression (MAG_AUTO)
+    @param column_y: column number for Y values of the regression ( 2MASS 
+                     column name for photometric value )
     
     @return: tuple with linear fit parameters and a Plot showing the fit
              a - intercept 
@@ -241,8 +249,8 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
         
     #X = -2.5 * numpy.log10(table_new['FLUX_AUTO']/1.0)
     filter = column_y
-    X = table_new[column_x]
-    Y = table_new[column_y]
+    X = table_new[column_x] # MAG_AUTO = -2.5 * numpy.log10(table_new['FLUX_AUTO']/1.0)
+    Y = table_new[column_y] # 2MASS photometric value
    
    
     #remove the NaN values 
@@ -274,13 +282,13 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
     log.debug("Zero Point (from polyfit) =%f", a)
     
     
-    # Compute the ZP as the median  of all per-star ZP=(Mag_2mass-Mag_Inst)
+    # Compute the ZP as the median of all per-star ZP=(Mag_2mass-Mag_Inst)
     zps = n_Y - n_X 
     zp = numpy.median(zps)
     #zp = a
     log.debug("Initial ZP(median) = %f"%zp)
     zp_sigma = numpy.std(zps)
-    print "ZPS=",zps
+    #print "ZPS=",zps
     # do a kind of sigma-clipping
     zp_c = numpy.median(zps[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)])
     log.debug("ZP_sigma=%f"%zp_sigma)
@@ -500,6 +508,8 @@ def doPhotometry(input_image, catalog, output_filename):
     sex.config['CATALOG_NAME'] = image_catalog
     sex.config['DETECT_THRESH'] = 1.5
     sex.config['DETECT_MINAREA'] = 5
+    sex.config['MAG_ZEROPOINT'] = 0 #26.56
+    
     
     try:
         sex.run(input_image, updateconfig=True, clean=False)
@@ -507,7 +517,7 @@ def doPhotometry(input_image, catalog, output_filename):
         log.error("Canno't create SExtractor catalog : %s", str(e))
         raise e 
             
-    ## 1 - Generate region of base catalog
+    ## 1 - Generate region of base catalog (2MASS)
     icat = catalog_query.ICatalog ()
     out_base_catalog = os.getcwd() + "/catalog_region.xml"
     sr = 500 # arcsec
@@ -550,7 +560,7 @@ def doPhotometry(input_image, catalog, output_filename):
     try:
         exptime = 1.0 # SWARP normalize flux to 1 sec
         file_ext = output_filename.split(".")[1]
-        output_filename_2 = output_filename.replace("."+file_ext,"_2."+file_ext) 
+        output_filename_2 = output_filename.replace("." + file_ext,"_2."+file_ext) 
         plot_file = generate_phot_comp_plot ( match_cat, two_mass_col_name, exptime, 
                                               output_filename_2, 
                                               out_format='pdf')

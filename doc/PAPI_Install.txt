@@ -293,6 +293,10 @@ reset nmisc = /iraf/extern/nmisc
 task nmisc = nmisc$nmisc.cl
 
 
+Fix the bug in mscimarith:
+
+
+
 3) stsci_python 2.12
 --------------------
 -Download source package from

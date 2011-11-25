@@ -437,8 +437,8 @@ if __name__ == "__main__":
                                      options.master_bpm,
                                      options.normalize)
         mTwFlat.createMaster()
-    except:
-        log.error("Unexpected error: %s", sys.exc_info()[0])
+    except Exception,e:
+        log.error("Unexpected error: %s", str(e))
         raise
         sys.exit(1)
     
