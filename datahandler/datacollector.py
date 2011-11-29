@@ -109,6 +109,8 @@ class DataCollector (object):
        
     def __listFilesMJD(self, dirpath):
         """
+    	-- NOT USED -- !!!
+    	
     	Sort out input data files by MJD
     	
     	@NOTE: be careful, it could be a heavy routine    
@@ -164,6 +166,52 @@ class DataCollector (object):
     
         return sorted_files
 
+    def read_GEIRS_fitsLog(self, type=1, start_datetime=None, end_datetime=None):
+        """
+        @summary: Function to read at self.source the GEIRS log files listing 
+        the FITS files created. There are two options: 
+            - ~GEIRS/log/save_CA2.2m.log
+            - ~/tmp/fitsfiles.corrected
+        
+        @param type: 1 if source is a 'save_CA2.2m.log' file or 2 if it is a 
+        fitsfiles.corrected.
+        
+        @param start_date: datetime object for the first file to consider, 
+        where start to look for.
+        @param end_date: datetime object for the last file to consider, 
+        where end to look for.
+        
+        @return: A list with all the files read from the log file
+                
+        """  
+    
+        if start_datetime==None:
+            l_start_datetime = datetime.datetime.now()-datetime.timedelta(days=1)    
+        if end_datetime==None:
+            l_end_datetime = datetime.datetime.now()
+        if l_end_datetime < l_start_datetime:
+             print "[DC] Error, end_datetime < start_datetime !"
+             return []
+         
+         
+        # Read the file contents from a generated GEIRS file
+        if type == 1:
+            for line in fileinput.input(self.source):
+                sline = string.split(line)
+                if sline[0]!="#":
+                    contents.append(sline[6])
+                    #print "FILE = ", sline[6]
+        # To read ~/tmp/fitsfiles.corrected
+        elif type == 2:
+            # Read the file contents from a generated GEIRS file
+            for line in fileinput.input(self.source):
+                sline = string.split(line)
+                if sline[0][0]!="#" and sline[1]!="ERROR":
+                    contents.append(sline[1])
+                    #print "FILE = ", sline[6]
+                
+        
+        
     def findNewFiles(self):
     
         """
@@ -183,19 +231,19 @@ class DataCollector (object):
             # Read the file contents
             contents = [line for line in fileinput.input(self.source)]
         # To read ~/GEIRS/log/save_CA2.2m.log
-	elif self.mode=="geirs-file":
+        elif self.mode=="geirs-file":
             # Read the file contents from a generated GEIRS file
             for line in fileinput.input(self.source):
                 sline = string.split(line)
                 if sline[0]!="#":
                     contents.append(sline[6])
                     #print "FILE = ", sline[6]
-	# To read ~/tmp/fitsfiles.corrected
+        # To read ~/tmp/fitsfiles.corrected
         elif self.mode=="geirs-file2":
             # Read the file contents from a generated GEIRS file
             for line in fileinput.input(self.source):
                 sline = string.split(line)
-                if sline[0]!="#" and sline[1]!="ERROR":
+                if sline[0][0]!="#" and sline[1]!="ERROR":
                     contents.append(sline[1])
                     #print "FILE = ", sline[6]
                 

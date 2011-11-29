@@ -32,7 +32,7 @@ import atpy
 import numpy
 
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab

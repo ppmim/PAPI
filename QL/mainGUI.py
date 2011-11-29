@@ -151,10 +151,14 @@ class MainGUI(panicQL):
         
         
         # Default run mode
-        if  self.config_opts['quicklook']['run_mode']=="None": self.comboBox_QL_Mode.setCurrentItem(0)
-        elif self.config_opts['quicklook']['run_mode']=="Lazy": self.comboBox_QL_Mode.setCurrentItem(1)
-        elif self.config_opts['quicklook']['run_mode']=="PreReduction": self.comboBox_QL_Mode.setCurrentItem(2)
-        else: self.comboBox_QL_Mode.setCurrentItem(0)
+        if  self.config_opts['quicklook']['run_mode']=="None": 
+            self.comboBox_QL_Mode.setCurrentItem(0)
+        elif self.config_opts['quicklook']['run_mode']=="Lazy": 
+            self.comboBox_QL_Mode.setCurrentItem(1)
+        elif self.config_opts['quicklook']['run_mode']=="PreReduction": 
+            self.comboBox_QL_Mode.setCurrentItem(2)
+        else: 
+            self.comboBox_QL_Mode.setCurrentItem(0)
         
         self.group_by = self.config_opts['general']['group_by'].lower()
             
