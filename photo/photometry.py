@@ -412,14 +412,18 @@ class STILTSwrapper (object):
         @summary: do catalogs cross-match
         
         @param cat1,cat2: catalogs for cross-matching
-        @param err: max. error for finding objects within (arcseconds)
-        @param out_filename: filename where results will be saved;if absent, 
-                the location will be a tempfile with a generated name
-        @param out_format: format of the output generated; current options available are:
-            - VO Table (XML) (votable) (default)
-            - SVC (Software handshaking structure) message (svc)
-            - ASCII table (ascii)
-        @return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+        
+	@param err: max. error for finding objects within (arcseconds)
+        
+	@param out_filename: filename where results will be saved;if absent, 
+        the location will be a tempfile with a generated name
+        
+	@param out_format: format of the output generated; current options available are:
+        - VO Table (XML) (votable) (default)
+        - SVC (Software handshaking structure) message (svc)
+        - ASCII table (ascii)
+        
+	@return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
         """
         
         in1 = cat1

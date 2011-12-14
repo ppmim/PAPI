@@ -1,0 +1,647 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>astromatic.sextractor &mdash; PAPI 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="PAPI 1.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">PAPI 1.0.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for astromatic.sextractor</h1><div class="highlight"><pre>
+<span class="c"># ======================================================================</span>
+<span class="c">#</span>
+<span class="c"># sextractor module.</span>
+<span class="c">#</span>
+<span class="c"># Author: Laurent Le Guillou &lt;llg@lpnhe.in2p3.fr&gt;</span>
+<span class="c">#</span>
+<span class="c"># $Id: sextractor.py,v 1.14 2005/02/14 19:27:31 laurentl Exp $</span>
+<span class="c">#</span>
+<span class="c"># ======================================================================</span>
+<span class="c">#</span>
+<span class="c"># &quot;sextractor&quot;: wrapper around SExtractor.</span>
+<span class="c">#</span>
+<span class="c"># ======================================================================</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A wrapper for SExtractor</span>
+
+<span class="sd">A wrapper for SExtractor, the Source Extractor.</span>
+<span class="sd">by Laurent Le Guillou</span>
+<span class="sd">version: 0.1.5 - last modified: 2005-02-14</span>
+<span class="sd">version: 0.1.6 - last modified: 2011-06-17 by jmiguel@iaa.es </span>
+<span class="sd">                 Substituted popen2.popen4 with subprocess.Popen </span>
+
+<span class="sd">This wrapper allows you to configure SExtractor, run it and get</span>
+<span class="sd">back its outputs without the need of editing SExtractor</span>
+<span class="sd">configuration files. by default, configuration files are created</span>
+<span class="sd">on-the-fly, and SExtractor is run silently via python.</span>
+
+<span class="sd">Tested on SExtractor versions 2.2.1 and 2.3.2.</span>
+
+
+<span class="sd">Example of use:</span>
+
+<span class="sd">-----------------------------------------------------------------</span>
+
+<span class="sd">    import sextractor</span>
+
+<span class="sd">    # Create a SExtractor instance</span>
+<span class="sd">    sex = sextractor.SExtractor()</span>
+
+<span class="sd">    # Modify the SExtractor configuration</span>
+<span class="sd">    sex.config[&#39;GAIN&#39;] = 0.938</span>
+<span class="sd">    sex.config[&#39;PIXEL_SCALE&#39;] = .19</span>
+<span class="sd">    sex.config[&#39;VERBOSE_TYPE&#39;] = &quot;FULL&quot;</span>
+<span class="sd">    sex.config[&#39;CHECKIMAGE_TYPE&#39;] = &quot;BACKGROUND&quot;</span>
+
+<span class="sd">    # Add a parameter to the parameter list</span>
+<span class="sd">    sex.config[&#39;PARAMETERS_LIST&#39;].append(&#39;FLUX_BEST&#39;)</span>
+
+<span class="sd">    # Lauch SExtractor on a FITS file</span>
+<span class="sd">    sex.run(&quot;nf260002.fits&quot;)</span>
+
+<span class="sd">    # Read the resulting catalog [first method, whole catalog at once]</span>
+<span class="sd">    catalog = sex.catalog()</span>
+<span class="sd">    for star in catalog:</span>
+<span class="sd">        print star[&#39;FLUX_BEST&#39;], star[&#39;FLAGS&#39;]</span>
+<span class="sd">        if (star[&#39;FLAGS&#39;] &amp; sextractor.BLENDED):</span>
+<span class="sd">            print &quot;This star is BLENDED&quot;</span>
+
+<span class="sd">    # Read the resulting catalog [second method, whole catalog at once]</span>
+<span class="sd">    catalog_name = sex.config[&#39;CATALOG_NAME&#39;]</span>
+<span class="sd">    catalog_f = sextractor.open(catalog_name)</span>
+<span class="sd">    catalog = catalog_f.readlines()</span>
+<span class="sd">    for star in catalog:</span>
+<span class="sd">        print star[&#39;FLUX_BEST&#39;], star[&#39;FLAGS&#39;]</span>
+<span class="sd">        if (star[&#39;FLAGS&#39;] &amp; sextractor.BLENDED):</span>
+<span class="sd">            print &quot;This star is BLENDED&quot;</span>
+<span class="sd">    catalog_f.close()</span>
+
+<span class="sd">    # Read the resulting catalog [third method, star by star]</span>
+<span class="sd">    catalog_name = sex.config[&#39;CATALOG_NAME&#39;]</span>
+<span class="sd">    catalog_f = sextractor.open(catalog_name)</span>
+<span class="sd">    star = catalog_f.readline()</span>
+<span class="sd">    while star:</span>
+<span class="sd">        print star[&#39;FLUX_BEST&#39;], star[&#39;FLAGS&#39;]</span>
+<span class="sd">        if (star[&#39;FLAGS&#39;] &amp; sextractor.BLENDED):</span>
+<span class="sd">            print &quot;This star is BLENDED&quot;</span>
+<span class="sd">        star = catalog_f.readline()</span>
+<span class="sd">    catalog_f.close()</span>
+
+<span class="sd">    # Removing the configuration files, the catalog and</span>
+<span class="sd">    # the check image</span>
+<span class="sd">    sex.clean(config=True, catalog=True, check=True)</span>
+
+<span class="sd">-----------------------------------------------------------------</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># ======================================================================</span>
+
+<span class="kn">import</span> <span class="nn">__builtin__</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">exceptions</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">from</span> <span class="nn">sexcatalog</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="c"># PAPI packages</span>
+<span class="kn">import</span> <span class="nn">misc.utils</span>
+
+<span class="c"># ======================================================================</span>
+
+<span class="c">#__version__ = &quot;0.1.5 (2005-02-14)&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;0.1.6 (2011-05-17)&quot;</span>
+
+<span class="c"># ======================================================================</span>
+
+<div class="viewcode-block" id="SExtractorException"><a class="viewcode-back" href="../../api.html#astromatic.sextractor.SExtractorException">[docs]</a><span class="k">class</span> <span class="nc">SExtractorException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="c"># ======================================================================</span>
+</div>
+<span class="n">nnw_config</span> <span class="o">=</span> \
+<span class="sd">&quot;&quot;&quot;NNW</span>
+<span class="sd"># Neural Network Weights for the SExtractor star/galaxy classifier (V1.3)</span>
+<span class="sd"># inputs:	9 for profile parameters + 1 for seeing.</span>
+<span class="sd"># outputs:	``Stellarity index&#39;&#39; (0.0 to 1.0)</span>
+<span class="sd"># Seeing FWHM range: from 0.025 to 5.5&#39;&#39; (images must have 1.5 &lt; FWHM &lt; 5 pixels)</span>
+<span class="sd"># Optimized for Moffat profiles with 2&lt;= beta &lt;= 4.</span>
+
+<span class="sd"> 3 10 10  1</span>
+
+<span class="sd">-1.56604e+00 -2.48265e+00 -1.44564e+00 -1.24675e+00 -9.44913e-01 -5.22453e-01  4.61342e-02  8.31957e-01  2.15505e+00  2.64769e-01</span>
+<span class="sd"> 3.03477e+00  2.69561e+00  3.16188e+00  3.34497e+00  3.51885e+00  3.65570e+00  3.74856e+00  3.84541e+00  4.22811e+00  3.27734e+00</span>
+
+<span class="sd">-3.22480e-01 -2.12804e+00  6.50750e-01 -1.11242e+00 -1.40683e+00 -1.55944e+00 -1.84558e+00 -1.18946e-01  5.52395e-01 -4.36564e-01 -5.30052e+00</span>
+<span class="sd"> 4.62594e-01 -3.29127e+00  1.10950e+00 -6.01857e-01  1.29492e-01  1.42290e+00  2.90741e+00  2.44058e+00 -9.19118e-01  8.42851e-01 -4.69824e+00</span>
+<span class="sd">-2.57424e+00  8.96469e-01  8.34775e-01  2.18845e+00  2.46526e+00  8.60878e-02 -6.88080e-01 -1.33623e-02  9.30403e-02  1.64942e+00 -1.01231e+00</span>
+<span class="sd"> 4.81041e+00  1.53747e+00 -1.12216e+00 -3.16008e+00 -1.67404e+00 -1.75767e+00 -1.29310e+00  5.59549e-01  8.08468e-01 -1.01592e-02 -7.54052e+00</span>
+<span class="sd"> 1.01933e+01 -2.09484e+01 -1.07426e+00  9.87912e-01  6.05210e-01 -6.04535e-02 -5.87826e-01 -7.94117e-01 -4.89190e-01 -8.12710e-02 -2.07067e+01</span>
+<span class="sd">-5.31793e+00  7.94240e+00 -4.64165e+00 -4.37436e+00 -1.55417e+00  7.54368e-01  1.09608e+00  1.45967e+00  1.62946e+00 -1.01301e+00  1.13514e-01</span>
+<span class="sd"> 2.20336e-01  1.70056e+00 -5.20105e-01 -4.28330e-01  1.57258e-03 -3.36502e-01 -8.18568e-02 -7.16163e+00  8.23195e+00 -1.71561e-02 -1.13749e+01</span>
+<span class="sd"> 3.75075e+00  7.25399e+00 -1.75325e+00 -2.68814e+00 -3.71128e+00 -4.62933e+00 -2.13747e+00 -1.89186e-01  1.29122e+00 -7.49380e-01  6.71712e-01</span>
+<span class="sd">-8.41923e-01  4.64997e+00  5.65808e-01 -3.08277e-01 -1.01687e+00  1.73127e-01 -8.92130e-01  1.89044e+00 -2.75543e-01 -7.72828e-01  5.36745e-01</span>
+<span class="sd">-3.65598e+00  7.56997e+00 -3.76373e+00 -1.74542e+00 -1.37540e-01 -5.55400e-01 -1.59195e-01  1.27910e-01  1.91906e+00  1.42119e+00 -4.35502e+00</span>
+
+<span class="sd">-1.70059e+00 -3.65695e+00  1.22367e+00 -5.74367e-01 -3.29571e+00  2.46316e+00  5.22353e+00  2.42038e+00  1.22919e+00 -9.22250e-01 -2.32028e+00</span>
+
+
+<span class="sd"> 0.00000e+00 </span>
+<span class="sd"> 1.00000e+00 </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># ======================================================================</span>
+
+<div class="viewcode-block" id="SExtractor"><a class="viewcode-back" href="../../api.html#astromatic.sextractor.SExtractor">[docs]</a><span class="k">class</span> <span class="nc">SExtractor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A wrapper class to transparently use SExtractor.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_SE_config</span> <span class="o">=</span> <span class="p">{</span> 
+        <span class="s">&quot;CATALOG_NAME&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;name of the output catalog&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;py-sextractor.cat&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;CATALOG_TYPE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span>
+         <span class="s">&#39;&quot;NONE&quot;,&quot;ASCII_HEAD&quot;,&quot;ASCII&quot;,&quot;FITS_1.0&quot; or &quot;FITS_LDAC&quot;&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;ASCII_HEAD&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;PARAMETERS_NAME&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;name of the file containing catalog contents&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;py-sextractor.param&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;DETECT_TYPE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;&quot;CCD&quot; or &quot;PHOTO&quot;&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;CCD&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;FLAG_IMAGE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;filename for an input FLAG-image&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;flag.fits&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;DETECT_MINAREA&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;minimum number of pixels above threshold&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+        
+        <span class="s">&quot;DETECT_THRESH&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;&lt;sigmas&gt; or &lt;threshold&gt;,&lt;ZP&gt; in mag.arcsec-2&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">},</span>
+        
+        <span class="s">&quot;ANALYSIS_THRESH&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;&lt;sigmas&gt; or &lt;threshold&gt;,&lt;ZP&gt; in mag.arcsec-2&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">},</span>
+        
+        <span class="s">&quot;FILTER&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;apply filter for detection (&quot;Y&quot; or &quot;N&quot;)&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&#39;Y&#39;</span><span class="p">},</span>
+        
+        <span class="s">&quot;FILTER_NAME&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;name of the file containing the filter&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;py-sextractor.conv&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;DEBLEND_NTHRESH&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Number of deblending sub-thresholds&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">},</span>
+        
+        <span class="s">&quot;DEBLEND_MINCONT&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Minimum contrast parameter for deblending&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">0.005</span><span class="p">},</span>
+        
+        <span class="s">&quot;CLEAN&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Clean spurious detections (Y or N)&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&#39;Y&#39;</span><span class="p">},</span>
+        
+        <span class="s">&quot;CLEAN_PARAM&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Cleaning efficiency&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+        
+        <span class="s">&quot;MASK_TYPE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;type of detection MASKing: can be one of &quot;NONE&quot;, &quot;BLANK&quot; or &quot;CORRECT&quot;&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;CORRECT&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;PHOT_APERTURES&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;MAG_APER aperture diameter(s) in pixels&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+        
+        <span class="s">&quot;PHOT_AUTOPARAMS&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;MAG_AUTO parameters: &lt;Kron_fact&gt;,&lt;min_radius&gt;&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">]},</span>
+        
+        <span class="s">&quot;SATUR_LEVEL&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;level (in ADUs) at which arises saturation&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">300000.0</span><span class="p">},</span>
+        
+        <span class="s">&quot;MAG_ZEROPOINT&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;magnitude zero-point&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        
+        <span class="s">&quot;MAG_GAMMA&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;gamma of emulsion (for photographic scans)&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span>
+        
+        <span class="s">&quot;GAIN&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;detector gain in e-/ADU&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">8.0</span><span class="p">},</span>
+        
+        <span class="s">&quot;PIXEL_SCALE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;size of pixel in arcsec (0=use FITS WCS info)&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        
+        <span class="s">&quot;SEEING_FWHM&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;stellar FWHM in arcsec&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+        
+        <span class="s">&quot;STARNNW_NAME&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Neural-Network_Weight table filename&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;py-sextractor.nnw&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;BACK_SIZE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Background mesh: &lt;size&gt; or &lt;width&gt;,&lt;height&gt;&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">},</span>
+        
+        <span class="s">&quot;BACK_FILTERSIZE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Background filter: &lt;size&gt; or &lt;width&gt;,&lt;height&gt;&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+        
+        <span class="s">&quot;BACKPHOTO_TYPE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;can be &quot;GLOBAL&quot; or &quot;LOCAL&quot;&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;GLOBAL&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;CHECKIMAGE_TYPE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;can be one of &quot;NONE&quot;, &quot;BACKGROUND&quot;, &quot;MINIBACKGROUND&quot;, &quot;-BACKGROUND&quot;, &quot;OBJECTS&quot;, &quot;-OBJECTS&quot;, &quot;SEGMENTATION&quot;, &quot;APERTURES&quot;, or &quot;FILTERED&quot;&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;NONE&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;CHECKIMAGE_NAME&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;Filename for the check-image&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;check.fits&quot;</span><span class="p">},</span>
+        
+        <span class="s">&quot;MEMORY_OBJSTACK&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;number of objects in stack&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">3000</span><span class="p">},</span>
+        
+        <span class="s">&quot;MEMORY_PIXSTACK&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;number of pixels in stack&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">300000</span><span class="p">},</span>
+        
+        <span class="s">&quot;MEMORY_BUFSIZE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&quot;number of lines in buffer&quot;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">},</span>
+        
+        <span class="s">&quot;VERBOSE_TYPE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;can be &quot;QUIET&quot;, &quot;NORMAL&quot; or &quot;FULL&quot;&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;QUIET&quot;</span><span class="p">},</span>
+
+        <span class="c"># -- Extra-keys (will not be saved in the main configuration file</span>
+
+        <span class="s">&quot;PARAMETERS_LIST&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;[Extra key] catalog contents (to put in PARAMETERS_NAME)&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;NUMBER&quot;</span><span class="p">,</span> <span class="s">&quot;XWIN_IMAGE&quot;</span><span class="p">,</span> <span class="s">&quot;YWIN_IMAGE&quot;</span><span class="p">,</span><span class="s">&quot;ERRAWIN_IMAGE&quot;</span><span class="p">,</span>
+                   <span class="s">&quot;ERRBWIN_IMAGE&quot;</span><span class="p">,</span> 
+                   <span class="s">&quot;FLUX_BEST&quot;</span><span class="p">,</span> <span class="s">&quot;FLUXERR_BEST&quot;</span><span class="p">,</span> 
+                   <span class="s">&quot;X_IMAGE&quot;</span><span class="p">,</span> <span class="s">&quot;Y_IMAGE&quot;</span><span class="p">,</span> <span class="s">&quot;X_WORLD&quot;</span><span class="p">,</span> <span class="s">&quot;Y_WORLD&quot;</span><span class="p">,</span> 
+                   <span class="s">&quot;FLAGS&quot;</span><span class="p">,</span> <span class="s">&quot;FWHM_IMAGE&quot;</span><span class="p">,</span><span class="s">&quot;FLUX_RADIUS&quot;</span><span class="p">,</span><span class="s">&quot;FLUX_AUTO&quot;</span><span class="p">,</span> 
+                   <span class="s">&quot;FLUXERR_AUTO&quot;</span><span class="p">,</span> <span class="s">&quot;MAG_AUTO&quot;</span><span class="p">,</span> <span class="s">&quot;MAG_APER&quot;</span><span class="p">,</span><span class="s">&quot;ISOAREA_IMAGE&quot;</span><span class="p">,</span><span class="s">&quot;ISOAREAF_IMAGE&quot;</span><span class="p">]},</span>
+
+        <span class="s">&quot;CONFIG_FILE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;[Extra key] name of the main configuration file&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;py-sextractor.sex&quot;</span><span class="p">},</span>
+
+        <span class="s">&quot;FILTER_MASK&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;Array to put in the FILTER_MASK file&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]},</span>
+        <span class="c">#-------------------------------- WEIGHTing ----------------------------------</span>
+        <span class="s">&quot;WEIGHT_TYPE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;type of WEIGHTing: NONE, BACKGROUND, MAP_RMS, MAP_VAR or MAP_WEIGHT&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;NONE&quot;</span><span class="p">},</span>
+         
+        <span class="s">&quot;WEIGHT_IMAGE&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;weight-map filename&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;weight.fits&quot;</span><span class="p">},</span>
+         
+        <span class="s">&quot;WEIGHT_GAIN&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;modulate gain (E/ADU) with weights? (Y/N)&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;Y&quot;</span><span class="p">},</span>
+         
+        <span class="s">&quot;WEIGHT_THRESH&quot;</span><span class="p">:</span>
+        <span class="p">{</span><span class="s">&quot;comment&quot;</span><span class="p">:</span> <span class="s">&#39;weight threshold[s] for bad pixels&#39;</span><span class="p">,</span>
+         <span class="s">&quot;value&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span><span class="p">}</span>
+          
+         
+        <span class="p">}</span>
+    
+    <span class="c"># -- Special config. keys that should not go into the config. file.</span>
+
+    <span class="n">_SE_config_special_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;PARAMETERS_LIST&quot;</span><span class="p">,</span> <span class="s">&quot;CONFIG_FILE&quot;</span><span class="p">,</span> <span class="s">&quot;FILTER_MASK&quot;</span><span class="p">]</span>
+
+
+    <span class="c"># -- Dictionary of all possible parameters (from sexcatalog.py module)</span>
+
+    <span class="n">_SE_parameters</span> <span class="o">=</span> <span class="n">SExtractorfile</span><span class="o">.</span><span class="n">_SE_keys</span>
+
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        SExtractor class constructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">dict</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">SExtractor</span><span class="o">.</span><span class="n">_SE_config</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s">&quot;value&quot;</span><span class="p">]))</span>\
+                  <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">SExtractor</span><span class="o">.</span><span class="n">_SE_config</span><span class="o">.</span><span class="n">keys</span><span class="p">()]))</span>
+
+        <span class="c"># Extra config parameters that will be added/updated to the current values of the config file (high priority)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ext_config</span> <span class="o">=</span> <span class="p">{}</span>
+              
+        <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+<div class="viewcode-block" id="SExtractor.setup"><a class="viewcode-back" href="../../api.html#astromatic.sextractor.SExtractor.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look for SExtractor program (&#39;sextractor&#39;, or &#39;sex&#39;).</span>
+<span class="sd">        If a full path is provided, only this path is checked.</span>
+<span class="sd">        Raise a SExtractorException if it failed.</span>
+<span class="sd">        Return program and version if it succeed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># -- Finding sextractor program and its version</span>
+        <span class="c"># first look for &#39;sextractor&#39;, then &#39;sex&#39;</span>
+
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sextractor&#39;</span><span class="p">,</span> <span class="s">&#39;sex&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span>
+        
+        <span class="n">selected</span><span class="o">=</span><span class="bp">None</span>
+        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> 
+                    <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">,</span> <span class="n">close_fds</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="n">versionline</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+ 
+                <span class="k">if</span> <span class="p">(</span><span class="n">versionline</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;SExtractor&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">selected</span><span class="o">=</span><span class="n">candidate</span>
+                    <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">continue</span>
+                
+        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">selected</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SExtractorException</span><span class="p">,</span> \
+                  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                  Cannot find SExtractor program. Check your PATH,</span>
+<span class="sd">                  or provide the SExtractor program path in the constructor.</span>
+<span class="sd">                  &quot;&quot;&quot;</span>
+
+        <span class="n">_program</span> <span class="o">=</span> <span class="n">selected</span>
+
+        <span class="c"># print versionline</span>
+        <span class="n">_version_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&quot;[Vv]ersion ([0-9\.])+&quot;</span><span class="p">,</span> <span class="n">versionline</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_version_match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SExtractorException</span><span class="p">,</span> \
+                  <span class="s">&quot;Cannot determine SExtractor version.&quot;</span>
+
+        <span class="n">_version</span> <span class="o">=</span> <span class="n">_version_match</span><span class="o">.</span><span class="n">group</span><span class="p">()[</span><span class="mi">8</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_version</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SExtractorException</span><span class="p">,</span> \
+                  <span class="s">&quot;Cannot determine SExtractor version.&quot;</span>
+
+        <span class="c"># print &quot;Use &quot; + self.program + &quot; [&quot; + self.version + &quot;]&quot;</span>
+
+        <span class="k">return</span> <span class="n">_program</span><span class="p">,</span> <span class="n">_version</span>
+
+
+</div>
+<div class="viewcode-block" id="SExtractor.update_config"><a class="viewcode-back" href="../../api.html#astromatic.sextractor.SExtractor.update_config">[docs]</a>    <span class="k">def</span> <span class="nf">update_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the configuration files according to the current</span>
+<span class="sd">        in-memory SExtractor configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># -- Write filter configuration file</span>
+
+        <span class="c"># First check the filter itself</span>
+
+        <span class="nb">filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;FILTER_MASK&#39;</span><span class="p">]</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">filter</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>   <span class="c"># May raise ValueError, OK</span>
+
+        <span class="n">filter_f</span> <span class="o">=</span> <span class="n">__builtin__</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;FILTER_NAME&#39;</span><span class="p">],</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">filter_f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;CONV NORM</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="n">filter_f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;# </span><span class="si">%d</span><span class="s">x</span><span class="si">%d</span><span class="s"> Generated from sextractor.py module.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+                       <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">:</span>
+            <span class="n">filter_f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="n">row</span><span class="p">)))</span>
+            <span class="n">filter_f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+            
+        <span class="n">filter_f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c"># -- Write parameter list file</span>
+
+        <span class="n">parameters_f</span> <span class="o">=</span> <span class="n">__builtin__</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;PARAMETERS_NAME&#39;</span><span class="p">],</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;PARAMETERS_LIST&#39;</span><span class="p">]:</span>
+            <span class="k">print</span> <span class="o">&gt;&gt;</span><span class="n">parameters_f</span><span class="p">,</span> <span class="n">parameter</span>
+
+        <span class="n">parameters_f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c"># -- Write NNW configuration file</span>
+
+        <span class="n">nnw_f</span> <span class="o">=</span> <span class="n">__builtin__</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;STARNNW_NAME&#39;</span><span class="p">],</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">nnw_f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">nnw_config</span><span class="p">)</span>
+        <span class="n">nnw_f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+        <span class="c"># -- Write main configuration file</span>
+
+        <span class="n">main_f</span> <span class="o">=</span> <span class="n">__builtin__</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;CONFIG_FILE&#39;</span><span class="p">],</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="n">SExtractor</span><span class="o">.</span><span class="n">_SE_config_special_keys</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="s">&quot;PHOT_AUTOPARAMS&quot;</span><span class="p">):</span> <span class="c"># tuple instead of a single value</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            
+            <span class="k">print</span> <span class="o">&gt;&gt;</span><span class="n">main_f</span><span class="p">,</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%-16s</span><span class="s">       </span><span class="si">%-16s</span><span class="s"> # </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">SExtractor</span><span class="o">.</span><span class="n">_SE_config</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s">&#39;comment&#39;</span><span class="p">]))</span>
+
+        <span class="n">main_f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="SExtractor.run"><a class="viewcode-back" href="../../api.html#astromatic.sextractor.SExtractor.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">file</span><span class="p">,</span> <span class="n">updateconfig</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run SExtractor.</span>
+
+<span class="sd">        If updateconfig is True (default), the configuration</span>
+<span class="sd">        files will be updated before running SExtractor.</span>
+
+<span class="sd">        If clean is True (default: False), configuration files </span>
+<span class="sd">        (if any) will be deleted after SExtractor terminates.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">updateconfig</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_config</span><span class="p">()</span>
+
+        <span class="c"># Try to find SExtractor program</span>
+        <span class="c"># This will raise an exception if it failed</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">program</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c"># Compound extra config command line args</span>
+        <span class="n">ext_args</span><span class="o">=</span><span class="s">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ext_config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">ext_args</span><span class="o">=</span><span class="n">ext_args</span> <span class="o">+</span> <span class="s">&quot; -&quot;</span> <span class="o">+</span> <span class="n">key</span><span class="o">+</span> <span class="s">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ext_config</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+        <span class="n">commandline</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="o">+</span> <span class="s">&quot; -c &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;CONFIG_FILE&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s">&quot; &quot;</span> <span class="o">+</span> <span class="n">ext_args</span> <span class="o">+</span> <span class="s">&quot; &quot;</span> <span class="o">+</span> <span class="nb">file</span><span class="p">)</span>
+        
+        <span class="c">#print commandline</span>
+        <span class="n">rcode</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">runCmd</span><span class="p">(</span><span class="n">commandline</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="n">rcode</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SExtractorException</span><span class="p">,</span> \
+                  <span class="s">&quot;SExtractor command [</span><span class="si">%s</span><span class="s">] failed.&quot;</span> <span class="o">%</span> <span class="n">commandline</span>
+            
+        <span class="k">if</span> <span class="n">clean</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+
+</div>
+<div class="viewcode-block" id="SExtractor.catalog"><a class="viewcode-back" href="../../api.html#astromatic.sextractor.SExtractor.catalog">[docs]</a>    <span class="k">def</span> <span class="nf">catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the output catalog produced by the last SExtractor run.</span>
+<span class="sd">        Output is a list of dictionaries, with a dictionary for</span>
+<span class="sd">        each star: {&#39;param1&#39;: value, &#39;param2&#39;: value, ...}.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">output_f</span> <span class="o">=</span> <span class="n">SExtractorfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;CATALOG_NAME&#39;</span><span class="p">],</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">output_f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">output_f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">c</span>
+
+</div>
+<div class="viewcode-block" id="SExtractor.clean"><a class="viewcode-back" href="../../api.html#astromatic.sextractor.SExtractor.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the generated SExtractor files (if any).</span>
+<span class="sd">        If config is True, remove generated configuration files.</span>
+<span class="sd">        If catalog is True, remove the output catalog.</span>
+<span class="sd">        If check is True, remove output check image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">config</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;FILTER_NAME&#39;</span><span class="p">])</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;PARAMETERS_NAME&#39;</span><span class="p">])</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;STARNNW_NAME&#39;</span><span class="p">])</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;CONFIG_FILE&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">catalog</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;CATALOG_NAME&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">check</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;CHECKIMAGE_NAME&#39;</span><span class="p">])</span>
+                
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+
+
+<span class="c"># ======================================================================</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">PAPI 1.0.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, J.M.Ibanez (IAA-CSIC).
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

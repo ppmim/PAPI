@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction &mdash; PAPI 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="PAPI 1.0.1 documentation" href="index.html" />
+    <link rel="next" title="User Guide" href="user_guide.html" />
+    <link rel="prev" title="Welcome to PAPI’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="user_guide.html" title="User Guide"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to PAPI’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PAPI 1.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>PAPI is an automatic image processing pipeline for data taken with the
+PAnoramic Near Infrared Camera (PANIC) on the 2.2m Telescope at Calar Alto Observatory. The pipeline
+currently supports imaging data from camera and is written in Python
+and C making it portable across many platforms. The automated processing
+steps include basic calibration (removeing instrumental signature), cosmic-ray
+removal, treatment for post-SAA cosmic ray persistence and electronic ghosts,
+sky subtraction, non-linear count-rate correction,
+artifact masking, robust alignment and registration for large mosaics,
+weight map generation, and drizzling onto a final image mosaic.</p>
+<p><strong>Development Team:</strong> Jose M. Ibanez (IAA-CSIC)</p>
+<div class="section" id="caveats">
+<h2>Caveats<a class="headerlink" href="#caveats" title="Permalink to this headline">¶</a></h2>
+<p>Currently it is only possible for PANIC to reduce data taken with the
+Observing Tool (OT), but not manually with GEIRS.
+PAPI was primarily developed and optimized for reducing broad-band imaging data of
+extragalactic sources (such as imaging data taken for field galaxy surveys and galaxy cluster surveys).
+Other types imaging data have been reduced with PAPI but YMMV (See <em class="xref std std-ref">troubleshooting</em> for tips).
+PAPI is <strong>not</strong> designed to reduce any kind of field taken with PANIC.</p>
+</div>
+<div class="section" id="prerequisites">
+<span id="index-0"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>These software must be install for PAPI to run:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="http://www.python.org">python</a> (2.4 or 2.5)</li>
+<li><a class="reference external" href="http://www.sqlite.org">sqlite</a> (v3.0 &gt; if using Python 2.4)</li>
+<li><a class="reference external" href="http://initd.org/tracker/pysqlite">pysqlite</a> (v2.2.0 &gt; if using Python 2.4)</li>
+<li><a class="reference external" href="http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python">stsci_python</a> (v2.2 &gt;)</li>
+<li><a class="reference external" href="http://astromatic.iap.fr/software/sextractor/">SExtractor</a> (v2.3.2 &gt;)</li>
+<li><a class="reference external" href="http://hea-www.harvard.edu/RD/ds9">SAO DS9 and XPA</a> (if applying user defined masks)</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="download">
+<span id="index-1"></span><h2>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h2>
+<p>Download the papi_latest.tgz file and the papi_reffiles.tgz file.</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="http://code.google.com/p/panicdrs/files/papi_latests.tgz">papi_latest.tgz</a></li>
+<li><a class="reference external" href="http://code.google.com/p/panicdrs/files/papi_reffiles.tgz">papi_reffiles.tgz</a></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="installing">
+<h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">Unzip and untar the PAPI files in a suitable location.</p>
+<blockquote>
+<div><ul class="simple">
+<li>tar zxf papi_X.X.X.tgz</li>
+<li>ln -s papi_X.X.X papi</li>
+<li>cd papi</li>
+<li>tar zxf papi_reffiles.tgz</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Build the source</p>
+<blockquote>
+<div><ul class="simple">
+<li>cd src</li>
+<li>make</li>
+<li>make install</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Edit <tt class="docutils literal"><span class="pre">papi_setup</span></tt> script</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Modify the PAPI_DIR and PAPI_PIPE in the papi_setup.[sh][.csh] file in the PAPI bin directory</p>
+</li>
+<li><p class="first">Add the papi_setup.[sh][.csh] to your .bash_profile or .cshrc (.tcshrc)</p>
+<blockquote>
+<div><ul class="simple">
+<li>Bash: <tt class="docutils literal"><span class="pre">.</span> <span class="pre">$PAPI_DIR/bin/papi_setup.sh</span></tt></li>
+<li>CSH: <tt class="docutils literal"><span class="pre">source</span> <span class="pre">$PAPI_DIR/bin/papi_setup.csh</span></tt></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+<p>Example papi_setup.sh:</p>
+<div class="highlight-python"><pre>#------------------------------------------------------------------------------
+# User Configurable Settings
+#------------------------------------------------------------------------------
+
+# path to PAPI directory
+export PAPI_DIR=${HOME}/pipelines/papi
+
+# path to PAPI output data products
+export PAPI_PIPE=${HOME}/Data
+
+#------------------------------------------------------------------------------
+# Fixed Settings
+#------------------------------------------------------------------------------
+# path to PAPI reference files
+export PAPI_REF=${PAPI_DIR}/PAPI_REF
+export PATH=${PATH}:${PAPI_DIR}/bin
+export PYTHONPATH=${PYTHONPATH}:${PAPI_DIR}/lib</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#caveats">Caveats</a></li>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#download">Download</a></li>
+<li><a class="reference internal" href="#installing">Installing</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to PAPI&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="user_guide.html"
+                        title="next chapter">User Guide</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/intro.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="user_guide.html" title="User Guide"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to PAPI’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">PAPI 1.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, J.M.Ibanez (IAA-CSIC).
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

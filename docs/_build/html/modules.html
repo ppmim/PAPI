@@ -1,0 +1,349 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Modules &mdash; PAPI 1.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="PAPI 1.0.1 documentation" href="index.html" />
+    <link rel="prev" title="Developer Guide" href="developer_guide.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="developer_guide.html" title="Developer Guide"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PAPI 1.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="modules">
+<h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
+<p>The PAPI pipeline includes N processing steps from basic calibration
+to generating final co-added registered mosaics (See table below). Among these
+steps are steps for successfully handling three of the most common PANIC
+anomalies: electronic ghosting, the pedestal effect and cosmic-ray persistence.
+Electronic ghosts occur when a bright object is observed in one of the four
+quadrants on a PANIC detector. This results in an echo of the bright object
+in the other three quadrants. The module undopuft attempts to remove these
+artifacts. The pedestal effect is the result of variable biases in each of the four
+PANIC quadrants - leaving a significant pedestal signature in the processed
+data.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="81%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Module</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">papi</span></tt></td>
+<td>Ingest uncalibrated data and builds a SQLite database containing fits header data</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">calDark</span></tt></td>
+<td>Removes electronic ghosts (a.k.a. the &#8220;Mr. Staypuft&#8221; effect)</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">calDarkModel</span></tt></td>
+<td>Basic calibration, sky subtraction/pedestal effect removal, cosmic-ray rejection</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">calBPM</span></tt></td>
+<td>Removes cosmic-ray persistence signal if target was observed shortly after the SAA</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">calDomeFlat</span></tt></td>
+<td>Removes residual instrument signatures by subtracting a &#8220;super-median&#8221; reference image</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">calTwFlat</span></tt></td>
+<td>Uses bicubic spline to flatten the background</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">calSuperFlat</span></tt></td>
+<td>Corrects for count-rate non-linearity</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">calGainMap</span></tt></td>
+<td>Apply user-defined masks (optional)</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">calNonLinearity</span></tt></td>
+<td>Uses object matching algorithms to improve image alignment and registration</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">checkQuality</span></tt></td>
+<td>Creates accurate <em>RMS</em> maps for use with MultiDrizzle</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">eval_focus_serie</span></tt></td>
+<td>Creates final CR-cleaned, distortion-free drizzled image mosaics using multidrizzle</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">astrowarp</span></tt></td>
+<td>Create final aligned and coadded frame using SEx,SCAMP and SWARP</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="papi">
+<span id="index-1"></span><h2><tt class="docutils literal"><span class="pre">papi</span></tt><a class="headerlink" href="#papi" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">papi</span></tt> module in the main PAPI routine that start the data reduction.
+It starts by creating a subdirectory in the <tt class="docutils literal"><span class="pre">PAPI_DIR</span></tt> using the run name
+give on the command line.  Within the run directory the following
+subdirectories are created:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="93%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Directory</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">CALIB</span></tt></td>
+<td>A copy of all the uncalibrated input data and the output processed data products for modules <tt class="docutils literal"><span class="pre">undupuft</span></tt> through <tt class="docutils literal"><span class="pre">nonlincor</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">ALIGN</span></tt></td>
+<td>Output processed data products for modules <tt class="docutils literal"><span class="pre">weightmap</span></tt> through <tt class="docutils literal"><span class="pre">mdrizzle</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">FINAL</span></tt></td>
+<td>The final data products (final image mosiacs, weightmaps and context images)</td>
+</tr>
+</tbody>
+</table>
+<p>NICRED creates a <a class="reference external" href="http://www.sqlite.org">SQLite</a> database to store the uncalibrated input data fits headers and pipeline metadata:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Table</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">headers</span></tt></td>
+<td>Select FITS header keywords for all input images</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">run_log</span></tt></td>
+<td>Runtime log messages</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">run_pars</span></tt></td>
+<td>Value of each runtime option</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">run_status</span></tt></td>
+<td>Runtime status information for each module</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">raw</span></tt></td>
+<td>A <em>VIEW</em> of the header table listing only the raw FITS image headers</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="undopuft">
+<span id="index-3"></span><h2><tt class="docutils literal"><span class="pre">undopuft</span></tt><a class="headerlink" href="#undopuft" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">undopuft</span></tt> module attempts to remove the electronic ghosts that can appear when observing
+a bright source. For details see <a class="reference external" href="http://www.stsci.edu/hst/nicmos/performance/anomalies/staypuft.html">Electronic Ghosts: Mr. Staypuft, Ringing, and Streaking</a>.</p>
+</div>
+<div class="section" id="calped">
+<span id="index-4"></span><h2><tt class="docutils literal"><span class="pre">calped</span></tt><a class="headerlink" href="#calped" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">calped</span></tt> module performs basic instrumental calibration (dark current subtraction, flat fielding,
+conversion to count rates, and cosmic ray identification and rejection) and attempts to remove
+the NICMOS pedestal effect. These task are performed by the STSCI IRAF package tasks <a class="reference external" href="http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?calnica">calnica</a> and <a class="reference external" href="http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?pedsky.hlp">pedsky</a>.</p>
+<p>The NICMOS pedestal effect is the result of variable biases in each of the four NICMOS detector quadrants these
+varying bias levels can leave a significant pedestal signature in the processed data. For details see the
+NICMOS anomaly page <a class="reference external" href="http://www.stsci.edu/hst/nicmos/performance/anomalies/pedestal.html">Residual Bias (Pedestal)</a></p>
+<p>NICRED runs all of the calibration steps provided by <a class="reference external" href="http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?calnica">calnica</a> in the default sequence with the exception of one
+additional step. Before the <a class="reference external" href="http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?calnica">calnica</a> cosmic ray identification and removal step <em>CRIDCALC</em> is run NICRED runs an
+additional step to improve the cosmic ray rejection. For NICMOS MultiAccum mode observations, <em>CRIDCALC</em> assumes
+that accumulating background counts over the entire observation is a linear function. This assumption may not
+be the true for all observations. Depending on circumstances of the observation the background
+count rate may vary over the duration of the observation. In order to determine if the background count rate
+is sufficiently non-linear, NICRED computes the median of the first and last three readouts of the MultiAccum
+observation.  If the NIRCED finds the count rate has varied it applies the additional step of running <a class="reference external" href="http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?pedsky.hlp">pedsky</a>
+on each of the individual readouts in the MultiAccum observation. This additional step assures the background
+count rate is linear before running the <em>CRIDCALC</em> step.</p>
+</div>
+<div class="section" id="saaclean">
+<span id="index-5"></span><h2><tt class="docutils literal"><span class="pre">saaclean</span></tt><a class="headerlink" href="#saaclean" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">saaclean</span></tt> module removes cosmic ray persistence due to observations following an HST transit of
+the South Atlantic Anomaly (SAA). See <a class="reference external" href="http://www.stsci.edu/hst/nicmos/documents/isrs/isr_2007_001.pdf">Removing Post-SAA Persistence in NICMOS Data</a>.
+NICRED uses the <a class="reference external" href="http://www.stsci.edu/resources/software_hardware/pyraf">PyRAF</a> task <tt class="docutils literal"><span class="pre">saaclean</span></tt> to perform this processing.</p>
+</div>
+<div class="section" id="medsub">
+<h2><tt class="docutils literal"><span class="pre">medsub</span></tt><a class="headerlink" href="#medsub" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">medsub</span></tt> module attempts to remove any residual instrument signature left over after basic calibration
+by subtracting a &#8220;super-median&#8221; reference image. These super-median images are created by median stacking a large
+number of images that have been processed by the NICRED modules <tt class="docutils literal"><span class="pre">undopuft</span></tt>, <tt class="docutils literal"><span class="pre">calped</span></tt> and <tt class="docutils literal"><span class="pre">saaclean</span></tt>.
+Many super-median reference images (based on various camera, sample-sequence, observation window or HST proposal ID,
+and filter combinations) have been pre-generated and are provided in <a class="reference external" href="http://www.firstgalaxies.org/downloads/nicred/nicred_reffiles.tgz">nicred_reffiles.tgz</a>.</p>
+<p><tt class="docutils literal"><span class="pre">medsub</span></tt> uses the following criteria for determining which super-median image to use:</p>
+<ol class="arabic simple">
+<li>Same camera.</li>
+<li>Same sample sequence.</li>
+<li>Same filter.</li>
+<li>Same HST proposal ID (PROP_ID fits header keyword). Or..</li>
+<li>The super-median reference image with and observation date nearest the observation date of the input image.</li>
+</ol>
+</div>
+<div class="section" id="flatten">
+<h2><tt class="docutils literal"><span class="pre">flatten</span></tt><a class="headerlink" href="#flatten" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">flatten</span></tt> module attempts to remove any discontinuities between the four quadrants of a NICMOS camera 2 or 3 image.
+Discontinuities between quadrants can occur when an exposure contains a large bright object in one of the quadrants.</p>
+</div>
+<div class="section" id="nonlincor">
+<span id="index-6"></span><h2><tt class="docutils literal"><span class="pre">nonlincor</span></tt><a class="headerlink" href="#nonlincor" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">nonlincor</span></tt> module corrects NICMOS images for their count-rate dependent
+non-linearity. It used the header keywords CAMERA and FILTER to determine the
+non-linearity parameter. It corrects the first image, and in the case of a
+multi-extension image, the second image as well, with the appropriate power law.
+For details see <a class="reference external" href="http://www.stsci.edu/hst/nicmos/documents/isrs/isr_2006_003.pdf">Correcting the NICMOS count-rate
+dependent non-linearity</a></p>
+</div>
+<div class="section" id="applymask">
+<span id="index-7"></span><h2><tt class="docutils literal"><span class="pre">applymask</span></tt><a class="headerlink" href="#applymask" title="Permalink to this headline">¶</a></h2>
+<p>NICRED has the ability to mask any residual artifacts that may occur in one&#8217;s
+data (e.g., as may occur when satellites pass through the HST focal plane).
+Masks are easily generated using <a class="reference external" href="http://http://hea-www.harvard.edu/RD/ds9">SAO’s DS9</a>
+image display tool using the following procedure:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Display all <tt class="docutils literal"><span class="pre">_cal4.fits</span></tt> images in DS9.</li>
+<li>Marked artifacts on each image with the DS9 polygon region tool.</li>
+<li>A script is run that saves a DS9 region file for each image which has a marked artifact.</li>
+<li>A second script is run that applies the marked regions in these region files to the associated image’s data-quality array.</li>
+</ol>
+</div></blockquote>
+<img alt="_images/applymask.png" class="align-center" src="_images/applymask.png" />
+</div>
+<div class="section" id="align">
+<h2><tt class="docutils literal"><span class="pre">align</span></tt><a class="headerlink" href="#align" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">align</span></tt> module uses the external package <tt class="docutils literal"><span class="pre">superalign</span></tt> to determine the internal
+shifts and rotations for an arbitrary number of (overlapping)
+contiguous images from a set of (distortion free) catalogs.  It
+requires good initial guesses for the shifts and rotations (within 2.5
+arcsec and 0.5 degrees of the true solution, respectively), and thus
+is ideal for use with NICMOS HST data where these quantities are
+approximately known.  It offers several useful advantages relative to
+other alignment programs:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>It does not require that all images be contiguous with a single reference image.
+This allows one to construct arbitrarily large mosaics out of individual images.</li>
+<li>Input catalogs can include substantial (&gt;80%) contamination from cosmic rays.</li>
+</ol>
+</div></blockquote>
+<p>For more details on <tt class="docutils literal"><span class="pre">superalign</span></tt> see the Appendix section <em class="xref std std-ref">superalign</em>.</p>
+</div>
+<div class="section" id="weightmap">
+<span id="index-8"></span><h2><tt class="docutils literal"><span class="pre">weightmap</span></tt><a class="headerlink" href="#weightmap" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">weightmap</span></tt> module generates an inverse variance weigh map image of each input image as input to MultiDrizzle.</p>
+<p>Where <em>D</em> is the dark image; <em>A</em> is the amplifier glow image; <em>G</em> is the gain; <em>B</em> is the average background as computed by <tt class="docutils literal"><span class="pre">calnica</span></tt>; <em>sigma</em> is the readnoise; <em>f</em> is the inverse flatfield image; and <em>t</em> is the exposure time.</p>
+</div>
+<div class="section" id="mdrizzle">
+<span id="index-9"></span><h2><tt class="docutils literal"><span class="pre">mdrizzle</span></tt><a class="headerlink" href="#mdrizzle" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">mdrizzle</span></tt> module performs cosmic ray rejection and combination of dithered observations using the STSCi software package MultiDrizzle.
+For a complete discussion of MultiDrizzle and the Drizzle alorgithm for combining dithered imaging data see the <a class="reference external" href="http://incubator.stsci.edu/mediawiki/index.php/Telescopedia:Multidrizzle">MultiDrizzle Handbook Wiki</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Modules</a><ul>
+<li><a class="reference internal" href="#papi"><tt class="docutils literal"><span class="pre">papi</span></tt></a></li>
+<li><a class="reference internal" href="#undopuft"><tt class="docutils literal"><span class="pre">undopuft</span></tt></a></li>
+<li><a class="reference internal" href="#calped"><tt class="docutils literal"><span class="pre">calped</span></tt></a></li>
+<li><a class="reference internal" href="#saaclean"><tt class="docutils literal"><span class="pre">saaclean</span></tt></a></li>
+<li><a class="reference internal" href="#medsub"><tt class="docutils literal"><span class="pre">medsub</span></tt></a></li>
+<li><a class="reference internal" href="#flatten"><tt class="docutils literal"><span class="pre">flatten</span></tt></a></li>
+<li><a class="reference internal" href="#nonlincor"><tt class="docutils literal"><span class="pre">nonlincor</span></tt></a></li>
+<li><a class="reference internal" href="#applymask"><tt class="docutils literal"><span class="pre">applymask</span></tt></a></li>
+<li><a class="reference internal" href="#align"><tt class="docutils literal"><span class="pre">align</span></tt></a></li>
+<li><a class="reference internal" href="#weightmap"><tt class="docutils literal"><span class="pre">weightmap</span></tt></a></li>
+<li><a class="reference internal" href="#mdrizzle"><tt class="docutils literal"><span class="pre">mdrizzle</span></tt></a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="developer_guide.html"
+                        title="previous chapter">Developer Guide</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/modules.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="developer_guide.html" title="Developer Guide"
+             >previous</a> |</li>
+        <li><a href="index.html">PAPI 1.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, J.M.Ibanez (IAA-CSIC).
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>
