@@ -24,6 +24,7 @@ import time
 import copy
 import fileinput
 import glob
+import datetime as dt
 
 #PAPI modules
 import datahandler
@@ -185,68 +186,105 @@ class DataCollector (object):
                 
         """  
     
+    	contents = []
+    	
         if start_datetime==None:
-            l_start_datetime = datetime.datetime.now()-datetime.timedelta(days=1)    
+            # by default, we limit the files one day old
+            l_start_datetime = dt.datetime.now()-dt.timedelta(days=1)    
         if end_datetime==None:
-            l_end_datetime = datetime.datetime.now()
+            l_end_datetime = dt.datetime.now()
         if l_end_datetime < l_start_datetime:
              print "[DC] Error, end_datetime < start_datetime !"
              return []
-         
+        
+        #print "start_date = %s"%l_start_datetime
+        #print "end_date = %s"%l_end_datetime
          
         # Read the file contents from a generated GEIRS file
         if type == 1:
             for line in fileinput.input(self.source):
                 sline = string.split(line)
                 if sline[0]!="#":
-                    contents.append(sline[6])
-                    #print "FILE = ", sline[6]
+                    try:
+                        line_date = dt.datetime.strptime(sline[0]+" "+sline[1],
+                                                     "%Y-%m-%d %H:%M:%S")
+                    except ValueError,e:
+                        print "Error, cannot read datetime stamp in log file line :",line
+                        continue
+                    if line_date > l_start_datetime and line_date < l_end_datetime:
+					 	contents.append(sline[6])
+					  	print "FILE = ", sline[6]
+                    else:
+                        pass
+						#print "File too old ...."
+						#print "file datetime = %s"%line_date
         # To read ~/tmp/fitsfiles.corrected
         elif type == 2:
             # Read the file contents from a generated GEIRS file
             for line in fileinput.input(self.source):
                 sline = string.split(line)
                 if sline[0][0]!="#" and sline[1]!="ERROR":
-                    contents.append(sline[1])
-                    #print "FILE = ", sline[6]
-                
+                    try:
+                        line_date = dt.datetime.strptime(sline[0],"%Y-%m-%d_%Hh%Mm%S")
+                    except ValueError,e:
+                        print "Error, cannot read datetime stamp in log file line",line
+                        continue
+                    if line_date > l_start_datetime and line_date < l_end_datetime:
+                     	contents.append(sline[1])
+                      	#print "FILE = ", sline[1]
+                    else:
+                    	pass
+                    	#print "File too old ...."
+                    	#print "file datetime = %s"%line_date
+        
+        
+        return contents        
         
         
     def findNewFiles(self):
-    
         """
-	    Find files that are not yet listed in the dirlist
-	    ,and match these with the filename filter pattern
+        Find files that are not yet listed in the dirlist
+        ,and match these with the filename filter pattern
         """
 	    
         # Retrieve the current value of the filename pattern from the widget
         pattern = self.filename_filter
         contents = []
         
-        if self.mode=="dir":
-            # Read the directory contents
-            #contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
-            contents = self.__listFiles(self.source)
-        elif self.mode=="file":
-            # Read the file contents
-            contents = [line for line in fileinput.input(self.source)]
-        # To read ~/GEIRS/log/save_CA2.2m.log
-        elif self.mode=="geirs-file":
-            # Read the file contents from a generated GEIRS file
-            for line in fileinput.input(self.source):
-                sline = string.split(line)
-                if sline[0]!="#":
-                    contents.append(sline[6])
-                    #print "FILE = ", sline[6]
-        # To read ~/tmp/fitsfiles.corrected
-        elif self.mode=="geirs-file2":
-            # Read the file contents from a generated GEIRS file
-            for line in fileinput.input(self.source):
-                sline = string.split(line)
-                if sline[0][0]!="#" and sline[1]!="ERROR":
-                    contents.append(sline[1])
-                    #print "FILE = ", sline[6]
-                
+        try:
+	    	if self.mode=="dir":
+	            # Read the directory contents
+	            #contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
+	            contents = self.__listFiles(self.source)
+	        elif self.mode=="file":
+	            # Read the file contents
+	            contents = [line for line in fileinput.input(self.source)]
+	        # To read ~/GEIRS/log/save_CA2.2m.log
+	        elif self.mode=="geirs-file":
+	        	contents = self.read_GEIRS_fitsLog(type=1)
+	        	"""
+	            # Read the file contents from a generated GEIRS file
+	            for line in fileinput.input(self.source):
+	                sline = string.split(line)
+	                if sline[0]!="#":
+	                    contents.append(sline[6])
+	                    #print "FILE = ", sline[6]
+	            """
+	        # To read ~/tmp/fitsfiles.corrected
+	        elif self.mode=="geirs-file2":
+	        	contents = self.read_GEIRS_fitsLog(type=2)
+	        	"""
+	            # Read the file contents from a generated GEIRS file
+	            for line in fileinput.input(self.source):
+	                sline = string.split(line)
+	                if sline[0][0]!="#" and sline[1]!="ERROR":
+	                    contents.append(sline[1])
+	                    #print "FILE = ", sline[6]
+	            """    
+	            
+        except Exception, e:
+            print "Some error while reading source  %s "%self.source
+            return
 	    
         # Check the obtained list of files agains the existing directory list
 	    # Remove files that already existed in the directory list
@@ -255,7 +293,6 @@ class DataCollector (object):
     
         iterlist = copy.copy(self.dirlist) # lists are mutables !
         for file in iterlist:
-    
             if file not in contents:
                 # Hmm... a strange situation. Apparently a file listed in self.dirlist
                 # DISappeared from the directory. Adjust the lists accordingly

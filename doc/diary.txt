@@ -374,4 +374,54 @@ caso. Habría que ver como afecta a la reducción....
 
 - Bug resuelto en QL: había un bug en la creación del QTimer cuando se
   especifica un directorio a "monitorizar" que afectaba a mainGUI.py
+
+2011-11-20 al 25
+================
+
+- Pruebas SW de integración en HD. (ver documentos de notas)
+ 
+2011-11-29
+==========
+- Inicio funcion read_GEIRS_fitsLog() para mejorar la lectura de los ficheros de
+log de GEIRS, tanto
+
+    * ~/GEIRS/log/save_CA2.2m.log
+    * ~/tmp/fitsfiles.corrected
+    
+2011-12-12
+==========
+
+- Teleconf PANIC: JF me comenta que no tiene inconveniente en enviarme la carta
+de consentimiento para la ayuda de movilidad, pero me pregunta que fechas tendría
+previsto para ir. Yo lo contesto que en principio Verano, pero que aún o se cuando
+estaría el dinero y tal. JF piensa que es muy tarde, pues el piensa en poder 
+hacer algo para GEIRS.
+Y sobre el SW, pues que el OT le parece demasiado complicado, y que quizás sería
+mejor hablar con CA (Ana Guijarro). 
+También comenta que van a contratar una persona para que ayude a CS con el SW.
+
+- Recibo llamada de Jens para hablarme del nuevo CCD-SW para Twin. Por lo visto
+el software de bajo nivel lo harían en HD, a modo de librería similar a la que 
+hicieron para CAFOS-upgrade, y la GUI sería para hacerla nosotros, más la GUI
+de control del instrumento Twin, para sincronizar las dos CCDs etc ...
+Le digo a Jens que tenemos que consularlo con Matilde & Julio.
+
+
+- Modifico QL para que se pueda seleccionar desde el botón Input/Source dir tanto
+un directorio como los ficheros de log de GEIRS (save_CA2.2mlog y fitsfiles.corrected).
+Tengo que probar bien si funcionar en cualquier versión de SuSE, pues me pareció 
+que en el portatil no funcionaba bien.
+
+
+2011-12-13
+==========
+
+- Pruebo el qphot de forma interactiva para ir seleccionando y visualizando los
+valores fotometrícos de los objetos en la imagen reducida y aunque al principio
+me costó entender el manejo, luego es muy potente y útil. Además, si tenemos 
+activado el radplot=yes, es muy interesante. Podemos decirle además el ZPOINT
+que queremos que use para el cálculo de la fotometría.
+
+
+
   

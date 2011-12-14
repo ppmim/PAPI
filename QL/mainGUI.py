@@ -586,29 +586,39 @@ class MainGUI(panicQL):
         Slot function called when the "Input Dir" button is clicked
         """
         
-        source = QFileDialog.getExistingDirectory( self.m_default_data_dir, 
-                                                 self,"get existing directory", 
-                                                 "Choose a directory",True )
+        #source = QFileDialog.getExistingDirectory( self.m_default_data_dir, 
+        #                                         self,"get existing directory", 
+        #                                         "Choose a directory",True )
+        # source can only be a directory
         
-        #source=QFileDialog.getOpenFileNames( "Source log (*.log)", self.m_default_data_dir, self, "Source Dialog","select source")
-        ## NOTE: 'dir' can be a file or a directory
+        source = QFileDialog.getOpenFileNames( "Source data log (*.log)", 
+                                               self.m_default_data_dir, self, 
+                                               "Source Dialog","select source")
+        ## NOTE: 'source' can be a file or a directory
         
         if (not source):
             return
         else:
-            #dir=str(source[0])
-            dir = str(source)
+            #dir = str(source) # required when QFileDialog.getExistingDirectory
+            dir = str(source[0])
             self.logConsole.info("+Source : " + dir)
             if (self.m_sourcedir != dir and self.m_outputdir!=dir):
                 self.lineEdit_sourceD.setText(dir)
                 self.m_sourcedir = str(dir)
                 ##Create DataCollector for a path     
                 self.file_pattern = str(self.lineEdit_filename_filter.text())
-                if os.path.isfile(dir):
-                    self.dc = datahandler.DataCollector("geirs-file", str(dir), self.file_pattern , self.new_file_func)  
+                if os.path.isfile(dir) and os.path.basename(dir)=="save_CA2.2m.log":
+                    self.dc = datahandler.DataCollector("geirs-file", str(dir), 
+                                                        self.file_pattern , 
+                                                        self.new_file_func)  
+                elif os.path.isfile(dir) and os.path.basename(dir)=="fitsfiles.corrected":
+                    self.dc = datahandler.DataCollector("geirs-file2", str(dir), 
+                                                        self.file_pattern , 
+                                                        self.new_file_func)  
                 elif os.path.isdir(dir):
-                    self.dc = datahandler.DataCollector("dir", str(dir), self.file_pattern , self.new_file_func)
-                    #self.dc = datahandler.DataCollector("geirs-file2", str(dir), self.file_pattern , self.new_file_func)	
+                    self.dc = datahandler.DataCollector("dir", str(dir), 
+                                                        self.file_pattern , 
+                                                        self.new_file_func)
                 ## Activate the autochecking of new files
                 self.checkBox_autocheck.setChecked(True)
                 ##Create QTimer for the data collector
