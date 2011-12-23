@@ -24,13 +24,15 @@ import math
 ###### Enable logging
 from misc.paLog import log
 
+__docformat__ = "restructuredtext"  
 
 ############################################################
 class DataSet(object):  
 
     """
-    \brief
+    
     Class used to define a data set of frames load from a local directory or a Data Base  
+    
     """
     TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
                     ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
@@ -44,6 +46,8 @@ class DataSet(object):
         
         \param source : can be a 'directory' name, a 'filename' containing the
                         list file or python list havind the files of the DataSet
+    
+        :param source: can be a directory name bla bla....
         """
         self.con = None #connection
         self.source = source

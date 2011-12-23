@@ -32,7 +32,7 @@
 #                                             (even for MEF files)
 ################################################################################
 #
-# Create object masks (SExtractor OBJECTS images) for a list of FITS images.
+# Creates object masks (SExtractor OBJECTS images) for a list of FITS images.
 # Expects the command "sex" (SExtractor Version 2+) in path.  If weight maps
 # exist they will be used (assume weight map filename given by replacing .fits
 # with .weight.fits).

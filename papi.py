@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-# Copyright (c) 2009-2011 Jose M. Ibanez. All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #
@@ -18,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 ################################################################################
 #
 # PAPI (PAnic PIpeline)
@@ -27,6 +29,10 @@
 # Last update 17/May/2011
 #
 ################################################################################
+"""
+This is the **main** module of the PAPI software to start any data reduction
+process of a data set.
+"""
 
 
     ####################################################################

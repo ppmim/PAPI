@@ -423,5 +423,39 @@ activado el radplot=yes, es muy interesante. Podemos decirle además el ZPOINT
 que queremos que use para el cálculo de la fotometría.
 
 
+2011-12-14
+==========
+
+- Implemento rutina 'plot_cpu_mem_stats.py' para sacar las gráficas de CPU y 
+memoria de los test hechos en Heidelberg.
+
+- Instalo sphinx + pygments (con easy_install) para empezar a documentar PAPI
+
+- Comienzo con primeras pruebas.
+
+
+2011-12-15
+==========
+
+- Continuo probando Sphinx, pues parece muy interesante para usar en la documentación
+de PAPI. Sin embargo, de cara a documentar el codigo fuente (python) de PAPI
+me encuentro con el problema de que hasta ahora el codigo fuento lo de PAPI lo 
+estaba documentando en las docstring siguiendo la sintaxis de epytext/javadoc, 
+pero resulta que Sphinx usa las docstring del formato reST(reStructuredText);
+según he buscado en google, no parece que haya una forma fácil para pasar de
+epytext a reST.
+
+La sintaxis de reST para las docstring de python es la siguiente:
+ 
+ -http://epydoc.sourceforge.net/manual-fields.html#epydoc-fields
+
+ -http://mundogeek.net/archivos/2008/07/07/documentacion-en-python/#more-1582
+
+
+También me doy cuenta de que en las docstrings del codigo python no podemos usar
+todos los metatags de reST, pues al importar los modulos en sphinx se queja;sin
+embargo, veo que la documentación de Numpy si los usa, pero para ello hay que 
+instalar una extensión a sphinx propia de Numpy para que se genera la documentación
+como en Numpy ( ver  https://github.com/numpy/numpy/tree/master/doc/sphinxext)
 
   

@@ -625,6 +625,10 @@ def runCmd( str_cmd, p_shell=True ):
 # ======================================================================
 if __name__ == "__main__":
 
+    if len(sys.argv)<2:
+	print "Wrong number of arguments\n"
+	print "Usage: scamp.py file.fits\n"
+	sys.exit(0)
 
     scamp = SCAMP()
     # Using a specific config file (updateconfig=False)
