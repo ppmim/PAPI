@@ -5,9 +5,6 @@
 
 Welcome to PAPI's documentation!
 ================================
-.. image:: _static/logo_PANIC.jpg
-    :align: center
-
 
 Contents:
 
@@ -16,9 +13,17 @@ Contents:
 
    
    intro
+   running
+   quick_look
    user_guide
    developer_guide
    modules
+   acknowledgments
+   references
+   citation
+   license
+   appendix
+   
 
 
 Indices and tables

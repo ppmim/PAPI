@@ -19,32 +19,37 @@ data.
 ====================     ===========
 Module                   Description
 ====================     ===========
-``papi``                 Ingest uncalibrated data and builds a SQLite database containing fits header data
-``calDark``              Removes electronic ghosts (a.k.a. the "Mr. Staypuft" effect)
-``calDarkModel``         Basic calibration, sky subtraction/pedestal effect removal, cosmic-ray rejection
-``calBPM``               Removes cosmic-ray persistence signal if target was observed shortly after the SAA
-``calDomeFlat``          Removes residual instrument signatures by subtracting a "super-median" reference image
-``calTwFlat``            Uses bicubic spline to flatten the background
-``calSuperFlat``         Corrects for count-rate non-linearity
-``calGainMap``           Apply user-defined masks (optional)
-``calNonLinearity``      Uses object matching algorithms to improve image alignment and registration
-``checkQuality``         Creates accurate *RMS* maps for use with MultiDrizzle
-``eval_focus_serie``     Creates final CR-cleaned, distortion-free drizzled image mosaics using multidrizzle
-``astrowarp``            Create final aligned and coadded frame using SEx,SCAMP and SWARP 
+``papi``                 Main pipeline module to start the entire data reduction process 
+``calDark``              Creates a master dark by combination of a dark sequence
+``calDarkModel``         Creates a master dark model from a dark serie
+``calBPM``               Creates a master Bad Pixel Mask from a set of darks and flats calibration files
+``calDomeFlat``          Creates a master Dome Flat 
+``calTwFlat``            Creates a master Twilight Flat
+``calSuperFlat``         Creates a master Super Flat from a set of object or sky frames
+``calGainMap``           Creates a Gain Map from any master flat
+``calNonLinearity``      Corrects the images pixel values for non-linearity
+``checkQuality``         Computes some quality values from the image (FWHM, STD, RMS)
+``applyDarkFlat``        Finds out the best Focus value from a focus serie
+``eval_focus_serie``     Finds out the best Focus value from a focus serie
+``skyfilter``            Subtracts sky background to a dither sequence of frames
+``astrowarp``            Creates final aligned and coadded frame using SEx,SCAMP and SWARP 
+``photometry``           Performs a photometric calibration comparison with 2MASS
+``genLogsheet``          Creates a log sheet from a set of FITS files
+``makeobjmask``          Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
 ====================     ===========
 
 .. index:: setup, sqlite
 
 ``papi``
-*********
+********
 
-The ``papi`` module in the main PAPI routine that start the data reduction.  
+The ``papi`` module is the main PAPI routine that start the data reduction.  
 It starts by creating a subdirectory in the ``PAPI_DIR`` using the run name 
 give on the command line.  Within the run directory the following
 subdirectories are created:
 
 
-.. autmodule:: papi
+.. automodule:: papi
    :members:
 
 
@@ -58,7 +63,7 @@ Directory   Description
 ``FINAL``   The final data products (final image mosiacs, weightmaps and context images)
 =========   ===========
 
-NICRED creates a SQLite_ database to store the uncalibrated input data fits headers and pipeline metadata:
+PAPI creates a SQLite_ database to store the uncalibrated input data fits headers and pipeline metadata:
 
 .. index:: log, logging, status, FITS, headers
 
@@ -76,153 +81,144 @@ Table            Description
 
 .. _SQLite: http://www.sqlite.org
 
-.. index:: undopuft, staypuft
+.. index:: papi
 
-``undopuft``
-************
+``calDark``
+***********
 
-The ``undopuft`` module attempts to remove the electronic ghosts that can appear when observing
-a bright source. For details see `Electronic Ghosts: Mr. Staypuft, Ringing, and Streaking 
-<http://www.stsci.edu/hst/nicmos/performance/anomalies/staypuft.html>`_. 
+The ``calDark`` module creates a master dark image from a set of dark frames.
+In addition computes the Read-Out Noise of the detectors along with several
+statistics.
+
+Input
 
 .. index:: calped, calnica, pedsky, cridcalc, multiaccum, calibration
 
-``calped``
+``calDarkModel``
+****************
+
+The ``calDarkModel`` module performs a dark model. To do that, a input dark serie
+exposures with a range of exposure times is given. Then a linear fit is done at 
+each pixel position of data number versus exposure time. A each pixel position 
+in the output map represents the slope of the fit done at that position and is 
+thus the dark current expressed in units of data numbers per second.
+
+.. index:: , SAA, pyraf
+
+``calBPM``
 **********
 
-The ``calped`` module performs basic instrumental calibration (dark current subtraction, flat fielding, 
-conversion to count rates, and cosmic ray identification and rejection) and attempts to remove 
-the NICMOS pedestal effect. These task are performed by the STSCI IRAF package tasks calnica_ and pedsky_. 
+The ``calBPM`` module 
 
-The NICMOS pedestal effect is the result of variable biases in each of the four NICMOS detector quadrants these 
-varying bias levels can leave a significant pedestal signature in the processed data. For details see the 
-NICMOS anomaly page `Residual Bias (Pedestal) <http://www.stsci.edu/hst/nicmos/performance/anomalies/pedestal.html>`_
+``calDomeFlat``
+***************
 
-NICRED runs all of the calibration steps provided by calnica_ in the default sequence with the exception of one 
-additional step. Before the calnica_ cosmic ray identification and removal step *CRIDCALC* is run NICRED runs an
-additional step to improve the cosmic ray rejection. For NICMOS MultiAccum mode observations, *CRIDCALC* assumes 
-that accumulating background counts over the entire observation is a linear function. This assumption may not 
-be the true for all observations. Depending on circumstances of the observation the background 
-count rate may vary over the duration of the observation. In order to determine if the background count rate 
-is sufficiently non-linear, NICRED computes the median of the first and last three readouts of the MultiAccum 
-observation.  If the NIRCED finds the count rate has varied it applies the additional step of running pedsky_ 
-on each of the individual readouts in the MultiAccum observation. This additional step assures the background 
-count rate is linear before running the *CRIDCALC* step. 
+The ``calDomeFlat`` module creates a master flat field from dome flat observations,
+a bad pixel map an various statistics.
 
-.. _calnica: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?calnica
-
-.. _pedsky: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?pedsky.hlp
-
-.. index:: saaclean, SAA, pyraf
-
-``saaclean``
-************
-
-The ``saaclean`` module removes cosmic ray persistence due to observations following an HST transit of 
-the South Atlantic Anomaly (SAA). See `Removing Post-SAA Persistence in NICMOS Data 
-<http://www.stsci.edu/hst/nicmos/documents/isrs/isr_2007_001.pdf>`_. 
-NICRED uses the PyRAF_ task ``saaclean`` to perform this processing.
-
-.. _PyRAF: http://www.stsci.edu/resources/software_hardware/pyraf
-
-
-``medsub``
-**********
-
-The ``medsub`` module attempts to remove any residual instrument signature left over after basic calibration 
-by subtracting a "super-median" reference image. These super-median images are created by median stacking a large 
-number of images that have been processed by the NICRED modules ``undopuft``, ``calped`` and ``saaclean``. 
-Many super-median reference images (based on various camera, sample-sequence, observation window or HST proposal ID, 
-and filter combinations) have been pre-generated and are provided in `nicred_reffiles.tgz 
-<http://www.firstgalaxies.org/downloads/nicred/nicred_reffiles.tgz>`_. 
-
-``medsub`` uses the following criteria for determining which super-median image to use:
+``calDomeFlat`` uses the following criteria for determining which super-median image to use:
 
 1. Same camera.
 2. Same sample sequence.
 3. Same filter.
-4. Same HST proposal ID (PROP_ID fits header keyword). Or..
+4. Same PANIC proposal ID (PROP_ID fits header keyword). Or..
 5. The super-median reference image with and observation date nearest the observation date of the input image.
 
 
-``flatten``
-***********
 
-The ``flatten`` module attempts to remove any discontinuities between the four quadrants of a NICMOS camera 2 or 3 image. 
-Discontinuities between quadrants can occur when an exposure contains a large bright object in one of the quadrants. 
-
-
-.. index:: nonlincor, non-linearity, count-rate
-
-``nonlincor``
+``calTwFlat``
 *************
 
-The ``nonlincor`` module corrects NICMOS images for their count-rate dependent 
-non-linearity. It used the header keywords CAMERA and FILTER to determine the 
+The ``calTwFlat`` module creates a master flat field from twilight observations,
+a bad pixel map an various statistics.
+
+.. index:: flat-field, twilight 
+
+``calSuperFlat``
+****************
+
+The ``calSuperFlat`` module creates a master super flat field from science observations,
+a bad pixel map an various statistics.
+
+.. index:: flat-field, super-flat 
+
+
+``applyDarkFalt``
+*****************
+
+The ``applyDarkFalt`` module subtract a master dark and divide by the list of images
+given.
+
+.. index:: flat, dark, calibration 
+
+
+``calGainMap``
+****************
+
+The ``calGainMap`` module creates a master gain map from a flat field 
+
+.. index:: flat-field, super-flat 
+
+
+``calNonLinearity``
+*******************
+
+The ``calNonLinearity`` module corrects PANIC images for their count-rate dependent 
+non-linearity. It used the header keywords READMODE and FILTER to determine the 
 non-linearity parameter. It corrects the first image, and in the case of a 
 multi-extension image, the second image as well, with the appropriate power law. 
-For details see `Correcting the NICMOS count-rate 
-dependent non-linearity <http://www.stsci.edu/hst/nicmos/documents/isrs/isr_2006_003.pdf>`_
+For details see `Correcting the PANIC count-rate 
+dependent non-linearity <http://www.iaa.es/PANIC/papi/documents/nonlinearity.pdf>`_
 
 .. index:: mask, masking, applymask, ds9
 
-``applymask``
-*************
+``checkQuality``
+****************
+The ``checkQuality`` module computes some initial image quality estimations using 
+SExtractor.
 
-NICRED has the ability to mask any residual artifacts that may occur in one's 
-data (e.g., as may occur when satellites pass through the HST focal plane). 
-Masks are easily generated using `SAO’s DS9 <http://http://hea-www.harvard.edu/RD/ds9>`_ 
-image display tool using the following procedure:
+.. index:: fwhm, seeing, sextractor
 
-    1. Display all ``_cal4.fits`` images in DS9.
-    2. Marked artifacts on each image with the DS9 polygon region tool.
-    3. A script is run that saves a DS9 region file for each image which has a marked artifact.
-    4. A second script is run that applies the marked regions in these region files to the associated image’s data-quality array.
-
-
-.. image:: _static/applymask.png
-    :align: center
     
-``align``
-*********
-
-The ``align`` module uses the external package ``superalign`` to determine the internal
-shifts and rotations for an arbitrary number of (overlapping)
-contiguous images from a set of (distortion free) catalogs.  It
-requires good initial guesses for the shifts and rotations (within 2.5
-arcsec and 0.5 degrees of the true solution, respectively), and thus
-is ideal for use with NICMOS HST data where these quantities are
-approximately known.  It offers several useful advantages relative to
-other alignment programs:
-
-    1. It does not require that all images be contiguous with a single reference image. 
-       This allows one to construct arbitrarily large mosaics out of individual images.
-
-    2. Input catalogs can include substantial (>80%) contamination from cosmic rays.
-
-For more details on ``superalign`` see the Appendix section :ref:`superalign`. 
-
-.. index:: multidrizzle, weightmap, variance
-
-``weightmap``
+``skyfilter``
 *************
 
-The ``weightmap`` module generates an inverse variance weigh map image of each input image as input to MultiDrizzle.
+The ``skyfilter`` module uses the external package ``irdr_skyfilter`` to perform the
+sky background subtraction from a dither sequence of science frames. It works
+with almost all kind of dither sequences, even with sequences used for extended
+objects (T-S-T-S- ...., T-T-S-T-T-S-T-T-....)
 
-.. math::spee
+For more details on ``skyfilter`` see the Appendix section :ref:`skyfilter`. 
 
-        Var\; =\; \frac{\left( \left( {D}\; +\; {A} \right)\times {G}\; +\; \left( {B}\times {f} \right)\times {G}\; +\; {\sigma_{read}}^{2} \right)}{\left( {f}^{2}\; \times \; {t}^{2} \right)}
+.. index:: sky-background, irdr, sky
 
-        W\; =\; \frac{1}{Var}
+``eval_focus_serie``
+********************
 
-Where *D* is the dark image; *A* is the amplifier glow image; *G* is the gain; *B* is the average background as computed by ``calnica``; *sigma* is the readnoise; *f* is the inverse flatfield image; and *t* is the exposure time. 
+The ``eval_focus_serie`` module computes the best focus estimation for a focus
+exposure serie. It is done according to the FWHM value estimated for each
+frame, fitting a curve the the values pair values (FWHM,focus) and finding out the 
+minimun.
+
+- Requirements
+
+    - T-FOCUS (telescope focus) keyword value present in the header 
+    - (Raw) Images with enought number of stars
+    - A serie of images taken with covering a range of telescope focus values including the best focus value.
+ 
+
+.. index:: focus, fwhm, seeing
+
+``astrowarp``
+*************
+
+The ``astrowarp`` module performs alingment and warping of a set of images previosuly reduced. 
+That module uses the Astromatic_ packages sextractor_ , scamp_ and swarp_
+to perform the...
+
+.. _astromatic: http://www.astromatic.net/
+.. _sextractor: http://www.astromatic.net/software/sextractor
+.. _scamp: http://www.astromatic.net/software/scamp
+.. _swarp: http://www.astromatic.net/software/swarp
 
 
-.. index:: multidrizzle, dithering, weightmap, variance
-
-``mdrizzle``
-************
-
-The ``mdrizzle`` module performs cosmic ray rejection and combination of dithered observations using the STSCi software package MultiDrizzle. 
-For a complete discussion of MultiDrizzle and the Drizzle alorgithm for combining dithered imaging data see the `MultiDrizzle Handbook Wiki  
-<http://incubator.stsci.edu/mediawiki/index.php/Telescopedia:Multidrizzle>`_.
