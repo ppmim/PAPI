@@ -163,10 +163,12 @@ if __name__ == "__main__":
                   help="Source file list of data frames. It can be a file or directory name.")
     
     parser.add_option("-o", "--output file for logsheet",
-                  action="store", dest="output_filename", help="write output logsheet to specified file")
+                  action="store", dest="output_filename", type="str",
+                  default="/tmp/files.txt",
+                  help="write output logsheet to specified file (default=%default)")
     
     parser.add_option("-d", "--display",
-                  action="store_true", dest="show", default=False,
+                  action="store_true", dest="show", default=True,
                   help="show result on screen (stdout)")
     
     parser.add_option("-r", "--rows", nargs=2,
@@ -180,7 +182,8 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
     
-    if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    # args is the leftover positional arguments after all options have been processed
+    if not options.source_file_list or not options.output_filename or len(args)!=0: 
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if options.verbose:

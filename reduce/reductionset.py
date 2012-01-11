@@ -180,8 +180,11 @@ class ReductionSet(object):
         self.m_type = ""         # Type (dark, flat, object, ...) of the current data set; should be always object !
         self.m_expt = 0.0        # Exposition Time of the current data set files
         self.m_ncoadd = 0        # Number of coadds of the current data set files
-        self.m_itime  = 0.0      # Integration Time of the currenct data set files
+        self.m_itime  = 0.0      # Integration Time of the current data set files
         self.m_readmode = ""     # readout mode (must be the same for all data files)
+        
+        # Check if LEMON pipeline for photometric variability will be executed
+        self.m_lemon_processing = False 
         
         ##Local DataBase (in memory)
         self.db = None
@@ -2272,7 +2275,14 @@ class ReductionSet(object):
                                        master_flat, 
                                        out_dir)
             self.m_LAST_FILES = res.apply()
-                        
+
+        ########################################################################
+        # 4.2 - LEMON connection - End here for LEMON processing    
+        ########################################################################
+        if self.m_lemon_processing:
+            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+            return out_dir+"/files_skysub.list"
+                           
         ########################################################################
         # 5 - Quality assessment (FWHM, background, sky transparency, 
         # ellipticity, PSF quality)  

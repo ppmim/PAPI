@@ -389,7 +389,8 @@ if __name__ == "__main__":
 
     print "Files:",filelist
     tmp_dir = os.path.dirname(options.output_filename)
-    mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, options.normalize,"/tmp")
+    mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, 
+                            options.normalize)
     mDFlat.createMaster()
     
         

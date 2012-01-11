@@ -222,7 +222,7 @@ def generate_phot_comp_plot ( input_catalog, filter, expt = 1.0 ,
 
 
 def compute_regresion ( vo_catalog, column_x, column_y , 
-                        output_filename="/tmp/linear_fit.pdf"):
+                        output_filename="/tmp/linear_fit.pdf", min_snr=10.0):
     """
     @summary: Compute and Plot the linear regression of two columns of the 
               input vo_catalog
@@ -247,13 +247,14 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
     # ToBeDone
     ## Filter data by FLAGS=0, FLUX_AUTO>0, ...
     ## SNR = FLUX_AUTO / FLUXERR_AUTO
-    min_snr = 10
     table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
                              (table.j_snr>min_snr) & (table.h_snr>min_snr) &
                              (table.k_snr>min_snr) & (table.j_k<1.0) &
                              (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
     
-    # If there aren't enough 2MASS objects, don't use color cut
+    print ">> Number of matched points = ",len(table_new)
+    
+    # If there aren't enough 2MASS objects, don't use color cut (J-K)<1
     if len(table_new)<25:
         #table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
         #                         (table.j_snr>min_snr))
@@ -261,6 +262,9 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
                              (table.j_snr>min_snr) & (table.h_snr>min_snr) &
                              (table.k_snr>min_snr) & 
                              (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
+        
+        print ">> Number of matched points (no color cut)= ",len(table_new)
+
         
     #X = -2.5 * numpy.log10(table_new['FLUX_AUTO']/1.0)
     filter = column_y
@@ -414,8 +418,8 @@ class STILTSwrapper (object):
               'ascii': 1
               }
     
-    #_stilts_pathname = "/home/panic/SOFTWARE/STILTS/stilts"
-    _stilts_pathname = "/home/panicmgr/PAPI/downloads/STILTS/stilts"
+    _stilts_pathname = "/home/panic/SOFTWARE/STILTS/stilts"
+    #_stilts_pathname = "/home/panicmgr/PAPI/downloads/STILTS/stilts"
     
     def __init__(self, *a, **k):
         """ The constructor """
@@ -467,7 +471,7 @@ class STILTSwrapper (object):
         ./stilts plot2d in=match_S_b.vot subsetNS='j_k<=1.0 & k_snr>10' lineNS=LinearRegression xdata=k_m ydata=MyMag_k xlabel="2MASS k_m / mag" ylabel="PAPI k_m / mag"
         """
 
-def doPhotometry(input_image, catalog, output_filename):
+def doPhotometry(input_image, catalog, output_filename, snr):
     """
     @summary: Run the rough photometric calibraiton
     
@@ -475,7 +479,9 @@ def doPhotometry(input_image, catalog, output_filename):
     
     @param catalog: photometric catalog to compare to
     
-    @param output_filename: file where output figure will be saved  
+    @param output_filename: file where output figure will be saved
+    
+    @param snr : minimum SNR of stars used of linear fit  
     """
     
     
@@ -566,7 +572,7 @@ def doPhotometry(input_image, catalog, output_filename):
     log.debug("Compute & Plot regression !!!")    
     try:
         compute_regresion (out_xmatch_file, 'MAG_AUTO', 
-                           two_mass_col_name, output_filename )
+                           two_mass_col_name, output_filename, snr )
         log.debug("Well DONE !!")
         #sys.exit(0)
     except Exception,e:
@@ -604,13 +610,18 @@ if __name__ == "__main__":
     parser = OptionParser(usage)
     
     parser.add_option("-i", "--input_image",
-                  action="store", dest="input_image", help="input image to calibrate\
-                  to do photometric comparison with")
+                  action="store", dest="input_image", 
+                  help="input image to calibrate to do photometric comparison with")
                   
     parser.add_option("-c", "--base_catalog (2MASS, USNO-B)",
                   action="store", dest="base_catalog",
                   help="Name of base catalog to compare with (2MASS, USNO-B) -- not used !!! (default = %default)",
                   default="2MASS")
+    
+    parser.add_option("-S", "--snr",
+                  action="store", dest="snr", type=int,
+                  help="min SNR of stars used for linear fit (default = %default)",
+                  default=10.0)
     
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 
@@ -639,7 +650,8 @@ if __name__ == "__main__":
         
     try:
         catalog = "2MASS"
-        doPhotometry(options.input_image, catalog, options.output_filename)
+        doPhotometry(options.input_image, catalog, options.output_filename, 
+                     options.snr)
     except Exception,e:
         log.info("Some error while running photometric calibration: %s"%str(e))
         sys.exit(0)

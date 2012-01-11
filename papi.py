@@ -109,7 +109,11 @@ def main(arguments = None):
                   action = "store", dest = "output_dir", 
                   help = "output dir for product files")
     
-    parser.add_option("-r", "--red_mode", type = "str",
+    parser.add_option("-r", "--rows", nargs=2,
+                  action="store", dest="rows", type=int,
+                  help="use only files of the source file-list in the range of rows specified (0 to N, both included)")
+
+    parser.add_option("-R", "--red_mode", type = "str",
                   action = "store", dest = "reduction_mode", 
                   help = "Mode of data reduction to do (quick|science)")
                   
@@ -125,7 +129,6 @@ def main(arguments = None):
                   action = "store", dest = "seq_to_reduce", 
                   default = "all", help = "Sequence number to reduce. \
                   Be default, all sequences found will be reduced.")
-    
 
     parser.add_option("-v", "--verbose",
                   action = "store_true", dest = "verbose", default = True,
@@ -199,6 +202,16 @@ def main(arguments = None):
         for file in dircache.listdir(general_opts['source']):
             if file.endswith(".fits") or file.endswith(".fit"):
                 sci_files.append((general_opts['source']+"/"+file).replace('//','/'))
+    
+    # Take only the rows(files) required
+    if (os.path.isfile(general_opts['source']) and len(init_options.rows)>0):
+        i = 0
+        tmp_sci_files = []
+        for file in sci_files:
+            if i>=init_options.rows[0] and i<=init_options.rows[1]:
+                tmp_sci_files.append(file)
+            i = i+1
+        sci_files = tmp_sci_files 
     
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     log.debug(">> Starting PAPI....")
