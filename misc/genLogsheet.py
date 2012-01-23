@@ -176,7 +176,7 @@ if __name__ == "__main__":
                   help="show only filenames the range of rows specified (0 to N")
 
     parser.add_option("-F", "--filenames_only",
-                  action="store_true", dest="filenames_only", default=False,
+                  action="store_true", dest="filenames_only", default=True,
                   help="Only print out the filenames")
     
 

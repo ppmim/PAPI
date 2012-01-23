@@ -458,4 +458,29 @@ embargo, veo que la documentación de Numpy si los usa, pero para ello hay que
 instalar una extensión a sphinx propia de Numpy para que se genera la documentación
 como en Numpy ( ver  https://github.com/numpy/numpy/tree/master/doc/sphinxext)
 
-  
+2012-01-09
+==========
+- Incorporación después de vacaciones !
+- Matilde me dice que han estado observando con O2k para su proyecto. Quedamos
+en que me bajaré los datos y iré mirando como reducirlos, al menos hasta la
+sustracción de cielo, pues a partir de ahí continuará LEMON.
+
+
+2012-01-10
+==========
+- Comienzo la implementación para que PAPI se detenga en después de la sustracción
+de cielo y devuelta la lista de ficheros pre-reducidos para pasarle a LEMON.
+
+- En las primeras pruebas de la reducción de datos de Matilde, me doy con 
+problemas como:
+
+    1) Hay un objeto extenso (nebulosa) y no han observado en modo "T-S-T-S-...",
+    por lo que PAPI no puede reducir bien las imágenes por la nebulosa.
+    1) las secuencias de Ks tiene dos iteraciones sobre un patrón de dithering
+    de 5 posiciones, con lo cual el algorimo estimación de cielo no funciona 
+    bien y hace sobrecorrección.
+    2) los parametros del calculo del gainmap son muy severos (0.7,13), por lo
+    que los relajo a (0.5, 1.5)
+    
+- Hablo con Matilde de estos primeros problemas y me dice que no me preocupe, 
+que primero ella estudiará cual es le mejor método para la sustracción de cielo.

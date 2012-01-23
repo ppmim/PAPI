@@ -247,11 +247,17 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
     # ToBeDone
     ## Filter data by FLAGS=0, FLUX_AUTO>0, ...
     ## SNR = FLUX_AUTO / FLUXERR_AUTO
+    
     table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
                              (table.j_snr>min_snr) & (table.h_snr>min_snr) &
                              (table.k_snr>min_snr) & (table.j_k<1.0) &
                              (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
     
+    """table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
+                             (table.k_snr>min_snr) &
+                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
+    
+    """
     print ">> Number of matched points = ",len(table_new)
     
     # If there aren't enough 2MASS objects, don't use color cut (J-K)<1
@@ -568,6 +574,7 @@ def doPhotometry(input_image, catalog, output_filename, snr):
     
     ## 3a- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
     ###### and generate the plot file with the photometric comparison
+    ###### using Numpy & Matplotlib
     ###### 2MASS_Mag = Inst_Mag*b + ZP  
     log.debug("Compute & Plot regression !!!")    
     try:
@@ -581,11 +588,12 @@ def doPhotometry(input_image, catalog, output_filename, snr):
         raise e
     
     ## 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
-    ###### and generate the plot file with the photometric comparison  
+    ###### and generate the plot file with the photometric comparison 
+    ###### using STILTS
     try:
         exptime = 1.0 # SWARP normalize flux to 1 sec
-        file_ext = output_filename.split(".")[1]
-        output_filename_2 = output_filename.replace("." + file_ext,"_2."+file_ext) 
+        file_ext = os.path.splitext(output_filename)[1]
+        output_filename_2 = output_filename.replace(file_ext, "_b"+file_ext) 
         plot_file = generate_phot_comp_plot ( match_cat, two_mass_col_name, exptime, 
                                               output_filename_2, 
                                               out_format='pdf')

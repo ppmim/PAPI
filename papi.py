@@ -204,7 +204,10 @@ def main(arguments = None):
                 sci_files.append((general_opts['source']+"/"+file).replace('//','/'))
     
     # Take only the rows(files) required
-    if (os.path.isfile(general_opts['source']) and len(init_options.rows)>0):
+    if (os.path.isfile(general_opts['source']) and init_options.rows!=None):
+        if (init_options.rows[0]<0) or (init_options.rows[1]>len(sci_files)-1):
+            parser.error("wrong rows index values (0,N-1)")
+            parser.print_help()
         i = 0
         tmp_sci_files = []
         for file in sci_files:
