@@ -133,7 +133,7 @@ class MainGUI(panicQL):
         self.isOTrunning = True
         self.last_filter = ''  # filter name (J,H,Ks, ...) of the last dataframe received
         self.last_ob_id = -1   # Obseving Block ID (unique) of the last dataframe received
-        self.last_img_type = '' # image type (DARK, FLAT, SCIENCE, ...) of last received image
+        self.last_img_type = None # image type (DARK, FLAT, SCIENCE, ...) of last received image
         self.last_ra = -1
         self.last_dec = -1
         self.last_filename = None  # last filename of the FITS received
@@ -862,15 +862,23 @@ class MainGUI(panicQL):
             # General case for OT observations
             if fits.getExpNo()==1:
                 #Start of sequence
+                self.curr_sequence = [filename]
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
                 log.debug("Start OS-0 %s detected : %s"%(typeSeq, str(retSeq)))
                 self.logConsole.warning("Start of observing sequence [%s]"%(typeSeq))  
-            if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1:
+            if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1 \
+            and (fits.getType()==self.last_img_type or self.last_img_type==None):
+                #End of sequence
                 retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects !
                 self.curr_sequence = []
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
                 log.debug("EOS-0 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
+                if self.last_img_type!=None and fits.getType()!=self.last_img_type:
+                    #skip/remove the current/last file, type mismatch !
+                    self.curr_sequence = self.curr_sequence[:-1]
+                    log.error("Detected file type mismatch. File %s skipped"%(filename))
+                #Mid of sequence, continue adding file
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         # ############################################
         # We suppose data is obtained using GEIRS+MIDAS_scripts observations
@@ -878,7 +886,8 @@ class MainGUI(panicQL):
         # TODO: TBC !!! I don't know if it will work with calibration sequences
         else:
             log.debug("Checking GEIRS keywords...")
-            if self.last_ob_id==-1: # first time 
+            if self.last_ob_id==-1: # first time
+                # Start of sequence 
                 self.curr_sequence.append(filename)
                 log.debug("Adding file to sequence: %s",str(self.curr_sequence))
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
@@ -886,21 +895,23 @@ class MainGUI(panicQL):
                 or fits.getFilter()!= self.last_filter \
                 or fits.getType()!=self.last_img_type:
                 retSeq = self.curr_sequence[:]  # very important !! Lists are mutable objects ! or clist = copy.copy(list)
-                #reset the sequence list
+                #End of sequence, and then reset the sequence list
                 self.curr_sequence = [filename]
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
                 log.debug("EOS-1 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
+                #Check RA,Dec coordinates for distance
                 ra_point_distance = self.last_ra-fits.ra
                 dec_point_distance = self.last_dec-fits.dec
                 dist = math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
                 if dist>self.MAX_POINT_DIST:
                     retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects ! 
-                    #reset the sequence list
+                    #End of sequence, then reset the sequence list
                     self.curr_sequence = [filename]
                     endSeq,retSeq,typeSeq = True,retSeq,fits.getType()
                     log.debug("EOS-2 %s detected : %s"%(typeSeq, str(self.retSeq)))
                 else:
+                    #Mid of sequence, continue adding file
                     self.curr_sequence.append(filename)
                     log.debug("Adding file to sequence: %s",str(self.curr_sequence))
                     endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
