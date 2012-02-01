@@ -86,13 +86,18 @@ class LogSheet (object):
         
         
         # STEP 0:Get the user-defined list of frames
-        if os.path.isdir(self.__file_list):
+        if type(self.__file_list)==type([]):
+            filelist = self.__file_list
+        elif os.path.isdir(self.__file_list):
             # Input is a directory
             filelist = [os.path.join(self.__file_list, file) for file in os.listdir(self.__file_list)]
-        else:    
+        elif os.path.isfile(self.__file_list):
             # Input is a file
             filelist = [line.replace( "\n", "") for line in fileinput.input(self.__file_list)]
-            
+        else:
+            log.error("Source file type unknown ...")
+            return None
+        
         # STEP 1: Create the logsheet text file
         logsheet = open(self.__output_filename,"w")
         if not self.remove_head:    
@@ -124,10 +129,14 @@ class LogSheet (object):
         for key in keys:
             if self.rows==None:  # show all the data 
                 f = sorted_list[key]
-                logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, os.path.basename(f.filename), f.getFilter(), f.getType(), f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
+                logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, f.pathname, f.getFilter(), f.getType(), f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
             elif id>=min and id<=max:
                 f = sorted_list[key]
-                logsheet.write('%-32s\n' % (f.pathname))
+                logsheet.write('%s\n' % (f.pathname))
+                print '%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s'\
+                    % (id, os.path.basename(f.filename), f.getFilter(), f.getType(), 
+                       f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), \
+                       f.getDateTimeObs())
                 #logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, os.path.basename(f.filename), f.getFilter(), f.getType(), f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
 
                 
@@ -139,7 +148,7 @@ class LogSheet (object):
         return self.__output_filename
     
     def show (self):
-        #TODO
+        #To be completed
         os.system("cat %s" %(self.__output_filename))
         pass
                 

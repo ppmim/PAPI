@@ -90,7 +90,28 @@ class ReductionSet(object):
                  group_by="ot", check_data=True, config_dict=None, 
                  external_db_files=None, temp_dir = None,
                  *a, **k):
-        """ Init function """
+        """ 
+        Init object 
+        
+        Parameters
+        ----------
+        rs_filelist : list
+            list of files of the reduction set
+        
+        out_dir : str
+            output dir where output files will be generated
+        
+        obs_mode : str
+            'dither' - files belong to a dither pattern observation
+            'other' - 
+        dark : str
+            if given, the filename of the master dark to be used for the reduction
+        flat : str
+            if given, the filename of the master flat to be used for the reduction
+        
+        ....
+        
+        """
         
         super (ReductionSet, self).__init__ (*a, **k)
         
@@ -148,7 +169,7 @@ class ReductionSet(object):
         self.master_flat = flat # master flat to use (input)
         self.master_bpm = bpm # master Bad Pixel Mask to use (input)
         self.apply_dark_flat = self.config_dict['general']['apply_dark_flat'] # 0=no, 1=before, 2=after
-        self.red_mode = red_mode # reduction mode (quick=for QL, science=for science) 
+        self.red_mode = red_mode # reduction mode (lemon=for LEMON pipeline, quick=for QL, science=for science) 
         log.debug("GROUP_BY = %s"%group_by)
         self.group_by = group_by.lower() # flag to decide how classification will be done, by OT (OB_ID, OB_PAT, FILTER and TEXP kws) or by FILTER (FILTER kw)
         self.check_data = check_data # flat to indicate if data checking need to be done (see checkData() method)
@@ -183,8 +204,6 @@ class ReductionSet(object):
         self.m_itime  = 0.0      # Integration Time of the current data set files
         self.m_readmode = ""     # readout mode (must be the same for all data files)
         
-        # Check if LEMON pipeline for photometric variability will be executed
-        self.m_lemon_processing = False 
         
         ##Local DataBase (in memory)
         self.db = None
@@ -1547,6 +1566,7 @@ class ReductionSet(object):
         # set the reduction mode
         if red_mode is not None:
             self.red_mode = red_mode
+        #else, keep the red_mode from the object initialization
             
         # Look for the sequences     
         sequences, seq_types = self.getSequences()
@@ -1647,6 +1667,10 @@ class ReductionSet(object):
         # Take the first file of the sequence in order to find out the type of 
         # the sequence
         fits = datahandler.ClFits(sequence[0])
+        
+        # If red_mode='lemon', only science sequences will be processed
+        if self.red_mode=='lemon' and not fits.isScience():
+            return [] # nothing to do
         
         if fits.isDark():
             log.debug("[reduceSeq] A Dark sequence is going to be reduced: \n%s"%str(sequence))
@@ -1802,9 +1826,9 @@ class ReductionSet(object):
                         # 
                         
                         try:
-                            out_ext.append(self.reduceSingleObj(obj_ext[n], 
-                                                                mdark, mflat, 
-                                                                mbpm, self.red_mode, 
+                            out_ext.append(self.reduceSingleObj(obj_ext[n],
+                                                                mdark, mflat,
+                                                                mbpm, self.red_mode,
                                                                 out_dir=self.out_dir,
                                                                 output_file = self.out_dir + \
                                                                 "/out_Q%02d.fits"%(n+1)))
@@ -1812,14 +1836,18 @@ class ReductionSet(object):
                             log.error("[reduceSeq] Some error while reduction of extension %d of object sequence", n+1)
                             raise e
         
-            # if all reduction were fine, now join/stich back the extensions in a widther frame
+            # If red_mode is 'lemon',then no warping of frames is required
+            if self.red_mode=='lemon':
+                return out_ext
+            
+            # if all reduction were fine, now join/stich back the extensions in a wider frame
             seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
             if len(out_ext) >1:
                 log.debug("[reduceSeq] *** Creating final output file *WARPING* single output frames....***")
                 #option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
                 #mef.createMEF(self.out_file)
-                #option 2(current): SWARP resulted images to register the N-extension into one wide-single extension
+                #option 2(current): SWARP result images to register the N-extension into one wide-single extension
                 log.debug("*** Coadding/Warping overlapped files....")
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
@@ -1828,7 +1856,11 @@ class ReductionSet(object):
                 swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
                 swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
-                swarp.run(out_ext, updateconfig=False, clean=False)
+                try:
+                    swarp.run(out_ext, updateconfig=False, clean=False)
+                except SWARPException, e:
+                    log.error("Error while running SWARP")
+                    raise e
                 
                 files_created.append(seq_result_outfile)
                 log.info("*** Obs. Sequence reduced. File %s created.  ***", 
@@ -2078,13 +2110,39 @@ class ReductionSet(object):
     def reduceSingleObj(self, obj_frames, master_dark, master_flat, master_bpm, 
                   red_mode, out_dir, output_file):
         
-        """ Main reduction procedure. 
-            Given a set of object(science) frames and (optionally) master calibration files,
-            run the data reduction of the observing object sequence, producing an reduced
-            ouput frame if no error; otherwise return None or raise exception.
+        """ 
+        Main reduction procedure. 
+        Given a set of object(science) frames and (optionally) master calibration files,
+        run the data reduction of the observing object sequence, producing an reduced
+        ouput frame if no error; otherwise return None or raise exception.
             
-            NOTE: Currently this method only accepts single FITS files (not MEF), it means
-                  the splitting must be done previusly to call this method.
+        NOTE: Currently this method only accepts single FITS files (not MEF), it means
+              the splitting must be done previusly to call this method.
+       
+        Parameters
+        ----------
+        
+        obj_frames : list
+            list of files to be processed
+        
+        master_dark : str
+            Master dark filename to be used in the processing
+            
+        master_flat : str
+            Master flat filename to be used in the processing
+            
+        
+        
+        Returns
+        -------
+        
+        output_file : str 
+            If 'red_mode' = 'quick' or 'science', then the function return the 
+            coadded frame obtained from the reduction, both 'quick' and 'science' 
+            reduction mode.
+            If 'red_mode' = 'lemon', the method return a file listing the files
+            obtained of the pre-processing done (dark, flat and sky subtraction) 
+        
         """
         
         log.info("##################################")
@@ -2101,6 +2159,7 @@ class ReductionSet(object):
         
         # set the reduction mode
         if red_mode != None: self.red_mode = red_mode
+        #else, keep the red_mode value from the object
         
         
         # Clean old files 
@@ -2279,7 +2338,7 @@ class ReductionSet(object):
         ########################################################################
         # 4.2 - LEMON connection - End here for LEMON processing    
         ########################################################################
-        if self.m_lemon_processing:
+        if self.red_mode=='lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
             return out_dir+"/files_skysub.list"
                            

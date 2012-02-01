@@ -36,12 +36,35 @@ from misc.paLog import log
 class DataCollector (object):
 	
     """
-        \brief
-        Class that implement the data receiver FITS data files comming from GEIRS  
+    Class that implement the data receiver FITS data files comming from GEIRS  
     """
     
     def __init__(self, mode, source, filename_filter, p_callback_func):
-    
+        """
+        Initialize object
+        
+        Parameters
+        ----------
+        mode : str
+            'dir' - Read/inspect the files files from the given directory in 'source'
+            'file' - Read/inspect the files from the given file given in 'source'
+            'geirs-file' - Read the file contents from a generated GEIRS file of 
+            type 1, i.e, ~GEIRS/log/save_CA2.2m.log
+            'geirs-file2' - Read the file contents from a generated GEIRS file of 
+            type 1, i.e., ~/tmp/fitsfiles.corrected
+            
+        source: str
+            directory name or filename to be read for inputs
+            
+        filename_filter : str
+            filter for files to look for (i.e: *.fits)
+            
+        p_callback_func : str
+            function name to be executed each time a new file is read/detected.
+            This function usually has as first parameter the filename just read.
+            
+        """
+        
         self.mode = mode
         self.filename_filter = filename_filter
         self.source = source

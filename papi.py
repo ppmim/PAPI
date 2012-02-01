@@ -61,6 +61,7 @@ from misc.paLog import log
 import reduce.reductionset as RS
 import misc.config
 import misc.utils as utils
+import misc.genLogsheet as gls
 
 ################################################################################
 # main
@@ -88,52 +89,55 @@ def main(arguments = None):
 
     parser.add_option("-c", "--config", type = "str",
                       action = "store", dest = "config_file",
-                      help = "config file for the PANIC Pipeline application.\
-                       If not specified, '%s' is used" \
+                      help = """Config file for the PANIC Pipeline application.
+                       If not specified, '%s' is used."""
                        % misc.config.default_config_file())
                   
     parser.add_option("-s", "--source", type = "str",
                   action = "store", dest = "source",
-                  help = "Source file list of data frames. \
-                  It can be a file or directory name.")
+                  help = """Source file list of data frames. It can be a file 
+                  or directory name.""")
     
     parser.add_option("-o", "--output_file", type = "str",
-                  action = "store", dest = "output_filename", 
-                  help = "final reduced output image")
+                  action = "store", dest = "output_file", 
+                  help = "Final reduced output image")
     
     parser.add_option("-t", "--temp_dir", type = "str",
                   action = "store", dest = "temp_dir",
-                  help = "directory for temporal files")              
+                  help = "Directory for temporal files")              
     
     parser.add_option("-d", "--out_dir", type = "str",
                   action = "store", dest = "output_dir", 
-                  help = "output dir for product files")
+                  help = "Output dir for product files")
     
     parser.add_option("-r", "--rows", nargs=2,
                   action="store", dest="rows", type=int,
-                  help="use only files of the source file-list in the range of rows specified (0 to N, both included)")
+                  help="""Use *only* files of the source file-list in the range 
+                  of rows specified (0 to N, both included)""")
+    
+    parser.add_option("-l", "--list",
+                  action="store_true", dest="list", default = False,
+                  help="""Generate a list with all the source files read from 
+                  the source only sorted by MJD""")
 
     parser.add_option("-R", "--red_mode", type = "str",
                   action = "store", dest = "reduction_mode", 
-                  help = "Mode of data reduction to do (quick|science)")
+                  help = "Mode of data reduction to do (lemon|quick|science)")
                   
     parser.add_option("-m", "--obs_mode", type = "str",
                   action = "store", dest = "obs_mode", 
-                  default = "dither", help = "observing mode (dither|ext_dither|other)")
+                  default = "dither", help = "Observing mode (dither|ext_dither|other)")
     
     parser.add_option("-p", "--print",
                   action = "store_true", dest = "print_seq", default = False,
-                  help = "print detected sequences in the Data Set")
+                  help = "Print detected sequences in the Data Set")
 
     parser.add_option("-S", "--seq_to_reduce", type = "str",
                   action = "store", dest = "seq_to_reduce", 
-                  default = "all", help = "Sequence number to reduce. \
-                  Be default, all sequences found will be reduced.")
+                  default = "all", help = """Sequence number to reduce. By default, 
+                  all sequences found will be reduced.""")
 
-    parser.add_option("-v", "--verbose",
-                  action = "store_true", dest = "verbose", default = True,
-                  help = "verbose mode [default]")
-    
+
                   
     # file calibration options
     
@@ -151,14 +155,18 @@ def main(arguments = None):
 
     parser.add_option("-g", "--group_by", type = "str",
                   action = "store", dest = "group_by",
-                  help = "kind of data grouping (based on) to do with the \
-                  dataset files (ot |filter)")
+                  help = """kind of data grouping (based on) to do with the 
+                  dataset files (ot |filter)""")
 
     parser.add_option("-k", "--check_data", 
                   action = "store_true", dest = "check_data", 
-                  help = "if true, check data properties matching \
-                  (type, expt, filter, ncoadd, mjd)")
-
+                  help = """if true, check data properties matching (type, expt, 
+                  filter, ncoadd, mjd)""")
+    
+    parser.add_option("-v", "--verbose",
+                  action = "store_true", dest = "verbose", default = True,
+                  help = "Verbose mode [default]")
+    
         
     (init_options, i_args) = parser.parse_args (args = arguments)
     
@@ -203,10 +211,18 @@ def main(arguments = None):
             if file.endswith(".fits") or file.endswith(".fit"):
                 sci_files.append((general_opts['source']+"/"+file).replace('//','/'))
     
+    # Check for list files sorted by MJD
+    if init_options.list==True:
+       log.debug("Creating logsheet file ....")
+       logSheet = gls.LogSheet(sci_files, "/tmp/logsheet.txt", [0,len(sci_files)], True)
+       logSheet.create()
+       
+       return
+   
     # Take only the rows(files) required
     if (os.path.isfile(general_opts['source']) and init_options.rows!=None):
         if (init_options.rows[0]<0) or (init_options.rows[1]>len(sci_files)-1):
-            parser.error("wrong rows index values (0,N-1)")
+            parser.error("wrong rows index values (0,%s)"%(len(sci_files)-1))
             parser.print_help()
         i = 0
         tmp_sci_files = []

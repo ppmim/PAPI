@@ -181,7 +181,10 @@ class MainGUI(panicQL):
         ## ------------------------------
         self.file_pattern = str(self.lineEdit_filename_filter.text())
         # Data collector for input files
-        self.dc = datahandler.DataCollector("geirs-file2", self.m_sourcedir, 
+        #self.dc = datahandler.DataCollector("geirs-file2", self.m_sourcedir, 
+        #                                    self.file_pattern , self.new_file_func)
+        
+        self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
                                             self.file_pattern , self.new_file_func)
         # Data collector for output files
         self.dc_outdir = None # Initialized in checkOutDir_slot()
@@ -853,8 +856,10 @@ class MainGUI(panicQL):
                  fits.getFilter(), self.last_filter, fits.getOBId(), self.last_ob_id )
         #############################################
         # Based on the meta-data provided by the OT
-        # Option based on number of expositions (NOEXP) in the pattern and the exposition 
-        # number (EXPNO) of the current frame; It even works for calibration frames sequences (dark, flats, ...)
+        # Option based on number of expositions (NOEXP) in the pattern and the 
+        # exposition number (EXPNO) of the current frame; It even works for 
+        # calibration frames sequences (dark, flats, ...)
+        # Added checking of type mismatch of sequence files
         log.info("EXPNO= %s, NOEXPO= %s", fits.getExpNo(), fits.getNoExp())
         if fits.isFromOT():
             log.debug("Checking OT keywords...")
