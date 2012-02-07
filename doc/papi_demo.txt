@@ -126,7 +126,12 @@ PL> photometry.py -i ./reduced_SEQ.fits
 Simulation of mage distortion & correction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 (see TN)
- 
+
+1) We take a 'pre-reduced' image from HAWK-I of 4439x4439 pixels (0.106arcsec/px,
+7.5x7.5arcmin)
+2) Run applyDistort.py -s ./hawki.fits -o ./dist.fits -m dist_mat_K.txt -f 1.0
+3) Run astrowarp.py -c ../config_files/papi_suse11.cfg -s ./dist.fits -o ./out.fits 
+
 PL> applyDistort.py 
 
 
