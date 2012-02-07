@@ -232,6 +232,7 @@ def main(arguments = None):
             i = i+1
         sci_files = tmp_sci_files 
     
+    
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     log.debug(">> Starting PAPI....")
     log.debug("   + source  : %s",general_opts['source'])

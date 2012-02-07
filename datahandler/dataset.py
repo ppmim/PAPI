@@ -395,6 +395,78 @@ class DataSet(object):
                  
     def GetFilterFiles(self, max_mjd_diff=None ):
         """ 
+        @summary: Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
+        ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
+        
+        In addition, MJD is checked in order to look for time gaps into a (Filter,Type) 
+        sequence. It will be quite useful for data grouping when the OT was not used 
+        during the observing run.
+        
+        @param max_mjd_diff: Maximun seconds of temporal distant allowed between 
+        two consecutive frames
+         
+        @return: the list of types [DARK, FLAT, etc] and list of list,
+        having each list the list of files beloging to.
+
+        @note: it is mainly useful when the OT is not used for the data acquisition
+                    
+        """
+        
+        if max_mjd_diff==None: max_mjd_diff=DataSet.MAX_MJD_DIFF
+        
+        par_list = [] # parameter tuple list (filter,texp)
+        filter_file_list = [] # list of file list (one per each filter)
+              
+        # First, look for Filters on SCIENCE files
+        #s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' order by mjd"
+        s_select="select DISTINCT filter,type from dataset  order by mjd"
+
+        #print s_select
+        cur = self.con.cursor()
+        cur.execute(s_select,"")
+        rows = cur.fetchall()
+        if len(rows)>0:
+            par_list = [ [str(f[0]), str(f[1])]  for f in rows] # important to apply str() ??
+        print "Total rows selected:  %d" %(len(par_list))
+        print "Filters found :\n ", par_list
+        
+        # Finally, look for files of each Filter
+        for par in par_list:
+            s_select = "select filename from dataset where filter=? and type=? order by mjd"
+            #s_select = "select filename from dataset where filter=? and texp=?  order by mjd"    
+            cur = self.con.cursor()
+            cur.execute(s_select,(par[0],par[1]))
+            rows = cur.fetchall()
+            if len(rows)>0:
+                filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
+            #print "%d files found for Filter %s" %(len(rows), par[0])
+
+        # Now, look for temporal gap inside the current sequences were found
+        new_seq_list = []
+        new_seq_par = []
+        k = 0
+        for seq in filter_file_list:
+            group = []
+            mjd_0 = self.GetFileInfo(seq[0])[10]
+            for file in seq:
+                t = self.GetFileInfo(file)[10]
+                if math.fabs(t-mjd_0)<max_mjd_diff:
+                    group.append(file)
+                    mjd_0 = t
+                else:
+                    log.debug("Sequence split due to temporal gap between sequence frames")
+                    new_seq_list.append(group[:]) # very important, lists are mutable !
+                    new_seq_par.append(par_list[k][1])
+                    mjd_0 = t
+                    group = [file]
+            new_seq_list.append(group[:]) # very important, lists are mutable !
+            new_seq_par.append(par_list[k][1])
+            k+=1    
+            
+        return  new_seq_list, new_seq_par
+    
+    def GetSciFilterFiles(self, max_mjd_diff=None ):
+        """ 
         @summary: Get all the SCIENCE group files found for each (Filter,TExp) 
         ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
         
@@ -407,6 +479,8 @@ class DataSet(object):
          
         @return: the list of parameter-tuples [filter, texp] and list of list,
         having each list the list of files beloging to.
+        
+        @note: it is mainly useful when the OT is not used for the data acquisition
             
         """
         
@@ -462,6 +536,7 @@ class DataSet(object):
             k+=1    
             
         return  new_seq_list, new_seq_par
+
                          
     def GetSequences(self, group_by='ot'):
         """
@@ -474,7 +549,8 @@ class DataSet(object):
         @return: two lists:
              - a of list, having each list the list of files beloging 
                to the sequence.
-             - a list of list of parameters for each list found (OB_ID, OB_PAT, FILTER, TEXP)
+             - a list with the Types for each sequence found (DARK, DOME_FLAT, 
+             TW_FLAT, SCIENCE)
         """   
         
         if group_by.lower()=='ot': 
@@ -582,7 +658,8 @@ class DataSet(object):
         @return: two lists:
              - a list of list, having each list the list of files beloging 
                to the sequence.
-             - a list of parameters for each list found (OB_ID, OB_PAT, FILTER, TEXP)
+             - a list with the Types for each sequence found (DARK, DOME_FLAT, 
+             TW_FLAT, SCIENCE)
     
         @see: GetSeqFiles()
             

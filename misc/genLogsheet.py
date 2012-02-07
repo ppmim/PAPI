@@ -125,7 +125,8 @@ class LogSheet (object):
         else:
             min = 0
             max = len(keys)
-            
+
+        print "KEYS=",keys            
         for key in keys:
             if self.rows==None:  # show all the data 
                 f = sorted_list[key]

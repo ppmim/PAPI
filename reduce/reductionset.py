@@ -700,12 +700,13 @@ class ReductionSet(object):
         
         if self.group_by=='ot':
             seqs, seq_types = self.getOTSequences(show)
+        #elif self.group_by=='filter':
+        #    seqs = self.getObjectSequences() # only look for science sequences !
+        #    seq_types = ['SCIENCE']*len(seqs)
+        #elif self.group_by=='none':
         elif self.group_by=='filter':
-            seqs = self.getObjectSequences() # only look for science sequences !
-            seq_types = ['SCIENCE']*len(seqs)
-        elif self.group_by=='none':
             if self.db==None: self.__initDB()
-            seqs, seq_types = self.db.GetSequences(group_by='none')
+            seqs, seq_types = self.db.GetSequences(group_by='filter')
         else:
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
@@ -921,7 +922,7 @@ class ReductionSet(object):
                 out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
             """
             # look for sky subtracted images created by irdr::skyfilter            
-            files=[line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
+            files = [line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
             for file in files:
                 if os.path.exists(file+".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
                     shutil.move(file.replace(".fits", ".fits.skysub"), file.replace(".fits", ".skysub.fits"))
@@ -1548,12 +1549,13 @@ class ReductionSet(object):
             
          3. Insert the results into the local DB 
          
-        @param red_mode: reduction mode (quick, science); default mode is 'quick'
+        @param red_mode: reduction mode (lemon, quick, science); default mode 
+        is 'quick'.
         
         @param seqs_to_reduce: list of sequence number [0,N-1] to be reduced;
         default (None), all sequences found will be reduced.
            
-        @return: the number of sequences successfully reduced
+        @return: the number of sequences successfully reduced.
         
         """
         
@@ -1644,8 +1646,9 @@ class ReductionSet(object):
                 if type == r_type:
                     new_sequences.append(sequences[i])
                     new_seq_types.append(type)
-                else:
-                    log.debug("[reorder_sequences]: Any sequence of type [%s]"%(r_type.lower()))
+                    log.info("[reorder_sequences]: Sequence is of type [%s]"%(r_type.lower()))
+                #else:
+                #    log.debug("[reorder_sequences]: Sequence is NOT of type [%s]"%(r_type.lower()))
             
 
         return new_sequences, new_seq_types
@@ -1668,9 +1671,6 @@ class ReductionSet(object):
         # the sequence
         fits = datahandler.ClFits(sequence[0])
         
-        # If red_mode='lemon', only science sequences will be processed
-        if self.red_mode=='lemon' and not fits.isScience():
-            return [] # nothing to do
         
         if fits.isDark():
             log.debug("[reduceSeq] A Dark sequence is going to be reduced: \n%s"%str(sequence))
@@ -1680,7 +1680,7 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDark_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                task = reduce.calDark.MasterDark (sequence, self.temp_dir, outfile, texp_scale=False)
+                task = reduce.calDark.MasterDark (sequence, self.temp_dir, outfile, texp_scale=True)
                 out = task.createMaster()
                 files_created.append(out) # out must be equal to outfile
             except Exception,e:
@@ -1838,7 +1838,8 @@ class ReductionSet(object):
         
             # If red_mode is 'lemon',then no warping of frames is required
             if self.red_mode=='lemon':
-                return out_ext
+                files_created = out_ext
+                return files_created
             
             # if all reduction were fine, now join/stich back the extensions in a wider frame
             seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
@@ -2151,6 +2152,7 @@ class ReductionSet(object):
         log.info("#### OUT_DIR = %s ",out_dir)
         log.info("#### OUT_FILE = %s ", output_file)
         log.info(" ----------------------------------")
+        log.info("#### FILTER = %s", self.db.GetFileInfo(obj_frames[0])[3])
         log.info("#### MASTER_DARK = %s ", master_dark)
         log.info("#### MASTER_FLAT = %s ", master_flat)
         log.info("#### MASTER_BPM = %s ", master_bpm)
@@ -2340,7 +2342,8 @@ class ReductionSet(object):
         ########################################################################
         if self.red_mode=='lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
-            return out_dir+"/files_skysub.list"
+            log.info("1st Skysubtraction done !")
+            #return out_dir+"/files_skysub.list"
                            
         ########################################################################
         # 5 - Quality assessment (FWHM, background, sky transparency, 
@@ -2461,8 +2464,17 @@ class ReductionSet(object):
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)      
     
+    
         ########################################################################
-        # 9.2 - Divide by the master flat after sky subtraction ! (see notes above)
+        # 9.2 - LEMON connection - End here for LEMON processing    
+        ########################################################################
+        
+        if self.red_mode=='lemon':
+            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub2.list")
+            return out_dir+"/files_skysub2.list"
+    
+        ########################################################################
+        # 9.3 - Divide by the master flat after sky subtraction ! (see notes above)
         # (the same task as above 4.2)
         ########################################################################
         if self.apply_dark_flat==2 and master_flat!=None:

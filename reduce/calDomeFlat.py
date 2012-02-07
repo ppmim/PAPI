@@ -77,8 +77,8 @@ class MasterDomeFlat:
          6. (optionally) Normalize the flat-field
             
          # NOTE : We do NOT subtract any MASTER_DARK, it is not required for 
-         DOME FLATS (it is done implicitly because both are taken with the
-         same Exposition Time)    
+         DOME FLATS (it is done implicitly because both ON/OFF flata are taken 
+         with the same Exposition Time)    
          
     
     \par Language:
