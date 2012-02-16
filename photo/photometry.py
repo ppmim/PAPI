@@ -612,7 +612,7 @@ if __name__ == "__main__":
 
     log.debug( 'Testing Photometric calibration comparison with 2MASS')
     
-        # Get and check command-line options
+    # Get and check command-line options
         
     usage = "usage: %prog [options] arg1 arg2 ..."
     parser = OptionParser(usage)
