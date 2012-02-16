@@ -155,6 +155,9 @@ class ReductionSet(object):
         else:
             self.out_dir = out_dir
         
+        if not os.path.exists(self.out_dir):
+            raise Exception("Output dir does not exist.")
+        
         # Main output file resulted from the data reduction process
         if out_file==None: # if no filename, we choose a random filename
             output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', prefix='red_set_', dir=self.out_dir)
@@ -729,6 +732,22 @@ class ReductionSet(object):
             log.debug("Found %d groups of files", len(seq_types))
         
 
+        #To print the sequences into the log file
+        debug = 1
+        if debug:    
+            k=0
+            log.debug("=========================================================")
+            log.debug("=========== GROUPED SEQUENCES (by %s) =============="%self.group_by)
+            log.debug("=========================================================")
+            for type in seq_types:
+                log.debug("SEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
+                        %(k, type, self.db.GetFileInfo(seqs[k][0])[3], 
+                          self.db.GetFileInfo(seqs[k][0])[4], 
+                          len(seqs[k])))
+                log.debug("-------------------------------------------------------------------")
+                for file in seqs[k]:
+                    log.debug("%s type = %s" %(file, self.db.GetFileInfo(file)[2]))
+                k+=1
             
         return seqs, seq_types
     
@@ -1217,7 +1236,24 @@ class ReductionSet(object):
                                        out_dir+"/*.xml", out_dir+"/*.ldac",
                                        out_dir+"/*.png" )
 
-    
+    def purgeOutput(self):
+        """
+        Purge the output dir in order to remove all the intermediate files
+        """
+        
+        log.debug("Purging the output dir ...")
+        
+        out_dir = self.out_dir
+                 
+        misc.fileUtils.removefiles(out_dir+"/*.ldac")
+        misc.fileUtils.removefiles(out_dir+"/coadd1*", out_dir+"/*.objs",
+                                       out_dir+"/py-sex*", out_dir+"/*_D_F.fits" )
+        misc.fileUtils.removefiles(out_dir+"/gain*.fits",out_dir+"/masterObjMask.fits",
+                                       out_dir+"/*.pap", out_dir+"/*.list")
+        misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
+                                       out_dir+"/*.xml", out_dir+"/*.ldac",
+                                       out_dir+"/*.png" )
+        
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
         """
@@ -1613,6 +1649,10 @@ class ReductionSet(object):
         log.debug("[reduceSet] Files generated # %d #: ***"%len(files_created))
         for r_file in files_created: log.debug("\t    - %s"%r_file)
         log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
+
+        # WARNING : Purging output !! 
+        purgeOutput()
+        
 
         return files_created
    

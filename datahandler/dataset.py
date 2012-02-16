@@ -392,8 +392,101 @@ class DataSet(object):
             #print "%d files found in OB %d" %(len(rows), int(ob_id))
             
         return ob_id_list, ob_file_list
-                 
+    
     def GetFilterFiles(self, max_mjd_diff=None ):
+        """ 
+        @summary: Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
+        ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
+        
+        In addition, MJD is checked in order to look for time gaps into a (Filter,Type) 
+        sequence. It will be quite useful for data grouping when the OT was not used 
+        during the observing run.
+        
+        @param max_mjd_diff: Maximun seconds of temporal distant allowed between 
+        two consecutive frames
+         
+        @return: the list of types [DARK, FLAT, etc] and list of list,
+        having each list the list of files beloging to.
+
+        @note: it is mainly useful when the OT is not used for the data acquisition
+                    
+        """
+        
+        if max_mjd_diff==None: max_mjd_diff=DataSet.MAX_MJD_DIFF
+        
+        par_list = [] # parameter tuple list (filter,texp)
+        filter_file_list = [] # list of file list (one per each filter)
+              
+        # First, look for Filters on SCIENCE files
+        #s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' order by mjd"
+        s_select="select DISTINCT filter,type from dataset where type<>'DOME_FLAT_LAMP_OFF' and type<>'DOME_FLAT_LAMP_ON' order by mjd"
+        
+
+        cur = self.con.cursor()
+        cur.execute(s_select,"")
+        rows = cur.fetchall()
+        par_list = []
+        if len(rows)>0:
+            par_list = [ [str(f[0]), str(f[1])]  for f in rows] # important to apply str() ??
+        print "Total rows selected:  %d" %(len(par_list))
+        print "Filters found :\n ", par_list
+        
+        # Look for DOME_FLATS_ON/OFF
+        s_select="select DISTINCT filter from dataset where type='DOME_FLAT_LAMP_OFF' or type='DOME_FLAT_LAMP_ON' order by mjd"
+        cur = self.con.cursor()
+        cur.execute(s_select,"")
+        rows = cur.fetchall()
+        par_list2 = []
+        if len(rows)>0:
+            par_list2 = [ [str(f[0]), "DOME_FLAT"]  for f in rows] # important to apply str() ??
+        print "(2nd) Total rows selected:  %d" %(len(par_list2))
+        print "(2nd) Filters found :\n ", par_list2
+
+        #concatenate the two list (dome_flat, the rest)
+        par_list = par_list + par_list2
+        
+        print "PAR_LIST=",par_list
+        # Finally, look for files of each Filter
+        for par in par_list:
+            cur = self.con.cursor()
+            if par[1]!='DOME_FLAT':
+                s_select = "select filename from dataset where filter=? and type=? order by mjd"
+                cur.execute(s_select,(par[0],par[1]))    
+            else:
+                print "vamooooos !!!"
+                s_select = "select filename from dataset where filter=? and type like 'DOME_FLAT%' order by mjd"
+                cur.execute(s_select, (par[0],)) # la coma es imprescindible, no se por que .....
+            print "Que pasaaaa !!"    
+            rows = cur.fetchall()
+            if len(rows)>0:
+                filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
+            #print "====> %d files found for Filter %s" %(len(rows), par[0])
+
+        # Now, look for temporal gap inside the current sequences were found
+        new_seq_list = []
+        new_seq_par = []
+        k = 0
+        for seq in filter_file_list:
+            group = []
+            mjd_0 = self.GetFileInfo(seq[0])[10]
+            for file in seq:
+                t = self.GetFileInfo(file)[10]
+                if math.fabs(t-mjd_0)<max_mjd_diff:
+                    group.append(file)
+                    mjd_0 = t
+                else:
+                    #log.debug("Sequence split due to temporal gap between sequence frames")
+                    new_seq_list.append(group[:]) # very important, lists are mutable !
+                    new_seq_par.append(par_list[k][1])
+                    mjd_0 = t
+                    group = [file]
+            new_seq_list.append(group[:]) # very important, lists are mutable !
+            new_seq_par.append(par_list[k][1])
+            k+=1    
+            
+        return  new_seq_list, new_seq_par
+                 
+    def GetFilterFiles_BUENO(self, max_mjd_diff=None ):
         """ 
         @summary: Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
         ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).

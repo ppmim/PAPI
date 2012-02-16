@@ -3,6 +3,7 @@
 """
 
 import logging
+import datetime
 
 
 class ColorFormatter(logging.Formatter):
@@ -35,7 +36,9 @@ console.setFormatter(ColorFormatter('    [%(name)s]: %(asctime)s %(levelname)-8s
 logging.getLogger('PAPI').addHandler(console)
 
 ## File
-file_hd = logging.FileHandler("/tmp/papi.log")
+datetime_str = str(datetime.datetime.utcnow()).replace(" ","T")
+
+file_hd = logging.FileHandler("/tmp/papi_" + datetime_str + ".log")
 file_hd.setLevel(logging.DEBUG) # here we set the level for File handler 
 formatter = logging.Formatter('[%(name)s]: %(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s')
 file_hd.setFormatter(formatter)
@@ -43,7 +46,7 @@ logging.getLogger('PAPI').addHandler(file_hd)
 
 ## define the global log level
 logging.getLogger('PAPI').setLevel(logging.DEBUG) # debug is the lowest level
-## define the global variable used whole arround the PAPI sources
+## define the global variable used whole around the PAPI sources
 log = logging.getLogger('PAPI')
 
 

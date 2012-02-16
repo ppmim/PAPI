@@ -652,7 +652,8 @@ class ClFits (object):
             log.warning("Cannot find keyword : %s:",str(e))
             self.pat_noexp = -1
             
-        # To Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers
+        # Try Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers
+        # Has no sense, because file is not opened with 'update' flag
         try:
             if self.instrument=='omega2000':
                 myfits[0].header.update('PRESS1', 0.0)

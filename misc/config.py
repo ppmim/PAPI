@@ -736,7 +736,7 @@ def read_options(options, section, config_file = default_config_file()):
     fd.close()    
     # Finally, parse the modified configuration file, as we would normally do
     options = read_config_file(temp_filename)
-    print "FILE=",temp_filename
+    #print "FILE=",temp_filename
     #os.remove(temp_filename)
     return options
 

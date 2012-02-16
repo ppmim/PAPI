@@ -164,7 +164,7 @@ def main(arguments = None):
                   filter, ncoadd, mjd)""")
     
     parser.add_option("-v", "--verbose",
-                  action = "store_true", dest = "verbose", default = True,
+                  action = "store_true", dest = "verbose", default = False,
                   help = "Verbose mode [default]")
     
         
@@ -196,6 +196,7 @@ def main(arguments = None):
         or len(i_args) != 0: # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
+    
     if general_opts['verbose']:
         print "reading %s ..." % general_opts['source']
     
@@ -254,7 +255,6 @@ def main(arguments = None):
                         )
         #if options.print_seq:
         if init_options.print_seq:
-            print "SEQUENCES found:"
             rs.getSequences()
         else:
             if init_options.seq_to_reduce=='all':
