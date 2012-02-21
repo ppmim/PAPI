@@ -317,39 +317,39 @@ class ReductionSet(object):
             if chk_filter and not mismatch_filter: 
                 if fi.getFilter() != filter_0:
                     log.debug("File %s does not match file FILTER", file)
-                    mismatch_filter=True
+                    mismatch_filter = True
                     break
             if chk_type and not mismatch_type: 
                 if fi.getType() != type_0:
                     log.debug("File %s does not match file TYPE", file)
-                    mismatch_type=True
+                    mismatch_type = True
                     break
             if chk_expt and not mismatch_expt: 
                 if fi.expTime() != expt_0:
                 #if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or \
                 #    (fi.expTime()-self.MAX_MJD_DIFF)>expt_0):   # more relaxed situation
                     log.debug("File %s does not match file EXPTIME", file)
-                    mismatch_expt=True
+                    mismatch_expt = True
                     break
             if chk_itime and not mismatch_itime: 
                 if fi.getItime() != itime_0:
                     log.debug("File %s does not match file ITIME", file)
-                    mismatch_itime=True
+                    mismatch_itime = True
                     break
             if chk_ncoadd and not mismatch_ncoadd: 
                 if fi.getNcoadds() != ncoadd_0:
                     log.debug("File %s does not match file NCOADD", file)
-                    mismatch_ncoadd=True
+                    mismatch_ncoadd = True
                     break
             if chk_readmode and not mismatch_readmode: 
                 if fi.getReadMode() != readmode_0:
                     log.debug("File %s does not match file READMODE", file)
-                    mismatch_readmode=True
+                    mismatch_readmode = True
                     break
             if chk_cont and not mismatch_cont:
                 if prev_MJD!=-1 and (fi.getMJD()-prev_MJD)>self.MAX_MJD_DIFF:
                     log.error("Maximmun time distant between two consecutives frames exceeded !!")
-                    mismatch_cont=True
+                    mismatch_cont = True
                     break
                 else:
                     prev_MJD=fi.getMJD()
@@ -1241,18 +1241,18 @@ class ReductionSet(object):
         Purge the output dir in order to remove all the intermediate files
         """
         
-        log.debug("Purging the output dir ...")
+        log.info("Purging the output dir ...")
         
         out_dir = self.out_dir
                  
-        misc.fileUtils.removefiles(out_dir+"/*.ldac")
-        misc.fileUtils.removefiles(out_dir+"/coadd1*", out_dir+"/*.objs",
-                                       out_dir+"/py-sex*", out_dir+"/*_D_F.fits" )
-        misc.fileUtils.removefiles(out_dir+"/gain*.fits",out_dir+"/masterObjMask.fits",
+        misc.fileUtils.removefiles(out_dir+"/*.ldac",out_dir+"/py-sex*",
+                                   out_dir+"/*.objs")
+        misc.fileUtils.removefiles(out_dir+"/coadd1*", out_dir+"/*_D.fits",
+                                       out_dir+"/*_F.fits", out_dir+"/*_D_F.fits" )
+        misc.fileUtils.removefiles(out_dir+"/gain*.fits", out_dir+"/masterObjMask.fits",
                                        out_dir+"/*.pap", out_dir+"/*.list")
         misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
-                                       out_dir+"/*.xml", out_dir+"/*.ldac",
-                                       out_dir+"/*.png" )
+                                       out_dir+"/*.xml", out_dir+"/*.png" )
         
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
@@ -1651,7 +1651,7 @@ class ReductionSet(object):
         log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
 
         # WARNING : Purging output !! 
-        purgeOutput()
+        #self.purgeOutput()
         
 
         return files_created
@@ -2378,13 +2378,13 @@ class ReductionSet(object):
             self.m_LAST_FILES = res.apply()
 
         ########################################################################
-        # 4.2 - LEMON connection - End here for LEMON processing    
+        # 4.2 - LEMON connection - End here for LEMON-1 processing    
         ########################################################################
-        if self.red_mode=='lemon':
+        """if self.red_mode=='lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
             log.info("1st Skysubtraction done !")
             #return out_dir+"/files_skysub.list"
-                           
+        """                   
         ########################################################################
         # 5 - Quality assessment (FWHM, background, sky transparency, 
         # ellipticity, PSF quality)  
@@ -2442,7 +2442,7 @@ class ReductionSet(object):
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd1.fits','average')
     
         ########################################################################
-        # End of first cycle: SINGLE REDUCTION
+        # End of first cycle: SINGLE REDUCTION (quick mode or extended object !) 
         ########################################################################
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
@@ -2490,6 +2490,9 @@ class ReductionSet(object):
             elif self.apply_dark_flat==1 and master_flat!=None:
                 line = file.replace(".fits","_F.fits") + " " + obj_mask + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+            elif self.apply_dark_flat==1 and master_dark!=None:
+                line = file.replace(".fits","_D.fits") + " " + obj_mask + " "\
+                + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             else:
                 line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
                 " " + str(offset_mat[j][1])
@@ -2515,7 +2518,7 @@ class ReductionSet(object):
     
         ########################################################################
         # 9.3 - Divide by the master flat after sky subtraction ! (see notes above)
-        # (the same task as above 4.2)
+        # (the same task as above 4.2) --> HAS NO SENSE !!! only for a test ??? or a.l.a. O2k 
         ########################################################################
         if self.apply_dark_flat==2 and master_flat!=None:
             log.info("**** Applying Flat AFTER sky subtraction ****")

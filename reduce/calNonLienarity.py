@@ -184,6 +184,11 @@ class NonLinearityModel:
         
         """   
         log.debug("Start createModel")
+        log.warn("Non-Linearity model computation is NOT yet implemented !!")
+        
+        return
+    
+    
         start_time = time.time()
         t=utils.clock()
         t.tic()
@@ -259,6 +264,7 @@ class NonLinearityModel:
         myfits_data = myfits_hdu[0].data
         myfits_hdu.close()
         
+        """
         # determine read mode (TO BE COMPLETED !)
         if myfits_hdr['READMODE'] == 'multiple.endpoints':
             rmode = 'mer'
@@ -270,6 +276,8 @@ class NonLinearityModel:
         
         # read fits file containing polynomial for correction
         polyfile = model.replace(".fits", "_"+rmode+".fits")
+        """
+        polyfile = model
         
         print 'Reading '+polyfile
         # for some weird reason I don't manage to read the cube using the standard functions
@@ -301,7 +309,8 @@ class NonLinearityModel:
             print 'Writing '+outfitsname
         # scale back data to original values
         myfits_hdu[0].scale(bitpix_designation,'old')
-        myfits_hdu.writeto(outfitsname)
+        myfits_hdu.writeto(outfitsname, output_verify='ignore')
+        myfits_hdu.close()
 
         log.info("Linearity correction done >> %s"%outfitsname)
         
@@ -329,12 +338,13 @@ if __name__ == "__main__":
                   help="filename of outputs coeffs, contains (a0, a1, a2)")
     
     parser.add_option("-a", "--apply_model",
-                  action="store_true", dest="apply_model", default=True,
+                  action="store_true", dest="apply_model", default=False,
                   help="Apply to input the given non-linearity model [default],\
                   otherwise, the model will be computed with input files if they \
                   fit to requirements for model computation")
     
     ## not sure if required
+    """
     parser.add_option("-l", "--limit",
                   action="store", dest="satur_lim", default=40000, 
                   help="saturation limit")
@@ -343,7 +353,7 @@ if __name__ == "__main__":
                   action="store_true", dest="ref_time", default=False,
                   help="exptime used as reference")
     
-
+    """
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=False,
                   help="verbose mode [default]")
@@ -351,7 +361,8 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
     #Check required parameters
-    if (not options.source_file_list or not options.satur_lim or not options.out_data or not options.out_coeff_file or not options.ref_time or len(args)!=0): # args is the leftover positional arguments after all options have been processed
+    if (not options.source_file_list or not options.out_data 
+        or not options.out_coeff_file  or len(args)!=0): # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if options.verbose:

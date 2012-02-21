@@ -99,7 +99,7 @@ class ApplyDarkFlat:
     def __init__(self, sci_files, mdark = None, mflat = None, \
                  out_dir_ ="/tmp", bpm = None):
         self.__sci_files = sci_files  # list of files which apply dark and flat
-        self.__mdark = mdark          # master dark to apply
+        self.__mdark = mdark          # master dark (model) to apply
         self.__mflat = mflat          # master flat to apply (dome, twlight) - not normalized !!
         self.__bpm = bpm              # not used at the moment
         self.__out_dir = out_dir_
@@ -136,11 +136,18 @@ class ApplyDarkFlat:
                 dark = pyfits.open(self.__mdark)
                 cdark = datahandler.ClFits (self.__mdark)
                 dark_time = cdark.expTime()
+                
+                if (cdark.getType()!='MASTER_DARK' or 
+                    cdark.getType()!='MASTER_DARK_MODEL'):
+                    log.error("File %s does not look a neither MASTER_DARK nor MASTER_DARK_MODEL",self.__mdark)
+                    raise Exception("File %sdoes not look a neither MASTER_DARK nor MASTER_DARK_MODEL"%self.__mdark)
+                
                 #dark_data=dark[0].data
-                if len(dark)>1:
+                """if len(dark)>1:
                     dmef = True
                     n_ext = len(dark)-1
                     log.debug("Dark MEF file with %d extensions", n_ext)
+                """
                 out_suffix = out_suffix.replace(".fits","_D.fits")
                 log.debug("Master DARK to be subtracted : %s"%self.__mdark)
         # No master dark provided, then no dark to subtract
@@ -159,22 +166,27 @@ class ApplyDarkFlat:
                 flat = pyfits.open(self.__mflat)
                 cflat = datahandler.ClFits (self.__mflat)
                 flat_time = cflat.expTime()
+                
+                if not cflat.isMasterFlat():
+                    log.error("File %s does not look a neither MASTER_FLAT",self.__mflat)
+                    raise Exception("File %s does not look MASTER_FLAT"%self.__mflat)
+                
                 flat_filter = cflat.getFilter()
-                #flat_data=flat[0].data
+                #flat_data = flat[0].data
                 #MEF
-                if len(flat)>1:
-                    fmef = True
-                    if len(dark) != len(flat):
+                if cflat.next>1:
+                    ###fmef = True
+                    if cdark.next != cflat.next:
                         raise Exception("Number of extensions does not match \
                         in Dark and Flat files!")
-                    else: n_ext = len(flat)-1    
+                    else: n_ext = cdark.next    
                     log.debug("Flat MEF file with %d extensions", n_ext)
                     
                 # compute mode for n_ext normalization (in case of MEF, we normalize 
                 # all extension wrt chip 0)
                 naxis1 = cflat.getNaxis1()
                 naxis2 = cflat.getNaxis2()
-                if len(flat)>1: 
+                if cflat.next>1: 
                     ext = 1
                 else: 
                     ext = 0
@@ -196,7 +208,7 @@ class ApplyDarkFlat:
         # Get the user-defined list of flat frames
         framelist = self.__sci_files
         
-        # STEP 2: Check the  TYPE and FILTER of each science file
+        # STEP 2: Check the TYPE and FILTER of each science file
         # If any frame on list missmatch the FILTER, then the procedure will be 
         # aborted
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
@@ -215,7 +227,7 @@ class ApplyDarkFlat:
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter()))
             
             # Check FILTER
-            if ( flat_filter != None and cf.getFilter() != flat_filter):
+            if (flat_filter != None and cf.getFilter() != flat_filter):
                 log.error("Error: Task 'applyDarkFlat' found a frame with \
                 different FILTER. Skipping frame...")
                 f.close()
@@ -236,11 +248,23 @@ class ApplyDarkFlat:
                 i_time = float(cf.expTime()) # all extension have the same TEXP
                 if self.__mdark != None and dark_time!=None:
                     time_scale = float(i_time / dark_time)
-                else: time_scale = 1
+                else: time_scale = 1.0
                 for chip in range (0, n_ext):
                     if n_ext > 1: # it means, MEF
-                        if self.__mdark != None: dark_data = dark[chip+1].data
+                        # Set dark
+                        if self.__mdark != None: 
+                            ####dark_data = dark[chip+1].data
+                            if time_scale != 1.0:
+                                dark_data = None
+                                log.debug("Dark EXPTIME mismatch ! checking for dark model ...")
+                                if not cdark.isMasterDarkModel():
+                                    log.error("Cannot find out a scaled dark to apply")
+                                    raise Exception("Cannot find a scaled dark to apply")
+                                else:
+                                    log.debug("Scaling master dark ...")
+                                    dark_data = dark[chip+1].data[0]*i_time + dark[chip+1].data[1]
                         else: dark_data = 0
+                        # Set normalized flat
                         if self.__mflat!=None: flat_data = flat[chip+1].data/mode # normalization wrt chip 0
                         else: flat_data = 1
                         sci_data = f[chip+1].data 
@@ -252,8 +276,17 @@ class ApplyDarkFlat:
                         sci_data = f[0].data 
                                                                
                     # STEP 2.1: Check EXPTIME and apply master DARK and master FLAT
-                    if time_scale != 1.0: log.debug("Scaling master dark ...")
-                    sci_data = (sci_data - dark_data*time_scale) / flat_data
+                    if time_scale != 1.0:
+                        scaled_dark = None
+                        log.debug("Dark EXPTIME mismatch ! checking for dark model ...")
+                        if not cdark.isMasterDarkModel():
+                            log.error("Cannot find out a scaled dark to apply")
+                            raise Exception("Cannot find a scaled dark to apply")
+                        else:
+                            log.debug("Scaling master dark ...")
+                            scaled_dark = dark[0]
+                    
+                    sci_data = (sci_data - dark_data) / flat_data
                     #store back the new values
                     if n_ext > 1: # it means, MEF
                         f[chip+1].data = sci_data

@@ -57,6 +57,7 @@ class ClFits (object):
          SKY,              # Sky for extended objects during dither sequence
          SCIENCE, (RAW)
          MASTER_DARK,
+         MASTER_DARK_MODEL,
          MASTER_SKY_FLAT,
          MASTER_DOME_FLAT,
          MASTER_TW_FLAT,
@@ -169,6 +170,13 @@ class ClFits (object):
     def isMasterDark(self):
         return (self.type=="MASTER_DARK")
     
+    def isMasterDarkModel(self):
+        return (self.type=="MASTER_DARK_MODEL")
+    
+    def isMasterFlat(self):
+        return (self.type=="MASTER_DOME_FLAT" or self.type=="MASTER_TW_FLAT"
+                or self.type=="MASTER_SKY_FLAT")
+    
     def isSky(self):
         return (self.type=="SKY")
     
@@ -236,7 +244,7 @@ class ClFits (object):
             try:
                 myfits = pyfits.open(self.pathname, 
                                      ignore_missing_end=True) # since some problems with O2k files   
-                temp=myfits[0].data
+                temp = myfits[0].data
                 myfits.close(output_verify='ignore')
                 return temp
             except:
@@ -269,22 +277,22 @@ class ClFits (object):
         
         #Check if is a MEF file 
         if len(myfits)>1:
-            self.mef=True
-            self.next=len(myfits)-1
+            self.mef = True
+            self.next = len(myfits)-1
             log.debug("Found a MEF file with %d extensions", self.next)
         else:
-            self.mef=False
-            self.next=1
+            self.mef = False
+            self.next = 1
             ###log.debug("Found a simple FITS file")
         
         # If file is a MEF, some values will be read from the header extensions      
         if self.mef:
             # we suppose all extension have the same dimensions
-            self.naxis1=myfits[1].header['NAXIS1']
-            self.naxis2=myfits[1].header['NAXIS2']
+            self.naxis1 = myfits[1].header['NAXIS1']
+            self.naxis2 = myfits[1].header['NAXIS2']
         else:
-            self.naxis1=myfits[0].header['NAXIS1']
-            self.naxis2=myfits[0].header['NAXIS2']
+            self.naxis1 = myfits[0].header['NAXIS1']
+            self.naxis2 = myfits[0].header['NAXIS2']
         # pointer to the primary-main header
         self.my_header = myfits[0].header
           
@@ -302,9 +310,9 @@ class ClFits (object):
         
         # Find out the how data file were"observed"
         if 'OBS_TOOL' in myfits[0].header or self.instrument=='hawki':
-            self.obs_tool=True
+            self.obs_tool = True
         else:
-            self.obs_tool=False
+            self.obs_tool = False
         
         #Software Version (GEIRS Version)
         if 'SOFTWARE' in myfits[0].header:

@@ -203,12 +203,26 @@ class MasterDark(object):
                         #expname = 'EXPTIME'
                         #ParList = _getparlistname('darkcombine')
                         )
-        
-    
+         
+        """
+        iraf.imcombine(input = "@"+(self.__temp_dir+"/files.list").replace('//','/'),
+                        output = tmp1.replace('//','/'),
+                        combine = 'average',
+                        #ccdtype = '',
+                        #process = 'no',
+                        reject = 'minmax',
+                        nlow = '0',
+                        nhigh = '1',
+                        nkeep = '1',
+                        scale = scale_str,
+                        expname = 'EXPTIME'
+                        #ParList = _getparlistname('darkcombine')
+                        )
+        """
     	if self.m_normalize:
     	    log.debug("Normalizing master dark to 1 sec")
     	    # divide master dark by the TEXP to get a master dark in ADU/s units
-    	    texp=datahandler.ClFits(tmp1).expTime()
+    	    texp = datahandler.ClFits(tmp1).expTime()
     	    iraf.mscred.mscarith(operand1 = tmp1,
     				operand2 = texp,
     				op = '/',
