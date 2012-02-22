@@ -484,3 +484,15 @@ problemas como:
     
 - Hablo con Matilde de estos primeros problemas y me dice que no me preocupe, 
 que primero ella estudiará cual es le mejor método para la sustracción de cielo.
+
+2012-02-22
+==========
+- Modificación en applyDarkFlat, calTwFlat y ReductionSet para usar 
+MASTER_DARK_MODEL de forma que se pueda escalar correctamente, pues como se hacia
+antes con un MASTER_DARK normal, no estaba bien, pues se estaba escalando también
+el BIAS intrinseco de los DARK.
+
+- Modifico también la rutina calDarkModel para que se grabe en el header alguna
+información mas sobre el DARK_MODEL.
+
+ 

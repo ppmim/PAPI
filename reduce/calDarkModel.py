@@ -168,11 +168,10 @@ class MasterDarkModel(object):
                 f = datahandler.ClFits ( framelist[i] )
                 temp[counter, :,:] = file[0].data
                 times[counter] = float(f.expTime())
-                print "EXPTIME=", times[counter]
                 counter = counter+1
                 file.close()
                 
-        print "Now polyfit..."
+        log.debug("Now fits dark model...")
         #now collapse and fit the data
         slopes = numpy.zeros(naxis1*naxis2, dtype=numpy.float)
         bias = numpy.zeros(naxis1*naxis2, dtype=numpy.float)
@@ -191,22 +190,40 @@ class MasterDarkModel(object):
         #Get the median value of the dark current                 
         median_dark_current = numpy.mean(slopes)    #numpy.median(out[0,:,:])
         median_bias = numpy.mean(bias) 
-        print "MEDIAN_DARK_CURRENT=", median_dark_current
-        print "MEDIAN BIAS=", median_bias    
+        
+        log.info("MEDIAN_DARK_CURRENT = %s"%median_dark_current)
+        log.info("MEDIAN BIAS = %s"% median_bias)    
         
         misc.fileUtils.removefiles( self.__output_filename )               
         # Write result in a FITS
         hdu = pyfits.PrimaryHDU()
         hdu.scale('float32') # important to set first data type
-        hdu.data = out     
-        hdulist = pyfits.HDUList([hdu])
+        hdu.data = out
+        ##--
+
+        # copy some keywords 
+        hdr0 = pyfits.getheader( framelist[numpy.where(darks==1)[0][0]]  )
+        #hdr0.update('sup-dark', 'super-dark-model created by PAPI')
+        #hdu.header = hdr0
+        hdu.header.update('INSTRUME', hdr0['INSTRUME'])
+        hdu.header.update('TELESCOP', hdr0['TELESCOP'])
+        hdu.header.update('CAMERA', hdr0['CAMERA'])
+        hdu.header.update('MJD-OBS', hdr0['MJD-OBS'])
+        hdu.header.update('DATE-OBS', hdr0['DATE-OBS'])
+        hdu.header.update('DATE', hdr0['DATE'])
+        hdu.header.update('UT', hdr0['UT'])
+        hdu.header.update('LST', hdr0['LST'])
+        hdu.header.update('ORIGIN', hdr0['ORIGIN'])
+        hdu.header.update('OBSERVER', hdr0['OBSERVER'])
+        #
         
         hdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
         hdu.header.add_history('Dark model based on %s' % framelist)
+        hdulist = pyfits.HDUList([hdu])
         hdulist.writeto(self.__output_filename)
         hdulist.close(output_verify='ignore')
 
-        #hdr0 = pyfits.getheader(darklist[0])
+        #hdr0 = pyfits.getheader(framelist[np.where(darks==1][0])
         #hdr0.update('sup-dark', 'super-dark created by IR.py')
         #pyfits.writeto(_sdark, superdark, header=hdr0, clobber=clobber)
 

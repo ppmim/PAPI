@@ -453,10 +453,8 @@ class DataSet(object):
                 s_select = "select filename from dataset where filter=? and type=? order by mjd"
                 cur.execute(s_select,(par[0],par[1]))    
             else:
-                print "vamooooos !!!"
                 s_select = "select filename from dataset where filter=? and type like 'DOME_FLAT%' order by mjd"
                 cur.execute(s_select, (par[0],)) # la coma es imprescindible, no se por que .....
-            print "Que pasaaaa !!"    
             rows = cur.fetchall()
             if len(rows)>0:
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!

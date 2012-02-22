@@ -11,9 +11,9 @@
 #              03/03/2010    jmiguel@iaa.es  - Added READMODE checking 
 #              20/09/2010    jmiguel@iaa.es  - Added support of MEF files
 #              18/11/2010    jmiguel@iaa.es  - Added optional normalization by mode
+#              22/02/2012    jmiguel@iaa.es  - Added Dark model use to build the required scaled dark 
 #
 # TODO:
-#   - use of dark model to subtract right dark current
 #   - take into account BPM !!!
 #   - compute automatically the level of counts the twilight flats should have (lthr,hthr)
 ################################################################################
@@ -100,13 +100,13 @@ class MasterTwilightFlat (object):
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, flat_files, master_dark, output_filename="/tmp/mtwflat.fits", \
+    def __init__(self, flat_files, master_dark_model, output_filename="/tmp/mtwflat.fits", \
                 lthr=1000, hthr=100000, bpm=None, normal=True, temp_dir="/tmp/"):
         
         """Initialization method"""
         
         self.__input_files = flat_files
-        self.__master_dark = master_dark # if fact, it should be a dark model ???
+        self.__master_dark = master_dark_model # if fact, it is a dark model
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__bpm = bpm
         self.__normal = normal
@@ -195,8 +195,8 @@ class MasterTwilightFlat (object):
                 except:
                     raise
             else:
-                myfits=pyfits.open(iframe, ignore_missing_end=True)
-                mean=numpy.mean(myfits[0].data)
+                myfits = pyfits.open(iframe, ignore_missing_end=True)
+                mean = numpy.mean(myfits[0].data)
                 log.debug("MEAN value of MEF = %d", mean)
                 
             myfits.close()            
@@ -205,11 +205,11 @@ class MasterTwilightFlat (object):
                 raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
                 #continue
             else: 
-                f_expt=f.expTime()
-                f_filter=f.getFilter()
-                f_readmode=f.getReadMode()
+                f_expt = f.expTime()
+                f_filter = f.getFilter()
+                f_readmode = f.getReadMode()
                 if f.isTwFlat():
-                    f_type=f.getType()
+                    f_type = f.getType()
                 else:
                     log.error("Error, frame %s does not look a TwiLight Flat field" %(iframe))
                     raise Exception("Error, frame %s does not look a TwiLight Flat field" %(iframe))
@@ -242,12 +242,16 @@ class MasterTwilightFlat (object):
         try:
             cdark = datahandler.ClFits ( self.__master_dark )
             mdark = pyfits.open(self.__master_dark, ignore_missing_end=True)
+            #MASTER_DARK_MODEL is required !!!
+            if not cdark.isMasterDarkModel():
+                log.error("File %s does not look a Master Dark Model"%self.__master_dark)
+                raise Exception("Cannot find a scaled dark to apply")
         except:
             mdark.close()
             raise
         
         #Check MEF compatibility
-        if (f.mef and not cdark.mef) or (not f.mef and cdark.mef):
+        if not f.mef==cdark.mef:
             log.error("Type mismatch with MEF files")
             mdark.close()
             raise Exception("Type mismatch with MEF files")
@@ -256,7 +260,7 @@ class MasterTwilightFlat (object):
         else:
             next = 0
                 
-        t_dark = cdark.expTime()
+        #t_dark = cdark.expTime()
         fileList = []
         for iframe in good_frames:
             # Remove old dark subtracted flat frames
@@ -264,17 +268,23 @@ class MasterTwilightFlat (object):
             misc.fileUtils.removefiles(my_frame)
             
             log.debug("Scaling master dark")
-            # Build master dark with proper (scaled) EXPTIME and subtract (???? I don't know how good is this method of scaling !!!)
+            # Build master dark with proper (scaled) EXPTIME and subtract ( I don't know how good is this method of scaling !!!)
             f = pyfits.open(iframe, ignore_missing_end=True)
             t_flat = datahandler.ClFits ( iframe ).expTime()
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
             if next>0:
                 for i in range(1,next+1):
-                    f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
+                    scaled_dark = mdark[i].data[0]*t_flat + mdark[i].data[1]
+                    log.info("AVG(scaled_dark)=%s"%numpy.mean(scaled_dark))
+                    f[i].data = f[i].data - scaled_dark
+                    #f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
                     f[i].header.add_history('Dark subtracted %s (scaled)'
                                              %os.path.basename(self.__master_dark))
             else:
-                f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
+                scaled_dark = mdark[0].data[0]*t_flat + mdark[0].data[1]
+                log.info("AVG(scaled_dark)=%s"%numpy.mean(scaled_dark))
+                f[0].data = f[0].data - scaled_dark
+                #f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
                 f[0].header.add_history('Dark subtracted %s (scaled)' 
                                         %os.path.basename(self.__master_dark))    
                 log.debug("Dark subtraction (scaled) done")
@@ -370,6 +380,21 @@ class MasterTwilightFlat (object):
         return self.__output_filename
         
         
+
+
+def makemasterframe(list_or_array):
+#from http://www.astro.ucla.edu/~ianc/python/_modules/ir.html#baseObject
+    """
+    If an array is passed, return it.  Otherwise, return a
+    median stack of the input filename list.
+    """
+        
+    if hasattr(list_or_array, 'shape') and len(list_or_array.shape)>1:
+        masterframe = np.array(list_or_array, copy=False)
+    else:
+        masterframe = np.median(map(pyfits.getdata, list_or_array), axis=0)
+
+    return masterframe
         
         
 

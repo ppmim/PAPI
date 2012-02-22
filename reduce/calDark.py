@@ -100,7 +100,7 @@ class MasterDark(object):
         self.__temp_dir = temp_dir #temporal dir used for temporal/intermediate files
         self.__bpm = bpm
         self.m_min_ndarks = 3
-        self.m_texp_scale = texp_scale
+        self.m_texp_scale = texp_scale # see note below
         self.m_normalize = normalize
         
 
@@ -146,9 +146,12 @@ class MasterDark(object):
         f_ncoadds = -1
         f_readmode = -1
         good_frames = []
+        
         for iframe in framelist:
             f = datahandler.ClFits ( iframe )
-            log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" %(iframe, f.expTime(), f.getType(), f.getNcoadds(), f.getReadMode() )) 
+            log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" 
+                      %(iframe, f.expTime(), f.getType(), f.getNcoadds(), 
+                        f.getReadMode() )) 
             if not f.isDark():
                 log.error("Error: Task 'createMasterDark' finished. Frame %s is not 'DARK'",iframe)
                 raise Exception("Found a non DARK frame") 
@@ -189,7 +192,22 @@ class MasterDark(object):
         
         
         # Call the noao.imred.ccdred task through PyRAF
-        misc.utils.listToFile(good_frames, self.__temp_dir+"/files.list") 
+        misc.utils.listToFile(good_frames, self.__temp_dir+"/files.list")
+        
+        """
+        NOTE: I don't know how darkcombine does the scaling with EXPTIME, in
+        #fact --> see F.Vales email : 
+        #http://iraf.net/phpBB2/viewtopic.php?p=138721
+        http://iraf.net/phpBB2/viewtopic.php?p=86769&sid=65b3c9990c92749c317ab554a01c8da7
+        """
+        """
+        If we decide to scale the dark by exposure time, we will have to have 
+        the bias subtracted. (You can do this by turning the "process" option on.) 
+        Otherwise, the bias will end up being scaled, too. Once again, keep 
+        in mind that running ccdproc with the resultant darks will cause the 
+        bias to be subtracted again; you have to be very careful.
+        """
+        
         iraf.mscred.darkcombine(input = "@"+(self.__temp_dir+"/files.list").replace('//','/'),
                         output = tmp1.replace('//','/'),
                         combine = 'average',

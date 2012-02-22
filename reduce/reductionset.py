@@ -215,7 +215,8 @@ class ReductionSet(object):
         # It is an optional external database provided when creating a ReductionSet 
         # instance and mainly can have calibration files required for the reduction 
         # of the current data set. It will be used during the on-line QL 
-        # data reduction,e.g., tw_flats require a master dark than can be in other RS    
+        # data reduction,e.g., tw_flats that require a master dark than can be 
+        # in other RS. Mainly used in Quick-Look !!    
         self.ext_db = None
         
         # (optional) file list to build the external DB. We proceed this way, because
@@ -593,9 +594,9 @@ class ReductionSet(object):
         filter = obj_frame.getFilter()
         
         #DARK
-        master_dark = self.db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark ???
+        master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) # Do NOT require equal EXPTIME Master Dark ???
         if len(master_dark)==0 and self.ext_db!=None:
-            master_dark = self.ext_db.GetFilesT('MASTER_DARK', -1) # Do NOT require equal EXPTIME Master Dark ???
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL', -1) # Do NOT require equal EXPTIME Master Dark ???
         #FLATS
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
@@ -1499,7 +1500,7 @@ class ReductionSet(object):
                 group.append(full_flat_list[k][0])
                 k+=1
             try:
-                master_dark = self.db.GetFilesT('MASTER_DARK') # could be > 1 master darks, then use the last(mjd sorted)
+                master_dark = self.db.GetFilesT('MASTER_DARK_MODEL') # could be > 1 master darks, then use the last(mjd sorted)
                 # if required, master_dark will be scaled in MasterTwilightFlat class
                 if len(master_dark)>0:
                     # generate a random filename for the master, to ensure we do not overwrite any file
@@ -1507,12 +1508,18 @@ class ReductionSet(object):
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
                     #outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
-                    task = reduce.calTwFlat.MasterTwilightFlat(group, master_dark[-1], outfile, lthr=1000, hthr=100000, bpm=None)
+                    
+                    task = reduce.calTwFlat.MasterTwilightFlat(group, 
+                                                               master_dark[-1], 
+                                                               outfile, lthr=1000, 
+                                                               hthr=100000, 
+                                                               bpm=None)
                     out = task.createMaster()
+                    
                     l_mflats.append(out) # out must be equal to outfile
                 else:
-                    log.error("MASTER_DARK not found. Cannot build master TwFlat")
-                    raise Exception("MASTER_DARK not found. Cannot build master TwFlat.")
+                    log.error("MASTER_DARK_MODEL not found. Cannot build master TwFlat")
+                    raise Exception("MASTER_DARK_MODEL not found. Cannot build master TwFlat.")
             except Exception,e:
                 log.error("Some error while creating master TwFlat: %s",str(e))
                 log.error("but, proceding with next twflat group ...")
@@ -1720,8 +1727,18 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDark_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                task = reduce.calDark.MasterDark (sequence, self.temp_dir, outfile, texp_scale=True)
-                out = task.createMaster()
+
+                dark_model = True
+                if dark_model:
+                    # Build master dark model from a dark serie
+                    task = reduce.calDarkModel.MasterDarkModel (sequence, self.temp_dir, outfile)
+                    out = task.createDarkModel()
+                else:
+                    # Orthodox master dark -- same EXPTIME & NCOADDS
+                    task = reduce.calDark.MasterDark (sequence, self.temp_dir, outfile, texp_scale=False)
+                    out = task.createMaster()
+                
+                 
                 files_created.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DARK: %s",str(e))
@@ -1733,8 +1750,10 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDFlat_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
+                
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, self.temp_dir, outfile, None)
                 out=task.createMaster()
+                
                 files_created.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DomeFlat: %s",str(e))
@@ -1745,17 +1764,20 @@ class ReductionSet(object):
                 #Look for the required MasterDark (any ExpTime);first in the Local DB (current RS), 
                 #and if anyone found, then in the External DB
                 #Local (ExpTime is not a constraint)
-                master_dark = self.db.GetFilesT('MASTER_DARK') # could there be > 1 master darks, then use the last(mjd sorted)
+                master_dark = self.db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                
                 #External (ExpTime is not a constraint)
                 if len(master_dark)==0 and self.ext_db!=None:
-                    master_dark = self.ext_db.GetFilesT('MASTER_DARK') # could there be > 1 master darks, then use the last(mjd sorted)
+                    master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                
                 # if required, master_dark will be scaled in MasterTwilightFlat class
                 if len(master_dark)>0:
-                    log.debug("[reduceSeq] MASTER_DARK found --> %s"%master_dark[-1])
+                    log.debug("[reduceSeq] MASTER_DARK_MODEL found --> %s"%master_dark[-1])
                     # generate a random filename for the masterTw, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
+                    
                     task = reduce.calTwFlat.MasterTwilightFlat(sequence, master_dark[-1], 
                                                                outfile, lthr=1000, hthr=100000, 
                                                                bpm=None,
@@ -1764,8 +1786,8 @@ class ReductionSet(object):
                     files_created.append(out) # out must be equal to outfile
                 else:
                     # should we create master dark ??
-                    log.error("[reduceSeq] MASTER_DARK not found. Cannot build master TwFlat")
-                    raise Exception("[reduceSeq] MASTER_DARK not found")
+                    log.error("[reduceSeq] MASTER_DARK_MODEL not found. Cannot build master TwFlat")
+                    raise Exception("[reduceSeq] MASTER_DARK_MODEL not found")
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
@@ -1890,6 +1912,7 @@ class ReductionSet(object):
                 #mef.createMEF(self.out_file)
                 #option 2(current): SWARP result images to register the N-extension into one wide-single extension
                 log.debug("*** Coadding/Warping overlapped files....")
+                
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
                 swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
@@ -1897,6 +1920,7 @@ class ReductionSet(object):
                 swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
                 swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
+                
                 try:
                     swarp.run(out_ext, updateconfig=False, clean=False)
                 except SWARPException, e:

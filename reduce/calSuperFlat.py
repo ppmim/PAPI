@@ -134,7 +134,7 @@ class SuperSkyFlat(object):
         log.info("Combining images...(images are scaled to have the same median)")
         misc.utils.listToFile(m_filelist, self.temp_dir + "/files.txt") 
         # Combine the images to find out the super Flat using sigma-clip algorithm;
-        # the imput images are scaled to have the same median, the pixels containing 
+        # the input images are scaled to have the same median, the pixels containing 
         # objects are rejected by an algorithm based on the measured noise (sigclip),
         # and the flat-field is obtained by a median.
         iraf.mscred.combine(input=("'"+"@"+self.temp_dir+"/files.txt"+"'").replace('//','/'),
