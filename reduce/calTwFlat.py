@@ -151,7 +151,7 @@ class MasterTwilightFlat (object):
         if nframes<self.m_min_flats:
             log.error("Not enought number (%s) of flat frames (>%s) to compute \
             master tw-flat",nframes, self.m_min_flats)
-            return False
+            raise Error("Flat sequence is too short, at least %s frames are required"%self.m_min_flats)
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
             log.error('Directory of combined FLAT frame does not exist')
@@ -192,8 +192,8 @@ class MasterTwilightFlat (object):
                         mean+=numpy.mean(myfits[i].data)
                     mean/=f.next
                     log.debug("MEAN value of MEF = %d", mean)
-                except:
-                    raise
+                except Exception,e:
+                    raise e
             else:
                 myfits = pyfits.open(iframe, ignore_missing_end=True)
                 mean = numpy.mean(myfits[0].data)
@@ -246,9 +246,9 @@ class MasterTwilightFlat (object):
             if not cdark.isMasterDarkModel():
                 log.error("File %s does not look a Master Dark Model"%self.__master_dark)
                 raise Exception("Cannot find a scaled dark to apply")
-        except:
+        except Exception,e:
             mdark.close()
-            raise
+            raise e
         
         #Check MEF compatibility
         if not f.mef==cdark.mef:
@@ -464,7 +464,7 @@ if __name__ == "__main__":
         mTwFlat.createMaster()
     except Exception,e:
         log.error("Unexpected error: %s", str(e))
-        raise
+        raise e
         sys.exit(1)
     
         

@@ -114,8 +114,8 @@ class MasterDarkModel(object):
         if not os.path.exists(os.path.dirname(self.__output_filename)):
             raise NameError, 'Wrong output path'
         if not self.__output_filename:
-            log.error("Combined DARK frame not defined")
-            raise "Wrong output filename"
+            log.error("Output DARK frame not defined")
+            raise Exception("Wrong output filename")
     
         # Change to the source directory
         base, infile = os.path.split(self.__output_filename) 
@@ -139,7 +139,7 @@ class MasterDarkModel(object):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different  READMODE")
                     darks[i] = 0  
                     #continue
-                    raise Exception("Found a DARK frame with different  READMODE") 
+                    raise Exception("Found a DARK frame with different READMODE") 
                 else: 
                     f_readmode = fits.getReadMode()
                     darks[i] = 1
@@ -153,7 +153,7 @@ class MasterDarkModel(object):
         
         if ndarks<2:
             log.error('Dark frameset doesnt have enough frames. At least 2 dark frames are needed')
-            return False
+            raise Exception("Dark sequence is too short. Al least 2 dark frames are needed !")
         
         #Initialize some storage arrays
         temp = numpy.zeros([ndarks, naxis1, naxis2], dtype=numpy.float)
@@ -171,7 +171,7 @@ class MasterDarkModel(object):
                 counter = counter+1
                 file.close()
                 
-        log.debug("Now fits dark model...")
+        log.debug("Now fitting the dark model...")
         #now collapse and fit the data
         slopes = numpy.zeros(naxis1*naxis2, dtype=numpy.float)
         bias = numpy.zeros(naxis1*naxis2, dtype=numpy.float)
@@ -195,16 +195,14 @@ class MasterDarkModel(object):
         log.info("MEDIAN BIAS = %s"% median_bias)    
         
         misc.fileUtils.removefiles( self.__output_filename )               
+
         # Write result in a FITS
         hdu = pyfits.PrimaryHDU()
         hdu.scale('float32') # important to set first data type
         hdu.data = out
-        ##--
 
         # copy some keywords 
         hdr0 = pyfits.getheader( framelist[numpy.where(darks==1)[0][0]]  )
-        #hdr0.update('sup-dark', 'super-dark-model created by PAPI')
-        #hdu.header = hdr0
         hdu.header.update('INSTRUME', hdr0['INSTRUME'])
         hdu.header.update('TELESCOP', hdr0['TELESCOP'])
         hdu.header.update('CAMERA', hdr0['CAMERA'])
@@ -216,18 +214,22 @@ class MasterDarkModel(object):
         hdu.header.update('ORIGIN', hdr0['ORIGIN'])
         hdu.header.update('OBSERVER', hdr0['OBSERVER'])
         #
-        
         hdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
         hdu.header.add_history('Dark model based on %s' % framelist)
         hdulist = pyfits.HDUList([hdu])
-        hdulist.writeto(self.__output_filename)
-        hdulist.close(output_verify='ignore')
-
+        # write FITS
+        try:
+            hdulist.writeto(self.__output_filename)
+            hdulist.close(output_verify='ignore')
+        except Exception,e:
+            log.error("Error writing dark model %s"%self.__output_filename)
+            raise e
+        
+        #--only tests
         #hdr0 = pyfits.getheader(framelist[np.where(darks==1][0])
         #hdr0.update('sup-dark', 'super-dark created by IR.py')
         #pyfits.writeto(_sdark, superdark, header=hdr0, clobber=clobber)
 
-        #--
         #hdu.data=out[0,:,:]
         #f_dark=pyfits.HDUList([hdu])
         #f_dark.writeto("/tmp/darkc.fits")
@@ -235,10 +237,11 @@ class MasterDarkModel(object):
         #f_bias=pyfits.HDUList([hdu])
         #f_bias.writeto("/tmp/bias.fits")
         #--
+        
         log.debug('Saved DARK Model to %s' , self.__output_filename)
         log.debug("createDarkModel' finished %s", t.tac() )
         
-        return True
+        return self.__output_filename
         
 ################################################################################
 # Functions       

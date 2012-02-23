@@ -1752,7 +1752,7 @@ class ReductionSet(object):
                 os.unlink(outfile) # we only need the name
                 
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, self.temp_dir, outfile, None)
-                out=task.createMaster()
+                out = task.createMaster()
                 
                 files_created.append(out) # out must be equal to outfile
             except Exception,e:
@@ -2617,4 +2617,50 @@ class ReductionSet(object):
                 print file
             k+=1
         
+def de_crosstalk(in_image, out_image=None):
+    """
+    Remove cross-talk in O2k images
+    """
+ 
+    log.debug("De-cross-talk procedure started !")
+       
+    if not out_image:
+        l_out_image = in_image.replace(".fits","_dx.fits")
+    
+    try:
+        f_in = pyfits.open(in_image)
+        if len(f_in)==1:
+            data_in = f_in[0].data
+        else:
+            log.errro("MEF files currently not supported !")
+    except Exception,e:
+        log.error("Error openning FITS file : %s"%in_image)
+        raise e
+    
+    n_stripes = 8
+    width_st = 1024
+    height_st = 128
+    
+    cube = numpy.zeros([n_stripes, width_st, height], dtype=numpy.float)
+    stripe = numpy.zeros([width_st, height], dtype=numpy.float)
+    
+    for j in range (0,n_stripes):
+        cube [j] = data_in[0:(j+1)*width_st, j*height:(j+1)*height]
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
         

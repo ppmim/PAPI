@@ -120,9 +120,9 @@ class MasterDark(object):
         # STEP 0: Determine the number of darks frames to combine
         try:    
             nframes = len(framelist)
-        except IndexError:
+        except IndexError,e:
             log.error("No DARK frames defined")
-            raise
+            raise e
         
         if nframes<self.m_min_ndarks:
             log.error("Not enought number of dark frames (>%s) to compute master dark: %s",self.m_min_ndarks, framelist)
@@ -133,7 +133,7 @@ class MasterDark(object):
             raise NameError, 'Wrong output path'
         if not self.__output_filename:
             log.error("Combined DARK frame not defined")
-            raise "Wrong output filename"
+            raise Exception("Wrong output filename")
     
         # Change to the source directory
         base, infile   = os.path.split(self.__output_filename)
@@ -320,11 +320,11 @@ if __name__ == "__main__":
     #print "Files:",filelist
     
     try:
-	mDark = MasterDark(filelist,"/tmp", options.output_filename, options.texp_scale, None, options.normalize)
-	mDark.createMaster()
+        mDark = MasterDark(filelist,"/tmp", options.output_filename, options.texp_scale, None, options.normalize)
+        mDark.createMaster()
     except Exception,e:
-	log.error("Task failed. Some error was found")
-	raise e
+        log.error("Task failed. Some error was found")
+        raise e
 	
     
     
