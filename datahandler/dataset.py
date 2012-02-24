@@ -111,29 +111,33 @@ class DataSet(object):
           \return 0 if all was successful, otherwise <0
         """
 
-        #log.debug("Inserting file %s into dataset" % filename)
+        log.debug("Inserting file %s into dataset" % filename)
         if filename==None: return 0
         
         try:
             fitsf = datahandler.ClFits ( filename )
-        except:
+        except Exception,e:
             log.exception( "Unexpected error reading FITS file %s" %filename )
-            raise
+            raise e
         
         data = (self.id, fitsf.runID, fitsf.obID, fitsf.obPat, fitsf.pat_expno, fitsf.pat_noexp, 
                 filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, 
                 fitsf.filter, fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object,
-                fitsf.detectorID) 
+                fitsf.detectorID)
+        
+        print "dataDB_tuple = ", data
+         
         cur = self.con.cursor()
+        
         try:
             cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +
                         "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
             self.con.commit()
 
-        except sqlite.DatabaseError:
+        except sqlite.DatabaseError,e:
             self.con.rollback()
             log.exception("error inserting into DB")
-            raise
+            raise e
 
         self.id+=1
         return 0

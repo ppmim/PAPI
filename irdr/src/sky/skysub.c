@@ -34,7 +34,7 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
         else
         {    
             if (skyw[i] > 0)
-                imgout[i] = img[i] + (skybkg - sky[i]);  /* subt. sky structure */
+                imgout[i] = img[i] + (skybkg - sky[i]);  /* subt. sky structure and add constant (skybkg) to preserve original count level */
             else
                 imgout[i] = img[i];
         }

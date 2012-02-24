@@ -1658,7 +1658,7 @@ class ReductionSet(object):
         log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
 
         # WARNING : Purging output !! 
-        #self.purgeOutput()
+        self.purgeOutput()
         
 
         return files_created
@@ -2531,6 +2531,14 @@ class ReductionSet(object):
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)      
     
+        ########################################################################
+        # 9.1 - Remove crosstalk - (only if bright stars are present)    
+        ########################################################################
+        remove_crosstalk = True
+        if remove_crosstalk:
+            res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
+                        [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
+            self.m_LAST_FILES = res
     
         ########################################################################
         # 9.2 - LEMON connection - End here for LEMON processing    
@@ -2616,36 +2624,7 @@ class ReductionSet(object):
             for file in seq_list[k]:
                 print file
             k+=1
-        
-def de_crosstalk(in_image, out_image=None):
-    """
-    Remove cross-talk in O2k images
-    """
- 
-    log.debug("De-cross-talk procedure started !")
-       
-    if not out_image:
-        l_out_image = in_image.replace(".fits","_dx.fits")
-    
-    try:
-        f_in = pyfits.open(in_image)
-        if len(f_in)==1:
-            data_in = f_in[0].data
-        else:
-            log.errro("MEF files currently not supported !")
-    except Exception,e:
-        log.error("Error openning FITS file : %s"%in_image)
-        raise e
-    
-    n_stripes = 8
-    width_st = 1024
-    height_st = 128
-    
-    cube = numpy.zeros([n_stripes, width_st, height], dtype=numpy.float)
-    stripe = numpy.zeros([width_st, height], dtype=numpy.float)
-    
-    for j in range (0,n_stripes):
-        cube [j] = data_in[0:(j+1)*width_st, j*height:(j+1)*height]
+
         
         
         
