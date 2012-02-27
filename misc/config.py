@@ -413,6 +413,8 @@ def read_config_file(config_file = default_config_file()):
     general["output_dir"] = read_parameter(config, "general", "output_dir", str, True, config_file)
     general["temp_dir"] = read_parameter(config, "general", "temp_dir", str, True, config_file)
     general["output_file"] = read_parameter(config, "general", "output_file", str, True, config_file)
+    general["ext_calibration_db"] = read_parameter(config, "general", "ext_calibration_db", str, True, config_file)
+    
     
     general["master_dark"] = read_parameter(config, "general", "master_dark", str, False, config_file)
     general["master_flat"] = read_parameter(config, "general", "master_flat", str, False, config_file)
@@ -423,6 +425,9 @@ def read_config_file(config_file = default_config_file()):
     general["check_data"] = read_parameter(config, "general", "check_data", bool, False, config_file)
     general["min_frames"] = read_parameter(config, "general", "min_frames", int, False, config_file)
     general["group_by"] = read_parameter(config, "general", "group_by", str, False, config_file)
+    general["remove_crosstalk"] = read_parameter(config, "general", "remove_crosstalk", bool, False, config_file)
+    general["purge_output"] = read_parameter(config, "general", "purge_output", bool, False, config_file)
+    
     
     general["max_mjd_diff"] = read_parameter(config, "general", "max_mjd_diff", float, False, config_file)
     

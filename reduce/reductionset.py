@@ -104,10 +104,21 @@ class ReductionSet(object):
         obs_mode : str
             'dither' - files belong to a dither pattern observation
             'other' - 
+        
         dark : str
             if given, the filename of the master dark to be used for the reduction
+        
         flat : str
             if given, the filename of the master flat to be used for the reduction
+        
+        external_db_files : str or list
+            File list or Directory used as an external calibration database.
+            Then, if during the reduction of a ReductionSet(RS) no calibration (dark, flat) 
+            are found in the current RS, then PAPI will look for them into this directory.
+            If the directory does not exists, of no calibration are found, then no calibrations
+            will be used for the data reduction.
+            Note that the calibrations into the current RS have always higher priority than
+            the ones in the external calibration DB.   
         
         ....
         
@@ -154,6 +165,7 @@ class ReductionSet(object):
                 self.out_dir = "/tmp/"
         else:
             self.out_dir = out_dir
+            
         
         if not os.path.exists(self.out_dir):
             raise Exception("Output dir does not exist.")
@@ -224,12 +236,20 @@ class ReductionSet(object):
         # we can have problems because SQLite3 does not support access from multiple 
         # threads, and the RS.reduceSet() can be executed from other thread than 
         # it was created.
+        # --> If can be a list of files or a directory name having the files
         # Further info: http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency  
         #               http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
-        if external_db_files!=None:
-            self.ext_db_files = external_db_files 
+        self.ext_db_files = []
+        if external_db_files == None:
+            if config_dict !=None:
+                cal_dir = self.config_dict['general']['ext_calibration_db']
+                if os.path.isdir(cal_dir):
+                    for file in dircache.listdir(cal_dir):
+                        if file.endswith(".fits") or file.endswith(".fit"):
+                            self.ext_db_files.append((cal_dir+"/"+file).replace('//','/'))
         else:
-            self.ext_db_files = []
+            self.ext_db_files = external_db_files    
+
              
     def __initDB(self):
         """
@@ -349,7 +369,7 @@ class ReductionSet(object):
                     break
             if chk_cont and not mismatch_cont:
                 if prev_MJD!=-1 and (fi.getMJD()-prev_MJD)>self.MAX_MJD_DIFF:
-                    log.error("Maximmun time distant between two consecutives frames exceeded !!")
+                    log.error("Maximmun time distant between two consecutives frames exceeded. File= %s",file)
                     mismatch_cont = True
                     break
                 else:
@@ -589,7 +609,7 @@ class ReductionSet(object):
         
         obj_frame = datahandler.ClFits(sci_obj_list[0])
         # We take as sample, the first frame in the list, but all frames must
-        # have the same features (expT,filter,ncoadda, readout-mode, ...)
+        # have the same features (expT,filter,ncoadd, readout-mode, ...)
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
@@ -1657,8 +1677,9 @@ class ReductionSet(object):
         for r_file in files_created: log.debug("\t    - %s"%r_file)
         log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
 
-        # WARNING : Purging output !! 
-        self.purgeOutput()
+        # WARNING : Purging output !!
+        if self.config_dict['general']['purge_output']:
+            self.purgeOutput()
         
 
         return files_created
@@ -1901,6 +1922,7 @@ class ReductionSet(object):
             # If red_mode is 'lemon',then no warping of frames is required
             if self.red_mode=='lemon':
                 files_created = out_ext
+		log.info("*** Obs. Sequence LEMON-reduced. ***") 
                 return files_created
             
             # if all reduction were fine, now join/stich back the extensions in a wider frame
@@ -1948,6 +1970,9 @@ class ReductionSet(object):
         # Insert all created files into the DB                
         for file in files_created:
             self.db.insert(file)
+        
+        # not sure if is better to do here ??? 
+        #self.purgeOutput()
             
         return files_created
  
@@ -2535,7 +2560,7 @@ class ReductionSet(object):
         # 9.1 - Remove crosstalk - (only if bright stars are present)    
         ########################################################################
         remove_crosstalk = True
-        if remove_crosstalk:
+        if self.config_dict['general']['remove_crosstalk']:
             res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
                         [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
             self.m_LAST_FILES = res
@@ -2546,6 +2571,7 @@ class ReductionSet(object):
         
         if self.red_mode=='lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub2.list")
+            log.info("End of sequence LEMON-reduction. # %s # files created. ",len(self.m_LAST_FILES))
             return out_dir+"/files_skysub2.list"
     
         ########################################################################

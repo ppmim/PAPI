@@ -315,7 +315,7 @@ if __name__ == "__main__":
         parser.error("incorrect number of arguments " )
     
     
-    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
     #print "Files:",filelist
     
