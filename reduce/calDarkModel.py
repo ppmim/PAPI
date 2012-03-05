@@ -49,6 +49,9 @@ import datahandler
 import pyfits
 import numpy
 
+#import scipy.stats.stats
+
+
 # Logging
 from misc.paLog import log
 
@@ -168,6 +171,12 @@ class MasterDarkModel(object):
                 f = datahandler.ClFits ( framelist[i] )
                 temp[counter, :,:] = file[0].data
                 times[counter] = float(f.expTime())
+                _mean = numpy.mean(file[0].data)
+                _median = numpy.median(file[0].data)
+                _mode = 3*_median - 2*_mean
+                m_mode = my_mode(file[0].data)[0][0]
+                #scipy_mode = scipy.stats.stats.mode ( file[0].data ) # extremely low !!
+                log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s my_MODE=%s"%(f.expTime(),f.getItime(),_mean, _median,m_mode))
                 counter = counter+1
                 file.close()
                 
@@ -188,8 +197,8 @@ class MasterDarkModel(object):
         #out=numpy.where(out==0, numpy.polyfit(times, temp, deg=1), 0)   
         
         #Get the median value of the dark current                 
-        median_dark_current = numpy.mean(slopes)    #numpy.median(out[0,:,:])
-        median_bias = numpy.mean(bias) 
+        median_dark_current = numpy.median(slopes)    #numpy.median(out[0,:,:])
+        median_bias = numpy.median(bias) 
         
         log.info("MEDIAN_DARK_CURRENT = %s"%median_dark_current)
         log.info("MEDIAN BIAS = %s"% median_bias)    
@@ -251,6 +260,26 @@ def usage ():
     print "-o / --out=         Output dark model filename "
 
 ################################################################################
+def my_mode(data):
+    """
+    An easy (efficient and precise ??) way to find out the mode stats of an array
+    """
+    
+    my_histo = np.histogram(data)
+    np.max
+    counts = {}
+    for x in data.flatten():
+        counts[x] = counts.get(x,0) + 1
+    
+    maxcount = max(counts.values())
+    modelist = []
+    
+    for x in counts:
+        if counts[x] == maxcount:
+            modelist.append(x)
+    
+    return modelist,maxcount
+
 # main
 if __name__ == "__main__":
     print 'Start MasterDarkModel....'
