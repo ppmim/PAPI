@@ -71,7 +71,25 @@ from misc.paLog import log
 def remove_crosstalk(in_image, out_image=None, overwrite=False):
     """
     Remove cross-talk in O2k or PANIC images
+    
+    Parameters
+    ----------
+    in_image : str
+        Input filename to be decrosstalk
+    
+    out_image : str
+        Output filename of decrosstalked image
+        
+    overwrite: Boolean
+        If true, the input file 'in_image' filename will be overwritten,
+        otherwise, the 'out_image' filename will be used as output. 
+    
+    Returns
+    -------
+    If all was successful, the name of the output file is returned
+        
     """
+    
     try:
         if pyfits.getval(in_image, 'INSTRUME').lower()=='omega2000':
             return de_crosstalk_o2k(in_image, out_image, overwrite)
@@ -109,7 +127,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
             log.error("Only O2k instrument is supported !")
             raise Exception("Only O2k instrument is supported !")
     except Exception,e:
-        log.error("Error openning FITS file : %s"%in_image)
+        log.error("Error opening FITS file : %s"%in_image)
         raise e
     
     #### Q1 #### left-bottom, horizontal stripes 

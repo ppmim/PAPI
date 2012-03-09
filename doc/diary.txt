@@ -563,9 +563,21 @@ Master dark tradicional. Esto implicó modificar un poco la funcion RS.checkData
 - Implementada nueva funcionalidad a QL para restar los 2 últimos SCI-frames
 recibidos, mejor dicho, los 2 más nuevos (MJD) --> pushB_subtract_last2_slot()
 
+- Añado opción remove_cosmic_ray al fichero de configuración 
+
+2012-03-10
+==========
 
 
+VIDEOCONF 14-Marzo-2012
+=======================
 
+- QL : added 2-last frames subtraction
+- Data reduction O2k 
+- Dxtalk
+- CR removal
+- Studying an alternative to iraf.imcobine (to give up IRAF)
+- Documentation
 
 
  

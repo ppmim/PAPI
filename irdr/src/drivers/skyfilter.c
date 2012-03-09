@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
         
         if (usemask) {
             if (skymodel==1)
+                /* NOTE: mean provide a higher S/N ratio than median */
                 sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
             else
                 sky = cube_mean_min_w(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1, nsky/2);

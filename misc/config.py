@@ -426,6 +426,7 @@ def read_config_file(config_file = default_config_file()):
     general["min_frames"] = read_parameter(config, "general", "min_frames", int, False, config_file)
     general["group_by"] = read_parameter(config, "general", "group_by", str, False, config_file)
     general["remove_crosstalk"] = read_parameter(config, "general", "remove_crosstalk", bool, False, config_file)
+    general["remove_cosmic_ray"] = read_parameter(config, "general", "remove_cosmic_ray", bool, False, config_file)
     general["purge_output"] = read_parameter(config, "general", "purge_output", bool, False, config_file)
     
     

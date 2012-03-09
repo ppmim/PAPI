@@ -2613,23 +2613,32 @@ class ReductionSet(object):
         ########################################################################
         # 9.1 - Remove crosstalk - (only if bright stars are present)    
         ########################################################################
-        remove_crosstalk = True
         if self.config_dict['general']['remove_crosstalk']:
             res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
                         [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
             self.m_LAST_FILES = res
     
         ########################################################################
-        # 9.2 - LEMON connection - End here for LEMON processing    
+        # 9.2 - Remove Cosmic Rays -    
+        ########################################################################
+        if self.config_dict['general']['remove_cosmic_ray']:
+            res = map ( reduce.remove_cosmics.remove_cr, self.m_LAST_FILES, 
+                        [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES),
+                        [False]*len(self.m_LAST_FILES))
+            self.m_LAST_FILES = res
+            
+        ########################################################################
+        # 9.3 - LEMON connection - End here for LEMON processing    
         ########################################################################
         
         if self.red_mode=='lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub2.list")
-            log.info("End of sequence LEMON-reduction. # %s # files created. ",len(self.m_LAST_FILES))
+            log.info("End of sequence LEMON-reduction. # %s # files created. ",
+                     len(self.m_LAST_FILES))
             return out_dir+"/files_skysub2.list"
     
         ########################################################################
-        # 9.3 - Divide by the master flat after sky subtraction ! (see notes above)
+        # 9.4 - Divide by the master flat after sky subtraction ! (see notes above)
         # (the same task as above 4.2) --> HAS NO SENSE !!! only for a test ??? or a.l.a. O2k 
         ########################################################################
         if self.apply_dark_flat==2 and master_flat!=None:
