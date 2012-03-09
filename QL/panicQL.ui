@@ -421,73 +421,6 @@
                     <string>Browse the output processed files location</string>
                 </property>
             </widget>
-            <widget class="QComboBox">
-                <item>
-                    <property name="text">
-                        <string>None</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Lazy</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>Pre-reduction</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_1</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_2</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>UserDef_3</string>
-                    </property>
-                </item>
-                <property name="name">
-                    <cstring>comboBox_QL_Mode</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>641</x>
-                        <y>160</y>
-                        <width>110</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Filter data sources list using its class/type</string>
-                </property>
-            </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel4_2_2</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>647</x>
-                        <y>139</y>
-                        <width>80</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>QL Mode</string>
-                </property>
-            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_file_filter</cstring>
@@ -502,62 +435,6 @@
                 </property>
                 <property name="text">
                     <string>Filename Filter</string>
-                </property>
-            </widget>
-            <widget class="QComboBox">
-                <item>
-                    <property name="text">
-                        <string>ALL</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>DARK</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>DOME_FLAT</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>SKY_FLAT</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>SCIENCE</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>REDUCED</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>GROUP</string>
-                    </property>
-                </item>
-                <item>
-                    <property name="text">
-                        <string>OUTS</string>
-                    </property>
-                </item>
-                <property name="name">
-                    <cstring>comboBox_classFilter</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>490</x>
-                        <y>160</y>
-                        <width>110</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Filter data sources list using its class/type</string>
                 </property>
             </widget>
             <widget class="QPushButton">
@@ -581,27 +458,6 @@
                 </property>
                 <property name="text">
                     <string>Create Calibrations</string>
-                </property>
-            </widget>
-            <widget class="QLabel">
-                <property name="name">
-                    <cstring>textLabel4_2</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>490</x>
-                        <y>140</y>
-                        <width>110</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="font">
-                    <font>
-                        <bold>1</bold>
-                    </font>
-                </property>
-                <property name="text">
-                    <string>List View Filter</string>
                 </property>
             </widget>
             <widget class="QLabel">
@@ -735,6 +591,150 @@
                     <bool>true</bool>
                 </property>
             </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel4_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>378</x>
+                        <y>140</y>
+                        <width>110</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>List View Filter</string>
+                </property>
+            </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>ALL</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>DARK</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>DOME_FLAT</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>SKY_FLAT</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>SCIENCE</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>REDUCED</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>GROUP</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>OUTS</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox_classFilter</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>378</x>
+                        <y>160</y>
+                        <width>110</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Filter data sources list using its class/type</string>
+                </property>
+            </widget>
+            <widget class="QComboBox">
+                <item>
+                    <property name="text">
+                        <string>None</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Lazy</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>Pre-reduction</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_1</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_2</string>
+                    </property>
+                </item>
+                <item>
+                    <property name="text">
+                        <string>UserDef_3</string>
+                    </property>
+                </item>
+                <property name="name">
+                    <cstring>comboBox_QL_Mode</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>529</x>
+                        <y>160</y>
+                        <width>110</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Filter data sources list using its class/type</string>
+                </property>
+            </widget>
+            <widget class="QLabel">
+                <property name="name">
+                    <cstring>textLabel4_2_2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>535</x>
+                        <y>139</y>
+                        <width>80</width>
+                        <height>20</height>
+                    </rect>
+                </property>
+                <property name="font">
+                    <font>
+                        <bold>1</bold>
+                    </font>
+                </property>
+                <property name="text">
+                    <string>QL Mode</string>
+                </property>
+            </widget>
             <widget class="QPushButton">
                 <property name="name">
                     <cstring>pushButton_start_proc</cstring>
@@ -756,6 +756,29 @@
                 </property>
                 <property name="text">
                     <string>START processing</string>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>pushButton_subtract_last2</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>650</x>
+                        <y>160</y>
+                        <width>111</width>
+                        <height>24</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>244</red>
+                        <green>153</green>
+                        <blue>42</blue>
+                    </color>
+                </property>
+                <property name="text">
+                    <string>Subtract-Last2</string>
                 </property>
             </widget>
         </widget>
@@ -3283,6 +3306,12 @@
         <receiver>panicQL</receiver>
         <slot>createCalibs_slot()</slot>
     </connection>
+    <connection>
+        <sender>pushButton_subtract_last2</sender>
+        <signal>clicked()</signal>
+        <receiver>panicQL</receiver>
+        <slot>pushB_subtract_last2_slot()</slot>
+    </connection>
 </connections>
 <includes>
     <include location="local" impldecl="in implementation">panicQL.ui.h</include>
@@ -3335,6 +3364,7 @@
     <slot>findOS_slot()</slot>
     <slot>createCalibs_slot()</slot>
     <slot>pushB_start_stop_slot()</slot>
+    <slot>pushB_subtract_last2_slot()</slot>
 </slots>
 <layoutdefaults spacing="6" margin="11"/>
 </UI>

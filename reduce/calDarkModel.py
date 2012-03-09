@@ -174,9 +174,9 @@ class MasterDarkModel(object):
                 _mean = numpy.mean(file[0].data)
                 _median = numpy.median(file[0].data)
                 _mode = 3*_median - 2*_mean
-                m_mode = my_mode(file[0].data)[0][0]
+                #m_mode = my_mode(file[0].data)[0][0]
                 #scipy_mode = scipy.stats.stats.mode ( file[0].data ) # extremely low !!
-                log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s my_MODE=%s"%(f.expTime(),f.getItime(),_mean, _median,m_mode))
+                log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s"%(f.expTime(),f.getItime(),_mean, _median))
                 counter = counter+1
                 file.close()
                 
@@ -265,8 +265,6 @@ def my_mode(data):
     An easy (efficient and precise ??) way to find out the mode stats of an array
     """
     
-    my_histo = np.histogram(data)
-    np.max
     counts = {}
     for x in data.flatten():
         counts[x] = counts.get(x,0) + 1

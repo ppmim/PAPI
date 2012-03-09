@@ -495,4 +495,77 @@ el BIAS intrinseco de los DARK.
 - Modifico también la rutina calDarkModel para que se grabe en el header alguna
 información mas sobre el DARK_MODEL.
 
+2012-02-24
+==========
+
+- Implementacion metodo dxtalk.py (O2k y PANIC)
+
+2012-02-25
+==========
+
+- Lanzamiento de PAPI (modo lemon) con todos los datos de Matilde de 
+O2k (Enero-Febrero 2012)
+
+2012-02-27
+==========
+- Revision resultados reducción de PAPI
+- Implementacion de nueva opcion en PAPI para que permita usar ficheros de
+calibracion maestros (master dark, flat ...) de un repositorio (directorio)
+externo, de forma que si al reducir un DS no dispone de los correspondiente masters,
+pueda usar los que haya en dicho repositorio.
+
+
+2012-02-28
+==========
+- Dudas sobre los valores obtenidos en el dark model. Pregunto a Clemens, Vianak 
+y Rene Fassbinder sobre el tema para ver si me sacan de la duda.
+
+
+2012-03-02
+==========
+- Rene Fassbinder me responde aclarandome finalmente donde estaba mi error con 
+la estimación de dark model medio---> El valor de MEAN no es significativo !!!!
+Está "contaminado" por los hot-pixels !!! 
+De todas formas, el método de dark-model y la sustracción de dark correspondiente
+hecha en las imágenes de Matilde creo que están bien !
+
+
+2012-03-05
+==========
+- Estudio para ver como mejorar el dxtalk.py de forma que tenga en cuenta los 
+outliers y estrellas brillantes al calcular la mediana.
+Encuentro interesante el método : Standard Deviation Mask que trae Maxim/DL.
+
+- Encontrado en http://www.astro.yale.edu/dokkum/lacosmic/ código Python para 
+eliminar Cosmic-Rays (CR) de imágenes basado en http://arxiv.org/abs/astro-ph/0108003 
+Lo pruebo con imágenes de O2k y parece que va bien, aunque tarda 2'20''.
+Los CR en principio se "resuelven" en el IR al hacer el combine del stack, pero
+en el modo Lemon quizás sea interesante tenerlo ????
+
+2012-03-06
+==========
+- Continuo con el estudio y pruebas de rutina alternativa para iraf.imcombine,
+pero sin éxito.
+
+- Escribo en las listas de AstroPy y NumPy para pregunar acerca del tema.
+Objengo respuestas, diciendo que el paquete stsci contempla dicha rutina, pero 
+hay que instalar PyRAF !!!! entonces estamos en la misma. No obstante podría
+ser un punto de partida para mi implementación.
+
+  
+2012-03-08
+==========
+- Modificación en PAPI para que detecte secuencia de Dark para DarkModel o 
+Master dark tradicional. Esto implicó modificar un poco la funcion RS.checkData().
+
+2012-03-09
+==========
+- Implementada nueva funcionalidad a QL para restar los 2 últimos SCI-frames
+recibidos, mejor dicho, los 2 más nuevos (MJD) --> pushB_subtract_last2_slot()
+
+
+
+
+
+
  

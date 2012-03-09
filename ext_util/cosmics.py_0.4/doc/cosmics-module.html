@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>cosmics</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >cosmics.py</th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Module&nbsp;cosmics
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="cosmics-module.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== MODULE DESCRIPTION ==================== -->
+<h1 class="epydoc">Module cosmics</h1><p class="nomargin-top"><span class="codelink"><a href="cosmics-pysrc.html">source&nbsp;code</a></span></p>
+<h1 class="heading">About</h1>
+    <p>cosmics.py is a small and simple python module to detect and clean 
+    cosmic ray hits on images (numpy arrays or FITS), using scipy, and 
+    based on Pieter van Dokkum's L.A.Cosmic algorithm.</p>
+    <p>L.A.Cosmic = Laplacian cosmic ray detection</p>
+    <p><a href="http://www.astro.yale.edu/dokkum/lacosmic/" 
+    target="_top">http://www.astro.yale.edu/dokkum/lacosmic/</a></p>
+    <p>(article : <a href="http://arxiv.org/abs/astro-ph/0108003" 
+    target="_top">http://arxiv.org/abs/astro-ph/0108003</a>)</p>
+  <h1 class="heading">Additional features</h1>
+    <p>I pimped this a bit to suit my needs :</p>
+    <ul>
+      <li>
+        Automatic recognition of saturated stars, including their full 
+        saturation trails. This avoids that such stars are treated as big 
+        cosmics. Indeed saturated stars tend to get even uglier when you 
+        try to clean them. Plus they keep L.A.Cosmic iterations going on 
+        forever. This feature is mainly for pretty-image production. It is 
+        optional, requires one more parameter (a CCD saturation level in 
+        ADU), and uses some nicely robust morphology operations and object 
+        extraction.
+      </li>
+      <li>
+        Scipy image analysis allows to &quot;label&quot; the actual cosmic 
+        ray hits (i.e. group the pixels into local islands). A bit special,
+        but I use this in the scope of visualizing a PSF construction.
+      </li>
+    </ul>
+    <p>But otherwise the core is really a 1-to-1 implementation of 
+    L.A.Cosmic, and uses the same parameters. Only the conventions on how 
+    filters are applied at the image edges might be different.</p>
+    <p>No surprise, this python module is much faster then the IRAF 
+    implementation, as it does not read/write every step to disk.</p>
+  <h1 class="heading">Usage</h1>
+    <p>Everything is in the file cosmics.py, all you need to do is to 
+    import it. You need pyfits, numpy and scipy. See the demo scripts for 
+    example usages (the second demo uses f2n.py to make pngs, and thus also
+    needs PIL).</p>
+    <p>Your image should have clean borders, cut away prescan/overscan 
+    etc.</p>
+  <h1 class="heading">Todo</h1>
+    <p>Ideas for future improvements :</p>
+    <ul>
+      <li>
+        Add something reliable to detect negative glitches (dust on CCD or 
+        small traps)
+      </li>
+      <li>
+        Top level functions to simply run all this on either numpy arrays 
+        or directly on FITS files
+      </li>
+      <li>
+        Reduce memory usage ... easy
+      </li>
+      <li>
+        Switch from signal to ndimage, homogenize mirror boundaries
+      </li>
+    </ul>
+    <p>Malte Tewes, January 2010</p>
+
+<hr />
+<div class="fields">      <p><strong>Version:</strong>
+        0.4
+      </p>
+</div><!-- ==================== CLASSES ==================== -->
+<a name="section-Classes"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td align="left" colspan="2" class="table-header">
+    <span class="table-header">Classes</span></td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="cosmics.cosmicsimage-class.html" class="summary-name">cosmicsimage</a>
+    </td>
+  </tr>
+</table>
+<!-- ==================== FUNCTIONS ==================== -->
+<a name="section-Functions"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td align="left" colspan="2" class="table-header">
+    <span class="table-header">Functions</span></td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics-module.html#fromfits" class="summary-sig-name">fromfits</a>(<span class="summary-sig-arg">infilename</span>,
+        <span class="summary-sig-arg">hdu</span>=<span class="summary-sig-default">0</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">True</span>)</span><br />
+      Reads a FITS file and returns a 2D numpy array of the data.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#fromfits">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics-module.html#tofits" class="summary-sig-name">tofits</a>(<span class="summary-sig-arg">outfilename</span>,
+        <span class="summary-sig-arg">pixelarray</span>,
+        <span class="summary-sig-arg">hdr</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">True</span>)</span><br />
+      Takes a 2D numpy array and write it into a FITS file.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#tofits">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics-module.html#subsample" class="summary-sig-name">subsample</a>(<span class="summary-sig-arg">a</span>)</span><br />
+      Returns a 2x2-subsampled version of array a (no interpolation, just 
+      cutting pixels in 4).</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#subsample">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics-module.html#rebin" class="summary-sig-name">rebin</a>(<span class="summary-sig-arg">a</span>,
+        <span class="summary-sig-arg">newshape</span>)</span><br />
+      Auxiliary function to rebin an ndarray a.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#rebin">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="rebin2x2"></a><span class="summary-sig-name">rebin2x2</span>(<span class="summary-sig-arg">a</span>)</span><br />
+      Wrapper around rebin that actually rebins 2 by 2</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#rebin2x2">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== VARIABLES ==================== -->
+<a name="section-Variables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td align="left" colspan="2" class="table-header">
+    <span class="table-header">Variables</span></td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="cosmics-module.html#laplkernel" class="summary-name">laplkernel</a> = <code title="np.array([[0.0,-1.0, 0.0], [-1.0, 4.0,-1.0], [0.0,-1.0, 0.0]])">np.array([[0.0,-1.0, 0.0], [-1.0, 4.0,-1.0], [0.0<code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="growkernel"></a><span class="summary-name">growkernel</span> = <code title="np.ones((3, 3))">np.ones((3, 3))</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="dilstruct"></a><span class="summary-name">dilstruct</span> = <code title="np.ones((5, 5))">np.ones((5, 5))</code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== FUNCTION DETAILS ==================== -->
+<a name="section-FunctionDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td align="left" colspan="2" class="table-header">
+    <span class="table-header">Function Details</span></td>
+</tr>
+</table>
+<a name="fromfits"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">fromfits</span>(<span class="sig-arg">infilename</span>,
+        <span class="sig-arg">hdu</span>=<span class="sig-default">0</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">True</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#fromfits">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Reads a FITS file and returns a 2D numpy array of the data. Use hdu to
+  specify which HDU you want (default = primary = 0)</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="tofits"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">tofits</span>(<span class="sig-arg">outfilename</span>,
+        <span class="sig-arg">pixelarray</span>,
+        <span class="sig-arg">hdr</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">True</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#tofits">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Takes a 2D numpy array and write it into a FITS file. If you specify a
+  header (pyfits format, as returned by fromfits()) it will be used for the
+  image. You can give me boolean numpy arrays, I will convert them into 8 
+  bit integers.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="subsample"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">subsample</span>(<span class="sig-arg">a</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#subsample">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Returns a 2x2-subsampled version of array a (no interpolation, just 
+  cutting pixels in 4). The version below is directly from the scipy 
+  cookbook on rebinning : <a href="http://www.scipy.org/Cookbook/Rebinning"
+  target="_top">http://www.scipy.org/Cookbook/Rebinning</a> There is 
+  ndimage.zoom(cutout.array, 2, order=0, prefilter=False), but it makes 
+  funny borders.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="rebin"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">rebin</span>(<span class="sig-arg">a</span>,
+        <span class="sig-arg">newshape</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#rebin">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Auxiliary function to rebin an ndarray a. <a 
+  href="http://www.scipy.org/Cookbook/Rebinning" 
+  target="_top">http://www.scipy.org/Cookbook/Rebinning</a></p>
+<pre class="py-doctest">
+<span class="py-prompt">&gt;&gt;&gt; </span>a=rand(6,4); b=rebin(a,(3,2))</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== VARIABLES DETAILS ==================== -->
+<a name="section-VariablesDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td align="left" colspan="2" class="table-header">
+    <span class="table-header">Variables Details</span></td>
+</tr>
+</table>
+<a name="laplkernel"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">laplkernel</h3>
+  
+  <dl class="fields">
+  </dl>
+  <dl class="fields">
+    <dt>Value:</dt>
+      <dd><table><tr><td><pre class="variable">
+np.array([[0.0,-1.0, 0.0], [-1.0, 4.0,-1.0], [0.0,-1.0, 0.0]])
+</pre></td></tr></table>
+</dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >cosmics.py</th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Jan  7 09:54:50 2010
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

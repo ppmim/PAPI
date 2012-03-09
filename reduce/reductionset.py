@@ -184,10 +184,15 @@ class ReductionSet(object):
         self.master_flat = flat # master flat to use (input)
         self.master_bpm = bpm # master Bad Pixel Mask to use (input)
         self.apply_dark_flat = self.config_dict['general']['apply_dark_flat'] # 0=no, 1=before, 2=after
-        self.red_mode = red_mode # reduction mode (lemon=for LEMON pipeline, quick=for QL, science=for science) 
+        self.red_mode = red_mode # reduction mode (lemon=for LEMON pipeline, 
+                                 # quick=for QL, science=for science) 
         log.debug("GROUP_BY = %s"%group_by)
-        self.group_by = group_by.lower() # flag to decide how classification will be done, by OT (OB_ID, OB_PAT, FILTER and TEXP kws) or by FILTER (FILTER kw)
-        self.check_data = check_data # flat to indicate if data checking need to be done (see checkData() method)
+        self.group_by = group_by.lower() # flag to decide how classification 
+                                         # will be done, by OT (OB_ID, OB_PAT, 
+                                         # FILTER and TEXP kws) or by 
+                                         # FILTER (FILTER kw)
+        self.check_data = check_data # flat to indicate if data checking need 
+                                     # to be done (see checkData() method)
          
         
         if self.config_dict:
@@ -210,8 +215,11 @@ class ReductionSet(object):
         
         
         # real "variables" holding current reduction status
-        self.m_LAST_FILES = []   # Contain the files as result of the last processing step (science processed frames). Properly initialized in reduceSingleObj()
+        self.m_LAST_FILES = []   # Contain the files as result of the last 
+                                 # processing step (science processed frames). 
+                                 # Properly initialized in reduceSingleObj()
         self.m_rawFiles = []     # Raw files (originals in the working directory)
+                                 # of the current sequence being reduced.
         self.m_filter = ""       # Filter of the current data set (m_LAST_FILES)
         self.m_type = ""         # Type (dark, flat, object, ...) of the current data set; should be always object !
         self.m_expt = 0.0        # Exposition Time of the current data set files
@@ -299,15 +307,54 @@ class ReductionSet(object):
         
     def checkData(self, chk_filter=True, chk_type=True, chk_expt=True,
                   chk_itime=True, chk_ncoadd=True, chk_cont=True,
-                  chk_readmode=True):
+                  chk_readmode=True, file_list=None):
         """
-        @return: True is all files in file have the same filter and/or 
-        type and/or expt; False otherwise.
-        @note : Also is checked the temporal continuity (distant between two 
+        Check if data properties match in the current file list.
+        
+        Parameters
+        ---------- 
+        
+        chk_filter: bool
+            Flag to indicate if filter property must be checked
+        
+        chk_type: bool
+            Flag to indicate if type (dark, flat, science, ...) must be checked
+        
+        chk_expt: bool
+            Flag to indicate if type Exposition Time must be checked
+
+        chk_itime: bool
+            Flag to indicate if type Integration Time (ITIME) must be checked
+
+        chk_ncoadd: bool
+            Flag to indicate if type number of coadds (NCOADD) must be checked
+
+        chk_cont: bool
+            Flag to indicate if type temporal continuity (MJD) must be checked
+
+        chk_readmode: bool
+            Flag to indicate if type Readout mode  must be checked
+
+        file_list : list
+            A list having the FITS files to check
+            
+        Return: 
+        -------
+            - True whether all files in 'file_list' have the same properties 
+            - False otherwise.
+            
+        Note:
+        -----
+        Also is checked the temporal continuity (distant between two 
         consecutive frames),if exceeded raise an exception 
         """
         
-        f = datahandler.ClFits(self.m_LAST_FILES[0])
+        if file_list and len(file_list)>0:
+            files_to_check = file_list
+        else:
+            files_to_check = self.m_LAST_FILES
+            
+        f = datahandler.ClFits(files_to_check[0])
         
         filter_0 = f.getFilter()
         type_0 = f.getType()
@@ -332,9 +379,9 @@ class ReductionSet(object):
         mismatch_cont = False
         mismatch_readmode = False
         
-        prev_MJD=-1
-        for file in self.m_LAST_FILES:
-            fi=datahandler.ClFits( file )
+        prev_MJD = -1
+        for file in files_to_check:
+            fi = datahandler.ClFits( file )
             if chk_filter and not mismatch_filter: 
                 if fi.getFilter() != filter_0:
                     log.debug("File %s does not match file FILTER", file)
@@ -347,7 +394,7 @@ class ReductionSet(object):
                     break
             if chk_expt and not mismatch_expt: 
                 if fi.expTime() != expt_0:
-                #if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or \
+                #if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or
                 #    (fi.expTime()-self.MAX_MJD_DIFF)>expt_0):   # more relaxed situation
                     log.debug("File %s does not match file EXPTIME", file)
                     mismatch_expt = True
@@ -378,11 +425,11 @@ class ReductionSet(object):
         if mismatch_filter or mismatch_type or mismatch_expt or  \
             mismatch_itime or mismatch_ncoadd or mismatch_cont:
             log.error("Data checking found a mismatch....check your data files....")
-            raise Exception("Error while checking data (filter, type, ExpT, Itime, NCOADDs, MJD)")
-            #return False             
+            #raise Exception("Error while checking data (filter, type, ExpT, Itime, NCOADDs, MJD)")
+            return False             
         else:    
             log.debug("All files match same file filter")
-            #return True
+            return True
             
     def checkFilter(self):
         """
@@ -1749,16 +1796,23 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
 
-                dark_model = True
-                if dark_model:
-                    # Build master dark model from a dark serie
-                    task = reduce.calDarkModel.MasterDarkModel (sequence, self.temp_dir, outfile)
-                    out = task.createDarkModel()
-                else:
+                # Check for EXPT in order to know how to create the master dark (dark model or fixed EXPT)     
+                if (self.checkData(chk_filter=True, chk_type=True, chk_expt=True, 
+                                   chk_itime=True, chk_ncoadd=True, chk_cont=True, 
+                                   chk_readmode=True, file_list=sequence)==True):
                     # Orthodox master dark -- same EXPTIME & NCOADDS
+                    log.debug("Found dark serie with equal EXPTIME. Master dark is going to be created")
                     task = reduce.calDark.MasterDark (sequence, self.temp_dir, outfile, texp_scale=False)
                     out = task.createMaster()
-                
+                else:
+                    log.info("Found a dark series of frames with different EXPTIME: Dark model will be created")
+                    use_dark_model = True
+                    if use_dark_model==True:
+                        # Build master dark model from a dark serie
+                        task = reduce.calDarkModel.MasterDarkModel (sequence, self.temp_dir, outfile)
+                        out = task.createDarkModel()
+                    else:
+                        log.warning("Found a dark serie with diff EXPTIME, but dark model processing not activated")
                  
                 files_created.append(out) # out must be equal to outfile
             except Exception,e:
@@ -2279,11 +2333,11 @@ class ReductionSet(object):
         # TODO : it could/should be done in reduceSeq, to avoid the spliting ...??
         log.info("**** Data Validation ****")
         if self.check_data:
-            try:
-                self.checkData(chk_filter=True, chk_type=False, chk_expt=True, 
-                               chk_itime=True, chk_ncoadd=True, chk_readmode=True)
-            except Exception,e:
-                raise e
+            if (self.checkData(chk_filter=True, chk_type=False, chk_expt=True, 
+                               chk_itime=True, chk_ncoadd=True, chk_readmode=True)==True):
+                log.debug("Data checking was OK !")
+            else:
+                raise Exception("Mismatch in data checking !")
         
         ########################################################################
         # 00 - Sort out data by MJD (self.m_LAST_FILES)

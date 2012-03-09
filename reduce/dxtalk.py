@@ -392,6 +392,10 @@ if __name__ == "__main__":
     parser.add_option("-O", "--overwrite",
                   action="store_true", dest="overwrite", default=False,
                   help="overwrite the original image with the corrected one")
+
+    parser.add_option("-S", "--check_stars",
+                  action="store_true", dest="check_stars", default=False,
+                  help="check if there are bright stars and take them into account for the cube median")  
                                 
     (options, args) = parser.parse_args()
     
@@ -404,7 +408,8 @@ if __name__ == "__main__":
         options.output_image = None
 
     try:    
-        remove_crosstalk(options.input_image, options.output_image, options.overwrite)
+        remove_crosstalk(options.input_image, options.output_image, 
+                         options.overwrite, options.check_stars)
     except Exception, e:
         log.error("Fail of Crosstalk procedure")
         raise e

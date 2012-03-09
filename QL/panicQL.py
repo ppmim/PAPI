@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon Jan 23 16:45:35 2012
+# Created: Fri Mar 9 10:49:10 2012
 #      by: The PyQt User Interface Compiler (pyuic) 3.17.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -10797,30 +10797,12 @@ class panicQL(QMainWindow):
         self.pushButton_outputD = QPushButton(self.tab,"pushButton_outputD")
         self.pushButton_outputD.setGeometry(QRect(19,61,110,23))
 
-        self.comboBox_QL_Mode = QComboBox(0,self.tab,"comboBox_QL_Mode")
-        self.comboBox_QL_Mode.setGeometry(QRect(641,160,110,21))
-
-        self.textLabel4_2_2 = QLabel(self.tab,"textLabel4_2_2")
-        self.textLabel4_2_2.setGeometry(QRect(647,139,80,20))
-        textLabel4_2_2_font = QFont(self.textLabel4_2_2.font())
-        textLabel4_2_2_font.setBold(1)
-        self.textLabel4_2_2.setFont(textLabel4_2_2_font)
-
         self.pushButton_file_filter = QPushButton(self.tab,"pushButton_file_filter")
         self.pushButton_file_filter.setGeometry(QRect(566,30,120,23))
-
-        self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
-        self.comboBox_classFilter.setGeometry(QRect(490,160,110,21))
 
         self.pushButton_createCalibs = QPushButton(self.tab,"pushButton_createCalibs")
         self.pushButton_createCalibs.setGeometry(QRect(778,130,140,23))
         self.pushButton_createCalibs.setPaletteBackgroundColor(QColor(196,196,196))
-
-        self.textLabel4_2 = QLabel(self.tab,"textLabel4_2")
-        self.textLabel4_2.setGeometry(QRect(490,140,110,20))
-        textLabel4_2_font = QFont(self.textLabel4_2.font())
-        textLabel4_2_font.setBold(1)
-        self.textLabel4_2.setFont(textLabel4_2_font)
 
         self.textLabel4_2_3 = QLabel(self.tab,"textLabel4_2_3")
         self.textLabel4_2_3.setGeometry(QRect(8,170,110,20))
@@ -10850,9 +10832,31 @@ class panicQL(QMainWindow):
         self.listView_dataS.setAllColumnsShowFocus(1)
         self.listView_dataS.setRootIsDecorated(1)
 
+        self.textLabel4_2 = QLabel(self.tab,"textLabel4_2")
+        self.textLabel4_2.setGeometry(QRect(378,140,110,20))
+        textLabel4_2_font = QFont(self.textLabel4_2.font())
+        textLabel4_2_font.setBold(1)
+        self.textLabel4_2.setFont(textLabel4_2_font)
+
+        self.comboBox_classFilter = QComboBox(0,self.tab,"comboBox_classFilter")
+        self.comboBox_classFilter.setGeometry(QRect(378,160,110,21))
+
+        self.comboBox_QL_Mode = QComboBox(0,self.tab,"comboBox_QL_Mode")
+        self.comboBox_QL_Mode.setGeometry(QRect(529,160,110,21))
+
+        self.textLabel4_2_2 = QLabel(self.tab,"textLabel4_2_2")
+        self.textLabel4_2_2.setGeometry(QRect(535,139,80,20))
+        textLabel4_2_2_font = QFont(self.textLabel4_2_2.font())
+        textLabel4_2_2_font.setBold(1)
+        self.textLabel4_2_2.setFont(textLabel4_2_2_font)
+
         self.pushButton_start_proc = QPushButton(self.tab,"pushButton_start_proc")
         self.pushButton_start_proc.setGeometry(QRect(777,160,140,23))
         self.pushButton_start_proc.setPaletteBackgroundColor(QColor(205,64,64))
+
+        self.pushButton_subtract_last2 = QPushButton(self.tab,"pushButton_subtract_last2")
+        self.pushButton_subtract_last2.setGeometry(QRect(650,160,111,24))
+        self.pushButton_subtract_last2.setPaletteBackgroundColor(QColor(244,153,42))
         self.tabWidget3.insertTab(self.tab,QString.fromLatin1(""))
 
         self.TabPage = QWidget(self.tabWidget3,"TabPage")
@@ -11322,6 +11326,7 @@ class panicQL(QMainWindow):
         self.connect(self.pushButton_findOS,SIGNAL("clicked()"),self.findOS_slot)
         self.connect(self.listView_OS,SIGNAL("rightButtonPressed(QListViewItem*,const QPoint&,int)"),self.testSlot)
         self.connect(self.pushButton_createCalibs,SIGNAL("clicked()"),self.createCalibs_slot)
+        self.connect(self.pushButton_subtract_last2,SIGNAL("clicked()"),self.pushB_subtract_last2_slot)
 
 
     def languageChange(self):
@@ -11349,16 +11354,18 @@ class panicQL(QMainWindow):
         QToolTip.add(self.pushButton_tempD,self.__tr("Browse the temporal file location"))
         self.pushButton_outputD.setText(self.__tr("Output Dir"))
         QToolTip.add(self.pushButton_outputD,self.__tr("Browse the output processed files location"))
-        self.comboBox_QL_Mode.clear()
-        self.comboBox_QL_Mode.insertItem(self.__tr("None"))
-        self.comboBox_QL_Mode.insertItem(self.__tr("Lazy"))
-        self.comboBox_QL_Mode.insertItem(self.__tr("Pre-reduction"))
-        self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_1"))
-        self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_2"))
-        self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_3"))
-        QToolTip.add(self.comboBox_QL_Mode,self.__tr("Filter data sources list using its class/type"))
-        self.textLabel4_2_2.setText(self.__tr("QL Mode"))
         self.pushButton_file_filter.setText(self.__tr("Filename Filter"))
+        self.pushButton_createCalibs.setText(self.__tr("Create Calibrations"))
+        self.textLabel4_2_3.setText(self.__tr("Data List View"))
+        self.listView_dataS.header().setLabel(0,self.__tr("File                                                        "))
+        self.listView_dataS.header().setLabel(1,self.__tr("ImageType                            "))
+        self.listView_dataS.header().setLabel(2,self.__tr("Filter     "))
+        self.listView_dataS.header().setLabel(3,self.__tr("ExpT"))
+        self.listView_dataS.header().setLabel(4,self.__tr("Date-Obs                     "))
+        self.listView_dataS.header().setLabel(5,self.__tr("Object         "))
+        self.listView_dataS.header().setLabel(6,self.__tr("RA                       "))
+        self.listView_dataS.header().setLabel(7,self.__tr("Dec                     "))
+        self.textLabel4_2.setText(self.__tr("List View Filter"))
         self.comboBox_classFilter.clear()
         self.comboBox_classFilter.insertItem(self.__tr("ALL"))
         self.comboBox_classFilter.insertItem(self.__tr("DARK"))
@@ -11369,18 +11376,17 @@ class panicQL(QMainWindow):
         self.comboBox_classFilter.insertItem(self.__tr("GROUP"))
         self.comboBox_classFilter.insertItem(self.__tr("OUTS"))
         QToolTip.add(self.comboBox_classFilter,self.__tr("Filter data sources list using its class/type"))
-        self.pushButton_createCalibs.setText(self.__tr("Create Calibrations"))
-        self.textLabel4_2.setText(self.__tr("List View Filter"))
-        self.textLabel4_2_3.setText(self.__tr("Data List View"))
-        self.listView_dataS.header().setLabel(0,self.__tr("File                                                        "))
-        self.listView_dataS.header().setLabel(1,self.__tr("ImageType                            "))
-        self.listView_dataS.header().setLabel(2,self.__tr("Filter     "))
-        self.listView_dataS.header().setLabel(3,self.__tr("ExpT"))
-        self.listView_dataS.header().setLabel(4,self.__tr("Date-Obs                     "))
-        self.listView_dataS.header().setLabel(5,self.__tr("Object         "))
-        self.listView_dataS.header().setLabel(6,self.__tr("RA                       "))
-        self.listView_dataS.header().setLabel(7,self.__tr("Dec                     "))
+        self.comboBox_QL_Mode.clear()
+        self.comboBox_QL_Mode.insertItem(self.__tr("None"))
+        self.comboBox_QL_Mode.insertItem(self.__tr("Lazy"))
+        self.comboBox_QL_Mode.insertItem(self.__tr("Pre-reduction"))
+        self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_1"))
+        self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_2"))
+        self.comboBox_QL_Mode.insertItem(self.__tr("UserDef_3"))
+        QToolTip.add(self.comboBox_QL_Mode,self.__tr("Filter data sources list using its class/type"))
+        self.textLabel4_2_2.setText(self.__tr("QL Mode"))
         self.pushButton_start_proc.setText(self.__tr("START processing"))
+        self.pushButton_subtract_last2.setText(self.__tr("Subtract-Last2"))
         self.tabWidget3.changeTab(self.tab,self.__tr("Main"))
         self.buttonGroup2_2.setTitle(self.__tr("Data Grouping"))
         self.lineEdit_ra_dec_near_offset.setText(self.__tr("150"))
@@ -11727,6 +11733,9 @@ class panicQL(QMainWindow):
 
     def pushB_start_stop_slot(self):
         print "panicQL.pushB_start_stop_slot(): Not implemented yet"
+
+    def pushB_subtract_last2_slot(self):
+        print "panicQL.pushB_subtract_last2_slot(): Not implemented yet"
 
     def __tr(self,s,c = None):
         return qApp.translate("panicQL",s,c)

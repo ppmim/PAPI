@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>cosmics.cosmicsimage</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="cosmics-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >cosmics.py</th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="cosmics-module.html">Module&nbsp;cosmics</a> ::
+        Class&nbsp;cosmicsimage
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="cosmics.cosmicsimage-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class cosmicsimage</h1><p class="nomargin-top"><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage">source&nbsp;code</a></span></p>
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td align="left" colspan="2" class="table-header">
+    <span class="table-header">Instance Methods</span></td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">rawarray</span>,
+        <span class="summary-sig-arg">pssl</span>=<span class="summary-sig-default">0.0</span>,
+        <span class="summary-sig-arg">gain</span>=<span class="summary-sig-default">2.2</span>,
+        <span class="summary-sig-arg">readnoise</span>=<span class="summary-sig-default">10.0</span>,
+        <span class="summary-sig-arg">sigclip</span>=<span class="summary-sig-default">5.0</span>,
+        <span class="summary-sig-arg">sigfrac</span>=<span class="summary-sig-default">0.3</span>,
+        <span class="summary-sig-arg">objlim</span>=<span class="summary-sig-default">5.0</span>,
+        <span class="summary-sig-arg">satlevel</span>=<span class="summary-sig-default">50000.0</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">True</span>)</span><br />
+      sigclip : increase this if you detect cosmics where there are none.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="__str__"></a><span class="summary-sig-name">__str__</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      Gives a summary of the current state, including the number of cosmic 
+      pixels in the mask etc.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.__str__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#labelmask" class="summary-sig-name">labelmask</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Finds and labels the cosmic &quot;islands&quot; and returns a list of
+      dicts containing their positions.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.labelmask">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#getdilatedmask" class="summary-sig-name">getdilatedmask</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">size</span>=<span class="summary-sig-default">3</span>)</span><br />
+      Returns a morphologically dilated copy of the current mask.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.getdilatedmask">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#clean" class="summary-sig-name">clean</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">mask</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Given the mask, we replace the actual problematic pixels with the 
+      masked 5x5 median value.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.clean">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#findsatstars" class="summary-sig-name">findsatstars</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Uses the satlevel to find saturated stars (not cosmics !), and puts 
+      the result as a mask in self.satstars.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.findsatstars">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#getsatstars" class="summary-sig-name">getsatstars</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Returns the mask of saturated stars after finding them if not yet 
+      done.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.getsatstars">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getmask"></a><span class="summary-sig-name">getmask</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.getmask">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getrawarray"></a><span class="summary-sig-name">getrawarray</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      For external use only, as it returns the rawarray minus pssl !</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.getrawarray">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getcleanarray"></a><span class="summary-sig-name">getcleanarray</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      For external use only, as it returns the cleanarray minus pssl !</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.getcleanarray">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#guessbackgroundlevel" class="summary-sig-name">guessbackgroundlevel</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      Estimates the background level.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.guessbackgroundlevel">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#lacosmiciteration" class="summary-sig-name">lacosmiciteration</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Performs one iteration of the L.A.Cosmic algorithm.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.lacosmiciteration">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#findholes" class="summary-sig-name">findholes</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">True</span>)</span><br />
+      Detects &quot;negative cosmics&quot; in the cleanarray and adds them 
+      to the mask.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.findholes">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="cosmics.cosmicsimage-class.html#run" class="summary-sig-name">run</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">maxiter</span>=<span class="summary-sig-default">4</span>,
+        <span class="summary-sig-arg">verbose</span>=<span class="summary-sig-default">False</span>)</span><br />
+      Full artillery :-)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.run">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td align="left" colspan="2" class="table-header">
+    <span class="table-header">Method Details</span></td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">rawarray</span>,
+        <span class="sig-arg">pssl</span>=<span class="sig-default">0.0</span>,
+        <span class="sig-arg">gain</span>=<span class="sig-default">2.2</span>,
+        <span class="sig-arg">readnoise</span>=<span class="sig-default">10.0</span>,
+        <span class="sig-arg">sigclip</span>=<span class="sig-default">5.0</span>,
+        <span class="sig-arg">sigfrac</span>=<span class="sig-default">0.3</span>,
+        <span class="sig-arg">objlim</span>=<span class="sig-default">5.0</span>,
+        <span class="sig-arg">satlevel</span>=<span class="sig-default">50000.0</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">True</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.__init__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>sigclip : increase this if you detect cosmics where there are none. 
+  Default is 5.0, a good value for earth-bound images. objlim : increase 
+  this if normal stars are detected as cosmics. Default is 5.0, a good 
+  value for earth-bound images.</p>
+  <p>Constructor of the cosmic class, takes a 2D numpy array of your image 
+  as main argument. sigclip : laplacian-to-noise limit for cosmic ray 
+  detection objlim : minimum contrast between laplacian image and fine 
+  structure image. Use 5.0 if your image is undersampled, HST, ...</p>
+  <p>satlevel : if we find agglomerations of pixels above this level, we 
+  consider it to be a saturated star and do not try to correct and pixels 
+  around it. A negative satlevel skips this feature.</p>
+  <p>pssl is the previously subtracted sky level !</p>
+  <p>real   gain    = 1.8          # gain (electrons/ADU)    (0=unknown) 
+  real   readn   = 6.5                  # read noise (electrons) 
+  (0=unknown) ##gain0  string statsec = &quot;*,*&quot;       # section to 
+  use for automatic computation of gain real   skyval  = 0.           # sky
+  level that has been subtracted (ADU) real   sigclip = 3.0          # 
+  detection limit for cosmic rays (sigma) real   sigfrac = 0.5          # 
+  fractional detection limit for neighbouring pixels real   objlim  = 3.0
+  # contrast limit between CR and underlying object int    niter   = 1
+  # maximum number of iterations</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="labelmask"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">labelmask</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.labelmask">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Finds and labels the cosmic &quot;islands&quot; and returns a list of 
+  dicts containing their positions. This is made on purpose for 
+  visualizations a la f2n.drawstarslist, but could be useful anyway.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getdilatedmask"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getdilatedmask</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">size</span>=<span class="sig-default">3</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.getdilatedmask">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Returns a morphologically dilated copy of the current mask. size = 3 
+  or 5 decides how to dilate.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="clean"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">clean</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">mask</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.clean">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Given the mask, we replace the actual problematic pixels with the 
+  masked 5x5 median value. This mimics what is done in L.A.Cosmic, but it's
+  a bit harder to do in python, as there is no readymade masked median. So 
+  for now we do a loop... Saturated stars, if calculated, are also masked :
+  they are not &quot;cleaned&quot;, but their pixels are not used for the 
+  interpolation.</p>
+  <p>We will directly change self.cleanimage. Instead of using the 
+  self.mask, you can supply your own mask as argument. This might be useful
+  to apply this cleaning function iteratively. But for the true L.A.Cosmic,
+  we don't use this, i.e. we use the full mask at each iteration.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="findsatstars"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">findsatstars</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.findsatstars">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Uses the satlevel to find saturated stars (not cosmics !), and puts 
+  the result as a mask in self.satstars. This can then be used to avoid 
+  these regions in cosmic detection and cleaning procedures. Slow ...</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getsatstars"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getsatstars</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.getsatstars">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Returns the mask of saturated stars after finding them if not yet 
+  done. Intended mainly for external use.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="guessbackgroundlevel"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">guessbackgroundlevel</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.guessbackgroundlevel">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Estimates the background level. This could be used to fill pixels in 
+  large cosmics.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="lacosmiciteration"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">lacosmiciteration</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.lacosmiciteration">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Performs one iteration of the L.A.Cosmic algorithm. It operates on 
+  self.cleanarray, and afterwards updates self.mask by adding the newly 
+  detected cosmics to the existing self.mask. Cleaning is not made 
+  automatically ! You have to call clean() after each iteration. This way 
+  you can run it several times in a row to to L.A.Cosmic 
+  &quot;iterations&quot;. See function lacosmic, that mimics the full 
+  iterative L.A.Cosmic algorithm.</p>
+  <p>Returns a dict containing</p>
+  <ul>
+    <li>
+      niter : the number of cosmic pixels detected in this iteration
+    </li>
+    <li>
+      nnew : among these, how many were not yet in the mask
+    </li>
+    <li>
+      itermask : the mask of pixels detected in this iteration
+    </li>
+    <li>
+      newmask : the pixels detected that were not yet in the mask
+    </li>
+  </ul>
+  <p>If findsatstars() was called, we exclude these regions from the 
+  search.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="findholes"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">findholes</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">True</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.findholes">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Detects &quot;negative cosmics&quot; in the cleanarray and adds them 
+  to the mask. This is not working yet.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="run"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">run</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">maxiter</span>=<span class="sig-default">4</span>,
+        <span class="sig-arg">verbose</span>=<span class="sig-default">False</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="cosmics-pysrc.html#cosmicsimage.run">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Full artillery :-)</p>
+  <ul>
+    <li>
+      Find saturated stars
+    </li>
+    <li>
+      Run maxiter L.A.Cosmic iterations (stops if no more cosmics are 
+      found)
+    </li>
+  </ul>
+  <p>Stops if no cosmics are found or if maxiter is reached.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="cosmics-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >cosmics.py</th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Jan  7 09:54:50 2010
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

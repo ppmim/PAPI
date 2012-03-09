@@ -1594,6 +1594,47 @@ class MainGUI(panicQL):
         if str(source):
             self.lineEdit_masterMask.setText(source)
             self.m_masterMask=str(source)                       
+
+    def pushB_subtract_last2_slot(self):
+        """
+        Slot called when button 'Subtract-Last2' is clicked.
+        
+        The two newest SCIENCE frames received (MJD) will be subtracted
+        """
+        
+        #(type , filter) = self.inputsDB.GetFileInfo(self.last_filename)[2:4]
+        #if type != 'SCIENCE':
+        #only SCIENCE frames are processed
+        #pass
+        ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
+        if len(ltemp)>1:
+            #get the  last 2 files (included the current one)
+            last2_files = ltemp[-2:]
+            if (self.inputsDB.GetFileInfo(last2_files[0])[3] == 
+                self.inputsDB.GetFileInfo(last2_files[1])[3]):
+                try:
+                    #Change cursor
+                    self.setCursor(Qt.waitCursor)
+                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    thread = reduce.ExecTaskThread(self.mathOp, 
+                                                   self._task_info_list, 
+                                                   last2_files,'-', 
+                                                   "/tmp/sub.fits")
+                    thread.start()
+                except:
+                    QMessageBox.critical(self, "Error", "Error while subtracting files")
+                    raise
+                
+            else:
+                self.logConsole.error("Last two frames have different FILTER. Cannot subtract each other")
+                log.warning("Last two frames have different FILTER. Cannot subtract each other")
+                return
+        else:
+            self.logConsole.info("Not enought files for subtraction")
+            log.debug("Not enought files for subtraction")
+            return
+        
+        
     
     def genFileList( self, file_list, outFilename ):
       

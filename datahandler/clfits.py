@@ -713,31 +713,34 @@ class ClFits (object):
 ################################################################################            
 #  Useful function to check data integrity
 ################################################################################
-def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, c_ncoadds=True, c_readmode=True):
+def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, 
+                         c_ncoadds=True, c_readmode=True):
     """
-        This function will check all the files in the file_list have the same properties required as True in the parameters
-        Note that that properties should be available in the main header(0) in case of MEF files
+    This function will check all the files in the file_list have the same 
+    properties required as True in the parameters.
+    Note that that properties should be available in the main header(0) in case 
+    of MEF files.
     """
     
-    m_type=''
-    m_filter=''
-    m_texp=''
-    m_ncoadds=''
-    m_readmode=''
+    m_type = ''
+    m_filter = ''
+    m_texp = ''
+    m_ncoadds = ''
+    m_readmode = ''
     
     # First file as reference
-    if file_list[0]:
+    if len(file_list)>0 and file_list[0]:
             f=ClFits ( file_list[0] )
-            m_type=f.getType()
-            m_filter=f.getFilter()
-            m_texp=f.expTime()
-            m_ncoadds=f.getNcoadds()
-            m_readmode=f.getReadMode()
+            m_type = f.getType()
+            m_filter = f.getFilter()
+            m_texp = f.expTime()
+            m_ncoadds = f.getNcoadds()
+            m_readmode = f.getReadMode()
     
     # Check all files        
     for file in file_list:
-            f=ClFits ( file )
-            debug=0
+            f = ClFits ( file )
+            debug = 0
             if debug:
                 print 'FILE=',file
                 print '------------------------'
@@ -747,11 +750,17 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True, c_n
                 print 'NCOADDS=',f.getNcoadds()
                 print 'READMODE=',f.getReadMode()
             
-            if (  (c_type and m_type!=f.getType()) or (c_filter and m_filter!=f.getFilter()) or (c_texp and m_texp!=f.expTime()) or (c_ncoadds and m_ncoadds!=f.getNcoadds()) or (c_readmode and m_readmode!=f.getReadMode())):
+            if (  (c_type and m_type!=f.getType()) or 
+                  (c_filter and m_filter!=f.getFilter()) or 
+                  (c_texp and m_texp!=f.expTime()) or 
+                  (c_ncoadds and m_ncoadds!=f.getNcoadds()) or 
+                  (c_readmode and m_readmode!=f.getReadMode())):
+                
                 log.debug("Missmath on some property (FILTER, EXPTIME, NCOADDS or  READMODE)")
                 return False
         
     log.debug("Successful properties checking")
+    
     return True      
       
 		

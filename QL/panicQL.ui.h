@@ -294,3 +294,9 @@ void panicQL::pushB_start_stop_slot()
 {
 
 }
+
+
+void panicQL::pushB_subtract_last2_slot()
+{
+
+}
