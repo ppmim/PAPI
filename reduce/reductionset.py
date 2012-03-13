@@ -61,6 +61,7 @@ import misc.fileUtils
 import misc.utils
 from reduce.makeobjmask import *
 import reduce.imtrim
+import reduce.remove_cosmics
 import reduce.astrowarp
 import misc.mef 
 import astromatic
@@ -2614,19 +2615,24 @@ class ReductionSet(object):
         # 9.1 - Remove crosstalk - (only if bright stars are present)    
         ########################################################################
         if self.config_dict['general']['remove_crosstalk']:
-            res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
-                        [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
-            self.m_LAST_FILES = res
-    
+            try:
+                res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
+                            [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
+                self.m_LAST_FILES = res
+            except Exception,e:
+                raise
+
         ########################################################################
         # 9.2 - Remove Cosmic Rays -    
         ########################################################################
         if self.config_dict['general']['remove_cosmic_ray']:
-            res = map ( reduce.remove_cosmics.remove_cr, self.m_LAST_FILES, 
-                        [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES),
-                        [False]*len(self.m_LAST_FILES))
-            self.m_LAST_FILES = res
-            
+            try:
+                res = map ( reduce.remove_cosmics.remove_cr, self.m_LAST_FILES, 
+                            [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES),
+                            [False]*len(self.m_LAST_FILES))
+                self.m_LAST_FILES = res
+            except Exception,e:
+                raise e
         ########################################################################
         # 9.3 - LEMON connection - End here for LEMON processing    
         ########################################################################

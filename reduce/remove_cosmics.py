@@ -59,7 +59,8 @@ import numpy
 # Logging
 from misc.paLog import log
 
-import cosmics
+import ext_util.cosmics.cosmics as cosmics
+
 
 def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
     """
@@ -132,7 +133,7 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
             # (c.mask is a boolean numpy array, that gets converted here to an integer array)
     
     except Exception,e:
-        log.error("Error removing cosmic rays in file : %s"%in_image)
+        log.error("Error removing cosmic rays in file : %s , Error %s:"%(in_image,str(e)))
         raise e
     
     return out_file

@@ -668,7 +668,7 @@ def tofits(outfilename, pixelarray, hdr = None, verbose = True):
 	else: # this if else is probably not needed but anyway ...
 		hdu = pyfits.PrimaryHDU(pixelarray.transpose(), hdr)
 
-	hdu.writeto(outfilename)
+	hdu.writeto(outfilename, output_verify='ignore')
 	
 	if verbose :
 		print "Wrote %s" % outfilename
