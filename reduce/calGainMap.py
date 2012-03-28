@@ -154,36 +154,63 @@ class DomeGainMap(object):
                  
 class GainMap(object):
     """
-    \brief Class used to build a Gain Map from a Flat Field image (dome, 
-    twilight, science-sky)  
-    
-    \par Class:
-        GainMap
-    \par Purpose:
-         Create a Gain Map from a master flat-field (dome, tw, sky)
-    \par Description:
+    Description:
+    -----------
+    Build a Gain Map from a Flat Field image (dome, twilight, science-sky)  
             
-    \par Language:
-        PyRaf
-    \param file_list
-        A list FITS files or directory
-    \param output_filename
-        File where log will be written
-    \retval 0
-        If no error
-    \author
-        JMIbanez, IAA-CSIC
+    Author:
+    ------
+    JMIbanez, IAA-CSIC
         
     """
     def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",  
                  bpm=None, do_normalization=True, mingain=0.5, maxgain=1.5, 
                  nxblock=16, nyblock=16, nsigma=5):
+        """
+        Initialization method
+        
+        Parameters:
+        ----------
+        
+        flatfield: str
+            Master flat field (dome, sky) from which the gainmap will be created.
+        
+        output_filename: str
+            Output filename of the gainmap to build
+        
+        bpm: str (optional)
+            Bad pixel mask to use optionally for the gainmap build 
+        
+        do_normalization: bool
+            If true, a normalization will be done; and if the input master
+            flat is a multi-chip frame, the gainmap will be normalized wrt chip1
+            However, be aware that the master flat might already have the 
+            normalization done.
+        
+        mingain : int (0.5)
+            Minimal gain; pixels below this gain value are considered bad and 
+            set to 0 
+        
+        maxgain: int (1.5)
+            Maximal gain; pixels above this gain value are considered bad and 
+            set to 0. 
+        
+        nxblock: int (16)
+            X-size (pixels) of box used to compute local bkg (even)
+        
+        nyblock: int (16)
+            Y-size (pixels) of box used to compute local bkg (even)
+        
+        nsigma: int (5)
+            Number of (+|-) stddev from local bkg to be bad pixel (default=5)
+            
+        """
          
         self.flat = flatfield  # Flat-field image (normalized or not, because optionaly, normalization can be done here)
         self.output_file_dir = os.path.dirname(output_filename)
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
-        self.do_norm=do_normalization
+        self.do_norm = do_normalization
         
         # Some default parameter values
         self.m_MINGAIN = mingain #pixels with sensitivity < MINGAIN are assumed bad 
@@ -197,8 +224,13 @@ class GainMap(object):
     def create(self):
         
         """
-        @sumary: Given a NOT normalized flat field, compute the gain map taking 
+        Given a NOT normalized flat field, compute the gain map taking 
         into account the input parameters and an optional Bad Pixel Map (bpm)
+        
+        Return:
+        ------
+        If success, return the output filename of the Gain Map generated.
+        
         """
         
         log.debug("Start creating Gain Map for file: %s", self.flat) 
@@ -207,12 +239,18 @@ class GainMap(object):
         # Check if we have a MEF file
         f = datahandler.ClFits ( self.flat )
         isMEF = f.mef
-        if (not isMEF): nExt=1
-        else: nExt=f.next
+        if (not isMEF): nExt = 1
+        else: nExt = f.next
         
         naxis1 = f.naxis1
         naxis2 = f.naxis2
+        offset1 = int(naxis1*0.1)
+        offset2 = int(naxis2*0.1)
         nbad = 0
+
+        if f.getInstrument()=='panic' and naxis1==4096 and naxis2==4096:
+            is_a_panic_full_frame = True # i.e., a single extension (GEIRS) full frame
+        else: is_a_panic_full_frame = False
         
         gain = np.zeros([nExt, naxis1, naxis2], dtype=np.float32)
         myflat = pyfits.open(self.flat)
@@ -225,16 +263,25 @@ class GainMap(object):
                 flatM = myflat[0].data
             
             # ##############################################################################
-            # Normalize the flat (if MEF, all extension is normlized wrt extension/chip 1) #
+            # Normalize the flat (if MEF, all extension is normalized wrt extension/chip 1)#
             # ##############################################################################
             if chip==0:
-                if self.do_norm:
-                    median = np.median(flatM[200:naxis1-200, 200:naxis2-200])
-                    mean = np.mean(flatM[200:naxis1-200, 200:naxis2-200])
+                if self.do_norm and not is_a_panic_full_frame:
+                    median = np.median(flatM[offset1:naxis1-offset1, offset2:naxis2-offset2])
+                    mean = np.mean(flatM[offset1:naxis1-offset1, offset2:naxis2-offset2])
                     mode = 3*median-2*mean
                     log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
                     log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
-                else: median = 1.0 # maybe normalization is already done...
+                
+                elif self.do_norm and is_a_panic_full_frame:
+                    median = np.median(flatM[offset1/2:naxis1/2-offset1/2, offset2/2:naxis2/2-offset2/2])
+                    mean = np.mean(flatM[offset1/2:naxis1/2-offset1/2, offset2/2:naxis2/2-offset2/2])
+                    mode = 3*median-2*mean
+                    log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
+                    log.debug("Normalizing (PANIC full-frame) flat-field by MEDIAN ( %f ) value", median)
+
+                else: median = 1.0 # normalization not required
+                
             flatM = flatM/median   
             
             # Check for bad pixel 
@@ -297,6 +344,9 @@ class GainMap(object):
         prihdr = myflat[0].header.copy()
         prihdr.update('PAPITYPE','MASTER_GAINMAP','TYPE of PANIC Pipeline generated file')
         prihdr.add_history('Gain map based on %s' % self.flat)
+        if self.do_norm:
+            prihdr.add_history('Normalization wrt chip 0 done.')
+        
         fo = pyfits.HDUList()
         # Add primary header to output file...
         if isMEF: 
@@ -365,7 +415,7 @@ if __name__ == "__main__":
     
     parser.add_option("-N", "--normal",  default=True,
                   action="store_true", dest="normal", 
-                  help="Set if previous normalization need to be done to input flat-field (default=True)")                            
+                  help="if true, the input flat-field will be normalized before build the gainmap (default=True)")                            
                   
     (options, args) = parser.parse_args()
     

@@ -104,7 +104,23 @@ def remove_crosstalk(in_image, out_image=None, overwrite=False):
  
 def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     """
-    Remove cross-talk in O2k images (2kx2k)
+    Remove cross-talk in O2k images (2kx2k).
+    
+    The image structure expected is as follow:
+    
+        +-----------------+
+        +        |        +
+        +   Q4   |   Q3   +
+        +        |        +
+        +-----------------+
+        +        |        +
+        +   Q1   |   Q2   +
+        +        |        +
+        +-----------------+
+        
+    where each quadrant (Qn) is 1kx1k and has 8 horizontal (Q1,Q3) or vertical
+    (Q2,Q4) stripes of 128 pixels of length (width or heigh). 
+    So, so quadrant pairs (Q1,Q3) and (Q2,Q4) are processed in the same way.
     """
  
     if overwrite:
@@ -232,6 +248,26 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     # Q4
     data_out[1024:2048,0:1024] *=median[0]/median[3]
     """  
+    
+    """
+    Other test to do a zero offset normalization, instead of mult. scale normalization, much more 'dangerous'
+    --> But this method does not work either....quadrant offset level is still on images !!!
+    """
+    """
+    # Q1
+    print "SCALE[0]=",(numpy.mean(median)-median[0])
+    data_out[0:1024,0:1024] += (numpy.mean(median)-median[0])
+    # Q2
+    print "SCALE[1]=",(numpy.mean(median)-median[1])
+    data_out[0:1024,1024:2048] += (numpy.mean(median)-median[1])
+    # Q3
+    print "SCALE[2]=",(numpy.mean(median)-median[2])
+    data_out[1024:2048,1024:2048] += (numpy.mean(median)-median[2])
+    # Q4
+    print "SCALE[3]=",(numpy.mean(median)-median[3])
+    data_out[1024:2048,0:1024] += (numpy.mean(median)-median[3])
+    """
+    
     #mode = 3*numpy.median(data_in[200:1800,200:1800])-2*numpy.mean(data_in[200:1800,200:1800])
     #data_out = data_out + mode
     #print "Global MODE = ",mode
@@ -258,7 +294,21 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
 
 def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     """
-    Remove cross-talk in PANIC images (4kx4k)
+    Remove cross-talk in PANIC images (4kx4k).
+    The frame structure expected is as follow:
+    
+        +-----------------+
+        +        |        +
+        +   Q4   |   Q3   +
+        +        |        +
+        +-----------------+
+        +        |        +
+        +   Q1   |   Q2   +
+        +        |        +
+        +-----------------+
+        
+    where each quadrant (Qn) is 2kx2k and has 32 horizontal stripes of 64 pixels
+    of height. So, all the quadrant are processed in the same way.  
     """
     
     if overwrite:

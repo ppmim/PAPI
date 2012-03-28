@@ -569,15 +569,70 @@ recibidos, mejor dicho, los 2 más nuevos (MJD) --> pushB_subtract_last2_slot()
 ==========
 
 
-VIDEOCONF 14-Marzo-2012
-=======================
+2012-03-14
+==========
 
-- QL : added 2-last frames subtraction
-- Data reduction O2k 
-- Dxtalk
-- CR removal
-- Studying an alternative to iraf.imcobine (to give up IRAF)
-- Documentation
+- Videoconf: le envio las siguientes notas:
 
 
+Sale nuevamente el tema de los problemas de memoria en GEIRS, en los que está
+aún trabajando CS, y que cree que son problemas en el kernel, pero que espera
+poder resolverlos pronto.
+
+2012-03-27
+==========
+
+ - Modificación en calDomeFlat, calTwFlat, calSuperFlat para solucionar/mejorar
+ la normalization wrt chip 1, además de mejoras varias y documentacion en codigo
+ - Encuentro el metodo (trick) para usar dome+sky flat de forma que aprovechemos
+ las propiedades de ambos:
  
+ """
+  A trick. Often for a run you have dome ﬂats with an accumulated number of
+electrons in the millions, but a poor match in illumination and color to the dark
+sky. You also have a limited number of twilight ﬂats or dark-sky images that can
+be combined to make a dark-sky ﬂat, but the total counts per pixel in either set of
+ﬂats is not very high. A fairly standard procedure is to “median-smooth” dome
+and twilight or dark-sky ﬂat. A median smoothing replaces each pixel with the
+median of the pixel values in a box of a given size on a side. The result is an image
+that has been smoothed on the scale of the smoothing box size.
+A procedure for taking advantage of the facts that the large-scale ﬂat-ﬁeld
+variation of the dark-sky ﬂat match that of the program frames and the dome ﬂats
+have very high S/N in each pixel goes as follows:
+ 
+ (a) Median smooth the combined, dark-sky ﬂat — this improves the S/N and
+preserves the large-scale features of the ﬂat.
+ (b) Median smooth the combined dome ﬂats using the same ﬁlter size as was
+used for the dark-sky ﬂat.
+ (c) Divide the combined dome ﬂat by it’s median smoothed-version. The result is
+a frame that is ﬂat on large scales but contains all the high spatial frequency
+ﬂat-ﬁeld information.
+ (d) Now multiply the smoothed dark-sky frame and the result of the division in
+the previous step. You now have a ﬂat-ﬁeld with the low spatial frequency
+properties of the dark-sky ﬂat combined with the high S/N, high spatial
+frequency properties of the dome ﬂat.
+"""
+
+2012-03-28
+==========
+ - Modificación en calGainMap para hacer (opcionalmente) la normalization wrt 
+ chip 1 para el caso de imágenes full-frame de PANIC (como las saca GEIRS).
+ Aunque en principio la normalizacion ( si hay varios detectores, wrt chip1), 
+ puede ser realizada al crear los master-flat, tambien está la opción de hacerla
+ en calGainMap.
+ Si por "error" se hicese en los dos casos (master flat y gainmap), no creo que 
+ pasase nada. 
+ 
+ 
+
+FOR NEXT VIDEOCONF
+==================
+
+ - Improvements in master flat (normlizaton wrt chip 1)
+  
+FAQ:
+---
+1) ¿ para que se usa en PAPI los gainmap ? 
+   - skyfilter
+   - dithercubemean
+  

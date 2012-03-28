@@ -1771,13 +1771,23 @@ class ReductionSet(object):
         
     def reduceSeq(self, sequence, type):
         """
-        Reduce/process a produced OT-sequence of files (calibration, science)
+        Reduce/process a produced OT-sequence of files (calibration, science).
+    
        
         @param sequence: list of files of the sequence to be reduced
         @param type: type of sequence (see ClFits.type) (currently not used !) 
         
         @return: filenames created by the reduction proccess
-          
+
+        NOTE:
+        ---- 
+        Calibration files will not be splited for the building of the master 
+        calibration file, but science files will be splitted. 
+        In principle, not too much time could be saved if we split the calibration
+        files during the building of master calibrations.
+        However, the master calibration files will be splitted at the stage of
+        the processing of scince files. 
+        
         """
         
         log.debug("[reduceSeq] Starting ...")
@@ -2433,6 +2443,10 @@ class ReductionSet(object):
             nyblock = 16
             nsigma = 5
             
+        # When gainmap is created (from dome or sky flats), it must be normalized
+        # wrt mode of chip 1 to get gain differences, set bad pixels, 
+        # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
+        # pixels deviating >30(?)% ,...
         g = reduce.calGainMap.GainMap(local_master_flat, gainmap, bpm=master_bpm, 
                                     do_normalization=True, mingain=mingain, 
                                     maxgain=maxgain, nxblock=nxblock,

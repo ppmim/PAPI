@@ -7,14 +7,20 @@
 #
 # Created    : 14/11/2008    jmiguel@iaa.es
 # Last update: 29/09/2009    jmiguel@iaa.es
-#              11/12/2009    jmiguel@iaa.es - Include the use of ClFits class, and add filter name to the output filename
-#              14/12/2009    jmiguel@iaa.es - Skip non DOME flats and cotinue working with the good ones
+#              11/12/2009    jmiguel@iaa.es - Include the use of ClFits class, 
+#                            and add filter name to the output filename
+#              14/12/2009    jmiguel@iaa.es - Skip non DOME flats and cotinue 
+#                            working with the good ones
 #              12/02/2010    jmiguel@iaa.es - Check min number of dome flats
 #              03/03/2010    jmiguel@iaa.es - Added READMODE checking 
-#              17/11/2010    jmiguel@iaa.es - modified normalization by mode (instead of mean) and added optional flag for it
+#              17/11/2010    jmiguel@iaa.es - modified normalization by mode 
+#                            (instead of mean) and added optional flag for it
+#              27/03/2012    jmiguel@iaa.es  - Fixed bug wrt chip 1 normalization
+#
 # 
 # TODO:
 #    - include BPM creation
+#    - median smooth
 # NOTE:
 #    - A Bug in pyraf.mscred.mscarith required to modify src/mscarith.cl 
 #      line# 25 in msarith.cl should be changed from 
@@ -51,24 +57,23 @@ from iraf import mscred
 
 # Interact with FITS files
 import pyfits
-
-# Import Pyro core
-#import Pyro.core
-#import Pyro.naming
+import numpy as np
 
 # Logging
 from misc.paLog import log
 
 class MasterDomeFlat:
     """
-    \brief Class used to build and manage a master calibration dome flat
+    Class used to build and manage a master calibration dome flat.
     
-    \par Class:
-        MasterDomeFlat
-    \par Purpose:
-        Create a master Dome flat field
-    \par Description:
-            
+    Dome flats are not pretty good for low-spatial frequency QE variation 
+    across the chip (large scale variation), but quite reasonable for 
+    high-spatial frequency (small scale  variations).
+    
+    
+    Description:
+    ----------- 
+           
          1. Check the EXPTIME , TYPE(dome) and FILTER of each Flat frame
          2. Separate lamp ON/OFF dome flats
          3. Make the combine of Flat LAMP-OFF frames 
@@ -77,26 +82,41 @@ class MasterDomeFlat:
          6. (optionally) Normalize the flat-field
             
          # NOTE : We do NOT subtract any MASTER_DARK, it is not required for 
-         DOME FLATS (it is done implicitly because both ON/OFF flata are taken 
+         DOME FLATS (it is done implicitly because both ON/OFF flats are taken 
          with the same Exposition Time)    
          
     
-    \par Language:
-        PyRaf
-    \param data
-        A list of dome on/off flat fields
-    \param bpm
-        Input bad pixel mask or NULL
-    \retval 0
-        If no error
-    \author
+    Author:
+    -------
         JMIbannez, IAA-CSIC
-  
+        
+    TODO:
+    ----
+        - Multiply by the BPM
+        - Reject flat images when their background is different more than 1%
+        compared to the other, or when more than 3 sigma off the others.
+        - Optional Median smooth
     """
     
     def __init__(self, input_files, temp_dir="/tmp/", 
                  output_filename="/tmp/mdflat.fits", normal=True):
-        """ Initialization method """
+        """ 
+        Initialization method
+        
+        Parameters
+        ---------- 
+
+        input_files : list
+            A list of dome on/off flat fields
+        temp_dir : string
+            Temporal directory to use for temporal files
+        
+        output_filename : string
+            Filename of the master dome flat to build.
+        normal : bool
+            If true, normalization will be done.
+    
+        """
         
         self.__input_files = input_files
         self.__temp_dir = temp_dir
@@ -126,7 +146,8 @@ class MasterDomeFlat:
         if type(self.__input_files)==type(list()): 
             framelist = self.__input_files  # list of sources files to be used in sky-flat computation
         elif os.path.isfile(self.__input_files):
-            framelist = [line.replace( "\n", "") for line in fileinput.input(self.__input_files)]
+            framelist = [line.replace( "\n", "") 
+                         for line in fileinput.input(self.__input_files)]
         else:
             raise Exception("Cannot read source files")
         
@@ -153,15 +174,17 @@ class MasterDomeFlat:
     
     
         # STEP 1: Check the EXPTIME , TYPE(dome) and FILTER of each Flat frame
-        f_expt=-1
-        f_type=''
-        f_filter=''
-        f_readmode=''
+        f_expt = -1
+        f_type = ''
+        f_filter = ''
+        f_readmode = ''
         for iframe in framelist:
-            f=datahandler.ClFits ( iframe )
+            f = datahandler.ClFits ( iframe )
             log.debug("Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter()))
             # Check EXPTIME
-            if ( f_expt!=-1 and ( int(f.expTime()) != int(f_expt) or f.getFilter()!=f_filter or f.getReadMode()!=f_readmode)) :
+            if ( f_expt!=-1 and ( int(f.expTime()) != int(f_expt) or 
+                                  f.getFilter()!=f_filter or 
+                                  f.getReadMode()!=f_readmode)) :
                 log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with \n different FILTER or EXPTIME or READMODE. Skipped.")
                 continue
             else: 
@@ -207,6 +230,9 @@ class MasterDomeFlat:
         misc.fileUtils.removefiles(flat_lampon)
         misc.utils.listToFile(domelist_lampon, self.__temp_dir+"/files_on.list") 
         # - Call IRAF task
+        # Combine the images to find out the median using sigma-clip algorithm;
+        # the input images are scaled to a common mode, the pixels containing 
+        # objects are rejected by an algorithm based on the measured noise (sigclip).
         iraf.mscred.flatcombine(input="@"+(self.__temp_dir+"/files_on.list").replace('//','/'),
                         output=flat_lampon,
                         combine='median',
@@ -228,6 +254,9 @@ class MasterDomeFlat:
         misc.fileUtils.removefiles(flat_lampoff)
         misc.utils.listToFile(domelist_lampoff, self.__temp_dir+"/files_off.list") 
         # - Call IRAF task
+        # Combine the images to find out the median using sigma-clip algorithm;
+        # the input images are scaled to a common mode, the pixels containing 
+        # objects are rejected by an algorithm based on the measured noise (sigclip).
         iraf.mscred.flatcombine(input="@"+(self.__temp_dir+"/files_off.list").replace('//','/'),
                         output=flat_lampoff,
                         combine='median',
@@ -249,6 +278,7 @@ class MasterDomeFlat:
         misc.fileUtils.removefiles(flat_diff)
         
         # Handling of single FITS is not supported by mscred.mscarith
+        msg = ""
         if f.mef:
             iraf.mscred.mscarith(operand1 = flat_lampon,
                     operand2 = flat_lampoff,
@@ -260,7 +290,6 @@ class MasterDomeFlat:
             # Compute the mean of the image
             # mean has the array of mean values for each extension
             if self.__normal:
-                log.debug("Normalizing master flat frame wrt chip 0...") 
                 values = iraf.mscred.mscstat(
                     images=flat_diff,
                     fields='mode', Stdout=1)
@@ -271,16 +300,21 @@ class MasterDomeFlat:
                 #    mean+=float(values[i])
                 #mean=mean/i
                 mode = values[1] # wrt chip 0
-            else: mode=1
-            
-            # Compute normalized flat wrt chip 0
-            self.__output_filename = self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
-            misc.fileUtils.removefiles(self.__output_filename)
-            iraf.mscred.mscarith(operand1=flat_diff,
+                log.debug("Normalizing MEF master flat frame wrt chip 0...(MODE=%d)"%mode)
+                msg = "Normalization of MEF master flat frame wrt chip 0. (MODE=%d)"%mode 
+                
+                # Compute normalized flat wrt chip 0
+                self.__output_filename = self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
+                misc.fileUtils.removefiles(self.__output_filename)
+                iraf.mscred.mscarith(operand1=flat_diff,
                         operand2=mode,
                         op='/',
                         result=self.__output_filename,
                         )
+
+            else: 
+                os.rename(flat_diff, self.__output_filename)
+            
         #    
         # Single FITS (not MEF)
         #
@@ -292,30 +326,61 @@ class MasterDomeFlat:
                     )
             
             # STEP 5: Normalize the flat-field
-            # Compute the mean of the image
+            # If is a full PANIC image, then nomalization wrt chip 1 is done
             if self.__normal:
-                log.debug("Normalizing master flat frame...")
-                # mean has the array of mean values for each extension
-                mode = float(iraf.imstat (
-                    images=flat_diff,
-                    fields='mode', Stdout=1)[1])
+                if (f.getInstrument()=='panic' and 
+                    f.getNaxis1()==4096 and f.getNaxis2()==4096):
+                    # It supposed to have a full frame of PANIC in one single 
+                    # extension (GEIRS default)
+                    median = np.median(f[0].data[200:f.getNaxis1()/2-200, 
+                                                 200:f.getNaxis2()/2-200])
+                    #mean = np.mean(f[0].data[200:2048-200, 200:2048-200])
+                    #mode = 3*median-2*mean
+                    mode = median
+                    log.debug("Normalizing master flat frame wrt chip 1 ...(MODE=%d)"%mode)
+                    msg = "Normalization of (PANIC full-frame) master flat frame wrt chip 0. (MODE=%d)"%mode 
+
+                else:
+                    # mean has the array of mean values for each extension
+                    mode = float(iraf.imstat (
+                        images=flat_diff,
+                        fields='mode', Stdout=1)[1])
+                    log.debug("Normalizing master flat frame...(MODE=%d)"%mode)
+                    msg = "Normalization of (O2k?) master flat frame. (MODE=%d)"%mode
+
+            
+                # Compute normalized flat
+                self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
+                misc.fileUtils.removefiles(self.__output_filename)
+                iraf.imarith(operand1=flat_diff,
+                            operand2=mode,
+                            op='/',
+                            result=self.__output_filename,
+                            )
                     
-            else: mode=1
+            else: 
+                os.rename(flat_diff, self.__output_filename)
                 
-            # Compute normalized flat
-            self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
-            misc.fileUtils.removefiles(self.__output_filename)
-            iraf.imarith(operand1=flat_diff,
-                        operand2=mode,
-                        op='/',
-                        result=self.__output_filename,
-                        )                  
+        ## STEP 6 ##: (optional) Median smooth the master (normalized) flat
+        #iraf.mscmedian(
+        #        input=comb_flat_frame,
+        #        output="/tmp/median.fits",
+        #        xwindow=20,
+        #        ywindow=20,
+        #        outtype="median"
+        #        )
+        #
+        #Or using scipy ( a bit slower then iraf...)
+        #from scipy import ndimage
+        #filtered = ndimage.gaussian_filter(f[0].data, 20)                      
         
         # Change back to the original working directory
         iraf.chdir()
         
         flatframe = pyfits.open(self.__output_filename,'update')
-        if self.__normal: flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
+        if self.__normal: 
+            flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
+            if msg!="": flatframe[0].header.add_history(msg)
         else: flatframe[0].header.add_history('Computed master dome flat (lamp_on-lamp_off)' )
         
         flatframe[0].header.add_history('lamp_on  files: %s' %domelist_lampon )
@@ -368,7 +433,8 @@ if __name__ == "__main__":
     """
     parser.add_option("-n", "--normalize",
                   action="store_true", dest="normalize", default=False,
-                  help="normalize master flat by median [default False]")
+                  help="normalize master flat by mode. If image is multi-detector,\
+                  then normalization wrt chip 1 is done) [default False]")
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,

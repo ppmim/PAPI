@@ -7,15 +7,22 @@
 #
 # Created    : 19/05/2009    jmiguel@iaa.es
 # Last update: 29/09/2009    jmiguel@iaa.es
-#              14/12/2009    jmiguel@iaa.es  - Check NCOADDS; use ClFits class; Skip non TW flats and cotinue working with the good ones
+#              14/12/2009    jmiguel@iaa.es  - Check NCOADDS; use ClFits class; 
+#                                              Skip non TW flats and continue 
+#                                              working with the good ones
 #              03/03/2010    jmiguel@iaa.es  - Added READMODE checking 
 #              20/09/2010    jmiguel@iaa.es  - Added support of MEF files
-#              18/11/2010    jmiguel@iaa.es  - Added optional normalization by mode
-#              22/02/2012    jmiguel@iaa.es  - Added Dark model use to build the required scaled dark 
+#              18/11/2010    jmiguel@iaa.es  - Added optional normalization by 
+#                                              mode
+#              22/02/2012    jmiguel@iaa.es  - Added Dark model use to build the 
+#                                              required scaled dark 
+#              27/03/2012    jmiguel@iaa.es  - Fixed bug wrt chip 1 normalization
 #
 # TODO:
 #   - take into account BPM !!!
-#   - compute automatically the level of counts the twilight flats should have (lthr,hthr)
+#   - compute automatically the level of counts the twilight flats should 
+#     have (lthr,hthr)
+#   - median smooth
 ################################################################################
 
 ################################################################################
@@ -54,12 +61,14 @@ class ExError(Exception):
 
 class MasterTwilightFlat (object):
     """
-    \brief Class used to build and manage a master calibration twilight flat
-    \par Class:
-        MasterTwilightFlat
-    \par Purpose:
-        Create a master Twilight flat field
-    \par Description:
+    Description:
+    ------------
+    Class used to build and manage a master calibration twilight flat.
+    
+    Twilight flats are quite good for low-spatial frequency QE variation 
+    across the chip (large scale variation), but not for high-spatial 
+    frequency (small scale  variations).
+
         
         1. Check the  TYPE(twilight) and FILTER of each Flat frame
         If any frame on list missmatch the FILTER, then the master 
@@ -77,33 +86,38 @@ class MasterTwilightFlat (object):
         
         4. Normalize the tw-flat dividing by the mean value
         
-    \par Language:
-        PyRaf
-    \param data
-        A list file of twilight flat fields filenames
-        Input bad pixel mask or NULL
-    \param mdark
-        Master dark to subtract (required) - (a better approch should use a dark model)
-    \param output_filename  
-        Master Tw Flat created 
-    \param lthr
-        Low threshold to identify good twilight flats (default 100)
-    \param hthr
-        High threshold to identify good twilight flats (default 100000)
-    \param bpm
-        Bad Pixel mask to use (optional)
-    \retval median
-        When all goes well
-    \retval 0
-        If no error
-    \author
+    Author:
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, flat_files, master_dark_model, output_filename="/tmp/mtwflat.fits", \
-                lthr=1000, hthr=100000, bpm=None, normal=True, temp_dir="/tmp/"):
+    def __init__(self, flat_files, master_dark_model, 
+                 output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000, 
+                 bpm=None, normal=True, temp_dir="/tmp/"):
         
-        """Initialization method"""
+        """
+        Initialization method.
+        
+        Parameters:
+        -----------
+        
+        flat_files: list
+        
+        master_dark_model : string
+            Master dark model to subtract (required) 
+        output_filename: string
+            Filename of the output master tw-flat to build
+        lthr: int
+            Low threshold to identify good twilight flats (default 100)
+        hthr: int
+            High threshold to identify good twilight flats (default 100000)
+        bpm: string
+            Bad Pixel mask to use (optional)
+        normal: bool
+            If true, the normalization will be done.
+        temp_dir: string
+            Temporal directory for temporal files needed.
+        
+        """
         
         self.__input_files = flat_files
         self.__master_dark = master_dark_model # if fact, it is a dark model
@@ -309,6 +323,10 @@ class MasterTwilightFlat (object):
         misc.fileUtils.removefiles(comb_flat_frame)
         misc.utils.listToFile(fileList, self.__temp_dir + "/twflat_d.list")
         # - Call IRAF task
+        # Combine the images to find out the Tw-Flat using sigma-clip algorithm;
+        # the input images are scaled to have a common mode, the pixels containing 
+        # objects are rejected by an algorithm based on the measured noise (sigclip),
+        # and the flat-field is obtained by a median.
         iraf.mscred.flatcombine(input=("'"+"@"+self.__temp_dir+"/twflat_d.list"+"'").replace('//','/'),
                         output=comb_flat_frame,
                         combine='median',
@@ -326,29 +344,72 @@ class MasterTwilightFlat (object):
         # Remove the dark subtracted frames
         for ftr in fileList: misc.fileUtils.removefiles(ftr)
         
+        # STEP 3b (optional)
+        #Median smooth the master flat
+        #iraf.mscmedian(
+        #        input=comb_flat_frame,
+        #        output="/tmp/median.fits",
+        #        xwindow=20,
+        #        ywindow=20,
+        #        outtype="median"
+        #        )
+        #
+        #Or using scipy ( a bit slower then iraf...)
+        #from scipy import ndimage
+        #filtered = ndimage.gaussian_filter(f[0].data, 20)
+        
         # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
         # Compute the mean of the image
         if self.__normal:
-            log.debug("Normalizing master flat frame...")
+            f = pyfits.open(comb_flat_frame, ignore_missing_end=True)
             if next>0:
                 chip = 1 # normalize wrt to mode of chip 1
+                naxis1 = f[0].header['NAXIS1']
+                naxis2 = f[0].header['NAXIS2']
+                offset1 = int(naxis1*0.1)
+                offset2 = int(naxis2*0.1)
+                mode = (3*numpy.median(f[chip].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])-
+                        2*numpy.mean(f[chip].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2]))
+                msg = "Normalization of MEF master flat frame wrt chip 1. (MODE=%d)"%mode
+
+            
+            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME']=='panic'
+                  and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
+                # It supposed to have a full frame of PANIC in one single 
+                # extension (GEIRS default)
+                mode = (3*numpy.median(f[0].data[200:2048-200,200:2048-200])- 
+                       2*numpy.mean(f[0].data[200:2048-200,200:2048-200]) )
+                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MODE=%d)"%mode
+                
             else:
-                chip = 0
-            f = pyfits.open(comb_flat_frame, ignore_missing_end=True)
-            mode = 3*numpy.median(f[chip].data)-2*numpy.mean(f[chip].data)
-            f.close()        
-        else: mode = 1            
-        
-        # Cleanup: Remove temporary files
-        misc.fileUtils.removefiles(self.__output_filename)
-        # Compute normalized flat
-        log.debug("Doing normalization ...")
-        iraf.mscred.mscarith(operand1=comb_flat_frame,
+                naxis1 = f[0].header['NAXIS1']
+                naxis2 = f[0].header['NAXIS2']
+                offset1 = int(naxis1*0.1)
+                offset2 = int(naxis2*0.1)
+                mode = (3*numpy.median(f[0].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])-
+                        2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2]))
+                msg = "Normalization of master (O2k?) flat frame. (MODE=%d)"%mode 
+ 
+
+            f.close()
+            log.debug(msg)
+            
+            # Cleanup: Remove temporary files
+            misc.fileUtils.removefiles(self.__output_filename)
+            # Compute normalized flat
+            iraf.mscred.mscarith(operand1=comb_flat_frame,
                     operand2=mode,
                     op='/',
                     pixtype='real',
                     result=self.__output_filename,
                     )
+        else:
+            os.rename(comb_flat_frame, self.__output_filename ) 
+        
         
         # Change back to the original working directory
         iraf.chdir()
@@ -357,6 +418,7 @@ class MasterTwilightFlat (object):
                                 ignore_missing_end=True)
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master twilight flat')
+            flatframe[0].header.add_history(msg)
         else: 
             flatframe[0].header.add_history('Computed master (not normalized) twilight flat')
         
@@ -427,7 +489,8 @@ if __name__ == "__main__":
     
     parser.add_option("-n", "--normalize",
                   action="store_true", dest="normalize", default=False,
-                  help="normalize master flat by median [default False]")
+                  help="normalize master flat by mode. If image is multi-detector,\
+                  then normalization wrt chip 1 is done)[default False]")
     
     parser.add_option("-L", "--low", type="float", default=1000,
                   action="store", dest="minlevel", 

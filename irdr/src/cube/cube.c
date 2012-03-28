@@ -32,7 +32,7 @@ cube_median_cl(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
     medplane = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                          /* zero offset to normalize */
+    if (offset) {                          /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
         for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
             for (j = 0; j < np; j++)
                 buf[j] = *(planes[j] + i) + scale[j];
@@ -74,7 +74,7 @@ cube_median(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
     medplane = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                          /* zero offset to normalize */
+    if (offset) {                          /* zero offset to normalize; it is much more "safe" than a multiplicative normalization */
         for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
             for (j = 0; j < np; j++)
                 buf[j] = *(planes[j] + i) + scale[j];
@@ -108,7 +108,7 @@ cube_mean_nw(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
     meanplane = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                             /* zero offset to normalize */
+    if (offset) {                             /* zero offset to normalize , it is much more "safe" than a multiplicative normalization */
         for (i = 0; i < nx * ny; i++) {       /* mean combine cube to plane */
             for (j = 0; j < np; j++)
                 buf[j] = *(planes[j] + i) + scale[j];
@@ -142,7 +142,7 @@ cube_mean_sw(float *planes[MAXNPLANES], float *weights, int np, int nx, int ny,
 
     meanplane = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                            /* zero offset to normalize */
+    if (offset) {                            /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
         for (i = 0; i < nx * ny; i++) {      /* mean combine cube to plane */
             for (j = 0; j < np; j++)
                 buf[j] = *(planes[j] + i) + scale[j];
@@ -177,7 +177,7 @@ cube_mean(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES], int np,
     meanplane = (float *) emalloc(nx * ny * sizeof(float));
     sumwplanes = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                            /* zero offset to normalize */
+    if (offset) {                            /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
         for (i = 0; i < nx * ny; i++) {      /* mean combine cube to plane */
             nval = 0;
 
@@ -224,7 +224,7 @@ cube_sigma(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
     sigplane = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                                /* zero offset to normalize */
+    if (offset) {                                /* zero offset to normalize , it is much more "safe" than a multiplicative normalization */
         for (i = 0; i < nx * ny; i++) {            /* calculate sigma plane */
             for (j = 0; j < np; j++)
                 buf[j] = *(planes[j] + i) + scale[j];
@@ -261,7 +261,7 @@ cube_mean_min(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
     
     meanplane = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                          /* zero offset to normalize */
+    if (offset) {                          /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
         for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
             mean = 0;
             for (j = 0; j < np; j++)
@@ -310,7 +310,7 @@ cube_mean_min_w(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES], int np,
     sumwplanes = (float *) emalloc(nx * ny * sizeof(float));
     
 
-    if (offset) {                          /* zero offset to normalize */
+    if (offset) {                          /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
         for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
             mean = 0;
             for (j = 0; j < np; j++)
@@ -370,7 +370,7 @@ cube_median_min(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
     
     medianplane = (float *) emalloc(nx * ny * sizeof(float));
 
-    if (offset) {                          /* zero offset to normalize */
+    if (offset) {                          /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
         for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
             for (j = 0; j < np; j++)
                 buf[j] = *(planes[j] + i) + scale[j];

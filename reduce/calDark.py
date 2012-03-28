@@ -26,11 +26,17 @@
 #
 # Created    : 07/11/2008    jmiguel@iaa.es
 # Last update: 29/09/2009    jmiguel@iaa.es - Scale by EXPTIME
-#              11/12/2009    jmiguel@iaa.es - Rename output filename to include EXPTIME and NCOADDS and use ClFits class
-#              14/12/2009    jmiguel@iaa.es - Skip non DARK frames and cotinue working with the good ones (good_frames)
+#              11/12/2009    jmiguel@iaa.es - Rename output filename to include 
+#                            EXPTIME and NCOADDS and use ClFits class
+#              14/12/2009    jmiguel@iaa.es - Skip non DARK frames and continue 
+#                            working with the good ones (good_frames)
 #              02/03/2010    jmiguel@iaa.es - added READEMODE checking
-#              14/09/2010    jmiguel@iaa.es - added support to MEF files, calling mscred.darkcombine subrutine instead of imred.darkcombine
-#              07/03/2011    jmiguel@iaa.es - Added Stats output and normalization (divide master dark by the TEXP to get a master dark in ADU/s units)
+#              14/09/2010    jmiguel@iaa.es - added support to MEF files, 
+#                            calling mscred.darkcombine subrutine instead of 
+#                            imred.darkcombine
+#              07/03/2011    jmiguel@iaa.es - Added Stats output and 
+#                            normalization (divide master dark by the TEXP to 
+#                            get a master dark in ADU/s units)
 #
 # TODO
 #  - checking of ITIME ( and not only EXPTIME, NCOADDS )

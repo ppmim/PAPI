@@ -153,50 +153,91 @@ class SuperSkyFlat(object):
                 )
         
         
-        #Lightly smooth the superFlat
+        #Median smooth the superFlat
         #iraf.mscmedian(
         #        input=self.output_filename,
         #        output="/tmp/median.fits",
-        #        xwindow=5,
-        #        ywindow=5,
+        #        xwindow=20,
+        #        ywindow=20,
         #        outtype="median"
         #        )
+        #
+        #Or using scipy ( a bit slower then iraf...)
+        #from scipy import ndimage
+        #filtered = ndimage.gaussian_filter(f[0].data, 20)
+
+
         
-        # (optional) Normalize the wrt chip 1        
-        if self.norm:        
-            log.info("Normalizing flat field (wrt extension 1 when applicable)...")
-            f=pyfits.open(tmp1)
-            if len(f)>1: # is a MEF 
-                # normalize wrt extension 1 (chip 1?)
-                median=np.median(f[1].data[100:1900,100:1900])
+        # (optional) Normalize the wrt chip 1
+        if self.norm:
+            f = pyfits.open(tmp1, ignore_missing_end=True)
+            #MEF frame
+            if len(f)>1:
+                chip = 1 # normalize wrt to mode of chip 1
+                naxis1 = f[0].header['NAXIS1']
+                naxis2 = f[0].header['NAXIS2']
+                offset1 = int(naxis1*0.1)
+                offset2 = int(naxis2*0.1)
+                mode = (3*numpy.median(f[chip].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])-
+                        2*numpy.mean(f[chip].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2]))
+                msg = "Normalization of MEF master flat frame wrt chip 1. (MODE=%d)"%mode
+                
+            # PANIC multi-chip full frame
+            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME']=='panic'
+                  and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
+                # It supposed to have a full frame of PANIC in one single 
+                # extension (GEIRS default)
+                mode = (3*numpy.median(f[0].data[200:2048-200,200:2048-200])- 
+                       2*numpy.mean(f[0].data[200:2048-200,200:2048-200]) )
+                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MODE=%d)"%mode
+                
             else:
-                median=np.median(f[0].data[100:1900,100:1900])
-            f.close(output_verify='ignore')
-            misc.fileUtils.removefiles(tmp1.replace(".fits","_n.fits"))                                                 
-            out=tmp1.replace(".fits","_n.fits")
-            iraf.mscred.mscarith(operand1 = tmp1,
-                            operand2 = median,
-                            op = '/',
-                            result =out,
-                            verbose = 'yes'
-                            )
-        else: out=tmp1
-        shutil.move(out, self.output_filename)
+                naxis1 = f[0].header['NAXIS1']
+                naxis2 = f[0].header['NAXIS2']
+                offset1 = int(naxis1*0.1)
+                offset2 = int(naxis2*0.1)
+                mode = (3*numpy.median(f[0].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])-
+                        2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2]))
+                msg = "Normalization of master (O2k?) flat frame. (MODE=%d)"%mode 
+
+            log.debug(msg)
+
+            f.close()
+            
+            # Cleanup: Remove temporary files
+            misc.fileUtils.removefiles(self.output_filename)
+            # Compute normalized flat
+            iraf.mscred.mscarith(operand1=tmp1,
+                    operand2=mode,
+                    op='/',
+                    pixtype='real',
+                    result=self.output_filename,
+                    )
+        else:
+            os.rename(tmp1, self.output_filename) 
+        
         
         # Update FITS header 
         f = pyfits.open(self.output_filename,'update')
         if self.norm: 
             f[0].header.add_history("[calSuperFlat] Normalized Super-Flat created from : %s"%str(m_filelist))
+            f[0].header.add_history(msg)
         else:
             f[0].header.add_history("[calSuperFlat] Non-Normalized Super-Flat created from : %s"%str(m_filelist))
         f[0].header.update('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
-	#
-	if 'PAT_NEXP' in f[0].header:
-		f[0].header.update('PAT_NEXP', 1, 'Number of Positions into the dither pattern')
-	f[0].header.update('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
+        
+        #
+        if 'PAT_NEXP' in f[0].header:
+		          f[0].header.update('PAT_NEXP', 1, 'Number of Positions into the dither pattern')
+	
+        f[0].header.update('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         f.close(output_verify='ignore')
-                                                           
         log.debug("Image created : %s", self.output_filename)
+
         return self.output_filename
                                     
 ################################################################################
@@ -222,7 +263,9 @@ if __name__ == "__main__":
 
     
     parser.add_option("-N", "--norm",
-                  action="store_true", dest="norm", help="normalize output SuperFlat (optional)", default=False)
+                  action="store_true", dest="norm", help="normalize output \
+                  SuperFlat. If image is multi-chip, normalization wrt chip 1 \
+                  is done. (optional)", default=False)
         
 
     (options, args) = parser.parse_args()
