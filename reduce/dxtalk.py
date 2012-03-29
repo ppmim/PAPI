@@ -337,6 +337,9 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         log.error("Error openning FITS file : %s"%in_image)
         raise e
     
+    background = numpy.median(data_in)
+    print "Image background estimation = ", background
+
     #### Q1 #### left-bottom, horizontal stripes 
     n_stripes = 32 # = no. channels
     width_st = 2048
@@ -358,7 +361,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     for j in range(0,n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + median
+                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
         
     #### Q3 #### right-top, horizontal stripes 
     n_stripes = 32 # = no. channels
@@ -378,7 +381,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     for j in range(0,n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + median
+                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
         
     
     #### Q2 #### right-bottom, horizontal stripes 
@@ -402,7 +405,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     for j in range(0,n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + median
+                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
 
     #### Q4 #### left-top, horizontal stripes 
     n_stripes = 32 # = no. channels
@@ -423,7 +426,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     for j in range(0,n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + median
+                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
 
     ### write FITS ###
     

@@ -36,7 +36,7 @@ import calGainMap
 
 # Interact with FITS files
 import pyfits
-import numpy as np
+import numpy
 import datahandler
 
 
@@ -74,18 +74,28 @@ class SuperSkyFlat(object):
         
     """
     def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  
-                 bpm=None, norm=True, temp_dir="/tmp/"):
+                 bpm=None, norm=True, temp_dir="/tmp/", median_smooth=False):
         """
         Initialization method.
         
-        INPUTS:
-            filelist : it can be a file or a python-list having the list of files to use for the super-flat
+        Parameters:
+        ----------
+        
+        filelist : list 
+            It can be a file or a python-list having the list of files to use for the super-flat
             
-            output_filename (optional): filename for the super flat created
+        output_filename (optional): string
+            Filename for the super flat created
             
-            bpm (optional) : bad pixel map to be used
+        bpm (optional) : string 
+            Bad pixel map to be used
             
-            norm (optional): flag to indicate if the super flat must be normalized
+        norm (optional): bool
+            Flag to indicate if the super flat must be normalized
+            
+        median_smooth: bool
+            If true, median smooth filter is applied to the combined Flat-Field
+
         """
                     
             
@@ -100,6 +110,7 @@ class SuperSkyFlat(object):
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
         self.norm = norm # if true, the flat field will be normalized
+        self.__median_smooth = median_smooth
         
         # Some default parameter values
         self.m_MIN_N_GOOD = 2
@@ -154,17 +165,21 @@ class SuperSkyFlat(object):
         
         
         #Median smooth the superFlat
-        #iraf.mscmedian(
-        #        input=self.output_filename,
-        #        output="/tmp/median.fits",
-        #        xwindow=20,
-        #        ywindow=20,
-        #        outtype="median"
-        #        )
-        #
-        #Or using scipy ( a bit slower then iraf...)
-        #from scipy import ndimage
-        #filtered = ndimage.gaussian_filter(f[0].data, 20)
+        ## Median smooth the master (normalized) flat
+        if self.__median_smooth:
+            log.debug("Doing Median smooth of FF ...")
+            iraf.mscmedian(
+                    input=tmp1,
+                    output=tmp1.replace(".fits","_smooth.fits"),
+                    xwindow=20,
+                    ywindow=20,
+                    outtype="median"
+                    )
+            shutil.move(tmp1.replace(".fits","_smooth.fits"), tmp1)
+            
+            #Or using scipy ( a bit slower then iraf...)
+            #from scipy import ndimage
+            #filtered = ndimage.gaussian_filter(f[0].data, 20)
 
 
         
@@ -208,14 +223,15 @@ class SuperSkyFlat(object):
 
             f.close()
             
+            
             # Cleanup: Remove temporary files
-            misc.fileUtils.removefiles(self.output_filename)
+            #misc.fileUtils.removefiles(self.output_filename)
             # Compute normalized flat
             iraf.mscred.mscarith(operand1=tmp1,
                     operand2=mode,
                     op='/',
                     pixtype='real',
-                    result=self.output_filename,
+                    result=self.output_filename.replace("//","/")
                     )
         else:
             os.rename(tmp1, self.output_filename) 
@@ -248,9 +264,11 @@ if __name__ == "__main__":
     
     usage = "usage: %prog [options] arg1 arg2"
     parser = OptionParser(usage)
+    
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
+    
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
                   help="Source file list of data frames. It has to be a fullpath file name")
@@ -266,10 +284,15 @@ if __name__ == "__main__":
                   action="store_true", dest="norm", help="normalize output \
                   SuperFlat. If image is multi-chip, normalization wrt chip 1 \
                   is done. (optional)", default=False)
-        
+    
+    parser.add_option("-m", "--median_smooth",
+                  action="store_true", dest="median_smooth", default=False,
+                  help="Median smooth the combined flat-field [default False]")    
 
     (options, args) = parser.parse_args()
-    if not options.source_file_list or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    if not options.source_file_list or not options.output_filename or len(args)!=0: 
+        # args is the leftover positional arguments after all options have been 
+        # processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if options.verbose:
@@ -277,7 +300,9 @@ if __name__ == "__main__":
     
     filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     try:
-	superflat = SuperSkyFlat(filelist, options.output_filename, options.bpm, options.norm)
+	superflat = SuperSkyFlat(filelist, options.output_filename, 
+                             options.bpm, options.norm, "/tmp/",
+                             options.median_smooth)
     	superflat.create()
     except Exception,e:
 	log.error("Error: %s"%str(e))

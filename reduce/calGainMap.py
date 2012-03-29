@@ -251,9 +251,23 @@ class GainMap(object):
         if f.getInstrument()=='panic' and naxis1==4096 and naxis2==4096:
             is_a_panic_full_frame = True # i.e., a single extension (GEIRS) full frame
         else: is_a_panic_full_frame = False
+
+        # Check if normalization is already done to FF or otherwise it must be
+        # done here
+         
         
         gain = np.zeros([nExt, naxis1, naxis2], dtype=np.float32)
         myflat = pyfits.open(self.flat)
+        
+        # Check if normalization is already done to FF or otherwise it must be
+        # done here
+        if isMEF: extN = 1
+        else: extN = 0
+        if np.median(myflat[extN].data)> 100:
+            self.do_norm = True
+        else:
+            self.do_norm = False
+            
         for chip in range(0,nExt):
             log.debug("Operating in CHIP %d", chip+1)
             if isMEF:
@@ -280,7 +294,7 @@ class GainMap(object):
                     log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
                     log.debug("Normalizing (PANIC full-frame) flat-field by MEDIAN ( %f ) value", median)
 
-                else: median = 1.0 # normalization not required
+                else: median = 1.0 # normalization not required (but must be already done !!)
                 
             flatM = flatM/median   
             

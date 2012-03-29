@@ -34,6 +34,7 @@ import os
 import logging
 import fileinput
 import time
+import shutil
 from optparse import OptionParser
 
 import misc.fileUtils
@@ -92,7 +93,7 @@ class MasterTwilightFlat (object):
     """
     def __init__(self, flat_files, master_dark_model, 
                  output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000, 
-                 bpm=None, normal=True, temp_dir="/tmp/"):
+                 bpm=None, normal=True, temp_dir="/tmp/", median_smooth=False):
         
         """
         Initialization method.
@@ -116,6 +117,9 @@ class MasterTwilightFlat (object):
             If true, the normalization will be done.
         temp_dir: string
             Temporal directory for temporal files needed.
+        median_smooth: bool
+            If true, median smooth filter is applied to the combined Flat-Field
+            
         
         """
         
@@ -125,6 +129,7 @@ class MasterTwilightFlat (object):
         self.__bpm = bpm
         self.__normal = normal
         self.__temp_dir = temp_dir #temporal dir used for temporal/intermediate files
+        self.__median_smooth = median_smooth
         
         self.m_MIN_N_GOOD = 3
         self.m_lthr = lthr
@@ -346,14 +351,17 @@ class MasterTwilightFlat (object):
         
         # STEP 3b (optional)
         #Median smooth the master flat
-        #iraf.mscmedian(
-        #        input=comb_flat_frame,
-        #        output="/tmp/median.fits",
-        #        xwindow=20,
-        #        ywindow=20,
-        #        outtype="median"
-        #        )
-        #
+        if self.__median_smooth:
+            log.debug("Doing Median smooth of FF ...")
+            iraf.mscmedian(
+                    input=comb_flat_frame,
+                    output=comb_flat_frame.replace(".fits","_smooth.fits"),
+                    xwindow=20,
+                    ywindow=20,
+                    outtype="median"
+                    )
+            shutil.move(comb_flat_frame.replace(".fits","_smooth.fits"),comb_flat_frame)
+            
         #Or using scipy ( a bit slower then iraf...)
         #from scipy import ndimage
         #filtered = ndimage.gaussian_filter(f[0].data, 20)
@@ -405,7 +413,7 @@ class MasterTwilightFlat (object):
                     operand2=mode,
                     op='/',
                     pixtype='real',
-                    result=self.__output_filename,
+                    result=self.__output_filename.replace("//","/"),
                     )
         else:
             os.rename(comb_flat_frame, self.__output_filename ) 
@@ -492,6 +500,10 @@ if __name__ == "__main__":
                   help="normalize master flat by mode. If image is multi-detector,\
                   then normalization wrt chip 1 is done)[default False]")
     
+    parser.add_option("-m", "--median_smooth",
+                  action="store_true", dest="median_smooth", default=False,
+                  help="Median smooth the combined flat-field [default False]")
+    
     parser.add_option("-L", "--low", type="float", default=1000,
                   action="store", dest="minlevel", 
                   help="flats with median level bellow (default=1000) are rejected")
@@ -499,7 +511,6 @@ if __name__ == "__main__":
     parser.add_option("-H", "--high", type="float", default=100000,
                   action="store", dest="maxlevel", 
                   help="flats with median level above (default=100000) are rejected")
-    
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
@@ -523,7 +534,9 @@ if __name__ == "__main__":
                                      options.output_filename, options.minlevel,
                                      options.maxlevel,
                                      options.master_bpm,
-                                     options.normalize)
+                                     options.normalize,
+                                     "/tmp/",
+                                     median_smooth=options.median_smooth)
         mTwFlat.createMaster()
     except Exception,e:
         log.error("Unexpected error: %s", str(e))

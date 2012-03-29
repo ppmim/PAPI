@@ -1779,8 +1779,7 @@ class ReductionSet(object):
         
         @return: filenames created by the reduction proccess
 
-        NOTE:
-        ---- 
+        NOTE: 
         Calibration files will not be splited for the building of the master 
         calibration file, but science files will be splitted. 
         In principle, not too much time could be saved if we split the calibration
@@ -1837,7 +1836,10 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 
-                task = reduce.calDomeFlat.MasterDomeFlat(sequence, self.temp_dir, outfile, None)
+                task = reduce.calDomeFlat.MasterDomeFlat(sequence, 
+                                                         self.temp_dir, outfile, 
+                                                         normal=True, # it is also done in calGainMap
+                                                         median_smooth=False)
                 out = task.createMaster()
                 
                 files_created.append(out) # out must be equal to outfile
@@ -1864,10 +1866,15 @@ class ReductionSet(object):
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
                     
-                    task = reduce.calTwFlat.MasterTwilightFlat(sequence, master_dark[-1], 
-                                                               outfile, lthr=1000, hthr=100000, 
+                    task = reduce.calTwFlat.MasterTwilightFlat(sequence, 
+                                                               master_dark[-1], 
+                                                               outfile, 
+                                                               lthr=1000, 
+                                                               hthr=100000, 
                                                                bpm=None,
-                                                               temp_dir=self.temp_dir)
+                                                               normal=True, # it is also done in calGainMap
+                                                               temp_dir=self.temp_dir,
+                                                               median_smooth=False)
                     out = task.createMaster()
                     files_created.append(out) # out must be equal to outfile
                 else:
@@ -2401,7 +2408,7 @@ class ReductionSet(object):
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
                                                     local_master_flat, bpm=None, 
-                                                    norm=False, 
+                                                    norm=True, 
                                                     temp_dir=self.temp_dir)
                     superflat.create()
                 elif (self.obs_mode=="dither_on_off" or
@@ -2412,7 +2419,7 @@ class ReductionSet(object):
                     misc.utils.listToFile(sky_list, out_dir+"/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
                                                     local_master_flat, bpm=None, 
-                                                    norm=False, 
+                                                    norm=True, 
                                                     temp_dir=self.temp_dir)
                     superflat.create()                            
                 else:
@@ -2447,8 +2454,10 @@ class ReductionSet(object):
         # wrt mode of chip 1 to get gain differences, set bad pixels, 
         # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
         # pixels deviating >30(?)% ,...
+        # do_normalization=False because it is suppossed that FF is already normalized
         g = reduce.calGainMap.GainMap(local_master_flat, gainmap, bpm=master_bpm, 
-                                    do_normalization=True, mingain=mingain, 
+                                    do_normalization=False, # because it is suppossed that FF is already normalized 
+                                    mingain=mingain, 
                                     maxgain=maxgain, nxblock=nxblock,
                                     nyblock=nyblock, nsigma=nsigma)
         g.create() 

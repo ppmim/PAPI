@@ -587,30 +587,32 @@ poder resolverlos pronto.
  - Encuentro el metodo (trick) para usar dome+sky flat de forma que aprovechemos
  las propiedades de ambos:
  
- """
-  A trick. Often for a run you have dome ﬂats with an accumulated number of
+"""
+A trick to combine domeFF and skyFF :
+
+Often for a run you have dome flats with an accumulated number of
 electrons in the millions, but a poor match in illumination and color to the dark
-sky. You also have a limited number of twilight ﬂats or dark-sky images that can
-be combined to make a dark-sky ﬂat, but the total counts per pixel in either set of
-ﬂats is not very high. A fairly standard procedure is to “median-smooth” dome
-and twilight or dark-sky ﬂat. A median smoothing replaces each pixel with the
+sky. You also have a limited number of twilight flats or dark-sky images that can
+be combined to make a dark-sky flat, but the total counts per pixel in either set of
+flats is not very high. A fairly standard procedure is to “median-smooth” dome
+and twilight or dark-sky flat. A median smoothing replaces each pixel with the
 median of the pixel values in a box of a given size on a side. The result is an image
 that has been smoothed on the scale of the smoothing box size.
-A procedure for taking advantage of the facts that the large-scale ﬂat-ﬁeld
-variation of the dark-sky ﬂat match that of the program frames and the dome ﬂats
+A procedure for taking advantage of the facts that the large-scale flat-field
+variation of the dark-sky flat match that of the program frames and the dome flats
 have very high S/N in each pixel goes as follows:
  
- (a) Median smooth the combined, dark-sky ﬂat — this improves the S/N and
-preserves the large-scale features of the ﬂat.
- (b) Median smooth the combined dome ﬂats using the same ﬁlter size as was
-used for the dark-sky ﬂat.
- (c) Divide the combined dome ﬂat by it’s median smoothed-version. The result is
-a frame that is ﬂat on large scales but contains all the high spatial frequency
-ﬂat-ﬁeld information.
+ (a) Median smooth the combined, dark-sky flat — this improves the S/N and
+preserves the large-scale features of the flat.
+ (b) Median smooth the combined dome flats using the same filter size as was
+used for the dark-sky flat.
+ (c) Divide the combined dome flat by it’s median smoothed-version. The result is
+a frame that is flat on large scales but contains all the high spatial frequency
+flat-field information.
  (d) Now multiply the smoothed dark-sky frame and the result of the division in
-the previous step. You now have a ﬂat-ﬁeld with the low spatial frequency
-properties of the dark-sky ﬂat combined with the high S/N, high spatial
-frequency properties of the dome ﬂat.
+the previous step. You now have a flat-field with the low spatial frequency
+properties of the dark-sky flat combined with the high S/N, high spatial
+frequency properties of the dome flat.
 """
 
 2012-03-28
@@ -623,7 +625,36 @@ frequency properties of the dome ﬂat.
  Si por "error" se hicese en los dos casos (master flat y gainmap), no creo que 
  pasase nada. 
  
+ - Una vez más me surge la duda de si aplicar el FF y luego usar el GM (gainmap)
+ puede ser redundante y/o contraproducente. Después de ver donde se usa el GM
+ en PAPI:
+    1) skyfilter :
+        1.a) como BPM
+        1.b) crear el wmap (NCOMBINE*INT_TIME*gainmap*ImageVariance) 
+        cuando usamos cube_mean() con mascara de objetos
+        1.c) procedimiento IRDR::destripe() que no usamos de momento en PAPI
+    2) dithercubemean:
+        2.a) de nuevo, al crear el wmap, y en cube_mean()
  
+ llego a la conclusión de que el gainmap es "cte" para todas la imagenes de un
+ stack de dithering, y por tanto no debe ser determinante.
+ Además, revisando la documentacion "IRDR Users Guide" veo que hacen igual,
+ aplican FF, generan GM con el FF y luego usan el GM en skyfilter y dithercubemean.
+ Por tanto, de momento podemos dejarlo así.
+ 
+ - Encuentro un BUG(?) en mean.c, pues MINCLIP estaba a 1.5 en lugar de 5, que
+ es el valor original. Debe ser que alguna de mis pruebas con el NSIG del
+ cube.c, me confundí y modifiqué erroneamente el MINCLIP. 
+
+ 
+
+2012-03-29
+==========
+
+ - Añadida option de 'median_smooth' a los FF (dome,tw,sky)
+ - Implementado modulo para combinar domeFF y skyFF --> calCombineFF.py
+ 
+
 
 FOR NEXT VIDEOCONF
 ==================

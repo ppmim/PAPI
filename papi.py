@@ -170,6 +170,19 @@ def main(arguments = None):
         
     (init_options, i_args) = parser.parse_args (args = arguments)
     
+    """ TODO 
+    try:
+        papi_dir2 = os.environ['PAPI_DIR']
+        papi_dir2 = os.environ['NICRED_REF']
+        papi_dir3 = os.environ['NICRED_PIPE']
+    except KeyError, error:
+        print 'PAPI_DIR enviroment variable %s not found!' % error
+        sys.exit()
+    if len(args) <= 1:
+        parser.print_help()
+        sys.exit()
+    """
+    
     # Read the default configuration file if none was specified by the user
     if not init_options.config_file:
         config_file = misc.config.default_config_file()       

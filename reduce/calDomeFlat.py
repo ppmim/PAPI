@@ -42,6 +42,7 @@ import os
 import logging
 import fileinput
 import time
+import shutil
 from optparse import OptionParser
 
 import misc.fileUtils
@@ -99,7 +100,8 @@ class MasterDomeFlat:
     """
     
     def __init__(self, input_files, temp_dir="/tmp/", 
-                 output_filename="/tmp/mdflat.fits", normal=True):
+                 output_filename="/tmp/mdflat.fits", normal=True, 
+                 median_smooth=False):
         """ 
         Initialization method
         
@@ -115,6 +117,9 @@ class MasterDomeFlat:
             Filename of the master dome flat to build.
         normal : bool
             If true, normalization will be done.
+        median_smooth: bool
+            If true, median smooth filter is applied to the combined Flat-Field
+
     
         """
         
@@ -122,6 +127,8 @@ class MasterDomeFlat:
         self.__temp_dir = temp_dir
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__normal = normal
+        self.__median_smooth = median_smooth
+        
         self.MIN_FLATS = 4
         
     
@@ -280,6 +287,7 @@ class MasterDomeFlat:
         # Handling of single FITS is not supported by mscred.mscarith
         msg = ""
         if f.mef:
+            log.debug("Subtracting (MEF) files...") 
             iraf.mscred.mscarith(operand1 = flat_lampon,
                     operand2 = flat_lampoff,
                     op = '-',
@@ -313,12 +321,13 @@ class MasterDomeFlat:
                         )
 
             else: 
-                os.rename(flat_diff, self.__output_filename)
+                shutil.copy(flat_diff, self.__output_filename)
             
         #    
         # Single FITS (not MEF)
         #
         else:
+            log.debug("Subtracting ON-OFF frames...") 
             iraf.imarith(operand1 = flat_lampon,
                     operand2 = flat_lampoff,
                     op = '-',
@@ -358,18 +367,24 @@ class MasterDomeFlat:
                             result=self.__output_filename,
                             )
                     
-            else: 
-                os.rename(flat_diff, self.__output_filename)
+            else:
+                log.debug("Renaming file ...") 
+                shutil.copy(flat_diff, self.__output_filename)
                 
-        ## STEP 6 ##: (optional) Median smooth the master (normalized) flat
-        #iraf.mscmedian(
-        #        input=comb_flat_frame,
-        #        output="/tmp/median.fits",
-        #        xwindow=20,
-        #        ywindow=20,
-        #        outtype="median"
-        #        )
-        #
+        ## STEP 6 ##: (optional) 
+        ## Median smooth the master (normalized) flat
+        if self.__median_smooth:
+            log.debug("Doing Median smooth of FF ...")
+            iraf.mscmedian(
+                    input=self.__output_filename,
+                    output=self.__output_filename.replace(".fits","_smooth.fits").replace("//","/"),
+                    xwindow=20,
+                    ywindow=20,
+                    outtype="median"
+                    )
+            shutil.move(self.__output_filename.replace(".fits","_smooth.fits"),
+                        self.__output_filename)
+
         #Or using scipy ( a bit slower then iraf...)
         #from scipy import ndimage
         #filtered = ndimage.gaussian_filter(f[0].data, 20)                      
@@ -377,6 +392,7 @@ class MasterDomeFlat:
         # Change back to the original working directory
         iraf.chdir()
         
+        log.debug("Updating the header ...")
         flatframe = pyfits.open(self.__output_filename,'update')
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
@@ -435,7 +451,11 @@ if __name__ == "__main__":
                   action="store_true", dest="normalize", default=False,
                   help="normalize master flat by mode. If image is multi-detector,\
                   then normalization wrt chip 1 is done) [default False]")
-    
+
+    parser.add_option("-m", "--median_smooth",
+                  action="store_true", dest="median_smooth", default=False,
+                  help="Median smooth the combined flat-field [default False]")
+
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
                   help="verbose mode [default]")
@@ -456,7 +476,7 @@ if __name__ == "__main__":
     print "Files:",filelist
     tmp_dir = os.path.dirname(options.output_filename)
     mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, 
-                            options.normalize)
+                            options.normalize, options.median_smooth)
     mDFlat.createMaster()
     
         
