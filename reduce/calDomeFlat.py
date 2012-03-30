@@ -341,7 +341,7 @@ class MasterDomeFlat:
                     f.getNaxis1()==4096 and f.getNaxis2()==4096):
                     # It supposed to have a full frame of PANIC in one single 
                     # extension (GEIRS default)
-                    median = np.median(f[0].data[200:f.getNaxis1()/2-200, 
+                    median = np.median(f.getData()[200:f.getNaxis1()/2-200, 
                                                  200:f.getNaxis2()/2-200])
                     #mean = np.mean(f[0].data[200:2048-200, 200:2048-200])
                     #mode = 3*median-2*mean
