@@ -661,7 +661,7 @@ frequency properties of the dome flat.
   - Pruebas de los procedimientos modificados el día anterior, procurando que 
 pase por todos los casos posibles.
 
-  - estudio de los modos de autenticacion de subversion 
+  - Estudio de los modos de autenticacion de subversion 
 
 FOR NEXT VIDEOCONF
 ==================
