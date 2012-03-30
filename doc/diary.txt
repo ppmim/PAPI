@@ -655,6 +655,13 @@ frequency properties of the dome flat.
  - Implementado modulo para combinar domeFF y skyFF --> calCombineFF.py
  
 
+2012-03-30
+==========
+
+  - Pruebas de los procedimientos modificados el día anterior, procurando que 
+pase por todos los casos posibles.
+
+  - estudio de los modos de autenticacion de subversion 
 
 FOR NEXT VIDEOCONF
 ==================
