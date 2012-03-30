@@ -34,7 +34,6 @@ This is the **main** module of the PAPI software to start any data reduction
 process of a data set.
 """
 
-
     ####################################################################
     #                                                                  #
     #                   This is where it all starts.                   #
