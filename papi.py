@@ -29,6 +29,10 @@
 # Last update 17/May/2011
 #
 ################################################################################
+__date__ = "$Date$"
+__author__ = "$Author$"
+__revision__ = "$Rev$"
+
 """
 This is the **main** module of the PAPI software to start any data reduction
 process of a data set.
