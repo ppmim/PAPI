@@ -147,8 +147,8 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         # SExtractor catalog. The remaining pixels in the image
         # will be set to zero. Note that, therefore, the 'single-point' mask will
         # have as many non-zero pixels as objects are in the SExtractor catalog.
-        # NOTE:This feature is used to compute the dither offsets, but not for while
-        # object masking in skysubtraction
+        # NOTE:This feature is used to compute the dither offsets, but not for 
+        # while object masking in skysubtraction
         if single_point==True:
             # NOTE we update/overwrite the image and don't create a new one
             myfits=pyfits.open(fn+".objs", mode="update")

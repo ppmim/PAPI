@@ -1154,17 +1154,19 @@ class ReductionSet(object):
             mask_minarea = self.config_dict['offsets']['mask_minarea']
             mask_thresh = self.config_dict['offsets']['mask_thresh']
             satur_level = self.config_dict['offsets']['satur_level']
+            single_p= self.config_dict['offsets']['single_point']
         else:
             mask_minarea = 5
             mask_thresh = 1.5
             satur_level = 300000
+            single_p = True
             
         if images_in==None: # then we use the images ending with suffing in the output directory
             makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, satur_level, \
-                        output_list_file, single_point=True)
+                        output_list_file, single_point=single_p)
         elif os.path.isfile(images_in): # we use the given list of images
             makeObjMask( images_in , mask_minarea, mask_thresh, satur_level, \
-                        output_list_file, single_point=True)
+                        output_list_file, single_point=single_p)
         else:
             log.error("Option not recognized !!!")
             raise Exception("Wrong input frames given")
@@ -1266,7 +1268,7 @@ class ReductionSet(object):
             satur_level=300000
                                
         # BUG ! -> input_file+"*" as first parameter to makeObjMask ! (2011-09-23)                                                               
-        makeObjMask( input_file, mask_minarea, mask_thresh, satur_level, \
+        makeObjMask( input_file, mask_minarea, mask_thresh, satur_level,
                     outputfile=self.out_dir+"/objmask_file.txt", single_point=False)
         if os.path.exists(input_file+".objs"): 
             shutil.move(input_file+".objs", output_master_obj_mask)
@@ -1409,17 +1411,17 @@ class ReductionSet(object):
                 os.unlink(outfile) # we only need the name
                 # get gainmap parameters
                 if self.config_dict:
-                    mingain=self.config_dict['gainmap']['mingain']
-                    maxgain=self.config_dict['gainmap']['maxgain']
-                    nxblock=self.config_dict['gainmap']['nxblock']
-                    nyblock=self.config_dict['gainmap']['nyblock']
-                    nsigma=self.config_dict['gainmap']['nsigma']
+                    mingain = self.config_dict['gainmap']['mingain']
+                    maxgain = self.config_dict['gainmap']['maxgain']
+                    nxblock = self.config_dict['gainmap']['nxblock']
+                    nyblock = self.config_dict['gainmap']['nyblock']
+                    nsigma = self.config_dict['gainmap']['nsigma']
                 else:
-                    mingain=0.5
-                    maxgain=1.5
-                    nxblock=16
-                    nyblock=16
-                    nsigma=5    
+                    mingain = 0.5
+                    maxgain = 1.5
+                    nxblock = 16
+                    nyblock = 16
+                    nsigma = 5    
                 
                 task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=True,
                                                mingain=mingain, maxgain=maxgain, nxblock=nxblock,
@@ -1777,7 +1779,7 @@ class ReductionSet(object):
         @param sequence: list of files of the sequence to be reduced
         @param type: type of sequence (see ClFits.type) (currently not used !) 
         
-        @return: filenames created by the reduction proccess
+        @return: list of filenames created by the reduction proccess
 
         NOTE: 
         Calibration files will not be splited for the building of the master 
@@ -1812,19 +1814,23 @@ class ReductionSet(object):
                                    chk_readmode=True, file_list=sequence)==True):
                     # Orthodox master dark -- same EXPTIME & NCOADDS
                     log.debug("Found dark serie with equal EXPTIME. Master dark is going to be created")
-                    task = reduce.calDark.MasterDark (sequence, self.temp_dir, outfile, texp_scale=False)
+                    task = reduce.calDark.MasterDark (sequence, self.temp_dir, 
+                                                      outfile, texp_scale=False)
                     out = task.createMaster()
                 else:
                     log.info("Found a dark series of frames with different EXPTIME: Dark model will be created")
                     use_dark_model = True
-                    if use_dark_model==True:
+                    if use_dark_model==True and self.red_mode !="quick":
                         # Build master dark model from a dark serie
-                        task = reduce.calDarkModel.MasterDarkModel (sequence, self.temp_dir, outfile)
+                        task = reduce.calDarkModel.MasterDarkModel (sequence, 
+                                                                    self.temp_dir, 
+                                                                    outfile)
                         out = task.createDarkModel()
                     else:
                         log.warning("Found a dark serie with diff EXPTIME, but dark model processing not activated")
+                        out = None
                  
-                files_created.append(out) # out must be equal to outfile
+                if out!=None: files_created.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DARK: %s",str(e))
                 raise e
@@ -1836,13 +1842,14 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 
+                m_smooth = self.config_dict['dflats']['median_smooth']
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, 
                                                          self.temp_dir, outfile, 
                                                          normal=True, # it is also done in calGainMap
-                                                         median_smooth=False)
+                                                         median_smooth=m_smooth)
                 out = task.createMaster()
                 
-                files_created.append(out) # out must be equal to outfile
+                if out!=None: files_created.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DomeFlat: %s",str(e))
                 raise e
@@ -1865,6 +1872,8 @@ class ReductionSet(object):
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
+
+                    m_smooth = self.config_dict['twflats']['median_smooth']
                     
                     task = reduce.calTwFlat.MasterTwilightFlat(sequence, 
                                                                master_dark[-1], 
@@ -1874,9 +1883,9 @@ class ReductionSet(object):
                                                                bpm=None,
                                                                normal=True, # it is also done in calGainMap
                                                                temp_dir=self.temp_dir,
-                                                               median_smooth=False)
+                                                               median_smooth=m_smooth)
                     out = task.createMaster()
-                    files_created.append(out) # out must be equal to outfile
+                    if out!=None: files_created.append(out) # out must be equal to outfile
                 else:
                     # should we create master dark ??
                     log.error("[reduceSeq] MASTER_DARK_MODEL not found. Cannot build master TwFlat")
@@ -1994,7 +2003,7 @@ class ReductionSet(object):
             # If red_mode is 'lemon',then no warping of frames is required
             if self.red_mode=='lemon':
                 files_created = out_ext
-		log.info("*** Obs. Sequence LEMON-reduced. ***") 
+                log.info("*** Obs. Sequence LEMON-reduced. ***") 
                 return files_created
             
             # if all reduction were fine, now join/stich back the extensions in a wider frame
@@ -2041,7 +2050,7 @@ class ReductionSet(object):
                     
         # Insert all created files into the DB                
         for file in files_created:
-            self.db.insert(file)
+            if file!=None: self.db.insert(file)
         
         # not sure if is better to do here ??? 
         #self.purgeOutput()

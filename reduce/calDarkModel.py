@@ -65,7 +65,11 @@ class MasterDarkModel(object):
         Create a master Dark Model from a list for dark files
         
     \par Description:
-         An input series dark exposures with a range of exposure times is given. A linear fit is done at each pixel position of data number versus exposure time. A each pixel position in the output map represents the slope of the fit done at that position and is thus the dark current expressed in units of data numbers per second.   
+         An input series dark exposures with a range of exposure times is given. 
+         A linear fit is done at each pixel position of data number versus 
+         exposure time. A each pixel position in the output map represents the 
+         slope of the fit done at that position and is thus the dark current 
+         expressed in units of data numbers per second.   
     \par Language:
         PyRaf
     \param input_data
@@ -74,10 +78,11 @@ class MasterDarkModel(object):
         Input bad pixel mask or NULL
     \retval 0
         If no error, a fits file (nx*ny) with 2 planes (extensions)
-        plane 0 = bias
-        plane 1 = dark current in DN/sec
+        plane 0 = dark current in DN/sec
+        plane 1 = bias
         
-        DARKCURRENT The median dark current in data numbers per second found from the median value of the output dark current map.
+        DARKCURRENT The median dark current in data numbers per second found 
+        from the median value of the output dark current map.
     \author
         JMIbannez, IAA-CSIC
     

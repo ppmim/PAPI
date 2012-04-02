@@ -479,11 +479,8 @@ def read_config_file(config_file = default_config_file()):
 
 
     dark["suffix"] = read_parameter(config, "dark", "suffix", str, False, config_file)
-
     dark["check_prop"] = read_parameter(config, "dark", "check_prop", bool, False, config_file)
-
     dark["min_frames"] = read_parameter(config, "dark", "min_frames", int, False, config_file)
-    
 
     options["dark"] = dark
 
@@ -492,13 +489,11 @@ def read_config_file(config_file = default_config_file()):
     dflats = {}
     
     dflats["object_names"] = read_list_of_strings(config, "dflats", "object_names")
-    
     dflats["suffix"] = read_parameter(config, "dflats", "suffix", str, False, config_file)
-
     dflats["check_prop"] = read_parameter(config, "dflats", "check_prop", bool, False, config_file)
-    
     dflats["min_frames"] = read_parameter(config, "dflats", "min_frames", int, False, config_file)
-    
+    dflats["median_smooth"] = read_parameter(config, "dflats", "median_smoot", bool, False, config_file)
+
     area_width = read_parameter(config, "dflats", "area_width", int, True, config_file)
     if not area_width > 1:
         print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'dflats' must be a positive integer."
@@ -512,12 +507,10 @@ def read_config_file(config_file = default_config_file()):
     twflats = {}
     
     twflats["object_names"] = read_list_of_strings(config, "twflats", "object_names")
-    
     twflats["suffix"] = read_parameter(config, "twflats", "suffix", str, False, config_file)
-
     twflats["check_prop"] = read_parameter(config, "twflats", "check_prop", bool, False, config_file)
-    
     twflats["min_frames"] = read_parameter(config, "twflats", "min_frames", int, False, config_file)
+    twflats["median_smooth"] = read_parameter(config, "twflats", "median_smooth", bool, False, config_file)
     
     area_width = read_parameter(config, "twflats", "area_width", int, True, config_file)
     if not area_width > 1:
@@ -558,6 +551,8 @@ def read_config_file(config_file = default_config_file()):
     offsets["mask_thresh"] = read_parameter(config, "offsets", "mask_thresh", float, False, config_file)
     offsets["min_corr_frac"] = read_parameter(config, "offsets", "min_corr_frac", float, False, config_file)
     offsets["satur_level"] = read_parameter(config, "offsets", "satur_level", long, False, config_file)
+    offsets["single_point"] = read_parameter(config, "offsets", "single_point", bool, False, config_file)
+    
     
     options["offsets"] = offsets     
     

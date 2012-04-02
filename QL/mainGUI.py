@@ -717,7 +717,7 @@ class MainGUI(panicQL):
                     self.logConsole.info("Process successfully finished  !")
                     if self._task_info._return!=None:
                         if type(self._task_info._return)==type(list()):
-                            if len(self._task_info._return)==0:
+                            if len(self._task_info._return)==0 :
                                 self.logConsole.info(str(QString("No value returned")))
                                 QMessageBox.information(self, "Info", "No value returned")
                             else:
@@ -758,6 +758,8 @@ class MainGUI(panicQL):
                             # Cannot identify the type of the results...for sure
                             # something was wrong...
                             self.logConsole.error("No processing results obtained")
+                    else:
+                        self.logConsole.info("Nothing returned !")
                 else:
                     self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
                     QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))

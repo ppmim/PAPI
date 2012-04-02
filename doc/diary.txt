@@ -663,10 +663,16 @@ pase por todos los casos posibles.
 
   - Estudio de los modos de autenticacion de subversion 
 
+2012-04-02
+==========
+
+
 FOR NEXT VIDEOCONF
 ==================
 
  - Improvements in master flat (normlizaton wrt chip 1)
+ - New module for mix dome & sky FF : calCombineFF()
+ 
   
 FAQ:
 ---
