@@ -25,35 +25,17 @@
 #
 # Author: Jose Miguel Ibanez Mengual <jmiguel@iaa.es>
 #
+# 2011-5-17 : substituted popen2 with subprocess
 # ======================================================================
 
 """
-A wrapper for SCAMP
+A wrapper for SCAMP (Astromatic.net, E.Bertin).
 
-A wrapper for SCAMP, the Source Extractor.
-by Jose M. Ibanez Mengual
-version: 0.1 - last modified: 2010-10-18
-
-This wrapper allows you to configure SCAMP, run it and get
-back its outputs without the need of editing SCAMP
-configuration files. by default, configuration files are created
-on-the-fly, and SCAMP is run silently via python.
+This wrapper allows you to configure SCAMP, run it and get back its outputs 
+without the need of editing SCAMP configuration files. by default, configuration 
+files are created on-the-fly, and SCAMP is run silently via python.
 
 Tested on SCAMP versions 1.4.6 and 1.7.0
-
-
-Example of use:
-
------------------------------------------------------------------
-
-Update: 
-2011-5-17 : substituted popen2 with subprocess
-
-
-TODO   
-
------------------------------------------------------------------
-
 
 """
 
@@ -500,14 +482,30 @@ class SCAMP:
 
     def run(self, catalog_list, updateconfig=True, clean=False, path=None):
         """
-        Run SCAMP for a given list of catalog (.ldac files), and it can be one single catalog list
+        Run SCAMP for a given list of catalog (.ldac files), and it can be one 
+        single catalog list.
 
-        If updateconfig is True (default), the configuration
-        files will be updated before running SCAMP.
+        Parameters
+        ----------
+        
+        updateconfig: bool
+            Is True (default), the configuration files will be updated before 
+            running SCAMP.
 
-        If clean is True (default: False), configuration files 
-        (if any) will be deleted after SCAMP terminates.
-
+        clean: bool
+            If True (default: False), configuration files (if any) will be 
+            deleted after SCAMP terminates.
+        path: str
+            Path name to look for scamp binary file in the system.
+            
+        Raises
+        ------
+        SCAMP_Exception
+            Cannot run SCAMP
+        SCAMP_AccuracyException
+            SCAMP Warning/error: Significant inaccuracy likely to occur in 
+            projection.
+            
         """
 
         if updateconfig:
@@ -572,21 +570,27 @@ class SCAMP:
 # ======================================================================
 def runCmd( str_cmd, p_shell=True ):
     """ 
-        DESCRIPTION
-                A wrapper to run system commands  
-        INPUTS
-                str_cmd      - Command string to be executed in the shell
-                p_shell      - if True (default), command will be executed 
-                                through the shell, and all cout/cerr messages 
-                                will be available
-                             - if False, exception is the only way to find 
-                             out problems during the call
-        OUTPUT
-                Return 0 if some errors 
-                Retuen 1 if all was OK
-        TODO 
-                - allow to launch commands in background 
-                - best checking of error when shell=True        
+    A wrapper to run system commands.
+      
+    Parameters
+    ----------
+    str_cmd: str      
+      Command string to be executed in the shell
+    
+    p_shell: bool
+      If True (default), command will be executed through the shell, and all 
+      cout/cerr messages will be available.
+      If False, exception is the only way to find out problems during the call.
+
+    Returns
+    -------
+      0 if some error, or 1 if all was OK
+
+    Notes
+    -----
+    TODO:
+      - allow to launch commands in background 
+      - best checking of error when shell=True
     """
            
     print "Running command : %s \n"%str_cmd

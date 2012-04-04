@@ -21,7 +21,7 @@ Module                   Description
 ====================     ===========
 ``papi``                 Main pipeline module to start the entire data reduction process 
 ``calDark``              Creates a master dark by combination of a dark sequence
-``calDarkModel``         Creates a master dark model from a dark serie
+``calDarkModel``         Creates a master dark model from a dark series
 ``calBPM``               Creates a master Bad Pixel Mask from a set of darks and flats calibration files
 ``calDomeFlat``          Creates a master Dome Flat 
 ``calTwFlat``            Creates a master Twilight Flat
@@ -29,8 +29,8 @@ Module                   Description
 ``calGainMap``           Creates a Gain Map from any master flat
 ``calNonLinearity``      Corrects the images pixel values for non-linearity
 ``checkQuality``         Computes some quality values from the image (FWHM, STD, RMS)
-``applyDarkFlat``        Finds out the best Focus value from a focus serie
-``eval_focus_serie``     Finds out the best Focus value from a focus serie
+``applyDarkFlat``        Finds out the best Focus value from a focus series
+``eval_focus_serie``     Finds out the best Focus value from a focus series
 ``skyfilter``            Subtracts sky background to a dither sequence of frames
 ``astrowarp``            Creates final aligned and coadded frame using SEx,SCAMP and SWARP 
 ``photometry``           Performs a photometric calibration comparison with 2MASS
@@ -39,6 +39,7 @@ Module                   Description
 ====================     ===========
 
 .. index:: setup, sqlite
+
 
 ``papi``
 ********
@@ -50,6 +51,7 @@ subdirectories are created:
 
 
 .. automodule:: papi
+   
    :members:
 
 
@@ -63,7 +65,8 @@ Directory   Description
 ``FINAL``   The final data products (final image mosiacs, weightmaps and context images)
 =========   ===========
 
-PAPI creates a SQLite_ database to store the uncalibrated input data fits headers and pipeline metadata:
+PAPI creates a SQLite_ database to store the uncalibrated input data fits 
+headers and pipeline metadata:
 
 .. index:: log, logging, status, FITS, headers
 
@@ -90,20 +93,42 @@ The ``calDark`` module creates a master dark image from a set of dark frames.
 In addition computes the Read-Out Noise of the detectors along with several
 statistics.
 
-Input
+Options::
 
-.. index:: calped, calnica, pedsky, cridcalc, multiaccum, calibration
+
+   Usage: calDark.py [options] arg1 arg2 ...
+   
+   Options:
+     -h, --help            show this help message and exit
+     -s SOURCE_FILE_LIST, --source=SOURCE_FILE_LIST
+                           Source file list of data frames. It can be a file or
+                           directory name.
+     -o OUTPUT_FILENAME, --output=OUTPUT_FILENAME
+                           final coadded output image
+     -n, --normalize       normalize master dark to 1 sec [default False]
+     -e, --scale           scale raw frames by TEXP [default False]
+     -v, --verbose         verbose mode [default]
+
+Example::
+
+
+   $ calDark.py -s /data/PANIC_V0/dark_seq_1/ -o /data/out
+
+
+.. index:: dark, calibration
 
 ``calDarkModel``
 ****************
 
-The ``calDarkModel`` module performs a dark model. To do that, a input dark serie
+The ``calDarkModel`` module performs a dark model. To do that, a input dark series
 exposures with a range of exposure times is given. Then a linear fit is done at 
 each pixel position of data number versus exposure time. A each pixel position 
 in the output map represents the slope of the fit done at that position and is 
 thus the dark current expressed in units of data numbers per second.
 
-.. index:: , SAA, pyraf
+
+
+.. index:: , dark, calibration
 
 ``calBPM``
 **********
@@ -153,7 +178,7 @@ given.
 
 
 ``calGainMap``
-****************
+**************
 
 The ``calGainMap`` module creates a master gain map from a flat field 
 
@@ -192,11 +217,11 @@ For more details on ``skyfilter`` see the Appendix section :ref:`skyfilter`.
 
 .. index:: sky-background, irdr, sky
 
-``eval_focus_serie``
-********************
+``eval_focus_series``
+*********************
 
-The ``eval_focus_serie`` module computes the best focus estimation for a focus
-exposure serie. It is done according to the FWHM value estimated for each
+The ``eval_focus_series`` module computes the best focus estimation for a focus
+exposure series. It is done according to the FWHM value estimated for each
 frame, fitting a curve the the values pair values (FWHM,focus) and finding out the 
 minimun.
 
@@ -204,7 +229,7 @@ minimun.
 
     - T-FOCUS (telescope focus) keyword value present in the header 
     - (Raw) Images with enought number of stars
-    - A serie of images taken with covering a range of telescope focus values including the best focus value.
+    - A series of images taken with covering a range of telescope focus values including the best focus value.
  
 
 .. index:: focus, fwhm, seeing

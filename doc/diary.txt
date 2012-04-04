@@ -439,7 +439,7 @@ memoria de los test hechos en Heidelberg.
 
 - Continuo probando Sphinx, pues parece muy interesante para usar en la documentación
 de PAPI. Sin embargo, de cara a documentar el codigo fuente (python) de PAPI
-me encuentro con el problema de que hasta ahora el codigo fuento lo de PAPI lo 
+me encuentro con el problema de que hasta ahora el codigo fuente de PAPI lo 
 estaba documentando en las docstring siguiendo la sintaxis de epytext/javadoc, 
 pero resulta que Sphinx usa las docstring del formato reST(reStructuredText);
 según he buscado en google, no parece que haya una forma fácil para pasar de

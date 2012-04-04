@@ -23,7 +23,6 @@ Contents:
    citation
    license
    appendix
-   
 
 
 Indices and tables

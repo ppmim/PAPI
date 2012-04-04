@@ -3,14 +3,14 @@ Introduction
 ============
 
 PAPI is an automatic image processing pipeline for data taken with the 
-PAnoramic Near Infrared Camera (PANIC) on the 2.2m Telescope at Calar Alto Observatory. The pipeline
-currently supports imaging data from camera and is written in Python 
-and C making it portable across many platforms. The automated processing 
-steps include basic calibration (removeing instrumental signature), cosmic-ray 
-removal, treatment for post-SAA cosmic ray persistence and electronic ghosts, 
-sky subtraction, non-linear count-rate correction, 
-artifact masking, robust alignment and registration for large mosaics, 
-weight map generation, and drizzling onto a final image mosaic. 
+PAnoramic Near Infrared Camera (PANIC) on the 2.2m and 3.5m Telescopes at Calar 
+Alto Observatory. The pipeline currently supports imaging data from camera and 
+is written in Python and C making it portable across many platforms. The 
+automated processing steps include basic calibration (removeing instrumental 
+signature), cosmic-ray removal, treatment for electronic ghosts (cross-talk), 
+sky subtraction, non-linear count-rate correction, artifact masking, robust 
+alignment and registration for large mosaics, weight map generation, and 
+drizzling onto a final image mosaic. 
 
 **Development Team:** Jose M. Ibanez (IAA-CSIC)
 
@@ -20,8 +20,9 @@ Caveats
 Currently it is only possible for PANIC to reduce data taken with the
 Observing Tool (OT), but not manually with GEIRS.
 PAPI was primarily developed and optimized for reducing broad-band imaging data of
-extragalactic sources (such as imaging data taken for field galaxy surveys and galaxy cluster surveys). 
-Other types imaging data have been reduced with PAPI but YMMV (See :ref:`troubleshooting` for tips).
+extragalactic sources (such as imaging data taken for field galaxy surveys and 
+galaxy cluster surveys). Other types imaging data have been reduced with PAPI 
+but results can not be as good as desired. (See :ref:`troubleshooting` for tips).
 PAPI is **not** designed to reduce any kind of field taken with PANIC.  
 
 .. index:: prerequisites, requirements
@@ -29,7 +30,7 @@ PAPI is **not** designed to reduce any kind of field taken with PANIC.
 Prerequisites
 *************
 
-These software must be install for PAPI to run:
+These software must be installed for PAPI to run:
 
 	* `python <http://www.python.org>`_ (2.4 or 2.5)
 	* `sqlite <http://www.sqlite.org>`_ (v3.0 > if using Python 2.4)

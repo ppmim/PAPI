@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+#
 # Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#
 
 ################################################################################
 #
@@ -33,10 +33,7 @@ __date__ = "$Date$"
 __author__ = "$Author$"
 __revision__ = "$Rev$"
 
-"""
-This is the **main** module of the PAPI software to start any data reduction
-process of a data set.
-"""
+'''User command line interface of PAPI.'''
 
     ####################################################################
     #                                                                  #

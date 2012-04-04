@@ -77,29 +77,29 @@ from misc.paLog import log
 
 class MasterDark(object):
     """
-    \brief Class used to build and manage a master calibration dark 
-    
-    \par Class:
-        MasterDark
-    \par Purpose:
-        Create a master Dark from a list for dark files (single or MEF files)
-    \par Description:
-            
-    \par Language:
-        PyRaf
-    \param data
-        A list of dark files
-    \param bpm
-        Input bad pixel mask or NULL
-    \retval 0
-        If no error
-    \author
-        JMIbannez, IAA-CSIC
-        
+    Create a master Dark from a list for dark files (single or MEF files); all
+    must have the same properties (TEXP, NCOADDS, READMODE).
     """
     def __init__(self, file_list, temp_dir, output_filename="/tmp/mdark.fits", 
                  texp_scale=False, bpm=None, normalize=False):
-        """Constructor"""
+        """
+        
+        :param file_list: A list of dark files
+        :type file_list: list 
+        :param temp_dir: Input bad pixel mask or NULL
+        :type temp_dir: str
+        :param output_filename: Output filename of the master dark file created.
+        :type output_filename: str
+        :param texp_scale: If true, scale the darks before the combination.
+        :type texp_scale: bool
+        :param bpm: Bad pixel Map filename
+        :type bpm: str
+        :param normalize:
+            If true, a normalization to 1 second is done after darks combination.
+            It means, the master dark is supposed to have the count level of a
+            dark frame of 1 second.
+        :type normalize: bool
+        """
         
         self.__file_list = file_list
         self.__output_filename = output_filename  # full filename (path+filename)
@@ -113,8 +113,13 @@ class MasterDark(object):
     def createMaster(self):
       
         """
-        \brief Create a master DARK from the dark file list
-        """   
+        Create a master DARK from the dark file list.
+        
+        Warns
+        -----
+        The method must be called only after the object was properly initialized.
+        """
+           
         log.debug("Start createMaster")
         t = utils.clock()
         t.tic()

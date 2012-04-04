@@ -8,32 +8,19 @@ Quickstart
 
 Running PAPI can be as simple as executing the following command in a terminal::
 	
-	papi.py run_name input_data_directory
+	$ papi.py -s raw_data -d result 
 
-Where ``run_name`` is the name of the dataset (e.g. A1689_NIC3) and 
-``input_data_directory`` is the path to the uncalibrated data directory.
+Where ``raw_data`` is the directory of the raw dataset (uncalibrated) having 
+both science or calibration files, and ``result`` is the path to the directory 
+where the calibrated data produced by the pìpeline will be saved.
 
-.. index:: uncalibrated, data, mast
+Example::
 
-Getting PAPI Data
-*****************
+   $ papi.py -s /my/raw_data/directory -d /my/result/directory
 
-The PAPI pipeline requires the full set of uncalibrated data products 
-and best reference files for each observation in the input image set. These files 
-can be readily obtained through the CAHA archive. When
-requesting data from CAHA you need to specify:
-	
-	* Science Files Requested: **Uncalibrated** 
-	* Reference Files: **Best Reference Files**
+.. index:: uncalibrated, data
 
-.. image:: _static/caha_archive.jpg
-   :align: center
-   :height: 300 px
-   :width: 565 px
 
-.. CAHA: http://www.caha.es/APPS/ARCHIVE/
-
-.. index:: options
 
 Optional Commands
 *****************
@@ -41,15 +28,14 @@ Optional Commands
 For most image sets PAPI can be run in the default configuration with no 
 additional interaction required. If the default settings are insufficient for 
 processing a particular data set, there are a number of run-time options which 
-may be applied to help improve the reductions:
+may be applied to help improve the reductions.
 
-	* Modules can be run manually step-by-step allowing for the inspection of the output at each step.
-	* Modules can be skipped.
-	* A pipeline run can be stopped, restarted or rerun at any stage of the reduction after the initial setup.
-	* An external reference image can be used to improve the internal alignment of the reduced NICMOS frames.
+The next command will show some of the available options::
+
+   $ papi.py --help
 
 
-Here's a listing of the PAPI command line options::
+Then, the listing of the PAPI command line options::
 
    Usage: papi.py [OPTION]... DIRECTORY...
 
@@ -59,27 +45,30 @@ Here's a listing of the PAPI command line options::
      --version             show program's version number and exit
      -h, --help            show this help message and exit
      -c CONFIG_FILE, --config=CONFIG_FILE
-                           config file for the PANIC Pipeline application.
-                           If not specified, './config_files/papi_portatil.cfg'
-                           is used
+                           Config file for the PANIC Pipeline application.
+                           If not specified, './config_files/papi_suse11.cfg' is
+                           used.
      -s SOURCE, --source=SOURCE
-                           Source file list of data frames.                   It
-                           can be a file or directory name.
-     -o OUTPUT_FILENAME, --output_file=OUTPUT_FILENAME
-                           final reduced output image
+                           Source file list of data frames. It can be a file
+                           or directory name.
+     -o OUTPUT_FILE, --output_file=OUTPUT_FILE
+                           Final reduced output image
      -t TEMP_DIR, --temp_dir=TEMP_DIR
-                           directory for temporal files
+                           Directory for temporal files
      -d OUTPUT_DIR, --out_dir=OUTPUT_DIR
-                           output dir for product files
-     -r REDUCTION_MODE, --red_mode=REDUCTION_MODE
-                           Mode of data reduction to do (quick|science)
+                           Output dir for product files
+     -r ROWS, --rows=ROWS  Use *only* files of the source file-list in the range
+                           of rows specified (0 to N, both included)
+     -l, --list            Generate a list with all the source files read from
+                           the source only sorted by MJD
+     -R REDUCTION_MODE, --red_mode=REDUCTION_MODE
+                           Mode of data reduction to do (lemon|quick|science)
      -m OBS_MODE, --obs_mode=OBS_MODE
-                           observing mode (dither|ext_dither|other)
-     -p, --print           print detected sequences in the Data Set
+                           Observing mode (dither|ext_dither|other)
+     -p, --print           Print detected sequences in the Data Set
      -S SEQ_TO_REDUCE, --seq_to_reduce=SEQ_TO_REDUCE
-                           Sequence number to reduce.                   Be
-                           default, all sequences found will be reduced.
-     -v, --verbose         verbose mode [default]
+                           Sequence number to reduce. By default,
+                           all sequences found will be reduced.
      -D MASTER_DARK, --master_dark=MASTER_DARK
                            master dark to subtract
      -F MASTER_FLAT, --master_flat=MASTER_FLAT
@@ -89,24 +78,67 @@ Here's a listing of the PAPI command line options::
      -g GROUP_BY, --group_by=GROUP_BY
                            kind of data grouping (based on) to do with the
                            dataset files (ot |filter)
-     -k, --check_data      if true, check data properties matching
-                           (type, expt, filter, ncoadd, mjd)
-   
+     -k, --check_data      if true, check data properties matching (type, expt,
+                           filter, ncoadd, mjd)
+     -v, --verbose         Verbose mode [default]
+  
 	
-.. index:: mask, masking, applymask
+Configuration files
+*******************
+PAPI has a set of configuration files required to run properly. They are the next
+ones:
 
-Applying User Defined Masks
-***************************
+   * papi.cfg:  main configuration file
 
-Run PAPI with the ``--applymask`` option. PAPI will stop processing after the ``nonlincor`` module and give
-instructions on how to run the masking tools on your data.
+      In addition to the command line options, PAPI has a configuration file in 
+      which the user can set both the command line options  and a wider set of 
+      additional ones. 
+      This config file can be specified with the ``-c`` option, but by default it 
+      is looked for it in the ``config_files`` directory defined by PAPI_CONFIG 
+      environment variable.
 
-.. _troubleshooting:
+   * scamp.cfg: SCAMP configuration file
+   * swarp.conf: SWARP configuration file
+   * sextractor.sex : SExtractor configuration file
+   * sextractor.conf: 
+   * sextractor.cong:
+   * sextractor.nnw:
+   * sextractor.param:
+   
+    
+.. index:: run, command line, config
+
+Getting PAPI Data
+*****************
+
+The PAPI pipeline requires the full set of uncalibrated data products 
+and best reference files for each observation in the input image set. These files 
+can be readily obtained through the CAHA_ archive. When
+requesting data from CAHA you need to specify:
+   
+   * Instrument : **PANIC**
+   * Science Files Requested: **Uncalibrated - Raw** 
+   * Reference Files: **Advanced Data Products**
+
+.. image:: _static/caha_archive.jpg
+   :align: center
+   :height: 300 px
+   :width: 565 px
+
+.. _CAHA: http://caha.sdc.cab.inta-csic.es/calto/index.jsp
+
+.. index:: options
+
 
 Troubleshooting
 ***************
 
-As we stated previously, PAPI was developed primarily for reducing imaging data of extragalactic sources. 
-Here are some tips for reducing other types of data:
+As we stated previously, PAPI was developed primarily for reducing NIR imaging
+data of any kind of sources (galactic, extragalactic, coarse or crowed fields, 
+and extended objects). Here are some tips for reducing each types of data:
+
+* Coarse fields:
+* Crowded fields:
+* Extended objects:
 
 *Add tips here*

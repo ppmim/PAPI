@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 #encoding:UTF-8
-
-# Copyright (c) 2010 Jose M. Ibanez All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
 #
-# This file is part of PAPI
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
+#
+# This file is part of PAPI (PANIC Pipeline)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +19,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 # ======================================================================
 #
@@ -25,37 +27,17 @@
 #
 # Author: Jose Miguel Ibanez Mengual <jmiguel@iaa.es>
 #
+# Update 2011-5-17 : substituted popen2 with subprocess
 # ======================================================================
 
 """
-A wrapper for SWARP
+A wrapper for SWARP (Astromatic.net, E.Bertin).
 
-A wrapper for SWARP from Astromatic (E.Bertin).
-by Jose M. Ibanez Mengual
-
-version: 0.1 - last modified: 2010-06-09
-Update 2011-5-17 : substituted popen2 with subprocess
-
-This wrapper allows you to configure SWARP, run it and get
-back its outputs without the need of editing SWARP
-configuration files. by default, configuration files are created
-on-the-fly, and SWARP is run silently via python.
+This wrapper allows you to configure SWARP, run it and get back its outputs 
+without the need of editing SWARP configuration files. by default, configuration 
+files are created on-the-fly, and SWARP is run silently via python.
 
 Tested on SWARP versions 2.17.x
-
-
-Example of use:
-
------------------------------------------------------------------
-
-
-
-
-TODO   
-
------------------------------------------------------------------
-
-
 """
 
 # ======================================================================
@@ -94,7 +76,7 @@ class SWARP:
 
     _SW_config = { 
 
-#----------------------------- Output--------- ---------------------------------
+#------------------------------Output-------------------------------------------
     
         "IMAGEOUT_NAME":
         {"comment": "Output filename",
@@ -336,7 +318,7 @@ class SWARP:
     def __init__(self):
         """
         SWARP class constructor.
-        If a specific config_file is provided, it is used 
+        If a specific config_file is provided, it is used.
         """
 
         self.config = (
@@ -366,7 +348,7 @@ class SWARP:
         if (path):
             candidates = [path]
         
-        selected=None
+        selected = None
         for candidate in candidates:
             try:
                 p = subprocess.Popen (candidate, shell = True, bufsize = 0,
@@ -409,8 +391,8 @@ class SWARP:
 
     def update_config(self):
         """
-        Update the configuration files according to the current
-        in-memory SWARP configuration.
+        Update the configuration files according to the current in-memory SWARP 
+        configuration.
         """
         
 
@@ -435,14 +417,25 @@ class SWARP:
 
     def run(self, file_list, updateconfig=True, clean=False, path=None):
         """
-        Run SWARP for a given list of files (fits files), and it can be one single file
+        Description
+        -----------
+        
+        Run SWARP for a given list of files (fits files), and it can be one 
+        single file.
 
-        If updateconfig is True (default), the configuration
-        files will be updated before running SWARP.
+        Parameters
+        ----------
+        
+        updateconfig: bool
+            If True (default), the configuration files will be updated before 
+            running SWARP.
 
-        If clean is True (default: False), configuration files 
-        (if any) will be deleted after SWARP terminates.
+        clean: bool
+            If clean is True (default: False), configuration files (if any) will 
+            be deleted after SWARP terminates.
 
+        path: str
+            Path to the 'swarp' application (binary file) in the system.
         """
 
         if updateconfig:

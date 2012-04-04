@@ -1,5 +1,45 @@
 PANIC Quick-Look Tool (PQL)
 ===========================
+The PANIC Quick-Look ((hereafter PQL) will  perform some on-line data processing 
+for quick-look or quality check of the data being acquired, taking a close look 
+at a raw near-infrared image and getting a quick feedback of the running observation.
+
+The PQL is an application with a graphical user interface which monitors the 
+GEIRS data output, waiting for new FITS files coming from GEIRS. When a new file 
+is detected, it is added to the file list view in the main panel, and then the 
+PQL will perform the task previously specified by the user in the setup 
+configuration. Some of the available tasks are:
+
+   * Only display the FITS image with no processing
+   * Dark subtraction, flat division
+   * Sky subtraction (using N-nearest frames or own sky )
+   * Field distortion removal
+   * Image align and stacking
+   * Preliminary astrometric solution
+   * Preliminary photometry
+
+In addition, the PQL allows the user to execute manually in an interactive way 
+some tasks with the data. For example, he user will be able to select a file, 
+compute some statistics values (background, FWHM, min, max, …) or ask for the
+sky subtraction looking for the nearest N frames around the selected one. Other 
+option available is to select a set of files and request a shift and align of 
+them.
+
+The PQL can be operated in both near-real time mode and offline mode (all data files
+already stored in the disk), although its functionalities have been provided 
+mainly in near-real time to check the status and progress of the observation 
+during the night. 
+
+The next figure shows a snapshot of the PQL:
+  
+.. image:: _static/pql_1.jpg
+   :align: center
+   :height: 725 px
+   :width: 993 px 
+   :scale: 75 %
+   :name: PQL snapshot 
+   
+
 
 .. index:: quick-look, running
 
@@ -9,47 +49,31 @@ Running on-line
 
 Running PQL can be as simple as executing the following command in a terminal::
 	
-	runPQL.py config_file
+	runPQL.py [-C config_file ] [-s raw_data ] [-o result ] 
 
-Where ``config_file`` is the name of the configuration file to use.
+Where ``config_file`` is the configuration file to be used (see bellow),
+``raw_data`` is the directory of the raw dataset (uncalibrated) having 
+both science or calibration files, and ``result`` is the path to the directory 
+where the calibrated data produced by the QL will be saved.  
+
+If no option is specified for launch the PQL, it will look for the default 
+configuration file and run with the configuration on it.
+
 
 .. index:: config, quicklook, papi, on-line
 
-Getting PAPI Data
-*****************
+Running off-line
+****************
+Run PQL in off-line mode means that data were already taken and are in a specific
+directory that we wish to inspect in quick way.
 
-The PAPI pipeline requires the full set of uncalibrated data products 
-and best reference files for each observation in the input image set. These files 
-can be readily obtained through the CAHA archive. When
-requesting data from CAHA you need to specify:
-	
-	* Science Files Requested: **Uncalibrated** 
-	* Reference Files: **Best Reference Files**
+.. index:: config, quicklook, off-line
 
-.. image:: _static/caha_archive.jpg
-   :align: center
-   :height: 300 px
-   :width: 565 px
-
-.. CAHA: http://www.caha.es/APPS/ARCHIVE/
-
-.. index:: options
 
 Optional Commands
 *****************
 
-For most image sets PAPI can be run in the default configuration with no 
-additional interaction required. If the default settings are insufficient for 
-processing a particular data set, there are a number of run-time options which 
-may be applied to help improve the reductions:
-
-	* Modules can be run manually step-by-step allowing for the inspection of the output at each step.
-	* Modules can be skipped.
-	* A pipeline run can be stopped, restarted or rerun at any stage of the reduction after the initial setup.
-	* An external reference image can be used to improve the internal alignment of the reduced NICMOS frames.
-
-
-Here's a listing of the PAPI command line options::
+Here's a listing of the PQL command line options::
 
    Usage: runQL.py [OPTION]... DIRECTORY...
 
@@ -74,22 +98,12 @@ Here's a listing of the PAPI command line options::
    
    
 	
-.. index:: quicklook, off-line
-
-Running off-line
-****************
-
-Run PQL in off-line mode means that data were already taken and are in a specific
-directory that we wish to inspect in quick way.
-
-
+.. index:: quicklook, off-line, on-line, configuration
 
 .. _troubleshooting:
 
 Troubleshooting
 ***************
 
-As we stated previously, PAPI was developed primarily for reducing imaging data of extragalactic sources. 
-Here are some tips for reducing other types of data:
 
 *Add tips here*
