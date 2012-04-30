@@ -1,0 +1,48 @@
+Advanced PANIC quick-look tool using Python
+===========================================
+
+José-Miguel Ibáñez*a, Antonio J.Garcíaa, Clemens Storzb, Josef W. Friedb, Matilde Fernándeza, Julio F. Rodríguez Gómeza
+aInstituto de Astrofísica de Andalucía (CSIC), Glorieta de la Astronomía 3, E-18008 Granada, Spain  
+          b Max-Planck-Institut für Astronomie  / Königstuhl 17, D-69117 Heidelberg, Germany
+Abstract
+--------  
+PANIC, the Panoramic Near Infrared Camera, is an instrument for the Calar Alto Observatory which is currently being integrated in laboratory and whose first light is foreseen for this year. We present here how the PANIC Quick-Look tool (PQL) and pipeline (PAPI) are being implemented, leveraging existing rapid programming Python technologies and packages, together with well-known astronomical software suites (Astromatic, IRAF) and parallel processing techniques. We will briefly describe the structure of the PQL tool, whose original characteristics are in the use of the SQLite database and PyQt, a Python binding of the GUI toolkit Qt.  
+Keywords: quick-look, pipeline, data reduction, python
+
+1. INTRODUCTION 
+---------------
+In 2005, the German-Spanish Observatory of Calar Alto (CAHA) changed its administrative status, and since then Germany and Spain have given financial support in equal shares for the development of new instrumentation for the observatory through their institutions Max-Planck-Gesellschaft (MPG) and Consejo Superior de Investigaciones Científicas (CSIC).
+In the frame of this agreement, the idea of building a new infrared camera for the 2.2m telescope, as the first instrument of the consortium, was suggested by both astronomical communities, supported by the Scientific Advisory Committee and approved by the Executive Committee.
+The PAnoramic Near Infrared Camera (PANIC), is a new instrument for CAHA (Calar Alto Observatory) whose first light is foreseen for end this year. This instrument is the first being built inside the Spanish-German consortium signed between MPG-MPIA and CSIC-IAA for the development of new instrumentation for CAHA.
+PANIC is a wide-field infrared imager for the Ritchey-Chrétien focus of the CAHA 2.2m and 3.5m telescopes. The optics is a folded single optical train, pure lens optics, with a plate scale of 0.45"/px (18 µm) at the 2.2m telescope and 0.23"/px at the 3.5m. A mosaic of four Hawaii-2RG of 2k x 2k with a gap of 3mm between the single detectors, will give a field of view of 0.5x0.5 degrees and 0.25x0.25 degrees, respectively. This cryogenic instrument will cover the photometric bands from Z to Ks (0.8 to 2.5 µm). PANIC will have a low thermal background due to cold stops. 
+The instrument's cold opto-mechanics consists of 9 lenses up to 255 mm
+diameter and three rectangular folding mirrors. It will be operated at about
+80 K, achieved by liquid nitrogen cooling. A compact filter unit can carry up
+to 19 filters distributed over four filter wheels. The mass limit of 400 kg at
+the 2.2m telescope requires a low mass design: a cryostat with dished ends,
+and a separate small LN2 vessel for cooling of the detector only and all parts
+are light weighted and made of aluminum wherever possible.
+
+2. PANIC SOFTWARE ARCHITECTURE
+
+3. PIPELINE SOFTWARE MODULES
+
+4. QUICK-LOOK TOOL
+
+5. FURTHER WORK
+
+6. CONCLUSIONS
+
+ACKNOWLEDGMENTS
+We would like to thank the CAHA, MPIA and IAA staff who gave us inputs and suggestions to improve the PANIC software functionalities during the meetings held at their institutes.
+
+REFERENCES
+[1] Anderson J., King I.R., "An Improved Distortion Solution for the Hubble Space Telescope's WFPC2" PASP 115,113 (2003)
+[2] Baumeister H., at al., "PANIC: the new panoramic NIR camera for Calar Alto", Proc. SPIE 7014, 70142R (2008)
+[3] Bertin E., Arnouts, S. "SExtractor: Software for source extraction", A&AS 117, 393 (1996)
+[4] Bertin E., "Automatic astrometric and photometric calibration with SCAMP", ASP Conf. Series 351,112 (2006)
+[5] Calabretta M.,  Greisen. E., "Representation of Celestial co-ordinates in FITS" ,A&A, (2000) (This paper was re-writed with 2002 paper of the same authors)
+[6] Cárdenas M.C. ,et al,"Preliminary optical design of PANIC: a wield-field infrared camera for CAHA", Proc. SPIE  7014,70142Q (2008)
+[7] Fried J.W., Baumeister H., Huber A., Laun W., Rohloff R.R., Max-Planck-Institut für Astronomie (Germany); Vázquez M.C., Instituto de Astrofísica de Andalucía (Spain), "Opto-mechanical design of PANIC", Proc. SPIE 7735, 138 (2010)
+[8] PANIC preliminary design review, PANIC team (2007), (internal communication)
+[9] Sabbey C. N., Lewis J. R., McMahon R. G., Irwin M. J., "Infrared Imaging Data Reduction Software and Techniques",ASP Conf. Series 238, 317 (2001)
