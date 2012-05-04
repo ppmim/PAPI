@@ -1,12 +1,14 @@
 Advanced PANIC quick-look tool using Python
 ===========================================
 
-José-Miguel Ibáñez*a, Antonio J.Garcíaa, Clemens Storzb, Josef W. Friedb, Matilde Fernándeza, Julio F. Rodríguez Gómeza
-aInstituto de Astrofísica de Andalucía (CSIC), Glorieta de la Astronomía 3, E-18008 Granada, Spain  
+José-Miguel Ibáñez*(a), Antonio J.García(a), Clemens Storz(b), Josef W. Friedb, Matilde Fernández(a), Julio F. Rodríguez Gómez(
+a)Instituto de Astrofísica de Andalucía (CSIC), Glorieta de la Astronomía 3, E-18008 Granada, Spain  
           b Max-Planck-Institut für Astronomie  / Königstuhl 17, D-69117 Heidelberg, Germany
 Abstract
 --------  
-PANIC, the Panoramic Near Infrared Camera, is an instrument for the Calar Alto Observatory which is currently being integrated in laboratory and whose first light is foreseen for this year. We present here how the PANIC Quick-Look tool (PQL) and pipeline (PAPI) are being implemented, leveraging existing rapid programming Python technologies and packages, together with well-known astronomical software suites (Astromatic, IRAF) and parallel processing techniques. We will briefly describe the structure of the PQL tool, whose original characteristics are in the use of the SQLite database and PyQt, a Python binding of the GUI toolkit Qt.  
+PANIC, the Panoramic Near Infrared Camera, is an instrument for the Calar Alto
+Observatory which is currently being integrated in laboratory and whose first
+light is foreseen for this year. We present here how the PANIC Quick-Look tool (PQL) and pipeline (PAPI) are being implemented, leveraging existing rapid programming Python technologies and packages, together with well-known astronomical software suites (Astromatic, IRAF) and parallel processing techniques. We will briefly describe the structure of the PQL tool, whose original characteristics are in the use of the SQLite database and PyQt, a Python binding of the GUI toolkit Qt.  
 Keywords: quick-look, pipeline, data reduction, python
 
 1. INTRODUCTION 
@@ -25,13 +27,51 @@ are light weighted and made of aluminum wherever possible.
 
 2. PANIC SOFTWARE ARCHITECTURE
 
+
+
 3. PIPELINE SOFTWARE MODULES
 
+3.1 Language 
+
+Since the beginning, the programming language selected was with no much
+doubts, Python, one of the princial language used nowadys for data processing
+in astrophisics. Python is a is an interpreted, interactive, object-oriented programming
+language. It is a "very high level language" or "scripting language," often compared to Perl, Tcl, Scheme, and Java. It combines remarkable power with a very clear and simple syntax that resembles the "pseudocode" one might use to describe the essentials of an algorithm. Implementations are availabe for free on all major (and many minor) computing platforms. Python is an "open source" project with a very liberal license.
+
+
 4. QUICK-LOOK TOOL
+------------------
+The quick-look software is a mandatory requirement for most of the
+astronomical instruments. Observers must have fast access to their data in
+order to evaluate if the required quality of their observations has been
+archieved. We hava adopted, and already implemented for PANIC, ta simple and
+fast solution for the quick-look software taking advantage of two rather well
+known astronomical tools: DS9 and IRAF. We have embedded the former into the
+observation software panel from which we can also have access to some commands
+of IRAF tha we have opportunely customized for quick-look purposes. Our choice
+offers several advantages, among which is the saving of time devoted to
+project, design and test new software.
+
+Embedding the binary version of DS9 into the observation software is a
+particulary powerful choice because DS9 is highly customizable at level of
+graphical user interface: it is ver easy to hide, add or modify the widgets of
+this application. Moreover, if we also consider the posibility of communicate
+with other tasks and the XPA protocol allowing external processes fo access
+and control DS9 data and algorithms, we can state that DS9 is a very adaptable
+and complete application.
+  
+4.1 Automatic reduction process
+-------------------------------
+One key feature of the PQL is to have the application "sniffing" for new files
+written to disk from the detector (GEIRS). Once a new file is detected in the
+target directory, the PQL automatically reduces the data frames and coadds
+them to previously reduced observations of the same object (dataset).
+
+ 
 
 5. FURTHER WORK
 
-6. CONCLUSIONS
+6. CONCLUSION
 
 ACKNOWLEDGMENTS
 We would like to thank the CAHA, MPIA and IAA staff who gave us inputs and suggestions to improve the PANIC software functionalities during the meetings held at their institutes.
