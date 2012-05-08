@@ -45,10 +45,10 @@ __revision__ = "$Rev$"
     
 #From system
 import sys
-import os
+#import os
 import os.path
 from optparse import OptionParser
-from optparse import IndentedHelpFormatter
+#from optparse import IndentedHelpFormatter
 import fileinput
 import dircache
 

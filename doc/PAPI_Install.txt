@@ -3,7 +3,10 @@ PANIC SOFTWARE INSTALLATION INSTRUCTIONS
 ========================================
 
 The next are the installation instructions for the PANIC software on the
-openSuSE 11.1-64 bit.
+openSuSE 11.1-64 bit
+
+Updated to openSuSE11.4 64bit (4-May-2012) -- (S11.4)
+
  
 ********
 ** OT **
@@ -33,14 +36,21 @@ http://download.netbeans.org/netbeans/7.0.1/final/bundles/netbeans-7.0.1-ml-java
 ** PIPELINE **
 **************
 
-1-Python v2.6 : (default in openSuSE11.1)
+0-Some system modules:
+======================
+zypper install tcl tk  tcl-devel tk-devl python-tk
+zypper install python-sphinx
+
+
+
+1-Python v2.6 : (default in openSuSE11.1) (v2.7 - S11.4)
 ===============
 
 1.1 python-devel 
 
 >zypper install python-devel
 
-1.2 IPython 0.8.4 (optional)
+1.2 IPython 0.8.4 (optional)  (IPython-0.10-11.1 - S11.4)
 
 > zypper install ipython
 
@@ -62,7 +72,7 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
   OpenSuSE from :
   ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/home:/makoenig:/science/openSUSE_Factory/x86_64/libplplot9-5.7.1-1.2.x86_64.rpm
   
-  * libgfortran is required by libplot9. It must be installed from openSuSE reposotory with zypper install libgfortran43
+  * libgfortran is required by libplot9. It must be installed from openSuSE reposotory with zypper install libgfortran43  (libgfortran45 - S11.4)
 
 > rpm -ivl libplplot9-5.7.1-1.2.x86_64.rpm 
 
@@ -255,18 +265,32 @@ This script will show you the name of your iraf extern.pkg file and several
 lines of configuration. Copy/paste ALL of these lines into extern.pkg, even
 if you do not need all of them.
 
+-----
+OJO !!! ---> la funcion envget("helpdb") parece que no funciona bien y da problemas 
+al lanzar pyraf (unos problemas un tanto raros "canno't import gki" ....etc)
+
+Quitando del extern.pkg los IF's y pondiendo la ruta del helpdb a "mano" no da problemas.
+-----
+ 
 If you do not have write access to hlib$extern.pkg, you can place these lines
 in your login.cl
 
 If your extern.pkg file already contains definitions for STSDAS, TABLES, or
 STECF, remove them. 
 
-2.2) mscred 5.04 
+2.2) mscred 5.04 (src + bin packages)
 ----------------
 - This external IRAF package is not required by stsci_python, but PAPI for MEF processing
 - Download source and binary package from ftp://iraf.noao.edu/iraf/extern/
 - Follow the installation instructions from README file (basically, as usual
 extenal IRAF packages)
+
+- Set appropiate links:
+
+> ln -s bin.redhat bin.linux
+> ln -s bin.redhat bin 
+
+
 
 2.3) nmisc v05-06-2003 (mm/dd/yyyy)
 -----------------------------------
@@ -294,6 +318,36 @@ task nmisc = nmisc$nmisc.cl
 
 
 Fix the bug in mscimarith:
+
+"""
+IRAF: --> mscred.mscarith
+
+"""
+Hello,
+
+There's a typo in mscred.mscarith.cl which prevents msarith from
+running in pyraf.
+
+line# 25 in mscarith.cl should be changed from
+
+int nop1, nop2, nresults, next1, next2, nexts, n
+
+to
+
+int nop1, nop2, nresult, next1, next2, nexts, n
+
+The error in pyraf is:
+
+apply(self._clFunction, parList, kw)
+File "<CL script mscred.mscarith>", line 90, in mcsarith
+taskObj.nresult = iraf.sections.nimages
+File "/usr/stsci/pyssgdev/2.4.2/pyraf/iraftask.py", line 1135, in __setattr__
+raise AttributeError(str(e))
+AttributeError: Unknown parameter requested: nresult
+
+
+Nadia Dencheva
+"""
 
 
 
@@ -377,8 +431,9 @@ export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_
 
 
 
-IRAF
-====
+===================================
+IRAF installation (opcion suse) - not well documented !!
+===================================
 
 Make directories:
 ~~~~~~~~~~~~~~~~
@@ -465,3 +520,289 @@ sudo chown -R /iraf . # change dir owner
 cd $hbin # go to HSI bin dir
 sudo chown 0 alloc.e # fix alloc.e ownership
 sudo chmod 4755 alloc.e # fix permissions
+
+
+
+
+
+====================================================================================
+IRAF installation (debian)- much better documented
+====================================================================================
+= IRAF Setup on Ubuntu/Debian =
+
+This page describes how to setup IRAF on a 32-bit Ubuntu/Debian machine.
+Installation of X11IRAF and DS9 are also included, plus installation of Tables
+and STSDAS are shown as an example of adding external packages.
+
+It will be easiest if you just copy-paste the instructions one by one.
+Please be sure to read and implement the instructions in [[brackets]] as well.
+
+For 64-bit installation, see -
+http://geco.phys.columbia.edu/~rubab/iraf/iraf_step_by_step_installation_64bit
+
+Please send questions or comments to:
+khan@astronomy.ohio-state.edu
+
+--------------------------------------------------------------------------------
+
+sudo apt-get install tcsh
+
+wget http://geco.phys.columbia.edu/~rubab/iraf/ldso_1.9.11-15_i386.deb
+
+sudo dpkg -i ldso_1.9.11-15_i386.deb
+
+wget http://geco.phys.columbia.edu/~rubab/iraf/libc5_5.4.46-15_i386.deb
+
+sudo dpkg -i libc5_5.4.46-15_i386.deb
+
+wget http://geco.phys.columbia.edu/~rubab/iraf/termcap-compat_1.2.3_i386.deb
+
+sudo dpkg -i termcap-compat_1.2.3_i386.deb
+
+[[Use System>Administration>Users and Groups to create an account with username 
+"iraf", real name "IRAF Maintenance", home directory "/iraf/iraf/local", shell 
+"/bin/tcsh", and a secure password. Be sure to grant admin privilege to this 
+account. For sudo commands here on, use this password. An easy way to avoid 
+confusion is to assign the same password to this account as to your other / 
+sys-admin account.]]
+
+
+>>useradd iraf -d /iraf/iraf/local -s /bin/tcsh
+
+
+sudo chown -R iraf:iraf /iraf
+
+su iraf
+
+mkdir /iraf/irafbin
+
+mkdir /iraf/irafbin/bin.linux
+
+mkdir /iraf/irafbin/noao.bin.linux
+
+mkdir /iraf/x11iraf
+
+mkdir /iraf/extern
+
+cd /iraf/iraf
+
+wget http://iraf.noao.edu/iraf/ftp/iraf/v214/PCIX/as.pcix.gen.gz
+
+tar -zxf as.pcix.gen.gz
+
+rm as.pcix.gen.gz
+
+cd /iraf/iraf/unix/bin.redhat/
+
+mv * ../bin.linux/
+
+cd /iraf/irafbin/bin.linux
+
+wget http://iraf.noao.edu/iraf/ftp/iraf/v214/PCIX/ib.rhux.x86.gz
+
+tar -zxpf ib.rhux.x86.gz
+
+rm ib.rhux.x86.gz
+
+cd /iraf/irafbin/noao.bin.linux
+
+wget http://iraf.noao.edu/iraf/ftp/iraf/v214/PCIX/nb.rhux.x86.gz
+
+tar -zxpf nb.rhux.x86.gz
+
+rm nb.rhux.x86.gz
+
+cd /iraf/iraf/unix/hlib
+
+source irafuser.csh
+
+[[Choose default paths as will be shown in on-screen prompt parentheses.
+Type "y" only where "yes" returns "huh?".]]
+
+sudo ./install
+
+sudo apt-get install libncurses5
+
+cd /iraf/x11iraf/
+
+wget http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v2.0BETA-bin.redhat.tar.gz
+ 
+tar -zxf x11iraf-v2.0BETA-bin.redhat.tar.gz
+
+mv lib.redhat lib.linux
+
+mv bin.redhat bin.linux
+
+sudo ./install
+
+rm x11iraf-v2.0BETA-bin.redhat.tar.gz
+
+http://hea-www.harvard.edu/saord/ds9/archive/linux/ds9.linux.6.2.tar.gz
+ 
+tar -zxf ds9.linux.6.2.tar.gz
+
+rm ds9.linux.6.2.tar.gz
+
+sudo mv ds9 /usr/local/bin/
+
+exit
+
+cd
+
+wget http://geco.phys.columbia.edu/~rubab/iraf/iraf
+
+sudo chmod u=rwx iraf
+
+mkdir ~/IRAF
+
+cd ~/IRAF
+
+mkiraf
+
+[[Select "xgterm" as your IRAF shell when prompted.]]
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+The command ./iraf will now launch a complete IRAF session containing DS9,
+xgterm and ecl, based in ~/IRAF. Alternately, start "xgterm' (typing xgterm), 
+cd into the directory where you did "mkiraf", and type "ecl" for enhanced IRAF, 
+"cl" for regular IRAF, and "ds9" for standalone DS9 launch. 
+
+Repeat the last 5 steps for each user as needed.
+
+The following steps show how to add external packages. This example install 
+Tables and STSDAS. If you don't need extra packages, then you are done already.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+su iraf
+
+cd /iraf/extern/
+
+mkdir tables stsdas
+
+cd /iraf/extern/tables/
+
+wget http://stsdas.stsci.edu/download/tables_3.12/tables3.12.tar.gz
+
+tar -zxf tables3.12.tar.gz
+
+rm tables3.12.tar.gz
+
+cd bin.linux/
+
+wget http://stsdas.stsci.edu/download/tables_3.12/tables3.12.bin.redhat.tar.gz
+
+tar -zxf tables3.12.bin.redhat.tar.gz
+
+rm tables3.12.bin.redhat.tar.gz
+
+cd /iraf/extern/stsdas
+
+wget http://stsdas.stsci.edu/download/stsdas_3.12/stsdas3.12.tar.gz
+
+tar -zxf stsdas3.12.tar.gz
+
+rm stsdas3.12.tar.gz
+
+cd bin.linux
+
+wget http://stsdas.stsci.edu/download/stsdas_3.12/stsdas3.12.bin.redhat.tar.gz
+
+tar -zxf stsdas3.12.bin.redhat.tar.gz
+
+rm stsdas3.12.bin.redhat.tar.gz
+
+cd /iraf/extern/stsdas
+
+python python/compileall.py ./python
+
+python python/compileall.py ./python/*
+
+nano /iraf/iraf/unix/hlib/extern.pkg
+
+[[Now, edit this file so that it look like what follows. Do not delete any 
+existing lines, just add the new lines that has "stsdas" or "tables" or 
+"apropos" in them.]]
+
+-----------------------------------------
+
+reset noao = iraf$noao/
+
+task noao.pkg = noao$noao.cl
+
+reset tables = /iraf/extern/tables/
+task tables.pkg = tables$tables.cl
+
+reset stsdas = /iraf/extern/stsdas/
+task stsdas.pkg = stsdas$stsdas.cl
+task apropos = stsdas$apropos.cl
+
+reset helpdb = "lib$helpdb.mip \
+,noao$lib/helpdb.mip \
+,tables$lib/helpdb.mip \
+,stsdas$lib/helpdb.mip \
+"
+
+keep
+
+-----------------------------------------
+
+[[Use ctrl-x to exit, answer "y" to save file, press enter to confirm.]
+
+exit
+
+cd
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+Now, tables and stsdas are available for use inside iraf. Some of the other
+commonly used packages are ared, mscred, color, ctio, fitsutil, gemini, gmisc,
+nmisc, rvsao and xdimsum. Google will help you find the packages and you can set
+them up (similar to the example given here for stsdas/tables) following the 
+instructions of the host pages.
+
+The following are some notes on alternate way of doing things.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+1. You can intall iraf without actually creating a separate user called "iraf". 
+To do this, simply skip the [[ instructions ]] on how to create a new user, and 
+*skip* these two lines -
+
+sudo chown -R iraf:iraf /iraf
+su iraf
+
+Instead, precede *all* your commands with "sudo". 
+
+
+2. Instead of installing the *.deb package of termcap-compat, you can install 
+the rpm package. To do this, *skip* these lines -
+
+wget http://geco.phys.columbia.edu/~rubab/iraf/ldso_1.9.11-15_i386.deb
+sudo dpkg -i --force-architecture ldso_1.9.11-15_i386.deb
+wget http://geco.phys.columbia.edu/~rubab/iraf/libc5_5.4.46-15_i386.deb
+sudo dpkg -i --force-architecture libc5_5.4.46-15_i386.deb
+wget http://geco.phys.columbia.edu/~rubab/iraf/termcap-compat_1.2.3_i386.deb
+sudo dpkg -i --force-architecture termcap-compat_1.2.3_i386.deb
+
+Instead, do these -
+
+
+sudo apt-get install rpm
+wget http://geco.phys.columbia.edu/~rubab/iraf/libtermcap-2.0.8-47.x86.rpm
+sudo rpm -iv --force-debian --nodeps  libtermcap-2.0.8-47.x86.rpm
+rm libtermcap-2.0.8-47.x86.rpm
+
+
+3. Here are some other places to get packages from, or if you want to use x11iraf-1.5
+wget http://iraf.net/ftp/iraf/v214/PCIX/as.pcix.gen.gz
+wget http://iraf.net/ftp/iraf/v214/PCIX/ib.rhux.x86.gz
+wget http://iraf.net/ftp/iraf/v214/PCIX/nb.rhux.x86.gz
+wget http://iraf.net/ftp/iraf/x11iraf/x11iraf-v1.5DEV-bin.redhat.tar.gz
+
+
+= END =
+
+

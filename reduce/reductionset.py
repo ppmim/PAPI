@@ -29,17 +29,17 @@
 ################################################################################
     
 #From system
-import sys
+#import sys
 import os
 import os.path
 import fileinput
-import glob
+#import glob
 import shutil
 import tempfile
 import dircache
-import math
+#import math
 import pprocess
-
+import multiprocessing
 
 # IRAF packages
 from pyraf import iraf
@@ -66,6 +66,17 @@ import reduce.astrowarp
 import misc.mef 
 import astromatic
 import datahandler.dataset
+
+#
+# Next function is neeed to use Pool() with class methods.
+# Solution obtained from :  
+# http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
+#
+def eval_func_tuple(f_args):
+    """Takes a tuple of a function and args, evaluates and returns result"""
+    return f_args[0](*f_args[1:]) 
+
+
 
 class ReductionSetException(Exception):
     pass
@@ -1632,7 +1643,7 @@ class ReductionSet(object):
                     # generate a random filename for the master super flat, to ensure we do not overwrite any file
                     output_fd, output_path = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                     os.close(output_fd)
-                    os.unlink(outfile_path) # we only need the name
+                    os.unlink(output_path) # we only need the name
                     #outfile = self.out_dir+"/master_superflat_%s.fits"%last_filter # added as suffix (FILTER)
                     superflat = reduce.SuperSkyFlat(seq, output_path, bpm=None, norm=False, temp_dir=self.temp_dir)
                     out=superflat.create()
@@ -1926,14 +1937,20 @@ class ReductionSet(object):
                 parallel = self.config_dict['general']['parallel']
                 
                 if parallel==True:
+                    ######## Parallel #########
                     log.info("[reduceSeq] Entering PARALLEL data reduction ...")
                     try:
                         # Map the parallel process
                         n_cpus = self.config_dict['general']['ncpus']
-                        results = pprocess.Map(limit=n_cpus, reuse=1) 
+                        #results = pprocess.Map(limit=n_cpus, reuse=1) 
                         # IF reuse=0, it block the application !! I don't know why ?? 
                         # though in pprocess examples it works! 
-                        calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
+                        #calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
+
+                        # New method using multiprocessing
+                        multiprocessing.freeze_support()
+                        pool = multiprocessing.Pool(n_cpus)
+                        results = []
                         for n in range(next):
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
                             ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
@@ -1954,12 +1971,14 @@ class ReductionSet(object):
                             
                             # async call to procedure
                             extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
-                        
+                            #calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
+                            red_parameters = (obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
+                            results += [pool.apply_async(self.reduceSingleObj, red_parameters)]
+                            
                         # Here is where we WAIT (BLOCKING) for the results (iteration is a blocking call)
                         for result in results:
                             #print "RESULT=",result
-                            out_ext.append(result)
+                            out_ext.append(result.get())
 
                         log.critical("[reduceSeq] DONE PARALLEL REDUCTION ")
                             
@@ -1973,16 +1992,20 @@ class ReductionSet(object):
                         raise e
                     
                 else:
+                    ######## Serial #########
                     for n in range(next):
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
                         log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", n+1)
+                        
                         ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
-                        if dark_ext==[]: mdark=None
-                        else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                        if flat_ext==[]: mflat=None
-                        else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                        if bpm_ext==[]: mbpm=None
-                        else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
+                        if dark_ext==[]: mdark = None
+                        else: mdark = dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        
+                        if flat_ext==[]: mflat = None
+                        else: mflat = flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        
+                        if bpm_ext==[]: mbpm = None
+                        else: mbpm = bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
                         
                         # Debug&Test
                         #if n==1: return None,None# only for a TEST !!!
@@ -2161,7 +2184,7 @@ class ReductionSet(object):
                 dark_ext, cext = self.split([dark])
                 flat_ext, cext = self.split([flat])
                 bpm_ext, cext = self.split([bpm])
-                parallel=self.config_dict['general']['parallel']
+                parallel = self.config_dict['general']['parallel']
                 
                 if parallel==True:
                     log.info("Entering parallel data reduction ...")
@@ -2322,7 +2345,8 @@ class ReductionSet(object):
         log.info("#### OUT_DIR = %s ",out_dir)
         log.info("#### OUT_FILE = %s ", output_file)
         log.info(" ----------------------------------")
-        log.info("#### FILTER = %s", self.db.GetFileInfo(obj_frames[0])[3])
+        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
+        log.info("#### FILTER = %s", c_filter)
         log.info("#### MASTER_DARK = %s ", master_dark)
         log.info("#### MASTER_FLAT = %s ", master_flat)
         log.info("#### MASTER_BPM = %s ", master_bpm)
