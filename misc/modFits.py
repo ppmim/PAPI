@@ -32,10 +32,6 @@ from optparse import OptionParser
 import pyfits
 import numpy as np
 
-
-
-
-
 def modFits(files, keyword, value, ext=0):
     """
     \brief Method used to modify some keywords in a list of FITS files
@@ -62,9 +58,10 @@ def modFits(files, keyword, value, ext=0):
             hdulist = pyfits.open(file)
         except IOError:
             print 'Error, can not open file %s' %(file)
-            continue    
+            continue
+
         #Check if it is a MEF file 
-        if ext>len(hdulist)-1:
+        if ext>(len(hdulist)-1):
             print "[Error] Wrong Extension number for file: %s"%file
             continue
         
@@ -91,23 +88,23 @@ if __name__ == "__main__":
     parser = OptionParser(usage)
     
     parser.add_option("-f", "--fits",
-                  action="store", dest="fits",
+                  action="store", dest="fits", type="str",
                   help="Input fits file. It has to be a fullpath file name")
     
     parser.add_option("-l", "--input",
-                  action="store", dest="input_file_list",
+                  action="store", dest="input_file_list", type="str",
                   help="Source file list of data frames. It has to be a fullpath file name")
                   
     parser.add_option("-k", "--key_value",
-                  action="store", dest="keyword", nargs=2,
-                  help="Extension number in which to look for 'keyword'")
+                  action="store", dest="keyword", type="str", nargs=1,
+                  help="Keyword space separated to be modified")
                   
-    parser.add_option("-v", "--value",
+    parser.add_option("-v", "--value", type="str",
                   action="store", dest="value",
                   help="Value to set to 'keyword'")
                                 
     parser.add_option("-e", "--ext",
-                  action="store", dest="extension_number", default=0,
+                  action="store", dest="extension_number", type="int", default=0,
                   help="Extension number in which to look for 'keyword' [0,N]")
     
     (options, args) = parser.parse_args()
