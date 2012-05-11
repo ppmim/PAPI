@@ -68,13 +68,43 @@ import astromatic
 import datahandler.dataset
 
 #
-# Next function is neeed to use Pool() with class methods.
-# Solution obtained from :  
+# Next functions are needed to allow the use of  multiprocessing.Pool() with 
+# class methods, that need to be picklable (at least 
+# Solution obtained from :
+# http://www.frozentux.net/2010/05/python-multiprocessing/  
 # http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
+# In addition, there is other version of the above functions:
+# http://stackoverflow.com/questions/5429584/handling-the-classmethod-pickling-issue-with-copy-reg
+# but it does not work (at least for me!) 
 #
-def eval_func_tuple(f_args):
-    """Takes a tuple of a function and args, evaluates and returns result"""
-    return f_args[0](*f_args[1:]) 
+def _pickle_method(method):
+    """
+    Pickle methods properly, including class methods.
+    """
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
+
+def _unpickle_method(func_name, obj, cls):
+    """
+    Unpickle methods properly, including class methods.
+    """
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)        
+
+import copy_reg 
+import types 
+ 
+copy_reg.pickle(types.MethodType,  
+    _pickle_method,  
+    _unpickle_method)  
 
 
 
@@ -1972,10 +2002,21 @@ class ReductionSet(object):
                             # async call to procedure
                             extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
                             #calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
-                            red_parameters = (obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
-                            results += [pool.apply_async(self.reduceSingleObj, red_parameters)]
+                            red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
+                                              self.red_mode, l_out_dir, 
+                                              extension_outfilename)
+                            # Notice that the results will probably not come out 
+                            # of the output queue in the same in the same order 
+                            # as the corresponding tasks were put on the input 
+                            # Pool.  If it is important to get the results back
+                            # in the original order then consider using `Pool.map()` 
+                            # or `Pool.imap()` (which will save on the amount of 
+                            # code needed anyway).
+                            results += [pool.apply_async(self.reduceSingleObj, 
+                                                         red_parameters)]
                             
-                        # Here is where we WAIT (BLOCKING) for the results (iteration is a blocking call)
+                        # Here is where we WAIT (BLOCKING) for the results 
+                        # (result.get() is a blocking call)
                         for result in results:
                             #print "RESULT=",result
                             out_ext.append(result.get())

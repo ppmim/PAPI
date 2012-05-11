@@ -663,8 +663,46 @@ pase por todos los casos posibles.
 
   - Estudio de los modos de autenticacion de subversion 
 
-2012-04-02
+2012-05-09
 ==========
+   - Videoconf: no pude asistir por subir al OSN a instalar la CCD Excelon 
+   en Albireo.
+   Parace ser que lo unico destacable respecto al SW fue que JF pregunto para
+   cuando la segunda integracion del SW.
+   
+
+2012-05-10
+==========
+
+   - Comienzo migracion de pprocess a multithreading (python >2.7)
+   - Encuentro un problema pues lo metodos de clases no los soporta
+   directamente Pool.apply_async(), hay que hacerlos "picklable".
+
+2012-05-11
+==========
+   - Encuentro una solucion para el problema anterior:
+   http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
+   
+   y parece que funciona. 
+   
+   
+2012-05-12
+==========
+   - Lanzo PAPI con mutiprocessing.Pool y parece que funciona bien (data set
+   de HAWK-I-3).
+   
+   - Ahora detecto un problema "aleatorio" (no ocurre siempre) en el multiprocessing:
+   
+   Exception in thread Thread-1 (most likely raised during interpreter shutdown):
+Traceback (most recent call last):
+  File "/gel/usr/mawal32/system/lib/python2.7/threading.py", line 530, in __bootstrap_inner
+  File "/gel/usr/mawal32/system/lib/python2.7/threading.py", line 483, in run
+  File "/gel/usr/mawal32/system/lib/python2.7/multiprocessing/pool.py", line 272, in _handle_workers
+<type 'exceptions.TypeError'>: 'NoneType' object is not callable
+   
+y parece que esta reportado el bug, pero no consigo solucionarlo de momento:
+   
+   http://bugs.python.org/issue9207.
 
 
 FOR NEXT VIDEOCONF
