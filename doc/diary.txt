@@ -704,16 +704,75 @@ y parece que esta reportado el bug, pero no consigo solucionarlo de momento:
    
    http://bugs.python.org/issue9207.
 
+2012-05-14
+==========
+   - Añado al multiprocessing las llamadas:
+   
+        pool.close()
+        pool.join() 
+        
+     para intentar solucionar el problema aparecido el dia anterior.
+   - Lanzo PAPI varias veces y parece que funciona bien (data set HAWK-I-3).
+   - En una de las veces que ejecute PAPI el 15-Mayo si fallo otra vez dando el
+   mensaje de arriba (12-May), por lo que parece que con el close()+join()
+   no se soluciona.
+  
+2012-05-15
+==========
+   - Pruebas en reduceSingleObj() con AstroWarp en el modo "quick":
+     
+       - con HAWK-I-3, y DETECT_THRESH=4, no es capaz de hacer astrometría ni crear el mosaico;
+       con DETECT_THRESH=1.5, hace astrometría mal, y por tanto el mosaico final tambien está
+       desformado.
+       - con O2k-Matilde-2012-20120105-S-5, si lo hace bien (DETECT_THRESH=1.5)
+       
+
 
 FOR NEXT VIDEOCONF
 ==================
 
  - Improvements in master flat (normlizaton wrt chip 1)
  - New module for mix dome & sky FF : calCombineFF()
- 
-  
+
+DOUBTS FOR MATILDE
+==================
+
+ - integration of cubes/individual files (add or mean)
+   Si; opciones sumatorio "simple" del cubo/ficheros
+ - integration of single-images (individual files)
+   ver arriba
+ - how to proceed with windowed/binned images ? MF preguntara a la gente de Barcelona. Preguntar CS sobre el binning. 
+ - JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? --> MF le preguntara a JF que quiere exactamente
+ - how to reduce 'other' readout modes (rrr-mpia, lir, mer, srr, cntsr) or only work for lir (line-interlaced-read)
+   MF preguntara a CS
+ - how to remove the stripe/quadrant background offsets in dxtalk.py --> MF no se le ocurre a priori como eliminarlo; JM preguntara al Chino (WIRCAM)
+   Otra opcion es ver si se puede restar solamente la estrella.
+
+
+ - New module for mix dome & sky FF : calCombineFF() - no comentada
+ - show MF PAPI CL interface - no comentada
+
+
+
+
+TODO's for Clemens
+==================
+- comando para añadir cualquier keyword al header
+- WCS correcto en los headers, actualmente tiene
+TYPE1  = 'PIXEL'
+CTYPE2  = 'PIXEL'
+CRPIX1  =                  1.0
+CRPIX2  =                  1.0
+CRVAL1  =                  1.0
+CRVAL2  =                  1.0
+CDELT1  =                  1.0
+CDELT2  =                  1.0
+
+- bug en la salida del comando median cuando se envia desde el OT con snd_panic_new, que ahora sólo devuleve OK
+
+
 FAQ:
----
+===
 1) ¿ para que se usa en PAPI los gainmap ? 
    - skyfilter
    - dithercubemean

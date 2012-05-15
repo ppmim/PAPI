@@ -57,8 +57,12 @@ zypper install python-sphinx
 
 2-Astromatic
 ============
+Two options:
+A) Binary packages
++++++++++++++++++++
+
 2.1 SExtractor v2.8.6: from astromatic get rpm for 64 bit
-----------------------
+---------------------------------------------------------
 - Download from astromatic.net -->
 http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 
@@ -97,6 +101,48 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 - Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.19.1-1.x86_64.rpm
 
 > rpm -ivl swarp-2.19.1-1.x86_64.rpm
+
+B) Sources packages
++++++++++++++++++++
+
+B.1) Add science repository in order to install atlas/blas/lapack/fftw (etc):
+
+Add the file /etc/zypp/repos.d/science.repo with the next content:
+
+[science]
+name=Software for Scientists and Engineers (openSUSE_11.4)
+type=rpm-md
+baseurl=http://download.opensuse.org/repositories/science/openSUSE_11.4/
+gpgcheck=1
+gpgkey=http://download.opensuse.org/repositories/science/openSUSE_11.4/repodata/repomd.xml.key
+enabled=1
+
+
+B.2) Install atlas/blas/lapack/fftw development libraries :
+
+zypper install libatlas3-devel lapack-devel blas-devel
+
+B.3) Sextractor: 
+- Download the source tar ball
+- run configure, make & make install
+
+B.4) SCAMP: 
+- Download the source tar ball
+- run configure, make & make install
+
+At the linking stage, I got the next error (suse11.4):
+
+libtool: Version mismatch error.  This is libtool 2.4, but the
+libtool: definition of this LT_INIT comes from libtool 2.2.6b.
+libtool: You should recreate aclocal.m4 with macros from libtool 2.4
+libtool: and run autoconf again.
+
+??????
+
+B.5) SWARP: 
+- Download the source tar ball
+- run configure, make & make install
+
 
 
 3. Numpy v1.6.1
