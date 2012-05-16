@@ -43,7 +43,6 @@ import fileinput
 import pyfits
 
 # PAPI modules
-import misc.paLog
 from misc.paLog import log
 
 
@@ -156,6 +155,7 @@ def runCmd( str_cmd, p_shell=True ):
     err = stdoutdata + " " + stderrdata
 
     print "STDOUT + STDERR", err
+    
     
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
     if (err.lower().count('error ') or err.lower().count('error:') 

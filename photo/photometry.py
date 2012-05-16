@@ -539,7 +539,7 @@ def doPhotometry(input_image, catalog, output_filename, snr):
     sex.config['CATALOG_NAME'] = image_catalog
     sex.config['DETECT_THRESH'] = 1.5
     sex.config['DETECT_MINAREA'] = 5
-    sex.config['MAG_ZEROPOINT'] = 0 #26.56
+    sex.config['MAG_ZEROPOINT'] = 0 #26.0
     
     
     try:

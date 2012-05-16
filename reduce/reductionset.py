@@ -38,8 +38,9 @@ import shutil
 import tempfile
 import dircache
 #import math
-import pprocess
+import pprocess # to be removed  !!
 import multiprocessing
+import itertools
 
 # IRAF packages
 from pyraf import iraf
@@ -65,6 +66,7 @@ import reduce.remove_cosmics
 import reduce.astrowarp
 import misc.mef 
 import astromatic
+from astromatic.swarp import *
 import datahandler.dataset
 
 #
@@ -536,12 +538,58 @@ class ReductionSet(object):
             sorted_files.append(tuple[0])
         
         return sorted_files
+
+    def collapse(self, frame_list, out_filename_suffix="_sum")
+        """
+        Collapse (sum) the data cube into a single 2D image
+        
+        Return a list with the new collapsed frames
+        """
     
+        log.debug("Starting collapse() method ....")
+        
+        new_frame_list = [] 
+        n = 0
+        
+        if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
+            return []
+
+        for frame_i in frame_list:
+            f = pyfits.open(frame_i)
+            # First, we need to check if we have MEF files
+            if len(f)>1:
+                log.error("MEF files cannot be collapsed. First need to be splitted !")
+                raise Exception("MEF files cannot be collapsed. First need to be splitted !")
+                new_frame_list.append(frame_i)
+            elif len(f[0].data.shape)!=3:
+                log.info("No collapse required. It is not a cube image")
+                new_frame_list.append(frame_i)
+            else:            
+                #Suppose we have single CUBE file ...
+                out_hdulist = pyfits.HDUList()               
+                prihdu = pyfits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
+                
+                # Start by updating PRIMARY header keywords...
+                #prihdu.header.update ('EXTEND', pyfits.FALSE, after = 'NAXIS')
+                
+                out_hdulist.append(prihdu)    
+                #out_hdulist.verify ('ignore')
+                # Now, write the new MEF file
+                new_filename = frame_i.replace(".fits","_sum.fits")
+                out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
+                out_hdulist.close(output_verify = 'ignore')
+                del out_hdulist
+                new_frame_list.append(new_filename)
+                log.info("FITS file %s created" % (new_frame_list[n]))
+                n+=1
+          
     def split(self, frame_list):
         """ 
         Split the data from the given frame list (any kind, science or 
         calibration) into N 'sub-list', where N is the number of extension of 
         the Multi-Extension FITS.
+        
+        Return a list with the splited frames and the number of extensions.
         """
         
         log.debug("Starting split() method ....")
@@ -1756,7 +1804,7 @@ class ReductionSet(object):
                     # what it is very useful for the QL
                     failed_sequences +=1
                     log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
-                    log.warning("[reduceSet] Procceding to next sequence...")
+                    log.debug("[reduceSet] Procceding to next sequence...")
                     if len(sequences)==1: 
                         raise e
             k = k + 1
@@ -1811,7 +1859,20 @@ class ReductionSet(object):
             
 
         return new_sequences, new_seq_types
-        
+    
+    def collapse_cube(self, cube_file):
+      """
+      Collapse (adding) all the planes of the give cube into a s single plane
+      """
+      
+      #1-check is a cube
+      f = 
+    def calc(self, args):
+        """
+        Method used only to use with Pool.map_asycn() function
+        """
+        return self.reduceSingleObj(*args)
+      
     def reduceSeq(self, sequence, type):
         """
         Reduce/process a produced OT-sequence of files (calibration, science).
@@ -1981,7 +2042,12 @@ class ReductionSet(object):
                         multiprocessing.freeze_support()
                         pool = multiprocessing.Pool(n_cpus)
                         results = []
+                          
                         for n in range(next):
+                            ## only a test to reduce Q01
+                            #log.critical("only a test to reduce Q01")
+                            if n!=0 and n!=1: continue
+                            ## end-of-test
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
                             ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
                             if dark_ext==[]: mdark = None
@@ -2012,15 +2078,25 @@ class ReductionSet(object):
                             # in the original order then consider using `Pool.map()` 
                             # or `Pool.imap()` (which will save on the amount of 
                             # code needed anyway).
-                            results += [pool.apply_async(self.reduceSingleObj, 
-                                                         red_parameters)]
-                            
+                            #results += [pool.apply_async(self.reduceSingleObj, 
+                            #                             red_parameters)]
+                            results += [pool.map_async(self.calc,
+                                                      [red_parameters])]         
                         # Here is where we WAIT (BLOCKING) for the results 
-                        # (result.get() is a blocking call)
+                        # (result.get() is a blocking call).
+                        # If the remote call raised an exception then that 
+                        # exception will be reraised by get().
                         for result in results:
                             #print "RESULT=",result
-                            out_ext.append(result.get())
+                            out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
 
+                        #Prevents any more tasks from being submitted to the pool. 
+                        #Once all the tasks have been completed the worker 
+                        #processes will exit.
+                        pool.close()
+                        #Wait for the worker processes to exit. One must call 
+                        #close() or terminate() before using join().
+                        pool.join()
                         log.critical("[reduceSeq] DONE PARALLEL REDUCTION ")
                             
                         #pool=multiprocessing.Pool(processes=2)
@@ -2073,6 +2149,7 @@ class ReductionSet(object):
             # if all reduction were fine, now join/stich back the extensions in a wider frame
             seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
             if len(out_ext) >1:
+                print "OUT_EXT=",out_ext
                 log.debug("[reduceSeq] *** Creating final output file *WARPING* single output frames....***")
                 #option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
@@ -2092,6 +2169,9 @@ class ReductionSet(object):
                     swarp.run(out_ext, updateconfig=False, clean=False)
                 except SWARPException, e:
                     log.error("Error while running SWARP")
+                    raise e
+                except Exception, e:
+                    log.error("Unknow error while running SWARP: %s",str(e))
                     raise e
                 
                 files_created.append(seq_result_outfile)
@@ -2598,25 +2678,26 @@ class ReductionSet(object):
         # parecidos, y en CPU tambien =, por tanto, opcion a considerar !!---
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        """
-        if self.obs_mode!='dither' or self.red_mode=="quick":
-            log.info("**** Doing Astrometric calibration and  coaddition result frame ****")
-            #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", 
-            coadded_file=output_file, config_dict=self.config_dict)
-            try:
-                aw.run()
-            except Exception,e:
-                log.error("Some error while running Astrowarp....")
-                raise e
-            log.info("Generated output file ==>%s", output_file)
-            log.info("#########################################")
-            log.info("##### End of SINGLE data reduction ######")
-            log.info("#########################################")
-            return output_file
+        prueba = False  
+        if prueba:
+            if self.obs_mode!='dither' or self.red_mode=="quick":
+                log.info("**** Doing Astrometric calibration and  coaddition result frame ****")
+                #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+                coadded_file=output_file, config_dict=self.config_dict)
+                try:
+                    aw.run()
+                except Exception,e:
+                    log.error("Some error while running Astrowarp....")
+                    raise e
+                log.info("Generated output file ==>%s", output_file)
+                log.info("#########################################")
+                log.info("##### End of SINGLE data reduction ######")
+                log.info("#########################################")
+                return output_file
         
         ## -- fin prueba !!
-        """
+        
         ########################################################################
         # 6 - Compute dither offsets from the first sky subtracted/filtered 
         # images using cross-correlation

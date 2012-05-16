@@ -504,7 +504,7 @@ class SExtractor:
         
         if (rcode==0):
             raise SExtractorException, \
-                  "SExtractor command [%s] failed." % commandline
+                  "SExtractor command [%s] failed." % str(commandline)
             
         if clean:
             self.clean()

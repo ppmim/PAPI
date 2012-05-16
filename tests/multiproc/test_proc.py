@@ -65,7 +65,8 @@ def test():
 
     # Start worker processes
     for i in range(NUMBER_OF_PROCESSES):
-        Process(target=worker, args=(task_queue, done_queue)).start()
+        p = Process(target=worker, args=(task_queue, done_queue))
+        p.start()
 
     # Get and print results
     print 'Unordered results:'
@@ -84,7 +85,9 @@ def test():
     for i in range(NUMBER_OF_PROCESSES):
         task_queue.put('STOP')
 
-
+    print "Joinning ...."
+    p.join()
+    
 if __name__ == '__main__':
     freeze_support()
     test()

@@ -423,7 +423,21 @@ Files to patch:
       - scc.c
 
 
-15. OTHER SYSTEM LIBS REQUIRED
+15. OTHER SOFTWARE REQUIRED
+===========================
+
+- STILTS (http://www.star.bris.ac.uk/~mbt/stilts/) : used by photometry.py for catalog xmatching
+
+  > wget http://www.star.bris.ac.uk/~mbt/stilts/stilts.jar
+  > wget http://www.star.bris.ac.uk/~mbt/stilts/stilts
+
+and copy to the directory specified by the _stilts_pathname variable in photometry.py (/home/panic/SOFTWARE/STILTS/stilts)
+
+TO BE CONFIRMED/ENHANCED !
+
+
+
+16. OTHER SYSTEM LIBS REQUIRED
 ==============================
 
 - libcurl4-32bit (and maybe this link : usr/lib/libcurl.so.3 ->

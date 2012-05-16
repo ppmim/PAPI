@@ -443,7 +443,8 @@ class SWARP:
 
         # Try to find SWARP program
         # This will raise an exception if it failed
-
+        
+        print "SWARP 1"
         self.program, self.version = self.setup(path)
         
         # check how many files in the input
@@ -452,24 +453,30 @@ class SWARP:
             for file in file_list:
                my_files = my_files + " " + file
         else:
-            my_files=file_list # a single file
-                
+            my_files = file_list # a single file
+
+        print "SWARP 2"
+
         # Compound extra config command line args
         ext_args=""
         for key in self.ext_config.keys():
             ext_args=ext_args + " -" + key+ " " + str(self.ext_config[key])
-               
+
+        print "SWARP 3"
+       
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + my_files)
         
-        #print commandline
+        print "SWARP 4"
+
+        print commandline
 
         #rcode = os.system(commandline)
         rcode = misc.utils.runCmd(commandline)
         
         if (rcode==0):
             raise SWARPException, \
-                  "SWARP command [%s] failed." % commandline
+                  "SWARP command [%s] failed." % str(commandline)
             
         if clean:
             self.clean()

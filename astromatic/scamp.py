@@ -53,6 +53,11 @@ import fileinput
 import types
 import subprocess
 
+
+# PAPI modules
+from misc.paLog import log
+
+
 # ======================================================================
 
 __version__ = "0.1 (2010-06-08)"
@@ -539,10 +544,10 @@ class SCAMP:
         
         if (rcode==1):
             raise SCAMP_Exception, \
-                  "SCAMP command [%s] failed." % commandline
+                  "SCAMP command [%s] failed." % str(commandline)
         elif (rcode==2):
             raise SCAMP_AccuracyException, \
-                  "SCAMP Warning/error: Significant inaccuracy likely to occur in projection."
+                  "SCAMP Warning/error: Significant inaccuracy likely to occur in projection.\n%s" %commandline
             
         if clean:
             self.clean()
@@ -593,7 +598,8 @@ def runCmd( str_cmd, p_shell=True ):
       - best checking of error when shell=True
     """
            
-    print "Running command : %s \n"%str_cmd
+    log.info("Running command : %s \n", str_cmd)
+    
     try:
         p = subprocess.Popen(str_cmd, bufsize = 0, shell = p_shell, stdin = subprocess.PIPE, 
                              stdout = subprocess.PIPE, stderr = subprocess.PIPE, 
@@ -622,7 +628,7 @@ def runCmd( str_cmd, p_shell=True ):
       or err.count('WARNING: Not enough matched detections') # SCAMP
       or err.count('WARNING: Significant inaccuracy likely to occur in projection')): #SCAMP
         print "An error happened while running command --> %s \n"%err
-        return 1
+        return 1 # ERROR
     else:
         return 0 # NO ERROR
     

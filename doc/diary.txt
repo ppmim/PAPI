@@ -726,7 +726,28 @@ y parece que esta reportado el bug, pero no consigo solucionarlo de momento:
        desformado.
        - con O2k-Matilde-2012-20120105-S-5, si lo hace bien (DETECT_THRESH=1.5)
        
+   - Una prueba con O2k-Matilde-2012-20120105-S-6 falló, pues el gainmap era todo BPM !!!! ---> BUG ????
+       
+   - Reunion con MF para dudas de PAPI (ver comentarios abajo, sección DOUBTS FOR MATILDE)
 
+2012-05-16
+==========
+    - Compruebo que haciendo :
+      
+      > aladin /tmp/reduced_SEQ.fits /tmp/reduced_SEQ_zp.xml 
+      
+      y haciendo click sobre una objeto no muestra los valores de catalogo leido 
+      (/tmp/reduced_SEQ_zp.xml) y generado con SExtractor con el MAG_ZEROPOINT 
+      calculado previamente con photometry.py
+  
+    - Le pregunto a VTerron si el ha tenido problemas con multiprocessing, parece
+    que no ha tenido problemas; el usa Pool.map_asycn(), asi que voy yo a probar 
+    con esa llamada para ver si así se soluciona.
+    
+    
+    
+    
+  
 
 FOR NEXT VIDEOCONF
 ==================
@@ -734,23 +755,38 @@ FOR NEXT VIDEOCONF
  - Improvements in master flat (normlizaton wrt chip 1)
  - New module for mix dome & sky FF : calCombineFF()
 
-DOUBTS FOR MATILDE
-==================
+DOUBTS FOR MATILDE (15-May-2012)
+================================
 
  - integration of cubes/individual files (add or mean)
-   Si; opciones sumatorio "simple" del cubo/ficheros
- - integration of single-images (individual files)
-   ver arriba
- - how to proceed with windowed/binned images ? MF preguntara a la gente de Barcelona. Preguntar CS sobre el binning. 
- - JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? --> MF le preguntara a JF que quiere exactamente
+   -->Si; sumatorio "simple" del cubo/ficheros sin mas.
+ - integration of single-images (individual files) --> keyword FRAMENUM
+   (ver arriba)
+ - how to proceed with windowed/binned images ? 
+   --> MF preguntara a la gente de Barcelona sobre las ventanas 
+   y como se podrian reducir (sky, astrometry, etc). 
+   --> JM Preguntara CS sobre el binning: CS responde que no, que en IR no hay binning 
+ - JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? 
+   --> MF le preguntara a JF que quiere exactamente; MF no ve muy interesante el ir viendo la Mag de cada
+   estrella al marcarla en el display. Es mucho más útil la grafica de magnitud instrumental VS magnitud catalogo.
+   --->JM mirara si con Aladin de puede hacer lo de leer un catalogo+imagen para consultar la magnitud, y tambien
+   con imexam.
+   --> JM : con > aladin /tmp/reduced_SEQ.fits /tmp/reduced_SEQ_zp.xml se puede hacer !! y haciendo click sobre una 
+   objeto no muestra los valores de catalogo leido (/tmp/reduced_SEQ_zp.xml) y generado con SExtractor con el MAG_ZEROPOINT 
+   calculado previamente con photometry.py
+   
  - how to reduce 'other' readout modes (rrr-mpia, lir, mer, srr, cntsr) or only work for lir (line-interlaced-read)
-   MF preguntara a CS
- - how to remove the stripe/quadrant background offsets in dxtalk.py --> MF no se le ocurre a priori como eliminarlo; JM preguntara al Chino (WIRCAM)
-   Otra opcion es ver si se puede restar solamente la estrella.
+   MF preguntara a CS, pues no sabe a priori de que diferencias puede haber pero tiene "curiosidad" por ver que quería decir CS 
+   (aunque JF dijo que no había diferencias)
+ - how to remove the stripe/quadrant background offsets in dxtalk.py --> MF no se le ocurre a priori como eliminarlo; 
+ JM preguntara al Chino (WIRCAM); Otra opcion es ver si se puede restar solamente la estrella, lo estudiará JM.
 
 
- - New module for mix dome & sky FF : calCombineFF() - no comentada
- - show MF PAPI CL interface - no comentada
+DOUBTS FOR MATILDE (next)
+================================
+
+ - New module for mix dome & sky FF : calCombineFF()
+ - show MF PAPI CL interface
 
 
 

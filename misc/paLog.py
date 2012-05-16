@@ -11,8 +11,8 @@ class ColorFormatter(logging.Formatter):
     def color(self, level=None):
         codes = {\
             None:       (0,   0),
+	    'DEBUG':    (1,  32), # green
             'INFO':     (0,  33), # yellow
-            'DEBUG':    (1,  32), # green
             'WARNING':  (1,  34), # blue
             'ERROR':    (1,  31), # red
             'CRITICAL': (1, 101), # negro, fondo rojo

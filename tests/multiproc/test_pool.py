@@ -111,18 +111,22 @@ def test():
     
     results = []
     #results = [pool.apply_async(calculate, t) for t in TASKS]
-    #results = [pool.apply_async(obj.func1, (2,5))]
-    results+= [pool.apply_async(calculate, t) for t in TASKS2]
+    results = [pool.map_async(calculatestar, [(mul,(3,5))] )]
+    #results+= [pool.apply_async(calculate, t) for t in TASKS2]
+    #results+= [pool.map_async(calculate, [(mul,(3,5))])]
+    ##results = [pool.map_async(calculatestar, TASKS)]
     #imap_it = pool.imap(calculatestar, TASKS)
     #imap_unordered_it = pool.imap_unordered(calculatestar, TASKS)
 
     print 'Ordered results using pool.apply_async():'
     for r in results:
         print '\t', r.get()
-    print
+    
 
-
-
+    print "Joinning ..."
+    pool.close()
+    #pool.terminate()
+    pool.join()
 
 
 if __name__ == '__main__':

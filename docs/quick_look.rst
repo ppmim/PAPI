@@ -49,7 +49,7 @@ Running on-line
 
 Running PQL can be as simple as executing the following command in a terminal::
 	
-	runPQL.py [-C config_file ] [-s raw_data ] [-o result ] 
+	> ./runPQL.py [-C config_file ] [-s raw_data ] [-o result ] 
 
 Where ``config_file`` is the configuration file to be used (see bellow),
 ``raw_data`` is the directory of the raw dataset (uncalibrated) having 
@@ -66,6 +66,7 @@ Running off-line
 ****************
 Run PQL in off-line mode means that data were already taken and are in a specific
 directory that we wish to inspect in quick way.
+In order for working in off-line mode, yoy
 
 .. index:: config, quicklook, off-line
 

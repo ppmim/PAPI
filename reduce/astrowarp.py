@@ -211,7 +211,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
     config_dict  - dictionary with config arguments
     
     do_votable   - If True, build-out a VO-Table (SEx) with the fields required 
-                    for the photometry calibration 
+                   for the photometry calibration. 
     """
     
     log.debug("[doAstrometry] *** Start Astrometric calibration ***")
@@ -435,7 +435,7 @@ class AstroWarp(object):
                 raise RuntimeError("There was an error while running 'initwcs'")
             """   
         ## STEP 1: Create SExtractor catalogs (.ldac)
-        log.debug("*** Creating SExtractor catalog ....")
+        log.debug("*** Creating objects catalog (SExtractor)....")
         for file in self.input_files:
             sex = astromatic.SExtractor()
             #sex.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
@@ -453,7 +453,7 @@ class AstroWarp(object):
             #filter_area(file + ".ldac")    
                         
         ## STEP 2: Make the multi-astrometric calibration for each file (all overlapped-files together)
-        log.debug("*** Doing multi-astrometric calibration ....")
+        log.debug("*** Doing multi-astrometric calibration (SCAMP)....")
         scamp = astromatic.SCAMP()
         scamp.config['CONFIG_FILE'] = self.config_dict['config_files']['scamp_conf']
         #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
@@ -471,7 +471,7 @@ class AstroWarp(object):
         
         ## STEP 3: Make the coadding with SWARP, and using .head files created by SCAMP
         # It requires the files are overlapped, i.e., have an common sky-area
-        log.debug("*** Coadding overlapped files....")
+        log.debug("*** Coadding overlapped files (SWARP)....")
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf']
         #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
@@ -555,7 +555,8 @@ if __name__ == "__main__":
     cfg_options = misc.config.read_config_file(config_file)
     
     
-    if not options.source_file or not options.output_filename or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    # args is the leftover positional arguments after all options have been processed
+    if not options.source_file or not options.output_filename or len(args)!=0: 
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if options.verbose:
