@@ -68,6 +68,7 @@ import misc.mef
 import astromatic
 from astromatic.swarp import *
 import datahandler.dataset
+import misc.collapse
 
 #
 # Next functions are needed to allow the use of  multiprocessing.Pool() with 
@@ -428,34 +429,34 @@ class ReductionSet(object):
             fi = datahandler.ClFits( file )
             if chk_filter and not mismatch_filter: 
                 if fi.getFilter() != filter_0:
-                    log.debug("File %s does not match file FILTER", file)
+                    log.debug("File %s does not match FILTER", file)
                     mismatch_filter = True
                     break
             if chk_type and not mismatch_type: 
                 if fi.getType() != type_0:
-                    log.debug("File %s does not match file TYPE", file)
+                    log.debug("File %s does not match TYPE", file)
                     mismatch_type = True
                     break
             if chk_expt and not mismatch_expt: 
                 if fi.expTime() != expt_0:
                 #if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or
                 #    (fi.expTime()-self.MAX_MJD_DIFF)>expt_0):   # more relaxed situation
-                    log.debug("File %s does not match file EXPTIME", file)
+                    log.debug("File %s does not match EXPTIME", file)
                     mismatch_expt = True
                     break
             if chk_itime and not mismatch_itime: 
                 if fi.getItime() != itime_0:
-                    log.debug("File %s does not match file ITIME", file)
+                    log.debug("File %s does not match ITIME", file)
                     mismatch_itime = True
                     break
             if chk_ncoadd and not mismatch_ncoadd: 
                 if fi.getNcoadds() != ncoadd_0:
-                    log.debug("File %s does not match file NCOADD", file)
+                    log.debug("File %s does not match NCOADD", file)
                     mismatch_ncoadd = True
                     break
             if chk_readmode and not mismatch_readmode: 
                 if fi.getReadMode() != readmode_0:
-                    log.debug("File %s does not match file READMODE", file)
+                    log.debug("File %s does not match READMODE", file)
                     mismatch_readmode = True
                     break
             if chk_cont and not mismatch_cont:
@@ -539,50 +540,6 @@ class ReductionSet(object):
         
         return sorted_files
 
-    def collapse(self, frame_list, out_filename_suffix="_sum")
-        """
-        Collapse (sum) the data cube into a single 2D image
-        
-        Return a list with the new collapsed frames
-        """
-    
-        log.debug("Starting collapse() method ....")
-        
-        new_frame_list = [] 
-        n = 0
-        
-        if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
-            return []
-
-        for frame_i in frame_list:
-            f = pyfits.open(frame_i)
-            # First, we need to check if we have MEF files
-            if len(f)>1:
-                log.error("MEF files cannot be collapsed. First need to be splitted !")
-                raise Exception("MEF files cannot be collapsed. First need to be splitted !")
-                new_frame_list.append(frame_i)
-            elif len(f[0].data.shape)!=3:
-                log.info("No collapse required. It is not a cube image")
-                new_frame_list.append(frame_i)
-            else:            
-                #Suppose we have single CUBE file ...
-                out_hdulist = pyfits.HDUList()               
-                prihdu = pyfits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
-                
-                # Start by updating PRIMARY header keywords...
-                #prihdu.header.update ('EXTEND', pyfits.FALSE, after = 'NAXIS')
-                
-                out_hdulist.append(prihdu)    
-                #out_hdulist.verify ('ignore')
-                # Now, write the new MEF file
-                new_filename = frame_i.replace(".fits","_sum.fits")
-                out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
-                out_hdulist.close(output_verify = 'ignore')
-                del out_hdulist
-                new_frame_list.append(new_filename)
-                log.info("FITS file %s created" % (new_frame_list[n]))
-                n+=1
-          
     def split(self, frame_list):
         """ 
         Split the data from the given frame list (any kind, science or 
@@ -1860,13 +1817,6 @@ class ReductionSet(object):
 
         return new_sequences, new_seq_types
     
-    def collapse_cube(self, cube_file):
-      """
-      Collapse (adding) all the planes of the give cube into a s single plane
-      """
-      
-      #1-check is a cube
-      f = 
     def calc(self, args):
         """
         Method used only to use with Pool.map_asycn() function
@@ -1909,7 +1859,10 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDark_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-
+                
+                #check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence)
+                
                 # Check for EXPT in order to know how to create the master dark (dark model or fixed EXPT)     
                 if (self.checkData(chk_filter=True, chk_type=True, chk_expt=True, 
                                    chk_itime=True, chk_ncoadd=True, chk_cont=True, 
@@ -1943,7 +1896,10 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDFlat_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                
+
+                #check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence)
+
                 m_smooth = self.config_dict['dflats']['median_smooth']
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, 
                                                          self.temp_dir, outfile, 
@@ -1974,6 +1930,9 @@ class ReductionSet(object):
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
+
+                    #check and collapse if required (cube images)
+                    sequence = misc.collapse.collapse(sequence)
 
                     m_smooth = self.config_dict['twflats']['median_smooth']
                     
@@ -2012,6 +1971,9 @@ class ReductionSet(object):
                 Only %d frames found. Required >%d frames" %(len(sequence),
                                                             self.config_dict['general']['min_frames']))
             else:
+                #check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence)
+
                 # Get calibration files
                 dark, flat, bpm = None, None, None
                 if self.red_mode == "quick":
@@ -2021,6 +1983,8 @@ class ReductionSet(object):
                     dark, flat, bpm = self.getCalibFor(sequence)
                     # Return 3 filenames of master calibration frames (dark, flat, bpm), 
 
+
+                # Check and split files if required
                 obj_ext, next = self.split(sequence) # it must return a list of list (one per each extension)
                 dark_ext, cext = self.split([dark])
                 flat_ext, cext = self.split([flat])

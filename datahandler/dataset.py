@@ -827,6 +827,105 @@ class DataSet(object):
         print "[dataset.GetSeqFilesB] OS's found :\n ", seq_list
         
         return seq_list, seq_types
+
+    ############################################################
+
+    def GetSeqFilesC(self, filter=None, type=None):
+        """
+        
+        NEW VERSION WITH FRAMENUM for distinguish-FITS
+        ==============================================
+        Get all the files for each Observing Sequence (OS) found. 
+        By OS we mean a set of files with the next common features:
+        
+            - start with PAT_EXPN=1 and end with the PAT_EXPN=PAT_NEXP
+            
+        INPUTS
+        @param filter:  filter can be specified to restrict the search
+          
+        @param type: it can be SCIENCE, DARKs,FLATs  (None=any type)
+          
+        @note: this method is thought to work fine for SCIENCE sequences;
+        for calibration sequences need improvements
+        
+        @return: two lists:
+             - a list of list, having each list the list of files beloging 
+               to the sequence.
+             - a list with the Types for each sequence found (DARK, DOME_FLAT, 
+             TW_FLAT, SCIENCE)
+    
+        @see: GetSeqFiles()
+            
+        """
+        
+        if filter==None:
+            s_filter = "filter>=?"
+            filter=""
+        else:
+            s_filter = "filter=?"
+              
+        if type==None:
+            s_type = "type>=''"
+        elif type=="SCIENCE":
+            s_type = "type='SCIENCE' or type='SKY'"
+        elif type=="FLAT":
+            s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
+        else:
+            s_type = "type='%s'"%(str(type))
+                      
+        # First, look for OB_IDs
+        #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
+        s_select="select filename, ob_id, ob_pat, expn, nexp, filter, texp, type \
+                from dataset where %s and %s order by mjd" %(s_filter,s_type)
+        #print s_select
+        cur = self.con.cursor()
+        cur.execute(s_select,(filter,))
+        rows = cur.fetchall()
+        
+        found_first = False
+        group = []
+        seq_list = [] # list of lists of files from each sequence
+        seq_types =[] # list of types for each sequence
+        for fits in rows:
+            print "%s  %s  %s  %s  %s %s  %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
+                                       fits[3], fits[4], fits[5], fits[6], fits[7], # expn, nexp, filter, texp, type
+                                       fits[3]==fits[4]) # true/false
+            if fits[7].count('MASTER'): 
+                print "--------> Found a MASTER calibration file; it will not be grouped !!!<----------"
+                continue
+            if fits[3]==1 and framenum==1: #expn == 1 ?
+                group = [str(fits[0])] #filename
+                found_first = True # update flag
+                # special case of only-one-file sequences
+                if fits[3]==fits[4]:
+                    #detected end of the sequence
+                    seq_list.append(group[:]) # very important ==> lists are mutable !
+                    # Set the 'nice' type
+                    if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
+                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    else: my_type = str(fits[7])
+                    seq_types.append(my_type)
+                    group = []
+                    found_first = False  # reset flag
+            elif found_first:
+                group.append(str(fits[0]))
+                if fits[3]==fits[4]:
+                    #detected end of the sequence
+                    seq_list.append(group[:]) # very important ==> lists are mutable !
+                    # Set the 'nice' type
+                    if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
+                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    else: my_type = str(fits[7])
+                    seq_types.append(my_type)
+                    group = []
+                    found_first = False  # reset flag
+            else:
+                pass
+        
+        print "[dataset.GetSeqFilesB] OS's found :\n ", seq_list
+        
+        return seq_list, seq_types
+                       
                        
     ############################################################    
     def GetFileInfo( self, filename ):
