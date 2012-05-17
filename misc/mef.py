@@ -557,8 +557,8 @@ class MEF (object):
                 
                     new_filename = file.replace(".fits", out_filename_suffix % (i*2+j))
                     if out_dir != None: 
-                        new_filename = new_filename.replace (os.path.dirname(new_filename), out_dir) 
-                    out_filenames.append (new_filename)
+                        new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
+                    out_filenames.append(new_filename)
      
                     # Now, write the new MEF file
                     out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
@@ -624,7 +624,7 @@ if __name__ == "__main__":
         filelist = [options.file]
     elif options.input_file_list:
         filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
-        print filelist
+        #print filelist
     else:
         parser.print_help()
         parser.error("incorrect number of arguments " )

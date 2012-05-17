@@ -577,6 +577,7 @@ class ReductionSet(object):
             ]
             
             if datahandler.ClFits(frame_list[0]).isFromGEIRS():
+                log.debug("Splitting GEIRS FITS-files")
                 try:
                     mef = misc.mef.MEF(frame_list)
                     (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
@@ -585,7 +586,7 @@ class ReductionSet(object):
                     log.debug("Some error while splitting GEIRS data set. %s",str(e))
                     raise
             else:
-                log.debug("Splitting data files")
+                log.debug("Splitting (HAWKI?) FITS-files")
                 try:
                     mef = misc.mef.MEF(frame_list)
                     (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws_to_cp)
@@ -1846,6 +1847,9 @@ class ReductionSet(object):
         log.debug("[reduceSeq] Starting ...")
         files_created = []
         
+        #check and collapse if required (cube images)
+        sequence = misc.collapse.collapse(sequence, "_c", self.out_dir)
+
         # Take the first file of the sequence in order to find out the type of 
         # the sequence
         fits = datahandler.ClFits(sequence[0])
@@ -1859,9 +1863,6 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDark_', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                
-                #check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
                 
                 # Check for EXPT in order to know how to create the master dark (dark model or fixed EXPT)     
                 if (self.checkData(chk_filter=True, chk_type=True, chk_expt=True, 
@@ -1897,9 +1898,6 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
 
-                #check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
-
                 m_smooth = self.config_dict['dflats']['median_smooth']
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, 
                                                          self.temp_dir, outfile, 
@@ -1930,9 +1928,6 @@ class ReductionSet(object):
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
-
-                    #check and collapse if required (cube images)
-                    sequence = misc.collapse.collapse(sequence)
 
                     m_smooth = self.config_dict['twflats']['median_smooth']
                     
@@ -1971,9 +1966,6 @@ class ReductionSet(object):
                 Only %d frames found. Required >%d frames" %(len(sequence),
                                                             self.config_dict['general']['min_frames']))
             else:
-                #check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
-
                 # Get calibration files
                 dark, flat, bpm = None, None, None
                 if self.red_mode == "quick":
