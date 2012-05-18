@@ -79,6 +79,7 @@ class ClFits (object):
         self.type      = "UNKNOW"
         self.naxis1    = -1
         self.naxis2    = -1
+        self._shape    = () # shape of first HDU of the FITS =(naxis3, naxis2, naxis1)
         self.runID     = -1 # exposition ID for the current night (unique for that night)
         self.obID      = -1 # Observation Block ID (unique) provided by the OT
         self.obPat     = -1 # Observation (dither) Pattern 
@@ -134,7 +135,8 @@ class ClFits (object):
     
     def getNaxis2(self):
         return self.naxis2
-    
+        
+  
     def pathname(self):
         return self.pathname
     
@@ -199,15 +201,21 @@ class ClFits (object):
         return (self.exptime)
     
     @property
+    def shape(self):
+        return self._shape
+    
+    @property
     def ra(self):
         return self._ra
     
     @property
     def dec(self):
         return self._dec
+        
     @property
     def softwareVer(self):
         return self._softwareVer
+    
     
     #def getRA(self):
     #    return self.ra
@@ -290,9 +298,11 @@ class ClFits (object):
             # we suppose all extension have the same dimensions
             self.naxis1 = myfits[1].header['NAXIS1']
             self.naxis2 = myfits[1].header['NAXIS2']
+            self._shape = myfits[1].data.shape # (naxis3, naxis2, naxis1)
         else:
             self.naxis1 = myfits[0].header['NAXIS1']
             self.naxis2 = myfits[0].header['NAXIS2']
+            self._shape = myfits[0].data.shape # (naxis2, naxis1)
         # pointer to the primary-main header
         self.my_header = myfits[0].header
           

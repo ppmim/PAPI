@@ -350,7 +350,7 @@ class ReductionSet(object):
             self.ext_db = None
                 
         
-    def checkData(self, chk_filter=True, chk_type=True, chk_expt=True,
+    def checkData(self, chk_shape=True, chk_filter=True, chk_type=True, chk_expt=True,
                   chk_itime=True, chk_ncoadd=True, chk_cont=True,
                   chk_readmode=True, file_list=None):
         """
@@ -359,6 +359,9 @@ class ReductionSet(object):
         Parameters
         ---------- 
         
+        check_shape: bool
+            Flag to indicate if shape (naxis1, naxis2, naxis3) must be checked
+            
         chk_filter: bool
             Flag to indicate if filter property must be checked
         
@@ -407,6 +410,7 @@ class ReductionSet(object):
         itime_0 = f.getItime()
         ncoadd_0 = f.getNcoadds()
         readmode_0 = f.getReadMode()
+        shape_0 = f.shape
         
         self.m_filter = filter_0
         self.m_type = type_0
@@ -423,10 +427,16 @@ class ReductionSet(object):
         mismatch_ncoadd = False
         mismatch_cont = False
         mismatch_readmode = False
+        mismatch_shape = False
         
         prev_MJD = -1
         for file in files_to_check:
             fi = datahandler.ClFits( file )
+            if chk_shape and not mismatch_shape: 
+                if fi.shape != shape_0:
+                    log.debug("File %s does not match SHAPE", file)
+                    mismatch_shape = True
+                    break
             if chk_filter and not mismatch_filter: 
                 if fi.getFilter() != filter_0:
                     log.debug("File %s does not match FILTER", file)
@@ -467,7 +477,7 @@ class ReductionSet(object):
                 else:
                     prev_MJD=fi.getMJD()
                     
-        if mismatch_filter or mismatch_type or mismatch_expt or  \
+        if mismatch_shape or mismatch_filter or mismatch_type or mismatch_expt or  \
             mismatch_itime or mismatch_ncoadd or mismatch_cont:
             log.error("Data checking found a mismatch....check your data files....")
             #raise Exception("Error while checking data (filter, type, ExpT, Itime, NCOADDs, MJD)")
@@ -577,7 +587,6 @@ class ReductionSet(object):
             ]
             
             if datahandler.ClFits(frame_list[0]).isFromGEIRS():
-                log.debug("Splitting GEIRS FITS-files")
                 try:
                     mef = misc.mef.MEF(frame_list)
                     (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
@@ -586,7 +595,7 @@ class ReductionSet(object):
                     log.debug("Some error while splitting GEIRS data set. %s",str(e))
                     raise
             else:
-                log.debug("Splitting (HAWKI?) FITS-files")
+                log.debug("Splitting data files")
                 try:
                     mef = misc.mef.MEF(frame_list)
                     (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws_to_cp)
@@ -1847,9 +1856,6 @@ class ReductionSet(object):
         log.debug("[reduceSeq] Starting ...")
         files_created = []
         
-        #check and collapse if required (cube images)
-        sequence = misc.collapse.collapse(sequence, "_c", self.out_dir)
-
         # Take the first file of the sequence in order to find out the type of 
         # the sequence
         fits = datahandler.ClFits(sequence[0])
@@ -1864,8 +1870,11 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 
+                #check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence)
+                
                 # Check for EXPT in order to know how to create the master dark (dark model or fixed EXPT)     
-                if (self.checkData(chk_filter=True, chk_type=True, chk_expt=True, 
+                if (self.checkData(chk_shape=True, chk_filter=True, chk_type=True, chk_expt=True, 
                                    chk_itime=True, chk_ncoadd=True, chk_cont=True, 
                                    chk_readmode=True, file_list=sequence)==True):
                     # Orthodox master dark -- same EXPTIME & NCOADDS
@@ -1898,6 +1907,9 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
 
+                #check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence)
+
                 m_smooth = self.config_dict['dflats']['median_smooth']
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, 
                                                          self.temp_dir, outfile, 
@@ -1928,6 +1940,9 @@ class ReductionSet(object):
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
+
+                    #check and collapse if required (cube images)
+                    sequence = misc.collapse.collapse(sequence)
 
                     m_smooth = self.config_dict['twflats']['median_smooth']
                     
@@ -1966,6 +1981,9 @@ class ReductionSet(object):
                 Only %d frames found. Required >%d frames" %(len(sequence),
                                                             self.config_dict['general']['min_frames']))
             else:
+                #check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence)
+
                 # Get calibration files
                 dark, flat, bpm = None, None, None
                 if self.red_mode == "quick":
@@ -2002,7 +2020,7 @@ class ReductionSet(object):
                         for n in range(next):
                             ## only a test to reduce Q01
                             #log.critical("only a test to reduce Q01")
-                            if n!=0 and n!=1: continue
+                            #if n!=0 and n!=1: continue
                             ## end-of-test
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
                             ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
@@ -2461,7 +2479,7 @@ class ReductionSet(object):
         # TODO : it could/should be done in reduceSeq, to avoid the spliting ...??
         log.info("**** Data Validation ****")
         if self.check_data:
-            if (self.checkData(chk_filter=True, chk_type=False, chk_expt=True, 
+            if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, chk_expt=True, 
                                chk_itime=True, chk_ncoadd=True, chk_readmode=True)==True):
                 log.debug("Data checking was OK !")
             else:

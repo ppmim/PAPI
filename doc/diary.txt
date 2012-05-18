@@ -758,15 +758,15 @@ FOR NEXT VIDEOCONF
 DOUBTS FOR MATILDE (15-May-2012)
 ================================
 
- - integration of cubes/individual files (add or mean)
+ 1) integration of cubes/individual files (add or mean)
    -->Si; sumatorio "simple" del cubo/ficheros sin mas.
- - integration of single-images (individual files) --> keyword FRAMENUM
+ 2) integration of single-images (individual files) --> keyword FRAMENUM
    (ver arriba)
- - how to proceed with windowed/binned images ? 
+ 3) how to proceed with windowed/binned images ? 
    --> MF preguntara a la gente de Barcelona sobre las ventanas 
    y como se podrian reducir (sky, astrometry, etc). 
    --> JM Preguntara CS sobre el binning: CS responde que no, que en IR no hay binning 
- - JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? 
+ 4) JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? 
    --> MF le preguntara a JF que quiere exactamente; MF no ve muy interesante el ir viendo la Mag de cada
    estrella al marcarla en el display. Es mucho más útil la grafica de magnitud instrumental VS magnitud catalogo.
    --->JM mirara si con Aladin de puede hacer lo de leer un catalogo+imagen para consultar la magnitud, y tambien
@@ -774,17 +774,27 @@ DOUBTS FOR MATILDE (15-May-2012)
    --> JM : con > aladin /tmp/reduced_SEQ.fits /tmp/reduced_SEQ_zp.xml se puede hacer !! y haciendo click sobre una 
    objeto no muestra los valores de catalogo leido (/tmp/reduced_SEQ_zp.xml) y generado con SExtractor con el MAG_ZEROPOINT 
    calculado previamente con photometry.py
+   --> JM : ademas, "Quick-look Photometry with Imexamine" 
+   --> JM: Además, imexam te muestra con 'a' la magnitud (MAG), teniendo en cuenta el ZP que se puede modificar con (epar rimexam)
    
- - how to reduce 'other' readout modes (rrr-mpia, lir, mer, srr, cntsr) or only work for lir (line-interlaced-read)
+   #   COL    LINE     COORDINATES
+   #     R    MAG    FLUX     SKY    PEAK    E   PA BETA ENCLOSED   MOFFAT DIRECT 
+     2243.31 2888.93 2243.31 2888.93
+     28.92  13.82  29750.   1.239   70.36 0.18  -77 1.14    13.63    15.59   9.68
+   ( en este ejemplo ZP=25)
+   
+ 5) how to reduce 'other' readout modes (rrr-mpia, lir, mer, srr, cntsr) or only work for lir (line-interlaced-read)
    MF preguntara a CS, pues no sabe a priori de que diferencias puede haber pero tiene "curiosidad" por ver que quería decir CS 
    (aunque JF dijo que no había diferencias)
- - how to remove the stripe/quadrant background offsets in dxtalk.py --> MF no se le ocurre a priori como eliminarlo; 
+ 6) how to remove the stripe/quadrant background offsets in dxtalk.py --> MF no se le ocurre a priori como eliminarlo; 
  JM preguntara al Chino (WIRCAM); Otra opcion es ver si se puede restar solamente la estrella, lo estudiará JM.
 
 
 DOUBTS FOR MATILDE (next)
 ================================
-
+ - "significado" de MagInstrumental negativa ??? 
+    mag_instrumental = zmag - 2.5 * log10(flujo/tiempo_integracion)
+    
  - New module for mix dome & sky FF : calCombineFF()
  - show MF PAPI CL interface
 

@@ -26,13 +26,12 @@ from optparse import OptionParser
 import sys
 import os
 import pyfits
-import fileinput
 
 # Logging
 from misc.paLog import log
 import misc.utils
 
-def collapse(frame_list, out_filename_suffix="_c", out_dir=None):
+def collapse(frame_list, out_filename_suffix="_c"):
     """
     Collapse (sum) a (list) of data cube into a single 2D image.
 
@@ -50,10 +49,61 @@ def collapse(frame_list, out_filename_suffix="_c", out_dir=None):
     for frame_i in frame_list:
         f = pyfits.open(frame_i)
         # First, we need to check if we have MEF files
-        if len(f)>1:
-            log.error("MEF files cannot be collapsed. First need to be splitted !")
-            raise Exception("MEF files cannot be collapsed. First need to be splitted !")
+        if len(f)>1 and len(f[1].data.shape)==3:
+            log.error("MEF-cubes files cannot be collapsed. First need to be splitted !")
+            raise Exception("MEF-cubes files cannot be collapsed. First need to be splitted !")
+        elif len(f)>1 and len(f[1].data.shape)==2:
+            log.debug("MEF file has no cubes, no collapse required.")
             new_frame_list.append(frame_i)
+        elif len(f[0].data.shape)!=3: # 2D !
+            log.debug("It is not a FITS-cube image, no collapse required.")
+            new_frame_list.append(frame_i)
+        else:            
+            #Suppose we have single CUBE file ...
+            #sum=numpy.zeros([2048,2048],dtype='float32')
+            out_hdulist = pyfits.HDUList()               
+            prihdu = pyfits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
+            prihdu.scale('float32') 
+            # Updating PRIMARY header keywords...
+            prihdu.header.update('NCOADDS', f[0].data.shape[0])
+            prihdu.header.update('EXPTIME', f[0].header['EXPTIME']*f[0].data.shape[0])
+            
+            
+            out_hdulist.append(prihdu)    
+            #out_hdulist.verify ('ignore')
+            # Now, write the new MEF file
+            new_filename = frame_i.replace(".fits", out_filename_suffix+".fits")
+            out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
+            
+            out_hdulist.close(output_verify = 'ignore')
+            del out_hdulist
+            new_frame_list.append(new_filename)
+            log.info("FITS file %s created" % (new_frame_list[n]))
+            n+=1
+     
+    return new_frame_list
+
+def collapse_distinguish(frame_list, out_filename_suffix="_c"):
+    """
+    Collapse (sum) a set of distinguish files (not cubes) into a single 2D image.
+
+    Return a list with the new collapsed frames.
+    """
+
+    log.debug("Starting collapse_distinguish() method ....")
+    
+    new_frame_list = [] 
+    n = 0
+
+    if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
+        return []
+
+    for frame_i in frame_list:
+        f = pyfits.open(frame_i)
+        # First, we need to check if we have MEF files
+        if len(f)>1 and len(f[1].data.shape)==3:
+            log.error("MEF-cubes files cannot be collapsed. First need to be splitted !")
+            raise Exception("MEF-cubes files cannot be collapsed. First need to be splitted !")
         elif len(f[0].data.shape)!=3:
             log.debug("No collapse required. It is not a FITS-cube image")
             new_frame_list.append(frame_i)
@@ -70,10 +120,8 @@ def collapse(frame_list, out_filename_suffix="_c", out_dir=None):
             
             out_hdulist.append(prihdu)    
             #out_hdulist.verify ('ignore')
-            new_filename = frame_i.replace(".fits", out_filename_suffix+".fits")
-            if out_dir != None: 
-                new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
             # Now, write the new MEF file
+            new_filename = frame_i.replace(".fits", out_filename_suffix+".fits")
             out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
             
             out_hdulist.close(output_verify = 'ignore')
@@ -83,77 +131,6 @@ def collapse(frame_list, out_filename_suffix="_c", out_dir=None):
             n+=1
      
     return new_frame_list
-
-def collapse_distinguish(frame_list, out_filename=None):
-    """
-    Collapse (sum) a set of distinguish files (not cubes) into a single 2D image.
-
-    Return a list with the new collapsed frames.
-    """
-
-    log.debug("Starting collapse_distinguish() method ....")
-
-    if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
-        return None
-
-    sum = None
-    sum_exptime = 0.0
-    n = 0
-    #numpy.zeros([2048,2048], dtype='float32')
-    
-    # Sum all the files, and even doing cube collapse if required
-    for frame_i in frame_list:
-        try:
-            f = pyfits.open(frame_i)
-        except Exception,e:
-            log.error("Cannot read file %s. Skipped !",frame_i)
-            continue
-        # First, we need to check if we have MEF files
-        if len(f)>1:
-            log.error("MEF files cannot be collapsed. First need to be splitted !")
-            raise Exception("MEF files cannot be collapsed. First need to be splitted !")
-        else:            
-            #Indeed, check if we have single CUBE file ...
-            if sum==None and len(f[0].data.shape)==3: 
-                sum = f[0].data.sum(0)
-            elif sum==None and len(f[0].data.shape)==2:
-                sum = f[0].data
-            elif len(f[0].data.shape)==3:
-                sum += f[0].data.sum(0)
-            elif len(f[0].data.shape)==2:
-                sum += f[0].data
-            n += 1
-            # Sum EXPTIME    
-            if 'EXPTIME' in f[0].header:     
-                sum_exptime += f[0].header['EXPTIME']
-            else:
-                log.warning("NO EXPTIME keyword found !")
-                sum_exptime +=0
-            log.debug("Summed file %s",frame_i)
-
-    # Write the final sum to a FITS-file                   
-    out_hdulist = pyfits.HDUList()               
-    prihdu = pyfits.PrimaryHDU (data = sum, header = f[0].header)
-    prihdu.scale('float32') 
-    # Updating PRIMARY header keywords...
-    prihdu.header.update('NCOADDS', n)
-    prihdu.header.update('EXPTIME', sum_exptime)
-    
-    
-    out_hdulist.append(prihdu)    
-    #out_hdulist.verify ('ignore')
-    # Now, write the new MEF file
-    if out_filename==None:
-        new_filename = os.path.dirname(frame_i)+"/sum.fits"
-    else:
-        new_filename = out_filename
-    out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
-    
-    out_hdulist.close(output_verify = 'ignore')
-    del out_hdulist
-    log.info("FITS file %s created" % new_filename)
-     
-    return new_filename
     
 ################################################################################
 # main
@@ -170,35 +147,28 @@ if __name__ == "__main__":
     parser.add_option("-i", "--input_image",
                   action="store", dest="input_image", 
                   help="input cube image to collapse to a 2D image")
-    
-    parser.add_option ("-l", "--input_file_list",
-                  action = "store", dest = "input_file_list",
-                  help = "Source file list of data frames to collapse \
-                  It has to be a fullpath file name") 
-                 
+                  
     parser.add_option("-s", "--suffix",
                   action="store", dest="suffix", 
                   help="output filename suffix to add (default = %default)",
                   default="_col")
-    
                                 
     (options, args) = parser.parse_args()
     
     
-    if not options.input_image and not options.input_file_list: 
+    if not options.input_image or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("wrong number of arguments " )
-        sys.exit(0)
+    
 
-    if options.input_file_list:
-        filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
-    elif options.input_image:
-        filelist = [options.input_image]
-            
+    if not os.path.exists(options.input_image):
+        log.error ("Input image %s does not exist", options.input_image)
+        sys.exit(0)
+        
     try:
-        #collapse(frames, options.suffix)
-        collapse_distinguish(filelist)
+        frames = [options.input_image]
+        print collapse(frames, options.suffix)
     except Exception,e:
         log.info("Some error while collapsing image to 2D: %s"%str(e))
         sys.exit(0)
