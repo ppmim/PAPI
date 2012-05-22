@@ -774,7 +774,11 @@ might replace with  the correct on.
     backport de multiprocessing para python 2.5. Se instala sin problemas y las pruebas de unidad
     se ejecutan sin problema.
 
-   - 
+2012-05-22
+==========    
+    - Escribo a Wei-Hao para preguntarle sobre el dxtalk_wircam
+    - Busco en THELI sobre el dxtalk, y aunque aparece en la documentacion no encuentro el código
+    
 
 FOR NEXT VIDEOCONF
 ==================
@@ -815,7 +819,11 @@ DOUBTS FOR MATILDE (15-May-2012)
    (aunque JF dijo que no había diferencias)
  6) how to remove the stripe/quadrant background offsets in dxtalk.py --> MF no se le ocurre a priori como eliminarlo; 
  JM preguntara al Chino (WIRCAM); Otra opcion es ver si se puede restar solamente la estrella, lo estudiará JM.
-
+ JM--> Wei-Hao me responde:
+   """
+   How about a simple background subtraction in each stripe after
+   the subtraction of the median?  Maybe this will solve the problem.
+   """
 
 DOUBTS FOR MATILDE (next)
 ================================
@@ -823,8 +831,11 @@ DOUBTS FOR MATILDE (next)
     mag_instrumental = zmag - 2.5 * log10(flujo/tiempo_integracion)
     
  - New module for mix dome & sky FF : calCombineFF()
- - show MF PAPI CL interface
+ - show MF PAPI CL interface:
 
+> papi.py -s /data/O2K/2012-Matilde/20120103/ -S 15  -g filter 
+> photometry.py -i /tmp/reduced_SEQ.fits -z 26.821570
+> aladin /tmp/reduced_SEQ.fits /tmp/reduced_SEQ.xml
 
 
 
@@ -854,7 +865,14 @@ FAQ:
 NEXT TODOs
 ==========
 - ver notas librata sobre si se reduce o no HAWK-I-4
-- ver notas librata sobre si se reduce o no HAWK-I-5; en el portatil lo hacer, pero el resultado no es muy bueno, incluso la astrometria no parece funcionar
+- ver notas librata sobre si se reduce o no HAWK-I-5; en el portatil lo hace, pero el resultado no es muy bueno, incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py
 - graficos scamp de distorsion !!!
+
+
+DEPENDENCIAS DE IRDR
+====================
+- skyfilter
+- dithercubemean
+- offsets

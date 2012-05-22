@@ -80,6 +80,7 @@ import misc.collapse
 # http://stackoverflow.com/questions/5429584/handling-the-classmethod-pickling-issue-with-copy-reg
 # but it does not work (at least for me!) 
 #
+
 def _pickle_method(method):
     """
     Pickle methods properly, including class methods.
@@ -104,11 +105,10 @@ def _unpickle_method(func_name, obj, cls):
 
 import copy_reg 
 import types 
- 
+
 copy_reg.pickle(types.MethodType,  
     _pickle_method,  
     _unpickle_method)  
-
 
 
 class ReductionSetException(Exception):
