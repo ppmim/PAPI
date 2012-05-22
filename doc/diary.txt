@@ -744,10 +744,37 @@ y parece que esta reportado el bug, pero no consigo solucionarlo de momento:
     que no ha tenido problemas; el usa Pool.map_asycn(), asi que voy yo a probar 
     con esa llamada para ver si así se soluciona.
     
+
+2012-05-17y18
+=============
+    - Implementacion y pruebas del metodo collapse() para sumar cubos; aun pendiente
+    la suma de ficheros independientes, pues aunque el suma de ficheros independientes
+    esta implementada de momento, aun no se como "agrupar" los ficheros. Le pregunto
+    a Clemens si podria usar el FRAMENUM y si me podria añadir algo para saber cuantos
+    ficheros tiene una exposición (repeats). Me responde que en la nueva logica de los 
+    FITS que tambien necesita Lucifer, y que para septiembre:
+
+"""    
+Will come with the new FITS-header-organisation at least until September
+(needed also for Lucifer). Please just assume a dummy-keyword name, which you
+might replace with  the correct on.
+"""
     
     
-    
-  
+2012-05-21
+==========    
+    - Me encuentro un problema a ejecutar PAPI en el portatil (suse11.1-64);
+    el problema surge al importar el paquete cosmics, que a su vez importa un
+    modulo de scipy que da problemas.
+    Para intentar solucinarlo, actualizo numpy1.6.2, scipy0.10.1
+    Pruebo la demo de cosmics y ahora ya no da problemas !!!  
+
+   - Otro problema es que en el portatil tengo python2.5, y no tiene el paquete multiprocessing
+    por defecto a partir de python2.6, por lo que me bajo el paquete independiente de 
+    backport de multiprocessing para python 2.5. Se instala sin problemas y las pruebas de unidad
+    se ejecutan sin problema.
+
+   - 
 
 FOR NEXT VIDEOCONF
 ==================
@@ -822,4 +849,12 @@ FAQ:
 1) ¿ para que se usa en PAPI los gainmap ? 
    - skyfilter
    - dithercubemean
-  
+
+
+NEXT TODOs
+==========
+- ver notas librata sobre si se reduce o no HAWK-I-4
+- ver notas librata sobre si se reduce o no HAWK-I-5; en el portatil lo hacer, pero el resultado no es muy bueno, incluso la astrometria no parece funcionar
+
+- escribir al Chino sobre el dxtalk.py
+- graficos scamp de distorsion !!!
