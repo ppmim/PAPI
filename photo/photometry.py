@@ -477,7 +477,7 @@ class STILTSwrapper (object):
         ./stilts plot2d in=match_S_b.vot subsetNS='j_k<=1.0 & k_snr>10' lineNS=LinearRegression xdata=k_m ydata=MyMag_k xlabel="2MASS k_m / mag" ylabel="PAPI k_m / mag"
         """
 
-def doPhotometry(input_image, catalog, output_filename, snr):
+def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     """
     @summary: Run the rough photometric calibraiton
     
@@ -487,7 +487,9 @@ def doPhotometry(input_image, catalog, output_filename, snr):
     
     @param output_filename: file where output figure will be saved
     
-    @param snr : minimum SNR of stars used of linear fit  
+    @param snr : minimum SNR of stars used of linear fit
+    
+    @param zero_point: initial magnitud zero point for SExtractor (default 0.0)
     """
     
     
@@ -539,7 +541,7 @@ def doPhotometry(input_image, catalog, output_filename, snr):
     sex.config['CATALOG_NAME'] = image_catalog
     sex.config['DETECT_THRESH'] = 1.5
     sex.config['DETECT_MINAREA'] = 5
-    sex.config['MAG_ZEROPOINT'] = 0 #26.0
+    sex.config['MAG_ZEROPOINT'] = zero_point
     
     
     try:
@@ -547,7 +549,13 @@ def doPhotometry(input_image, catalog, output_filename, snr):
     except Exception,e:
         log.error("Canno't create SExtractor catalog : %s", str(e))
         raise e 
-            
+    
+    # if ZP was provided, then only the SExtractor catalog will be
+    # generated, but not xmatching against any external catalog
+    if zero_point:
+      log.info("Catalog generated: %s",image_catalog) 
+      return image_catalog
+      
     ## 1 - Generate region of base catalog (2MASS)
     icat = catalog_query.ICatalog ()
     out_base_catalog = os.getcwd() + "/catalog_region.xml"
@@ -631,6 +639,10 @@ if __name__ == "__main__":
                   help="min SNR of stars used for linear fit (default = %default)",
                   default=10.0)
     
+    parser.add_option("-z", "--zero_point",
+                  action="store", dest="zero_point", type=float, default=0.0,
+                  help="Magnitude Zero Point [%default]; then only Sex catalog will be generated")
+                  
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 
                   help="output plot filename (default = %default)",
@@ -659,7 +671,7 @@ if __name__ == "__main__":
     try:
         catalog = "2MASS"
         doPhotometry(options.input_image, catalog, options.output_filename, 
-                     options.snr)
+                     options.snr, options.zero_point)
     except Exception,e:
         log.info("Some error while running photometric calibration: %s"%str(e))
         sys.exit(0)
