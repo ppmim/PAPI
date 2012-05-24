@@ -183,9 +183,9 @@ class SuperSkyFlat(object):
 
 
         
-        # (optional) Normalize the wrt chip 1
+        # (optional) Normalize wrt chip 1
         if self.norm:
-            f = pyfits.open(tmp1, ignore_missing_end=True)
+            f = pyfits.open(tmp1, 'update', ignore_missing_end=True )
             #MEF frame
             if len(f)>1:
                 chip = 1 # normalize wrt to mode of chip 1
@@ -198,6 +198,9 @@ class SuperSkyFlat(object):
                         2*numpy.mean(f[chip].data[offset1:naxis1-offset1, 
                                                   offset2:naxis2-offset2]))
                 msg = "Normalization of MEF master flat frame wrt chip 1. (MODE=%d)"%mode
+                # Do the normalization wrt chip 1
+                for i_ext in xrange(1, len(f)):
+                    f[i_ext].data = f[i_ext].data / mode
                 
             # PANIC multi-chip full frame
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME']=='panic'
@@ -207,7 +210,8 @@ class SuperSkyFlat(object):
                 mode = (3*numpy.median(f[0].data[200:2048-200,200:2048-200])- 
                        2*numpy.mean(f[0].data[200:2048-200,200:2048-200]) )
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MODE=%d)"%mode
-                
+                f[0].data = f[0].data / mode
+            # O2k or splitted PANIC frame   
             else:
                 naxis1 = f[0].header['NAXIS1']
                 naxis2 = f[0].header['NAXIS2']
@@ -217,35 +221,21 @@ class SuperSkyFlat(object):
                                                     offset2:naxis2-offset2])-
                         2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
                                                   offset2:naxis2-offset2]))
-                msg = "Normalization of master (O2k?) flat frame. (MODE=%d)"%mode 
+                msg = "Normalization of master (O2k? or PANIC-splitted frame) flat frame. (MODE=%d)"%mode
+                print "pixel_antes = ", f[0].data[100,100]
+                f[0].data = f[0].data / mode
+                print "pixel_despues = ", f[0].data[100,100]
 
             log.debug(msg)
 
-            f.close()
-            
-            log.debug("Normalization parametes---> (tmp1=%s,result=%s)"%(tmp1,self.output_filename.replace("//","/")))
-          
-            # Cleanup: Remove temporary files
-            misc.fileUtils.removefiles(self.output_filename)
-            # Compute normalized flat
-            iraf.mscred.mscarith(operand1=tmp1,
-                    operand2=mode,
-                    op='/',
-                    #pixtype='real',
-                    result=self.output_filename.replace("//","/")
-                    )
-        else:
-            os.rename(tmp1, self.output_filename) 
-        
-        log.debug("Normalization done ! (tmp1=%s,result=%s)"%(tmp1,self.output_filename.replace("//","/")))
-        
-        # Update FITS header 
-        f = pyfits.open(self.output_filename,'update')
-        if self.norm: 
+            # Update FITS header 
             f[0].header.add_history("[calSuperFlat] Normalized Super-Flat created from : %s"%str(m_filelist))
             f[0].header.add_history(msg)
         else:
+            # Update FITS header 
+            f = pyfits.open(tmp1,'update', ignore_missing_end=True)
             f[0].header.add_history("[calSuperFlat] Non-Normalized Super-Flat created from : %s"%str(m_filelist))
+
         f[0].header.update('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         
         #
@@ -254,6 +244,7 @@ class SuperSkyFlat(object):
 	
         f[0].header.update('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         f.close(output_verify='ignore')
+        os.rename(tmp1, self.output_filename) 
         log.debug("Image created : %s", self.output_filename)
 
         return self.output_filename

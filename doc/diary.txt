@@ -789,7 +789,7 @@ might replace with  the correct on.
     - Haciendo pruebas con PAPI, me encuentro con el un error aleatorio, pues no siempre ocurre (50%), 
     y tanto con pprocess como con multiprocessing. El error se produce en la llamada iraf.mscred.mscarith(...)
     en calSuperFlat.py. Compruebo que los parametros de llamada de la función están bien; no se por qué puede ser ???
-      
+    Este error se produce tanto en openSuSE11.1-i586 (python2.6) como con suse11.4-x64 (python2.7)  
 
     [PAPI]: 2012-05-24 17:13:00,575 DEBUG    calSuperFlat:222: Normalization of master (O2k?) flat frame. (MODE=2857)
     [PAPI]: 2012-05-24 17:13:00,576 DEBUG    calSuperFlat:226: Normalization parametes---> (tmp1=/data/out/Q02/tmp_sf.fits,result=/data/out/Q02/superFlat.fits)
@@ -807,6 +807,10 @@ Exception OSError: (10, 'No child processes') in <bound method Subprocess.__del_
 ('IRAF task terminated abnormally\nERROR (601, "Parameter not a legal boolean (try \'yes\' or \'no\') (verify)\x07")\n', 10, 'No child processes')  
 
 
+
+    SOLUCION: sustituyo la llamada a iraf.mscred.mscarith por las operaciones correspondientes en python !!!
+    
+    
 
 
 FOR NEXT VIDEOCONF

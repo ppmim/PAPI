@@ -1377,9 +1377,9 @@ class ReductionSet(object):
         misc.fileUtils.removefiles(out_dir+"/coadd1*", out_dir+"/*_D.fits",
                                        out_dir+"/*_F.fits", out_dir+"/*_D_F.fits" )
         misc.fileUtils.removefiles(out_dir+"/gain*.fits", out_dir+"/masterObjMask.fits",
-                                       out_dir+"/*.pap", out_dir+"/*.list")
+                                       out_dir+"/*.pap", out_dir+"/*.list", out_dir+"/superFlat.fits")
         misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
-                                       out_dir+"/*.xml", out_dir+"/*.png" )
+                                       out_dir+"/*.xml", out_dir+"/*.png")
         
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
