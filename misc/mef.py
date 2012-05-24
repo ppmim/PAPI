@@ -188,7 +188,7 @@ class MEF (object):
                 log.error("Warning, Found a simple FITS file")
             
             for i in range (1, n_ext+1):
-                suffix = out_filename_suffix % i
+                suffix = out_filename_suffix % i # number from 1 to 4
                 new_filename = file.replace(".fits", suffix)
                 if out_dir != None: 
                     new_filename = new_filename.replace( 
@@ -406,19 +406,19 @@ class MEF (object):
                         
                         
                         # Now update the new-wcs for the new subframe header
-                        hdu_i.header.update ('CRPIX1', 1024)
-                        hdu_i.header.update ('CRPIX2', 1024)
-                        hdu_i.header.update ('CRVAL1', new_pix_center[0][0])
-                        hdu_i.header.update ('CRVAL2', new_pix_center[0][1])
-                        hdu_i.header.update ('CD1_1', -pix_scale/3600.0, "Axis rotation & scaling matrix")
-                        hdu_i.header.update ('CD1_2', 0, "Axis rotation & scaling matrix")
-                        hdu_i.header.update ('CD2_1', 0, "Axis rotation & scaling matrix")
-                        hdu_i.header.update ('CD2_2', pix_scale/3600.0, "Axis rotation & scaling matrix")
-                        hdu_i.header.update ('CTYPE1' , 'RA---TAN') 
-                        hdu_i.header.update ('CTYPE2' , 'DEC--TAN')
-                        hdu_i.header.update ('CUNIT1', 'deg')
-                        hdu_i.header.update ('CUNIT2', 'deg')
-                        hdu_i.header.update ('CHIP_NO', 2*i+j, "PANIC Chip number [0,1,2,3]")
+                        hdu_i.header.update('CRPIX1', 1024)
+                        hdu_i.header.update('CRPIX2', 1024)
+                        hdu_i.header.update('CRVAL1', new_pix_center[0][0])
+                        hdu_i.header.update('CRVAL2', new_pix_center[0][1])
+                        hdu_i.header.update('CD1_1', -pix_scale/3600.0, "Axis rotation & scaling matrix")
+                        hdu_i.header.update('CD1_2', 0, "Axis rotation & scaling matrix")
+                        hdu_i.header.update('CD2_1', 0, "Axis rotation & scaling matrix")
+                        hdu_i.header.update('CD2_2', pix_scale/3600.0, "Axis rotation & scaling matrix")
+                        hdu_i.header.update('CTYPE1' , 'RA---TAN') 
+                        hdu_i.header.update('CTYPE2' , 'DEC--TAN')
+                        hdu_i.header.update('CUNIT1', 'deg')
+                        hdu_i.header.update('CUNIT2', 'deg')
+                        hdu_i.header.update('CHIP_NO', 2*i+j, "PANIC Chip number [0,1,2,3]")
                         
                     # now, copy extra keywords required
                     for key in copy_keyword:
@@ -431,8 +431,8 @@ class MEF (object):
                         except KeyError:
                             print 'Warning, key %s cannot not be copied, is not in the header' % (key)
                     # Append new HDU to MEF
-                    out_hdulist.append (hdu_i)
-                    out_hdulist.verify ('ignore')
+                    out_hdulist.append(hdu_i)
+                    out_hdulist.verify('ignore')
             
             # Now, write the new MEF file
             #out_hdulist[0].header.update('NEXTEND', 4)
@@ -535,18 +535,18 @@ class MEF (object):
                         prihdu.header.update ('DEC', new_pix_center[0][1])
                         
                         # Now update the new-wcs for the new subframe
-                        prihdu.header.update ('CRPIX1', 1024)
-                        prihdu.header.update ('CRPIX2', 1024)
-                        prihdu.header.update ('CRVAL1', new_pix_center[0][0])
-                        prihdu.header.update ('CRVAL2', new_pix_center[0][1])
-                        prihdu.header.update ('CTYPE1' , 'RA---TAN') 
-                        prihdu.header.update ('CTYPE2' , 'DEC--TAN')
-                        prihdu.header.update ('CUNIT1', 'deg')
-                        prihdu.header.update ('CUNIT2', 'deg')
-                        prihdu.header.update ('CD1_1', -pix_scale/3600.0, "Axis rotation & scaling matrix")
-                        prihdu.header.update ('CD1_2', 0, "Axis rotation & scaling matrix")
-                        prihdu.header.update ('CD2_1', 0,  "Axis rotation & scaling matrix")
-                        prihdu.header.update ('CD2_2', pix_scale/3600.0, "Axis rotation & scaling matrix")
+                        prihdu.header.update('CRPIX1', 1024)
+                        prihdu.header.update('CRPIX2', 1024)
+                        prihdu.header.update('CRVAL1', new_pix_center[0][0])
+                        prihdu.header.update('CRVAL2', new_pix_center[0][1])
+                        prihdu.header.update('CTYPE1' , 'RA---TAN') 
+                        prihdu.header.update('CTYPE2' , 'DEC--TAN')
+                        prihdu.header.update('CUNIT1', 'deg')
+                        prihdu.header.update('CUNIT2', 'deg')
+                        prihdu.header.update('CD1_1', -pix_scale/3600.0, "Axis rotation & scaling matrix")
+                        prihdu.header.update('CD1_2', 0, "Axis rotation & scaling matrix")
+                        prihdu.header.update('CD2_1', 0,  "Axis rotation & scaling matrix")
+                        prihdu.header.update('CD2_2', pix_scale/3600.0, "Axis rotation & scaling matrix")
                         prihdu.header.add_history("[MEF.splitGEIRSToSimple] File created from %s"%file)
                         
                     
@@ -555,10 +555,10 @@ class MEF (object):
                     out_hdulist.append (prihdu)    
                     out_hdulist.verify ('ignore')
                 
-                    new_filename = file.replace(".fits", out_filename_suffix % (i*2+j))
+                    new_filename = file.replace(".fits", out_filename_suffix % (i*2+j+1)) # number from 1 to 4
                     if out_dir != None: 
-                        new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
-                    out_filenames.append(new_filename)
+                        new_filename = new_filename.replace (os.path.dirname(new_filename), out_dir) 
+                    out_filenames.append (new_filename)
      
                     # Now, write the new MEF file
                     out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
@@ -624,7 +624,7 @@ if __name__ == "__main__":
         filelist = [options.file]
     elif options.input_file_list:
         filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
-        #print filelist
+        print filelist
     else:
         parser.print_help()
         parser.error("incorrect number of arguments " )

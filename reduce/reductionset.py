@@ -1772,7 +1772,7 @@ class ReductionSet(object):
                     failed_sequences +=1
                     log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
                     log.debug("[reduceSet] Procceding to next sequence...")
-                    if len(sequences)==1: 
+                    if len(sequences)==1:
                         raise e
             k = k + 1
     
@@ -1878,7 +1878,7 @@ class ReductionSet(object):
                                    chk_itime=True, chk_ncoadd=True, chk_cont=True, 
                                    chk_readmode=True, file_list=sequence)==True):
                     # Orthodox master dark -- same EXPTIME & NCOADDS
-                    log.debug("Found dark serie with equal EXPTIME. Master dark is going to be created")
+                    log.debug("Found dark series with equal EXPTIME. Master dark is going to be created")
                     task = reduce.calDark.MasterDark (sequence, self.temp_dir, 
                                                       outfile, texp_scale=False)
                     out = task.createMaster()
@@ -1893,6 +1893,7 @@ class ReductionSet(object):
                         out = task.createDarkModel()
                     else:
                         log.warning("Found a dark serie with diff EXPTIME, but dark model processing not activated")
+                        #raise Exception("Dark series are not processed in quick mode")
                         out = None
                  
                 if out!=None: files_created.append(out) # out must be equal to outfile
@@ -2007,15 +2008,15 @@ class ReductionSet(object):
                     try:
                         # Map the parallel process
                         n_cpus = self.config_dict['general']['ncpus']
-                        #results = pprocess.Map(limit=n_cpus, reuse=1) 
+                        results = pprocess.Map(limit=n_cpus, reuse=1) 
                         # IF reuse=0, it block the application !! I don't know why ?? 
                         # though in pprocess examples it works! 
-                        #calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
+                        calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
 
                         # New method using multiprocessing
-                        multiprocessing.freeze_support()
-                        pool = multiprocessing.Pool(n_cpus)
-                        results = []
+                        ###multiprocessing.freeze_support()
+                        ###pool = multiprocessing.Pool(n_cpus)
+                        ###results = []
                           
                         for n in range(next):
                             ## only a test to reduce Q01
@@ -2041,10 +2042,10 @@ class ReductionSet(object):
                             
                             # async call to procedure
                             extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            #calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
-                            red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
-                                              self.red_mode, l_out_dir, 
-                                              extension_outfilename)
+                            calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
+                            ###red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
+                            ###                  self.red_mode, l_out_dir, 
+                            ###                  extension_outfilename)
                             # Notice that the results will probably not come out 
                             # of the output queue in the same in the same order 
                             # as the corresponding tasks were put on the input 
@@ -2054,23 +2055,25 @@ class ReductionSet(object):
                             # code needed anyway).
                             #results += [pool.apply_async(self.reduceSingleObj, 
                             #                             red_parameters)]
-                            results += [pool.map_async(self.calc,
-                                                      [red_parameters])]         
+                            ###results += [pool.map_async(self.calc,
+                            ###                          [red_parameters])]         
                         # Here is where we WAIT (BLOCKING) for the results 
                         # (result.get() is a blocking call).
                         # If the remote call raised an exception then that 
                         # exception will be reraised by get().
-                        for result in results:
+                        ###for result in results:
                             #print "RESULT=",result
-                            out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
-
+                        ###    out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
+                        for result in results:
+                            out_ext.append(result)
+                            
                         #Prevents any more tasks from being submitted to the pool. 
                         #Once all the tasks have been completed the worker 
                         #processes will exit.
-                        pool.close()
+                        ###pool.close()
                         #Wait for the worker processes to exit. One must call 
                         #close() or terminate() before using join().
-                        pool.join()
+                        ###pool.join()
                         log.critical("[reduceSeq] DONE PARALLEL REDUCTION ")
                             
                         #pool=multiprocessing.Pool(processes=2)
@@ -2767,6 +2770,7 @@ class ReductionSet(object):
         # 9.1 - Remove crosstalk - (only if bright stars are present)    
         ########################################################################
         if self.config_dict['general']['remove_crosstalk']:
+            log.info("**** Removing crosstalk ****")
             try:
                 res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
                             [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))

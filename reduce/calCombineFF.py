@@ -68,7 +68,7 @@ import pyfits
 import numpy
 
 import misc.fileUtils
-import misc.utils as utils
+import datahandler
 
 # Logging
 from misc.paLog import log
@@ -110,7 +110,7 @@ def combineFF(domeFF, skyFF, combinedFF=None):
     """
     
     
-    if not utils.isaFITS(domeFF) or not utils.isaFITS(skyFF):
+    if not datahandler.isaFITS(domeFF) or not datahandler.isaFITS(skyFF):
         log.error("Some input FF is not a FITS file")
         raise Exception("Some input FF is not a FITS file")
         

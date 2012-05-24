@@ -223,19 +223,21 @@ class SuperSkyFlat(object):
 
             f.close()
             
-            
+            log.debug("Normalization parametes---> (tmp1=%s,result=%s)"%(tmp1,self.output_filename.replace("//","/")))
+          
             # Cleanup: Remove temporary files
-            #misc.fileUtils.removefiles(self.output_filename)
+            misc.fileUtils.removefiles(self.output_filename)
             # Compute normalized flat
             iraf.mscred.mscarith(operand1=tmp1,
                     operand2=mode,
                     op='/',
-                    pixtype='real',
+                    #pixtype='real',
                     result=self.output_filename.replace("//","/")
                     )
         else:
             os.rename(tmp1, self.output_filename) 
         
+        log.debug("Normalization done ! (tmp1=%s,result=%s)"%(tmp1,self.output_filename.replace("//","/")))
         
         # Update FITS header 
         f = pyfits.open(self.output_filename,'update')

@@ -52,7 +52,7 @@ def initWCS( input_image ):
     """
     
     try:
-        f=datahandler.ClFits ( input_image )
+        f = datahandler.ClFits ( input_image )
     except Exception,e:
         raise e
     
@@ -565,7 +565,7 @@ if __name__ == "__main__":
     # Check if source_file is a FITS file or a text file listing a set of files
     if os.path.exists(options.source_file):
         try:
-            misc.utils.fits_simple_verify(options.source_file)
+            datahandler.fits_simple_verify(options.source_file)
             filelist=[options.source_file]
         except:
             filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file)]

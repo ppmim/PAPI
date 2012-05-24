@@ -777,8 +777,37 @@ might replace with  the correct on.
 2012-05-22
 ==========    
     - Escribo a Wei-Hao para preguntarle sobre el dxtalk_wircam
+     Wei-Hao me responde:
+      """
+      How about a simple background subtraction in each stripe after
+      the subtraction of the median?  Maybe this will solve the problem.
+      """
     - Busco en THELI sobre el dxtalk, y aunque aparece en la documentacion no encuentro el código
-    
+
+2012-05-24
+==========    
+    - Haciendo pruebas con PAPI, me encuentro con el un error aleatorio, pues no siempre ocurre (50%), 
+    y tanto con pprocess como con multiprocessing. El error se produce en la llamada iraf.mscred.mscarith(...)
+    en calSuperFlat.py. Compruebo que los parametros de llamada de la función están bien; no se por qué puede ser ???
+      
+
+    [PAPI]: 2012-05-24 17:13:00,575 DEBUG    calSuperFlat:222: Normalization of master (O2k?) flat frame. (MODE=2857)
+    [PAPI]: 2012-05-24 17:13:00,576 DEBUG    calSuperFlat:226: Normalization parametes---> (tmp1=/data/out/Q02/tmp_sf.fits,result=/data/out/Q02/superFlat.fits)
+    [PAPI]: 2012-05-24 17:13:00,632 DEBUG    calSuperFlat:222: Normalization of master (O2k?) flat frame. (MODE=2857)
+    [PAPI]: 2012-05-24 17:13:00,633 DEBUG    calSuperFlat:226: Normalization parametes---> (tmp1=/data/out/Q01/tmp_sf.fits,result=/data/out/Q01/superFlat.fits)
+Killing IRAF task `delete'
+Killing IRAF task `delete'
+Exception OSError: (10, 'No child processes') in <bound method Subprocess.__del__ of <Subprocess '/iraf/iraf/bin.linux/x_system.e -c', at 15a6d40>> ignored
+Exception OSError: (10, 'No child processes') in <bound method Subprocess.__del__ of <Subprocess '/iraf/iraf/bin.linux/x_system.e -c', at 15a6d40>> ignored
+    [PAPI]: 2012-05-24 17:13:03,286 ERROR    reductionset:2085: [reduceSeq] Error while parallel data reduction ! --> Error running IRAF task delete
+('IRAF task terminated abnormally\nERROR (601, "Parameter not a legal boolean (try \'yes\' or \'no\') (verify)\x07")\n', 10, 'No child processes')                                                   
+    [PAPI]: 2012-05-24 17:13:03,286 ERROR    reductionset:1773: [reduceSet] Cannot reduce sequence : 
+ ['/data/i_test/001/dark_seq_ind0072.fits', '/data/i_test/001/dark_seq_ind0073.fits', '/data/i_test/001/dark_seq_ind0074.fits', '/data/i_test/001/dark_seq_ind0075.fits', '/data/i_test/001/dark_seq_ind0076.fits']                                                                                                                                                                                       
+ Error running IRAF task delete                                                                                                                                                                      
+('IRAF task terminated abnormally\nERROR (601, "Parameter not a legal boolean (try \'yes\' or \'no\') (verify)\x07")\n', 10, 'No child processes')  
+
+
+
 
 FOR NEXT VIDEOCONF
 ==================
@@ -836,6 +865,10 @@ DOUBTS FOR MATILDE (next)
 > papi.py -s /data/O2K/2012-Matilde/20120103/ -S 15  -g filter 
 > photometry.py -i /tmp/reduced_SEQ.fits -z 26.821570
 > aladin /tmp/reduced_SEQ.fits /tmp/reduced_SEQ.xml
+> papi.py -s /data/O2K/Matilde/120105/ -S 0  -g filter -R lemon
+> cp /data/out/mDark_EXRfly.fits /data/calibs/mDark_serie.fits
+> papi.py -s /data/O2K/Matilde/120105/ -S 4  -g filter -R lemon -D /data/calibs/mDark_serie.fits
+> papi.py -s /data/O2K/Matilde/120105/ -S 28 -g filter -R lemon -D /data/calibs/mDark_serie.fits -F /data/calibs/mTwFlat_J.fits 
 
 
 
@@ -867,7 +900,7 @@ NEXT TODOs
 - ver notas librata sobre si se reduce o no HAWK-I-4
 - ver notas librata sobre si se reduce o no HAWK-I-5; en el portatil lo hace, pero el resultado no es muy bueno, incluso la astrometria no parece funcionar
 
-- escribir al Chino sobre el dxtalk.py
+- escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
 - graficos scamp de distorsion !!!
 
 
@@ -876,3 +909,11 @@ DEPENDENCIAS DE IRDR
 - skyfilter
 - dithercubemean
 - offsets
+
+
+DUDAS OT
+========
+- ¿ en un OB solo puede haber un calibration_series ?
+- en la pantalla de Telescope-Iterator, por que el valor de Cycles=5 cuando creas un patron cualquiera ? 
+(parace que es el valor que pone por defecto en Cycles en "Single Exposure")
+Yo pondría por defecto 1 cycle

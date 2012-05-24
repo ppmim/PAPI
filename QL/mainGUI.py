@@ -278,13 +278,12 @@ class MainGUI(panicQL):
             temp = pyfits.open(filename,"readonly", ignore_missing_end=True) # since some problems with O2k files 
             #temp.verify(option='exception')  # it is a too severe checking !!!
             temp.close()
-            misc.utils.fits_simple_verify(filename)
+            datahandler.fits_simple_verify(filename)
             
             if filename in self.read_error_files:
                 log.debug("New try to read %s was successful at last! ", filename)
                 #self.read_error_files.remove(filename)
                 del self.read_error_files[filename] 
-            temp.close()
         except Exception,e:
             log.error("Error while opening file %s. Maybe writing is not finished: %s", filename, str(e))
             if filename not in self.read_error_files:
@@ -292,7 +291,7 @@ class MainGUI(panicQL):
                 if fromOutput: self.dc_outdir.remove(filename) # it means the file could be detected again by the DataCollector
                 else: self.dc.remove(filename)
                 #self.read_error_files.append(filename) # to avoid more than two tries of opening the file
-                self.read_error_files[filename]=1 # init the error counter
+                self.read_error_files[filename] = 1 # init the error counter
             else:
                 if self.read_error_files[filename]>self.MAX_READ_ERRORS:
                     #definitely, we discard the file
@@ -544,7 +543,6 @@ class MainGUI(panicQL):
                 raise e
         # ##########################################################################################
         elif self.checkBox_subSky.isChecked():
-            print "QUE PASSSSSSSS !!!!"
             try:
                 self.subtract_nearSky_slot(True)    
             except Exception,e:
@@ -719,7 +717,7 @@ class MainGUI(panicQL):
                         if type(self._task_info._return)==type(list()):
                             if len(self._task_info._return)==0 :
                                 self.logConsole.info(str(QString("No value returned")))
-                                QMessageBox.information(self, "Info", "No value returned")
+                                #QMessageBox.information(self, "Info", "No value returned")
                             else:
                                 str_list = ""
                                 #print "FILES CREATED=",self._task_info._return
@@ -2526,13 +2524,14 @@ source directory (If no, only the new ones coming will be processed) ?"),
             thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list)
             thread.start()
         except Exception,e:
+            print "donde esta la excepcion ? por aqui nunca pasa !!!!!! la hebra no devuelve la excepcion ?"
             #Anyway, restore cursor
             # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
             # thus the ExecTaskThread can't restore the cursor
             self.setCursor(Qt.arrowCursor) 
             QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
             self.m_processing = False
-            raise e
+            #raise e # Para que seguir elevando la excepcion ?
         
       
 ################################################################################

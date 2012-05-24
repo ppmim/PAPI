@@ -48,10 +48,10 @@ import fileinput
 from optparse import OptionParser
 import pyfits
 
-import misc.utils as utils
 from misc.paLog import log
 import astromatic.sextractor
 import astromatic.ldac
+import datahandler
 
 
 #-----------------------------------------------------------------------
@@ -102,7 +102,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
     
     files = []       
     # Check if inputfile is FITS file 
-    if utils.isaFITS(inputfile)==True:
+    if datahandler.isaFITS(inputfile)==True:
         files=[inputfile]
     # or a text file having the list of files to be masked
     elif os.path.isfile(inputfile):

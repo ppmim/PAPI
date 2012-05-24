@@ -100,6 +100,7 @@ def remove_crosstalk(in_image, out_image=None, overwrite=False):
             raise Exception("Instrument is not supported !")
     except Exception,e:
         raise e
+
     
  
 def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
@@ -122,7 +123,9 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     (Q2,Q4) stripes of 128 pixels of length (width or heigh). 
     So, so quadrant pairs (Q1,Q3) and (Q2,Q4) are processed in the same way.
     """
- 
+
+    log.debug("Start remove_crosstalk (O2k)")
+
     if overwrite:
         out_file = in_image
     else:   
@@ -292,6 +295,8 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         hdulist.close(output_verify='ignore')
     except Exception,e:
         raise e
+  
+    log.debug("End of remove_crosstalk (O2k)")
 
     return out_file
 
@@ -314,6 +319,8 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     of height. So, all the quadrant are processed in the same way.  
     """
     
+    log.debug("Start remove_crosstalk (PANIC)")
+
     if overwrite:
         out_file = in_image
     else:   
@@ -445,6 +452,10 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         hdulist.close(output_verify='ignore')
     except Exception,e:
         raise e
+      
+    log.debug("End of remove_crosstalk (PANIC)")
+    
+    return out_file
     
 # main
 if __name__ == "__main__":

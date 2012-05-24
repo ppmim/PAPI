@@ -25,6 +25,7 @@ import copy
 import fileinput
 import glob
 import datetime as dt
+import logging
 
 #PAPI modules
 import datahandler
@@ -170,19 +171,36 @@ class DataCollector (object):
         """
         
         dataset = []
-        
+        print 
         for file in i_files:
-        	# filter out files already detected as bad files
-        	if file not in self.bad_files_found:
-	            try:
-	                fits = datahandler.ClFits(file)
-	            except Exception,e:
-	                print "[__sortFilesMJD] Error reading file %s , skipped..."%(file)
-	                print str(e)
-	                self.bad_files_found.append(file)      
-	            else:
-	                dataset.append((file, fits.getMJD()))
-        
+            # filter out files already detected as bad files
+            if file not in self.bad_files_found:
+                try:
+                    fits = datahandler.ClFits(file)
+                except Exception,e:
+                    print "[__sortFilesMJD] Error reading file %s , skipped..."%(file)
+                    print str(e)
+                    self.bad_files_found.append(file)      
+                else:
+                    dataset.append((file, fits.getMJD()))
+	
+	# Now, try to re-read the bad_files_found
+	sleep_time = 0.0
+	while len(self.bad_files_found)>0 and sleep_time<5.0:
+            sleep_time +=0.5
+            print "[__sortFilesMJD] Start to re-read bad_files_found (sleep_time=%f)"%sleep_time
+            for file in self.bad_files_found:
+                time.sleep(sleep_time)
+                try:
+                    fits = datahandler.ClFits(file)
+                    self.bad_files_found.remove(file)
+                    print "[__sortFilesMJD] file successfully re-read !"
+                except Exception,e:
+                    print "[__sortFilesMJD] Error re-reading file %s , skipped..."%(file)
+                    print str(e)
+                else:
+                    dataset.append((file, fits.getMJD()))
+              
         dataset = sorted(dataset, key=lambda data_file: data_file[1])          
         sorted_files = []
         for tuple in dataset:
@@ -350,8 +368,9 @@ class DataCollector (object):
 				
         # ## 2011-09-12
         # Before adding to dirlist and process the new files, we sort out by MJD
-        # ## 
-        contents = self.__sortFilesMJD(contents)
+        # Only when mode=dir, because it is supposed files modes are already sorted
+        if self.mode=="dir":
+            contents = self.__sortFilesMJD(contents)
         
         # Now loop over the remaining files
         for file in contents:

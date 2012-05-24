@@ -268,14 +268,21 @@ class ClFits (object):
         if not os.path.exists( self.pathname ):
             log.error('Cannot find frame : "%s"' % self.pathname)
             raise Exception("File %s not found"%self.pathname)
-                    
+        
+        # check FITS-file integrity
+        try:
+            fits_simple_verify(self.pathname)
+        except Exception,e:
+            log.error("Could not read with integrity FITS-file:  %s\n %s"%(self.pathname, str(e)))
+            raise e
+          
         # Open the file            
         try:
             myfits = pyfits.open(self.pathname, 
                                  ignore_missing_end=True) # since some problems with O2k files                               
             
-            if len(myfits)==0 or 'SIMPLE' not in myfits[0].header or myfits[0].header['SIMPLE']!=True:
-                raise ValueError('Found a not compliant FITS file.')
+            #if len(myfits)==0 or 'SIMPLE' not in myfits[0].header or myfits[0].header['SIMPLE']!=True:
+            #    raise ValueError('Found a not compliant FITS file.')
 
             #myfits = pyfits.open(self.pathname, 'update')
             #myfits[0].verify()
@@ -785,7 +792,64 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True,
     log.debug("Successful properties checking")
     
     return True      
-      
+
+################################################################################
+####### fits tools #############################################################
+################################################################################
+def isaFITS(filepath):
+    """
+    Check if a given filepath is a FITS file
+    """
+    if os.path.exists(filepath):
+        try:
+            fd = pyfits.open(filepath, ignore_missing_end=True)
+            if fd[0].header['SIMPLE']==True:
+                return True
+            else:
+                return False
+        except Exception,e:
+            print str(e)
+            return False
+    else:
+        return False
+
+def fits_simple_verify(fitsfile):
+    """
+    Performs 2 simple checks on the input fitsfile, which is a string
+    containing a path to a FITS file.  First, it checks that the first card is
+    SIMPLE, and second it checks that the file 2880 byte aligned.
+    
+    This function is useful for performing quick verification of FITS files.
+    
+    Raises:
+      ValueError:  if either of the 2 checks fails
+      IOError:     if fitsfile doesn't exist
+    """
+    
+    if not os.path.exists(fitsfile):
+        raise IOError("file '%s' doesn't exist" % fitsfile)
+
+
+    f = open(fitsfile,"readonly")
+        
+    FITS_BLOCK_SIZE = 2880
+    try:
+        # check first card name
+        card = f.read(len("SIMPLE"))
+        if card != "SIMPLE":
+            raise ValueError("input file is not a FITS file")
+
+        # check file size
+        stat_result = os.stat(fitsfile)
+        file_size = stat_result.st_size
+        # check that file_size>fits_block_size*4 to ensure all the header/s content can be read     
+        if file_size % FITS_BLOCK_SIZE != 0 or file_size<FITS_BLOCK_SIZE*4:
+            log.warning("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
+            raise ValueError("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
+    finally:
+        f.close()
+            
+
 		
 ################################################################################            
 #  Main for Testing
