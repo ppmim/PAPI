@@ -84,6 +84,39 @@ from iraf import mscred
 # Math module for efficient array processing
 import numpy
 
+# Multiprocessing
+from multiprocessing import Process, Queue, current_process, freeze_support
+
+def _pickle_method(method):
+    """
+    Pickle methods properly, including class methods.
+    """
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
+
+def _unpickle_method(func_name, obj, cls):
+    """
+    Unpickle methods properly, including class methods.
+    """
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)        
+
+import copy_reg 
+import types 
+
+copy_reg.pickle(types.MethodType,  
+    _pickle_method,  
+    _unpickle_method)  
+
+  
   
 class MainGUI(panicQL):
 
@@ -204,6 +237,16 @@ class MainGUI(panicQL):
         self._task_timer = QTimer( self )
         self.connect( self._task_timer, SIGNAL("timeout()"), self.checkLastTask )
         self._task_timer.start( 1000, False )    # 1 second continuous timer
+        
+        # Processing Queue management
+        # Create queues
+        freeze_support()
+        self._task_queue = Queue()
+        self._done_queue = Queue()
+        
+        self._queue_timer = QTimer( self )
+        self.connect( self._queue_timer, SIGNAL("timeout()"), self.checkDoneQueue )
+        self._queue_timer.start( 1000, False )    # 1 second continuous timer
         
         ##Start display (DS9)
         #display.startDisplay()
@@ -354,7 +397,7 @@ class MainGUI(panicQL):
         elif self.comboBox_QL_Mode.currentText().contains("UserDef_3"):
             return ## TO BE DONE
         """
-    
+        
     def processSeq(self, obsSequence):
         
         """ DEPRECATED !!!
@@ -666,7 +709,79 @@ class MainGUI(panicQL):
             if not self.checkBox_autocheck.isChecked():
                 self.checkBox_autocheck.setChecked(True)
                 self.autocheck_slot()
+                
+    def checkDoneQueue(self):
+        """
+        Check Queue of done task
+        """
+        if not self._done_queue.empty():
+            try:
+                r = self._done_queue.get()
+                print "Queue result ->",r
+                self.logConsole.debug("Task finished")
+                log.info("Get from Queue: %s"%str(r))
+                
+                if r!=None:
+                    if type(r)==type(list()):
+                        if len(r)==0 :
+                            self.logConsole.info(str(QString("No value returned")))
+                            #QMessageBox.information(self, "Info", "No value returned")
+                        else:
+                            str_list = ""
+                            #print "FILES CREATED=",self._task_info._return
+                            display.showFrame(self._task_info._return) #_return is a file list
+                            for file in r:
+                                #display.showFrame(file)
+                                str_list+=str(file)+"\n"
+                                #!!! keep up-date the out DB for future calibrations !!!
+                                # Because some science sequences could neen the
+                                # master calibration created by a former reduction,
+                                # and only if apply_master_dark flat is activated,
+                                # the last produced file is inserted into the output DB
+                                # However, in order to avoid twice insert into
+                                # outputDB (although I think it should not be a
+                                # problem), if the checkBox for the outputs is 
+                                # activated on the GUI, the DB insertion will be 
+                                # done there (I hope), and not here !
+                                if not self.checkBox_outDir_autocheck.isChecked():   
+                                    log.debug("Updating DB...")
+                                    self.outputsDB.insert(file)
+                                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(r)).arg(str(str_list))))
+                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(r)).arg(str(str_list)))
+                    elif type(r)==type("") and \
+                                os.path.isfile(r):
+                        self.logConsole.debug(str(QString(">>New file %1 created ").arg(r)))
+                        if r.endswith(".fits"):
+                            display.showFrame(r)
+                        # Keep updated the out-DB for future calibrations
+                        # See comments above
+                        if not self.checkBox_outDir_autocheck.isChecked():
+                            log.debug("Updating DB...")
+                            self.outputsDB.insert(r)
+                        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    else:
+                        # Cannot identify the type of the results...for sure
+                        # something was wrong...
+                        self.logConsole.error("No processing results obtained")
+                else:
+                    self.logConsole.info("Nothing returned !")
+            else:
+                self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
+                QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
             
+            except Exception,e:
+                raise Exception("Error while checking_task_info_list: %s"%str(e))
+            finally:
+                #Anyway, restore cursor
+                self.setCursor(Qt.arrowCursor)
+                self.m_processing = False
+                # Return to the previus working directory
+                os.chdir(self._ini_cwd)
+                #Good moment to update the master calibration files    
+                self._update_master_calibrations()
+                
+                    
     def checkLastTask(self):
         """
         Receiver function signaled by QTimer 'self._task_timer' object.
@@ -2445,6 +2560,23 @@ source directory (If no, only the new ones coming will be processed) ?"),
         item.setFontUnderline( True )
         self.textEdit_log.append("HOLA me llamo <mytag> Jose Miguel </mytag>")
         """
+    
+    def worker1(self, input, output):
+        for func, args in iter(input.get, 'STOP'):
+            result = calculate(func, args)
+            output.put(result)
+            
+    def worker(self, input, output):
+        args = input.get()
+        print "ARGS=",args
+        output.put(RS.ReductionSet(*(args[0])).reduceSet())
+    
+    def calc(self, args):
+        """
+        Method used only to use with Pool.map_asycn() function
+        """
+        return RS.ReductionSet(*args).reduceSet()
+    
         
     def processFiles(self, files=None):
         """
@@ -2488,17 +2620,32 @@ source directory (If no, only the new ones coming will be processed) ?"),
             output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj_', dir=self.m_outputdir)
             os.close(output_fd)
             os.unlink(outfilename) # we only need the name
-            self._task = RS.ReductionSet( files, self.m_outputdir, out_file=outfilename,
-                                            obs_mode="dither", dark=None, 
-                                            flat=None, bpm=None, red_mode="quick",
-                                            group_by=self.group_by, check_data=True,
-                                            config_dict=self.config_opts,
-                                            external_db_files=self.outputsDB.GetFiles())
+            ###self._task = RS.ReductionSet(files, self.m_outputdir, out_file=outfilename,
+            ###                                obs_mode="dither", dark=None, 
+            ###                                flat=None, bpm=None, red_mode="quick",
+            ###                                group_by=self.group_by, check_data=True,
+            ###                                config_dict=self.config_opts,
+            ###                                external_db_files=self.outputsDB.GetFiles())
             # provide the outputDB files as the external calibration files for the RS 
             
             log.debug("ReductionSet created !")
-            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list)
-            thread.start()
+            # New approach using multiprocessing
+            #rs_filelist, out_dir=None, out_file=None, obs_mode="dither", 
+            #     dark=None, flat=None, bpm=None, red_mode="quick", 
+            #     group_by="ot", check_data=True, config_dict=None, 
+            #     external_db_files=None, temp_dir = None,
+            params = (files, self.m_outputdir, outfilename,
+                      "dither", None, 
+                      None, None, "quick",
+                      self.group_by, True,
+                      self.config_opts,
+                      self.outputsDB.GetFiles(), None)
+            self._task_queue.put([params])
+            Process(target=self.worker, 
+                    args=(self._task_queue, self._done_queue)).start()
+                    
+            ###thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list)
+            ###thread.start()
         except Exception,e:
             print "donde esta la excepcion ? por aqui nunca pasa !!!!!! la hebra no devuelve la excepcion ?"
             #Anyway, restore cursor

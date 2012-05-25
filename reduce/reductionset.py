@@ -1293,7 +1293,7 @@ class ReductionSet(object):
         if type_comb=='average': # (use IRDR::dithercubemean)
             prog = self.m_irdr_path+"/dithercubemean "
             cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
-            e=utils.runCmd( cmd )
+            e = utils.runCmd( cmd )
             if e==0:
                 log.debug("Some error while running command %s", cmd)
                 return (None,None)
