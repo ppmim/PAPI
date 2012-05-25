@@ -184,7 +184,11 @@ class MainGUI(panicQL):
         #self.dc = datahandler.DataCollector("geirs-file2", self.m_sourcedir, 
         #                                    self.file_pattern , self.new_file_func)
         
-        self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
+        if os.path.basename(self.m_sourcedir)=='save_CA2.2m.log': s_mode = 'geirs-file'
+        elif os.path.basename(self.m_sourcedir)=='fitsfiles.corrected': s_mode = 'geirs-file2'
+        else: s_mode = 'dir'
+        
+        self.dc = datahandler.DataCollector(s_mode, self.m_sourcedir, 
                                             self.file_pattern , self.new_file_func)
         # Data collector for output files
         self.dc_outdir = None # Initialized in checkOutDir_slot()
@@ -257,7 +261,7 @@ class MainGUI(panicQL):
     def new_file_func(self, filename, fromOutput=False):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
         
-        
+        log.debug("New file (in source or out_dir) notified: %s",filename)
         ####################################################
         ### Check if deleted file is from source directory
         if filename.endswith("__deleted__"):
@@ -269,44 +273,6 @@ class MainGUI(panicQL):
                 log.error("Some error while deleting file %s"%filename.replace("__deleted__",""))
             self.slot_classFilter()
             return
-        
-        #######################################
-        ### otherwise, it must be a new file !!
-        log.debug( "New file detected --> %s. Going to verification...", filename)
-        # (Try) to check if the FITS file writing has finished -- 
-        try:
-            temp = pyfits.open(filename,"readonly", ignore_missing_end=True) # since some problems with O2k files 
-            #temp.verify(option='exception')  # it is a too severe checking !!!
-            temp.close()
-            datahandler.fits_simple_verify(filename)
-            
-            if filename in self.read_error_files:
-                log.debug("New try to read %s was successful at last! ", filename)
-                #self.read_error_files.remove(filename)
-                del self.read_error_files[filename] 
-        except Exception,e:
-            log.error("Error while opening file %s. Maybe writing is not finished: %s", filename, str(e))
-            if filename not in self.read_error_files:
-                log.debug("Removing file from DC.dirlist %s", filename)
-                if fromOutput: self.dc_outdir.remove(filename) # it means the file could be detected again by the DataCollector
-                else: self.dc.remove(filename)
-                #self.read_error_files.append(filename) # to avoid more than two tries of opening the file
-                self.read_error_files[filename] = 1 # init the error counter
-            else:
-                if self.read_error_files[filename]>self.MAX_READ_ERRORS:
-                    #definitely, we discard the file
-                    log.error("Definitely discarted file %s", filename)
-                    self.logConsole.error(str(QString("File %1 corrupted and discarted").arg(filename)))
-                    del self.read_error_files[filename] # could be interesting to have a list of discarted files ??
-                    #self.read_error_files.remove(filename)
-                else:
-                    log.debug("File %s still has some read error ...will retry to read it again ...", filename)
-                    self.read_error_files[filename]+=1
-                    if fromOutput: self.dc_outdir.remove(filename) # it means the file could be detected again by the DataCollector
-                    else: self.dc.remove(filename) 
-            return
-           
-        self.logConsole.append("New file (verified) detected in source: " + filename)
         
         ######################
         ## Insert into DB
@@ -786,7 +752,7 @@ class MainGUI(panicQL):
         and display them on the "Calibrations" view Panel
         """
         
-        log.debug("Updating master calibration files")
+        log.debug("Updating master calibration files received")
         
         master_dark = [] # we'll get a list of master dark candidates
         master_flat = [] # we'll get a list of master flat candidates
@@ -869,8 +835,16 @@ class MainGUI(panicQL):
                 #Start of sequence
                 self.curr_sequence = [filename]
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
+                #due to start of a new sequnece, we need to update 'last_' values here
+                #because some values (last_img_type) are checked below
+                self.last_ra = fits.ra
+                self.last_dec = fits.dec
+                self.last_filter = fits.getFilter()
+                self.last_ob_id = fits.getOBId()
+                self.last_img_type = fits.getType()
                 log.debug("Start OS-0 %s detected : %s"%(typeSeq, str(retSeq)))
-                self.logConsole.warning("Start of observing sequence [%s]"%(typeSeq))  
+                self.logConsole.warning("Start of observing sequence [%s]"%(typeSeq))
+                
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1 \
             and (fits.getType()==self.last_img_type or self.last_img_type==None):
                 #End of sequence
@@ -887,7 +861,7 @@ class MainGUI(panicQL):
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         # ############################################
         # We suppose data is obtained using GEIRS+MIDAS_scripts observations
-        # POINT_NO, DITH_NO, EXPO_NO keyword will be checked for sequece detection
+        # POINT_NO(=OB_ID), DITH_NO, EXPO_NO keyword will be checked for sequece detection
         # TODO: TBC !!! I don't know if it will work with calibration sequences
         else:
             log.debug("Checking GEIRS keywords...")
@@ -903,6 +877,7 @@ class MainGUI(panicQL):
                 #End of sequence, and then reset the sequence list
                 self.curr_sequence = [filename]
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
+                self.last_ob_id = -1 # re-init
                 log.debug("EOS-1 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
                 #Check RA,Dec coordinates for distance
@@ -914,6 +889,7 @@ class MainGUI(panicQL):
                     #End of sequence, then reset the sequence list
                     self.curr_sequence = [filename]
                     endSeq,retSeq,typeSeq = True,retSeq,fits.getType()
+                    self.last_ob_id = -1 # re-init
                     log.debug("EOS-2 %s detected : %s"%(typeSeq, str(self.retSeq)))
                 else:
                     #Mid of sequence, continue adding file

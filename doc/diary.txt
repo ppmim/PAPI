@@ -810,7 +810,50 @@ Exception OSError: (10, 'No child processes') in <bound method Subprocess.__del_
 
     SOLUCION: sustituyo la llamada a iraf.mscred.mscarith por las operaciones correspondientes en python !!!
     
+
+2012-05-25
+==========  
+  - Elimino el chequeo de los FITS en la funcion mainGUI:new_file_func(), pues ahora es realizado
+  en el clfits::recognize(). Lo pruebo y parece que va muy bien.
+  Esto servira para todos los modos 'file' & 'dir' del datacollector.
+  - Observo algo que parece una condición de carrera, y es que alguna vez puede ocurrir que aunque
+  el chequeo del FITS sea correcto, GEIRS no haya aún añadido las keywords que le da el OT y entonces
+  el QL no detecte bien el fichero pues no puede leer dichas keywords esenciales.
+  
+  - Se siguen produciendo errores de PyRAF de vez en cuando !!!!:
     
+       [PAPI]: 2012-05-25 13:29:58,295 INFO     calSuperFlat:145: Combining images...(images are scaled to have the same median)
+Killing IRAF task `combine'
+Exception OSError: (10, 'No child processes') in <bound method Subprocess.__del__ of <Subprocess '/iraf/extern/mscred/bin.linux/x_combine.e -c', at 32692d8>> ignored
+    [PAPI]: 2012-05-25 13:29:58,457 INFO     reductionset:2440: ##################################
+    [PAPI]: 2012-05-25 13:29:58,457 ERROR    reductionset:2085: [reduceSeq] Error while parallel data reduction ! --> Error running IRAF task combine
+('IRAF task terminated abnormally\nERROR (603, "Parameter not a legal number (project)\x07")\n', 10, 'No child processes')                                                                                                   
+    [PAPI]: 2012-05-25 13:29:58,458 INFO     reductionset:2441: #### Starting Object Data Reduction #####
+    [PAPI]: 2012-05-25 13:29:58,458 ERROR    reductionset:1773: [reduceSet] Cannot reduce sequence : 
+ ['/home/panic/data/i_test/001/dark_seq_ind0217.fits', '/home/panic/data/i_test/001/dark_seq_ind0218.fits', '/home/panic/data/i_test/001/dark_seq_ind0219.fits', '/home/panic/data/i_test/001/dark_seq_ind0220.fits', '/home/panic/data/i_test/001/dark_seq_ind0221.fits']                                                                                                                                                                                
+ Error running IRAF task combine                                                                                                                                                                                             
+('IRAF task terminated abnormally\nERROR (603, "Parameter not a legal number (project)\x07")\n', 10, 'No child processes')
+
+
+  Otro error:
+    
+    [PAPI]: 2012-05-25 13:33:26,592 ERROR    reductionset:1901: [reduceSeq] Some error while creating master DARK: [Errno 32] Broken pipe
+    [PAPI]: 2012-05-25 13:33:26,592 ERROR    reductionset:1773: [reduceSet] Cannot reduce sequence : 
+ ['/home/panic/data/i_test/001/dark_seq_ind0222.fits', '/home/panic/data/i_test/001/dark_seq_ind0223.fits', '/home/panic/data/i_test/001/dark_seq_ind0224.fits', '/home/panic/data/i_test/001/dark_seq_ind0225.fits', '/home/panic/data/i_test/001/dark_seq_ind0226.fits']                                                                                                                                                                                
+ [Errno 32] Broken pipe                                                                                                                                                                                                      
+    [PAPI]: 2012-05-25 13:33:26,592 DEBUG    reductionset:1774: [reduceSet] Procceding to next sequence...
+Exception in thread Thread-10:
+Traceback (most recent call last):
+  File "/usr/lib64/python2.7/threading.py", line 530, in __bootstrap_inner
+    self.run()
+  File "/home/panic/DEVELOP/PIPELINE/PANIC/trunk/reduce/threadsmod.py", line 51, in run
+    raise e
+OSError: [Errno 32] Broken pipe
+
+
+
+
+  
 
 
 FOR NEXT VIDEOCONF
@@ -878,6 +921,12 @@ DOUBTS FOR MATILDE (next)
 
 TODO's for Clemens
 ==================
+  - Observo algo que parece una condición de carrera, y es que alguna vez puede ocurrir que aunque
+  el chequeo del FITS sea correcto, GEIRS no haya aún añadido las keywords que le da el OT y entonces
+  el QL no detecte bien el fichero pues no puede leer dichas keywords esenciales.
+  Esto creo que no ocurre cuando usamos los modos 'file' el datacollector.
+  
+
 - comando para añadir cualquier keyword al header
 - WCS correcto en los headers, actualmente tiene
 TYPE1  = 'PIXEL'

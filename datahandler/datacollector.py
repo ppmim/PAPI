@@ -171,7 +171,6 @@ class DataCollector (object):
         """
         
         dataset = []
-        print 
         for file in i_files:
             # filter out files already detected as bad files
             if file not in self.bad_files_found:
@@ -185,6 +184,7 @@ class DataCollector (object):
                     dataset.append((file, fits.getMJD()))
 	
 	# Now, try to re-read the bad_files_found
+	# In fact the next code is no necessary because it is done in clfits:recognize()
 	sleep_time = 0.0
 	while len(self.bad_files_found)>0 and sleep_time<5.0:
             sleep_time +=0.5
@@ -368,7 +368,7 @@ class DataCollector (object):
 				
         # ## 2011-09-12
         # Before adding to dirlist and process the new files, we sort out by MJD
-        # Only when mode=dir, because it is supposed files modes are already sorted
+        # Only when mode=dir, because it is supposed in 'file's-modes are already sorted
         if self.mode=="dir":
             contents = self.__sortFilesMJD(contents)
         
@@ -390,24 +390,20 @@ class DataCollector (object):
 			        and (file not in self.newfiles) 
 			        ):
               
-                #print '[DC] Appending file to the queue'
-			    
-                ## new---
-                
-	                #fc=fits.FitsFile(file)
-	                ##fc.recognize()
-                ##fits.detected_files.append( file )
-                ## Append to the frameLog
-	                #fileList.put (fc.filename , fc.type )
-	                #misc.dataset.filesDB.insert(file)
-	                #misc.dataset.filesDB.ListDataSet()
-                
-                ## wen---
-                
-                self.callback_func(file)
-                # Only then, send message to the receiver client
-                #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12
-                print '[DC] Found new file ....%s' %file
+                #Checking file
+                try:
+                    fits = datahandler.ClFits(file)
+                    del fits
+                except Exception,e:
+                    print "[findNewFiles] Error reading file %s , skipped..."%(file)
+                    print str(e)
+                    self.remove(file)
+                    self.bad_files_found.append(file) 
+                else:
+                    self.callback_func(file)
+                    # Only then, send message to the receiver client
+                    #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12
+                    print '[DC] Found new file ....%s' %file
             else:
                 print "[DC] Warning, %s not a compliant file !!" %file
 	

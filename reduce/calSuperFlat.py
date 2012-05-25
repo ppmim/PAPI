@@ -222,9 +222,7 @@ class SuperSkyFlat(object):
                         2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
                                                   offset2:naxis2-offset2]))
                 msg = "Normalization of master (O2k? or PANIC-splitted frame) flat frame. (MODE=%d)"%mode
-                print "pixel_antes = ", f[0].data[100,100]
                 f[0].data = f[0].data / mode
-                print "pixel_despues = ", f[0].data[100,100]
 
             log.debug(msg)
 

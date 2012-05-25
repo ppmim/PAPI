@@ -154,7 +154,7 @@ def runCmd( str_cmd, p_shell=True ):
     (stdoutdata, stderrdata) = p.communicate()
     err = stdoutdata + " " + stderrdata
 
-    print "STDOUT + STDERR", err
+    if len(err)>0: print "STDOUT + STDERR=", err
     
     
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!

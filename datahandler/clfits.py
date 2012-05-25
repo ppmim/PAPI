@@ -21,6 +21,7 @@
 import os.path
 import pyfits
 import sys
+import time
 
 import pywcs 
 import numpy
@@ -260,7 +261,7 @@ class ClFits (object):
                 raise
     
 
-    def recognize(self):
+    def recognize(self, retries=5):
      
         ###log.info("Recognizing file %s" %self.filename)
 
@@ -270,13 +271,23 @@ class ClFits (object):
             raise Exception("File %s not found"%self.pathname)
         
         # check FITS-file integrity
-        try:
-            fits_simple_verify(self.pathname)
-        except Exception,e:
-            log.error("Could not read with integrity FITS-file:  %s\n %s"%(self.pathname, str(e)))
-            raise e
-          
-        # Open the file            
+        nTry = 0
+        while True:
+            try:
+                fits_simple_verify(self.pathname)
+            except Exception,e:
+                if nTry<retries:
+                    nTry +=1
+                    time.sleep(nTry*0.5)
+                    log.warning("Trying to re-read integrity of FITS-file : %s\n %s"%(self.pathname, str(e)))
+                else:
+                    log.error("Could not read with integrity FITS-file:  %s\n %s"%(self.pathname, str(e)))
+                    log.error("File discarded : %s"%self.pathname)
+                    raise e
+            else:
+                break
+              
+        # Open the file for header recognition            
         try:
             myfits = pyfits.open(self.pathname, 
                                  ignore_missing_end=True) # since some problems with O2k files                               
@@ -842,8 +853,8 @@ def fits_simple_verify(fitsfile):
         # check file size
         stat_result = os.stat(fitsfile)
         file_size = stat_result.st_size
-        # check that file_size>fits_block_size*4 to ensure all the header/s content can be read     
-        if file_size % FITS_BLOCK_SIZE != 0 or file_size<FITS_BLOCK_SIZE*4:
+        # check that file_size>fits_block_size*10 to be sure all the header/s content can be read     
+        if file_size % FITS_BLOCK_SIZE != 0 or file_size<FITS_BLOCK_SIZE*10:
             log.warning("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
             raise ValueError("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
     finally:
