@@ -231,7 +231,7 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
                      column name for photometric value )
     
     @return: tuple with linear fit parameters and a Plot showing the fit
-             a - intercept 
+             a - intercept (ZP)
              b - slope of the linear fit
              r - estimated error
              
@@ -410,6 +410,7 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
     plt.savefig("/tmp/phot_hist.pdf")
     pylab.show()
     
+    return (zp, b, r)
 
     
 class STILTSwrapper (object):
@@ -550,11 +551,6 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
         log.error("Canno't create SExtractor catalog : %s", str(e))
         raise e 
     
-    # if ZP was provided, then only the SExtractor catalog will be
-    # generated, but not xmatching against any external catalog
-    if zero_point:
-      log.info("Catalog generated: %s",image_catalog) 
-      return image_catalog
       
     ## 1 - Generate region of base catalog (2MASS)
     icat = catalog_query.ICatalog ()
@@ -585,10 +581,11 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     ###### using Numpy & Matplotlib
     ###### 2MASS_Mag = Inst_Mag*b + ZP  
     log.debug("Compute & Plot regression !!!")    
+    est_zp_err = zero_point
     try:
-        compute_regresion (out_xmatch_file, 'MAG_AUTO', 
-                           two_mass_col_name, output_filename, snr )
-        log.debug("Well DONE !!")
+        est_zp_err = compute_regresion (out_xmatch_file, 'MAG_AUTO', 
+                           two_mass_col_name, output_filename, snr )[0]
+        log.info("Estimated ZP_err=%s"%est_zp_err)
         #sys.exit(0)
     except Exception,e:
         log.error("Sorry, some error while computing linear fit or\
@@ -610,6 +607,26 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
         log.error("Sorry, some error while computing linear fit or \
         ploting the results: %s", str(e))
         raise e
+
+    ## 4.0 - Finally, generate image catalog (VOTable) -> SExtractor with the 
+    ## new estimated ZP
+    log.info("*** Creating SExtractor VOTable catalog (ZP=%f)...."%(est_zp_err+zero_point))
+    image_catalog = os.path.splitext(input_image)[0]  + ".xml"
+    
+    sex = astromatic.SExtractor()
+    sex.ext_config['CHECKIMAGE_TYPE'] = "NONE"
+    sex.config['CATALOG_TYPE'] = "ASCII_VOTABLE"
+    sex.config['CATALOG_NAME'] = image_catalog
+    sex.config['DETECT_THRESH'] = 1.5
+    sex.config['DETECT_MINAREA'] = 5
+    sex.config['MAG_ZEROPOINT'] = est_zp_err+zero_point
+    
+    
+    try:
+        sex.run(input_image, updateconfig=True, clean=False)
+    except Exception,e:
+        log.error("Canno't create SExtractor catalog : %s", str(e))
+        raise e 
 
     return output_filename
 
@@ -640,8 +657,8 @@ if __name__ == "__main__":
                   default=10.0)
     
     parser.add_option("-z", "--zero_point",
-                  action="store", dest="zero_point", type=float, default=0.0,
-                  help="Magnitude Zero Point [%default]; then only Sex catalog will be generated")
+                  action="store", dest="zero_point", type=float, default=25.0,
+                  help="Initial Magnitude Zero Point estimation [%default]; used for SExtractor")
                   
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 

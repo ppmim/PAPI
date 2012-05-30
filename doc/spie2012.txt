@@ -31,10 +31,14 @@ At the moment the instrument is beeing integrated at the MPIA labs. This means t
 
 3.1 Language 
 
-Since the beginning, the programming language selected was with no much
+Since the beginning, the programming language selected was with no much 
 doubts, Python, one of the princial language used nowadys for data processing
 in astrophisics. Python is a is an interpreted, interactive, object-oriented programming
-language. It is a "very high level language" or "scripting language," often compared to Perl, Tcl, Scheme, and Java. It combines remarkable power with a very clear and simple syntax that resembles the "pseudocode" one might use to describe the essentials of an algorithm. Implementations are availabe for free on all major (and many minor) computing platforms. Python is an "open source" project with a very liberal license.
+language. It is a "very high level language" or "scripting language," often compared 
+to Perl, Tcl, Scheme, and Java. It combines remarkable power with a very clear and simple 
+syntax that resembles the "pseudocode" one might use to describe the essentials of an 
+algorithm. Implementations are availabe for free on all major (and many minor) 
+computing platforms. Python is an "open source" project with a very liberal license.
 
 
 4. QUICK-LOOK TOOL
@@ -113,10 +117,7 @@ NOTES
 =====
 
 The pipeline can be run in two modes:
-quick look and science. The goal of
-the quick look pipeline is to deliver a
-processed image to the observer within
-five minutes of image acquisition. This
+quick look and science. The goal of the quick look pipeline is to deliver a processed image to the observer within five minutes of image acquisition. This
 enables immediate assessment of the
 image quality and instrument
 performance. The quick look pipeline

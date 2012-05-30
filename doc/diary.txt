@@ -851,8 +851,14 @@ Traceback (most recent call last):
 OSError: [Errno 32] Broken pipe
 
 
+  - Hago una primera prueba/implementación en QL para usar Process+Queue en lugar de la clase ExecTaskThread que "pienso"
+  que puede ser la causa de los errores de PyRAF descritos arriba.
+  
+  - Muevo algunos métodos relaccionados con FITS del módulo misc.utils al modulo clfits
 
-
+2012-05-29
+==========  
+  - Reunion con Matilde (ver notas más abajo).
   
 
 
@@ -862,16 +868,17 @@ FOR NEXT VIDEOCONF
  - Improvements in master flat (normlizaton wrt chip 1)
  - New module for mix dome & sky FF : calCombineFF()
 
-DOUBTS FOR MATILDE (15-May-2012)
-================================
+KDD con MATILDE (15-May-2012)
+=============================
 
  1) integration of cubes/individual files (add or mean)
    -->Si; sumatorio "simple" del cubo/ficheros sin mas.
+   individual, quizás el OT me pueda ayudar, al menos para PAPI (ot?)
  2) integration of single-images (individual files) --> keyword FRAMENUM
    (ver arriba)
  3) how to proceed with windowed/binned images ? 
    --> MF preguntara a la gente de Barcelona sobre las ventanas 
-   y como se podrian reducir (sky, astrometry, etc). 
+   y como se podrian reducir (sky, astrometry, etc). (pendiente)
    --> JM Preguntara CS sobre el binning: CS responde que no, que en IR no hay binning 
  4) JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? 
    --> MF le preguntara a JF que quiere exactamente; MF no ve muy interesante el ir viendo la Mag de cada
@@ -900,15 +907,50 @@ DOUBTS FOR MATILDE (15-May-2012)
    How about a simple background subtraction in each stripe after
    the subtraction of the median?  Maybe this will solve the problem.
    """
+   Lo que dice Wei-hao (restar a cada stripe su propio cielo) podría funcionar, pero nuestra "triste" realidad (imagenes con gradiente en el background), 
+   no puede funcionar.
+   
+KDD con MATILDE (29-May-2012)
+=============================
+ 
+ - repasamos los punto de la ultima KDD; MF no ha podido hacer sus "deberes", por lo que lo dejamos 
+ para la proxima KDD.
+ - JM comenta sus "deberes" y muestra el ejemplo : aladin /tmp/reduced_SEQ.fits /tmp/reduced_SEQ.xml
+   que a MF le parece bien.
+   NO obstante, MF no está muy conforme con la dispersión (STD=RMS=0.105950) que tenemos en el ejemplo que le muestro (o2k-120105).
+   MF pensará sobre ello, y yo probaré con MAG_APER, qphot, a ver que diferencias hay.
+   
+ - comentamos la respuesta de Wei-Hao:
+   How about a simple background subtraction in each stripe after
+   the subtraction of the median?  Maybe this will solve the problem.
+   """
+   Lo que dice Wei-hao (restar a cada stripe su propio cielo) podría funcionar, pero nuestra "triste" realidad (imagenes con gradiente en el background), 
+   no puede funcionar.
+   
+   Matilde sugiere restar al stripe-mediana el su propio background antes de restarlo a los N stripes de la imagen a
+   corregir, de forma que "solo" restesmos los artefactos ->"estrellas de crosstalk".
+   Quizas es background podría ser la "moda" de la imagen.
+ 
+ - "significado" de MagInstrumental negativa ? 
+   MF: bueno, no tiene importancia, pues el resultado es el mismo; lo que pasa es que normalmente hace
+   el ajuste con una estimación inicial ZP=25 de forma que no salgan valores "negativos".
+   
+    mag_instrumental = zmag - 2.5 * log10(flujo/tiempo_integracion)
+
+  - En cuanto al problema de identificar los grupos/secuencias cuando se graban en modo "individual",
+  MF comenta que quizás con la información extra del OT se pueda hacer.
+  JM lo pensará, pues quizás para el Pipe sirva, aunque no para el QL.
+  
+  - JM le comenta a MF que para la proxima sesion le dará un "tutoria" sobre como usar PAPI.
+  
 
 DOUBTS FOR MATILDE (next)
 ================================
- - "significado" de MagInstrumental negativa ??? 
-    mag_instrumental = zmag - 2.5 * log10(flujo/tiempo_integracion)
-    
- - New module for mix dome & sky FF : calCombineFF()
+
+- New module for mix dome & sky FF : calCombineFF()
  - show MF PAPI CL interface:
 
+> papi.py -s /data/O2K/2012-Matilde/20120103/ -g filter -p
 > papi.py -s /data/O2K/2012-Matilde/20120103/ -S 15  -g filter 
 > photometry.py -i /tmp/reduced_SEQ.fits -z 26.821570
 > aladin /tmp/reduced_SEQ.fits /tmp/reduced_SEQ.xml
@@ -916,6 +958,10 @@ DOUBTS FOR MATILDE (next)
 > cp /data/out/mDark_EXRfly.fits /data/calibs/mDark_serie.fits
 > papi.py -s /data/O2K/Matilde/120105/ -S 4  -g filter -R lemon -D /data/calibs/mDark_serie.fits
 > papi.py -s /data/O2K/Matilde/120105/ -S 28 -g filter -R lemon -D /data/calibs/mDark_serie.fits -F /data/calibs/mTwFlat_J.fits 
+
+- Matilde pensara sobre cual puede ser el origen de la dispersion "tan grande" en la estimacion de fot. absoluta.
+JM probar con qphot con MAG_APER, etc ...
+
 
 
 

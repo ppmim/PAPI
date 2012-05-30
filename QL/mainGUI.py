@@ -729,7 +729,7 @@ class MainGUI(panicQL):
                         else:
                             str_list = ""
                             #print "FILES CREATED=",self._task_info._return
-                            display.showFrame(self._task_info._return) #_return is a file list
+                            display.showFrame(r) #_return is a file list
                             for file in r:
                                 #display.showFrame(file)
                                 str_list+=str(file)+"\n"
@@ -749,8 +749,7 @@ class MainGUI(panicQL):
                                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                             self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(r)).arg(str(str_list))))
                             QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(r)).arg(str(str_list)))
-                    elif type(r)==type("") and \
-                                os.path.isfile(r):
+                    elif type(r)==type("") and os.path.isfile(r):
                         self.logConsole.debug(str(QString(">>New file %1 created ").arg(r)))
                         if r.endswith(".fits"):
                             display.showFrame(r)
@@ -766,10 +765,6 @@ class MainGUI(panicQL):
                         self.logConsole.error("No processing results obtained")
                 else:
                     self.logConsole.info("Nothing returned !")
-            else:
-                self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
-                QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
-            
             except Exception,e:
                 raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:

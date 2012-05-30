@@ -213,8 +213,19 @@ BLAS/Lapack
 >make
 >make install
 
-7. PySqlite2
-============
+7. PySqlite2 (python<2.5)
+=========================
+If you're using Python 2.5 and up, you already have a working version of pysqlite 2, bundled as sqlite3. You can stop here ;-)
+
+If you are using an older version of Python or you'd like to benefit from the latest and greatest version of pysqlite, grab Windows installer or the source .tar.gz from the official ​Downloads.
+
+If you need to build from this .tar.gz, simply do after unpacking:
+
+python setup.py build_static install 
+
+This will fetch the latest SQLite version and bundle it within the extension.
+
+
 Home: http://trac.edgewall.org/wiki/PySqlite
 - Requirements: sqlite3, sqlite-devel
 > zypper install sqlite3 sqlite3-devel

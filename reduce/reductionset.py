@@ -1151,13 +1151,13 @@ class ReductionSet(object):
             log.debug("===> Processing extension %d", n+1)
             # Create the temp list file of nearest (ar,dec,mjd) from current selected science file
             listfile=self.out_dir+"/nearfiles.list"
-            utils.listToFile(obj_ext[n], listfile)
+            misc.utils.listToFile(obj_ext[n], listfile)
             print "NEAR_FILES=", obj_ext[n]
             #Call external app skyfilter (papi)
             hwidth=2 ## TODO is it right ?????
             cmd=self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d %s"\
                         %(listfile, l_gainMap, hwidth, file_pos, self.out_dir)
-            e=utils.runCmd( cmd )
+            e = misc.utils.runCmd( cmd )
             if e==1: # success
                 fname = self.out_dir+"/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
                 out_ext.append(fname)  
@@ -1293,7 +1293,7 @@ class ReductionSet(object):
         if type_comb=='average': # (use IRDR::dithercubemean)
             prog = self.m_irdr_path+"/dithercubemean "
             cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
-            e = utils.runCmd( cmd )
+            e = misc.utils.runCmd( cmd )
             if e==0:
                 log.debug("Some error while running command %s", cmd)
                 return (None,None)
@@ -1339,7 +1339,7 @@ class ReductionSet(object):
             cmd  = prog + " " + output_master_obj_mask + " " + str(scale)
             # dilate will overwrite the master object mask
             
-            e=utils.runCmd( cmd )
+            e = misc.utils.runCmd( cmd )
             if e==0:
                 log.debug("Some error while running command %s", cmd)
             else:
