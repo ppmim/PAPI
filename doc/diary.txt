@@ -859,7 +859,13 @@ OSError: [Errno 32] Broken pipe
 2012-05-29
 ==========  
   - Reunion con Matilde (ver notas más abajo).
-  
+  - paper SPIE2012
+
+2012-05-30
+==========  
+
+   - Modificacion en phometry para que genere al catalogo con el ZP estimado (sugerencia MF)
+   
 
 
 FOR NEXT VIDEOCONF
@@ -943,6 +949,9 @@ KDD con MATILDE (29-May-2012)
   
   - JM le comenta a MF que para la proxima sesion le dará un "tutoria" sobre como usar PAPI.
   
+  - MF pensara sobre cual puede ser el origen de la dispersion "tan grande" en la estimacion de fot. absoluta.
+JM probar con qphot con MAG_APER, etc ...
+
 
 DOUBTS FOR MATILDE (next)
 ================================
@@ -959,8 +968,6 @@ DOUBTS FOR MATILDE (next)
 > papi.py -s /data/O2K/Matilde/120105/ -S 4  -g filter -R lemon -D /data/calibs/mDark_serie.fits
 > papi.py -s /data/O2K/Matilde/120105/ -S 28 -g filter -R lemon -D /data/calibs/mDark_serie.fits -F /data/calibs/mTwFlat_J.fits 
 
-- Matilde pensara sobre cual puede ser el origen de la dispersion "tan grande" en la estimacion de fot. absoluta.
-JM probar con qphot con MAG_APER, etc ...
 
 
 

@@ -118,27 +118,17 @@ NOTES
 
 The pipeline can be run in two modes:
 quick look and science. The goal of the quick look pipeline is to deliver a processed image to the observer within five minutes of image acquisition. This
-enables immediate assessment of the
-image quality and instrument
-performance. The quick look pipeline
-differs from the science pipeline in
-two areas: it applies calibration files
-from the most recent science pipeline
-run instead of the calibration frames
-from the current run, and it
-implements a subset of the full science
-pipeline reduction, terminating with
-the de-fringing stage.
-The science pipeline provides the
-observer with reduced data shortly
-after the end of the observing run. To
-provide the highest quality data a
-limited amount of human intervention
-is necessary, mainly in rejecting poor
-calibration frames. This pipeline has
-been running on a Sun UltraSparc
-system servicing ING Wide Field
-Survey Data since August 1998
+enables immediate assessment of the image quality and instrument performance. The quick look pipeline differs from the science pipeline in
+two areas: it applies calibration files from the most recent science pipeline run instead of the calibration frames from the current run, and it
+implements a subset of the full science pipeline reduction, terminating with the coaddition after the first sky background subtraction.
+The science pipeline provides the observer with reduced data shortly after the end of the observing run, early in the morning as soon as all the files are proccessed.
+To provide the highest quality data a limited amount of human intervention is necessary, mainly in rejecting poor
+calibration frames. This pipeline has been running on a 2x QuadCore AMD opteron CPU with 32GB and openSuSE11.1 64bits.
 (Lewis et al., 1999).
 
 
+HABLAR DE :
+  
+  1) como se usa el multiprocessing, reparto de tareas en los cores, etc; adjuntar gráfico
+  2) problemas de Python como lenguaje interpretado ===> PyUnit
+  3) Añadir agradeciemiento que me pasará MF

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'panicQL.ui'
 #
-# Created: Mon May 14 17:18:19 2012
+# Created: Wed May 30 12:36:13 2012
 #      by: The PyQt User Interface Compiler (pyuic) 3.18.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -10717,7 +10717,7 @@ class panicQL(QMainWindow):
         self.textLabel1_7_2.setGeometry(QRect(14,458,220,22))
 
         self.textEdit_log = QTextEdit(self.centralWidget(),"textEdit_log")
-        self.textEdit_log.setGeometry(QRect(10,488,940,130))
+        self.textEdit_log.setGeometry(QRect(10,487,940,130))
         self.textEdit_log.setTextFormat(QTextEdit.LogText)
         self.textEdit_log.setWordWrap(QTextEdit.WidgetWidth)
 
@@ -10729,12 +10729,6 @@ class panicQL(QMainWindow):
         self.checkBox_autocheck = QCheckBox(self.tab,"checkBox_autocheck")
         self.checkBox_autocheck.setGeometry(QRect(440,31,20,20))
         self.checkBox_autocheck.setChecked(0)
-
-        self.lineEdit_filename_filter = QLineEdit(self.tab,"lineEdit_filename_filter")
-        self.lineEdit_filename_filter.setGeometry(QRect(492,30,60,21))
-        self.lineEdit_filename_filter.setPaletteBackgroundColor(QColor(197,255,233))
-        self.lineEdit_filename_filter.setAlignment(QLineEdit.AlignRight)
-        self.lineEdit_filename_filter.setReadOnly(1)
 
         self.checkBox_outDir_autocheck = QCheckBox(self.tab,"checkBox_outDir_autocheck")
         self.checkBox_outDir_autocheck.setGeometry(QRect(441,64,20,20))
@@ -10775,11 +10769,6 @@ class panicQL(QMainWindow):
 
         self.pushButton_dataSourceD = QPushButton(self.tab,"pushButton_dataSourceD")
         self.pushButton_dataSourceD.setGeometry(QRect(19,27,110,23))
-
-        self.lineEdit_sourceD = QLineEdit(self.tab,"lineEdit_sourceD")
-        self.lineEdit_sourceD.setGeometry(QRect(140,30,290,21))
-        self.lineEdit_sourceD.setPaletteBackgroundColor(QColor(255,255,137))
-        self.lineEdit_sourceD.setReadOnly(1)
 
         self.lineEdit_outputD = QLineEdit(self.tab,"lineEdit_outputD")
         self.lineEdit_outputD.setGeometry(QRect(141,63,290,20))
@@ -10857,108 +10846,31 @@ class panicQL(QMainWindow):
         self.pushButton_subtract_last2 = QPushButton(self.tab,"pushButton_subtract_last2")
         self.pushButton_subtract_last2.setGeometry(QRect(650,160,111,24))
         self.pushButton_subtract_last2.setPaletteBackgroundColor(QColor(244,153,42))
+
+        self.lineEdit_sourceD = QLineEdit(self.tab,"lineEdit_sourceD")
+        self.lineEdit_sourceD.setGeometry(QRect(140,30,290,21))
+        self.lineEdit_sourceD.setPaletteBackgroundColor(QColor(255,255,137))
+        self.lineEdit_sourceD.setReadOnly(1)
+
+        self.lineEdit_filename_filter = QLineEdit(self.tab,"lineEdit_filename_filter")
+        self.lineEdit_filename_filter.setGeometry(QRect(492,30,60,21))
+        self.lineEdit_filename_filter.setPaletteBackgroundColor(QColor(197,255,233))
+        self.lineEdit_filename_filter.setAlignment(QLineEdit.AlignRight)
+        self.lineEdit_filename_filter.setReadOnly(1)
         self.tabWidget3.insertTab(self.tab,QString.fromLatin1(""))
 
         self.TabPage = QWidget(self.tabWidget3,"TabPage")
 
-        self.buttonGroup2_2 = QButtonGroup(self.TabPage,"buttonGroup2_2")
-        self.buttonGroup2_2.setGeometry(QRect(231,10,300,111))
-
-        self.lineEdit_ra_dec_near_offset = QLineEdit(self.buttonGroup2_2,"lineEdit_ra_dec_near_offset")
-        self.lineEdit_ra_dec_near_offset.setGeometry(QRect(137,30,50,21))
-        self.lineEdit_ra_dec_near_offset.setPaletteBackgroundColor(QColor(255,255,137))
-
-        self.textLabel5 = QLabel(self.buttonGroup2_2,"textLabel5")
-        self.textLabel5.setGeometry(QRect(190,33,58,20))
-
-        self.lineEdit_time_near_offset = QLineEdit(self.buttonGroup2_2,"lineEdit_time_near_offset")
-        self.lineEdit_time_near_offset.setGeometry(QRect(137,54,50,21))
-        self.lineEdit_time_near_offset.setPaletteBackgroundColor(QColor(255,255,137))
-
-        self.textLabel5_2 = QLabel(self.buttonGroup2_2,"textLabel5_2")
-        self.textLabel5_2.setGeometry(QRect(191,56,58,20))
-        self.textLabel5_2.setMidLineWidth(1)
-
-        self.textLabel4_3 = QLabel(self.buttonGroup2_2,"textLabel4_3")
-        self.textLabel4_3.setGeometry(QRect(20,30,110,20))
-
-        self.textLabel4_3_2 = QLabel(self.buttonGroup2_2,"textLabel4_3_2")
-        self.textLabel4_3_2.setGeometry(QRect(20,54,100,20))
-
-        self.checkBox_data_grouping = QCheckBox(self.buttonGroup2_2,"checkBox_data_grouping")
-        self.checkBox_data_grouping.setGeometry(QRect(18,80,270,19))
-        self.checkBox_data_grouping.setChecked(0)
-
-        self.groupBox1 = QGroupBox(self.TabPage,"groupBox1")
-        self.groupBox1.setGeometry(QRect(350,130,560,280))
-
-        self.textLabel3 = QLabel(self.groupBox1,"textLabel3")
-        self.textLabel3.setGeometry(QRect(21,141,130,16))
-
-        self.buttonGroup2 = QButtonGroup(self.groupBox1,"buttonGroup2")
-        self.buttonGroup2.setGeometry(QRect(200,140,310,120))
-
-        self.radioButton25_2 = QRadioButton(self.buttonGroup2,"radioButton25_2")
-        self.radioButton25_2.setGeometry(QRect(10,63,200,20))
-
-        self.radioButton25 = QRadioButton(self.buttonGroup2,"radioButton25")
-        self.radioButton25.setGeometry(QRect(10,41,260,20))
-
-        self.radioButton26 = QRadioButton(self.buttonGroup2,"radioButton26")
-        self.radioButton26.setGeometry(QRect(11,20,60,20))
-        self.radioButton26.setChecked(1)
-
-        self.checkBox7_2 = QCheckBox(self.groupBox1,"checkBox7_2")
-        self.checkBox7_2.setGeometry(QRect(24,30,140,19))
-        self.checkBox7_2.setChecked(0)
-
-        self.checkBox8_2 = QCheckBox(self.groupBox1,"checkBox8_2")
-        self.checkBox8_2.setGeometry(QRect(24,56,180,19))
-        self.checkBox8_2.setChecked(0)
-
-        self.checkBox8_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_2")
-        self.checkBox8_2_2.setGeometry(QRect(24,81,180,19))
-        self.checkBox8_2_2.setChecked(1)
-
-        self.comboBox_skyWindow = QComboBox(0,self.groupBox1,"comboBox_skyWindow")
-        self.comboBox_skyWindow.setGeometry(QRect(21,161,118,21))
-
-        self.pushButton22 = QPushButton(self.groupBox1,"pushButton22")
-        self.pushButton22.setGeometry(QRect(20,230,130,20))
-
-        self.checkBox8_2_3_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2_2")
-        self.checkBox8_2_3_2_2.setGeometry(QRect(190,80,290,19))
-
-        self.checkBox8_2_3_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2")
-        self.checkBox8_2_3_2.setGeometry(QRect(190,54,180,19))
-        self.checkBox8_2_3_2.setChecked(1)
-
-        self.checkBox8_2_3 = QCheckBox(self.groupBox1,"checkBox8_2_3")
-        self.checkBox8_2_3.setGeometry(QRect(190,30,180,19))
-        self.checkBox8_2_3.setChecked(1)
-
         self.groupBox4 = QGroupBox(self.TabPage,"groupBox4")
         self.groupBox4.setGeometry(QRect(16,10,200,111))
-
-        self.checkBox7_2_2 = QCheckBox(self.groupBox4,"checkBox7_2_2")
-        self.checkBox7_2_2.setGeometry(QRect(20,25,120,19))
-        self.checkBox7_2_2.setChecked(1)
 
         self.checkBox7_2_2_2 = QCheckBox(self.groupBox4,"checkBox7_2_2_2")
         self.checkBox7_2_2_2.setGeometry(QRect(20,47,130,19))
         self.checkBox7_2_2_2.setChecked(1)
 
-        self.buttonGroup3 = QButtonGroup(self.TabPage,"buttonGroup3")
-        self.buttonGroup3.setGeometry(QRect(550,10,350,110))
-
-        self.textLabel1_2 = QLabel(self.buttonGroup3,"textLabel1_2")
-        self.textLabel1_2.setGeometry(QRect(10,30,58,20))
-
-        self.checkBox_doRegrig = QCheckBox(self.buttonGroup3,"checkBox_doRegrig")
-        self.checkBox_doRegrig.setGeometry(QRect(18,80,140,19))
-
-        self.comboBox_AstromCatalog = QComboBox(0,self.buttonGroup3,"comboBox_AstromCatalog")
-        self.comboBox_AstromCatalog.setGeometry(QRect(10,50,90,21))
+        self.checkBox = QCheckBox(self.groupBox4,"checkBox")
+        self.checkBox.setGeometry(QRect(20,25,120,19))
+        self.checkBox.setChecked(1)
 
         self.groupBox_lazyMode = QGroupBox(self.TabPage,"groupBox_lazyMode")
         self.groupBox_lazyMode.setGeometry(QRect(11,130,330,280))
@@ -10989,6 +10901,91 @@ class panicQL(QMainWindow):
 
         self.checkBox_subLastFrame = QCheckBox(self.groupBox_lazyMode,"checkBox_subLastFrame")
         self.checkBox_subLastFrame.setGeometry(QRect(30,134,190,19))
+
+        self.buttonGroup3 = QButtonGroup(self.TabPage,"buttonGroup3")
+        self.buttonGroup3.setGeometry(QRect(671,10,240,110))
+
+        self.textLabel1_2 = QLabel(self.buttonGroup3,"textLabel1_2")
+        self.textLabel1_2.setGeometry(QRect(10,30,58,20))
+
+        self.checkBox_doRegrig = QCheckBox(self.buttonGroup3,"checkBox_doRegrig")
+        self.checkBox_doRegrig.setGeometry(QRect(18,80,140,19))
+
+        self.comboBox_AstromCatalog = QComboBox(0,self.buttonGroup3,"comboBox_AstromCatalog")
+        self.comboBox_AstromCatalog.setGeometry(QRect(10,50,90,21))
+
+        self.buttonGroup2_2 = QButtonGroup(self.TabPage,"buttonGroup2_2")
+        self.buttonGroup2_2.setGeometry(QRect(231,10,380,111))
+
+        self.lineEdit_ra_dec_near_offset = QLineEdit(self.buttonGroup2_2,"lineEdit_ra_dec_near_offset")
+        self.lineEdit_ra_dec_near_offset.setGeometry(QRect(137,30,50,21))
+        self.lineEdit_ra_dec_near_offset.setPaletteBackgroundColor(QColor(255,255,137))
+
+        self.textLabel5 = QLabel(self.buttonGroup2_2,"textLabel5")
+        self.textLabel5.setGeometry(QRect(190,33,58,20))
+
+        self.lineEdit_time_near_offset = QLineEdit(self.buttonGroup2_2,"lineEdit_time_near_offset")
+        self.lineEdit_time_near_offset.setGeometry(QRect(137,54,50,21))
+        self.lineEdit_time_near_offset.setPaletteBackgroundColor(QColor(255,255,137))
+
+        self.textLabel5_2 = QLabel(self.buttonGroup2_2,"textLabel5_2")
+        self.textLabel5_2.setGeometry(QRect(191,56,58,20))
+        self.textLabel5_2.setMidLineWidth(1)
+
+        self.textLabel4_3 = QLabel(self.buttonGroup2_2,"textLabel4_3")
+        self.textLabel4_3.setGeometry(QRect(20,30,110,20))
+
+        self.textLabel4_3_2 = QLabel(self.buttonGroup2_2,"textLabel4_3_2")
+        self.textLabel4_3_2.setGeometry(QRect(20,54,100,20))
+
+        self.checkBox_data_grouping = QCheckBox(self.buttonGroup2_2,"checkBox_data_grouping")
+        self.checkBox_data_grouping.setGeometry(QRect(18,80,340,19))
+        self.checkBox_data_grouping.setChecked(0)
+
+        self.groupBox1 = QGroupBox(self.TabPage,"groupBox1")
+        self.groupBox1.setGeometry(QRect(350,130,560,280))
+
+        self.textLabel3 = QLabel(self.groupBox1,"textLabel3")
+        self.textLabel3.setGeometry(QRect(21,141,130,16))
+
+        self.checkBox7_2 = QCheckBox(self.groupBox1,"checkBox7_2")
+        self.checkBox7_2.setGeometry(QRect(24,30,140,19))
+        self.checkBox7_2.setChecked(0)
+
+        self.checkBox8_2 = QCheckBox(self.groupBox1,"checkBox8_2")
+        self.checkBox8_2.setGeometry(QRect(24,56,180,19))
+        self.checkBox8_2.setChecked(0)
+
+        self.checkBox8_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_2")
+        self.checkBox8_2_2.setGeometry(QRect(24,81,180,19))
+        self.checkBox8_2_2.setChecked(1)
+
+        self.comboBox_skyWindow = QComboBox(0,self.groupBox1,"comboBox_skyWindow")
+        self.comboBox_skyWindow.setGeometry(QRect(21,161,118,21))
+
+        self.checkBox8_2_3 = QCheckBox(self.groupBox1,"checkBox8_2_3")
+        self.checkBox8_2_3.setGeometry(QRect(190,30,180,19))
+        self.checkBox8_2_3.setChecked(1)
+
+        self.checkBox8_2_3_2_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2_2")
+        self.checkBox8_2_3_2_2.setGeometry(QRect(190,80,360,19))
+
+        self.buttonGroup2 = QButtonGroup(self.groupBox1,"buttonGroup2")
+        self.buttonGroup2.setGeometry(QRect(200,140,340,120))
+
+        self.radioButton26 = QRadioButton(self.buttonGroup2,"radioButton26")
+        self.radioButton26.setGeometry(QRect(11,20,60,20))
+        self.radioButton26.setChecked(1)
+
+        self.radioButton25_2 = QRadioButton(self.buttonGroup2,"radioButton25_2")
+        self.radioButton25_2.setGeometry(QRect(10,63,250,20))
+
+        self.radioButton25 = QRadioButton(self.buttonGroup2,"radioButton25")
+        self.radioButton25.setGeometry(QRect(10,41,280,20))
+
+        self.checkBox8_2_3_2 = QCheckBox(self.groupBox1,"checkBox8_2_3_2")
+        self.checkBox8_2_3_2.setGeometry(QRect(190,54,180,19))
+        self.checkBox8_2_3_2.setChecked(1)
         self.tabWidget3.insertTab(self.TabPage,QString.fromLatin1(""))
 
         self.tab_2 = QWidget(self.tabWidget3,"tab_2")
@@ -11095,12 +11092,6 @@ class panicQL(QMainWindow):
 
         self.TabPage_2 = QWidget(self.tabWidget3,"TabPage_2")
 
-        self.textLabel1_5 = QLabel(self.TabPage_2,"textLabel1_5")
-        self.textLabel1_5.setGeometry(QRect(13,267,70,20))
-
-        self.textLabel2 = QLabel(self.TabPage_2,"textLabel2")
-        self.textLabel2.setGeometry(QRect(13,297,130,20))
-
         self.comboBox5 = QComboBox(0,self.TabPage_2,"comboBox5")
         self.comboBox5.setGeometry(QRect(150,298,92,22))
 
@@ -11112,22 +11103,10 @@ class panicQL(QMainWindow):
         self.listView_config.setGeometry(QRect(300,270,610,150))
         self.listView_config.setDefaultRenameAction(QListView.Accept)
 
-        self.textLabel1_6 = QLabel(self.TabPage_2,"textLabel1_6")
-        self.textLabel1_6.setGeometry(QRect(18,28,170,20))
-
-        self.pushButton_findOS = QPushButton(self.TabPage_2,"pushButton_findOS")
-        self.pushButton_findOS.setGeometry(QRect(230,20,160,23))
-        pushButton_findOS_font = QFont(self.pushButton_findOS.font())
-        pushButton_findOS_font.setBold(1)
-        self.pushButton_findOS.setFont(pushButton_findOS_font)
-
         self.pixmapLabel1 = QLabel(self.TabPage_2,"pixmapLabel1")
         self.pixmapLabel1.setGeometry(QRect(850,10,75,55))
         self.pixmapLabel1.setPixmap(self.image0)
         self.pixmapLabel1.setScaledContents(1)
-
-        self.checkBox22 = QCheckBox(self.TabPage_2,"checkBox22")
-        self.checkBox22.setGeometry(QRect(430,30,280,20))
 
         self.pushButton26 = QPushButton(self.TabPage_2,"pushButton26")
         self.pushButton26.setGeometry(QRect(10,344,111,30))
@@ -11163,6 +11142,24 @@ class panicQL(QMainWindow):
         self.listView_OS.setGeometry(QRect(10,70,920,180))
         self.listView_OS.setShowSortIndicator(0)
         self.listView_OS.setRootIsDecorated(1)
+
+        self.pushButton_findOS = QPushButton(self.TabPage_2,"pushButton_findOS")
+        self.pushButton_findOS.setGeometry(QRect(200,20,200,23))
+        pushButton_findOS_font = QFont(self.pushButton_findOS.font())
+        pushButton_findOS_font.setBold(1)
+        self.pushButton_findOS.setFont(pushButton_findOS_font)
+
+        self.checkBox22 = QCheckBox(self.TabPage_2,"checkBox22")
+        self.checkBox22.setGeometry(QRect(430,30,350,20))
+
+        self.textLabel2 = QLabel(self.TabPage_2,"textLabel2")
+        self.textLabel2.setGeometry(QRect(10,290,140,40))
+
+        self.textLabel1_5 = QLabel(self.TabPage_2,"textLabel1_5")
+        self.textLabel1_5.setGeometry(QRect(13,267,110,22))
+
+        self.textLabel1_6 = QLabel(self.TabPage_2,"textLabel1_6")
+        self.textLabel1_6.setGeometry(QRect(18,10,170,40))
         self.tabWidget3.insertTab(self.TabPage_2,QString.fromLatin1(""))
 
         self.TabPage_3 = QWidget(self.tabWidget3,"TabPage_3")
@@ -11213,6 +11210,7 @@ class panicQL(QMainWindow):
         self.irafConsoleAction.setIconSet(QIconSet(self.image13))
         self.Action = QAction(self,"Action")
         self.Action_2 = QAction(self,"Action_2")
+        self.Action_3 = QAction(self,"Action_3")
 
 
         self.toolBar = QToolBar(QString(""),self,Qt.DockTop)
@@ -11278,7 +11276,7 @@ class panicQL(QMainWindow):
 
         self.languageChange()
 
-        self.resize(QSize(983,695).expandedTo(self.minimumSizeHint()))
+        self.resize(QSize(983,731).expandedTo(self.minimumSizeHint()))
         self.clearWState(Qt.WState_Polished)
 
         self.connect(self.checkBox_autocheck,SIGNAL("clicked()"),self.autocheck_slot)
@@ -11335,7 +11333,6 @@ class panicQL(QMainWindow):
         self.textEdit_log.setText(QString.null)
         self.checkBox_autocheck.setText(QString.null)
         QToolTip.add(self.checkBox_autocheck,self.__tr("Autocheck for new incoming images"))
-        self.lineEdit_filename_filter.setText(self.__tr("*.fits"))
         self.checkBox_outDir_autocheck.setText(QString.null)
         QToolTip.add(self.checkBox_outDir_autocheck,self.__tr("Autocheck for new incoming images"))
         self.textLabel1_3.setText(self.__tr("Check"))
@@ -11347,7 +11344,6 @@ class panicQL(QMainWindow):
         self.textLabel2_3.setText(self.__tr("Last file received:"))
         self.pushButton_dataSourceD.setText(self.__tr("Input Dir"))
         QToolTip.add(self.pushButton_dataSourceD,self.__tr("Select a directory or log file for received files location"))
-        QToolTip.add(self.lineEdit_sourceD,self.__tr("Received files location"))
         QToolTip.add(self.lineEdit_outputD,self.__tr("Generated files location"))
         QToolTip.add(self.lineEdit_tempD,self.__tr("Temporal files location"))
         self.pushButton_tempD.setText(self.__tr("Temporary Dir"))
@@ -11387,7 +11383,30 @@ class panicQL(QMainWindow):
         self.textLabel4_2_2.setText(self.__tr("QL Mode"))
         self.pushButton_start_proc.setText(self.__tr("START processing"))
         self.pushButton_subtract_last2.setText(self.__tr("Subtract-Last2"))
+        QToolTip.add(self.lineEdit_sourceD,self.__tr("Received files location"))
+        self.lineEdit_filename_filter.setText(self.__tr("*.fits"))
         self.tabWidget3.changeTab(self.tab,self.__tr("Main"))
+        self.groupBox4.setTitle(self.__tr("Common settings"))
+        self.checkBox7_2_2_2.setText(self.__tr("Create Log file"))
+        self.checkBox.setText(self.__tr("Check header"))
+        self.groupBox_lazyMode.setTitle(self.__tr("Lazy Mode"))
+        self.checkBox_show_imgs.setText(self.__tr("Only display image"))
+        self.checkBox_appBPM.setText(self.__tr("Apply Bad Pixel Mask (BPM)"))
+        self.checkBox_appSAstrom.setText(self.__tr("Apply 'static' Astrometry"))
+        self.checkBox_subSky.setText(self.__tr("Subtract nearest sky"))
+        self.checkBox_subDark.setText(self.__tr("Dark subtraction"))
+        self.checkBox_appFlat.setText(self.__tr("Flat-Fielding"))
+        self.checkBox_subLastFrame.setText(self.__tr("Subtract last frame (science)"))
+        self.buttonGroup3.setTitle(self.__tr("Astrometry"))
+        self.textLabel1_2.setText(self.__tr("Catalog"))
+        self.checkBox_doRegrig.setText(self.__tr("Apply (re-grid)"))
+        self.comboBox_AstromCatalog.clear()
+        self.comboBox_AstromCatalog.insertItem(self.__tr("2MASS"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("USNO-B1"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("GSC 2.2"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("SDSS-R5"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("UCAC-2"))
+        self.comboBox_AstromCatalog.insertItem(self.__tr("FILE"))
         self.buttonGroup2_2.setTitle(self.__tr("Data Grouping"))
         self.lineEdit_ra_dec_near_offset.setText(self.__tr("150"))
         self.textLabel5.setText(self.__tr("arcsecs"))
@@ -11399,10 +11418,6 @@ class panicQL(QMainWindow):
         QToolTip.add(self.checkBox_data_grouping,self.__tr("Use header keywords POINT_NO, DITH_NO, EXPO_NO for data grouping"))
         self.groupBox1.setTitle(self.__tr("Pre-reduction Mode"))
         self.textLabel3.setText(self.__tr("# sky nearest frames"))
-        self.buttonGroup2.setTitle(self.__tr("Build Stacked Image"))
-        self.radioButton25_2.setText(self.__tr("Grouping using OT keywords"))
-        self.radioButton25.setText(self.__tr("Automatic grouping (ra,dec,mjd, filter, ...)"))
-        self.radioButton26.setText(self.__tr("No"))
         self.checkBox7_2.setText(self.__tr("Substract dark"))
         self.checkBox8_2.setText(self.__tr("Apply Master Flat"))
         self.checkBox8_2_2.setText(self.__tr("Apply SuperFlat"))
@@ -11413,31 +11428,13 @@ class panicQL(QMainWindow):
         self.comboBox_skyWindow.insertItem(self.__tr("4-frames"))
         self.comboBox_skyWindow.insertItem(self.__tr("5-frames"))
         self.comboBox_skyWindow.setCurrentItem(3)
-        self.pushButton22.setText(self.__tr("More Settings..."))
-        self.checkBox8_2_3_2_2.setText(self.__tr("Quality measurements  (background, psf, ....)"))
-        self.checkBox8_2_3_2.setText(self.__tr("Compute distortion map"))
         self.checkBox8_2_3.setText(self.__tr("Make Astrometry"))
-        self.groupBox4.setTitle(self.__tr("Common settings"))
-        self.checkBox7_2_2.setText(self.__tr("Check header"))
-        self.checkBox7_2_2_2.setText(self.__tr("Create Log file"))
-        self.buttonGroup3.setTitle(self.__tr("Astrometry"))
-        self.textLabel1_2.setText(self.__tr("Catalog"))
-        self.checkBox_doRegrig.setText(self.__tr("Apply (re-grid)"))
-        self.comboBox_AstromCatalog.clear()
-        self.comboBox_AstromCatalog.insertItem(self.__tr("2MASS"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("USNO-B1"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("GSC 2.2"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("SDSS-R5"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("UCAC-2"))
-        self.comboBox_AstromCatalog.insertItem(self.__tr("FILE"))
-        self.groupBox_lazyMode.setTitle(self.__tr("Lazy Mode"))
-        self.checkBox_show_imgs.setText(self.__tr("Only display image"))
-        self.checkBox_appBPM.setText(self.__tr("Apply Bad Pixel Mask (BPM)"))
-        self.checkBox_appSAstrom.setText(self.__tr("Apply 'static' Astrometry"))
-        self.checkBox_subSky.setText(self.__tr("Subtract nearest sky"))
-        self.checkBox_subDark.setText(self.__tr("Dark subtraction"))
-        self.checkBox_appFlat.setText(self.__tr("Flat-Fielding"))
-        self.checkBox_subLastFrame.setText(self.__tr("Subtract last frame (science)"))
+        self.checkBox8_2_3_2_2.setText(self.__tr("Quality measurements  (background, psf, ....)"))
+        self.buttonGroup2.setTitle(self.__tr("Build Stacked Image"))
+        self.radioButton26.setText(self.__tr("No"))
+        self.radioButton25_2.setText(self.__tr("Grouping using OT keywords"))
+        self.radioButton25.setText(self.__tr("Automatic grouping (ra,dec,filter)"))
+        self.checkBox8_2_3_2.setText(self.__tr("Compute distortion map"))
         self.tabWidget3.changeTab(self.TabPage,self.__tr("Setup"))
         self.pushButton_Darks_add.setText(self.__tr("Add..."))
         self.pushButton_DomeF_add.setText(self.__tr("Add..."))
@@ -11458,8 +11455,6 @@ class panicQL(QMainWindow):
         self.textLabel1_4_2_2.setText(self.__tr("<b>Sky Flat</b>"))
         self.pushButton_test1.setText(self.__tr("Test1"))
         self.tabWidget3.changeTab(self.tab_2,self.__tr("Calibrations"))
-        self.textLabel1_5.setText(self.__tr("<b>Data Type</b>"))
-        self.textLabel2.setText(self.__tr("<b>Reduction Schema</b>"))
         self.comboBox5.clear()
         self.comboBox5.insertItem(self.__tr("Basic"))
         self.comboBox5.insertItem(self.__tr("Pre-advanced"))
@@ -11490,9 +11485,6 @@ class panicQL(QMainWindow):
         item = QListViewItem(self.listView_config,item)
         item.setText(0,self.__tr("Photometry (global estimation)"))
 
-        self.textLabel1_6.setText(self.__tr("<font color=\"#2626ff\"><b>Observing Sequences</b></font>"))
-        self.pushButton_findOS.setText(self.__tr("Find Obs. Sequences"))
-        self.checkBox22.setText(self.__tr("Automatically create dataset from headers"))
         self.pushButton26.setText(self.__tr("Create DR-File"))
         self.pushButton10_4.setText(self.__tr("Reduce"))
         self.comboBox6.clear()
@@ -11508,6 +11500,11 @@ class panicQL(QMainWindow):
         self.listView_OS.header().setLabel(5,self.__tr("Object"))
         self.listView_OS.header().setLabel(6,self.__tr("RA"))
         self.listView_OS.header().setLabel(7,self.__tr("Dec"))
+        self.pushButton_findOS.setText(self.__tr("Find Obs. Sequences"))
+        self.checkBox22.setText(self.__tr("Automatically create dataset from headers"))
+        self.textLabel2.setText(self.__tr("<b>Reduction Schema</b>"))
+        self.textLabel1_5.setText(self.__tr("<b>Data Type</b>"))
+        self.textLabel1_6.setText(self.__tr("<font color=\"#2626ff\"><b>Observing Sequences</b></font>"))
         self.tabWidget3.changeTab(self.TabPage_2,self.__tr("Pipeline"))
         self.textEdit_log_2.setText(QString.null)
         self.textLabel1_7.setText(self.__tr("<font color=\"#1759ff\">Times in UTC</font>"))
@@ -11574,6 +11571,7 @@ class panicQL(QMainWindow):
         self.irafConsoleAction.setToolTip(self.__tr("Open an IRAF console"))
         self.Action.setText(self.__tr("Unnamed"))
         self.Action_2.setText(self.__tr("Unnamed"))
+        self.Action_3.setText(self.__tr("Unnamed"))
         self.toolBar.setLabel(self.__tr("Tools"))
         self.Toolbar.setLabel(self.__tr("Toolbar"))
         self.Toolbar_2.setLabel(self.__tr("Toolbar_2"))

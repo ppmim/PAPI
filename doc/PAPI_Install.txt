@@ -197,6 +197,8 @@ BLAS/Lapack
 * qt3-devel
 
 > zypper install qt3-devel
+> zypper install qt3-devel-tools (ONLY for development:User Interface Builder and other tools (designer, assistant, linguist)
+
 
 * SIP : 
 

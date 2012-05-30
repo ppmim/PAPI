@@ -65,14 +65,13 @@ import datahandler
 import misc.display as display
 import astromatic
 import photo.photometry
-from runQtProcess import *
+import runQtProcess as QtProc
+
 #Log
 import misc.paLog
 from misc.paLog import log
 
 
-# Interaction with FITS files
-import pyfits
 
 # IRAF packages
 from pyraf import iraf
@@ -81,8 +80,6 @@ from iraf import imred
 from iraf import ccdred
 from iraf import mscred
 
-# Math module for efficient array processing
-import numpy
 
 # Multiprocessing
 from multiprocessing import Process, Queue, current_process, freeze_support
@@ -375,30 +372,8 @@ class MainGUI(panicQL):
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 self.processLazy(filename)
                 return
-            
- 
- 
-        """    
-        elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
-            if self.m_show_imgs:
-                display.showFrame(filename)
-        #QL-Mode: Pre-reduction
-        elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
-            ## Process
-            self.processSeq(seq)
-            return
-        #QL-Mode: UserDef_1
-        elif self.comboBox_QL_Mode.currentText().contains("UserDef_1"):
-            return ## TO BE DONE
-        #QL-Mode: UserDef_2
-        elif self.comboBox_QL_Mode.currentText().contains("UserDef_2"):
-            return ## TO BE DONE
-        #QL-Mode: UserDef_3
-        elif self.comboBox_QL_Mode.currentText().contains("UserDef_3"):
-            return ## TO BE DONE
-        """
         
-    def processSeq(self, obsSequence):
+    def processSeq_deprecated(self, obsSequence):
         
         """ DEPRECATED !!!
         
@@ -519,7 +494,7 @@ class MainGUI(panicQL):
                     thread.start()
                 else:
                     QMessageBox.critical(self, "Error", "Error, cannot find the master calibration files")
-            except:
+            except Exception, e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 self.m_processing = False
                 self.setCursor(Qt.arrowCursor)
@@ -545,7 +520,7 @@ class MainGUI(panicQL):
                     
                 else:
                     log.debug("Cannot find the previous file to subtract by")
-            except:
+            except Exception,e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 self.m_processing = False
                 self.setCursor(Qt.arrowCursor)
@@ -596,21 +571,21 @@ class MainGUI(panicQL):
         Slot function called when the "Input Dir" button is clicked
         """
         
-        #source = QFileDialog.getExistingDirectory( self.m_default_data_dir, 
-        #                                         self,"get existing directory", 
-        #                                         "Choose a directory",True )
+        source = QFileDialog.getExistingDirectory( self.m_default_data_dir, 
+                                                 self,"get existing directory", 
+                                                 "Choose a directory",True )
         # source can only be a directory
         
-        source = QFileDialog.getOpenFileNames( "Source data log (*.log)", 
-                                               self.m_default_data_dir, self, 
-                                               "Source Dialog","select source")
+        ###source = QFileDialog.getOpenFileNames( "Source data log (*.log)", 
+        ###                                       self.m_default_data_dir, self, 
+        ###                                       "Source Dialog","select source")
         ## NOTE: 'source' can be a file or a directory
         
         if (not source):
             return
         else:
-            #dir = str(source) # required when QFileDialog.getExistingDirectory
-            dir = str(source[0])
+            dir = str(source) # required when QFileDialog.getExistingDirectory
+            ###dir = str(source[0]) # required when QFileDialog.getOpenFileNames
             self.logConsole.info("+Source : " + dir)
             if (self.m_sourcedir != dir and self.m_outputdir!=dir):
                 self.lineEdit_sourceD.setText(dir)
@@ -715,9 +690,9 @@ class MainGUI(panicQL):
         Check Queue of done task
         """
         if not self._done_queue.empty():
+            log.debug("Something new in the DoneQueue !")
             try:
                 r = self._done_queue.get()
-                print "Queue result ->",r
                 self.logConsole.debug("Task finished")
                 log.info("Get from Queue: %s"%str(r))
                 
@@ -1299,7 +1274,7 @@ class MainGUI(panicQL):
                 fileList = self.inputsDB.GetFilesT("ANY")
                 db=self.inputsDB
                 #db.ListDataSet()
-            elif  str(self.comboBox_classFilter.currentText())=="OUTS":
+            elif str(self.comboBox_classFilter.currentText())=="OUTS":
                 fileList = self.outputsDB.GetFilesT("ANY")
                 db=self.outputsDB
                 #db.ListDataSet()
@@ -1466,29 +1441,12 @@ class MainGUI(panicQL):
             child = child.nextSibling()
         #print "CHILDS=",group_files
         
-        #Change to working directory
-        os.chdir(self.m_tempdir)
-        #Change cursor
-        self.setCursor(Qt.waitCursor)
-        #Create working thread that compute sky-frame
         try:
-            self._task = RS.ReductionSet (group_files, self.m_outputdir, 
-                                        out_file=None,
-                                        obs_mode="dither", dark=None, flat=None, 
-                                        bpm=None, red_mode="quick", group_by=self.group_by, 
-                                        check_data=True, config_dict=self.config_opts,
-                                        external_db_files=self.outputsDB.GetFiles())
-            
-            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
-            thread.start()
+            return self.processFiles(group_files)
         except Exception,e:
-            #Anyway, restore cursor
-            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
-            # thus the ExecTaskThread can't restore the cursor
-            self.setCursor(Qt.arrowCursor) 
             QMessageBox.critical(self, "Error", "Error while group data reduction: \n%s"%str(e))
             raise e
-    
+
     def copy_files_slot(self):
         """
         Copy the file list fullnames belonging to the current group to the 
@@ -1875,26 +1833,10 @@ class MainGUI(panicQL):
             QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>=5) !")
             return
               
-        #Change to working directory
-        os.chdir(self.m_tempdir)
-        #Change cursor
-        self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         try:
-            self._task = RS.ReductionSet( self.m_popup_l_sel, self.m_outputdir, 
-                                          out_file=None,
-                                          obs_mode="dither", dark=None, 
-                                          flat=None, bpm=None, red_mode="quick",
-                                          group_by=self.group_by, check_data=True, 
-                                          config_dict=self.config_opts)
-                                            
-            thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
-            thread.start()
+            self.processFiles(self.m_popup_l_sel)
         except Exception,e:
-            #Anyway, restore cursor
-            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
-            # thus the ExecTaskThread can't restore the cursor
-            self.setCursor(Qt.arrowCursor) 
             QMessageBox.critical(self, "Error", "Error while Quick data reduction: \n%s"%str(e))
             raise e
 
@@ -2035,7 +1977,7 @@ class MainGUI(panicQL):
             self.setCursor(Qt.waitCursor) # restored checkLastTask
             #Call external script (papi)
             self.m_processing = True
-            self._proc=RunQtProcess(cmd, self.logConsole, self._task_info_list, out_file)      
+            self._proc = QtProc.RunQtProcess(cmd, self.logConsole, self._task_info_list, out_file)      
             self._proc.startCommand()
 
             """
@@ -2320,19 +2262,14 @@ class MainGUI(panicQL):
         #Create working thread that compute sky-frame
         if len(file_list)>1:
             try:
-                self._task = RS.ReductionSet( file_list, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
-                                            group_by=self.group_by, check_data=True, config_dict=self.config_opts)
-                
-                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
-                thread.start()
-            except:
+                self.processFiles(file_list)
+            except Exception, e:
                 #Anyway, restore cursor
                 # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
                 # thus the ExecTaskThread can't restore the cursor
                 self.setCursor(Qt.arrowCursor) 
                 QMessageBox.critical(self, "Error", "Error while building stack")
-                raise
+                raise e
         
         
     def createSuperMosaic_slot(self):
@@ -2375,7 +2312,7 @@ class MainGUI(panicQL):
         #Change cursor
         self.setCursor(Qt.waitCursor) # restored in checkLastTask
         # Call external script (papi)
-        self._proc = RunQtProcess(cmd, self.logConsole, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
+        self._proc = QtProc.RunQtProcess(cmd, self.logConsole, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
         self._proc.startCommand()
       
       
@@ -2556,21 +2493,19 @@ source directory (If no, only the new ones coming will be processed) ?"),
         self.textEdit_log.append("HOLA me llamo <mytag> Jose Miguel </mytag>")
         """
     
+    
     def worker1(self, input, output):
+        #print "arg_1=",input.get()
         for func, args in iter(input.get, 'STOP'):
-            result = calculate(func, args)
-            output.put(result)
+            #result = calculate(func, args)
+            print "ARGS=", args
+            output.put(RS.ReductionSet(args).func())
             
+    
     def worker(self, input, output):
         args = input.get()
         print "ARGS=",args
         output.put(RS.ReductionSet(*(args[0])).reduceSet())
-    
-    def calc(self, args):
-        """
-        Method used only to use with Pool.map_asycn() function
-        """
-        return RS.ReductionSet(*args).reduceSet()
     
         
     def processFiles(self, files=None):
@@ -2629,13 +2564,15 @@ source directory (If no, only the new ones coming will be processed) ?"),
             #     dark=None, flat=None, bpm=None, red_mode="quick", 
             #     group_by="ot", check_data=True, config_dict=None, 
             #     external_db_files=None, temp_dir = None,
-            params = (files, self.m_outputdir, outfilename,
+            
+            params = [(files, self.m_outputdir, outfilename,
                       "dither", None, 
                       None, None, "quick",
                       self.group_by, True,
                       self.config_opts,
-                      self.outputsDB.GetFiles(), None)
-            self._task_queue.put([params])
+                      self.outputsDB.GetFiles(), None)]
+
+            self._task_queue.put(params)
             Process(target=self.worker, 
                     args=(self._task_queue, self._done_queue)).start()
                     
@@ -2649,7 +2586,7 @@ source directory (If no, only the new ones coming will be processed) ?"),
             self.setCursor(Qt.arrowCursor) 
             QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
             self.m_processing = False
-            #raise e # Para que seguir elevando la excepcion ?
+            raise e # Para que seguir elevando la excepcion ?
         
       
 ################################################################################

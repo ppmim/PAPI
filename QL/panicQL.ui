@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>983</width>
-            <height>705</height>
+            <height>731</height>
         </rect>
     </property>
     <property name="caption">
@@ -38,7 +38,7 @@
         <property name="geometry">
             <rect>
                 <x>10</x>
-                <y>488</y>
+                <y>487</y>
                 <width>940</width>
                 <height>130</height>
             </rect>
@@ -92,35 +92,6 @@
                 </property>
                 <property name="toolTip" stdset="0">
                     <string>Autocheck for new incoming images</string>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_filename_filter</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>492</x>
-                        <y>30</y>
-                        <width>60</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>197</red>
-                        <green>255</green>
-                        <blue>233</blue>
-                    </color>
-                </property>
-                <property name="text">
-                    <string>*.fits</string>
-                </property>
-                <property name="alignment">
-                    <set>AlignRight</set>
-                </property>
-                <property name="readOnly">
-                    <bool>true</bool>
                 </property>
             </widget>
             <widget class="QCheckBox">
@@ -303,32 +274,6 @@
                 </property>
                 <property name="toolTip" stdset="0">
                     <string>Select a directory or log file for received files location</string>
-                </property>
-            </widget>
-            <widget class="QLineEdit">
-                <property name="name">
-                    <cstring>lineEdit_sourceD</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>140</x>
-                        <y>30</y>
-                        <width>290</width>
-                        <height>21</height>
-                    </rect>
-                </property>
-                <property name="paletteBackgroundColor">
-                    <color>
-                        <red>255</red>
-                        <green>255</green>
-                        <blue>137</blue>
-                    </color>
-                </property>
-                <property name="readOnly">
-                    <bool>true</bool>
-                </property>
-                <property name="toolTip" stdset="0">
-                    <string>Received files location</string>
                 </property>
             </widget>
             <widget class="QLineEdit">
@@ -781,6 +726,61 @@
                     <string>Subtract-Last2</string>
                 </property>
             </widget>
+            <widget class="QLineEdit">
+                <property name="name">
+                    <cstring>lineEdit_sourceD</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>140</x>
+                        <y>30</y>
+                        <width>290</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>255</red>
+                        <green>255</green>
+                        <blue>137</blue>
+                    </color>
+                </property>
+                <property name="readOnly">
+                    <bool>true</bool>
+                </property>
+                <property name="toolTip" stdset="0">
+                    <string>Received files location</string>
+                </property>
+            </widget>
+            <widget class="QLineEdit">
+                <property name="name">
+                    <cstring>lineEdit_filename_filter</cstring>
+                </property>
+                <property name="geometry">
+                    <rect>
+                        <x>492</x>
+                        <y>30</y>
+                        <width>60</width>
+                        <height>21</height>
+                    </rect>
+                </property>
+                <property name="paletteBackgroundColor">
+                    <color>
+                        <red>197</red>
+                        <green>255</green>
+                        <blue>233</blue>
+                    </color>
+                </property>
+                <property name="text">
+                    <string>*.fits</string>
+                </property>
+                <property name="alignment">
+                    <set>AlignRight</set>
+                </property>
+                <property name="readOnly">
+                    <bool>true</bool>
+                </property>
+            </widget>
         </widget>
         <widget class="QWidget">
             <property name="name">
@@ -806,25 +806,6 @@
                 </property>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>checkBox7_2_2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>25</y>
-                            <width>120</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Check header</string>
-                    </property>
-                    <property name="checked">
-                        <bool>true</bool>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
                         <cstring>checkBox7_2_2_2</cstring>
                     </property>
                     <property name="geometry">
@@ -837,6 +818,25 @@
                     </property>
                     <property name="text">
                         <string>Create Log file</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>20</x>
+                            <y>25</y>
+                            <width>120</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Check header</string>
                     </property>
                     <property name="checked">
                         <bool>true</bool>
@@ -1360,41 +1360,6 @@
                         <number>3</number>
                     </property>
                 </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>pushButton22</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>230</y>
-                            <width>130</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>More Settings...</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>checkBox8_2_3_2</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>190</x>
-                            <y>54</y>
-                            <width>180</width>
-                            <height>19</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Compute distortion map</string>
-                    </property>
-                    <property name="checked">
-                        <bool>true</bool>
-                    </property>
-                </widget>
                 <widget class="QCheckBox">
                     <property name="name">
                         <cstring>checkBox8_2_3</cstring>
@@ -1496,6 +1461,25 @@
                             <string>Automatic grouping (ra,dec,filter)</string>
                         </property>
                     </widget>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>checkBox8_2_3_2</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>190</x>
+                            <y>54</y>
+                            <width>180</width>
+                            <height>19</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Compute distortion map</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
                 </widget>
             </widget>
         </widget>
@@ -2985,6 +2969,14 @@
     <action>
         <property name="name">
             <cstring>Action_2</cstring>
+        </property>
+        <property name="text">
+            <string>Unnamed</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>Action_3</cstring>
         </property>
         <property name="text">
             <string>Unnamed</string>

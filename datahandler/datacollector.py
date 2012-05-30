@@ -287,23 +287,23 @@ class DataCollector (object):
         Find files that are not yet listed in the dirlist
         ,and match these with the filename filter pattern
         """
-	    
+
         # Retrieve the current value of the filename pattern from the widget
         pattern = self.filename_filter
         contents = []
         
         try:
-	    	if self.mode=="dir":
-	            # Read the directory contents
-	            #contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
-	            contents = self.__listFiles(self.source)
-	        elif self.mode=="file":
-	            # Read the file contents
-	            contents = [line for line in fileinput.input(self.source)]
-	        # To read ~/GEIRS/log/save_CA2.2m.log
-	        elif self.mode=="geirs-file":
-	        	contents = self.read_GEIRS_fitsLog(type=1)
-	        	"""
+            if self.mode=="dir":
+                # Read the directory contents
+                #contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
+                contents = self.__listFiles(self.source)
+            elif self.mode=="file":
+                # Read the file contents
+                contents = [line for line in fileinput.input(self.source)]
+                # To read ~/GEIRS/log/save_CA2.2m.log
+            elif self.mode=="geirs-file":
+                contents = self.read_GEIRS_fitsLog(type=1)
+                """
 	            # Read the file contents from a generated GEIRS file
 	            for line in fileinput.input(self.source):
 	                sline = string.split(line)
@@ -311,10 +311,10 @@ class DataCollector (object):
 	                    contents.append(sline[6])
 	                    #print "FILE = ", sline[6]
 	            """
-	        # To read ~/tmp/fitsfiles.corrected
-	        elif self.mode=="geirs-file2":
-	        	contents = self.read_GEIRS_fitsLog(type=2)
-	        	"""
+            # To read ~/tmp/fitsfiles.corrected
+            elif self.mode=="geirs-file2":
+                contents = self.read_GEIRS_fitsLog(type=2)
+                """
 	            # Read the file contents from a generated GEIRS file
 	            for line in fileinput.input(self.source):
 	                sline = string.split(line)
@@ -322,15 +322,15 @@ class DataCollector (object):
 	                    contents.append(sline[1])
 	                    #print "FILE = ", sline[6]
 	            """    
-	            
+         
         except Exception, e:
             print "Some error while reading source  %s "%self.source
             return
-	    
+
         # Check the obtained list of files agains the existing directory list
-	    # Remove files that already existed in the directory list
+        # Remove files that already existed in the directory list
     
-	    # ORDER of if-statements is important!
+        # ORDER of if-statements is important!
     
         iterlist = copy.copy(self.dirlist) # lists are mutables !
         for file in iterlist:
@@ -340,7 +340,7 @@ class DataCollector (object):
                 print '[DC] File %s disappeared from directory - updating lists' % file
                 self.dirlist.remove(file)
                 self.callback_func(file+"__deleted__")
-				
+
                 ## new---
                 #fc=fits.FitsFile(file)
                 #fc.recognize()
@@ -356,16 +356,15 @@ class DataCollector (object):
                 
                 # Is this file already in the list of unprocessed files?
                 if file in self.newfiles: self.newfiles.remove(file)
-	            
-				
+
             if file in contents:
                 # Normal situation, all files in self.dirlist are also in the current
                 # directory listing. Remove these files one-by-one from the list, so that
                 # the remaining files are those that are the new files in the input
                 # directory (this time).
                 contents.remove(file)
-			
-				
+
+
         # ## 2011-09-12
         # Before adding to dirlist and process the new files, we sort out by MJD
         # Only when mode=dir, because it is supposed in 'file's-modes are already sorted
@@ -384,10 +383,10 @@ class DataCollector (object):
             # Make sure that (1) the 'file' is not a directory entry, (2) that it
             # matches the filename filter pattern, and (3) that it not yet in
             # the unprocessed or processed list.
-            if   ( (not os.path.isdir(file))
+            if ( (not os.path.isdir(file))
 			        and (fnmatch.fnmatch(basename, pattern))
 			        and (file not in self.reducedfiles)    
-			        and (file not in self.newfiles) 
+			        and (file not in self.newfiles)
 			        ):
               
                 #Checking file
@@ -405,8 +404,8 @@ class DataCollector (object):
                     #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12
                     print '[DC] Found new file ....%s' %file
             else:
-                print "[DC] Warning, %s not a compliant file !!" %file
-	
+                print "[DC] Warning, %s not a compliant file or does not exist !!" %file
+
     
 if __name__ == "__main__":
     def imprime_fichero(un_fichero):
