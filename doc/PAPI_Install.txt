@@ -161,7 +161,7 @@ dependences (python 2.7 , etc....)
 4.Scipy v0.10.0b2 :
 ===================
 - Currently only used in applyDistort.py and third part cosmics, but  not required for PAPI
-- pre-requisites : blas3 lapack3
+- pre-requisites : blas3 lapack3+
 
 BLAS/Lapack
 ~~~~~~~~~~~
@@ -220,7 +220,7 @@ BLAS/Lapack
 If you're using Python 2.5 and up, you already have a working version of pysqlite 2, bundled as sqlite3. You can stop here ;-)
 
 If you are using an older version of Python or you'd like to benefit from the latest and greatest version of pysqlite, grab Windows installer or the source .tar.gz from the official ​Downloads.
-
+*-++++++++++++++
 If you need to build from this .tar.gz, simply do after unpacking:
 
 python setup.py build_static install 

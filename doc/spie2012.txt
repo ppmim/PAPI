@@ -127,8 +127,51 @@ calibration frames. This pipeline has been running on a 2x QuadCore AMD opteron 
 (Lewis et al., 1999).
 
 
+PyRAF
+=====
+
+A quick look procedure must be fast, efficient, reliable, user­friendly and able to provide the 
+observer with the data he/she needs to estimate the quality of the observations.
+IRAF  scripts  are  not  the  best  way  to  make  IRAF  to  interface  and  interact  with  external 
+applications, whereas the use of an external scripting language like Tcl makes communication 
+with IRAF environment particularly simple and fast. The scheme below illustrates how simple 
+can be the control of IRAF from a Tcl level script:
+- write a short procedure able to perform a “read event handler”;
+- open a process pipeline, in read/write mode, with the IRAF CL shell;
+- use the fconfigure command to set the properties of I/O channels;
+- use the fileevent command to register the previous procedure;
+- set the CL stdgraph mode as xgterm (or eps for plotting purposes);
+- go, in sequence, to IRAF tasks and launch their commands passing all the needed parameters.
+
+As an example we show the result of an application devised to get a quick visualization of any 
+spectral order of an IR echellogram.This application can be used  to compare  spectral orders
+obtained,  by  extraction  from  the 2D 
+
+DS9
+===
+
+To allow a quick­look inspection of the acquired frames we have embedded the 
+standalone  application  SAOImage  DS9  in  the  main  OS  GIANO  GUI.  DS9 
+incorporates the X Public Access (XPA) mechanism to allow external processes 
+to access and control their own data, algorithms and functions.
+The XPA communication method uses sockets to exchange information between 
+processes: this message system works very well both at the programming and at 
+the shell levels. However XPA was not devised to have a full control on the DS9 
+at GUI level. The simplest way to interact with DS9 at low level is the use of the 
+Tk toolkit.  In fact to customize DS9 as a suitable tool for a quick­look during an 
+observation it is not necessary to modify its source code. Thanks to the powerful 
+Tcl/Tk “send” mechanism is possible to personalize the GUI of DS9 according to 
+the  software  requirements:  it  is  easy  to  disable  the  toolbar  on  the  top  of  DS9, 
+insert/remove  entries,  buttons,  frames  and  so  on.  As  an  example:  a  few  items 
+allowing to personalize the DS9 GUI:
+ 
+
+
+
 HABLAR DE :
   
   1) como se usa el multiprocessing, reparto de tareas en los cores, etc; adjuntar gráfico
   2) problemas de Python como lenguaje interpretado ===> PyUnit
   3) Añadir agradeciemiento que me pasará MF
+
+
