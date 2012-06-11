@@ -867,6 +867,9 @@ OSError: [Errno 32] Broken pipe
    - Modificacion en phometry para que genere al catalogo con el ZP estimado (sugerencia MF)
    
 
+2012-06-11
+==========  
+   - 
 
 FOR NEXT VIDEOCONF
 ==================

@@ -241,8 +241,14 @@ class MainGUI(panicQL):
         self._task_queue = Queue()
         self._done_queue = Queue()
         
+        # Timer for DoneQueue (tasks to do)
         self._queue_timer = QTimer( self )
         self.connect( self._queue_timer, SIGNAL("timeout()"), self.checkDoneQueue )
+        self._queue_timer.start( 1000, False )    # 1 second continuous timer
+        
+        # Timer for TaskQueue (pending tasks)
+        self._queue_timer = QTimer( self )
+        self.connect( self._queue_timer, SIGNAL("timeout()"), self.TaskRunner )
         self._queue_timer.start( 1000, False )    # 1 second continuous timer
         
         ##Start display (DS9)
@@ -2508,6 +2514,7 @@ source directory (If no, only the new ones coming will be processed) ?"),
         output.put(RS.ReductionSet(*(args[0])).reduceSet())
     
         
+        
     def processFiles(self, files=None):
         """
         @summary: Process the files provided; if any files were given, all the files 
@@ -2533,7 +2540,7 @@ source directory (If no, only the new ones coming will be processed) ?"),
             return
         
         log.debug("Starting to process files...")
-        self.logConsole.info("++ Starting to process next files :")
+        self.logConsole.info("++ Starting to process next [%d] files :"%len(files))
         for file in files:
             self.logConsole.info("     - " + file)
             #self.logConsole.info(QString("    - %1").arg(file))
@@ -2573,8 +2580,8 @@ source directory (If no, only the new ones coming will be processed) ?"),
                       self.outputsDB.GetFiles(), None)]
 
             self._task_queue.put(params)
-            Process(target=self.worker, 
-                    args=(self._task_queue, self._done_queue)).start()
+            ##Process(target=self.worker, 
+            ##        args=(self._task_queue, self._done_queue)).start()
                     
             ###thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list)
             ###thread.start()
@@ -2588,7 +2595,23 @@ source directory (If no, only the new ones coming will be processed) ?"),
             self.m_processing = False
             raise e # Para que seguir elevando la excepcion ?
         
-      
+    def TaskRunner(self):
+        """
+        Procedure that continuisly in checking the task of pending task to be done
+        """
+        if not self._task_queue.empty() and not self.m_processing:
+            log.debug("Something new in the TaskQueue !")
+            try:
+                self.logConsole.debug("Starting to process queued task")
+		self.m_processing = True
+                Process(target=self.worker, 
+                    args=(self._task_queue, self._done_queue)).start()
+            except Exception,e:
+                log.error("Error in task Runner: %s"%(str(e)))
+	    finally:
+		self.m_processing = False
+                 
+          
 ################################################################################
 
 

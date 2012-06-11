@@ -43,67 +43,22 @@ _minversion_biggles = "1.6.4"
 import os
 import sys
 import time
-import threading
 import dircache
-import getopt
 import pyfits
 import shutil
 import fileinput
+from optparse import OptionParser
 
 #PAPI modules
 import datahandler
+import misc.mef
 
 #################################################################################        
 
-def run(args):
+def run(source, dest_path, in_data_type="all", delay=1.0, test=False, mef=False):
 
     print "Start the Data Simulator..."
 
-    # Init the variables with default values
-    source = ""
-    dest_path = ""
-    in_data_type = "all"
-    delay = 1.0
-    test  = False
-    mef   = False
-    
-    # Get and check command-line options
-    try:
-        opts, args = getopt.getopt(args, "s:d:t:D:mT", ['source=','dest=','type=','delay=',"mef","test"])
-    except getopt.GetoptError:
-        # print help information and exit:
-        usage()
-        sys.exit(2)
-
-    #if (opts==[]):
-    #    usage()
-    #    sys.exit(2)
-    
-    print opts
-    
-    for option, parameter in opts:
-        if option in ("-s", "--source"):
-            source = parameter
-            print "SOURCE directory or filelist =", source
-        if option in ("-d", "--dest"):
-            dest_path = parameter
-            print "DEST directory =", dest_path
-        if option in ("-t", "--type"):
-            in_data_type = parameter
-            print "in_data_type=", in_data_type
-        if option in ("-D", "--delay"):
-            delay = parameter
-            print "delay=", delay
-        if option in ("-T"):
-            test=True
-            print "Simulation  = True"
-        if option  in ("-M"):
-            mef=True
-            print "MEF = True"
-            
-    if  source=="" or dest_path=="":
-        usage()
-        sys.exit(2)
         
     # read source files
     list_s = []    
@@ -114,7 +69,7 @@ def run(args):
             if file.endswith(".fits") or file.endswith(".fit"):
                 list_s.append(file)
                 print "MY_FILE",file
-            else: print "Algo pasa......"
+            else: print "Something is wrong......"
     elif os.path.isdir(source):
         for file in dircache.listdir(source):
             print "[dir] parsing file ->",file
@@ -122,34 +77,33 @@ def run(args):
                 list_s.append(source+"/"+file)           
                 print "File added to list..."
  
-    print "to sort out ...",list_s
+    print "Sorting out files ...",list_s
     # sort out files
-    list_s=sortOutData(list_s)
+    list_s = sortOutData(list_s)
     #print "LIST",list_s
     
-    print "to copy...."
+    print "Copying files ...."
     # procced to copy to destiny
     for frame in list_s:
-        toCopy=False
+        toCopy = False
         if ( frame.endswith(".fits") or frame.endswith(".fit") ):
             data = pyfits.open(frame, ignore_missing_end=True)
             read_type = data[0].header['OBJECT']
             print "FILE= %s ,TYPE = %s" %(frame, read_type)
             if  ( in_data_type == "" or in_data_type == "all" ):
-                toCopy=True
+                toCopy = True
             elif  (read_type.count(in_data_type)>0): #re.compile("dark",re.IGNORECASE).search(read_type, 1)):
-                toCopy=True
+                toCopy = True
         
             if (toCopy == True):
                 if ( not test ):
                     # If MEF is activated 
                     if ( mef ):
-                        filelist[0]=frame
-                        filelist[1]=filelist[0]
-                        filelist[2]=filelist[0]
-                        filelist[3]=filelist[0]
+                        filelist = frame*4 
                         fname = frame.replace(".fits","_x4.fits")
-                        if createMEF(filelist, dest_path + "/" + fname, 4 ):
+                        
+                        mef = misc.mef.MEF(filelist)
+                        if mef.createMEF(dest_path + "/" + fname):
                             print 'Created  file %s' %(dest_path + "/" + fname)
                             time.sleep(float(delay))
                     else:
@@ -189,76 +143,51 @@ def sortOutData(list):
     
     return sorted_files
     
-def usage ():
-     print "Unknown command line parameter. Required parameters are : "
-     print "-s / --source=		Source of data frames"
-     print "-d / --dest=                Destiny of data frames"
-     print "Optional parameter are : "
-     print "-t / --type=                Type of data (default 'all')"
-     print "-D / --delay=               Delay in seconds between each copied image (default '1')"
-     print "--test                      Test to copy files, not copying files"
-     print "--mef                       Create Multi-(4)Extension FITS from a single file" 
 
 
-#################################################################################
-def createMEF( filelist, filename, next=4):
-    """
-    Create a Multi Extension FITS from a set of 4 frames given
-    """
-
-    #STEP 1: Check all required frames are given
-    if ( len(filelist) != next ):
-        print "Error, Not enought number frames given. Required frames=", next
-        return 0
-
-    #STEP 2: Start the MEF creation
-    #outfile = pyfits.open(filename, "append")
-    first_file=True
-    i=1
-    for file in filelist:
-        try:
-            infile=pyfits.open(file, ignore_missing_end=True) # since some weird problems with O2k data
-        except IOError:
-            #raise Exception("ERROR, Cannot open file")
-            print "ERROR, Cannot open file " + file
-            return 0
-
-        print "File given ", file
-        # Append the Primary Header    
-        if first_file:
-            phdr = pyfits.PrimaryHDU(header=infile[0].header,data=None) 
-            phdr.header.update(key='EXTEND', value=pyfits.TRUE, after='NAXIS', comment="FITS dataset may contain extensions")
-            phdr.header.update(key='NEXTEND', value=next, after='EXTEND',comment="Number of standard extensions")
-            phdr.header.update(key='FILENAME', value=filename)
-            #hdulist = pyfits.HDUList([pyfits.PrimaryHDU(header=phdr, data=None)])
-            hdulist = pyfits.HDUList()
-            hdulist.append(phdr)
-            first_file=False
-
-        #Append the ith Extension
-        _name="IMAGE_%d" %i
-        hdu = pyfits.ImageHDU(data=infile[0].data, header=infile[0].header , name=_name) 
-        hdulist.append(hdu) 
-        infile.close()
-        del infile, hdu
-        i = i + 1
-
-    # Write out the HDUlist (clobber=True, then overwrite output file if  exists)
-    hdulist.verify('silentfix')
-    hdulist.writeto(filename, output_verify='ignore', clobber=True)
-    hdulist.close(output_verify='ignore')
-    del hdulist
-    print "End of createMEF"
-
-    return 1
-
-#################################################################################  
-if __name__=="__main__":
-
-    filelist=['/disk-a/caha/panic/DATA/data_mat/QL1/orion0028.fits','/disk-a/caha/panic/DATA/data_mat/QL1/orion0029.fits','/disk-a/caha/panic/DATA/data_mat/QL1/orion0030.fits','/disk-a/caha/panic/DATA/data_mat/QL1/orion0031.fits']
+################################################################################
+# main
+if __name__ == "__main__":
     
-    #createMEF(filelist, "/disk-a/caha/panic/DATA/testMEF.fits", 4)
+    # Get and check command-line options
+    usage = "usage: %prog [options] arg1 arg2"
+    parser = OptionParser(usage)
+    
+    parser.add_option ("-s", "--source",
+                  action = "store", dest = "source",
+                  help = "Source (pathname of file-list) of data frames")
+    
+    parser.add_option ("-d", "--destiny",
+                  action = "store", dest = "dest_path",
+                  help = "Destiny pathname of data frames")
+    
+    parser.add_option ("-t", "--type",
+                  action = "store", dest = "type", type="str",
+                  help = "Type of files to copy(all,dark,flat,science) [default=%default]",
+                  default="all")
+    
+    parser.add_option ("-D", "--Delay",
+                  action = "store", dest = "delay", default=1.0, type=int,
+                  help = "Delay between file copy [default=%default]")
+    
+    parser.add_option ("-T", "--test",
+                  action = "store_true", dest = "test", default=False,
+                  help = "Does only a test, not doing the file copying [default=%default]")
+    
+    parser.add_option("-M", "--mef",
+                  action = "store_true", dest = "mef", default = False,
+                  help = "Build MEF file prior files are copied [default=%default]")
+    
 
-    run(sys.argv[1:])
+    (options, args) = parser.parse_args()
+    
+    
+    if not options.source or len(args)!=0: 
+    # args is the leftover positional arguments after all options have been processed
+        parser.print_help()
+        parser.error("wrong number of arguments " )
+        
+    run(options.source, options.dest_path, options.type, options.delay, 
+        options.test, options.mef)
 
 ################################################################################
