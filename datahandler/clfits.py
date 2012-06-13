@@ -247,7 +247,7 @@ class ClFits (object):
     
     def getData(self,ext=0):
         """No tested, to check !!!"""
-        if ext!=0 and not f.mef:
+        if ext!=0 and not self.mef:
             log.error("Wrong extension number especified. Not a MEF file.")
         else:
             try:

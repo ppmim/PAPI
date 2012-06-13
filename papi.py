@@ -132,9 +132,9 @@ def main(arguments = None):
                   action = "store_true", dest = "print_seq", default = False,
                   help = "Print detected sequences in the Data Set")
 
-    parser.add_option("-S", "--seq_to_reduce", type = "str",
-                  action = "store", dest = "seq_to_reduce", 
-                  default = "all", help = """Sequence number to reduce. By default, 
+    parser.add_option("-S", "--seq_to_reduce", type=int, nargs=2,
+                  action = "store", dest = "seq_to_reduce",
+                  default = -1, help = """Sequence number to reduce. By default, 
                   all sequences found will be reduced.""")
 
 
@@ -227,11 +227,10 @@ def main(arguments = None):
     
     # Check for list files sorted by MJD
     if init_options.list==True:
-       log.debug("Creating logsheet file ....")
-       logSheet = gls.LogSheet(sci_files, "/tmp/logsheet.txt", [0,len(sci_files)], True)
-       logSheet.create()
-       
-       return
+        log.debug("Creating logsheet file ....")
+        logSheet = gls.LogSheet(sci_files, "/tmp/logsheet.txt", [0,len(sci_files)], True)
+        logSheet.create()
+        return
    
     # Take only the rows(files) required
     if (os.path.isfile(general_opts['source']) and init_options.rows!=None):
@@ -270,11 +269,15 @@ def main(arguments = None):
         if init_options.print_seq:
             rs.getSequences()
         else:
-            if init_options.seq_to_reduce=='all':
+            if init_options.seq_to_reduce==-1: #all
                 rs.reduceSet(red_mode=general_opts['reduction_mode'])
             else:
+                m_seqs_to_reduce = []
+                print "SEQS=", init_options.seq_to_reduce
+                for elem in init_options.seq_to_reduce: 
+                    m_seqs_to_reduce.append(int(elem))
                 rs.reduceSet(red_mode=general_opts['reduction_mode'], 
-                             seqs_to_reduce=[int(init_options.seq_to_reduce)])
+                             seqs_to_reduce=m_seqs_to_reduce)
                 
     except RS.ReductionSetException, e:
         print e

@@ -2009,15 +2009,15 @@ class ReductionSet(object):
                         # Map the parallel process
                         n_cpus = self.config_dict['general']['ncpus']
                         #n_cpus = multiprocessing.cpu_count()
-                        ##results = pprocess.Map(limit=n_cpus, reuse=1) 
+                        results = pprocess.Map(limit=n_cpus, reuse=1) 
                         # IF reuse=0, it block the application !! I don't know why ?? 
                         # though in pprocess examples it works! 
-                        ##calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
+                        calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
 
                         # New method using multiprocessing
-                        multiprocessing.freeze_support()
-                        pool = multiprocessing.Pool(n_cpus)
-                        results = []
+                        ##multiprocessing.freeze_support()
+                        ##pool = multiprocessing.Pool(n_cpus)
+                        ##results = []
                           
                         for n in range(next):
                             ## only a test to reduce Q01
@@ -2043,10 +2043,11 @@ class ReductionSet(object):
                             
                             # async call to procedure
                             extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            ##calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
-                            red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
-                                              self.red_mode, l_out_dir, 
-                                              extension_outfilename)
+                            calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
+                            ##red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
+                            ##                  self.red_mode, l_out_dir, 
+                            ##                  extension_outfilename)
+                            
                             # Notice that the results will probably not come out 
                             # of the output queue in the same in the same order 
                             # as the corresponding tasks were put on the input 
@@ -2056,17 +2057,17 @@ class ReductionSet(object):
                             # code needed anyway).
                             #results += [pool.apply_async(self.reduceSingleObj, 
                             #                             red_parameters)]
-                            results += [pool.map_async(self.calc,
-                                                      [red_parameters])]         
+                            ##results += [pool.map_async(self.calc,
+                            ##                          [red_parameters])]         
                         # Here is where we WAIT (BLOCKING) for the results 
                         # (result.get() is a blocking call).
                         # If the remote call raised an exception then that 
                         # exception will be reraised by get().
-                        for result in results:
-                            out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
-
                         ##for result in results:
-                        ##    out_ext.append(result)
+                        ##    out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
+
+                        for result in results:
+                            out_ext.append(result)
                             
                         #Prevents any more tasks from being submitted to the pool. 
                         #Once all the tasks have been completed the worker 
@@ -2115,7 +2116,7 @@ class ReductionSet(object):
                                                                 output_file = self.out_dir + \
                                                                 "/out_Q%02d.fits"%(n+1)))
                         except Exception,e:
-                            log.error("[reduceSeq] Some error while reduction of extension %d of object sequence", n+1)
+                            log.error("[reduceSeq] Error while serial data reduction of extension %d of object sequence", n+1)
                             raise e
         
             # If red_mode is 'lemon',then no warping of frames is required
@@ -2695,8 +2696,8 @@ class ReductionSet(object):
         fo = open(out_dir+'/offsets1.pap',"r")
         fs = open(out_dir+'/stack1.pap','w+')
         for line in fo:
-          n_line = line.replace(".fits.objs", ".fits") 
-          fs.write( n_line )
+            n_line = line.replace(".fits.objs", ".fits") 
+            fs.write( n_line )
         fo.close()
         fs.close()    
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd1.fits','average')

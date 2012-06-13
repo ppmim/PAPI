@@ -699,7 +699,7 @@ class MainGUI(panicQL):
             log.debug("Something new in the DoneQueue !")
             try:
                 r = self._done_queue.get()
-                self.logConsole.debug("Task finished")
+                self.logConsole.debug("[checkDoneQueue] Task finished")
                 log.info("Get from Queue: %s"%str(r))
                 
                 if r!=None:
@@ -745,7 +745,7 @@ class MainGUI(panicQL):
                         # something was wrong...
                         self.logConsole.error("No processing results obtained")
                 else:
-                    self.logConsole.info("Nothing returned !")
+                    self.logConsole.warning("Nothing returned; processing may be failed !")
             except Exception,e:
                 raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:
@@ -1024,7 +1024,8 @@ class MainGUI(panicQL):
         Funtion called periodically to check for new files (only if no frame is being processed)
         """
         #print "---------------------->m_processing=", self.m_processing
-        if not self.m_processing:
+        #if not self.m_processing:
+        if True:
             self.dc.check()
             if self.checkBox_outDir_autocheck.isChecked():
                 self.dc_outdir.check()
@@ -2509,11 +2510,21 @@ source directory (If no, only the new ones coming will be processed) ?"),
             
     
     def worker(self, input, output):
+        """
+        Callback function used by Process task
+        """
+        
         args = input.get()
         print "ARGS=",args
-        output.put(RS.ReductionSet(*(args[0])).reduceSet())
-    
         
+        try:
+            output.put(RS.ReductionSet(*(args[0])).reduceSet())
+            log.info("[workerd] task done !")
+        except Exception,e:
+            log.error("[worker] Error while processing task")
+            output.put(None) # the DoneQueue will detect it
+        finally:
+            self.m_processing = False
         
     def processFiles(self, files=None):
         """
@@ -2527,8 +2538,6 @@ source directory (If no, only the new ones coming will be processed) ?"),
         @note: When the RS object is created, we provide the outputDB as the 
         external DB for the RS; this way fomer master calibration files can be
         used for the current data reduction (e.g., TwFlats who need a master dark)
-        
-        
         """
         
         if files==None:
@@ -2603,13 +2612,16 @@ source directory (If no, only the new ones coming will be processed) ?"),
             log.debug("Something new in the TaskQueue !")
             try:
                 self.logConsole.debug("Starting to process queued task")
-		self.m_processing = True
+                self.m_processing = True
                 Process(target=self.worker, 
                     args=(self._task_queue, self._done_queue)).start()
             except Exception,e:
                 log.error("Error in task Runner: %s"%(str(e)))
-	    finally:
-		self.m_processing = False
+                self.logConsole.debug("Error in TaskRunner")
+                self.m_processing = False
+                self.setCursor(Qt.arrowCursor)
+            finally:
+                self.logConsole.debug("Finally of TaskRunner")
                  
           
 ################################################################################

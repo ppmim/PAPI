@@ -39,7 +39,7 @@ logging.getLogger('PAPI').addHandler(console)
 datetime_str = str(datetime.datetime.utcnow()).replace(" ","T")
 
 file_hd = logging.FileHandler("/tmp/papi_" + datetime_str + ".log")
-file_hd.setLevel(logging.INFO) # here we set the level for File handler 
+file_hd.setLevel(logging.DEBUG) # here we set the level for File handler 
 formatter = logging.Formatter('[%(name)s]: %(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s')
 file_hd.setFormatter(formatter)
 logging.getLogger('PAPI').addHandler(file_hd)

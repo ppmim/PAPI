@@ -111,7 +111,7 @@ def run(source, dest_path, in_data_type="all", delay=1.0, test=False, mef=False)
                             shutil.copy(frame, dest_path )
                             print 'Copied %s file to %s' %(frame, dest_path)
                             time.sleep(float(delay))
-                        except ValueError:
+                        except Exception,e:
                             print "I/O error: file not copied"
                 # Only a test
                 else:

@@ -29,6 +29,7 @@ import logging
 import fileinput
 import shutil
 from optparse import OptionParser
+import time
 
 import misc.fileUtils
 import misc.utils as utils
@@ -144,13 +145,16 @@ class SuperSkyFlat(object):
         misc.fileUtils.removefiles(tmp1)
         log.info("Combining images...(images are scaled to have the same median)")
         misc.utils.listToFile(m_filelist, self.temp_dir + "/files.txt") 
+        #time.sleep(2)
         # Combine the images to find out the super Flat using sigma-clip algorithm;
         # the input images are scaled to have the same median, the pixels containing 
         # objects are rejected by an algorithm based on the measured noise (sigclip),
         # and the flat-field is obtained by a median.
-        iraf.mscred.combine(input=("'"+"@"+self.temp_dir+"/files.txt"+"'").replace('//','/'),
+        #iraf.mscred.combine(input=("'"+"@"+self.temp_dir+"/files.txt"+"'").replace('//','/'),
+        iraf.mscred.combine(input=("'"+"@/tmp/files.txt"+"'"),
                     output=tmp1,
                     combine='median',
+                    ccdtype='',
                     offset='none',
                     reject='sigclip',
                     lsigma=1.5,
@@ -162,7 +166,6 @@ class SuperSkyFlat(object):
                     #expname='EXPTIME'
                     #ParList = _getparlistname ('flatcombine')
                 )
-        
         
         #Median smooth the superFlat
         ## Median smooth the master (normalized) flat

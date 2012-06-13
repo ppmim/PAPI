@@ -70,30 +70,30 @@ class DataCollector (object):
         self.filename_filter = filename_filter
         self.source = source
         self.callback_func = p_callback_func
-		    
+        
         self.dirlist = [] 
-	    # Define the two lists containing the filenames of unprocessed and reduced
-	    # files.
+        # Define the two lists containing the filenames of unprocessed and reduced
+        # files.
         self.newfiles     = []
         self.reducedfiles = []
-        # next variable will include the files that was not able to read, in order
-        # to avoid re-read again
+        # next variable includes the files that was not able to read, 
+        # in order to not try to read them again
         self.bad_files_found = []
-
+        
         #Some flags
         self.stop = False
     
     def check(self):
-	    
-	    #print 'Start checking ...'
-	    self.autoCheckFiles()
-	    #print '...END checking'
+        
+        #print 'Start checking ...'
+        self.autoCheckFiles()
+        #print '...END checking'
     
     def Clear(self):
         self.dirlist = [] 
         self.newfiles = []
         self.reducedfiles = []
-        self.bad_files_found = []
+        self.bad_files_found = [] # we'll try to read again
         
     def remove(self, pathname):
         """
@@ -143,7 +143,7 @@ class DataCollector (object):
         
         dir_files = [os.path.join(dirpath, s) for s in glob.glob(dirpath+"/"+self.filename_filter) \
                      if os.path.isfile(os.path.join(dirpath, s))]
-    	
+
         dataset = []
         
         for file in dir_files:
@@ -161,7 +161,7 @@ class DataCollector (object):
         for tuple in dataset:
             sorted_files.append(tuple[0])
     
-    	return sorted_files
+        return sorted_files
     
     def __sortFilesMJD(self, i_files):
         """
@@ -182,29 +182,34 @@ class DataCollector (object):
                     self.bad_files_found.append(file)      
                 else:
                     dataset.append((file, fits.getMJD()))
-	
-	# Now, try to re-read the bad_files_found
-	# In fact the next code is no necessary because it is done in clfits:recognize()
-	sleep_time = 0.0
-	while len(self.bad_files_found)>0 and sleep_time<5.0:
-            sleep_time +=0.5
-            print "[__sortFilesMJD] Start to re-read bad_files_found (sleep_time=%f)"%sleep_time
-            for file in self.bad_files_found:
-                time.sleep(sleep_time)
-                try:
-                    fits = datahandler.ClFits(file)
-                    self.bad_files_found.remove(file)
-                    print "[__sortFilesMJD] file successfully re-read !"
-                except Exception,e:
-                    print "[__sortFilesMJD] Error re-reading file %s , skipped..."%(file)
-                    print str(e)
-                else:
-                    dataset.append((file, fits.getMJD()))
-              
+        
+        """            
+        # Now, try to re-read the bad_files_found
+        # In fact the next code is no necessary because it is done in clfits:recognize()
+        sleep_time = 0.0
+        while len(self.bad_files_found)>0 and sleep_time<5.0:
+                sleep_time +=0.5
+                print "[__sortFilesMJD] Start to re-read bad_files_found (sleep_time=%f)"%sleep_time
+                for file in self.bad_files_found:
+                    time.sleep(sleep_time)
+                    try:
+                        fits = datahandler.ClFits(file)
+                        self.bad_files_found.remove(file)
+                        print "[__sortFilesMJD] file successfully re-read !"
+                    except Exception,e:
+                        print "[__sortFilesMJD] Error re-reading file %s , skipped..."%(file)
+                        print str(e)
+                    else:
+                        dataset.append((file, fits.getMJD()))
+        #Files that failed to re-read are discarded for ever
+        self.discarded_files += self.bad_files_found
+        self.bad_files_found = []
+        """
+        
         dataset = sorted(dataset, key=lambda data_file: data_file[1])          
         sorted_files = []
-        for tuple in dataset:
-            sorted_files.append(tuple[0])
+        for l_tuple in dataset:
+            sorted_files.append(l_tuple[0])
     
         return sorted_files
 
@@ -227,16 +232,16 @@ class DataCollector (object):
                 
         """  
     
-    	contents = []
-    	
+        contents = []
+        
         if start_datetime==None:
             # by default, we limit the files one day old
             l_start_datetime = dt.datetime.now()-dt.timedelta(days=1)    
         if end_datetime==None:
             l_end_datetime = dt.datetime.now()
         if l_end_datetime < l_start_datetime:
-             print "[DC] Error, end_datetime < start_datetime !"
-             return []
+            print "[DC] Error, end_datetime < start_datetime !"
+            return []
         
         #print "start_date = %s"%l_start_datetime
         #print "end_date = %s"%l_end_datetime
@@ -253,12 +258,12 @@ class DataCollector (object):
                         print "Error, cannot read datetime stamp in log file line :",line
                         continue
                     if line_date > l_start_datetime and line_date < l_end_datetime:
-					 	contents.append(sline[6])
-					  	print "FILE = ", sline[6]
+                        contents.append(sline[6])
+                        print "FILE = ", sline[6]
                     else:
                         pass
-						#print "File too old ...."
-						#print "file datetime = %s"%line_date
+                        #print "File too old ...."
+                        #print "file datetime = %s"%line_date
         # To read ~/tmp/fitsfiles.corrected
         elif type == 2:
             # Read the file contents from a generated GEIRS file
@@ -271,13 +276,12 @@ class DataCollector (object):
                         print "Error, cannot read datetime stamp in log file line",line
                         continue
                     if line_date > l_start_datetime and line_date < l_end_datetime:
-                     	contents.append(sline[1])
-                      	#print "FILE = ", sline[1]
+                        contents.append(sline[1])
+                        #print "FILE = ", sline[1]
                     else:
-                    	pass
-                    	#print "File too old ...."
-                    	#print "file datetime = %s"%line_date
-        
+                        pass
+                        #print "File too old ...."
+                        #print "file datetime = %s"%line_date
         
         return contents        
         
@@ -332,7 +336,7 @@ class DataCollector (object):
     
         # ORDER of if-statements is important!
     
-        iterlist = copy.copy(self.dirlist) # lists are mutables !
+        iterlist = copy.copy(self.dirlist) # lists are mutable !
         for file in iterlist:
             if file not in contents:
                 # Hmm... a strange situation. Apparently a file listed in self.dirlist
@@ -340,14 +344,6 @@ class DataCollector (object):
                 print '[DC] File %s disappeared from directory - updating lists' % file
                 self.dirlist.remove(file)
                 self.callback_func(file+"__deleted__")
-
-                ## new---
-                #fc=fits.FitsFile(file)
-                #fc.recognize()
-                #fits.detected_files.remove( file )
-                # Show into the frameLog
-                #frameLog.put_warning (os.path.basename(file) + " --- " + "Removed !" )
-                                ## wen---
                 
                 # Do NOT swap the following two statements!
                 
@@ -363,7 +359,6 @@ class DataCollector (object):
                 # the remaining files are those that are the new files in the input
                 # directory (this time).
                 contents.remove(file)
-
 
         # ## 2011-09-12
         # Before adding to dirlist and process the new files, we sort out by MJD
@@ -387,9 +382,10 @@ class DataCollector (object):
 			        and (fnmatch.fnmatch(basename, pattern))
 			        and (file not in self.reducedfiles)    
 			        and (file not in self.newfiles)
+                    and (file not in self.bad_files_found)
 			        ):
               
-                #Checking file
+                #Try-to-read the file
                 try:
                     fits = datahandler.ClFits(file)
                     del fits
@@ -397,7 +393,7 @@ class DataCollector (object):
                     print "[findNewFiles] Error reading file %s , skipped..."%(file)
                     print str(e)
                     self.remove(file)
-                    self.bad_files_found.append(file) 
+                    self.bad_files_found.append(file)
                 else:
                     self.callback_func(file)
                     # Only then, send message to the receiver client
@@ -415,4 +411,4 @@ if __name__ == "__main__":
     dr.check()
     print 'Datacollector sample finished successful'
     
-	
+

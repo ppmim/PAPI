@@ -574,6 +574,16 @@ recibidos, mejor dicho, los 2 más nuevos (MJD) --> pushB_subtract_last2_slot()
 
 - Videoconf: le envio las siguientes notas:
 
+"""
+-PAPI+LEMON reduced ~7000 O2k images (Z,J,H,Ks) of Matilde's project 
+-PAPI : dark, flat, sky-subtraction and de-crosstalk (also ready for PANIC) - 
+- LEMON: time series analysis - Photometric precision up to 0.015mag (constant star) 
+  Attached figure: preliminary V and Ks band lightcurves of one star of the sample for which there is an shift between a visible and a near-infrared minimun. 
+- Added to PANIC a module for cosmic rays removal (based on P. van Dokkum's L.A.Cosmic algorithm, http://www.astro.yale.edu/dokkum/lacosmic/) 
+- Improvement in master dark model computation 
+
+About the OT, no news; Antonio is in vacation. 
+"""
 
 Sale nuevamente el tema de los problemas de memoria en GEIRS, en los que está
 aún trabajando CS, y que cree que son problemas en el kernel, pero que espera
@@ -869,7 +879,56 @@ OSError: [Errno 32] Broken pipe
 
 2012-06-11
 ==========  
-   - 
+   - Working on TaskRunner in QL and improvements in DataCollector 
+   
+2012-06-12
+==========  
+ - Sent to JF next notes for the videoconf:
+   
+    - Implemented support for FITS cubes (non integrated mode)
+    - Implementing support for distinguished FITS-files (non integrated)
+    - doing improvements on the parallel processing 
+    - (of course) debugging and profiling 
+
+  - Encuentro problemas serios en QL cuando se intenta reducir todo un DataSet
+  de un directorio leido del tirón.
+  Ese mismo error se produce tambien en PAPI cuando por ejemplo hacemos:
+  
+     > papi -s ~/DATA/i_test/001/ -S 8 9
+     
+     donde 8 es una secuencia de DARK 
+           9 es una secuencia de SCI
+
+    en cambio si 8 fuese una secuencia de SCI tambien, entoces no hay error !!!
+    por que ???
+    
+    ---> TODO PARECE INDICAR QUE EL PROBLEMA ES POR LA CONCURRENCIA DE IRAF !!!!!!!
+    
+    
+"""
+Killing IRAF task `combine'
+Exception OSError: (10, 'No child processes') in <bound method Subprocess.__del__ of <Subprocess '/iraf/extern/mscred/bin.linux/x_combine.e -c', at 208fea8>> ignored
+    [PAPI]: 2012-06-12 18:56:03,092 ERROR    reductionset:2087: [reduceSeq] Error while parallel data reduction ! --> Error running IRAF task combine
+('IRAF task terminated abnormally\nERROR (603, "Parameter not a legal number (project)\x07")\n', 10, 'No child processes')                                                                                                                                                     
+    [PAPI]: 2012-06-12 18:56:03,092 ERROR    reductionset:1773: [reduceSet] Cannot reduce sequence : 
+ ['/home/panic/data/i_test/001/dark_seq_ind0046.fits', '/home/panic/data/i_test/001/dark_seq_ind0047.fits', '/home/panic/data/i_test/001/dark_seq_ind0048.fits', '/home/panic/data/i_test/001/dark_seq_ind0049.fits', '/home/panic/data/i_test/001/dark_seq_ind0050.fits']     
+ Error running IRAF task combine                                                                                                                                                                                                                                               
+('IRAF task terminated abnormally\nERROR (603, "Parameter not a legal number (project)\x07")\n', 10, 'No child processes')                                                                                                                                                     
+    [PAPI]: 2012-06-12 18:56:03,092 DEBUG    reductionset:1774: [reduceSet] Procceding to next sequence...
+    [PAPI]: 2012-06-12 18:56:03,092 DEBUG    reductionset:1781: [reduceSet] All sequences processed.
+    [PAPI]: 2012-06-12 18:56:03,093 DEBUG    reductionset:1782: [reduceSet] Files generated # 1 #: ***
+    [PAPI]: 2012-06-12 18:56:03,093 DEBUG    reductionset:1783:             - /data/out/mDark_FVSjmi_2_2.fits
+    [PAPI]: 2012-06-12 18:56:03,093 DEBUG    reductionset:1784:             Sequences failed  # 1 #: ***
+    [PAPI]: 2012-06-12 18:56:03,093 INFO     reductionset:1371: Purging the output dir ...
+
+
+Well done (I hope) -  Elapsed time(s): 10.733102!!!
+List of images to combine ('@/data/out/Q01/files.txt'): XIO:  fatal IO error 11 (Resource temporarily unavailable) on X server ":0"
+      after 24 requests (24 known processed) with 0 events remaining.
+
+PANIC in `/iraf/extern/mscred/bin.linux/x_combine.e': Write to IPC with no reader
+"""
+
 
 FOR NEXT VIDEOCONF
 ==================
@@ -956,11 +1015,15 @@ KDD con MATILDE (29-May-2012)
 JM probar con qphot con MAG_APER, etc ...
 
 
+KDD con MATILDE (12-Jun-2012)
+=============================
+- no se produce
+
 DOUBTS FOR MATILDE (next)
 ================================
 
 - New module for mix dome & sky FF : calCombineFF()
- - show MF PAPI CL interface:
+- show MF PAPI CL interface:
 
 > papi.py -s /data/O2K/2012-Matilde/20120103/ -g filter -p
 > papi.py -s /data/O2K/2012-Matilde/20120103/ -S 15  -g filter 
