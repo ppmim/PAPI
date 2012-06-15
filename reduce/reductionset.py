@@ -1,7 +1,8 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
-# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #
@@ -111,6 +112,7 @@ copy_reg.pickle(types.MethodType,
     _unpickle_method)  
 
 
+
 class ReductionSetException(Exception):
     pass
 
@@ -170,7 +172,6 @@ class ReductionSet(object):
         """
         
         super (ReductionSet, self).__init__ (*a, **k)
-        
         
         # CONFIG dictionary
         if not config_dict:
@@ -1831,6 +1832,7 @@ class ReductionSet(object):
         """
         Method used only to use with Pool.map_asycn() function
         """
+        print "Que passssa !!!! \n\n\n"
         return self.reduceSingleObj(*args)
       
     def reduceSeq(self, sequence, type):
@@ -1853,7 +1855,22 @@ class ReductionSet(object):
         
         """
         
+        
         log.debug("[reduceSeq] Starting ...")
+        
+        # start creating the pool of process
+        n_cpus = self.config_dict['general']['ncpus']
+        #n_cpus = multiprocessing.cpu_count()
+
+        #Finally, it was not possible to create 'pool' as a global variable becasue
+        #there are problems with sharing a global pool (or whatever variable) with
+        #the Process created in the QL module for dispatching the on-line reduction.
+        #So, what we do now is create a new pool everytime we need to do any iraf
+        #depending task. In general, we create the pool for whatever task in 
+        #this function, but in serial reduction of SCI seqs, the pool will not
+        #be used.
+        pool = multiprocessing.Pool(processes=n_cpus)
+        
         files_created = []
         
         # Take the first file of the sequence in order to find out the type of 
@@ -1880,8 +1897,20 @@ class ReductionSet(object):
                     # Orthodox master dark -- same EXPTIME & NCOADDS
                     log.debug("Found dark series with equal EXPTIME. Master dark is going to be created")
                     task = reduce.calDark.MasterDark (sequence, self.temp_dir, 
-                                                      outfile, texp_scale=False)
-                    out = task.createMaster()
+                                                      outfile, texp_scale=False,
+                                                      bpm=None, normalize=False)
+                    #out = task.createMaster()
+                    
+                    red_parameters = ()
+                    result = pool.apply_async(task.createMaster, 
+                                                 red_parameters)
+                    result.wait()
+                    out = result.get()
+                    
+                    pool.close()
+                    pool.join()
+
+                    
                 else:
                     log.info("Found a dark series of frames with different EXPTIME: Dark model will be created")
                     use_dark_model = True
@@ -1890,7 +1919,17 @@ class ReductionSet(object):
                         task = reduce.calDarkModel.MasterDarkModel (sequence, 
                                                                     self.temp_dir, 
                                                                     outfile)
-                        out = task.createDarkModel()
+                        #out = task.createDarkModel()
+                        
+                        red_parameters = ()
+                        result = pool.apply_async(task.createDarkModel, 
+                                                 red_parameters)
+                        result.wait()
+                        out = result.get()
+                    
+                        pool.close()
+                        pool.join()
+                        
                     else:
                         log.warning("Found a dark serie with diff EXPTIME, but dark model processing not activated")
                         #raise Exception("Dark series are not processed in quick mode")
@@ -1916,7 +1955,16 @@ class ReductionSet(object):
                                                          self.temp_dir, outfile, 
                                                          normal=True, # it is also done in calGainMap
                                                          median_smooth=m_smooth)
-                out = task.createMaster()
+                #out = task.createMaster()
+                
+                red_parameters = ()
+                result = pool.apply_async(task.createMaster, 
+                                                 red_parameters)
+                result.wait()
+                out = result.get()
+                    
+                pool.close()
+                pool.join()
                 
                 if out!=None: files_created.append(out) # out must be equal to outfile
             except Exception,e:
@@ -1956,7 +2004,16 @@ class ReductionSet(object):
                                                                normal=True, # it is also done in calGainMap
                                                                temp_dir=self.temp_dir,
                                                                median_smooth=m_smooth)
-                    out = task.createMaster()
+                    #out = task.createMaster()
+                    red_parameters = ()
+                    result = pool.apply_async(task.createMaster, 
+                                                 red_parameters)
+                    result.wait()
+                    out = result.get()
+                    
+                    pool.close()
+                    pool.join()
+                    
                     if out!=None: files_created.append(out) # out must be equal to outfile
                 else:
                     # should we create master dark ??
@@ -2007,17 +2064,15 @@ class ReductionSet(object):
                     log.info("[reduceSeq] Entering PARALLEL data reduction ...")
                     try:
                         # Map the parallel process
-                        n_cpus = self.config_dict['general']['ncpus']
-                        #n_cpus = multiprocessing.cpu_count()
-                        results = pprocess.Map(limit=n_cpus, reuse=1) 
+                        #n_cpus = self.config_dict['general']['ncpus'] #anymore used, instead cpu_count()
+                        # pool is defined at the end of the file, as a global variable
+
+                        ##results = pprocess.Map(limit=n_cpus, reuse=1) 
                         # IF reuse=0, it block the application !! I don't know why ?? 
                         # though in pprocess examples it works! 
-                        calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
+                        ##calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
 
-                        # New method using multiprocessing
-                        ##multiprocessing.freeze_support()
-                        ##pool = multiprocessing.Pool(n_cpus)
-                        ##results = []
+                        results = []
                           
                         for n in range(next):
                             ## only a test to reduce Q01
@@ -2043,10 +2098,12 @@ class ReductionSet(object):
                             
                             # async call to procedure
                             extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
-                            ##red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
-                            ##                  self.red_mode, l_out_dir, 
-                            ##                  extension_outfilename)
+                            ##calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
+                            
+                            red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
+                                              self.red_mode, l_out_dir, 
+                                              extension_outfilename)
+                            log.debug("Calling parameters ---> %s"%(str(red_parameters)))
                             
                             # Notice that the results will probably not come out 
                             # of the output queue in the same in the same order 
@@ -2057,31 +2114,29 @@ class ReductionSet(object):
                             # code needed anyway).
                             #results += [pool.apply_async(self.reduceSingleObj, 
                             #                             red_parameters)]
-                            ##results += [pool.map_async(self.calc,
-                            ##                          [red_parameters])]         
+                            pool = multiprocessing.Pool(2)
+                            results += [pool.map_async(self.calc,
+                                                      [red_parameters])]         
                         # Here is where we WAIT (BLOCKING) for the results 
                         # (result.get() is a blocking call).
                         # If the remote call raised an exception then that 
                         # exception will be reraised by get().
-                        ##for result in results:
-                        ##    out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
 
                         for result in results:
-                            out_ext.append(result)
+                            result.wait()
+                            out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
+
+                        ##for result in results:
+                        ##    out_ext.append(result)
                             
                         #Prevents any more tasks from being submitted to the pool. 
                         #Once all the tasks have been completed the worker 
                         #processes will exit.
-                        ###pool.close()
+                        pool.close()
                         #Wait for the worker processes to exit. One must call 
                         #close() or terminate() before using join().
-                        ###pool.join()
+                        pool.join()
                         log.critical("[reduceSeq] DONE PARALLEL REDUCTION ")
-                            
-                        #pool=multiprocessing.Pool(processes=2)
-                        # !! ERROR !!, because multiprocessing.pool.map() does not support class methods
-                        #pool.map(self.reduceSingleObj,[[obj_ext[0], mdark, mflat, mbpm, self.red_mode, self.out_dir+"/out_Q01.fits"],\
-                        #                     [obj_ext[1], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q02.fits"]])
                             
                     except Exception,e:
                         log.error("[reduceSeq] Error while parallel data reduction ! --> %s",str(e))
@@ -2879,10 +2934,48 @@ class ReductionSet(object):
             k+=1
 
         
-        
-        
-        
-        
+#################
+## Important Note 
+#################
+#13-Jun-2012
+#===========
+# It it very important to create the pool of workers here, just after the 
+# class definition and just before any call to PyRAF in order to avoid
+# the bug found by V.Terron that seems to be in PyRAF 
+
+# It seems that PyRAF is messing with the multiprocessing module. The reason
+# why I think so is because two consecutive calls to difiphot.apphot.qphot work
+# fine, as well as using it as the function passed to map_async. But calling
+# qphot and then map_async, with the instantiation of the pool of workers done
+# in-between, makes the scripts fail with the most arcane of errors, such as
+# (yes, this is a real example):
+#
+# "Exception Exception OSErrorOSError: : ((1010, , ''NNoo cchhiilldd
+# pprroocceesssseess'')) in in <bound method Subprocess.__del__ of <Subprocess
+# '/iraf/iraf/noao/bin.linux/x_apphot.e -c', at 3c8c2d8>><bound method
+# Subprocess.__del__ of <Subprocess '/iraf/iraf/noao/bin.linux/x_apphot.e -c',
+# at 3c8c2d8>> ignored"
+#
+# However, everything goes as expected is the pool of workers is created before
+# qphot is ever used, directly or indirectly, in the script. It seems the first
+# execution of PyRAF's qphot is affecting how the multiprocessing module
+# works. That's why we need to create the pool before PyRAF runs, so that we
+# use the original, 'unmodified' code.
+
+# 
+#multiprocessing.freeze_support()
+#pool = multiprocessing.Pool(2)#processes=multiprocessing.cpu_count())
+#If processes is None then the number returned by cpu_count() is used.         
+
+#15-Jun-2012
+#===========
+#Finally, it was not possible to create as a global variable the pool, becasue
+#it there is problems with sharing a global pool (or whatever variable) with
+#the Process created in the QL module for dispatching the on-line reduction.
+#So, what we do now is create a new pool everytime we need to do any iraf
+#depending task.
+ 
+
         
         
         

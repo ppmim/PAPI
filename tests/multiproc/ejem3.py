@@ -1,4 +1,5 @@
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Pipe, Pool
+
 
 def f(conn):
     conn.send([42, None, 'hello'])

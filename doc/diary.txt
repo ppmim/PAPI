@@ -904,7 +904,6 @@ OSError: [Errno 32] Broken pipe
     
     ---> TODO PARECE INDICAR QUE EL PROBLEMA ES POR LA CONCURRENCIA DE IRAF !!!!!!!
     
-    
 """
 Killing IRAF task `combine'
 Exception OSError: (10, 'No child processes') in <bound method Subprocess.__del__ of <Subprocess '/iraf/extern/mscred/bin.linux/x_combine.e -c', at 208fea8>> ignored
@@ -928,6 +927,38 @@ List of images to combine ('@/data/out/Q01/files.txt'): XIO:  fatal IO error 11 
 
 PANIC in `/iraf/extern/mscred/bin.linux/x_combine.e': Write to IPC with no reader
 """
+
+2012-06-13
+==========  
+
+ * Pre-videoconf, videoconf y postvideoconf
+  - JF pregunta sobre que es el profiling y que es LEMON
+  - JF pregunta sobre la fecha para hacer la II-Sw-integration: CS está sin tiempo !!
+  - Quedamos en preparar un TODO-list con las cosas del SW de PANIC que quedan pendientes
+  con el objetivo de intentar determinar cuando podríamos tener la II-SI
+  
+ * Solucion a bug de PyRAF cuando llamamos al algún metodo en multiprocessing (ver notas del día 12-Jun-2012)
+   Gracias V.Terrón (ejemplo pyraf_multiproc.py) , que el ya había pasado por el mismo problema, 
+   encontramos que el "truco" está en crear el multiprocessing.pool antes de cualquier posible llamada a alguna rutina de PyRAF.
+   En el ejemplo del 12-Jun, la al reducirse la secuencia de DARK con darkcombine y luego reducir 
+   la secuencia de SCI con un Pool, entonces se corrompe el espacio de nombres de PyRAF o lo que sea
+   y ya se produce el error. 
+   Lo soluciono en reductionset.py declarando el Pool justo despues de la clase ReductionSet, pues si lo
+   declaro antes, da otro error por que no conoce la clase RS.
+   
+ * Ahora queda probar que en el QL todo funciona bien tambien.
+   Pues nada mas probar, me doy cuenta de que no funciona, pues el declarar
+   variables globales (pool) en reductionset.py, luego el Process que creamos
+   en el QL para procesar las secuencias (vía Queue) no puede acceder a dicho
+   pool global; aunque no se queja de ningún error, proceso de reducción 
+   se queda esperando forever en el result.get().
+   
+   Solución: ver 15-6-2012
+   
+2012-06-15
+==========  
+   
+   
 
 
 FOR NEXT VIDEOCONF

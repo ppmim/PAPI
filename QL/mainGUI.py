@@ -82,21 +82,21 @@ from iraf import mscred
 
 
 # Multiprocessing
-from multiprocessing import Process, Queue, current_process, freeze_support
+from multiprocessing import Process, Queue
 
 def _pickle_method(method):
-    """
-    Pickle methods properly, including class methods.
-    """
+    
+    #Pickle methods properly, including class methods.
+    
     func_name = method.im_func.__name__
     obj = method.im_self
     cls = method.im_class
     return _unpickle_method, (func_name, obj, cls)
 
 def _unpickle_method(func_name, obj, cls):
-    """
-    Unpickle methods properly, including class methods.
-    """
+    
+    #Unpickle methods properly, including class methods.
+    
     for cls in cls.mro():
         try:
             func = cls.__dict__[func_name]
@@ -113,7 +113,6 @@ copy_reg.pickle(types.MethodType,
     _pickle_method,  
     _unpickle_method)  
 
-  
   
 class MainGUI(panicQL):
 
@@ -237,7 +236,7 @@ class MainGUI(panicQL):
         
         # Processing Queue management
         # Create queues
-        freeze_support()
+        #freeze_support()
         self._task_queue = Queue()
         self._done_queue = Queue()
         
@@ -2587,8 +2586,10 @@ source directory (If no, only the new ones coming will be processed) ?"),
                       self.group_by, True,
                       self.config_opts,
                       self.outputsDB.GetFiles(), None)]
-
+            
+            #####RS.ReductionSet(*(params[0])).reduceSet()
             self._task_queue.put(params)
+            
             ##Process(target=self.worker, 
             ##        args=(self._task_queue, self._done_queue)).start()
                     

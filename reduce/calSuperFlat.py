@@ -1,7 +1,25 @@
 #!/usr/bin/env python
+
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
+#
+# This file is part of PAPI (PANIC Pipeline)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ################################################################################
-#
-#
 # PAPI (PANIC PIpeline)
 #
 # calSuperFlat.py
@@ -150,8 +168,7 @@ class SuperSkyFlat(object):
         # the input images are scaled to have the same median, the pixels containing 
         # objects are rejected by an algorithm based on the measured noise (sigclip),
         # and the flat-field is obtained by a median.
-        #iraf.mscred.combine(input=("'"+"@"+self.temp_dir+"/files.txt"+"'").replace('//','/'),
-        iraf.mscred.combine(input=("'"+"@/tmp/files.txt"+"'"),
+        iraf.mscred.combine(input=("'"+"@"+self.temp_dir+"/files.txt"+"'").replace('//','/'),
                     output=tmp1,
                     combine='median',
                     ccdtype='',
@@ -160,7 +177,8 @@ class SuperSkyFlat(object):
                     lsigma=1.5,
                     hsigma=1.5,
                     scale='median',
-                    zero='none'
+                    zero='none',
+                    statsec='' #'[350:130,480:220]' # default, entire image or [*,*]
                     #masktype='none'
                     #scale='exposure',
                     #expname='EXPTIME'

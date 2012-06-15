@@ -1,7 +1,27 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
+#
+# This file is part of PAPI (PANIC Pipeline)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
    Main routines for the loggin function.
 """
-
 import logging
 import datetime
 
@@ -24,14 +44,16 @@ class ColorFormatter(logging.Formatter):
         return self.color(record.levelname) + retval + self.color()
 
 
-### We define two logging handlers (Console and File), each one can have different properties (level, formater, ...)
+### We define two logging handlers (Console and File), each one can have 
+### different properties (level, formater, ...)
 ## Console
 console = logging.StreamHandler()
 console.setLevel(logging.DEBUG) # here we set the level for console handler
-# NOTE: Handler.setLevel() method, just as in logger objects, specifies the lowest severity that will be dispatched
-#to the appropriate destination.
-# Why are there two setLevel() methods? The level set in the logger determines which severity of messages it will pass
-# to its handlers. The level set in each handler determines which messages that handler will send on.
+## NOTE: Handler.setLevel() method, just as in logger objects, specifies the 
+##lowest severity that will be dispatched to the appropriate destination.
+## Why are there two setLevel() methods? The level set in the logger determines 
+##which severity of messages it will pass to its handlers. The level set in 
+## each handler determines which messages that handler will send on.
 console.setFormatter(ColorFormatter('    [%(name)s]: %(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s'))
 logging.getLogger('PAPI').addHandler(console)
 
