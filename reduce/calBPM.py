@@ -1,7 +1,8 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
-# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
+# Copyright (c) 2011-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #
@@ -61,7 +62,7 @@ import datahandler
 import misc.fileUtils
 import misc.utils as utils
 
-class BadPixelMask:
+class BadPixelMask(object):
     """
     \brief 
         Generate a bad pixel mask from a list of dark corrected dome flat images

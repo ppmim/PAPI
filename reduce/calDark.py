@@ -1,7 +1,8 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
-# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #
@@ -248,25 +249,25 @@ class MasterDark(object):
                         #ParList = _getparlistname('darkcombine')
                         )
         """
-    	if self.m_normalize:
-    	    log.debug("Normalizing master dark to 1 sec")
-    	    # divide master dark by the TEXP to get a master dark in ADU/s units
-    	    texp = datahandler.ClFits(tmp1).expTime()
-    	    iraf.mscred.mscarith(operand1 = tmp1,
+        if self.m_normalize:
+            log.debug("Normalizing master dark to 1 sec")
+            # divide master dark by the TEXP to get a master dark in ADU/s units
+            texp = datahandler.ClFits(tmp1).expTime()
+            iraf.mscred.mscarith(operand1 = tmp1,
     				operand2 = texp,
     				op = '/',
     				result =self.__output_filename,
     				verbose = 'no'
     				)
-    	else:
-    	    shutil.move(tmp1, self.__output_filename)
-    	    
+        else:
+            shutil.move(tmp1, self.__output_filename)
+    
         darkframe = pyfits.open(self.__output_filename,'update')
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.update('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         darkframe[0].header.update('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in darkframe[0].header:
-		          darkframe[0].header.update('PAT_NEXP',1,'Number of position into the current dither pattern')
+            darkframe[0].header.update('PAT_NEXP',1,'Number of position into the current dither pattern')
         if self.m_normalize:
             darkframe[0].header.update('EXPTIME',1.0)
             darkframe[0].header.update('ITIME', 1.0)
@@ -277,14 +278,14 @@ class MasterDark(object):
         log.debug('Saved master DARK to %s' , self.__output_filename)
         log.debug("createMasterDark' finished %s", t.tac() )
         
-    	# Get some stats from master dark (mean/median/rms)
+        # Get some stats from master dark (mean/median/rms)
         print "Stats:"
         print "----- "
         values = (iraf.mscstat (images=self.__output_filename,
                                 fields="image,mean,mode,stddev,min,max",
                                 format='yes',Stdout=1))
         for line in values:
-    	       print line
+            print line
             
         return self.__output_filename
         
@@ -322,7 +323,7 @@ if __name__ == "__main__":
     
     
     if not options.source_file_list or not options.output_filename:
-	parser.print_help()
+        parser.print_help()
         parser.error("incorrect number of arguments " )
     
     

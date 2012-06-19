@@ -101,7 +101,8 @@ def _unpickle_method(func_name, obj, cls):
         try:
             func = cls.__dict__[func_name]
         except KeyError:
-            pass
+            #pass
+            raise
         else:
             break
     return func.__get__(obj, cls)        
@@ -223,8 +224,8 @@ class MainGUI(panicQL):
         self.dc_outdir = None # Initialized in checkOutDir_slot()
         #datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern, self.new_file_func_out)
         
-        ## Task management
-        ## ---------------
+        ## Task management using Threads (ExecTaskThread)
+        ## ----------------------------------------------
         self._task = None                       # Pointer to task/thread that is running 
         #self._task_event = threading.Event()    # Event to syncronize ExecTaskThread and ExecTaskThread
         self._task_info = None
@@ -234,21 +235,23 @@ class MainGUI(panicQL):
         self.connect( self._task_timer, SIGNAL("timeout()"), self.checkLastTask )
         self._task_timer.start( 1000, False )    # 1 second continuous timer
         
-        # Processing Queue management
+        
+        ## Task management using Processing Queue management
+        ## -------------------------------------------------
         # Create queues
         #freeze_support()
         self._task_queue = Queue()
         self._done_queue = Queue()
         
         # Timer for DoneQueue (tasks to do)
-        self._queue_timer = QTimer( self )
-        self.connect( self._queue_timer, SIGNAL("timeout()"), self.checkDoneQueue )
-        self._queue_timer.start( 1000, False )    # 1 second continuous timer
+        self._queue_timer_done = QTimer( self )
+        self.connect( self._queue_timer_done, SIGNAL("timeout()"), self.checkDoneQueue )
+        self._queue_timer_done.start( 1000, False )    # 1 second continuous timer
         
         # Timer for TaskQueue (pending tasks)
-        self._queue_timer = QTimer( self )
-        self.connect( self._queue_timer, SIGNAL("timeout()"), self.TaskRunner )
-        self._queue_timer.start( 1000, False )    # 1 second continuous timer
+        self._queue_timer_todo = QTimer( self )
+        self.connect( self._queue_timer_todo, SIGNAL("timeout()"), self.TaskRunner )
+        self._queue_timer_todo.start( 1000, False )    # 1 second continuous timer
         
         ##Start display (DS9)
         #display.startDisplay()
@@ -377,67 +380,7 @@ class MainGUI(panicQL):
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 self.processLazy(filename)
                 return
-        
-    def processSeq_deprecated(self, obsSequence):
-        
-        """ DEPRECATED !!!
-        
-            Process the observing sequence received according with the QL pipeliene recipes
-            The sequence could be a calib or science sequence.
-            
-            @param obsSequence: a list files belonging to the observing sequence
-            
-            @deprecated: can be replaced by processFiles
-             
-        """
-        
-        log.debug("Starting to process Observation Sequence...")
-        self.logConsole.info("++ Starting to process Observation Sequence :")
-        
-        for file in obsSequence:
-            self.logConsole.info("     - " + file)
-            #self.logConsole.info(QString("    - %1").arg(file))
-        self.logConsole.info("... processing sequence ...")
-            
-        #Change to working directory
-        os.chdir(self.m_tempdir)
-        
-        #Change cursor
-        self.setCursor(Qt.waitCursor)
-        
-        # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a 
-        # mutex in thread !!!!
-        self.m_processing = False    
-        
-        #Create working thread that process the obsSequence
-        try:
-            # generate a random filename for the master, to ensure we do not overwrite any file
-            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj_', dir=self.m_outputdir)
-            os.close(output_fd)
-            os.unlink(outfilename) # we only need the name
-            self._task = RS.ReductionSet( obsSequence, self.m_outputdir, out_file=outfilename, \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick", \
-                                            group_by=self.group_by, check_data=True, config_dict=self.config_opts)
-            
-            if self._task.isaCalibSet():
-                log.debug("It's a calib sequence what is going to be reduced !")
-                self.logConsole.info("It is a CALIBRATION sequence")
-                #thread = reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
-                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
-            else:
-                log.debug("It's a science sequence what is going to be reduced !")
-                self.logConsole.info("It is a SCIENCE sequence")
-                thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list, "quick")
-            thread.start()
-        except Exception,e:
-            #Anyway, restore cursor
-            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
-            # thus the ExecTaskThread can't restore the cursor
-            self.setCursor(Qt.arrowCursor) 
-            QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
-            self.m_processing = False
-            raise e
-
+    
     def processLazy(self, filename):
         """
         Do some  operations to the last file detected. It depend on:
@@ -460,7 +403,7 @@ class MainGUI(panicQL):
             
         """
         
-        log.debug("Starting to process the file %s",filename)
+        log.debug("[processLazy] Starting to process the file %s",filename)
         
         (date, ut_time, type, filter, texp, detector_id, 
          run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(filename)
@@ -469,40 +412,38 @@ class MainGUI(panicQL):
         if type!="SCIENCE":
             return
 
-        self.logConsole.info(" ... processing file %s..."%filename)
+        self.logConsole.info(" [processLazy] Processing file %s "%filename)
         
         # ###########################################################################################
         # According to what options have been selected by the user, we do a processing or other...
         if self.checkBox_subDark.isChecked() or self.checkBox_appFlat.isChecked():
-            #Change to working directory
-            os.chdir(self.m_tempdir)  # -- required ???
-            #Create working thread that process the file
             try:
-                # Master dark with ANY EXPT, and scaled later
-                # could be > 1 master darks, but used the last(mjd sorted)
-                master_dark = self.inputsDB.GetFilesT('MASTER_DARK', -1) 
-                # could be > 1 master flat (tw,dome), but used the last(mjd sorted)
-                master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT',-1, filter) 
+                log.debug("En-queue the task ....")
+                #Look for (last received) calibration files
+                mDark, mFlat, mBPM = self.getCalibFor([filename])
                 # Both master_dark and master_flat are optional
-                if len(master_dark)>0 or len(master_flat)>0:
-                    if len(master_dark)>0: mDark = master_dark[-1] # most recently
-                    else: mDark = None
-                    if len(master_flat)>0: mFlat = master_flat[-1] # most recently
-                    else: mFlat = None
+                if mDark or mFlat:
                     #Change cursor
-                    self.setCursor(Qt.waitCursor)
-                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    self._task = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
-                                                      self.m_outputdir)
-                    thread = reduce.ExecTaskThread(self._task.apply, 
-                                                 self._task_info_list)
-                    thread.start()
+                    #self.setCursor(Qt.waitCursor)
+                    #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    #self._task = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
+                    #                                  self.m_outputdir)
+                    #thread = reduce.ExecTaskThread(self._task.apply, 
+                    #                             self._task_info_list)
+                    #thread.start()
+                    
+                    #Put into the queue the task to be done
+                    func_to_run = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
+                                                     self.m_outputdir)
+                    params = ()
+                    self._task_queue.put([(func_to_run.apply, params)])
+                    
                 else:
                     QMessageBox.critical(self, "Error", "Error, cannot find the master calibration files")
             except Exception, e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
-                self.m_processing = False
-                self.setCursor(Qt.arrowCursor)
+                #self.m_processing = False
+                #self.setCursor(Qt.arrowCursor)
                 raise e    
         # ##########################################################################################
         elif self.checkBox_subLastFrame.isChecked():
@@ -541,6 +482,67 @@ class MainGUI(panicQL):
         elif self.checkBox_show_imgs.isChecked():
             display.showFrame(filename)
             
+    def getCalibFor(self, sci_obj_list):
+        """
+        @summary: Given a list of frames belonging to a observing sequence for 
+        a given object (star, galaxy, whatever),return the most recently created 
+        calibration files (master dark,flat,bpm) in order to reduce the sequence.
+        The search of the calibration files is done, firstly in the local DB, but
+        if no results, then in the external DB if it was provided.
+          
+        @return:  3 calibration files (dark, flat, bpm); If more than one master
+        were found, the most recently created (according to MJD) is returned.
+        If some master were not found, None is returned.
+    
+        @note: This function is also equally implemented in ReductionSet 
+        """
+        
+        log.debug("Looking for calibration files into DB")
+        
+        master_dark = [] # we'll get a list of master dark candidates
+        master_flat = [] # we'll get a list of master flat candidates
+        master_bpm = [] # we'll get a list of master flat candidates
+        
+        obj_frame = datahandler.ClFits(sci_obj_list[0])
+        # We take as sample, the first frame in the list, but all frames must
+        # have the same features (expT,filter,ncoadd, readout-mode, ...)
+        expTime = obj_frame.expTime()
+        filter = obj_frame.getFilter()
+        
+        #self.inputsDB.ListDataSet()
+        #self.outputsDB.ListDataSet()
+        
+        #DARK - Do NOT require equal EXPTIME Master Dark ???
+        master_dark = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1) 
+        if len(master_dark)==0 and self.outputsDB!=None:
+            master_dark = self.outputsDB.GetFilesT('MASTER_DARK', -1) 
+        #FLATS - Do NOT require equal EXPTIME, but FILTER
+        master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+        if master_flat==[]:
+            master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
+        if len(master_flat)==0 and self.outputsDB!=None:
+            master_flat = self.outputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+            if len(master_flat)==0:
+                master_flat=self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
+
+        #BPM                
+        master_bpm = self.inputsDB.GetFilesT('MASTER_BPM')
+        if len(master_bpm)==0 and self.outputsDB!=None:
+            master_bpm = self.outputsDB.GetFilesT('MASTER_BPM')
+
+        log.debug("Master Darks found %s", master_dark)
+        log.debug("Master Flats found %s", master_flat)
+        log.debug("Master BPMs  found %s", master_bpm)
+        
+        # Return the most recently created (according to MJD order)
+        if len(master_dark)>0: r_dark = master_dark[-1]
+        else: r_dark = None
+        if len(master_flat)>0: r_flat = master_flat[-1]
+        else: r_flat = None
+        if len(master_bpm)>0: r_bpm = master_bpm[-1]
+        else: r_bpm = None
+        
+        return r_dark, r_flat, r_bpm
         
     #####################################################
     ### SLOTS ###########################################
@@ -832,8 +834,8 @@ class MainGUI(panicQL):
         
     def _update_master_calibrations(self):
         """
-        Query the **outputsDB** to update the master calibrations files with the last 
-        calibration files received, and then update: 
+        Query the **outputsDB** to update the master calibrations files with the 
+        last calibration files received, and then update: 
             
             self.m_masterDark
             self.m_masterFlat
@@ -1516,7 +1518,8 @@ class MainGUI(panicQL):
             else: self.m_listView_item_selected=str(listItem.text(0))
     
     def imexam_slot(self):
-        """Imexam the currect filename selected """
+        """Imexam the currect filename selected 
+        """
         
         try:
             #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
@@ -1530,7 +1533,7 @@ class MainGUI(panicQL):
         """ 
         Run Imexam the currect filename. First we start the DS9 display  
         
-        DOES NOT WORK !!!
+        DOES NOT WORK !!! --> try with multiprocessing.Process !
         
         Console error
         ~~~~~~~~~~~~~
@@ -1664,13 +1667,18 @@ class MainGUI(panicQL):
                 self.inputsDB.GetFileInfo(last2_files[1])[3]):
                 try:
                     #Change cursor
-                    self.setCursor(Qt.waitCursor)
-                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    thread = reduce.ExecTaskThread(self.mathOp, 
-                                                   self._task_info_list, 
-                                                   last2_files,'-', 
-                                                   "/tmp/sub.fits")
-                    thread.start()
+                    #self.setCursor(Qt.waitCursor)
+                    #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    #thread = reduce.ExecTaskThread(self.mathOp, 
+                    #                               self._task_info_list, 
+                    #                               last2_files,'-', 
+                    #                               "/tmp/sub.fits")
+                    #thread.start()
+                    
+                    #Put into the queue the task to be done
+                    func_to_run = mathOp
+                    params = (last2_files, "-", "/tmp/sub.fits", self.m_tempdir)
+                    self._task_queue.put([(func_to_run, params)])
                 except:
                     QMessageBox.critical(self, "Error", "Error while subtracting files")
                     raise
@@ -1687,12 +1695,14 @@ class MainGUI(panicQL):
         
     
     def genFileList( self, file_list, outFilename ):
-      
-      """ Generate a file 'outFilename' listing the files passed as a python-list in the file_list parameter"""
-      fo = open(outFilename,"w")
-      for file in file_list:
-        fo.write(file+"\n")
-      fo.close()
+        """ 
+        Generate a file 'outFilename' listing the files passed as a 
+        python-list in the file_list parameter
+        """
+        fo = open(outFilename,"w")
+        for my_file in file_list:
+            fo.write(my_file+"\n")
+        fo.close()
                              
     ############################################################################
     ############# PROCESSING STAFF #############################################
@@ -1719,56 +1729,7 @@ class MainGUI(panicQL):
                     QMessageBox.critical(self, "Error", "Error while subtracting files")
                     raise
 
-    def mathOp(self, files, operator, outputFile=None):
-        """This method will do the math operation (+,-,/) specified with the input files"""
-        
-        log.debug("Start mathOp")
-        
-        if outputFile==None:
-            output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=self.m_outputdir)
-            os.close(output_fd)
-
-        if operator!='+' and operator!='-' and operator!='/':
-            log.error("Math operation not supported")
-            return None
-
-        try:
-            # Remove an old output file (might it happen ?)
-            misc.fileUtils.removefiles(outputFile)
-            ## MATH operation '+'
-            if (operator=='+' and len(files)>2):
-                log.debug("Frame list to combine = [%s]", files )
-                misc.utils.listToFile(files, self.m_outputdir+"/files.tmp") 
-                iraf.mscred.combine(input=("@"+(self.m_outputdir+"/files.tmp").replace('//','/')),
-                         output=outputFile,
-                         combine='average',
-                         ccdtype='',
-                         reject='sigclip',
-                         lsigma=3,
-                         hsigma=3,
-                         subset='no',
-                         scale='mode'
-                         #masktype='none'
-                         #verbose='yes'
-                         #scale='exposure',
-                         #expname='EXPTIME'
-                         #ParList = _getparlistname ('flatcombine')
-                         )
-            ## MATH operation '-,/,*'
-            else:
-                iraf.mscarith(operand1=files[0],
-                          operand2=files[1],
-                          op=operator,
-                          result=outputFile,
-                          verbose='yes'
-                          )
-        except Exception,e:
-            log.error("[mathOp] An erron happened while math operation with FITS files")
-            raise e
-        
-        log.debug("mathOp result : %s"%outputFile)
-        
-        return outputFile
+    
         
     def sumFrames_slot(self):
         """This methot is called to sum two images selected from the File List View"""
@@ -2234,13 +2195,15 @@ class MainGUI(panicQL):
                 if file==self.m_listView_item_selected: file_n=i
                 else: i=i+1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
-                    QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))
+                    QMessageBox.critical(self, "Error", 
+                                         QString("File %1 is not a science frame").arg(file))
                 else:
                     file_list.append(file)
                     view_list +=  file + "\n"
             
-            resp=QMessageBox.information(self, "Info", QString("Selected near frames are:\n %1").arg(view_list), \
-                                            QMessageBox.Ok, QMessageBox.Cancel)
+            resp=QMessageBox.information(self, "Info", 
+                                         QString("Selected near frames are:\n %1").arg(view_list),
+                                         QMessageBox.Ok, QMessageBox.Cancel)
             if resp==QMessageBox.Cancel:
                 return
                     
@@ -2261,19 +2224,11 @@ class MainGUI(panicQL):
         outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/red_result.fits", "*.fits", self, "Save File dialog")
         if outfileName.isEmpty(): return # nothig to do !
            
-        #Change to working directory
-        os.chdir(self.m_tempdir)
-        #Change cursor
-        self.setCursor(Qt.waitCursor)
         #Create working thread that compute sky-frame
         if len(file_list)>1:
             try:
                 self.processFiles(file_list)
             except Exception, e:
-                #Anyway, restore cursor
-                # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
-                # thus the ExecTaskThread can't restore the cursor
-                self.setCursor(Qt.arrowCursor) 
                 QMessageBox.critical(self, "Error", "Error while building stack")
                 raise e
         
@@ -2464,6 +2419,7 @@ class MainGUI(panicQL):
                                 QString("Process also the current files in the \
 source directory (If no, only the new ones coming will be processed) ?"), 
                                 QMessageBox.Ok, QMessageBox.Cancel)
+            
             if res==QMessageBox.Cancel:
                 return
             else:
@@ -2507,29 +2463,13 @@ source directory (If no, only the new ones coming will be processed) ?"),
             print "ARGS=", args
             output.put(RS.ReductionSet(args).func())
             
-    
-    def worker(self, input, output):
-        """
-        Callback function used by Process task
-        """
-        
-        args = input.get()
-        print "ARGS=",args
-        
-        try:
-            output.put(RS.ReductionSet(*(args[0])).reduceSet())
-            log.info("[workerd] task done !")
-        except Exception,e:
-            log.error("[worker] Error while processing task")
-            output.put(None) # the DoneQueue will detect it
-        finally:
-            self.m_processing = False
-        
     def processFiles(self, files=None):
         """
         @summary: Process the files provided; if any files were given, all the files 
         in the current Source List View (but not the output files) will be
-        processed.
+        processed. The processing task will be inserted into the _task_queue
+        to be processed as soon as the current (if any) processing has finished
+        (m_processing=False).  
         
         @param files: files list to be processed; if None, all the files in the
         current List View will be used !
@@ -2554,11 +2494,6 @@ source directory (If no, only the new ones coming will be processed) ?"),
             #self.logConsole.info(QString("    - %1").arg(file))
         self.logConsole.info("... processing sequence ...")
             
-        #Change to working directory
-        os.chdir(self.m_tempdir)
-        #Change cursor
-        self.setCursor(Qt.waitCursor)
-        self.m_processing = False    # Pause autochecking for coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
         #Create working thread that process the files
         try:
             # generate a random filename for the master, to ensure we do not overwrite any file
@@ -2587,22 +2522,15 @@ source directory (If no, only the new ones coming will be processed) ?"),
                       self.config_opts,
                       self.outputsDB.GetFiles(), None)]
             
-            #####RS.ReductionSet(*(params[0])).reduceSet()
-            self._task_queue.put(params)
+            func_to_run = RS.ReductionSet(*(params[0])).reduceSet
+            self._task_queue.put([(func_to_run,())])
+            #self._task_queue.put(params) #default function supposed!
             
             ##Process(target=self.worker, 
             ##        args=(self._task_queue, self._done_queue)).start()
                     
-            ###thread = reduce.ExecTaskThread(self._task.reduceSet, self._task_info_list)
-            ###thread.start()
         except Exception,e:
-            print "donde esta la excepcion ? por aqui nunca pasa !!!!!! la hebra no devuelve la excepcion ?"
-            #Anyway, restore cursor
-            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
-            # thus the ExecTaskThread can't restore the cursor
-            self.setCursor(Qt.arrowCursor) 
             QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
-            self.m_processing = False
             raise e # Para que seguir elevando la excepcion ?
         
     def TaskRunner(self):
@@ -2613,6 +2541,9 @@ source directory (If no, only the new ones coming will be processed) ?"),
             log.debug("Something new in the TaskQueue !")
             try:
                 self.logConsole.debug("Starting to process queued task")
+                #Change cursor
+                self.setCursor(Qt.waitCursor)
+                #'mutex' variable 
                 self.m_processing = True
                 Process(target=self.worker, 
                     args=(self._task_queue, self._done_queue)).start()
@@ -2622,9 +2553,105 @@ source directory (If no, only the new ones coming will be processed) ?"),
                 self.m_processing = False
                 self.setCursor(Qt.arrowCursor)
             finally:
-                self.logConsole.debug("Finally of TaskRunner")
+                log.debug("End of TaskRunner")
                  
-          
+    def worker_original(self, input, output):
+        """
+        NOT USED - Callback function used by Process task
+        """
+        
+        args = input.get()
+        print "ARGS=",args
+        
+        try:
+            output.put(RS.ReductionSet(*(args[0])).reduceSet())
+            log.info("[workerd] task done !")
+        except Exception,e:
+            log.error("[worker] Error while processing task")
+            output.put(None) # the DoneQueue will detect it
+        finally:
+            self.m_processing = False
+            log.debug("Worker finished its task !")
+    
+    def worker(self, input, output):
+        """
+        Callback function used by Process task
+        """
+        
+        func, args = input.get()[0]
+        print "FUNC=",func
+        print "ARGS=",args
+        
+        log.debug("[worker] Worker start to work ...")
+        try:
+            output.put(func(*args))
+            log.info("[worker] task done !")
+        except Exception,e:
+            log.error("[worker] Error while processing task\n %s"%str(e))
+            output.put(None) # the DoneQueue will detect it
+        finally:
+            self.m_processing = False
+            log.debug("Worker finished its task !")
+    
+    def mathOp(self,files, operator, outputFile=None, tempDir=None):
+        """
+        This method will do the math operation (+,-,/) specified with the 
+        input files.
+        """
+        
+        log.debug("Start mathOp")
+        
+        if tempDir==None:
+            print "TEMP DIR is None !!"
+            t_dir = "/tmp"
+        else:
+            t_dir = tempDir
+        
+        if outputFile==None:
+            output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
+            os.close(output_fd)
+    
+        if operator!='+' and operator!='-' and operator!='/':
+            log.error("Math operation not supported")
+            return None
+    
+        try:
+            # Remove an old output file (might it happen ?)
+            misc.fileUtils.removefiles(outputFile)
+            ## MATH operation '+'
+            if (operator=='+' and len(files)>2):
+                log.debug("Frame list to combine = [%s]", files )
+                misc.utils.listToFile(files, t_dir+"/files.tmp") 
+                iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
+                         output=outputFile,
+                         combine='average',
+                         ccdtype='',
+                         reject='sigclip',
+                         lsigma=3,
+                         hsigma=3,
+                         subset='no',
+                         scale='mode'
+                         #masktype='none'
+                         #verbose='yes'
+                         #scale='exposure',
+                         #expname='EXPTIME'
+                         #ParList = _getparlistname ('flatcombine')
+                         )
+            ## MATH operation '-,/,*'
+            else:
+                iraf.mscarith(operand1=files[0],
+                          operand2=files[1],
+                          op=operator,
+                          result=outputFile,
+                          verbose='yes'
+                          )
+        except Exception,e:
+            log.error("[mathOp] An erron happened while math operation with FITS files")
+            raise e
+        
+        log.debug("mathOp result : %s"%outputFile)
+        
+        return outputFile
 ################################################################################
 
 
@@ -2730,3 +2757,70 @@ class LoggingConsole (object):
         prefix += s_time 
         
         return prefix + msg + suffix
+
+################################################################################
+# Some functions 
+################################################################################
+#Because mathOp is used with the queue of process, it cannot belong to MainGUI
+#class or an error in multiprocessing:
+#  'objects should only be shared between processes through inheritance'
+#            
+def mathOp(files, operator, outputFile=None, tempDir=None):
+    """
+    This method will do the math operation (+,-,/) specified with the 
+    input files.
+    """
+    
+    log.debug("Start mathOp")
+    
+    if tempDir==None:
+        print "TEMP DIR is None !!"
+        t_dir = "/tmp"
+    else:
+        t_dir = tempDir
+    
+    if outputFile==None:
+        output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
+        os.close(output_fd)
+
+    if operator!='+' and operator!='-' and operator!='/':
+        log.error("Math operation not supported")
+        return None
+
+    try:
+        # Remove an old output file (might it happen ?)
+        misc.fileUtils.removefiles(outputFile)
+        ## MATH operation '+'
+        if (operator=='+' and len(files)>2):
+            log.debug("Frame list to combine = [%s]", files )
+            misc.utils.listToFile(files, t_dir+"/files.tmp") 
+            iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
+                     output=outputFile,
+                     combine='average',
+                     ccdtype='',
+                     reject='sigclip',
+                     lsigma=3,
+                     hsigma=3,
+                     subset='no',
+                     scale='mode'
+                     #masktype='none'
+                     #verbose='yes'
+                     #scale='exposure',
+                     #expname='EXPTIME'
+                     #ParList = _getparlistname ('flatcombine')
+                     )
+        ## MATH operation '-,/,*'
+        else:
+            iraf.mscarith(operand1=files[0],
+                      operand2=files[1],
+                      op=operator,
+                      result=outputFile,
+                      verbose='yes'
+                      )
+    except Exception,e:
+        log.error("[mathOp] An erron happened while math operation with FITS files")
+        raise e
+    
+    log.debug("mathOp result : %s"%outputFile)
+    
+    return outputFile

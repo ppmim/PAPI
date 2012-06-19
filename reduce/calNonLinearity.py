@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2011-2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -124,7 +124,7 @@ import numpy
 # Logging
 from misc.paLog import log
 
-class NonLinearityModel:
+class NonLinearityModel(object):
     """
     \brief Class used to compute the Non-linearity model for the detectors
     

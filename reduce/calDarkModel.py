@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2011 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
-# Institute of Astrophysics of Andalusia, IAA-CSIC
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #

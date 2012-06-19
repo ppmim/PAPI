@@ -150,7 +150,7 @@ nnw_config = \
 
 # ======================================================================
 
-class SExtractor:
+class SExtractor(object):
     """
     A wrapper class to transparently use SExtractor.
 

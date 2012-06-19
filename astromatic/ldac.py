@@ -58,9 +58,9 @@ class LDACCat(object):
                 keyindex = int(key[startind + 1:endind]) - 1
 
                 try:
-                   return self.hdu.data.field(keyname)[:,keyindex]
+                    return self.hdu.data.field(keyname)[:,keyindex]
                 except AttributeError:
-                   raise KeyError(key) 
+                    raise KeyError(key) 
             else:
                 try:
                     return self.hdu.data.field(key)

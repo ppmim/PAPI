@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-""" This module implement the class ApplyDarkFlat """
 
-# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
+# Copyright (c) 2011-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #
@@ -68,7 +68,7 @@ class ExError (Exception):
     """ Next class if for a general execution Exception """
     pass
 
-class ApplyDarkFlat:
+class ApplyDarkFlat(object):
     """
     \brief Class used to subtract a master dark (or dark model) and then divide 
     by a master flat field
@@ -161,8 +161,8 @@ class ApplyDarkFlat:
             dark_data = 0
             dark_time = None
             
-       # ######################
-       # Master FLAT reading
+        # ######################
+        # Master FLAT reading
         if self.__mflat != None:    
             if not os.path.exists(self.__mflat): # check whether input file exists
                 log.error('File %s does not exist', self.__mflat)

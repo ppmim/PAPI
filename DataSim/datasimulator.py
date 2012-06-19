@@ -118,7 +118,7 @@ class DataSimulator(QDialog):
         print "DataSimulator.stop(): Not implemented yet"
 
     def exit(self):
-           exit(1)
+        exit(1)
         
 
     def type_changed(self):

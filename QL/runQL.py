@@ -98,8 +98,8 @@ def main(arguments = None):
     parser.add_option("-t", "--temp_dir", type="str",
                   action="store", dest="temp_dir", help="temporary directory to write")
     
-   # parser.add_option("-c", "--config",
-   #                action="store", dest="config_file", help="Quick Look config file")
+    # parser.add_option("-c", "--config",
+    #                action="store", dest="config_file", help="Quick Look config file")
               
         
     
@@ -138,13 +138,14 @@ def main(arguments = None):
     
     app = QApplication(sys.argv)
     try:
-    	f = mainGUI.MainGUI(ql_opts['source'], ql_opts['output_dir'], ql_opts['temp_dir'], config_opts=options)
-    	f.show()
-    	app.setMainWidget(f)
-    	app.exec_loop()
+        f = mainGUI.MainGUI(ql_opts['source'], ql_opts['output_dir'], 
+                            ql_opts['temp_dir'], config_opts=options)
+        f.show()
+        app.setMainWidget(f)
+        app.exec_loop()
     except:
-	log.debug("Some error while running mainGUI")
-	raise
+        log.debug("Some error while running mainGUI")
+        raise
 
 ######################################################################
 if __name__ == "__main__":

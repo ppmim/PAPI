@@ -718,11 +718,11 @@ class ReductionSet(object):
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
-        #DARK
-        master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) # Do NOT require equal EXPTIME Master Dark ???
+        #DARK - Do NOT require equal EXPTIME Master Dark ???
+        master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark)==0 and self.ext_db!=None:
-            master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL', -1) # Do NOT require equal EXPTIME Master Dark ???
-        #FLATS
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL', -1) 
+        #FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
             master_flat = self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
@@ -1907,6 +1907,7 @@ class ReductionSet(object):
                     result.wait()
                     out = result.get()
                     
+                    log.critical("OUTPUT file generated %s"%out)
                     pool.close()
                     pool.join()
 

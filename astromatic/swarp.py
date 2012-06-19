@@ -68,7 +68,7 @@ class SWARPException(Exception):
 
 # ======================================================================
 
-class SWARP:
+class SWARP(object):
     """
     A wrapper class to transparently use SWARP.
 
@@ -450,7 +450,7 @@ class SWARP:
         if type(file_list) == types.ListType:
             my_files=""
             for file in file_list:
-               my_files = my_files + " " + file
+                my_files = my_files + " " + file
         else:
             my_files = file_list # a single file
 

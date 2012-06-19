@@ -958,8 +958,51 @@ PANIC in `/iraf/extern/mscred/bin.linux/x_combine.e': Write to IPC with no reade
 2012-06-15
 ==========  
    
+   * Por fin encuentro la solución la problema del interbloqueo por la variable
+   global pool para evitar el bug de IRAF.
+   La solucion (espero que definitiva!) es crear el pool local en RS.reduceSeq()
+   de forma que lo usemos para todas la operaciones que requieran IRAF, de forma
+   que siempre habremos creado el pool con todo su espacio de nombres correcto
+   antes de llamar a IRAF (bug detectado por V.Terrón)
    
+2012-06-19
+==========  
 
+ - Estudion y/o migracion de los métodos que usan ExecTaskThread en QL;
+ Me encuentro con un dilema al migrarlo todo y hacer que todas las operaciones
+ pasen por el TaskManager y su cola, pues podría interesar que mientras se esté 
+ ejecutando la reducción de un DS "largo" se pueda interactura con el QL para 
+ realizar otra operación de "corta" duración (subtract_last_2, divide, etc...).
+ En dicho caso, habría que tener dos colas o bien dejarlo como está con Threads.
+ 
+ Mientras decidio sobre dicho dilema, me encuentro con un problema al migrar
+ QL:processLazy, pues me da el famoso error :
+ """
+ Process Process-1:
+Traceback (most recent call last):
+  File "/usr/lib64/python2.7/multiprocessing/process.py", line 232, in _bootstrap
+    self.run()
+  File "/usr/lib64/python2.7/multiprocessing/process.py", line 88, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/panic/DEVELOP/PIPELINE/PAPI/trunk/QL/mainGUI.py", line 2610, in worker
+    func, args = input.get()[0]
+  File "/usr/lib64/python2.7/multiprocessing/queues.py", line 91, in get
+    res = self._recv()
+  File "/home/panic/DEVELOP/PIPELINE/PAPI/trunk/QL/mainGUI.py", line 100, in _unpickle_method
+    for cls in cls.mro():
+AttributeError: ("class ApplyDarkFlat has no attribute 'mro'", <function _unpickle_method at 0x2c937d0>, ('apply', <reduce.applyDarkFlat.ApplyDarkFlat instance at 0x2f153b0>, <class reduce.applyDarkFlat.ApplyDarkFlat at 0x1b48600>))
+"""
+
+2012-06-20
+==========  
+
+- Encuentro la solución al problema de pickle/unpickle --> el problema estaba
+en que la clase ApplyDarkFlat no derivaba de Object, y por eso no tenia los
+atributos que necesitan los métodos de serialization.
+
+
+
+    
 
 FOR NEXT VIDEOCONF
 ==================

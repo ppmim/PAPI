@@ -625,8 +625,8 @@ class ClFits (object):
             else: 
                 self.detectorID='O2k'
         except:
-              log.warning("Cannot find HIERARCH ESO DET CHIP NAME")
-              self.detectorID='unknown'
+            log.warning("Cannot find HIERARCH ESO DET CHIP NAME")
+            self.detectorID='unknown'
                
         #RunID
         self.runID=-1
