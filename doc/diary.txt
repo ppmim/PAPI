@@ -1000,7 +1000,8 @@ AttributeError: ("class ApplyDarkFlat has no attribute 'mro'", <function _unpick
 en que la clase ApplyDarkFlat no derivaba de Object, y por eso no tenia los
 atributos que necesitan los métodos de serialization.
 
-
+- KDD con Matilde:
+  
 
     
 
@@ -1089,9 +1090,44 @@ KDD con MATILDE (29-May-2012)
 JM probar con qphot con MAG_APER, etc ...
 
 
-KDD con MATILDE (12-Jun-2012)
+KDD con MATILDE (19-Jun-2012)
 =============================
-- no se produce
+- Le enseño brevemente un poco del CL de PAPI, y la primera pregunta fué:
+  
+  ¿ cómo reducir toda una campaña ? - TODO !!! buscar en todos los subdirectorios de un directorio, pero 
+  crear logfiles distintos ??? yo creo que sería mejor.
+
+- Luego pasamos a ver las series de dark y le extraña el gran numero de pixeles calientes !! ¿ cómo podría afectar a la reducción suya ?
+  MF investigará sobre el tema. JM buscará como los trata PAPI.
+  
+- Le enseño el procedimineto para combinar domeFF y skyFF. Le parece interesante, pues ellos (VT y MF) están
+intentado algo parecido en LEMON. MF estudiará la utilización de esta mix de Flats.
+
+- MF me pregunta cómo se tratan los BadPixels en la sky_subtraction ? TODO !!!
+
+Respuesta JM:
+
+Los pixeles malos(BP) se comportan de la siguiente manera:
+
+  a) en la primera iteracion de sky_subtraction (sin mascara de objetos):
+  
+     - los pixeles malos de dejan con el valor del background medio (moda) de
+     dicha imagen
+  
+  b) en la segunda iteracion de sky_subtraction (con máscara de objetos):
+  
+      - los pixeles malos o enmascarados por Sextractror como objeto, se les
+      deja su propio valor, es decir, no se modifican.
+     
+
+- MF me pregunta si he cambiado algo en PAPI desde la reducción de sus datos en Febrero. Le digo
+que tengo que mirarlo en los logs, pero que lo que puede que haya cambiado es el fichero de configuración !!!
+
+- TODO: implementar en PAPI algo para hacer una copia del fichero de configuración usado en cada reducción,
+quizás incluirlo en el logfile !!!
+
+
+
 
 DOUBTS FOR MATILDE (next)
 ================================
@@ -1107,8 +1143,6 @@ DOUBTS FOR MATILDE (next)
 > cp /data/out/mDark_EXRfly.fits /data/calibs/mDark_serie.fits
 > papi.py -s /data/O2K/Matilde/120105/ -S 4  -g filter -R lemon -D /data/calibs/mDark_serie.fits
 > papi.py -s /data/O2K/Matilde/120105/ -S 28 -g filter -R lemon -D /data/calibs/mDark_serie.fits -F /data/calibs/mTwFlat_J.fits 
-
-
 
 
 
@@ -1143,11 +1177,13 @@ FAQ:
 
 NEXT TODOs
 ==========
-- ver notas librata sobre si se reduce o no HAWK-I-4
-- ver notas librata sobre si se reduce o no HAWK-I-5; en el portatil lo hace, pero el resultado no es muy bueno, incluso la astrometria no parece funcionar
+- ver notas libreta sobre si se reduce o no HAWK-I-4
+- ver notas libreta sobre si se reduce o no HAWK-I-5; 
+en el portatil lo hace, pero el resultado no es muy bueno, 
+incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-- graficos scamp de distorsion !!!
+- graficos SCAMP de distorsion !!!
 
 
 DEPENDENCIAS DE IRDR

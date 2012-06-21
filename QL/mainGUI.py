@@ -243,7 +243,7 @@ class MainGUI(panicQL):
         self._task_queue = Queue()
         self._done_queue = Queue()
         
-        # Timer for DoneQueue (tasks to do)
+        # Timer for DoneQueue (tasks already done)
         self._queue_timer_done = QTimer( self )
         self.connect( self._queue_timer_done, SIGNAL("timeout()"), self.checkDoneQueue )
         self._queue_timer_done.start( 1000, False )    # 1 second continuous timer
@@ -455,26 +455,31 @@ class MainGUI(panicQL):
                 if len(ltemp)>1:
                     last_file = ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
                     #Change cursor
-                    self.setCursor(Qt.waitCursor)
-                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    self._task = self.mathOp
-                    thread = reduce.ExecTaskThread(self._task, 
-                                                   self._task_info_list,  
-                                                   [filename, last_file],
-                                                   '-',None)
-                    thread.start()
+                    #self.setCursor(Qt.waitCursor)
+                    #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    #self._task = self.mathOp
+                    #thread = reduce.ExecTaskThread(self._task, 
+                    #                               self._task_info_list,  
+                    #                               [filename, last_file],
+                    #                               '-',None)
+                    #thread.start()
+                    
+                    #Put into the queue the task to be done
+                    func_to_run = mathOp 
+                    params = ([filename, last_file],'-', None, self.m_tempdir)
+                    self._task_queue.put([(func_to_run, params)])
                     
                 else:
                     log.debug("Cannot find the previous file to subtract by")
             except Exception,e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
-                self.m_processing = False
-                self.setCursor(Qt.arrowCursor)
+                #self.m_processing = False
+                #self.setCursor(Qt.arrowCursor)
                 raise e
         # ##########################################################################################
         elif self.checkBox_subSky.isChecked():
             try:
-                self.subtract_nearSky_slot(True)    
+                self.subtract_nearSky_slot(True)
             except Exception,e:
                 self.m_processing = False # ANY MORE REQUIRED ?,
                 raise e    
@@ -694,7 +699,8 @@ class MainGUI(panicQL):
                 
     def checkDoneQueue(self):
         """
-        Check Queue of done task
+        Check Queue of done tasks launched with Process in TaskRunner.
+        Funtion called periodically (every 1 sec).
         """
         if not self._done_queue.empty():
             log.debug("Something new in the DoneQueue !")
@@ -762,7 +768,8 @@ class MainGUI(panicQL):
     def checkLastTask(self):
         """
         Receiver function signaled by QTimer 'self._task_timer' object.
-        Funtion called periodically (every 1 sec) to check last task results.
+        Funtion called periodically (every 1 sec) to check last task results
+        launched with the ExecTaskThread function.
         """
         
         if len(self._task_info_list)>0:
@@ -1714,22 +1721,25 @@ class MainGUI(panicQL):
         if (len(self.m_popup_l_sel)!=2):
             QMessageBox.critical(self, "Error", "You need to select  2 files")
         else:
-            outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/sub.fits", "*.fits", self, "Save File dialog")
+            outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/sub.fits", 
+                                                      "*.fits", self, 
+                                                      "Save File dialog")
             if not outFilename.isEmpty():
                 try:
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
-                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
+                    # Pause autochecking coming files - ANY MORE REQUIRED ?, 
+                    # now using a mutex in thread !!!!
+                    self.m_processing = False    
                     thread = reduce.ExecTaskThread(self.mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,'-', 
                                                    str(outFilename))
                     thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while subtracting files")
+                    QMessageBox.critical(self, "Error", 
+                                         "Error while subtracting files")
                     raise
-
-    
         
     def sumFrames_slot(self):
         """This methot is called to sum two images selected from the File List View"""
@@ -1737,16 +1747,24 @@ class MainGUI(panicQL):
         if (len(self.m_popup_l_sel)<2):
             QMessageBox.critical(self, "Error", "You need to select  at least 2 files")
         else:
-            outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/sum.fits", "*.fits", self, "Save File dialog")
+            outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/sum.fits", 
+                                                      "*.fits", self, 
+                                                      "Save File dialog")
             if not outFilename.isEmpty():
                 try:
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
-                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    thread = reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'+', str(outFilename))
+                    self.m_processing = False    
+                    # Pause autochecking coming files - ANY MORE REQUIRED ?, 
+                    # now using a mutex in thread !!!!
+                    thread = reduce.ExecTaskThread(self.mathOp, 
+                                                   self._task_info_list, 
+                                                   self.m_popup_l_sel,
+                                                   '+', str(outFilename))
                     thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while adding files")
+                    QMessageBox.critical(self, "Error", 
+                                         "Error while adding files")
                     raise
                 
 
@@ -1756,16 +1774,24 @@ class MainGUI(panicQL):
         if (len(self.m_popup_l_sel)!=2):
             QMessageBox.critical(self, "Error", "You need to select  2 files")
         else:
-            outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/div.fits", "*.fits", self, "Save File dialog")
+            outFilename = QFileDialog.getSaveFileName(self.m_outputdir+"/div.fits", 
+                                                      "*.fits", self, 
+                                                      "Save File dialog")
             if not outFilename.isEmpty():
                 try:
                     #Change cursor
                     self.setCursor(Qt.waitCursor)
-                    self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    thread=reduce.ExecTaskThread(self.mathOp, self._task_info_list, self.m_popup_l_sel,'/', str(outFilename))
+                    # Pause autochecking coming files - ANY MORE REQUIRED ?, 
+                    # now using a mutex in thread !!!!
+                    self.m_processing = False
+                    thread=reduce.ExecTaskThread(self.mathOp, 
+                                                 self._task_info_list, 
+                                                 self.m_popup_l_sel, 
+                                                 '/',  str(outFilename))
                     thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while dividing files")
+                    QMessageBox.critical(self, "Error", 
+                                         "Error while dividing files")
                     raise
 
     def createMasterDark_slot(self):
@@ -1774,17 +1800,24 @@ class MainGUI(panicQL):
             QMessageBox.information(self,"Info","Not enought frames !")
             return
 
-        outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/master_dark.fits", "*.fits", self, "Save File dialog")
+        outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/master_dark.fits", 
+                                                  "*.fits", self, 
+                                                  "Save File dialog")
         if not outfileName.isEmpty():
             try:
                 texp_scale = False
                 self.setCursor(Qt.waitCursor)
-                self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, self.m_tempdir, str(outfileName), texp_scale)
-                thread = reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
+                self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, 
+                                                       self.m_tempdir, 
+                                                       str(outfileName), 
+                                                       texp_scale)
+                thread = reduce.ExecTaskThread(self._task.createMaster, 
+                                               self._task_info_list)
                 thread.start()
             except Exception, e:
                 self.setCursor(Qt.arrowCursor)
-                QMessageBox.critical(self, "Error", "Error while creating master Dark. \n"+str(e))
+                QMessageBox.critical(self, "Error", 
+                                     "Error while creating master Dark. \n"+str(e))
                 raise e
         else:
             pass
@@ -2067,7 +2100,9 @@ class MainGUI(panicQL):
                                           check_data=True, 
                                           config_dict=self.config_opts)
             
-            thread = reduce.ExecTaskThread(self._task.subtractNearSky, self._task_info_list, self._task.rs_filelist, file_n)
+            thread = reduce.ExecTaskThread(self._task.subtractNearSky, 
+                                           self._task_info_list, 
+                                           self._task.rs_filelist, file_n)
             thread.start()
         except:
             #Anyway, restore cursor

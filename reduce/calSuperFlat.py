@@ -101,7 +101,8 @@ class SuperSkyFlat(object):
         ----------
         
         filelist : list 
-            It can be a file or a python-list having the list of files to use for the super-flat
+            It can be a file or a python-list having the list of files to use 
+            for the super-flat.
             
         output_filename (optional): string
             Filename for the super flat created
@@ -228,8 +229,14 @@ class SuperSkyFlat(object):
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
-                mode = (3*numpy.median(f[0].data[200:2048-200,200:2048-200])- 
-                       2*numpy.mean(f[0].data[200:2048-200,200:2048-200]) )
+                naxis1 = f[0].header['NAXIS1']/2
+                naxis2 = f[0].header['NAXIS2']/2
+                offset1 = int(naxis1*0.1)
+                offset2 = int(naxis2*0.1)
+                mode = (3*numpy.median(f[0].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])-
+                        2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2]))
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MODE=%d)"%mode
                 f[0].data = f[0].data / mode
             # O2k or splitted PANIC frame   
@@ -259,8 +266,8 @@ class SuperSkyFlat(object):
         
         #
         if 'PAT_NEXP' in f[0].header:
-		          f[0].header.update('PAT_NEXP', 1, 'Number of Positions into the dither pattern')
-	
+            f[0].header.update('PAT_NEXP', 1, 'Number of Positions into the dither pattern')
+
         f[0].header.update('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         f.close(output_verify='ignore')
         os.rename(tmp1, self.output_filename) 

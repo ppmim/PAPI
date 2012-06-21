@@ -557,7 +557,7 @@ class ReductionSet(object):
         calibration) into N 'sub-list', where N is the number of extension of 
         the Multi-Extension FITS.
         
-        Return a list with the splited frames and the number of extensions.
+        Return a list with the split frames and the number of extensions.
         """
         
         log.debug("Starting split() method ....")
@@ -599,7 +599,9 @@ class ReductionSet(object):
                 log.debug("Splitting data files")
                 try:
                     mef = misc.mef.MEF(frame_list)
-                    (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", out_dir=self.out_dir, copy_keyword=kws_to_cp)
+                    (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
+                                                        out_dir=self.out_dir, 
+                                                        copy_keyword=kws_to_cp)
                 except Exception,e:
                     log.debug("Some error while splitting data set. %s",str(e))
                     raise
@@ -1091,12 +1093,14 @@ class ReductionSet(object):
     
     def subtractNearSky(self, near_list=None, file_pos=0, out_filename=None):
         """
-            Compute and subtract the nearest sky to the image in position 'fn' in the given frame list (near_list) 
+            Compute and subtract the nearest sky to the image in position 'fn' 
+            in the given frame list (near_list). 
                          
             This function make use of skyfilter_single.c (IRDR)              
             
             INPUT
-                file_pos : file position in sci file list (the list is supposed to be sorted by obs-date)
+                file_pos : file position in sci file list (the list is supposed 
+                to be sorted by obs-date)
             
             OUTPUT
                 The function generate a sky subtrated image (*.skysub.fits)
@@ -1106,7 +1110,6 @@ class ReductionSet(object):
                 1.2, 20110297 added out_dir parameter to skyfilter_single
         
             TODO: extended objects !!!!
-            
         """
         log.debug("Start subtractNearSky")
         
@@ -1120,10 +1123,11 @@ class ReductionSet(object):
             return None
         
         if len(near_list)<(self.HWIDTH+1):
-            log.error("Wrong number of sky frames provided. Min number of sky frame is %d", self.MIN_SKY_FRAMES)
+            log.error("Wrong number of sky frames provided. Min number of sky frame is %d", 
+                      self.MIN_SKY_FRAMES)
             return None
         
-        # Get the gain map
+        # 0.1 Get the gain map
         if not os.path.exists( self.master_flat ):
             #raise Exception("Error, gain map file <%s> not found"%gain)
             #TODO: --> DONE try to compute GainMap using the given images !!!
@@ -1136,28 +1140,41 @@ class ReductionSet(object):
             os.unlink(files_list) # we only need the name
             try:
                 misc.utils.listToFile(near_list, files_list)
-                superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, norm=False, temp_dir=self.temp_dir)
+                # Note: we must normalize wrt chip 1, so norm=True
+                superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, 
+                                                norm=True, 
+                                                temp_dir=self.temp_dir)
                 superflat.create()
             except Exception,e:
                 log.error("Error while creating gain map : %s", str(e))
                 raise
-        else: l_gainMap=self.master_flat
+        else: l_gainMap = self.master_flat
+        
+        #0.2 Check if GainMap need to be split
+        gain_ext, g_next = self.split([l_gainMap])
+        if g_next==1: gain_ext*=4
+        print "\nGAINEXT=",gain_ext
         
         # 1. Split MEF file (into the self.out_dir)
-        obj_ext, next = self.split(near_list) # it must return a list of list (one per each extension)
+        obj_ext, next = self.split(near_list)
+        # it must return a list of list (one per each extension) 
         out_ext = []
         
         # 2. Process each extension
         for n in range(next):
             log.debug("===> Processing extension %d", n+1)
-            # Create the temp list file of nearest (ar,dec,mjd) from current selected science file
-            listfile=self.out_dir+"/nearfiles.list"
+            # Create the temp list file of nearest (ar,dec,mjd) from current 
+            # selected science file
+            listfile = self.out_dir+"/nearfiles.list"
             misc.utils.listToFile(obj_ext[n], listfile)
             print "NEAR_FILES=", obj_ext[n]
-            #Call external app skyfilter (papi)
-            hwidth=2 ## TODO is it right ?????
-            cmd=self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d %s"\
-                        %(listfile, l_gainMap, hwidth, file_pos, self.out_dir)
+            print "GAIN_EXT_N=",gain_ext[n][0]
+            #Call external app skyfilter (irdr)
+            hwidth = self.HWIDTH
+            
+            cmd = self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d %s"\
+                        %(listfile, gain_ext[n][0], hwidth, file_pos, self.out_dir)
+            print "CMD=",cmd
             e = misc.utils.runCmd( cmd )
             if e==1: # success
                 fname = self.out_dir+"/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
@@ -2642,7 +2659,7 @@ class ReductionSet(object):
         # When gainmap is created (from dome or sky flats), it must be normalized
         # wrt mode of chip 1 to get gain differences, set bad pixels, 
         # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
-        # pixels deviating >30(?)% ,...
+        # pixels deviating >30%(?),...
         # do_normalization=False because it is suppossed that FF is already normalized
         g = reduce.calGainMap.GainMap(local_master_flat, gainmap, bpm=master_bpm, 
                                     do_normalization=False, # because it is suppossed that FF is already normalized 
@@ -2756,7 +2773,8 @@ class ReductionSet(object):
             fs.write( n_line )
         fo.close()
         fs.close()    
-        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd1.fits','average')
+        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
+                              out_dir+'/coadd1.fits','average')
     
         ########################################################################
         # End of first cycle: SINGLE REDUCTION (quick mode or extended object !) 

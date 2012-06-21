@@ -107,7 +107,7 @@ def combineFF(domeFF, skyFF, combinedFF=None):
      skyFF' = smooth(skyFF)
      domeFF' = smooth(domeFF)
      domeFF'' = domeFF / domeFF'
-     combFF = skyFF' * modeFF''
+     combFF = skyFF' * domeFF''
      
     
     Parameters

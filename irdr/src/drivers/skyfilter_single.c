@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     }*/
     /* end:15-4-2009 */
     
-    printf (" \n");
+    printf ("\n");
     for (i = 0, skybeg = 0; i < nplanes; i++) {
         int j, nsky = 0, skyend = skybeg + 2 * hwid;
         float avgscale = 0.0;
