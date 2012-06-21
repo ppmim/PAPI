@@ -292,7 +292,7 @@ class GainMap(object):
             log.debug("Operating in CHIP %d", chip+1)
             if isMEF:
                 #flatM=np.reshape(myflat[chip+1].data, naxis1*naxis2)
-                flatM = myflat[chip+1].data                            
+                flatM = myflat[chip+1].data                 
             else:
                 flatM = myflat[0].data
             

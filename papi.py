@@ -115,12 +115,16 @@ def main(arguments = None):
                   help="""Use *only* files of the source file-list in the range 
                   of rows specified (0 to N, both included)""")
     
+    parser.add_option("-R", "--recursive",
+                  action = "store_true", dest = "recursive", default = False,
+                  help = "Does recursive search for files in source directory")
+    
     parser.add_option("-l", "--list",
                   action="store_true", dest="list", default = False,
                   help="""Generate a list with all the source files read from 
                   the source only sorted by MJD""")
 
-    parser.add_option("-R", "--red_mode", type = "str",
+    parser.add_option("-M", "--red_mode", type = "str",
                   action = "store", dest = "reduction_mode", 
                   help = "Mode of data reduction to do (lemon|quick|science)")
                   
@@ -214,36 +218,42 @@ def main(arguments = None):
         print "reading %s ..." % general_opts['source']
     
     
-    sci_files = []
+    rs_files = []
     
     # Read file or list-directory 
     if os.path.isfile(general_opts['source']):
-        sci_files = [line.replace("\n", "").replace('//','/') 
+        rs_files = [line.replace("\n", "").replace('//','/') 
                      for line in fileinput.input(general_opts['source'])]
     elif os.path.isdir(general_opts['source']):
-        for file in dircache.listdir(general_opts['source']):
-            if file.endswith(".fits") or file.endswith(".fit"):
-                sci_files.append((general_opts['source']+"/"+file).replace('//','/'))
+        if init_options.recursive:
+            for root, dirs, files in os.walk(general_opts['source'], topdown=True):
+                for name in files:
+                    if name.endswith(".fits") or name.endswith(".fit"):
+                        rs_files.append(os.path.join(root, name))
+        else:
+            for file in dircache.listdir(general_opts['source']):
+                if file.endswith(".fits") or file.endswith(".fit"):
+                    rs_files.append((general_opts['source']+"/"+file).replace('//','/'))
     
     # Check for list files sorted by MJD
     if init_options.list==True:
         log.debug("Creating logsheet file ....")
-        logSheet = gls.LogSheet(sci_files, "/tmp/logsheet.txt", [0,len(sci_files)], True)
+        logSheet = gls.LogSheet(rs_files, "/tmp/logsheet.txt", [0,len(rs_files)], True)
         logSheet.create()
         return
    
     # Take only the rows(files) required
     if (os.path.isfile(general_opts['source']) and init_options.rows!=None):
-        if (init_options.rows[0]<0) or (init_options.rows[1]>len(sci_files)-1):
-            parser.error("wrong rows index values (0,%s)"%(len(sci_files)-1))
+        if (init_options.rows[0]<0) or (init_options.rows[1]>len(rs_files)-1):
+            parser.error("wrong rows index values (0,%s)"%(len(rs_files)-1))
             parser.print_help()
         i = 0
         tmp_sci_files = []
-        for file in sci_files:
+        for file in rs_files:
             if i>=init_options.rows[0] and i<=init_options.rows[1]:
                 tmp_sci_files.append(file)
             i = i+1
-        sci_files = tmp_sci_files 
+        rs_files = tmp_sci_files 
     
     
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
@@ -258,7 +268,7 @@ def main(arguments = None):
     
     # Create the RS (it works both simple FITS as MEF files)            
     try:
-        rs = RS.ReductionSet( sci_files, general_opts['output_dir'], out_file=general_opts['output_file'], \
+        rs = RS.ReductionSet( rs_files, general_opts['output_dir'], out_file=general_opts['output_file'], \
                           obs_mode=general_opts['obs_mode'], \
                           dark=general_opts['master_dark'], flat=general_opts['master_flat'], \
                           bpm=general_opts['master_bpm'], red_mode=general_opts['reduction_mode'], \
@@ -269,13 +279,16 @@ def main(arguments = None):
         if init_options.print_seq:
             rs.getSequences()
         else:
+            print "seq_to_reduce=",init_options.seq_to_reduce
             if init_options.seq_to_reduce==-1: #all
                 rs.reduceSet(red_mode=general_opts['reduction_mode'])
             else:
                 m_seqs_to_reduce = []
                 print "SEQS=", init_options.seq_to_reduce
-                for elem in init_options.seq_to_reduce: 
-                    m_seqs_to_reduce.append(int(elem))
+                m_seqs_to_reduce=range(init_options.seq_to_reduce[0],init_options.seq_to_reduce[1]+1)
+                #for elem in init_options.seq_to_reduce: 
+                #    m_seqs_to_reduce.append(int(elem))
+                #return
                 rs.reduceSet(red_mode=general_opts['reduction_mode'], 
                              seqs_to_reduce=m_seqs_to_reduce)
                 

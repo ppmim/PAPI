@@ -1094,14 +1094,17 @@ KDD con MATILDE (19-Jun-2012)
 =============================
 - Le enseño brevemente un poco del CL de PAPI, y la primera pregunta fué:
   
-  ¿ cómo reducir toda una campaña ? - TODO !!! buscar en todos los subdirectorios de un directorio, pero 
-  crear logfiles distintos ??? yo creo que sería mejor.
+  ¿ cómo reducir toda una campaña ? - TODO !!! buscar en todos los subdirectorios 
+  de un directorio, pero crear logfiles distintos ??? yo creo que sería mejor.
 
-- Luego pasamos a ver las series de dark y le extraña el gran numero de pixeles calientes !! ¿ cómo podría afectar a la reducción suya ?
+- Luego pasamos a ver las series de dark y le extraña el gran numero de pixeles 
+  calientes !! ¿ cómo podría afectar a la reducción suya ?
+  
   MF investigará sobre el tema. JM buscará como los trata PAPI.
   
-- Le enseño el procedimineto para combinar domeFF y skyFF. Le parece interesante, pues ellos (VT y MF) están
-intentado algo parecido en LEMON. MF estudiará la utilización de esta mix de Flats.
+- Le enseño el procedimineto para combinar domeFF y skyFF. Le parece interesante, 
+pues ellos (VT y MF) están intentado algo parecido en LEMON. MF estudiará la 
+utilización de esta mix de Flats.
 
 - MF me pregunta cómo se tratan los BadPixels en la sky_subtraction ? TODO !!!
 
@@ -1116,7 +1119,7 @@ Los pixeles malos(BP) se comportan de la siguiente manera:
   
   b) en la segunda iteracion de sky_subtraction (con máscara de objetos):
   
-      - los pixeles malos o enmascarados por Sextractror como objeto, se les
+      - los pixeles malos o enmascarados por SExtractor como objeto, se les
       deja su propio valor, es decir, no se modifican.
      
 
