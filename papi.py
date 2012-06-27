@@ -198,8 +198,13 @@ def main(arguments = None):
     # note: only values of the 'general' section can be invoked
     options = misc.config.read_options(init_options, 'general', config_file)
 
+    
+    
+    # Add the configuration filename as an extra value to the dictionary
+    options['general']['config_filename'] = config_file
+    
     #print "options = ",options
-
+    
     if i_args:    # i_args is the leftover positional arguments after all options have been processed
         parser.print_help()
         sys.exit(2) 

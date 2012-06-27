@@ -1805,6 +1805,14 @@ class ReductionSet(object):
         if self.config_dict['general']['purge_output']:
             self.purgeOutput()
         
+        # In order to have a complete track of the processing, copy log and 
+        # config files to the output directory    
+        if 1:
+            shutil.copy(misc.paLog.file_hd.baseFilename, self.out_dir)
+            shutil.copy(self.config_dict['general']['config_filename'], 
+                        self.out_dir)
+            
+        
 
         return files_created
    
@@ -1849,7 +1857,6 @@ class ReductionSet(object):
         """
         Method used only to use with Pool.map_asycn() function
         """
-        print "Que passssa !!!! \n\n\n"
         return self.reduceSingleObj(*args)
       
     def reduceSeq(self, sequence, type):
