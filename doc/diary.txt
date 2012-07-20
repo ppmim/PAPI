@@ -1000,10 +1000,151 @@ AttributeError: ("class ApplyDarkFlat has no attribute 'mro'", <function _unpick
 en que la clase ApplyDarkFlat no derivaba de Object, y por eso no tenia los
 atributos que necesitan los métodos de serialization.
 
-- KDD con Matilde:
-  
+2012-07-11
+==========  
 
+- Videoconf PANIC
+
+*) Le mando a JF lo siguiente:
+
+Dear Josef,
+
+sorry for the delay, but I forgot it.
+
+Please, take next inputs (QL & Pipeline) for the videoconf :
+
+- Talk presenting the PANIC Quick-Look tool at SPIE2012
+- Implemented procedure that mix dome & sky FF
+- Continue with endless debugging
+ 
+
+And the AIs to be done in QL & Pipeline before send PANIC to CAHA:
+
+- Add support for distinguished files (non integrated)
+- Implement health-check routines of the instrument (copy from JF's)
+- Complete the debugging and tests of QL and Pipeline (might need additional developments)
+- Review the initial photometric calibration
+- Complete the Verification and Validation of pipeline results (in progress)
+- Write QL and Pipeline User's Guide doc (initiated)
+- Decide if the whole software must run in single computer or separate on control & processing computers (depend on memory problem found in GEIRS)    
+- Choose & buy the computer/s to be used at Telescope
+- Install the computer/s and write installation document
+- Test QL & Pipeline at HD (2nd. Software Integration)
+
+
+For the moment these are the AIs I can remember, but for sure not the ones.
+
+*) Como resumen de la videoconf:
+
+- JF se ve abrumado por las 3 slides de SW, así que prefiere resumirlo en : SW is going on.
+Sin embargo, le preguntamos por GEIRS y las tareas pendientes:
+
+   - todo parece indicar que CS implementara el control de las ruedas de filtros (Agost-Sep), 
+   pero que el resto de cosas (sensors, fast readout, windowing, ...) lo hará si le sobra tiempo.
+   - le preguntamos a JF si sabe algo del problema de memoria en GEIRS, y nos dice que no sabe nada,
+   pero que le preguntará a CS. Tambien le pido que aproveche y le pregunte por una fecha tentativa
+   para la 2da.Software Integration.
+   JF en el mail de resumen de la videoconf, incluye:
+   """ 
+   Computer/memory:
+     - status of memory problem is as before (i.e.reason unknown)
+     - this problem has to be attacked again, wtih updated operating system etc
+     - CS sees no problem to run PANIC including GEIRS on 1 computer
+  """
+
+  - Ulli informa que el problema de movimientos relativos en el 3.5 ha sido resulto, por
+  lo que el OT podría usarlo.
+
+  - Tambien se habla de la documentacion(deseable para finales de 2012), en principio en PDF+source. Jens sugiere además
+  un trouble shooting document en la Web de forma que puedan hacer copy+paste para solucionar
+  problemas del software.
+
+
+2012-07-17
+==========
+
+- Matilde me dice que mejor postponemos las KDD hasta después de vacaciones (septiembre?)
+
+2012-07-18
+==========  
+
+- Subida al OSN para enseñarlo a César y Regina
+
+
+2012-07-19
+==========  
+
+- Tras varios días intentando compilar la libreria plplot-5.9.4 para que SCAMP pueda generar los gráficos png, lo consigo !!!:
+  
+  Los pasos son :
     
+    1) Descargar el fuente de gd-libgd (con zypper no consigo encontrar dicha libreria) de https://bitbucket.org/pierrejoye/gd-libgd/overview
+    
+      >hg clone https://bitbucket.org/pierrejoye/gd-libgd
+      
+    2) Compilar dicha libraria (libgd):
+       
+       > cd gd-libgd
+       > mkdir build
+       > cd build 
+       > cmake -DBUILD_TEST=1  -DENABLE_PNG=1 -DCMAKE_LIBRARY_PATH=/usr/loca/gdlib/lib -DCMAKE_INCLUDE_PATH=/usr/local/gdlib/include ../../gd-libgd/
+       > make
+       > make install
+       
+    3) Descargar la plplot-5.9.4 (pues parece que es la que recomiendan en el foro de SCAMP  http://www.astromatic.net/forum/showthread.php?tid=761)
+       aunque puede que con la 5.9.9 también funcionase.
+       
+       http://sourceforge.net/projects/plplot/files/plplot/5.0.1/
+       
+    
+    4) Compilar plplot-5.9.4
+    
+       > cd plplot-5.9.4
+       > mkdir build
+       > cd build 
+       > cmake -DCMAKE_INSTALL_PREFIX=/usr/local/plplot594 -DBUILD_TEST=ON ../../plplot-5.9.4 >&cmake.out
+       > ccmake ..
+         y editar a mano 
+ 
+          GDI32_LIBRARY /usr/local/lib/libgd.so
+          ENABLE_python OFF (pues da un problema al no encontrar un .h de numpy ??)
+          PLD_png ON
+    
+        básicamente eso.
+        
+     > make 
+     > make install
+     
+     IMPORTANTE: copiar /usr/loca/gdlib/libgd.so en /usr/local/plplot594/lib/ pues si no se quejará el PLPLOT de que no la encuentra.
+     
+     > export PLPLOT_LIB=/usr/local/plplot594
+     
+     y listo !!! SCAMP debe generar los graficos PNG sin problema (glup!).
+     
+     
+     FAQ:
+       My program exits with the error message Unable to either (1) open/find or (2) allocate memory for the font file
+
+       The PLplot library can't find the font files plstnd5.fnt and plxtnd5.fnt. Set the environment variable PLPLOT_LIB to the directory where these files are, e.g. export PLPLOT_LIB=/usr/local/plplot/data. 
+     
+     
+    HA costado lo suyo !!! lo ideal sería que SCAMP (E.Bertin) migrara a la libraría cairo para generar los PNGs !!!
+    
+    Sin embargo, si le digo a SCAMP que genere ficheros JPEG no lo hace (Requested device jpeg not available), pregunta cada vez por el tipo de fichero....por qué ?
+    PDF's si lo genera bien, incluso con mejor calidad que los PNG !!
+    PS: en B/N y no completos
+    Recompilo PLPLOT library con PLD_jpeg ON y ya si genera SCAMP los JPEG's, pero de una calidad pésima, inservibles !!!
+    
+    
+    
+    
+
+
+2012-07-20
+==========  
+    
+
+
 
 FOR NEXT VIDEOCONF
 ==================

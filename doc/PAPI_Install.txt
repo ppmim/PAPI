@@ -95,6 +95,66 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 > rpm -ivl scamp-1.7.0-1.x86_64.rpm
 
 
+PLPLOT para SCAMP (para generar ficheros png's):
+================================================
+
+1) Descargar el fuente de gd-libgd (con zypper no consigo encontrar dicha libreria) de https://bitbucket.org/pierrejoye/gd-libgd/overview
+    
+      >hg clone https://bitbucket.org/pierrejoye/gd-libgd
+      
+    2) Compilar dicha libraria (libgd):
+       
+       > cd gd-libgd
+       > mkdir build
+       > cd build 
+       > cmake -DBUILD_TEST=1  -DENABLE_PNG=1 -DCMAKE_LIBRARY_PATH=/usr/loca/gdlib/lib -DCMAKE_INCLUDE_PATH=/usr/local/gdlib/include ../../gd-libgd/
+       > make
+       > make install
+       
+    3) Descargar la plplot-5.9.4 (pues parece que es la que recomiendan en el foro de SCAMP  http://www.astromatic.net/forum/showthread.php?tid=761)
+       aunque puede que con la 5.9.9 también funcionase.
+       
+       http://sourceforge.net/projects/plplot/files/plplot/5.0.1/
+       
+    
+    4) Compilar plplot-5.9.4
+    
+       > cd plplot-5.9.4
+       > mkdir build
+       > cd build 
+       > cmake -DCMAKE_INSTALL_PREFIX=/usr/local/plplot594 -DBUILD_TEST=ON ../../plplot-5.9.4 >&cmake.out
+       > ccmake ..
+         y editar a mano 
+ 
+          GDI32_LIBRARY /usr/local/lib/libgd.so
+          ENABLE_python OFF (pues da un problema al no encontrar un .h de numpy ??)
+          PLD_png ON
+    
+        básicamente eso.
+        
+     > make 
+     > make install
+     
+     IMPORTANTE: copiar /usr/loca/gdlib/libgd.so en /usr/local/plplot594/lib/ pues si no se quejará el PLPLOT de que no la encuentra.
+     
+     > export PLPLOT_LIB=/usr/local/plplot594
+     
+     y listo !!! SCAMP debe generar los graficos PNG sin problema (glup!).
+     
+     
+     FAQ:
+       My program exits with the error message Unable to either (1) open/find or (2) allocate memory for the font file
+
+       The PLplot library can't find the font files plstnd5.fnt and plxtnd5.fnt. Set the environment variable PLPLOT_LIB to the directory where these files are, e.g. export PLPLOT_LIB=/usr/local/plplot/data. 
+     
+     
+    HA costado lo suyo !!! lo ideal sería que SCAMP (E.Bertin) migrara a la libraría cairo para generar los PNGs !!!
+    
+    Sin embargo, si le digo a SCAMP que genere ficheros JPEG no lo hace (Requested device jpeg not available), pregunta cada vez por el tipo de fichero....por qué ?
+    PDF's si lo genera bien, incluso con mejor calidad que los PNG !!
+    PS: en B/N y no completos
+    Recompilo PLPLOT library con PLD_jpeg ON y ya si genera SCAMP los JPEG's, pero de una calidad pésima, inservibles !!!
+
 
 2.3 SWARP v2.19.1 : 
 ------------------

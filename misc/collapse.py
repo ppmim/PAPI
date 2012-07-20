@@ -26,14 +26,15 @@ from optparse import OptionParser
 import sys
 import os
 import pyfits
+import fileinput
+import numpy
 
 # Logging
 from misc.paLog import log
-import misc.utils
 
-def collapse(frame_list, out_filename_suffix="_c"):
+def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
     """
-    Collapse (sum) a (list) of data cube into a single 2D image.
+    Collapse (sum) a (list) of data cubes into a single 2D image.
 
     Return a list with the new collapsed frames.
     """
@@ -43,7 +44,7 @@ def collapse(frame_list, out_filename_suffix="_c"):
     new_frame_list = [] 
     n = 0
 
-    if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
+    if frame_list == None or len(frame_list) == 0 or frame_list[0] == None:
         return []
 
     for frame_i in frame_list:
@@ -60,7 +61,6 @@ def collapse(frame_list, out_filename_suffix="_c"):
             new_frame_list.append(frame_i)
         else:            
             #Suppose we have single CUBE file ...
-            #sum=numpy.zeros([2048,2048],dtype='float32')
             out_hdulist = pyfits.HDUList()               
             prihdu = pyfits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
             prihdu.scale('float32') 
@@ -68,22 +68,25 @@ def collapse(frame_list, out_filename_suffix="_c"):
             prihdu.header.update('NCOADDS', f[0].data.shape[0])
             prihdu.header.update('EXPTIME', f[0].header['EXPTIME']*f[0].data.shape[0])
             
-            
             out_hdulist.append(prihdu)    
             #out_hdulist.verify ('ignore')
-            # Now, write the new MEF file
-            new_filename = frame_i.replace(".fits", out_filename_suffix+".fits")
-            out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
+            # Now, write the new collapsed file
+            if len(frame_list)>1:
+                t_filename = out_filename.replace(".fits", "_%s.fits"%str(n+1).zfill(3))
+            else:
+                t_filename = out_filename
+            out_hdulist.writeto (t_filename, output_verify = 'ignore', 
+                                 clobber=True)
             
             out_hdulist.close(output_verify = 'ignore')
             del out_hdulist
-            new_frame_list.append(new_filename)
+            new_frame_list.append(t_filename)
             log.info("FITS file %s created" % (new_frame_list[n]))
             n+=1
      
     return new_frame_list
 
-def collapse_distinguish(frame_list, out_filename_suffix="_c"):
+def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     """
     Collapse (sum) a set of distinguish files (not cubes) into a single 2D image.
 
@@ -93,9 +96,7 @@ def collapse_distinguish(frame_list, out_filename_suffix="_c"):
     log.debug("Starting collapse_distinguish() method ....")
     
     new_frame_list = [] 
-    n = 0
-
-    if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
+    if frame_list == None or len(frame_list) == 0 or frame_list[0] == None:
         return []
 
     for frame_i in frame_list:
@@ -104,31 +105,34 @@ def collapse_distinguish(frame_list, out_filename_suffix="_c"):
         if len(f)>1 and len(f[1].data.shape)==3:
             log.error("MEF-cubes files cannot be collapsed. First need to be splitted !")
             raise Exception("MEF-cubes files cannot be collapsed. First need to be splitted !")
-        elif len(f[0].data.shape)!=3:
-            log.debug("No collapse required. It is not a FITS-cube image")
+        elif len(f[0].data.shape)==2:
+            log.debug("Found a 2D-image: %s:"%frame_i)
             new_frame_list.append(frame_i)
-        else:            
-            #Suppose we have single CUBE file ...
-            #sum=numpy.zeros([2048,2048],dtype='float32')
-            out_hdulist = pyfits.HDUList()               
-            prihdu = pyfits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
-            prihdu.scale('float32') 
-            # Updating PRIMARY header keywords...
-            prihdu.header.update('NCOADDS', f[0].data.shape[0])
-            prihdu.header.update('EXPTIME', f[0].header['EXPTIME']*f[0].data.shape[0])
-            
-            
-            out_hdulist.append(prihdu)    
-            #out_hdulist.verify ('ignore')
-            # Now, write the new MEF file
-            new_filename = frame_i.replace(".fits", out_filename_suffix+".fits")
-            out_hdulist.writeto (new_filename, output_verify = 'ignore', clobber=True)
-            
-            out_hdulist.close(output_verify = 'ignore')
-            del out_hdulist
-            new_frame_list.append(new_filename)
-            log.info("FITS file %s created" % (new_frame_list[n]))
-            n+=1
+            if len(new_frame_list)==1:
+                sum = numpy.zeros([f[0].header['NAXIS1'], 
+                                   f[0].header['NAXIS2']], dtype='float32')
+                header1 = f[0].header
+            sum += f[0].data
+            f.close()
+        
+    # Now, save the collapsed set of files in a new single file        
+    out_hdulist = pyfits.HDUList()
+                   
+    prihdu = pyfits.PrimaryHDU (data = sum, header = header1)
+    prihdu.scale('float32') 
+        
+    # Updating PRIMARY header keywords...
+    prihdu.header.update('NCOADDS', len(new_frame_list))
+    prihdu.header.update('EXPTIME', header1['EXPTIME']*len(new_frame_list))
+    
+    out_hdulist.append(prihdu)    
+    #out_hdulist.verify ('ignore')
+    # Now, write the new single FITS file
+    out_hdulist.writeto (out_filename, output_verify = 'ignore', clobber=True)
+    
+    out_hdulist.close(output_verify = 'ignore')
+    del out_hdulist
+    log.info("FITS file %s created" % (out_filename))
      
     return new_frame_list
     
@@ -141,37 +145,54 @@ if __name__ == "__main__":
 
     # Get and check command-line options
         
-    usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    USAGE = "usage: %prog [options] arg1 arg2 ..."
+    parser = OptionParser(USAGE)
     
     parser.add_option("-i", "--input_image",
                   action="store", dest="input_image", 
-                  help="input cube image to collapse to a 2D image")
-                  
-    parser.add_option("-s", "--suffix",
-                  action="store", dest="suffix", 
-                  help="output filename suffix to add (default = %default)",
-                  default="_col")
+                  help="input cube image to collapse into a 2D image")
+
+    parser.add_option("-l", "--input_image_list",
+                  action="store", dest="input_image_list", 
+                  help="input image list to collapse into a single 2D image")
+
+    parser.add_option("-o", "--output_file",
+                  action="store", dest="output_file", 
+                  help="output filename (default = %default)",
+                  default="/tmp/out.fits")
                                 
     (options, args) = parser.parse_args()
     
     
-    if not options.input_image or len(args)!=0: 
+    if (not options.input_image and not options.input_image_list) or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()
-        parser.error("wrong number of arguments " )
+        parser.error("Wrong number of arguments " )
     
-
-    if not os.path.exists(options.input_image):
-        log.error ("Input image %s does not exist", options.input_image)
-        sys.exit(0)
+    if options.input_image and options.input_image_list:
+    # only one option can be executed 
+        parser.print_help()
+        parser.error("Only one option can be used")
         
-    try:
-        frames = [options.input_image]
-        print collapse(frames, options.suffix)
-    except Exception,e:
-        log.info("Some error while collapsing image to 2D: %s"%str(e))
-        sys.exit(0)
+    if options.input_image:
+        if not os.path.exists(options.input_image):
+            log.error("Input image %s does not exist", options.input_image)
+            sys.exit(0)
+            
+        try:
+            frames = [options.input_image]
+            print collapse(frames, options.output_file)
+        except Exception, e:
+            log.info("Some error while collapsing image to 2D: %s"%str(e))
+            sys.exit(0)
+    elif options.input_image_list:
+        try:
+            frames = [line.replace("\n", "") for line in 
+                      fileinput.input(options.input_image_list)]
+            print collapse_distinguish(frames, options.output_file)
+        except Exception, e:
+            log.info("Some error while collapsing image to 2D: %s"%str(e))
+            sys.exit(0)
         
     log.info("End-of-collapse")
     

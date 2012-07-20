@@ -1393,8 +1393,8 @@ class MainGUI(panicQL):
             popUpMenu.setItemEnabled(12, False)
             popUpMenu.insertSeparator()
             popUpMenu.insertSeparator()
-            popUpMenu.insertItem("Rough Astrometry", self.do_raw_astrometry, 0, 13)
-            popUpMenu.insertItem("Rough Photometry", self.do_raw_photometry, 0, 14)
+            popUpMenu.insertItem("Preliminary Astrometry", self.do_raw_astrometry, 0, 13)
+            popUpMenu.insertItem("Preliminary Photometry", self.do_raw_photometry, 0, 14)
             popUpMenu.insertSeparator()
             popUpMenu.insertSeparator()
             popUpMenu.insertItem("Show Stats", self.show_stats_slot, 0, 15 )
@@ -1413,7 +1413,7 @@ class MainGUI(panicQL):
             subPopUpMenu2.insertItem("Split MEF file", self.splitMEF_slot, 0, 1 )
             subPopUpMenu2.insertItem("Join MEF file", self.joinMEF_slot, 0, 2 )
             #subPopUpMenu2.insertItem("Slice cube", self.sliceCube_slot, 0, 3 )
-            #subPopUpMenu2.insertItem("Coadd cube", self.coaddCube_slot, 0, 4 )
+            #subPopUpMenu2.insertItem("Collapse cube", self.coaddCube_slot, 0, 4 )
             popUpMenu.insertItem("Fits", subPopUpMenu2, 0, 20 )
             
     
@@ -2262,7 +2262,9 @@ class MainGUI(panicQL):
         #Create working thread that compute sky-frame
         if len(file_list)>1:
             try:
-                self.processFiles(file_list)
+                #because choosen files might not be a complete sequence we
+                #set group_by to 'filter'
+                self.processFiles(file_list, group_by='filter') 
             except Exception, e:
                 QMessageBox.critical(self, "Error", "Error while building stack")
                 raise e
@@ -2498,7 +2500,7 @@ source directory (If no, only the new ones coming will be processed) ?"),
             print "ARGS=", args
             output.put(RS.ReductionSet(args).func())
             
-    def processFiles(self, files=None):
+    def processFiles(self, files=None, group_by=None):
         """
         @summary: Process the files provided; if any files were given, all the files 
         in the current Source List View (but not the output files) will be
@@ -2550,10 +2552,13 @@ source directory (If no, only the new ones coming will be processed) ?"),
             #     group_by="ot", check_data=True, config_dict=None, 
             #     external_db_files=None, temp_dir = None,
             
+            if group_by==None: l_group_by = self.group_by
+            else: l_group_by = group_by
+            
             params = [(files, self.m_outputdir, outfilename,
                       "dither", None, 
                       None, None, "quick",
-                      self.group_by, True,
+                      l_group_by, True,
                       self.config_opts,
                       self.outputsDB.GetFiles(), None)]
             

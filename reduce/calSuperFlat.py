@@ -211,8 +211,8 @@ class SuperSkyFlat(object):
             #MEF frame
             if len(f)>1:
                 chip = 1 # normalize wrt to mode of chip 1
-                naxis1 = f[0].header['NAXIS1']
-                naxis2 = f[0].header['NAXIS2']
+                naxis1 = f[1].header['NAXIS1']
+                naxis2 = f[1].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
                 mode = (3*numpy.median(f[chip].data[offset1:naxis1-offset1,
