@@ -95,8 +95,8 @@ class RunQtProcess(QWidget):
             log.error( "An error happened while running command --> %s \n", err)
             self.exit = 1
         else:
-          pass 
-          #log.info("readOutput: no error detected!")
+            pass 
+            #log.info("readOutput: no error detected!")
             
         self._outWindow.append(QString("STDOUT>>> %1").arg(err))
     
@@ -113,15 +113,15 @@ class RunQtProcess(QWidget):
             log.error( "An error happened while running command --> %s \n", err)
             self.exit = 1
         else:
-          pass 
-          #log.info("readErrors: NO error detected!")
+            pass 
+            #log.info("readErrors: NO error detected!")
         
         #self._outWindow.append( QString("STDERROR>>> %1").arg(err) )
     
     def exitFunc(self):
         
         #print "EXIT function !!"
-        # Firstly, remove previus task-status (when initiated)
+        # Firstly, remove previous task-status (when initiated)
         self.taskInfo._name =  "RunQtProcess : " + self._command
         self.taskInfo._curr_status = "FINISHED"             
         self.taskInfo._exit_status =  self.exit      

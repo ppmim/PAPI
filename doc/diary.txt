@@ -1144,8 +1144,31 @@ Sin embargo, le preguntamos por GEIRS y las tareas pendientes:
 ==========  
     
 
+2012-07-24
+==========  
 
+- Pruebas con PyQt4 (en openSuSE11.4)
+ 
+   * instalo SIP 4.13.3 (requerido por PyQt4.9.4)
+   * compilo PyQt4.9.4
+   *
 
+- Pruebas con Pyside (en openSuSE11.4)
+
+   * Sigo las instrucciones de http://qt-project.org/wiki/Building_PySide_on_Linux
+   y todo OK !
+   
+- Modifico PQL (mainGUI) para que no tenga que hacer uso de la clase RunQtProcess
+pues sólo se usaba en un caso (Subtract own-sky), y no merece la pena tener 
+una clase para sólo eso. 
+Lo que hago es que llamo directamente de forma sincrona (sin hebras ni nada) a
+la clase sextractor.
+No puedo usar hebras pues sex.run() no devuelve nada, y ExecTaskThread necesita
+de el fichero generado para poder mostrarlo.
+Todo esto para refactorizar código y simplificar !!
+Muevo temporalmente runQtProcess.py al directorio deprecated.
+
+   
 FOR NEXT VIDEOCONF
 ==================
 

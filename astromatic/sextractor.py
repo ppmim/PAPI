@@ -508,7 +508,7 @@ class SExtractor(object):
             
         if clean:
             self.clean()
-
+            
 
 
     def catalog(self):

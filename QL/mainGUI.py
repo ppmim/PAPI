@@ -65,7 +65,7 @@ import datahandler
 import misc.display as display
 import astromatic
 import photo.photometry
-import runQtProcess as QtProc
+#import runQtProcess as QtProc # not need it anymore !!
 
 #Log
 import misc.paLog
@@ -1960,10 +1960,9 @@ class MainGUI(panicQL):
             threshold = self.config_opts['skysub']['mask_thresh']
             input_file = self.m_listView_item_selected
             out_file = self.m_outputdir+"/"+os.path.basename(input_file.replace(".fits",".skysub.fits"))
-            #out_file = "/tmp/skysub.fits"
         
             #cmd="sex %s -c %s -FITS_UNSIGNED Y -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
-            cmd="sex %s -c %s -DETECT_MINAREA %s -DETECT_THRESH %s -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s -PARAMETERS_NAME %s -FILTER_NAME %s"% (input_file, sex_config, str(minarea), str(threshold), out_file, sex_param, sex_conv )  
+            #cmd="sex %s -c %s -DETECT_MINAREA %s -DETECT_THRESH %s -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s -PARAMETERS_NAME %s -FILTER_NAME %s"% (input_file, sex_config, str(minarea), str(threshold), out_file, sex_param, sex_conv )  
             
             """
             ***
@@ -1971,17 +1970,9 @@ class MainGUI(panicQL):
                 temporal files created by SExtractor !!!
             ***
             """
-            #Change to working directory
-            os.chdir(self.m_tempdir)
-            #Change cursor
-            self.setCursor(Qt.waitCursor) # restored checkLastTask
-            #Call external script (papi)
             self.m_processing = True
-            self._proc = QtProc.RunQtProcess(cmd, self.logConsole, self._task_info_list, out_file)      
-            self._proc.startCommand()
-
-            """
-            # Next implementation does not work because sex.run() doesn't retuen
+            
+            # Next implementation does not work because sex.run() doesn't return
             # the output file created !
             #
             input_file = self.m_listView_item_selected
@@ -1996,17 +1987,16 @@ class MainGUI(panicQL):
             sex.config['DETECT_MINAREA'] = self.config_opts['skysub']['mask_minarea']
             try:
                 self.setCursor(Qt.waitCursor)
-                updateconfig=True
-                clean=False
-                thread=reduce.ExecTaskThread(sex.run, self._task_info_list, \
-                                             # args for Sextractor:run() method
-                                             input_file, updateconfig, clean)
-                thread.start()    
+                updateconfig = True
+                clean = False
+                sex.run(input_file, updateconfig, clean)
             except Exception,e:
-                self.setCursor(Qt.arrowCursor)
-                QMessageBox.critical(self, "Error", "Error while sky subtraction "+str(e))
+                QMessageBox.critical(self, "Error", "Error while running Sextractor"+str(e))
                 raise e
-            """
+            else:
+                display.showFrame(out_file)
+            finally:
+                self.setCursor(Qt.arrowCursor)
         else:
             log.error("Sorry, selected file does not look a science file  ")
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             
@@ -2272,7 +2262,7 @@ class MainGUI(panicQL):
         
     def createSuperMosaic_slot(self):
         """
-        TBD : here is only a scheme of the routine !!!!
+        TODO : here is only a scheme of the routine !!!!
         Create an stitched wide-mosaic of next frames
         """
         QMessageBox.information(self, "Info", "Sorry, funtion not yet implemented !")
@@ -2290,8 +2280,8 @@ class MainGUI(panicQL):
         # Stack frame user selected  
         elif len(self.m_popup_l_sel)>1:
             # Create file list from current selected science files
-            listfile=self.m_tempdir+"/mosaic_files.list"      
-            file_lst= open( listfile, "w" )
+            listfile = self.m_tempdir+"/mosaic_files.list"      
+            file_lst = open( listfile, "w" )
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE_REDUCED'):
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science reduced frame").arg(file))
@@ -2302,16 +2292,48 @@ class MainGUI(panicQL):
             file_lst.close()
         
         # Call external script (SWARP)
-        cwd=os.getcwd()
         os.chdir(self.m_tempdir)
-        cmd=self.m_tempdir+"/build_mosaic %s" %(listfile)
         #Change to working directory
         os.chdir(self.m_tempdir)
         #Change cursor
         self.setCursor(Qt.waitCursor) # restored in checkLastTask
-        # Call external script (papi)
-        self._proc = QtProc.RunQtProcess(cmd, self.logConsole, self._task_info_list, self.m_outputdir+"/mosaic.fits" )      
-        self._proc.startCommand()
+
+        # Prepare SWARP call
+        swarp = astromatic.SWARP()
+        swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf']
+        basename, extension = os.path.splitext(self.m_popup_l_sel[0])
+        swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"  # very important !
+        if not os.path.isfile(self.m_popup_l_sel[0]+".head"):
+            raise Exception ("Cannot find required .head file")
+            
+        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY'
+        swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.m_popup_l_sel[0]) + "/coadd_tmp.fits"
+        if os.path.isfile(basename + ".weight" + extension):
+            swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
+            swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.m_popup_l_sel[0]) + "/coadd_tmp.weight.fits"
+        
+        """
+        #IMPORTANT: Rename the .head files in order to be found by SWARP
+        #but it's much efficient modify the HEADER_SUFFIX value (see above)
+        for aFile in self.input_files:
+            basename, extension = os.path.splitext(aFile)
+            shutil.move(aFile+".head", basename +".head")  # very important !!
+        """    
+        
+        #Create working thread that compute sky-frame
+        try:
+            updateconfig = False
+            clean = False
+            thread = reduce.ExecTaskThread(swarp.run, 
+                                           self._task_info_list,
+                                           #args of the doAstrometry function
+                                           self.m_popup_l_sel, updateconfig, clean) 
+            thread.start()
+        except:
+            QMessageBox.critical(self, "Error", "Error while running SWARP")
+            raise
+                
       
       
     def do_raw_astrometry(self):
