@@ -15,7 +15,6 @@
 import threading
 import time
 
-from qt import QMessageBox
 
 import misc.display as display
 
@@ -85,7 +84,8 @@ class WaitTaskThread(threading.Thread):
                 if self._task_info._return!=None:
                     display.showFrame(self._task_info._return)
             else:
-                QMessageBox.critical(None, "Error", "Error while running task ")
+                #QMessageBox.critical(None, "Error", "Error while running task ")
+                print "[WaitTaskThread] Error while running task !"
                 pass # nothing to do
             
             self._event.clear()   # restore the event condition
