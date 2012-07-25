@@ -37,8 +37,9 @@
     ####################################################################
 
 
+
+
 # system modules
-from qt import *
 import sys
 import os
 import os.path
@@ -51,7 +52,6 @@ from optparse import OptionParser
 import datetime
 
 # PANIC modules
-from panicQL import *
 import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
@@ -84,6 +84,8 @@ from iraf import mscred
 # Multiprocessing
 from multiprocessing import Process, Queue
 
+
+#-------------------------------------------------------------------------------
 def _pickle_method(method):
     
     #Pickle methods properly, including class methods.
@@ -114,15 +116,24 @@ copy_reg.pickle(types.MethodType,
     _pickle_method,  
     _unpickle_method)  
 
-  
-class MainGUI(panicQL):
+#-------------------------------------------------------------------------------
 
+
+from PyQt4 import QtCore, QtGui, uic
+
+#compile on-the-fly the .ui file
+form_class, base_class = uic.loadUiType('4.ui')
+
+
+class MainGUI(QtGui.QDialog, form_class):
+    def __init__(self, source="/tmp/data", ouput_dir="/tmp/out", 
+                 temp_dir="/tmp", config_opts=None, *args):
+        super(MainGUI, self).__init__(*args)
+
+        #panicQL.__init__(self)
+        
+        self.setupUi(self)
             
-    def __init__(self, source_dir="/tmp/data", output_dir='/tmp/out', 
-                 temp_dir='/tmp', config_opts=None):               
-        
-        panicQL.__init__(self)
-        
         self.config_opts = config_opts
               
         ## Init member variables
@@ -2886,4 +2897,3 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
     log.debug("mathOp result : %s"%outputFile)
     
     return outputFile
-
