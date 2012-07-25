@@ -122,7 +122,7 @@ copy_reg.pickle(types.MethodType,
 from PyQt4 import QtCore, QtGui, uic
 
 #compile on-the-fly the .ui file
-form_class, base_class = uic.loadUiType('4.ui')
+form_class, base_class = uic.loadUiType('panicQL_4n.ui')
 
 
 class MainGUI(QtGui.QDialog, form_class):
