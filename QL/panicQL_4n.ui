@@ -1,20 +1,21 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow" >
-  <property name="geometry" >
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>986</width>
-    <height>744</height>
+    <width>991</width>
+    <height>733</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget" >
-   <widget class="QWidget" name="verticalLayoutWidget" >
-    <property name="geometry" >
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
@@ -22,18 +23,18 @@
       <height>651</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout" >
+    <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QTabWidget" name="tabWidget" >
-       <property name="currentIndex" >
-        <number>1</number>
+      <widget class="QTabWidget" name="tabWidget">
+       <property name="currentIndex">
+        <number>0</number>
        </property>
-       <widget class="QWidget" name="tab_2" >
-        <attribute name="title" >
+       <widget class="QWidget" name="tab_2">
+        <attribute name="title">
          <string>Main</string>
         </attribute>
-        <widget class="QLabel" name="label_3" >
-         <property name="geometry" >
+        <widget class="QLabel" name="label_3">
+         <property name="geometry">
           <rect>
            <x>830</x>
            <y>44</y>
@@ -41,18 +42,24 @@
            <height>120</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="minimumSize">
+          <size>
+           <width>121</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
           <string/>
          </property>
-         <property name="pixmap" >
-          <pixmap>logo_PANIC.jpg</pixmap>
+         <property name="pixmap">
+          <pixmap>images/logo_PANIC.jpg</pixmap>
          </property>
-         <property name="scaledContents" >
+         <property name="scaledContents">
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QLabel" name="label_5" >
-         <property name="geometry" >
+        <widget class="QLabel" name="label_5">
+         <property name="geometry">
           <rect>
            <x>5</x>
            <y>410</y>
@@ -60,18 +67,18 @@
            <height>32</height>
           </rect>
          </property>
-         <property name="font" >
+         <property name="font">
           <font>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Last file received </string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="lineEdit_last_file" >
-         <property name="geometry" >
+        <widget class="QLineEdit" name="lineEdit_last_file">
+         <property name="geometry">
           <rect>
            <x>130</x>
            <y>410</y>
@@ -79,12 +86,12 @@
            <height>32</height>
           </rect>
          </property>
-         <property name="palette" >
+         <property name="palette">
           <palette>
            <active>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -93,9 +100,9 @@
             </colorrole>
            </active>
            <inactive>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -104,9 +111,9 @@
             </colorrole>
            </inactive>
            <disabled>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>244</red>
                <green>244</green>
                <blue>244</blue>
@@ -117,8 +124,8 @@
           </palette>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_add" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_add">
+         <property name="geometry">
           <rect>
            <x>640</x>
            <y>410</y>
@@ -126,12 +133,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Add</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_remove" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_remove">
+         <property name="geometry">
           <rect>
            <x>730</x>
            <y>410</y>
@@ -139,12 +146,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Remove</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_clear" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_clear">
+         <property name="geometry">
           <rect>
            <x>830</x>
            <y>410</y>
@@ -152,12 +159,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Clear all</string>
          </property>
         </widget>
-        <widget class="QLabel" name="label" >
-         <property name="geometry" >
+        <widget class="QLabel" name="label">
+         <property name="geometry">
           <rect>
            <x>414</x>
            <y>109</y>
@@ -165,19 +172,19 @@
            <height>20</height>
           </rect>
          </property>
-         <property name="font" >
+         <property name="font">
           <font>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>List View Filter</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_subtract_last2" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_subtract_last2">
+         <property name="geometry">
           <rect>
            <x>671</x>
            <y>124</y>
@@ -185,12 +192,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="palette" >
+         <property name="palette">
           <palette>
            <active>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>207</red>
                <green>129</green>
                <blue>88</blue>
@@ -199,9 +206,9 @@
             </colorrole>
            </active>
            <inactive>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>207</red>
                <green>129</green>
                <blue>88</blue>
@@ -210,9 +217,9 @@
             </colorrole>
            </inactive>
            <disabled>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>207</red>
                <green>129</green>
                <blue>88</blue>
@@ -222,18 +229,18 @@
            </disabled>
           </palette>
          </property>
-         <property name="font" >
+         <property name="font">
           <font>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Subtract-Last2</string>
          </property>
         </widget>
-        <widget class="QCheckBox" name="checkBox_outDir_autocheck" >
-         <property name="geometry" >
+        <widget class="QCheckBox" name="checkBox_outDir_autocheck">
+         <property name="geometry">
           <rect>
            <x>470</x>
            <y>80</y>
@@ -241,12 +248,12 @@
            <height>20</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string/>
          </property>
         </widget>
-        <widget class="QCheckBox" name="checkBox_autocheck" >
-         <property name="geometry" >
+        <widget class="QCheckBox" name="checkBox_autocheck">
+         <property name="geometry">
           <rect>
            <x>473</x>
            <y>35</y>
@@ -254,12 +261,12 @@
            <height>20</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string/>
          </property>
         </widget>
-        <widget class="QLineEdit" name="lineEdit_sourceD" >
-         <property name="geometry" >
+        <widget class="QLineEdit" name="lineEdit_sourceD">
+         <property name="geometry">
           <rect>
            <x>130</x>
            <y>30</y>
@@ -267,12 +274,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="palette" >
+         <property name="palette">
           <palette>
            <active>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -281,9 +288,9 @@
             </colorrole>
            </active>
            <inactive>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -292,9 +299,9 @@
             </colorrole>
            </inactive>
            <disabled>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>244</red>
                <green>244</green>
                <blue>244</blue>
@@ -305,8 +312,8 @@
           </palette>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_outputD" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_outputD">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>70</y>
@@ -314,12 +321,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Output Dir</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_start_proc" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_start_proc">
+         <property name="geometry">
           <rect>
            <x>671</x>
            <y>44</y>
@@ -327,12 +334,12 @@
            <height>30</height>
           </rect>
          </property>
-         <property name="palette" >
+         <property name="palette">
           <palette>
            <active>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>188</red>
                <green>5</green>
                <blue>49</blue>
@@ -341,9 +348,9 @@
             </colorrole>
            </active>
            <inactive>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>188</red>
                <green>5</green>
                <blue>49</blue>
@@ -352,9 +359,9 @@
             </colorrole>
            </inactive>
            <disabled>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>188</red>
                <green>5</green>
                <blue>49</blue>
@@ -364,18 +371,18 @@
            </disabled>
           </palette>
          </property>
-         <property name="font" >
+         <property name="font">
           <font>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Star Processing</string>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_createCalibs" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_createCalibs">
+         <property name="geometry">
           <rect>
            <x>670</x>
            <y>84</y>
@@ -383,12 +390,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="palette" >
+         <property name="palette">
           <palette>
            <active>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>112</red>
                <green>110</green>
                <blue>109</blue>
@@ -397,9 +404,9 @@
             </colorrole>
            </active>
            <inactive>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>112</red>
                <green>110</green>
                <blue>109</blue>
@@ -408,9 +415,9 @@
             </colorrole>
            </inactive>
            <disabled>
-            <colorrole role="Button" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Button">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>112</red>
                <green>110</green>
                <blue>109</blue>
@@ -420,18 +427,18 @@
            </disabled>
           </palette>
          </property>
-         <property name="font" >
+         <property name="font">
           <font>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Create Calibrations</string>
          </property>
         </widget>
-        <widget class="QLabel" name="label_2" >
-         <property name="geometry" >
+        <widget class="QLabel" name="label_2">
+         <property name="geometry">
           <rect>
            <x>553</x>
            <y>107</y>
@@ -439,19 +446,19 @@
            <height>20</height>
           </rect>
          </property>
-         <property name="font" >
+         <property name="font">
           <font>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>QL Mode</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="lineEdit_tempD" >
-         <property name="geometry" >
+        <widget class="QLineEdit" name="lineEdit_tempD">
+         <property name="geometry">
           <rect>
            <x>130</x>
            <y>110</y>
@@ -459,12 +466,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="palette" >
+         <property name="palette">
           <palette>
            <active>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -473,9 +480,9 @@
             </colorrole>
            </active>
            <inactive>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -484,9 +491,9 @@
             </colorrole>
            </inactive>
            <disabled>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>244</red>
                <green>244</green>
                <blue>244</blue>
@@ -497,8 +504,8 @@
           </palette>
          </property>
         </widget>
-        <widget class="QPushButton" name="pushButton_tempD" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_tempD">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>110</y>
@@ -506,12 +513,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Temporal Dir</string>
          </property>
         </widget>
-        <widget class="QComboBox" name="comboBox_classFilter" >
-         <property name="geometry" >
+        <widget class="QComboBox" name="comboBox_classFilter">
+         <property name="geometry">
           <rect>
            <x>414</x>
            <y>131</y>
@@ -520,48 +527,48 @@
           </rect>
          </property>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>ALL</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>DARK</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>DOME_FLAT</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>SKY_FLAT</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>SCIENCE</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>REDUCED</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>GROUP</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>OUTS</string>
           </property>
          </item>
         </widget>
-        <widget class="QComboBox" name="comboBox_QL_Mode" >
-         <property name="geometry" >
+        <widget class="QComboBox" name="comboBox_QL_Mode">
+         <property name="geometry">
           <rect>
            <x>541</x>
            <y>130</y>
@@ -570,38 +577,38 @@
           </rect>
          </property>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>None</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>Lazy</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>Pre-Reduction</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>UserDef_1</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>UserDef_2</string>
           </property>
          </item>
          <item>
-          <property name="text" >
+          <property name="text">
            <string>UserDef_3</string>
           </property>
          </item>
         </widget>
-        <widget class="QPushButton" name="pushButton_dataSourceD" >
-         <property name="geometry" >
+        <widget class="QPushButton" name="pushButton_dataSourceD">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>30</y>
@@ -609,12 +616,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Source Dir</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="lineEdit_outputD" >
-         <property name="geometry" >
+        <widget class="QLineEdit" name="lineEdit_outputD">
+         <property name="geometry">
           <rect>
            <x>130</x>
            <y>70</y>
@@ -622,12 +629,12 @@
            <height>31</height>
           </rect>
          </property>
-         <property name="palette" >
+         <property name="palette">
           <palette>
            <active>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -636,9 +643,9 @@
             </colorrole>
            </active>
            <inactive>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>255</red>
                <green>248</green>
                <blue>148</blue>
@@ -647,9 +654,9 @@
             </colorrole>
            </inactive>
            <disabled>
-            <colorrole role="Base" >
-             <brush brushstyle="SolidPattern" >
-              <color alpha="255" >
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
                <red>244</red>
                <green>244</green>
                <blue>244</blue>
@@ -660,8 +667,8 @@
           </palette>
          </property>
         </widget>
-        <widget class="QTableWidget" name="tableWidget" >
-         <property name="geometry" >
+        <widget class="QTableWidget" name="tableWidget">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>170</y>
@@ -670,48 +677,48 @@
           </rect>
          </property>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>File</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>ImageType</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>Filter</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>ExpTime</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>Date-Obs</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>Object</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>RA</string>
           </property>
          </column>
          <column>
-          <property name="text" >
+          <property name="text">
            <string>Dec</string>
           </property>
          </column>
         </widget>
-        <widget class="QTextEdit" name="textEdit_2" >
-         <property name="geometry" >
+        <widget class="QTextEdit" name="textEdit_log">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>450</y>
@@ -720,8 +727,8 @@
           </rect>
          </property>
         </widget>
-        <widget class="QLabel" name="label_8" >
-         <property name="geometry" >
+        <widget class="QLabel" name="label_8">
+         <property name="geometry">
           <rect>
            <x>15</x>
            <y>146</y>
@@ -729,23 +736,23 @@
            <height>22</height>
           </rect>
          </property>
-         <property name="font" >
+         <property name="font">
           <font>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
-         <property name="text" >
+         <property name="text">
           <string>Data List View</string>
          </property>
         </widget>
        </widget>
-       <widget class="QWidget" name="tab" >
-        <attribute name="title" >
+       <widget class="QWidget" name="tab">
+        <attribute name="title">
          <string>Setup</string>
         </attribute>
-        <widget class="QGroupBox" name="groupBox" >
-         <property name="geometry" >
+        <widget class="QGroupBox" name="groupBox">
+         <property name="geometry">
           <rect>
            <x>370</x>
            <y>20</y>
@@ -753,11 +760,11 @@
            <height>171</height>
           </rect>
          </property>
-         <property name="title" >
+         <property name="title">
           <string>Photometry</string>
          </property>
-         <widget class="QComboBox" name="comboBox" >
-          <property name="geometry" >
+         <widget class="QComboBox" name="comboBox">
+          <property name="geometry">
            <rect>
             <x>40</x>
             <y>60</y>
@@ -766,23 +773,23 @@
            </rect>
           </property>
           <item>
-           <property name="text" >
+           <property name="text">
             <string>2MASS</string>
            </property>
           </item>
           <item>
-           <property name="text" >
+           <property name="text">
             <string>USNO-B1</string>
            </property>
           </item>
           <item>
-           <property name="text" >
+           <property name="text">
             <string>GSC-2.2</string>
            </property>
           </item>
          </widget>
-         <widget class="QLabel" name="label_11" >
-          <property name="geometry" >
+         <widget class="QLabel" name="label_11">
+          <property name="geometry">
            <rect>
             <x>20</x>
             <y>40</y>
@@ -790,13 +797,13 @@
             <height>22</height>
            </rect>
           </property>
-          <property name="text" >
+          <property name="text">
            <string>Catalog</string>
           </property>
          </widget>
         </widget>
-        <widget class="QGroupBox" name="groupBox_3" >
-         <property name="geometry" >
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="geometry">
           <rect>
            <x>610</x>
            <y>20</y>
@@ -804,11 +811,11 @@
            <height>161</height>
           </rect>
          </property>
-         <property name="title" >
+         <property name="title">
           <string>Astrometry</string>
          </property>
-         <widget class="QComboBox" name="comboBox_AstromCatalog" >
-          <property name="geometry" >
+         <widget class="QComboBox" name="comboBox_AstromCatalog">
+          <property name="geometry">
            <rect>
             <x>50</x>
             <y>60</y>
@@ -817,23 +824,23 @@
            </rect>
           </property>
           <item>
-           <property name="text" >
+           <property name="text">
             <string>2MASS</string>
            </property>
           </item>
           <item>
-           <property name="text" >
+           <property name="text">
             <string>USNO-B1</string>
            </property>
           </item>
           <item>
-           <property name="text" >
+           <property name="text">
             <string>GSC-2.2</string>
            </property>
           </item>
          </widget>
-         <widget class="QLabel" name="label_12" >
-          <property name="geometry" >
+         <widget class="QLabel" name="label_12">
+          <property name="geometry">
            <rect>
             <x>10</x>
             <y>40</y>
@@ -841,12 +848,12 @@
             <height>22</height>
            </rect>
           </property>
-          <property name="text" >
+          <property name="text">
            <string>Catalog</string>
           </property>
          </widget>
-         <widget class="QCheckBox" name="checkBox_doRegrig" >
-          <property name="geometry" >
+         <widget class="QCheckBox" name="checkBox_doRegrig">
+          <property name="geometry">
            <rect>
             <x>20</x>
             <y>110</y>
@@ -854,13 +861,13 @@
             <height>23</height>
            </rect>
           </property>
-          <property name="text" >
+          <property name="text">
            <string>Apply Re-grid</string>
           </property>
          </widget>
         </widget>
-        <widget class="QGroupBox" name="groupBox_4" >
-         <property name="geometry" >
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>200</y>
@@ -868,11 +875,11 @@
            <height>381</height>
           </rect>
          </property>
-         <property name="title" >
+         <property name="title">
           <string>Lazy Mode</string>
          </property>
-         <widget class="QWidget" name="verticalLayoutWidget_2" >
-          <property name="geometry" >
+         <widget class="QWidget" name="verticalLayoutWidget_2">
+          <property name="geometry">
            <rect>
             <x>20</x>
             <y>40</y>
@@ -880,52 +887,52 @@
             <height>321</height>
            </rect>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_2" >
+          <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
-            <widget class="QCheckBox" name="checkBox_show_imgs" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_show_imgs">
+             <property name="text">
               <string>Only display image</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_subDark" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_subDark">
+             <property name="text">
               <string>Dark subtraction</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_appBPM" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_appBPM">
+             <property name="text">
               <string>Apply Bad Pixel Map</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_appFlat" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_appFlat">
+             <property name="text">
               <string>Flat-Fielding</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_subLastFrame" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_subLastFrame">
+             <property name="text">
               <string>Subtract last-frame</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_subSky" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_subSky">
+             <property name="text">
               <string>Subtract Near-sky</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_appSAstrom" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_appSAstrom">
+             <property name="text">
               <string>Apply Static Astrometry</string>
              </property>
             </widget>
@@ -933,8 +940,8 @@
           </layout>
          </widget>
         </widget>
-        <widget class="QGroupBox" name="groupBox_5" >
-         <property name="geometry" >
+        <widget class="QGroupBox" name="groupBox_5">
+         <property name="geometry">
           <rect>
            <x>440</x>
            <y>200</y>
@@ -942,91 +949,94 @@
            <height>371</height>
           </rect>
          </property>
-         <property name="title" >
+         <property name="title">
           <string>Pre-Reduction Mode</string>
          </property>
-         <widget class="QWidget" name="verticalLayoutWidget_3" >
-          <property name="geometry" >
+         <widget class="QWidget" name="verticalLayoutWidget_3">
+          <property name="geometry">
            <rect>
             <x>20</x>
             <y>40</y>
-            <width>371</width>
+            <width>361</width>
             <height>321</height>
            </rect>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_3" >
+          <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QCheckBox" name="checkBox_PR_darkSub" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_PR_darkSub">
+             <property name="text">
               <string>Dark subtraction</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_PR_applyBPM" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_PR_applyBPM">
+             <property name="text">
               <string>Apply Bad Pixel Map</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_PR_applyFF" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_PR_applyFF">
+             <property name="text">
               <string>Flat-Fielding</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_PR_applySF" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_PR_applySF">
+             <property name="text">
               <string>Super Flat-Field</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_PR_subSky" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_PR_subSky">
+             <property name="text">
               <string>Subtract Near-sky</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_PR_applyAst" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_PR_applyAst">
+             <property name="text">
               <string> Astrometric calibration</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_PR_applyPho" >
-             <property name="text" >
+            <widget class="QCheckBox" name="checkBox_PR_applyPho">
+             <property name="text">
               <string> Photometric calibration</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox_skyWindow" >
-             <property name="contextMenuPolicy" >
+            <widget class="QComboBox" name="comboBox_skyWindow">
+             <property name="contextMenuPolicy">
               <enum>Qt::DefaultContextMenu</enum>
              </property>
-             <property name="autoFillBackground" >
+             <property name="toolTip">
+              <string>Number of near skyframes for sky subtraction</string>
+             </property>
+             <property name="autoFillBackground">
               <bool>false</bool>
              </property>
-             <property name="modelColumn" >
+             <property name="modelColumn">
               <number>0</number>
              </property>
              <item>
-              <property name="text" >
+              <property name="text">
                <string>2</string>
               </property>
              </item>
              <item>
-              <property name="text" >
+              <property name="text">
                <string>3</string>
               </property>
              </item>
              <item>
-              <property name="text" >
+              <property name="text">
                <string>4</string>
               </property>
              </item>
@@ -1035,8 +1045,8 @@
           </layout>
          </widget>
         </widget>
-        <widget class="QGroupBox" name="groupBox_2" >
-         <property name="geometry" >
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="geometry">
           <rect>
            <x>20</x>
            <y>20</y>
@@ -1044,11 +1054,11 @@
            <height>171</height>
           </rect>
          </property>
-         <property name="title" >
+         <property name="title">
           <string>Data Grouping</string>
          </property>
-         <widget class="QWidget" name="formLayoutWidget" >
-          <property name="geometry" >
+         <widget class="QWidget" name="formLayoutWidget">
+          <property name="geometry">
            <rect>
             <x>10</x>
             <y>30</y>
@@ -1056,41 +1066,41 @@
             <height>121</height>
            </rect>
           </property>
-          <layout class="QFormLayout" name="formLayout" >
-           <property name="fieldGrowthPolicy" >
+          <layout class="QFormLayout" name="formLayout">
+           <property name="fieldGrowthPolicy">
             <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
            </property>
-           <item row="0" column="0" >
-            <widget class="QLabel" name="label_9" >
-             <property name="text" >
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_9">
+             <property name="text">
               <string>RA,Dec offsets</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="1" >
-            <widget class="QLineEdit" name="lineEdit_ra_dec_near_offset" >
-             <property name="text" >
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="lineEdit_ra_dec_near_offset">
+             <property name="text">
               <string/>
              </property>
             </widget>
            </item>
-           <item row="1" column="0" >
-            <widget class="QLabel" name="label_10" >
-             <property name="text" >
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_10">
+             <property name="text">
               <string>Time offsets</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="1" >
-            <widget class="QLineEdit" name="lineEdit_time_near_offset" >
-             <property name="text" >
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="lineEdit_time_near_offset">
+             <property name="text">
               <string/>
              </property>
             </widget>
            </item>
-           <item row="2" column="1" >
-            <widget class="QCheckBox" name="checkBox_data_grouping" >
-             <property name="text" >
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="checkBox_data_grouping">
+             <property name="text">
               <string>Headers Keywords</string>
              </property>
             </widget>
@@ -1099,12 +1109,12 @@
          </widget>
         </widget>
        </widget>
-       <widget class="QWidget" name="tab_3" >
-        <attribute name="title" >
+       <widget class="QWidget" name="tab_3">
+        <attribute name="title">
          <string>Log</string>
         </attribute>
-        <widget class="QTextEdit" name="textEdit" >
-         <property name="geometry" >
+        <widget class="QTextEdit" name="textEdit_log_2">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>40</y>
@@ -1119,107 +1129,107 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QMenuBar" name="menubar" >
-   <property name="geometry" >
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>986</width>
-     <height>30</height>
+     <width>991</width>
+     <height>20</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile" >
-    <property name="title" >
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen" />
-    <addaction name="actionShow" />
-    <addaction name="separator" />
-    <addaction name="actionSave_session" />
-    <addaction name="actionExit" />
+    <addaction name="actionOpen"/>
+    <addaction name="actionShow"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave_session"/>
+    <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuCalibrations" >
-    <property name="title" >
+   <widget class="QMenu" name="menuCalibrations">
+    <property name="title">
      <string>Calibrations</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuTools" >
-    <property name="title" >
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionIRAF_Console" />
-    <addaction name="actionDS9_Viewer" />
-    <addaction name="actionAladin" />
+    <addaction name="actionIRAF_Console"/>
+    <addaction name="actionDS9_Viewer"/>
+    <addaction name="actionAladin"/>
    </widget>
-   <widget class="QMenu" name="menuHelp" >
-    <property name="title" >
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
      <string>Help</string>
     </property>
    </widget>
-   <addaction name="menuFile" />
-   <addaction name="menuCalibrations" />
-   <addaction name="menuTools" />
-   <addaction name="menuHelp" />
+   <addaction name="menuFile"/>
+   <addaction name="menuCalibrations"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar" />
-  <widget class="QToolBar" name="toolBar" >
-   <property name="windowTitle" >
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
     <string>toolBar</string>
    </property>
-   <attribute name="toolBarArea" >
+   <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
-   <attribute name="toolBarBreak" >
+   <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionOpen" />
-   <addaction name="actionShow" />
-   <addaction name="actionAladin" />
-   <addaction name="actionIRAF_Console" />
-   <addaction name="actionExit" />
+   <addaction name="actionOpen"/>
+   <addaction name="actionShow"/>
+   <addaction name="actionAladin"/>
+   <addaction name="actionIRAF_Console"/>
+   <addaction name="actionExit"/>
   </widget>
-  <action name="actionIRAF_Console" >
-   <property name="text" >
+  <action name="actionIRAF_Console">
+   <property name="text">
     <string>IRAF Console</string>
    </property>
-   <property name="font" >
+   <property name="font">
     <font>
      <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
   </action>
-  <action name="actionDS9_Viewer" >
-   <property name="text" >
+  <action name="actionDS9_Viewer">
+   <property name="text">
     <string>DS9 Viewer</string>
    </property>
   </action>
-  <action name="actionAladin" >
-   <property name="text" >
+  <action name="actionAladin">
+   <property name="text">
     <string>Aladin</string>
    </property>
   </action>
-  <action name="actionOpen" >
-   <property name="icon" >
+  <action name="actionOpen">
+   <property name="icon">
     <iconset>
      <normaloff>../../../../../../../usr/share/icons/hicolor/16x16/actions/facebook.png</normaloff>../../../../../../../usr/share/icons/hicolor/16x16/actions/facebook.png</iconset>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Open</string>
    </property>
   </action>
-  <action name="actionShow" >
-   <property name="text" >
+  <action name="actionShow">
+   <property name="text">
     <string>Show</string>
    </property>
   </action>
-  <action name="actionExit" >
-   <property name="text" >
+  <action name="actionExit">
+   <property name="text">
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionSave_session" >
-   <property name="text" >
+  <action name="actionSave_session">
+   <property name="text">
     <string>Save session</string>
    </property>
   </action>

@@ -125,8 +125,8 @@ from PyQt4 import QtCore, QtGui, uic
 form_class, base_class = uic.loadUiType('panicQL_4n.ui')
 
 
-class MainGUI(QtGui.QDialog, form_class):
-    def __init__(self, source="/tmp/data", ouput_dir="/tmp/out", 
+class MainGUI(QtGui.QMainWindow, form_class):
+    def __init__(self, source_dir="/tmp/data", output_dir="/tmp/out", 
                  temp_dir="/tmp", config_opts=None, *args):
         super(MainGUI, self).__init__(*args)
 
@@ -2736,7 +2736,7 @@ class LoggingConsole (object):
 
         self.textEdit_w1 = textEdit1
         self.textEdit_w2 = textEdit2
-        
+        """
         ## Create log tags
         if self.textEdit_w1 is not None:
             # Error
@@ -2781,7 +2781,7 @@ class LoggingConsole (object):
             item.setColor( QColor("#1C731C") ) # dark green
             item.setFontWeight( QFont.Bold )
             item.setFontUnderline( False )
-        
+        """
 
     def append(self, message='', tag=None):
         
@@ -2811,15 +2811,26 @@ class LoggingConsole (object):
         if tag=="INFO":
             prefix = "<info_tag>"
             suffix = "</info_tag>"
+            if self.textEdit_w1 is not None:
+                self.textEdit_w1.setStyleSheet("background-color: yellow")
         elif tag=="WARNING":
             prefix = "<warning_tag>"
             suffix = "</warning_tag>"
+            if self.textEdit_w1 is not None:
+                self.textEdit_w1.setStyleSheet("background-color: red")
+
         elif tag=="ERROR":
             prefix = "<error_tag>"
             suffix = "</error_tag>"
+            if self.textEdit_w1 is not None:
+                self.textEdit_w1.setStyleSheet("background-color: black")
+
         elif tag=="DEBUG":
             prefix = "<debug_tag>"
             suffix = "</debug_tag>"
+            if self.textEdit_w1 is not None:
+                self.textEdit_w1.setStyleSheet("background-color: green")
+
         else:
             prefix = ""
             suffix = ""    
@@ -2829,7 +2840,8 @@ class LoggingConsole (object):
         s_time = "["+datetime.datetime.utcnow().isoformat()+"] "
         prefix += s_time 
         
-        return prefix + msg + suffix
+        #return prefix + msg + suffix
+        return msg
 
 ################################################################################
 # Some functions 
