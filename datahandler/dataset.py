@@ -15,7 +15,8 @@
 ################################################################################
 
 # Import requered modules
-from pysqlite2 import dbapi2 as sqlite
+#from pysqlite2 import dbapi2 as sqlite
+import sqlite3 as sqlite
 import datahandler
 import os
 import sys
