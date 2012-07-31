@@ -193,13 +193,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # Default run mode
         if  self.config_opts['quicklook']['run_mode']=="None": 
-            self.comboBox_QL_Mode.setCurrentItem(0)
+            self.comboBox_QL_Mode.setCurrentIndex(0)
         elif self.config_opts['quicklook']['run_mode']=="Lazy": 
-            self.comboBox_QL_Mode.setCurrentItem(1)
+            self.comboBox_QL_Mode.setCurrentIndex(1)
         elif self.config_opts['quicklook']['run_mode']=="PreReduction": 
-            self.comboBox_QL_Mode.setCurrentItem(2)
+            self.comboBox_QL_Mode.setCurrentIndex(2)
         else: 
-            self.comboBox_QL_Mode.setCurrentItem(0)
+            self.comboBox_QL_Mode.setCurrentIndex(0)
         
         self.group_by = self.config_opts['general']['group_by'].lower()
             

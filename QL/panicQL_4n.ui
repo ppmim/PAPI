@@ -27,7 +27,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab_2">
         <attribute name="title">
@@ -1106,6 +1106,108 @@
             </widget>
            </item>
           </layout>
+         </widget>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tab_4">
+        <attribute name="title">
+         <string>Calibrations</string>
+        </attribute>
+        <widget class="QGroupBox" name="groupBox_6">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>441</width>
+           <height>211</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="title">
+          <string>Last Master calibration files created</string>
+         </property>
+         <widget class="QLineEdit" name="lineEdit_masterDark">
+          <property name="geometry">
+           <rect>
+            <x>60</x>
+            <y>40</y>
+            <width>311</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_4">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>46</y>
+            <width>52</width>
+            <height>10</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Dark</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_6">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>90</y>
+            <width>52</width>
+            <height>10</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Flat</string>
+          </property>
+         </widget>
+         <widget class="QLineEdit" name="lineEdit_masterFlat">
+          <property name="geometry">
+           <rect>
+            <x>60</x>
+            <y>84</y>
+            <width>311</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_7">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>126</y>
+            <width>52</width>
+            <height>10</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>BPM</string>
+          </property>
+         </widget>
+         <widget class="QLineEdit" name="lineEdit_masterMask">
+          <property name="geometry">
+           <rect>
+            <x>60</x>
+            <y>120</y>
+            <width>311</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
          </widget>
         </widget>
        </widget>
