@@ -1168,6 +1168,19 @@ de el fichero generado para poder mostrarlo.
 Todo esto para refactorizar código y simplificar !!
 Muevo temporalmente runQtProcess.py al directorio deprecated.
 
+
+2012-10-01
+==========  
+- Después de un parón de dos meses en PAPI por estar con TCS2, retomo a PAPI.
+- Añado la escritura de los valores del diccionario del config_file que usa el
+ReductionSet en el log_file de cara a poder luego depurar la reduccion realizada
+por PAPI en cada ejecución.
+
+
+
+
+
+
    
 FOR NEXT VIDEOCONF
 ==================

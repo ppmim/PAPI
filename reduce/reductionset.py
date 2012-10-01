@@ -196,7 +196,7 @@ class ReductionSet(object):
         self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
         # Temporal directory for temporal files created during the data reduction process
         if temp_dir == None:
-            if config_dict !=None:
+            if self.config_dict !=None:
                 self.temp_dir = self.config_dict['general']['temp_dir']
             else:
                 self.temp_dir = "/tmp/"
@@ -205,7 +205,7 @@ class ReductionSet(object):
 
         # Output directory for the results of the data reduction process            
         if out_dir == None:
-            if config_dict !=None:
+            if self.config_dict !=None:
                 self.out_dir = self.config_dict['general']['output_dir']
             else:
                 self.out_dir = "/tmp/"
@@ -250,15 +250,17 @@ class ReductionSet(object):
             self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] # Maximun exposition time difference (seconds) between frames
             self.MIN_CORR_FRAC = self.config_dict['offsets']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
         else:
+            print "Program should not enter here  !!!"
             # some "default" config values (see below how they are updated from the config_dict)
             # Environment variables
+            """
             self.m_terapix_path = os.environ['TERAPIX']
             self.m_irdr_path = os.environ['IRDR_BIN']
             self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
             self.HWIDTH = 2 #half width of sky filter window in frames
             self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
             self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
-        
+            """
         
         # real "variables" holding current reduction status
         self.m_LAST_FILES = []   # Contain the files as result of the last 
@@ -295,7 +297,7 @@ class ReductionSet(object):
         #               http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         self.ext_db_files = []
         if external_db_files == None:
-            if config_dict !=None:
+            if self.config_dict !=None:
                 cal_dir = self.config_dict['general']['ext_calibration_db']
                 if os.path.isdir(cal_dir):
                     for file in dircache.listdir(cal_dir):
@@ -304,7 +306,11 @@ class ReductionSet(object):
         else:
             self.ext_db_files = external_db_files    
 
-             
+        # Print config_dictonary values in log file for debugging
+        log.info("[ReductionSet] CONFIGURATION VALUES OF RS ------------------")
+        log.info(printDict(self.config_dict))
+        log.info("------------------------------------------------------------")
+  
     def __initDB(self):
         """
         @summary: Initialize the Data Bases (local and external), loading the full frame list.
@@ -1333,13 +1339,14 @@ class ReductionSet(object):
         log.info("Start createMasterObjMask....")
         # STEP 1: create mask
         if self.config_dict:
-            mask_minarea=self.config_dict['skysub']['mask_minarea']
-            mask_thresh=self.config_dict['skysub']['mask_thresh']
-            satur_level=self.config_dict['skysub']['satur_level']
+            mask_minarea = self.config_dict['skysub']['mask_minarea']
+            mask_thresh = self.config_dict['skysub']['mask_thresh']
+            satur_level = self.config_dict['skysub']['satur_level']
         else:
-            mask_minarea=5
-            mask_thresh=1.5
-            satur_level=300000
+            print "Program should never enter here !!!"
+            #mask_minarea = 5
+            #mask_thresh = 1.5
+            #satur_level = 300000
                                
         # BUG ! -> input_file+"*" as first parameter to makeObjMask ! (2011-09-23)                                                               
         makeObjMask( input_file, mask_minarea, mask_thresh, satur_level,
@@ -1397,7 +1404,7 @@ class ReductionSet(object):
         misc.fileUtils.removefiles(out_dir+"/gain*.fits", out_dir+"/masterObjMask.fits",
                                        out_dir+"/*.pap", out_dir+"/*.list", out_dir+"/superFlat.fits")
         misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
-                                       out_dir+"/*.xml", out_dir+"/*.png")
+                                       out_dir+"/*.xml")#, out_dir+"/*.png")
         
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
@@ -1437,19 +1444,19 @@ class ReductionSet(object):
         """
         
         log.debug("Building GainMap for %s Flats", type)
-        l_gainmaps=[]
+        l_gainmaps = []
         # 1. Look for master flat frames
-        full_flat_list=[]
+        full_flat_list = []
         if type=="all":
             full_flat_list = self.db.GetFilesT(type="MASTER_SKY_FLAT", texp=-1, filter="ANY")
             full_flat_list+= self.db.GetFilesT(type="MASTER_TW_FLAT", texp=-1, filter="ANY")
             full_flat_list+= self.db.GetFilesT(type="MASTER_DOME_FLAT", texp=-1, filter="ANY")
         elif type=="sky":
-            full_flat_list=self.db.GetFilesT(type="MASTER_SKY_FLAT", texp=-1, filter="ANY")
+            full_flat_list = self.db.GetFilesT(type="MASTER_SKY_FLAT", texp=-1, filter="ANY")
         elif type=="twlight":
-            full_flat_list=self.db.GetFilesT(type="MASTER_TW_FLAT", texp=-1, filter="ANY")
+            full_flat_list = self.db.GetFilesT(type="MASTER_TW_FLAT", texp=-1, filter="ANY")
         elif type=="dome":
-            full_flat_list=self.db.GetFilesT(type="MASTER_DOME_FLAT", texp=-1, filter="ANY")
+            full_flat_list = self.db.GetFilesT(type="MASTER_DOME_FLAT", texp=-1, filter="ANY")
         else:
             log.error("Wrong type of master flat specified")
             raise Exception("Wrong type of master flat specified")
@@ -1465,13 +1472,13 @@ class ReductionSet(object):
             sorted_list.append((file, fits.getFilter()))
         
         # Sort out frames by FILTER
-        sorted_list=sorted(sorted_list, key=lambda data_file: data_file[1])
+        sorted_list = sorted(sorted_list, key=lambda data_file: data_file[1])
         
         # 3. take the first group having the same FILTER
         last_filter = sorted_list[0][1]
-        group=[]
-        build_master=False
-        k=0
+        group = []
+        build_master = False
+        k = 0
         while k<len(sorted_list):
             while k<len(sorted_list) and sorted_list[k][1]==last_filter:
                 group.append(sorted_list[k][0])
@@ -1491,6 +1498,7 @@ class ReductionSet(object):
                     nyblock = self.config_dict['gainmap']['nyblock']
                     nsigma = self.config_dict['gainmap']['nsigma']
                 else:
+                    print "Program should never enter here !"
                     mingain = 0.5
                     maxgain = 1.5
                     nxblock = 16
@@ -1805,13 +1813,9 @@ class ReductionSet(object):
         if self.config_dict['general']['purge_output']:
             self.purgeOutput()
         
-        # In order to have a complete track of the processing, copy log and 
-        # config files to the output directory    
-        if 1:
-            shutil.copy(misc.paLog.file_hd.baseFilename, self.out_dir)
-            shutil.copy(self.config_dict['general']['config_filename'], 
-                        self.out_dir)
-            
+        # In order to have a complete track of the processing, copy log to the 
+        # output directory.    
+        shutil.copy(misc.paLog.file_hd.baseFilename, self.out_dir)
         
 
         return files_created
@@ -2958,6 +2962,144 @@ class ReductionSet(object):
             for file in seq_list[k]:
                 print file
             k+=1
+
+
+## {{{ http://code.activestate.com/recipes/327142/ (r1)
+def printDict(aDict, br='\n', html=0,
+            keyAlign='l',   sortKey=0,
+            keyPrefix='',   keySuffix='',
+            valuePrefix='', valueSuffix='',
+            leftMargin=0,   indent=1 ):
+    '''
+return a string representive of aDict in the following format:
+    {
+     key1: value1,
+     key2: value2,
+     ...
+     }
+
+Spaces will be added to the keys to make them have same width.
+
+sortKey: set to 1 if want keys sorted;
+keyAlign: either 'l' or 'r', for left, right align, respectively.
+keyPrefix, keySuffix, valuePrefix, valueSuffix: The prefix and
+   suffix to wrap the keys or values. Good for formatting them
+   for html document(for example, keyPrefix='<b>', keySuffix='</b>'). 
+   Note: The keys will be padded with spaces to have them
+         equally-wide. The pre- and suffix will be added OUTSIDE
+         the entire width.
+html: if set to 1, all spaces will be replaced with '&nbsp;', and
+      the entire output will be wrapped with '<code>' and '</code>'.
+br: determine the carriage return. If html, it is suggested to set
+    br to '<br>'. If you want the html source code eazy to read,
+    set br to '<br>\n'
+
+version: 04b52
+author : Runsun Pan
+require: odict() # an ordered dict, if you want the keys sorted.
+         Dave Benjamin 
+         http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/161403
+    '''
+   
+    if aDict:
+
+        #------------------------------ sort key
+        if sortKey:
+            dic = aDict.copy()
+            keys = dic.keys()
+            keys.sort()
+            ###aDict = odict()
+            for k in keys:
+                aDict[k] = dic[k]
+            
+        #------------------- wrap keys with ' ' (quotes) if str
+        tmp = ['{']
+        ks = [type(x)==str and "'%s'"%x or x for x in aDict.keys()]
+
+        #------------------- wrap values with ' ' (quotes) if str
+        vs = [type(x)==str and "'%s'"%x or x for x in aDict.values()] 
+
+        maxKeyLen = max([len(str(x)) for x in ks])
+
+        for i in range(len(ks)):
+
+            #-------------------------- Adjust key width
+            k = {1            : str(ks[i]).ljust(maxKeyLen),
+                 keyAlign=='r': str(ks[i]).rjust(maxKeyLen) }[1]
+            
+            v = vs[i]        
+            tmp.append(' '* indent+ '%s%s%s:%s%s%s,' %(
+                        keyPrefix, k, keySuffix,
+                        valuePrefix,v,valueSuffix))
+
+        tmp[-1] = tmp[-1][:-1] # remove the ',' in the last item
+        tmp.append('}')
+
+        if leftMargin:
+            tmp = [ ' '*leftMargin + x for x in tmp ]
+          
+        if html:
+            return '<code>%s</code>' %br.join(tmp).replace(' ','&nbsp;')
+        else:
+            return br.join(tmp)     
+    else:
+        return '{}'
+
+'''
+Example:
+
+>>> a={'C': 2, 'B': 1, 'E': 4, (3, 5): 0}
+
+>>> print prnDict(a)
+{
+ 'C'   :2,
+ 'B'   :1,
+ 'E'   :4,
+ (3, 5):0
+}
+
+>>> print prnDict(a, sortKey=1)
+{
+ 'B'   :1,
+ 'C'   :2,
+ 'E'   :4,
+ (3, 5):0
+}
+
+>>> print prnDict(a, keyPrefix="<b>", keySuffix="</b>")
+{
+ <b>'C'   </b>:2,
+ <b>'B'   </b>:1,
+ <b>'E'   </b>:4,
+ <b>(3, 5)</b>:0
+}
+
+>>> print prnDict(a, html=1)
+<code>{
+&nbsp;'C'&nbsp;&nbsp;&nbsp;:2,
+&nbsp;'B'&nbsp;&nbsp;&nbsp;:1,
+&nbsp;'E'&nbsp;&nbsp;&nbsp;:4,
+&nbsp;(3,&nbsp;5):0
+}</code>
+
+>>> b={'car': [6, 6, 12], 'about': [15, 9, 6], 'bookKeeper': [9, 9, 15]}
+
+>>> print prnDict(b, sortKey=1)
+{
+ 'about'     :[15, 9, 6],
+ 'bookKeeper':[9, 9, 15],
+ 'car'       :[6, 6, 12]
+}
+
+>>> print prnDict(b, keyAlign="r")
+{
+        'car':[6, 6, 12],
+      'about':[15, 9, 6],
+ 'bookKeeper':[9, 9, 15]
+}
+'''
+## end of http://code.activestate.com/recipes/327142/ }}}
+
 
         
 #################

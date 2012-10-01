@@ -24,7 +24,6 @@ import sys
 import os
 import shutil
 import tempfile
-import subprocess 
 from optparse import OptionParser
 import fileinput
 import pyfits
@@ -262,7 +261,7 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
     #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
     scamp.ext_config['ASTREF_CATALOG'] = catalog
     scamp.ext_config['SOLVE_PHOTOM'] = "N"
-    scamp.ext_config['CHECKPLOT_TYPE'] = "NONE"
+    #scamp.ext_config['CHECKPLOT_TYPE'] = "NONE"
     scamp.ext_config['WRITE_XML'] = "N"
     cat_file = input_image + ".ldac"   # xxxxx.fits.ldac
     #updateconfig=False means scamp will use the specified config file instead of the single config parameters
