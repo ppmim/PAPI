@@ -44,6 +44,7 @@ import multiprocessing
 import itertools
 
 # IRAF packages
+import pyraf
 from pyraf import iraf
 from iraf import noao
 from iraf import imred
@@ -70,6 +71,22 @@ import astromatic
 from astromatic.swarp import *
 import datahandler.dataset
 import misc.collapse
+
+#If your parallel tasks are going to use the same instance of PyRAF (and thus 
+#the same process cache), as in the case of running the entire parallel program 
+#inside a single Python script via, say, the multiprocessing module, you will 
+#want to turn off process caching. This turns off the ability for PyRAF to 
+#use/re-use the same continually running, connected, IRAF task subprocess to do 
+#the work of each call to the task. With no process caching allowed, each new 
+#call you make to the IRAF task will start a new, separate IRAF executable, 
+#which will live only as long as it is doing your work, which is what you want. 
+#To turn off process caching, include this line in your Python script:
+#
+#           iraf.prcacheOff()
+#   
+#
+#if you imported iraf from pyraf as above.
+pyraf.iraf.prcacheOff()
 
 #
 # Next functions are needed to allow the use of  multiprocessing.Pool() with 
@@ -1773,7 +1790,7 @@ class ReductionSet(object):
         # If no sequence number was specified, all seqs will be re-ordered and
         # processed 
         if seqs_to_reduce==None:
-            seqs_to_reduce = range(len(sequences))    
+            seqs_to_reduce = range(len(sequences))
             # Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE
             # This is required because some calibration sequence could be created 
             # after the science sequence, and might happen no other calibration is 
@@ -2143,7 +2160,7 @@ class ReductionSet(object):
                             # code needed anyway).
                             #results += [pool.apply_async(self.reduceSingleObj, 
                             #                             red_parameters)]
-                            pool = multiprocessing.Pool(2)
+                            pool = multiprocessing.Pool(2) #  por que el 2 ???
                             results += [pool.map_async(self.calc,
                                                       [red_parameters])]         
                         # Here is where we WAIT (BLOCKING) for the results 

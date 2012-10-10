@@ -1176,6 +1176,21 @@ Muevo temporalmente runQtProcess.py al directorio deprecated.
 ReductionSet en el log_file de cara a poder luego depurar la reduccion realizada
 por PAPI en cada ejecución.
 
+- Encuentro un Bug(?) al lanzar PAPI en el portatil, pues da un error al crear
+un master_dark de conjunto de Alhambra....en cambio en udit43 no ocurre ???
+
+
+2012-10-02
+==========  
+
+- Test: aplico una distorsión (applyDistort.py) a una imagen reducida del
+dataset de ALHAMBRA. Después, le paso astrowarp.py y compruebo que el plot
+distort_1.png que genera SCAMP coincide con el que patrón de distorsión aplicado
+(dist_mat_K.txt, que me pasó hace tiempo Conchi de PANIC).
+Luego, buscando como interpretar mejor los plots que genera SCAMP (ver http://www.astro.uni-bonn.de/theli/gui/astromphotom.html)
+extraigo que los pixels más grandes (rojo en plot) son los que deben coincidir
+con el eje óptico del instrumento, y el resto serán más pequeños y por tanto
+generan la distorsión; pensado un poco, eso tiene sentido....
 
 
 

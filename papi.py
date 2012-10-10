@@ -290,7 +290,8 @@ def main(arguments = None):
             else:
                 m_seqs_to_reduce = []
                 print "SEQS=", init_options.seq_to_reduce
-                m_seqs_to_reduce=range(init_options.seq_to_reduce[0],init_options.seq_to_reduce[1]+1)
+                m_seqs_to_reduce = range(init_options.seq_to_reduce[0], 
+                                         init_options.seq_to_reduce[1]+1)
                 #for elem in init_options.seq_to_reduce: 
                 #    m_seqs_to_reduce.append(int(elem))
                 #return

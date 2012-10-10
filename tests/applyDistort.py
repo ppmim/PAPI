@@ -39,25 +39,30 @@ from optparse import OptionParser
 from pylab import *
 
 def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=False):
-    """ Apply (remove/add) to an image a distorion using a matrix distortion for a grid of points, so   
-        firstly, we need to compute the full distorion matrix to all the pixels of the image,
-        and then map the new coordinates to remove/add the distorion. Note how matrix interpolation
-        is done (prediction-->real), because it caused to me some nightmares, but finally I caught it!;
-        the point it that with that interpolation (predic-->real), we'll get a corrected image, because what
-        we get is for each point in a generated-corrected image, what point of the distorted image should be,
-        what is the input for the map_coordinates routine !
-        So, if we wist to apply a artificial distortion, we should do the inverse interpolation, thus real--->predic
+    """ Apply (remove/add) to an image a distortion using a matrix distortion for 
+    a grid of points, so firstly, we need to compute the full distortion matrix 
+    to all the pixels of the image, and then map the new coordinates to 
+    remove/add the distortion. Note how matrix interpolation is done 
+    (prediction-->real), because it caused to me some nightmares, but finally 
+    I caught it!; the point it that with that interpolation (predic-->real), 
+    we'll get a corrected image, because what we get is for each point in a 
+    generated-corrected image, what point of the distorted image should be, what 
+    is the input for the map_coordinates routine !
+    So, if we wish to apply a artificial distortion, we should do the inverse 
+    interpolation, thus real--->predic
         
         
         Predicted : where points should be when no distortion
-        Real      : where points are due to the optical distortion, then real means distorted
+        Real      : where points are due to the optical distortion, then real 
+        means distorted
         
         # NOTA: me costo entender como hacer la interpolacion (prediction-->real),
-        # pero es asi por como luego mapeamos con map_coordinates para corregir la distorsion
+        # pero es asi por como luego mapeamos con map_coordinates para corregir 
+        la distorsion.
     """
     
-    src_img=pyfits.open(src_image)
-    src=src_img[0].data
+    src_img = pyfits.open(src_image)
+    src = src_img[0].data
 
     src_h, src_w = src.shape
          
@@ -70,10 +75,12 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
     #Xp,Yp = N.meshgrid(N.arange(0,SX)*0.018, N.arange(0,SY)*0.018) 
     
     
-    t=1 # offset factor
-    pixel_size=0.0168  # pixel size in mm, it means the sampling rate of the matrix interpolation
-    offset=abs(min(dm[:,0]))
-    offset=0
+    t = 1 # offset factor
+    pixel_size = 0.0168  # pixel size in mm, it means the sampling rate of the matrix interpolation
+    offset = abs(min(dm[:,0]))
+    print "offset = ", offset
+    #offset = 0
+    
     # we offset the input matrix because it has a range [-v1,+v1], so we sum v1
     # to offset in order to work with positive values for the matrix mapping 
     
@@ -108,11 +115,11 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
 
     #vx=N.arange(-38.267,38.367,0.036)
     #vy=N.arange(-38.267,38.367,0.036)
-    vx=N.arange(0, offset*2, pixel_size_x)
-    vy=N.arange(0, offset*2, pixel_size_y)
+    vx = N.arange(0, offset*2, pixel_size_x)
+    vy = N.arange(0, offset*2, pixel_size_y)
     
-    Ix=ipx(vx,vy)/(pixel_size_x) # we divide by a sampling rate to have same points as pixels in the final image; 0.018 interpolated value with call
-    Iy=ipy(vx,vy)/(pixel_size_y)
+    Ix = ipx(vx,vy)/(pixel_size_x) # we divide by a sampling rate to have same points as pixels in the final image; 0.018 interpolated value with call
+    Iy = ipy(vx,vy)/(pixel_size_y)
     
     print "Offset=",offset
     print "pxl_x=",pixel_size_x
@@ -127,8 +134,8 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
     if os.path.exists(dst_path): os.remove(dst_path)    
     # Save the new image in a FITS file
     hdu = pyfits.PrimaryHDU()
-    hdu.header=src_img[0].header.copy()
-    hdu.data=new_image[0,:,:]     
+    hdu.header = src_img[0].header.copy()
+    hdu.data = new_image[0,:,:]     
     hdulist = pyfits.HDUList([hdu])
     hdu.header.add_history('Warp image created from %s and distortion matrix %s' %(src_image, dist_matrix))
     hdulist.writeto(dst_path)
@@ -136,7 +143,7 @@ def applyDistort(src_image, dst_path, dist_matrix , scale_factor=1.0, inverse=Fa
 
 def readDistMat(dist_mat_path):
     """ Read distortion matrix from a file (given by ZEMAX) and return a MxN matrix"""
-    a=N.loadtxt(dist_mat_path, skiprows=1, usecols=(5,6,7,8))
+    a = N.loadtxt(dist_mat_path, skiprows=1, usecols=(5,6,7,8))
     
     return a
     
@@ -149,14 +156,16 @@ if __name__ == "__main__":
     parser = OptionParser(usage, description=desc)
     
     parser.add_option("-s", "--source_file",
-                  action="store", dest="source_file", help="souce file (FITS) to apply matrix distortion")
+                  action="store", dest="source_file", 
+                  help="source file (FITS) to apply matrix distortion")
                   
     parser.add_option("-o", "--output_file",
                   action="store", dest="output_file",
                   help="Output file generated after distortion matrix is applied")
     
     parser.add_option("-m", "--matrix_file",
-                  action="store", dest="matrix_file", help="matrix file describing the distortion to apply to the source file")
+                  action="store", dest="matrix_file", 
+                  help="matrix file describing the distortion to apply to the source file")
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
@@ -169,7 +178,7 @@ if __name__ == "__main__":
     
     parser.add_option("-i", "--inverse",
                   action="store_true", dest="inverse", default=False,
-                  help="apply inverse distortion")
+                  help="apply inverse distortion (it means, correct distortion)")
     
                                 
     (options, args) = parser.parse_args()
@@ -177,6 +186,7 @@ if __name__ == "__main__":
     
     if not options.source_file or not options.output_file or not options.matrix_file:
         parser.print_help()
+    else:
         applyDistort(options.source_file, options.output_file, options.matrix_file, \
                      options.scale_factor, options.inverse)
         
