@@ -25,4 +25,6 @@ and the generated files will be stored at
 
 1) First, one might want to have a look the the input frames first:
 
-    $papi.py 
+    $papi.py -c /data/config/config_ex1.cfg -s /data/example_1 -p
+    
+It will show all the files found in the source data directory /data/

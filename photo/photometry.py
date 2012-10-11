@@ -286,7 +286,7 @@ def compute_regresion ( vo_catalog, column_x, column_y ,
     n_Y = Y[validdataBoth] 
 
     if len(n_X)<3 or len(n_Y)<3:
-        raise Exception("Not enought number of data, only %d points found"%len(n_X))
+        raise Exception("Not enough number of data, only %d points found"%len(n_X))
 
     # Compute the linear fit
     res = numpy.polyfit(n_X, n_Y, 1, None, True)

@@ -213,7 +213,7 @@ class CheckQuality(object):
                 print "Fits keyword updated " 
             
         else:
-            print "Not enought stars found !!"
+            print "Not enough stars found !!"
             fits_file.close(output_verify='ignore')    
             return -1,-1
         

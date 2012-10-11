@@ -238,12 +238,12 @@ class MasterDomeFlat(object):
         log.info('Filter=%s , TEXP=%f ' , f_filter, f_expt)
         
         if len(domelist_lampon) < self.MIN_FLATS:
-            log.error("Error, not enought lamp_on flats. At least %s are requered" %(self.MIN_FLATS))
-            raise Exception("Error, not enought lamp_on flats. At least %s are requered" %(self.MIN_FLATS))
+            log.error("Error, not enough lamp_on flats. At least %s are required" %(self.MIN_FLATS))
+            raise Exception("Error, not enough lamp_on flats. At least %s are required" %(self.MIN_FLATS))
         
         if len(domelist_lampoff) < self.MIN_FLATS:
-            log.error("Error, not enought lamp_off flats. At least %s are requered"%(self.MIN_FLATS))
-            raise Exception("Error, not enought lamp_off flats. At least %s are requered" %(self.MIN_FLATS))
+            log.error("Error, not enough lamp_off flats. At least %s are required"%(self.MIN_FLATS))
+            raise Exception("Error, not enough lamp_off flats. At least %s are required" %(self.MIN_FLATS))
     
         #Clobber existing output images
         iraf.clobber='yes'

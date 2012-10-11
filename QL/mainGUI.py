@@ -1695,8 +1695,8 @@ class MainGUI(panicQL):
                 log.warning("Last two frames have different FILTER. Cannot subtract each other")
                 return
         else:
-            self.logConsole.info("Not enought files for subtraction")
-            log.debug("Not enought files for subtraction")
+            self.logConsole.info("Not enough files for subtraction")
+            log.debug("Not enough files for subtraction")
             return
         
         
@@ -1797,7 +1797,7 @@ class MainGUI(panicQL):
     def createMasterDark_slot(self):
 
         if len(self.m_popup_l_sel)<=1:
-            QMessageBox.information(self,"Info","Not enought frames !")
+            QMessageBox.information(self,"Info","Not enough frames !")
             return
 
         outfileName = QFileDialog.getSaveFileName(self.m_outputdir+"/master_dark.fits", 
@@ -1830,7 +1830,7 @@ class MainGUI(panicQL):
         """
             
         if len(self.m_popup_l_sel)<5:
-            QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>=5) !")
+            QMessageBox.information(self,"Info","Error, not enough frames selected to reduce (>=5) !")
             return
               
         #Create working thread that compute sky-frame
@@ -1857,7 +1857,7 @@ class MainGUI(panicQL):
                     QMessageBox.critical(self, "Error", "Error while creating master Dome Flat")
                     raise
         else:
-            QMessageBox.information(self,"Info","Error, not enought frames (>2) !")
+            QMessageBox.information(self,"Info","Error, not enough frames (>2) !")
 
     def createMasterTwFlat_slot(self):
       
@@ -1892,7 +1892,7 @@ class MainGUI(panicQL):
         """
         
         if len(self.m_popup_l_sel)<=1:
-            QMessageBox.information(self,"Info","Not enought frames !")
+            QMessageBox.information(self,"Info","Not enough frames !")
             return
 
         outfileName = QFileDialog.getSaveFileName (self.m_outputdir+"/gainmap.fits", 
@@ -2030,7 +2030,7 @@ class MainGUI(panicQL):
                                                        time_near_offset, runId=0)
                     # For the moment, the minimun number of nearest is >0
                     if len(near_list)==0:
-                        QMessageBox.information(self, "Info", "Not enought science frames found")  
+                        QMessageBox.information(self, "Info", "Not enough science frames found")  
                         return
                 else:
                     QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
@@ -2066,8 +2066,8 @@ class MainGUI(panicQL):
                 near_list = ltemp[-5:] # actually, the last in the list is the current one (filename=ltemp[-1])
                 file_n = len(near_list)
             else:
-                self.logConsole.info("Not enought files for sky subtraction (>4)")
-                log.debug("Not enought files for sky subtraction (>5)")
+                self.logConsole.info("Not enough files for sky subtraction (>4)")
+                log.debug("Not enough files for sky subtraction (>5)")
                 return
 
         # ##################################    
@@ -2207,7 +2207,7 @@ class MainGUI(panicQL):
                 print "NEAR_LIST=", near_list
                 # For the moment, the minimun number of nearest is >0
                 if len(near_list)==0:
-                    QMessageBox.information(self, "Info", "Not enought science frames found")  
+                    QMessageBox.information(self, "Info", "Not enough science frames found")  
                     return
             else:
                 QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
@@ -2234,7 +2234,7 @@ class MainGUI(panicQL):
                     
         # CASE 2: Stack frames selected by user in the list_view
         elif len(self.m_popup_l_sel)>1 and len(self.m_popup_l_sel)<4:
-            QMessageBox.information(self,"Info","Error, not enought frames selected to reduce (>4) !")
+            QMessageBox.information(self,"Info","Error, not enough frames selected to reduce (>4) !")
             return    
         elif len(self.m_popup_l_sel)>=4:
             # Create file list from current selected science files
@@ -2270,7 +2270,7 @@ class MainGUI(panicQL):
         # Next code is only a raw template 
         # Check list lenght
         if len(self.m_popup_l_sel)<1:
-            QMessageBox.information(self, "Info", "Not enought science pre-reduced frames selected")
+            QMessageBox.information(self, "Info", "Not enough science pre-reduced frames selected")
             return
         
         if len(self.m_popup_l_sel)==1:
@@ -2347,7 +2347,7 @@ class MainGUI(panicQL):
         @return: None, but produce an astrometrically calibrated image.
           
         @todo: we should check the image is pre-reduced or at least, with 
-        enought objects 
+        enough objects 
         """
         
         if len(self.m_popup_l_sel)==1:
@@ -2391,7 +2391,7 @@ class MainGUI(panicQL):
         estimation.
           
         @todo: we should check the image is pre-reduced or at least, with 
-        enought objects 
+        enough objects 
         """
         
         if len(self.m_popup_l_sel)==1:

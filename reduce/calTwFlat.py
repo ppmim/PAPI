@@ -188,7 +188,7 @@ class MasterTwilightFlat (object):
             raise ExError('No FLAT frames defined')
         
         if nframes<self.m_min_flats:
-            log.error("Not enought number (%s) of flat frames (>%s) to compute \
+            log.error("Not enough number (%s) of flat frames (>%s) to compute \
             master tw-flat",nframes, self.m_min_flats)
             raise Error("Flat sequence is too short, at least %s frames are required"%self.m_min_flats)
         
@@ -219,7 +219,7 @@ class MasterTwilightFlat (object):
             f=datahandler.ClFits ( iframe )
             log.debug("Checking data compatibility (filter, texp, type)")
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
-            #Compute the mean count value in chip to find out good frames (enought check ??)
+            #Compute the mean count value in chip to find out good frames (enough check ??)
             mean = 0
             myfits = pyfits.open(iframe, ignore_missing_end=True)
             if f.mef==True:
@@ -266,8 +266,8 @@ class MasterTwilightFlat (object):
             for e in good_frames:
                 log.info("--->%s",e)            
         else:
-            log.error("Error, not enought good frames, exiting....")
-            raise Exception("Error, not enought good flat frames")
+            log.error("Error, not enough good frames, exiting....")
+            raise Exception("Error, not enough good flat frames")
                 
         #Clobber existing output images
         iraf.clobber = 'yes'

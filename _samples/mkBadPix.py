@@ -66,10 +66,10 @@ def compute_badPixMask ( flat_files, threshold ):
             flats_high+=nframe+' , '
             nhigh+=1
             
-    #Check whether there are enought flats files
+    #Check whether there are enough flats files
     if ( nlow<1 or nhigh<1 or abs(nlow-nhigh)>40 ):
-        #Error, not enought flat frames
-        print 'Error in compute_badPixMask, not enought flats frames '
+        #Error, not enough flat frames
+        print 'Error in compute_badPixMask, not enough flats frames '
         return -1
     
     #Combine LOW flats

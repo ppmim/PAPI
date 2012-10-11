@@ -906,7 +906,7 @@ class ReductionBlock:
         # ******************************************************************* 
         # MULTI 
         # *******************************************************************
-        # adjust and check there are enought frames 
+        # adjust and check there are enough frames 
         m_n_frames = 0 
         if 2*n_frames>len(self.m_file_list)-1:
             m_n_frames = len(self.m_file_list)-1
@@ -936,7 +936,7 @@ class ReductionBlock:
         # *** PRE-frames 
         if (i_frame-(m_n_frames + post_pend))>=0:
             sky_list = self.m_cl_file_list[(i_frame-(m_n_frames+post_pend)):i_frame]
-        else: # not enought pre-frames
+        else: # not enough pre-frames
             sky_list = self.m_cl_file_list[0:i_frame]
         
         log.debug("SKY_LIST(pre)=%s",sky_list)
@@ -944,7 +944,7 @@ class ReductionBlock:
         # *** POST-frames 
         if (i_frame+(m_n_frames+pre_pend))<=len(self.m_file_list)-1:
             sky_list += self.m_cl_file_list[i_frame+1:i_frame+(m_n_frames+pre_pend+1)]
-        else: # not enought post-frames
+        else: # not enough post-frames
             sky_list += self.m_cl_file_list[i_frame+1:]
             
         log.debug("SKY_LIST(post)=%s",sky_list)
@@ -1183,11 +1183,11 @@ class ReductionBlock:
                 # reject the frame
                 log.error("DISCARTING: Frame %s is neither dome_flat nor a dark frame", iframe.pathname)
                 
-        #Check whether there are enought calib frames
+        #Check whether there are enough calib frames
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10 
             or len(darks_frames)<3):
-            log.error("There are not enought calib frames for create BPM !!")
-            raise ExError, "Not enought calib frames"
+            log.error("There are not enough calib frames for create BPM !!")
+            raise ExError, "Not enough calib frames"
         
         #STEP 2: Create the master dark
         try:

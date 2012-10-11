@@ -1193,6 +1193,47 @@ con el eje óptico del instrumento, y el resto serán más pequeños y por tanto
 generan la distorsión; pensado un poco, eso tiene sentido....
 
 
+- Aniado a reductionset.py 
+
+ >>> pyraf.iraf.prcacheOff()
+
+que me reportó VTerron tras consultar en los foros de PyRAF y creer que era un bug.
+Aunque creo que ya no la necestio, pues no se que hice para evitar los problemas....
+
+No obstante, la añado también con la intención de solucionar el problema siguiente
+ya conocido desde hace tiempo:
+
+
+Exception in thread Thread-1 (most likely raised during interpreter shutdown):
+Traceback (most recent call last):
+  File "/usr/lib64/python2.7/threading.py", line 530, in __bootstrap_inner
+  File "/usr/lib64/python2.7/threading.py", line 483, in run
+  File "/usr/lib64/python2.7/multiprocessing/pool.py", line 272, in _handle_workers
+<type 'exceptions.TypeError'>: 'NoneType' object is not callable
+
+
+pero SIGUE dando el problema a pesar de deshabilitar la Cache.
+Leo en un foro que a alguien le pasa algo parecido, y le encuentro la siguiente
+respuesta interesante: 
+
+"""
+From: http://stackoverflow.com/questions/4079810/python-thread-exception-errors-when-exit-the-whole-program
+
+The problem is caused by the use of threading.Thread.setDaemon. Threads set 
+daemonic don't prevent the Python intepreter from exiting, but they still keep 
+running. Because Python cleans up the environment before the process is 
+terminated, the threads can run into trouble when stuff is removed from under 
+them. That raises an exception, which the thread class tries to print for your 
+convenience -- but that, then, too fails because the process is exiting.
+
+You could try to silence the exception, but that's tricky (and if the thread 
+does anything substantial, it might hide a real problem. Not the case here, 
+though.) Or you could ask the thread to stop before exiting, and not set the 
+thread daemonic. Or you can simply avoid using threads altogether. I do not 
+remember if wxPython has a convenient mechanism for getting a process's output 
+or even of doing asynchronous I/O, but many GUI toolkits do. And there's always
+Twisted, which does it all for you.
+"""
 
 
 

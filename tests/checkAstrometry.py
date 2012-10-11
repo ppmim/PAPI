@@ -40,7 +40,7 @@ def checkAstrometry(image, catalog="2mass"):
         
         TODO: Need review or use other method rather immatch, because it depend of the -i <min peak value>, now set to -1 ??? 
         
-        'image',   must have a good enought WCS header
+        'image',   must have a good enough WCS header
         'catalog', must be 2mass, usnob, usnoa, gsc and conresponding environtment variable must to be exported accordingly
     """
   

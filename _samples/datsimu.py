@@ -162,7 +162,7 @@ def createMEF( filelist, filename, next=4):
 
     #STEP 1: Check all required frames are given
     if ( len(filelist) != next ):
-        print "Error, Not enought number frames given. Required frames=", next
+        print "Error, Not enough number frames given. Required frames=", next
         return 0
 
     #STEP 2: Start the MEF creation

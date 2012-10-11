@@ -1924,10 +1924,10 @@ class createMasterSkyFlat(task):
         
     messageLog.put('Right, all flat frames same type')
     
-    # STEP 1.1 : Check that there are enought flat frames
+    # STEP 1.1 : Check that there are enough flat frames
     if len(framelist) < MIN_NUMB_FLATF:
-      messageLog.put("Error: Task 'createMasterSkyFlat' finished. Not enought flat frames to build master sky flat")
-      log.error("Error: Task 'createMasterSkyFlat' finished. Not enought flat frames to build master sky flat (<%d)" % MIN_NUMB_FLATF )
+      messageLog.put("Error: Task 'createMasterSkyFlat' finished. Not enough flat frames to build master sky flat")
+      log.error("Error: Task 'createMasterSkyFlat' finished. Not enough flat frames to build master sky flat (<%d)" % MIN_NUMB_FLATF )
       return -1
     
     #Clobber existing output images
@@ -2255,10 +2255,10 @@ class createPixelMask(task):
         flats_high+=nframe+' , '
         nhigh+=1
         
-    #Check whether there are enought flats files
+    #Check whether there are enough flats files
     if ( nlow<1 or nhigh<1 or abs(nlow-nhigh)>40 ):
-      #Error, not enought flat frames
-      messageLog.put_error('Error in createPixelMask, not enought flats frames L=%d H=%d ' %(nlow,nhigh))
+      #Error, not enough flat frames
+      messageLog.put_error('Error in createPixelMask, not enough flats frames L=%d H=%d ' %(nlow,nhigh))
       return -1
     
     #Combine LOW flats

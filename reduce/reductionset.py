@@ -1278,7 +1278,7 @@ class ReductionSet(object):
         else:
             try:
                 offsets_mat = numpy.loadtxt(p_offsets_file, usecols = (1,2,3)) # columns => (xoffset, yoffset, match fraction) in PIXELS
-                # check if correlation overlap fraction is good enought
+                # check if correlation overlap fraction is good enough
                 if (offsets_mat[:,2]<self.MIN_CORR_FRAC).sum()>1:
                     log.critical("Some error while computing dither offsets. Overlap correlation fraction is < %f",self.MIN_CORR_FRAC)
                     raise Exception("Wrong overlap correlation fraction for translation offsets")

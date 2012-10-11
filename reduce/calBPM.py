@@ -138,7 +138,7 @@ class BadPixelMask(object):
                 
             
         if len(good_flats)<2:
-            log.error('Not enought dome flats provided. At least 2 good flat frames are required')
+            log.error('Not enough dome flats provided. At least 2 good flat frames are required')
             sys.exit(1)
         
         # Due a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument

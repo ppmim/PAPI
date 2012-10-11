@@ -81,7 +81,7 @@ class BadPixelMask(object):
          Algorith to create the BPM
          -------------------------- 
          1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
-            and and check whether there are enought calib frames
+            and and check whether there are enough calib frames
          2: Check the master dark (Texp)
          3: Substrac the master dark to each dome flat
          4: Combine dome dark subtracted flats (on/off)
@@ -157,10 +157,10 @@ class BadPixelMask(object):
                 # reject the frame
                 log.error("DISCARTING: Frame %s is not dome_flat", f.pathname)
                 
-        #Check whether there are enought calib frames
+        #Check whether there are enough calib frames
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10):
-            log.error("There are not enought calib frames to create BPM !!")
-            raise ExError("Not enought calib frames")
+            log.error("There are not enough calib frames to create BPM !!")
+            raise ExError("Not enough calib frames")
         
         
         #STEP 3: Subtrac the master dark to each dome flat
@@ -316,11 +316,11 @@ class BadPixelMask(object):
                 # reject the frame
                 log.error("DISCARTING: Frame %s is neither dome_flat nor a dark frame", f.pathname)
                 
-        #Check whether there are enought calib frames
+        #Check whether there are enough calib frames
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10 
             or self.master_dark==None):
-            log.error("There are not enought calib frames for create BPM !!")
-            raise ExError("Not enought calib frames")
+            log.error("There are not enough calib frames for create BPM !!")
+            raise ExError("Not enough calib frames")
         
         
         #STEP 3: Subtrac the master dark to each dome flat

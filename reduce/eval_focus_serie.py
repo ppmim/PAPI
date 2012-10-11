@@ -104,7 +104,7 @@ class FocusSerie(object):
             plt.show()
 
         else:
-            print "Not enought data for fitting"
+            print "Not enough data for fitting"
             best_focus = np.NaN
 
         return best_focus

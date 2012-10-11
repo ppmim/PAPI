@@ -148,7 +148,7 @@ class MasterSuperFlat(object):
             raise ExError('No frames found')
         
         if nframes<self.m_min_flats:
-            log.error("Not enought number of flat frames (>%s) to compute master super-flat",self.m_min_flats)
+            log.error("Not enough number of flat frames (>%s) to compute master super-flat",self.m_min_flats)
             return False
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
