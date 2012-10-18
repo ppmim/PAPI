@@ -26,6 +26,8 @@ def check_requirement(package, module_name, version_attr, required_str):
         else:
             return ''
 
+def check_pyraf():
+
 def check_pyqt():
     wng = check_requirement("PyQt", "PyQt4.QtCore", "PYQT_VERSION_STR", "4.4")
     if wng:

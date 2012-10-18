@@ -55,6 +55,36 @@ zypper install python-sphinx
 > zypper install ipython
 
 
+1B-Python v2.7.x : (if no default in openSuSE11.x)
+=================
+Python 2.7 is mandatory because a bug with PyRAF routines (imcombine, imstats, ...)
+when executed by the multiprocessing module (Pool.apply_async, map_async, ...)
+
+1.1 wget http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz
+
+>tar -xvzf
+>mkdir /usr/local/python273
+>cd python-src-dir
+>./configure --prefix=/usr/local/python273
+>make install
+
+1.2 Python Modules
+-------------------
+- Then, after install the new version of Python interpreter, we must install
+again all the python modules, ie:
+
+ * IPython 0.8.4 (optional)
+ * numpy
+ * scipy
+ * matplotlib
+ * stsci_python
+ * VO.table + ATpy
+ * PyWCS 
+ * PyQt3
+ 
+ (see details below)
+
+
 2-Astromatic
 ============
 Two options:
@@ -318,7 +348,7 @@ note: optionally, xpa source can also be compiled and installed
 > mkdir -p /usr/local/wcstools/bin
 > cp bin/* /usr/local/wcstools/bin
 
-10. PyWCS (v.1.10-4.7)
+10. PyWCS (v.1.10-4.7) (included in stsci_python >=2.13)
 =================
 - download from https://trac.assembla.com/astrolib
 - PyFITS is required, but PyWCS can be installed without it
@@ -339,9 +369,9 @@ vo.table
 ATpy 
 ----
 > unpack .tar.gz
-> python setup.py install
+> python setup.py install 
 
-12. PProcess 
+12. PProcess (python < 2.5 )
 ============
 - download from http://www.boddie.org.uk/python/downloads/pprocess-0.5.tar.gz
 

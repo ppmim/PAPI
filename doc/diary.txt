@@ -1287,7 +1287,12 @@ perfectamente. El me recomienda pasar a PyRAF 2.0
 - Instalo PyRAF 2.0, en udit43, pero siguen los problemas.
 - Instalo Python 2.7 en un directorio a parte, pero no puedo probarlo pues
 no encuentra PyRAF, etc ....
+- Instalo en el portatil (/usr/local/python273) Python 2.7.3 y todos los 
+modulos de python que necesita PAPI. Lo documento en el PAPI_Install.txt. 
+Ahora todo parece funcionar correctamente en el portatil con la nueva version 
+de Python273.
 
+- comienzo desarrollo de check_papi_modules.py para incluyir al inicio de papi.py
 
 
 
