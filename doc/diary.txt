@@ -1236,13 +1236,65 @@ Twisted, which does it all for you.
 """
 
 
+2012-10-17
+==========  
+- En busca del error que hace que falle PyRAF+multiprocessing (sin clases ni nada)
+en python 2.6 ( HD, portatil, udit43), y que sin embargo funciona perfectamente
+en python 2.7:
+
+
+#!/usr/bin/env python
+
+import pyraf.iraf
+from pyraf.iraf import noao, imred, ccdred, mscred
+from pyraf.iraf import images,imutil
+
+import time
+import multiprocessing
+import sys
+
+pyraf.iraf.prcacheOff()
+
+def run_iraf():
+    print "Start run_iraf"
+
+    pyraf.iraf.unlearn("imstat")
+    #import pdb; pdb.set_trace()
+    pyraf.iraf.imstat(images = "/tmp/dark.fits", fields="mean")
+
+    print "End run_iraf"
+
+    return "Success!"
+
+if __name__ == '__main__':
+    #run_iraf()
+    #sys.exit(0)
+    pool = multiprocessing.Pool(processes=2)      # start 4 worker processes
+    result = pool.apply_async(run_iraf, args=())   
+    result.wait()
+    #result = multiprocessing.Pool(processes=4).apply_async(f, [10])
+    print result.get(timeout=5) 
+    
+    sys.exit(0)
+
+
+2012-10-18
+==========  
+- Continuo buscando el problema de PyRAF; escribo a help@stsci.edu preguntando
+sobre el problema.
+- Lo pruebo en el ordenador de VTerron (python 2.6.6, PyRAF 2.0) y funciona 
+perfectamente. El me recomienda pasar a PyRAF 2.0
+- Instalo PyRAF 2.0, en udit43, pero siguen los problemas.
+- Instalo Python 2.7 en un directorio a parte, pero no puedo probarlo pues
+no encuentra PyRAF, etc ....
+
+
+
 
    
 FOR NEXT VIDEOCONF
 ==================
 
- - Improvements in master flat (normlizaton wrt chip 1)
- - New module for mix dome & sky FF : calCombineFF()
 
 KDD con MATILDE (15-May-2012)
 =============================

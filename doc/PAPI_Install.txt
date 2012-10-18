@@ -220,7 +220,8 @@ dependences (python 2.7 , etc....)
 
 4.Scipy v0.10.0b2 :
 ===================
-- Currently only used in applyDistort.py and third part cosmics, but  not required for PAPI
+- Currently only used in applyDistort.py and third party software 'cosmics', 
+but  not required for PAPI.
 - pre-requisites : blas3 lapack3+
 
 BLAS/Lapack

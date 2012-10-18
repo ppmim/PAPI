@@ -1,6 +1,12 @@
 import multiprocessing, time           
-def foo(x):                            
-	time.sleep(3)                         
+def foo(t):                            
+	time.sleep(t)                         
+	return "Nada "
 
-multiprocessing.Pool(1).apply(foo, [1])
+print "start"
 
+r = multiprocessing.Pool(1).apply_async(foo, args=[3])
+#r.wait()
+print "Result=",r.get()
+
+print "end !"

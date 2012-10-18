@@ -54,7 +54,9 @@ import fileinput
 import time
 import shutil
 from optparse import OptionParser
+import numpy 
 
+# PAPI modules
 import misc.fileUtils
 import misc.utils as utils
 import datahandler
@@ -69,9 +71,6 @@ from iraf import mscred
 # Interact with FITS files
 import pyfits
 
-# Import Pyro core
-#import Pyro.core
-#import Pyro.naming
 
 # Logging
 from misc.paLog import log
@@ -278,6 +277,22 @@ class MasterDark(object):
         log.debug('Saved master DARK to %s' , self.__output_filename)
         log.debug("createMasterDark' finished %s", t.tac() )
         
+        stats = True
+        if stats:
+            medians = []
+            for i_frame in good_frames:
+                pf = pyfits.open(i_frame)
+                if len(pf)==1:
+                    print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
+                    medians.append(numpy.median(pf[0].data))
+                else:
+                    print "MEF files not yet supported"
+            print "QC DARK MEAN =",numpy.mean(medians)
+            print "QC DARK MED =",numpy.median(medians)
+            print "QC DARK STDEV =",numpy.std(medians)
+            #print "QC RONi",
+            #print "QC DARK NBADPIX =", 
+                  
         # Get some stats from master dark (mean/median/rms)
         print "Stats:"
         print "----- "
