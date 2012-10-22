@@ -283,15 +283,26 @@ class MasterDark(object):
             for i_frame in good_frames:
                 pf = pyfits.open(i_frame)
                 if len(pf)==1:
-                    print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
-                    medians.append(numpy.median(pf[0].data))
+                    #print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
+                    medians.append(numpy.median(pf[0].data[512:1536,512:1536]))
                 else:
-                    print "MEF files not yet supported"
+                    print "Error: MEF files not yet supported"
+                    return self.__output_filename
+                
+                # Get some stats from master dark (mean/median/rms)
+                values = (iraf.mscstat (images=i_frame,
+                                fields="image,mean,mode,midpt,stddev,min,max",
+                                format='yes',Stdout=1))
+                for line in values:
+                    print line
+            print "-----------------------------------"
+            print "MEDIANS=",medians    
             print "QC DARK MEAN =",numpy.mean(medians)
             print "QC DARK MED =",numpy.median(medians)
             print "QC DARK STDEV =",numpy.std(medians)
             #print "QC RONi",
             #print "QC DARK NBADPIX =", 
+            
                   
         # Get some stats from master dark (mean/median/rms)
         print "Stats:"

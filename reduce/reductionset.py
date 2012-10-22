@@ -2274,7 +2274,7 @@ class ReductionSet(object):
                 new_frame = pyfits.open(seq_result_outfile, 'update')
                 raw_frames = [os.path.basename(f) for f in sequence]
                 new_frame[0].header.add_history("RAW_FRAMES= %s"%str(raw_frames))
-                new_frame.close()
+                new_frame.close( )
                 
         else:
             log.error("[reduceSeq] Cannot identify the type of the sequence to reduce ...")

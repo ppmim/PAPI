@@ -62,6 +62,7 @@ import reduce.reductionset as RS
 import misc.config
 import misc.utils as utils
 import misc.genLogsheet as gls
+import misc.check_papi_modules
 
 ################################################################################
 # main
@@ -92,6 +93,11 @@ def main(arguments = None):
                       help = """Config file for the PANIC Pipeline application.
                        If not specified, '%s' is used."""
                        % misc.config.default_config_file())
+    
+    parser.add_option("-C", "--Check",
+                      action = "store_true", dest = "check_modules",
+                      help = """Check if versions of PAPI modules are right.""",
+                       default = False)
                   
     parser.add_option("-s", "--source", type = "str",
                   action = "store", dest = "source",
@@ -186,6 +192,11 @@ def main(arguments = None):
         parser.print_help()
         sys.exit()
     """
+    
+    # Check required modules and versions
+    if init_options.check_modules:
+        misc.check_papi_modules.check_modules()
+        return
     
     # Read the default configuration file if none was specified by the user
     if not init_options.config_file:
