@@ -30,19 +30,18 @@
 # 
 # TODO:
 # - include master dark subtraction !!!
-# - NO FUNCIONA BIEN, muy conservador ??!!!! no da mascaras buenas !!!! da pocos pixeles malos ????
+# - NO FUNCIONA BIEN, muy conservador ??! no da mascaras buenas !! 
+#   da pocos pixeles malos ????
 ################################################################################
 
 
-################################################################################
 # Import necessary modules
 
 import datetime
-import getopt
 import os
 import sys
 import fileinput
-
+from optparse import OptionParser
 
 
 # Pyraf modules
@@ -116,7 +115,7 @@ class BadPixelMask(object):
         
         
         # Read the file list
-        filelist=[line.replace( "\n", "") for line in fileinput.input(self.input_file)]
+        filelist = [line.replace( "\n", "") for line in fileinput.input(self.input_file)]
         
         # Here we could check if each frame is a good dome flat !!!
         good_flats=[]
@@ -148,8 +147,9 @@ class BadPixelMask(object):
             ftemp = open(flats,"w")
             for flat in good_flats:
                 ftemp.write(flat+"\n")
-            ftemp.close()       
+            ftemp.close() 
         else: flats = self.input_file
+        
              
         # STEP 1: Make the combine of dome Flat frames
         # - Build the frame list for IRAF
@@ -202,17 +202,17 @@ class BadPixelMask(object):
             tmpf.shape = nx1*nx2
             median = numpy.median(tmpf)
             
-            print "MEDIAN=",median
-            print "STD=",std
+            print ">>MEDIAN=",median
+            print ">>STD=",std
             
-            log.debug("Divide each flatted flat by its median")
+            #log.debug("Divide each flatted flat by its median")
             tmpf = tmpf/median
             
             low = 1.0 - self.lthr*std/median
             high = 1.0 + self.hthr*std/median
             
-            print "LOW=", low
-            print "HIGH=", high
+            print ">>LOW=", low
+            print ">>HIGH=", high
             
             #STEP 4.3 Define the bad pixels
             tmpf.shape = nx1,nx2
@@ -224,14 +224,14 @@ class BadPixelMask(object):
         
         # STEP 5: Go through the rejection mask and if a pixel has been marked bad 
         # more than a set number of times, then it is defined as bad
-        nbmax = numpy.max(2, len(good_flats)/4)
+        nbmax = numpy.maximum(2, len(good_flats)/4)
             
         bpm = numpy.where(bpm>nbmax,1,0) # bad pixel set to 1
         nbad = (bpm==1).sum()
         
         badfrac = float(nbad)/float(nx1*nx2)
-        print "# bad pixels", nbad
-        print " BAD_FRAC", badfrac
+        print ">>#Bad pixels", nbad
+        print ">>BAD_FRAC", badfrac
         
         # Save the BPM
         misc.fileUtils.removefiles( self.output )               
@@ -245,103 +245,73 @@ class BadPixelMask(object):
         hdulist.close(output_verify='ignore')
         
         # Remove temp files
-        #misc.fileUtils.removefiles(flat_comb)
+        misc.fileUtils.removefiles(flat_comb)
         
         log.debug('Saved Bad Pixel Mask  to %s' , self.output)
         log.debug("createBPM' finished %s", t.tac() )
         
 
-#-----------------------------------------------------------------------
+###############################################################################
+usage = "usage: %prog [options] "
+parser = OptionParser(usage)
+ 
+               
+parser.add_option("-s", "--source",
+              action="store", dest="source_file_list",
+              help="list of input (optionally dark corrected) dome flat images..")
 
-def usage():
-    print ''
-    print 'NAME'
-    print '       calBPM.py - Bad Pixel Mask creation\n'
-    print 'SYNOPSIS'
-    print '       calBPM.py [options] -f file.list\n'
-    print 'DESCRIPTION'
-    print '       Compute a BPM from a give dome-flat frames list'
-    print ' '
-    print 'OPTIONS'
-    print '       -f --file          The list of input (dark corrected) dome flat images'
-    print '       -d --dark          The master dark to subtract to dome flats'
-    print '       -o --out bmp.fits  The output bad pixel mask'
-    print '       -l --lthr 3        The low rejection threshold in units of sigma'
-    print '       -h --hthr 5        The high rejection threshold in units of sigma'
-    print '       -v : verbose debugging output\n'
-    print 'VERSION'
-    print '       25 June 2009'
-    print ''
-    raise SystemExit
+parser.add_option("-o", "--output",
+              action="store", dest="output_filename", 
+              help="The output bad pixel mask.")
 
-#-----------------------------------------------------------------------
+parser.add_option("-L", "--lthr",
+              action="store", dest="lthr", type='float', default=3.0,
+              help="The low rejection threshold in units of sigma [default 3]")
 
+parser.add_option("-H", "--hthr",
+              action="store", dest="hthr", type='float', default=5.0,
+              help="The high rejection threshold in units of sigma [default 5]")
 
+parser.add_option("-D", "--master_dark",
+              action="store", dest="master_dark", type='str',
+              help="[Optional] Master dark frame to subtract")    
+
+parser.add_option("-S", "--show_stats",
+              action="store_true", dest="show_stats", default=False,
+              help="Show statistics [default False]")    
+
+parser.add_option("-v", "--verbose",
+              action="store_true", dest="verbose", default=True,
+              help="verbose mode [default]")
 
 
 ################################################################################
 # main
-if __name__ == "__main__":
-    print 'Start BadPixelMask....'
+def main(arguments=None):
     
-    # Read command line parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:d:o:l:h:v',['file=','dark=','out=','lthr=','hthr=','verbose'])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(1)
+    if arguments is None:
+        arguments = sys.argv[1:] # argv[0] is the script name
+    (options, args) = parser.parse_args(args = arguments)
+
+    if len(args) !=0:
+        parser.print_help()
+        return 2 # used for command line syntax errors
     
-    nargs = len(sys.argv[1:])
-    nopts = len(opts)
-    if nargs<2:
-        usage()
-        sys.exit(2)  
+    # Make sure we are not overwriting an existing file 
+    if os.path.exists(options.output_filename):
+        print "Error. The output file '%s' already exists."  % \
+              (options.output_filename)
+        return 1
+    if options.master_dark:
+        print "Sorry, dark subtraction not yet implemented."
+        return 1
     
-    verbose= False
-    inputfile=''
-    dark=''
-    outputfile='/tmp/bpm.fits'
-    lthr=3
-    hthr=5
-    
-            
-    for option, par in opts:
-        if option in ("-f", "--file"):
-            inputfile=par
-            print "inputfile=", inputfile
-        if option in ("-d", "--dark"):
-            dark=par
-            print "dark=", dark
-        if option in ("-o", "--out"):
-            outputfile=par
-            print "outputfile=",outputfile
-        if option in ("-l", "--lthr"):
-            lthr=par
-            print "lthr=", lthr
-        if option in ("-h", "--hthr"):
-            hthr=par
-            print "hthr=",hthr
-        if option in ("-t", "--temp_dir"):
-            temp_dir = par
-            print "temp_dir=",temp_dir
-        if option in ('-v','--verbose'):      # verbose debugging output
-            verbose = True
-            print "Verbose true"
-                
-    
-    # Error checking:
-    if not os.path.exists(inputfile):      # check whether input file exists
-        print inputfile, 'does not exist'
-        sys.exit(2)
-    
-    print '...reading', inputfile
-    
-    bpm = BadPixelMask(inputfile, outputfile, lthr, hthr, temp_dir)
+    bpm = BadPixelMask(options.source_file_list, options.output_filename, 
+                       options.lthr, options.hthr)
     bpm.create()
-    
-    print 'ending BPM....'
-
-
-
-
-    
+        
+###############################################################################
+if __name__ == "__main__":
+    print 'Start BadPixelMap....'
+    sys.exit(main())
+        

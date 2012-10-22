@@ -46,7 +46,6 @@
 ################################################################################
 # Import necessary modules
 
-import getopt
 import sys
 import os
 import logging
@@ -340,6 +339,14 @@ if __name__ == "__main__":
     parser.add_option("-e", "--scale",
                   action="store_true", dest="texp_scale", default=False,
                   help="scale raw frames by TEXP [default False]")
+   
+    parser.add_option("-S", "--show_stats",
+                  action="store_true", dest="show_stats", default=False,
+                  help="Show frame stats [default False]")    
+    
+    parser.add_option("-b", "--show_stats",
+                  action="store_true", dest="computer_bpm", default=False,
+                  help="Compute the bpm from the dark (hot pixels) [default False]")    
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,

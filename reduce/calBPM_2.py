@@ -33,16 +33,14 @@
 ################################################################################
 
 
-################################################################################
 # Import necessary modules
-
-import datetime
-import getopt
 import os
+import datetime
 import sys
 import fileinput
+from optparse import OptionParser
 
-#from scipy import signal
+from scipy import signal
 #comentado el signal porque en el portatil da un error !!!!!
 
 # Pyraf modules
@@ -100,7 +98,7 @@ class BadPixelMask(object):
         
     """
     def __init__(self, i_file_list, master_dark, output_file=None, lsigma=4, 
-                 hsigma=4, temp_dir="/tmp"):
+                 hsigma=4, temp_dir="/tmp/"):
         
         self.i_file_list = i_file_list
         self.master_dark = master_dark
@@ -122,13 +120,14 @@ class BadPixelMask(object):
         
     def create_IRAF(self):
         
+        """Create a BPM using IRAF routines"""
         
         log.debug('createBadPixelMask started (iraf.ccdmask)')
-        t=utils.clock()
+        t = utils.clock()
         t.tic()
         
-        flats_off_frames=[]
-        flats_on_frames=[]
+        flats_off_frames = []
+        flats_on_frames = []
     
         
         #Check Master_Dark
@@ -181,10 +180,10 @@ class BadPixelMask(object):
                         result=file.replace(".fits","_D.fits"),
                         )
             flats_on_frames[flats_on_frames.index(file)]=file.replace(".fits","_D.fits")                                                
+
         
         print "OFF=", flats_off_frames
         print "ON=", flats_on_frames
-        
         
         #STEP 4: Combine dome dark subtracted flats (off)
         
@@ -211,7 +210,6 @@ class BadPixelMask(object):
                         #ParList = _getparlistname ('flatcombine')
                         )            
         #misc.fileUtils.removefiles(flats)
-        
         
         flat_on_comb = self.temp_dir + "flats_comb_on.fits"
         misc.fileUtils.removefiles(flat_on_comb)
@@ -293,14 +291,15 @@ class BadPixelMask(object):
         if os.path.exists(self.master_dark):
             f = datahandler.ClFits(self.master_dark)
             if not f.getType()=='MASTER_DARK':
-                log.error("File %s does not look a MASTER_DARK! Check your data.", self.master_dark)
-                raise ExError("File does not look a MASTER_DARK! Check your data.")              
+                pass
+                #log.error("File %s does not look a MASTER_DARK! Check your data.", self.master_dark)
+                #raise ExError("File does not look a MASTER_DARK! Check your data.")              
         else:
             log.error("File %s does not exist", self.master_dark)
             raise ExError("File does not exist")    
         
         
-        # Read the file list
+        # Read the source file list
         filelist=[line.replace( "\n", "").replace("//","/") for line in fileinput.input(self.i_file_list)]
         
         #STEP 1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
@@ -341,7 +340,7 @@ class BadPixelMask(object):
                         op='-',
                         result=file.replace(".fits","_D.fits"),
                         )
-            flats_on_frames[flats_on_frames.index(file)]=file.replace(".fits","_D.fits")                                                
+            flats_on_frames[flats_on_frames.index(file)] = file.replace(".fits","_D.fits")                                                
         print "OFF=", flats_off_frames
         print "ON=", flats_on_frames
         
@@ -357,13 +356,14 @@ class BadPixelMask(object):
         for flat in flats_off_frames:
             ftemp.write(flat+"\n")
         ftemp.close()       
-        iraf.flatcombine(input="@"+flats,
-                        output=flat_off_comb,
+        print "F=",flats
+        iraf.flatcombine(input="@"+flats.replace('//','/'),
+                        output=flat_off_comb.replace('//','/'),
                         combine='median',
                         ccdtype='none',
                         process='no',
                         reject='sigclip',
-                        subset='yes',
+                        subset='no',
                         scale='mode'
                         #verbose='yes'
                         #scale='exposure',
@@ -371,7 +371,6 @@ class BadPixelMask(object):
                         #ParList = _getparlistname ('flatcombine')
                         )            
         #misc.fileUtils.removefiles(flats)
-        
         
         flat_on_comb = self.temp_dir + "flats_comb_on.fits"
         misc.fileUtils.removefiles(flat_on_comb)
@@ -381,8 +380,8 @@ class BadPixelMask(object):
             ftemp.write(flat+"\n")
         ftemp.close()       
         #Combine dome dark subtracted flats (on)
-        iraf.flatcombine(input="@"+flats,
-                        output=flat_on_comb,
+        iraf.flatcombine(input="@"+flats.replace('//','/'),
+                        output=flat_on_comb.replace('//','/'),
                         combine='median',
                         ccdtype='none',
                         process='no',
@@ -400,8 +399,8 @@ class BadPixelMask(object):
         flat_ratio = self.temp_dir + 'flat_ratio.fits'
         misc.fileUtils.removefiles(flat_ratio)
         log.debug( 'Computing FlatRatio')
-        iraf.imarith(operand1=flat_off_comb,
-                 operand2=flat_on_comb,
+        iraf.imarith(operand1=flat_off_comb.replace('//','/'),
+                 operand2=flat_on_comb.replace('//','/'),
                  op='/',
                  result=flat_ratio,
                  )
@@ -441,28 +440,7 @@ class BadPixelMask(object):
         log.debug("Time elapsed : [%s]" , t.tac() )
 
         return self.output_file
-#-----------------------------------------------------------------------
- 
-def usage():
-    print ''
-    print 'NAME'
-    print '       calBPM_2.py - Bad Pixel Mask creation\n'
-    print 'SYNOPSIS'
-    print '       calBPM_2.py [options] -f file.list\n'
-    print 'DESCRIPTION'
-    print '       Compute a BPM from a give dome-flat (on and off) frames list'
-    print ' '
-    print 'OPTIONS'
-    print '       -f --file          The list of input dome flat images (on and off)'
-    print '       -d --dark          The master dark to subtract to dome flats'
-    print '       -o --out bmp.fits  The output bad pixel mask'
-    print '       -l --lsig 20       Positive sigma factors to use for selecting pixels below and above the median level based on the local percentile sigma'
-    print '       -h --hsig 20        '
-    print '       -v : verbose debugging output\n'
-    print 'VERSION'
-    print '       25 Sep 2009'
-    print ''
-    raise SystemExit
+
 
 #-----------------------------------------------------------------------
 
@@ -487,65 +465,68 @@ def blur_image(im, n, ny=None) :
     return(improc)
 
 
+
+###############################################################################
+usage = "usage: %prog [options] "
+parser = OptionParser(usage)
+ 
+               
+parser.add_option("-s", "--source",
+              action="store", dest="source_file_list",
+              help="list of input (optionally  corrected) dome flat images..")
+
+parser.add_option("-o", "--output",
+              action="store", dest="output_filename", 
+              help="The output bad pixel mask.")
+
+parser.add_option("-L", "--lthr",
+              action="store", dest="lthr", type='float', default=3.0,
+              help="The low rejection threshold in units of sigma [default 3]")
+
+parser.add_option("-H", "--hthr",
+              action="store", dest="hthr", type='float', default=5.0,
+              help="The high rejection threshold in units of sigma [default 5]")
+
+parser.add_option("-D", "--master_dark",
+              action="store", dest="master_dark", type='str',
+              help="[Optional] Master dark frame to subtract")    
+
+parser.add_option("-S", "--show_stats",
+              action="store_true", dest="show_stats", default=False,
+              help="Show statistics [default False]")    
+
+parser.add_option("-v", "--verbose",
+              action="store_true", dest="verbose", default=True,
+              help="verbose mode [default]")
+
+
 ################################################################################
 # main
-if __name__ == "__main__":
-    print 'Start creation of BadPixelMask....'
+def main(arguments=None):
     
-    # Read command line parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:d:o:l:h:t:v',['file=','dark=','out=','lsig=','hsig=','temp_dir=','verbose'])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(1)
+    if arguments is None:
+        arguments = sys.argv[1:] # argv[0] is the script name
+    (options, args) = parser.parse_args(args = arguments)
+
+    if len(args) !=0:
+        parser.print_help()
+        return 2 # used for command line syntax errors
     
-    nargs = len(sys.argv[1:])
-    nopts = len(opts)
-    if nargs<2:
-        usage()
-        sys.exit(2)  
+    # Make sure we are not overwriting an existing file 
+    if os.path.exists(options.output_filename):
+        print "Error. The output file '%s' already exists."  % \
+              (options.output_filename)
+        return 1
+    if not options.master_dark or not os.path.exists(options.master_dark):
+        print "Error, The master dark frame does not exists."
+        return 1
     
-    verbose= False
-    inputfile=''
-    dark=''
-    outputfile='/tmp/bpm.fits'
-    lsig=20
-    hsig=20
-    
-            
-    for option, par in opts:
-        if option in ("-f", "--file"):
-            inputfile = par
-            print "inputfile=", inputfile
-        if option in ("-d", "--dark"):
-            dark = par
-            print "dark=", dark
-        if option in ("-o", "--out"):
-            outputfile = par
-            print "outputfile=",outputfile
-        if option in ("-l", "--lsig"):
-            lthr = par
-            print "lsig=", lsig
-        if option in ("-h", "--hsig"):
-            hthr = par
-            print "hsig=",hsig
-        if option in ("-t", "--temp_dir"):
-            temp_dir = par
-            print "temp_dir=",temp_dir
-        if option in ('-v','--verbose'):      # verbose debugging output
-            verbose = True
-            print "Verbose true"
-                
-    
-    # Error checking:
-    if not os.path.exists(inputfile):      # check whether input file exists
-        print inputfile, 'does not exist'
-        sys.exit(2)
-    
-    print '...reading', inputfile
-    
-    bpm = BadPixelMask(inputfile, dark, outputfile, lsig, hsig, temp_dir)
-    #bpm.create()
+    bpm = BadPixelMask(options.source_file_list, options.master_dark,
+                       options.output_filename, 
+                       options.lthr, options.hthr)
     bpm.create_simple()
-    
-    print 'ending BPM....'
+        
+###############################################################################
+if __name__ == "__main__":
+    print 'Start BadPixelMap....'
+    sys.exit(main())
