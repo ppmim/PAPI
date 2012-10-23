@@ -80,7 +80,8 @@ class MasterDark(object):
     must have the same properties (TEXP, NCOADDS, READMODE).
     """
     def __init__(self, file_list, temp_dir, output_filename="/tmp/mdark.fits", 
-                 texp_scale=False, bpm=None, normalize=False):
+                 texp_scale=False, bpm=None, normalize=False,
+                 show_stats=False, no_type_checking=False):
         """
         
         :param file_list: A list of dark files
@@ -107,6 +108,8 @@ class MasterDark(object):
         self.m_min_ndarks = 3
         self.m_texp_scale = texp_scale # see note below
         self.m_normalize = normalize
+        self.show_stats = show_stats
+        self.no_type_checking = no_type_checking
         
 
     def createMaster(self):
@@ -162,7 +165,7 @@ class MasterDark(object):
             log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" 
                       %(iframe, f.expTime(), f.getType(), f.getNcoadds(), 
                         f.getReadMode() )) 
-            if not f.isDark():
+            if not self.no_type_checking and not f.isDark():
                 log.error("Error: Task 'createMasterDark' finished. Frame %s is not 'DARK'",iframe)
                 raise Exception("Found a non DARK frame") 
                 #continue
@@ -200,8 +203,7 @@ class MasterDark(object):
         if f_ncoadds==-1: f_ncoadds=1
         self.__output_filename = self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt, f_ncoadds))
         
-        
-        # Call the noao.imred.ccdred task through PyRAF
+    
         misc.utils.listToFile(good_frames, self.__temp_dir+"/files.list")
         
         """
@@ -217,7 +219,8 @@ class MasterDark(object):
         in mind that running ccdproc with the resultant darks will cause the 
         bias to be subtracted again; you have to be very careful.
         """
-        
+
+        # Call the noao.imred.ccdred task through PyRAF
         iraf.mscred.darkcombine(input = "@"+(self.__temp_dir+"/files.list").replace('//','/'),
                         output = tmp1.replace('//','/'),
                         combine = 'average',
@@ -270,14 +273,15 @@ class MasterDark(object):
             darkframe[0].header.update('EXPTIME',1.0)
             darkframe[0].header.update('ITIME', 1.0)
             darkframe[0].header.update('NCOADDS',1)
-            
+        
+        m_std = numpy.std(darkframe[0].data)
+        print "M_STD=",m_std    
         darkframe.close(output_verify='ignore') # This ignore any FITS standard violation and allow write/update the FITS file    
         
         log.debug('Saved master DARK to %s' , self.__output_filename)
         log.debug("createMasterDark' finished %s", t.tac() )
         
-        stats = True
-        if stats:
+        if self.show_stats:
             medians = []
             for i_frame in good_frames:
                 pf = pyfits.open(i_frame)
@@ -299,18 +303,20 @@ class MasterDark(object):
             print "QC DARK MEAN =",numpy.mean(medians)
             print "QC DARK MED =",numpy.median(medians)
             print "QC DARK STDEV =",numpy.std(medians)
+            print "QC DARK MAD =", numpy.median(numpy.abs(medians - numpy.median(medians)))
+            
             #print "QC RONi",
             #print "QC DARK NBADPIX =", 
             
                   
-        # Get some stats from master dark (mean/median/rms)
-        print "Stats:"
-        print "----- "
-        values = (iraf.mscstat (images=self.__output_filename,
-                                fields="image,mean,mode,stddev,min,max",
-                                format='yes',Stdout=1))
-        for line in values:
-            print line
+            # Get some stats from master dark (mean/median/rms)
+            print "Stats:"
+            print "----- "
+            values = (iraf.mscstat (images=self.__output_filename,
+                                    fields="image,mean,mode,stddev,min,max",
+                                    format='yes',Stdout=1))
+            for line in values:
+                print line
             
         return self.__output_filename
         
@@ -344,9 +350,9 @@ if __name__ == "__main__":
                   action="store_true", dest="show_stats", default=False,
                   help="Show frame stats [default False]")    
     
-    parser.add_option("-b", "--show_stats",
-                  action="store_true", dest="computer_bpm", default=False,
-                  help="Compute the bpm from the dark (hot pixels) [default False]")    
+    parser.add_option("-t", "--no_type_checking",
+                  action="store_true", dest="no_type_checking", default=False,
+                  help="Do not make frame type checking [default False]")    
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
@@ -365,12 +371,13 @@ if __name__ == "__main__":
     #print "Files:",filelist
     
     try:
-        mDark = MasterDark(filelist,"/tmp", options.output_filename, options.texp_scale, None, options.normalize)
+        mDark = MasterDark(filelist, "/tmp", options.output_filename, 
+                           options.texp_scale, None, options.normalize,
+                           options.show_stats, options.no_type_checking)
         mDark.createMaster()
     except Exception,e:
         log.error("Task failed. Some error was found")
         raise e
-	
     
     
         

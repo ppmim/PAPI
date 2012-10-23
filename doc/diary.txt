@@ -1295,7 +1295,20 @@ de Python273.
 - comienzo desarrollo de check_papi_modules.py para incluyir al inicio de papi.py
 
 
+2012-10-22
+==========  
+- Me doy cuenta de que calBPM y calBPM_2 no funcionan bien (temp_dir, master_dark, ...)
+y además le actualizo el Parser de opciones de la CL.
 
+2012-10-23
+==========  
+- añadidas bastantes mejoras a calBPM (incluso tenia un bug) y calBPM_2.
+- buscando algo para sustituir STILTS para el cross-matching de catalogos,
+encuentro un código de Sergio Pascual, 'gmatch' en
+
+     https://bitbucket.org/sergiopr/gmatch/src
+
+que habrá que probar.
    
 FOR NEXT VIDEOCONF
 ==================

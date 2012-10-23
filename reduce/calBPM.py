@@ -72,18 +72,17 @@ class BadPixelMask(object):
     \par Purpose:
         Work out the BPM
     \par Description:
-            
-    \par Language:
-        Python
-    \param data
-        A input image
-    \retval 0
-        If no error, the number of bad pixels
+        A list of dark corrected dome flat images is given. A master flat 
+        is created from all the input flats in the list. Each input flat is 
+        then divided by the master. Bad pixels are marked on the new image as 
+        those that are above or below the threshold (in sigma) in the new image. 
+        Any pixel which has been marked as bad for more than a quarter of the 
+        input images is defined as bad in the output mask. 
     \author
         JMIbannez, IAA-CSIC
         
     """
-    def __init__(self, input_file, outputfile, lthr=1.0, hthr=3.0, temp_dir="/tmp"):
+    def __init__(self, input_file, outputfile, lthr=3.0, hthr=5.0, temp_dir="/tmp"):
         
         self.input_file = input_file # file with the list of files to read and process 
         # Default parameters values
@@ -201,15 +200,18 @@ class BadPixelMask(object):
             std = numpy.std(tmpf)
             tmpf.shape = nx1*nx2
             median = numpy.median(tmpf)
+            mad = numpy.median(numpy.abs(tmpf - median))
+            mad*=1.4826
             
             print ">>MEDIAN=",median
             print ">>STD=",std
+            print ">>MAD=",mad
             
             #log.debug("Divide each flatted flat by its median")
             tmpf = tmpf/median
             
-            low = 1.0 - self.lthr*std/median
-            high = 1.0 + self.hthr*std/median
+            low = 1.0 - self.lthr*mad/median
+            high = 1.0 + self.hthr*mad/median
             
             print ">>LOW=", low
             print ">>HIGH=", high
@@ -223,7 +225,8 @@ class BadPixelMask(object):
         mflat.close()
         
         # STEP 5: Go through the rejection mask and if a pixel has been marked bad 
-        # more than a set number of times, then it is defined as bad
+        # more than a set number of times (a quarter of number of images), 
+        # then it is defined as bad.
         nbmax = numpy.maximum(2, len(good_flats)/4)
             
         bpm = numpy.where(bpm>nbmax,1,0) # bad pixel set to 1
@@ -297,6 +300,10 @@ def main(arguments=None):
         parser.print_help()
         return 2 # used for command line syntax errors
     
+    # Check mandatory arguments
+    if not options.output_filename or not options.source_file_list:
+        print "Error, '-s' and '-o' options are mandatory"
+        return 1
     # Make sure we are not overwriting an existing file 
     if os.path.exists(options.output_filename):
         print "Error. The output file '%s' already exists."  % \
