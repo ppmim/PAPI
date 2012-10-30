@@ -58,7 +58,124 @@ from misc.paLog import log
 import misc.utils
 import datahandler
 
+def stack_frames_B (frames, f_from, f_to, outframe, sigmaframe, 
+                  data_range_low, data_range_high, kappa):
+    """
+    Computes average, median or mode for stack of frames
+    
+    Parameters
+    ----------
+    frames: list
+        list of frames to be stacked
+    f_from: int
+        frame from start the stacking
+    f_to: int 
+        frame to end the stacking
+    outframe: str
+         filename where stack frame is saved to
+    sigmaframe: str 
+        filename where sigma frame is saved to
+    data_range_low: long 
+        min. value in range of accepted values in frame
+    data_range_high: long 
+        max. value in range of accepted values in frame
+    kappa: float 
+        number of sigmas to use in clipping during the stack
+    
+    Returns
+    -------
+    outframe, sigmaframe 
+    """
+    
+    # First, some checks
+    if len(frames)<2:
+        raise Exception("Not enough number of frames")
+    
+    cube = numpy.zeros([n_stripes, height_st, width_st], dtype=numpy.float)
+    data_out = numpy.zeros([n_stripes*height_st*2, width_st*2], dtype=numpy.float32)
+    median = numpy.zeros([4], dtype=numpy.float32)
+    
+    for i_frame in frames:
+        try:
+            f = pyfits.open(i_frame)
+        except Exception,e:
+            raise e
+        
+        if len(f)>1:
+            raise Exception("MEF files not yet supported.")
+        
+        cube[i] = f[0].data
+        
+            
+    return outframe, sigmaframe
 
+def stack_frames (file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe, 
+                  data_range_low, data_range_high, kappa):
+    """
+    Computes average, median or mode for stack of frames
+    
+    Parameters
+    ----------
+    file_of_frames: str
+        text file listing the frames to stack
+    type_comb: str
+        type of combination to make (mean, median, sigma)
+    f_from: int
+        frame from start the stacking
+    f_to: int 
+        frame to end the stacking
+    outframe: str
+         filename where stack frame is saved to
+    sigmaframe: str 
+        filename where sigma frame is saved to
+    data_range_low: long 
+        min. value in range of accepted values in frame
+    data_range_high: long 
+        max. value in range of accepted values in frame
+    kappa: float 
+        number of sigmas to use in clipping during the stack
+    
+    Returns
+    -------
+    outframe, sigmaframe 
+    """
+    
+    # First, some checks
+    if os.path.exists(file_of_frames)<2:
+        raise Exception("File does not exists")
+    
+    irdr_path = "/home/panic/DEVELOP/PIPELINE/PANIC/trunk/irdr/bin"
+    outweight = "/tmp/weight.fits"
+    
+    #/tmp/darks.txt /tmp/mean_dark.fits /tmp/weight.fits offset sigma noweight float
+    # Compute the outframe
+    mode ='mean'
+    if type_comb=='mean': mode = 'mode'
+    elif type_comb=='median': mode = 'median'
+    else:
+        log.error("Type of stacking not supported")
+        raise Exception("Type of stacking not supported")
+    
+    # (use IRDR::cubemean)
+    prog = irdr_path+"/cubemean "
+    cmd  = prog + " " + file_of_frames + " " + outframe + " " + outweight + \
+            " " + "offset " + mean + " noweight float"
+    e = misc.utils.runCmd( cmd )
+    if e==0:
+        log.debug("Some error while running command %s", cmd)
+        raise Exception("Some error while running command %s"%cmd)
+        
+    # Now, compute the sigmaframe
+    cmd  = prog + " " + file_of_frames + " " + outframe + " " + \
+            outweight + " " + "offset sigma noweight float"
+            
+    e = misc.utils.runCmd( cmd )
+    
+    log.debug("Successful ending of stack_frames")
+    
+    return (outframe, sigmaframe)
+            
+    
 def run_health_check ( input_file, window='full-frame', out_filename="/tmp/hc_out.fits" ):
     """
     @summary: 
@@ -77,7 +194,7 @@ def run_health_check ( input_file, window='full-frame', out_filename="/tmp/hc_ou
     
     
     # Read the file list from input_file
-    if os.path.exists(input_file)
+    if os.path.exists(input_file):
         filelist = [line.replace( "\n", "") for line in fileinput.input(input_file)]
     else:
         raise Exception("Input file %s does not exist"%input_file)
