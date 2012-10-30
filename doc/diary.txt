@@ -1310,8 +1310,117 @@ encuentro un código de Sergio Pascual, 'gmatch' en
 
 que habrá que probar.
    
+2012-10-24
+==========  
+- Encuentro una implementación de un wrapper para Sextractor de un compañero
+de Sergio Pascual, en :
+
+    https://gitorious.org/~gruel   
+
+- Astrometry.net: instalo y compilo la última version (0.38) en udit43/udit22 y 
+le copio los index files en (/usr/local/astrometry/data) y la pruebo con una
+imagen reducida y ya calibrada de O2k (Alhambra):
+
+solve-field ~/reduced_SEQ.fits --scale-units arcsecperpix --scale-low 0.2 --scale-high 0.4 --overwrite
+
+y lo hace aparentemente bien (aunque era una imagen ya calibrada astrometricamente por scamp!).
+
+Observaciones:
+   - SCAMP tardó 12 segundos en resolver el .ldac creado por SExtractor (6 secs),
+   en total unos 19secs; 
+   por otro lado Astrometry.net tarda 32secs en total (buscar fuentes y resolver 
+   astrometría)
+   Sin embargo, si ejecuto 'solve-field' con la opcion --no-plots, tarda 8secs !!!
+   
+   - Astrometry.net usa BD (/usr/local/astrometry/data/index-nnn.fits) local !
+   
+   - Astrometry genera un fichero reduce_SEQ.new con un WCS que usa proyección
+   TAN-SIP (TAN (gnomic) projection + SIP distortions).
+
+   - Si le paso una imagen no calibrada astrometricamente 
+            
+            /data/O2K/Matilde/120105/ferM_0065.fits
+     
+     entonces Astrometry.net empieza a buscar iterando sobre los indices y al
+     final lo paro pues después de más de 30minutos no parece terminar ...
+     Aunque le pase las coordenadas aproximadas, --ra 100.427917 --dec 9.522,
+     tampoco resuelve.
+     
+    Sin embargo, con astrowarp.py (PAPI) si puedo calibrar la misma imagen 
+    en bruto en 17secs:
+    
+    >> python reduce/astrowarp.py -s /data/O2K/Matilde/120105/ferM_0065.fits -o /tmp/astro_cal.fits
+
+- Josef Fried me responde el mail en el que le pregunto por las rutinas de
+Health-Check para PANIC, pero no entiendo, pues lo que me manda es muy parecido
+a la rutina ana.prg que ya tenía (incluso parece más antigua) y además no concuerda
+con lo que me comenta en el email ????
+
+- Recibo nueva oferta de Belen de DELL sobre el R720 (16K€)
+
+
+
+2012-10-29
+==========  
+- Escribo email resumen para enviar acerca del PANIC-computer (aún no lo envío)
+
+- Inicio implementación de health.py ...sin saber aún muy bien que tengo que hacer !!!!
+
+2012-10-30
+==========  
+- Sigo con el tema del health-check, y me pongo a probar manualmente la fórmula
+de Janisky para calcular la ganancia(K) y el RON, pero no me salen resultados
+congruentes.
+Además encuentro lo siguiente:
+
+"""
+In CCD imaging, gain refers to the magnitude of amplification a given system 
+will produce. Gain is reported in terms of electrons/ADU (analog-to-digital unit). 
+A gain of 8 means that the camera digitizes the CCD signal so that each ADU 
+corresponds to 8 photoelectrons.
+
+The system gain of a Photometrics camera is typically set so that the full 
+well of the CCD matches the full range of the digitizer (at 1x gain). The 
+camera's gain can also be selected under software control to meet the needs of 
+a given application. For example, the gain can be increased to 4x when the 
+application is photon starved and a high-sensitivity mode is required. 
+Alternatively, the gain can be reduced to 1/2x when the application is 
+photon-shot-noise limited and a high SNR mode is required. Because gain refers 
+to the amplification of a system and the gain reported in CCD imaging is 
+actually inverse amplification, the meaning of gain is not entirely intuitive. 
+As gain increases, the reported gain value decreases. For example, if the 
+system gain (1x) is 8e-/ADU, then the high-gain (4x) mode would be 2e-/ADU.
+
+A simple method to calculate the system gain is shown below:
+
+    1-Collect a bias image (zero-integration dark image) and label it "bias".
+    2-Collect two even-illumination images and label them "flat1" and "flat2".
+    3-Calculate a difference image: diff = flat2 - flat1.
+    4-Calculate the standard deviation of the central 100 x 100 pixels in the difference image.
+    5-Calculate the variance by squaring the standard deviation and dividing by 2 (variance adds per image, so the variance of the difference image is the sum of the variance of flat1 and flat2).
+    6-Calculate a bias-corrected image by subtracting the bias from one of the flat images and label it corr: corr = flat1 - bias.
+    7-Obtain the mean illumination level by calculating the mean of the central 100 x 100 region of the corr image.
+    8-The mean divided by the variance equals the gain: gain = mean /variance.
+
+A more rigorous method is that of Mortara and Fowler (SPIE Vol. 290 Solid State 
+Imagers for Astronomy (1981) pp. 28-33), which essentially involves repeating 
+the above procedure for a series of illumination levels over the full range of 
+the CCD full well. In addition, their method recommends collecting four or more
+flat images at each exposure level and averaging them to improve the precision 
+of the measurement. The authors also provide the theory supporting the method. 
+Another rigorous, excellent method that can be used to calculate gain is the 
+photon-transfer technique of Janesick et al. (Optical Engineering Vol. 26 (10) 
+(1987) pp. 972-980).
+"""
+
+
+
 FOR NEXT VIDEOCONF
 ==================
+
+- New quote about PANIC-computer.
+- I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
+
 
 
 KDD con MATILDE (15-May-2012)
@@ -1505,3 +1614,94 @@ DUDAS OT
 - en la pantalla de Telescope-Iterator, por que el valor de Cycles=5 cuando creas un patron cualquiera ? 
 (parace que es el valor que pone por defecto en Cycles en "Single Exposure")
 Yo pondría por defecto 1 cycle
+
+
+ASTROMETRIA con Astrometry.net 
+==============================
+
+Varias formas de hacer astrometría:
+
+1)IRAF: user-friendly!
+
+2)Aladin: interactivo
+
+3)Astrometry.net: completamente automático
+
+Astrometry.net
+--------------
+(http://astrometry.net)
+
+- Devuelve la astrometría en el WCS
+
+- Nunca da falsos positivos 
+    (quizás falso negativos)
+
+- Tanto con imágenes fits como con tablas de SEXtractor
+
+- Capaz de trabajar sin ninguna indicación
+     > solve-field images.fits
+
+- Necesita “licencia”
+
+- Está en desarrollo
+
+Requisitos:
+----------
+  * gcc
+  * cairo
+  * netpbm
+  * libpng
+  * libjpeg
+  * python (probablemente ≥ 2.4)
+  * numpy
+  
+Resultado
+---------
+   <base>-ngc.png : an annotation of the image.
+   <base>.wcs : a FITS WCS header for the solution.
+   <base>.new : a new FITS file containing the WCS header.
+   <base>-objs.png  : a plot of the sources (stars) we extracted from the image.
+   <base>-indx.png  : sources (red), plus stars from the index (green), plus the skymark ("quad") used to solve the image.
+   <base>-indx.xyls : a FITS BINTABLE with the pixel locations of stars from the index.
+   <base>.rdls : a FITS BINTABLE with the RA, Dec of sources we extracted from the image.
+   <base>.axy : a FITS BINTABLE of the sources we extracted, plus headers that describe the job (how the image is going to be                               solved).
+   <base>.solved : exists and contains (binary) 1 if the field solved.
+   <base>.match : a FITS BINTABLE describing the quad match that solved the image.
+   <base>.kmz : (optional) KMZ file for Google Sky-in-Earth. 
+   
+Trucos
+------
+- Darle la escala de la imagen:
+    > solve-field  image.fits --scale-units degwith --scale-low 1 --scale-high 2
+    > solve-field  image.fits --scale-units arcsecperpix --scale-low 0.3 --scale-high 0.4
+ 
+- Darle la posicion aproximada y radio en grados (o en hh:mm:ss y dd:mm:ss)
+    > solve-field  image.fits --ra 20 --dec –85 --radius 2
+
+- Que no pinte las plots 
+    > solve-field  image.fits --no-plots
+
+- Utilizar tabla de SEXtractor
+    Configurar SEXtractor          
+        CATALOG_TYPE        FITS_1.0
+        CATALOG_NAME    tabla.xyls
+        PARAMETERS_NAME xylist.param (X_IMAGE, Y_IMAGE, MAG_ISO
+
+    > solve-field  tabla.xyls --x-column X_IMAGE --y-column Y_IMAGE  sort-ascending --sort-column MAG_ISO --width 2000 --height 1500
+
+PIPELINE
+---------
+1-Obtengo la tabla con SEXtractor.
+
+2-Lanzo Astrometry. Utilizo la posición aproximada que esta en la cabecera.
+
+3-Utilizo las ftools para incluir las WCS en la imagen de BUSCA.
+
+4-Nueva tabla de SEXtractor con la astrometría corregida.
+
+5-Utilizo Aladin para comparar con los catálogos USNO-B1 y 2MASS
+
+6-Hago la estadística usando IDL
+
+7-Incluyo la estadística en la cabecera de la imagen con las ftools
+ 

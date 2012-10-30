@@ -22,7 +22,6 @@
 
 ################################################################################
 #
-#
 # PAPI (PANIC PIpeline)
 #
 # photometry.py
@@ -109,14 +108,22 @@ def nanmedian(arr):
 
 def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     """
-    @summary: do catalogs cross-match
+    @summary: Takes two input catalogues (VOTables) and performs a cross match to 
+    find objects within 'error' arcseconds of each other. 
+    The result is a new VOTable (default) containing only rows where a match 
+    was found. 
+    
+    @note: It runs without explicit specification of the sky position columns 
+    in either table (OBS_RA,OBS_DEC). It will work only if those columns are 
+    identified with appropriate UCDs, for instance pos.eq.ra;meta.main and 
+    pos.eq.dec:meta.main. If no suitable UCDs are in place this invocation will
+    fail with an error. 
     
     @param cat1,cat2: catalogs for cross-matching
     @param err: max. error for finding objects within (arcseconds)
-    @param out_filename: filename where results will be saved;if absent, 
-            the location will be a tempfile with a generated name
-    @param out_format: format of the output generated; current options available 
-            are:
+    @param out_filename: filename where results will be saved
+    @param out_format: format of the output generated; current options 
+            available are:
         - VO Table (XML) (votable) (default)
         - SVC (Software handshaking structure) message (svc)
         - ASCII table (ascii)
@@ -147,7 +154,7 @@ def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 )
     else:
         return out   
 
-def generate_phot_comp_plot ( input_catalog, filter, expt = 1.0 , 
+def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 , 
                               out_filename=None, out_format='pdf'):
     """
     @summary: generate a photometry comparison plot, comparing instrumental magnitude
@@ -439,17 +446,17 @@ class STILTSwrapper (object):
         
         @param cat1,cat2: catalogs for cross-matching
         
-	@param err: max. error for finding objects within (arcseconds)
+	    @param err: max. error for finding objects within (arcseconds)
         
-	@param out_filename: filename where results will be saved;if absent, 
-        the location will be a tempfile with a generated name
+	    @param out_filename: filename where results will be saved;if absent, 
+            the location will be a tempfile with a generated name
         
-	@param out_format: format of the output generated; current options available are:
-        - VO Table (XML) (votable) (default)
-        - SVC (Software handshaking structure) message (svc)
-        - ASCII table (ascii)
+	    @param out_format: format of the output generated; current options available are:
+            - VO Table (XML) (votable) (default)
+            - SVC (Software handshaking structure) message (svc)
+            - ASCII table (ascii)
         
-	@return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+	    @return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
         """
         
         in1 = cat1

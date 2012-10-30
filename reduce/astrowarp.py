@@ -65,7 +65,7 @@ def initWCS( input_image ):
             checkWCS(header)
             log.debug("FITS looks having a right WCS header")
         except Exception,e:
-            log.debug("No WCS compliant header, trying to creating one ...")
+            log.debug("No WCS compliant header, trying to create one ...")
             try:
                 # Read some basic values
                 naxis1 = f.getNaxis1()
