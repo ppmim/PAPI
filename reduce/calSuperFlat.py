@@ -71,33 +71,27 @@ from iraf import mscred
 
 class SuperSkyFlat(object):
     """
-    \brief Class used to build a super sky Flat from a dither set of science 
-           frames containing objects.
+    Class used to build a super sky Flat from a dither set of science 
+    frames containing objects.
     
-    \par Class:
-        SuperSkyFlat
-    \par Purpose:
-         Create a super flat field 
-    \par Description:
-            
-    \par Language:
-        PyRaf
-    \param file_list
+    Parameters
+    ----------
+    
+    file_list: list
         A list FITS files or directory
-    \param output_filename
+    output_filename: str
         File where log will be written
-    \retval 0
-        If no error
-    \author
-        JMIbannez, IAA-CSIC
-        
+    
+    Returns
+    -------
+        If no error return 0
     """
     def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  
                  bpm=None, norm=True, temp_dir="/tmp/", median_smooth=False):
         """
         Initialization method.
         
-        Parameters:
+        Parameters
         ----------
         
         filelist : list 
@@ -145,14 +139,15 @@ class SuperSkyFlat(object):
     def create(self):
       
         """
-        \brief Create the super sky flat using sigma-clipping algorithm (and supporting MEF)
+        Create the super sky flat using sigma-clipping algorithm (and supporting MEF)
         """
+        
         # del old files   
         log.debug("Start createSuperSkyFlat") 
         if os.path.exists(self.output_filename): os.remove(self.output_filename)
         
         # Check data integrity (all have the same properties)
-        m_filelist=self.filelist
+        m_filelist = self.filelist
         #print "LISTA =", m_filelist
             
         if not datahandler.checkDataProperties( m_filelist ):
@@ -309,6 +304,7 @@ if __name__ == "__main__":
                   help="Median smooth the combined flat-field [default False]")    
 
     (options, args) = parser.parse_args()
+    
     if not options.source_file_list or not options.output_filename or len(args)!=0: 
         # args is the leftover positional arguments after all options have been 
         # processed
@@ -319,10 +315,10 @@ if __name__ == "__main__":
     
     filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     try:
-	superflat = SuperSkyFlat(filelist, options.output_filename, 
+        superflat = SuperSkyFlat(filelist, options.output_filename, 
                              options.bpm, options.norm, "/tmp/",
                              options.median_smooth)
-    	superflat.create()
+        superflat.create()
     except Exception,e:
-	log.error("Error: %s"%str(e))
+        log.error("Error: %s"%str(e))
           

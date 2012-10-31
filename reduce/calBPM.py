@@ -63,23 +63,15 @@ import misc.utils as utils
 
 class BadPixelMask(object):
     """
-    \brief 
         Generate a bad pixel mask from a list of dark corrected dome flat images
         (extracted from VIRCAM pipeline, vircam_genbpm)
     
-    \par Class:
-         BadPixelMask   
-    \par Purpose:
-        Work out the BPM
-    \par Description:
         A list of dark corrected dome flat images is given. A master flat 
         is created from all the input flats in the list. Each input flat is 
         then divided by the master. Bad pixels are marked on the new image as 
         those that are above or below the threshold (in sigma) in the new image. 
         Any pixel which has been marked as bad for more than a quarter of the 
         input images is defined as bad in the output mask. 
-    \author
-        JMIbannez, IAA-CSIC
         
     """
     def __init__(self, input_file, outputfile, lthr=3.0, hthr=5.0, temp_dir="/tmp"):

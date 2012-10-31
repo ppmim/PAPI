@@ -70,31 +70,29 @@ class ExError (Exception):
 
 class ApplyDarkFlat(object):
     """
-    \brief Class used to subtract a master dark (or dark model) and then divide 
+    Class used to subtract a master dark (or dark model) and then divide 
     by a master flat field
     
-    \par Class:
-        ApplyDarkFlat
-    \par Purpose:
-        Apply a master dark and master flat to a list of non-calibrated science files
-    \par Description:
-        For each file processed a new file it is generated with the same filename but 
-        with the suffix '_DF.fits'
-    \par Language:
-        PyRaf
-    \param data
+    Apply a master dark and master flat to a list of non-calibrated science files
+    For each file processed a new file it is generated with the same filename but 
+    with the suffix '_DF.fits'
+    
+    Parameters
+    ----------
+    data
         A list of science files
-    \param bpm
+    bpm
         Input bad pixel mask or NULL
-    \param mdark
+    dark
         Master dark to subtract
-    \param mflat
+    mflat
         Master flat to divide by
-    \retval file_list
+    
+    Returns
+    -------
+    file_list
         If no error, return the list of files generated as result of the current 
         processing
-    \author
-        JMIbannez, IAA-CSIC
   
     """
     def __init__(self, sci_files, mdark = None, mflat = None, \
@@ -109,7 +107,7 @@ class ApplyDarkFlat(object):
     def apply(self):
       
         """
-        @summary: Apply masters DARK and/or FLAT to science file list. 
+        Apply masters DARK and/or FLAT to science file list. 
         Both master DARK and FLAT are optional,i.e., each one can be applied 
         even the other is not present.
         

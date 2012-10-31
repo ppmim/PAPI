@@ -93,7 +93,7 @@ class MasterDomeFlat(object):
     
     
     Description:
-    ----------- 
+    ------------ 
            
          1. Check the EXPTIME , TYPE(dome) and FILTER of each Flat frame
          2. Separate lamp ON/OFF dome flats
@@ -105,22 +105,17 @@ class MasterDomeFlat(object):
          # NOTE : We do NOT subtract any MASTER_DARK, it is not required for 
          DOME FLATS (it is done implicitly because both ON/OFF flats are taken 
          with the same Exposition Time)    
-         
-    
-    Author:
-    -------
-        JMIbannez, IAA-CSIC
         
     TODO:
-    ----
+    -----
         - Multiply by the BPM
         - Reject flat images when their background is different more than 1%
-        compared to the other, or when more than 3 sigma off the others.
+        compared to the other, or when more than 3 sigma of the others.
         - Optional Median smooth
     """
     
-    def __init__(self, input_files, temp_dir="/tmp/", 
-                 output_filename="/tmp/mdflat.fits", normal=True, 
+    def __init__(self, input_files, temp_dir="/tmp/",
+                 output_filename="/tmp/mdflat.fits", normal=True,
                  median_smooth=False):
         """ 
         Initialization method
@@ -132,14 +127,12 @@ class MasterDomeFlat(object):
             A list of dome on/off flat fields
         temp_dir : string
             Temporal directory to use for temporal files
-        
         output_filename : string
             Filename of the master dome flat to build.
         normal : bool
             If true, normalization will be done.
         median_smooth: bool
             If true, median smooth filter is applied to the combined Flat-Field
-
     
         """
         
@@ -155,7 +148,7 @@ class MasterDomeFlat(object):
     def createMaster(self):
       
         """
-        \brief Create a master Dome FLAT from the dome flat file list
+        Create a master Dome FLAT from the dome flat file list
         """   
         log.debug("Start createMasterDomeFlat")
         
@@ -402,7 +395,7 @@ class MasterDomeFlat(object):
                     ywindow=20,
                     outtype="median"
                     )
-            shutil.move(self.__output_filename.replace(".fits","_smooth.fits"),
+            shutil.move(self.__output_filename.replace(".fits", "_smooth.fits"),
                         self.__output_filename)
 
         #Or using scipy ( a bit slower then iraf...)
@@ -413,7 +406,7 @@ class MasterDomeFlat(object):
         iraf.chdir()
         
         log.debug("Updating the header ...")
-        flatframe = pyfits.open(self.__output_filename,'update')
+        flatframe = pyfits.open(self.__output_filename, 'update')
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
             if msg!="": flatframe[0].header.add_history(msg)
@@ -422,11 +415,12 @@ class MasterDomeFlat(object):
         flatframe[0].header.add_history('lamp_on  files: %s' %domelist_lampon )
         flatframe[0].header.add_history('lamp_off files: %s' %domelist_lampoff )
         #Add a new keyword-->PAPITYPE
-        flatframe[0].header.update('PAPITYPE','MASTER_DOME_FLAT','TYPE of PANIC Pipeline generated file')
-        flatframe[0].header.update('IMAGETYP','MASTER_DOME_FLAT','TYPE of PANIC Pipeline generated file')
+        flatframe[0].header.update('PAPITYPE', 'MASTER_DOME_FLAT', 
+                                   'TYPE of PANIC Pipeline generated file')
+        flatframe[0].header.update('IMAGETYP', 'MASTER_DOME_FLAT', 
+                                   'TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in flatframe[0].header:
-		          flatframe[0].header.update('PAT_NEXP', 
-                                             1,
+            flatframe[0].header.update('PAT_NEXP', 1,
                                              '# of positions into dither pattern')
 
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file

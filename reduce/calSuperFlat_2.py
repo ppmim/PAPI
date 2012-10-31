@@ -74,13 +74,10 @@ class ExError(Exception):
 
 class MasterSuperFlat(object):
     """
-    \brief Class used to build and manage a master calibration super flat from a list of night SCIENCE frames
-    \par Class:
-        MasterSuperFlat
-    \par Purpose:
-        Create a master normalized night Super Flat Field
-    \par Description:
-        
+    Class used to build and manage a master calibration super flat from a list of night SCIENCE frames
+    
+    Description
+    -----------    
         1. Check the TYPE(science) and FILTER and EXPTIME of each frame
            If any frame on list missmatch the FILTER,TYPE,EXPTIME,NCOADDS then the master super-flat will be aborted
         
@@ -89,26 +86,24 @@ class MasterSuperFlat(object):
         3. If required, we subtract a proper MASTER_DARK using the provided master_dark file (optional)
 
         4. If required, normalize the super-flat dividing by the mean value (default True)
-        
-    \par Language:
-        PyRaf
-    \param data
+    
+    Parameters
+    ----------
+    data: list
         A list of science frames
-    \param bpm
+    bpm: str
         Input bad pixel mask or NULL
-    \param mdark
+    mdark: str
         Master dark to subtract (optional)
-    \retval median
-        When all goes well
-    \retval 0
-        If no error
-    \author
-        JMIbannez, IAA-CSIC
+    
+    Returns
+    -------
+        When all goes well, return the median value; otherwise 0
     """
     
     def __init__(self, input_files, output_filaname="/tmp/msflat.fits", master_dark=None, output_dir="/tmp", normal=True, force=False):
         """
-        \brief Init the object
+        Init the object
         \param input_file - data science files, non dark subtracted
         \param output_filename - output master super flat produced 
         \param master_dark - master dark to be subtracted to each science frame
@@ -127,7 +122,7 @@ class MasterSuperFlat(object):
     def createMaster(self):
       
         """
-        \brief Create a master SUPER FLAT from a list for science files
+        Create a master SUPER FLAT from a list for science files
         """   
         log.debug("Start createMasterSuperFlat")
         start_time = time.time()
@@ -157,7 +152,7 @@ class MasterSuperFlat(object):
             raise ExError('Combined FLAT frame not defined')
     
         # Change to the source directory
-        base, infile   = os.path.split(self.__output_filename)
+        base, infile = os.path.split(self.__output_filename)
         iraf.chdir(base)
     
         m_framelist=""
@@ -166,10 +161,10 @@ class MasterSuperFlat(object):
         #print "LIST of Flat frames: ", m_framelist    
     
         # STEP 1: Check the EXPTIME , TYPE(science) and FILTER of each input science frame
-        f_expt=-1
-        f_type=''
-        f_filter=''
-        f_ncoadds=-1
+        f_expt = -1
+        f_type = ''
+        f_filter = ''
+        f_ncoadds = -1
         for iframe in framelist:
             f=datahandler.ClFits ( iframe )
             print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
@@ -179,24 +174,24 @@ class MasterSuperFlat(object):
                 log.error("Error: Task 'createMasterSkyFlat' finished. Found a frame with \n different FILTER or EXPTIME or NCOADDS or TYPE")
                 raise Execption("Error, found a frame with different TYPE, FILTER or EXPTIME or NCOADDS")
             else:
-                f_expt=f.expTime()
-                f_filter=f.getFilter()
+                f_expt = f.expTime()
+                f_filter = f.getFilter()
                 f_type = f.getType()
-                f_ncoadds=f.getNcoadds()
+                f_ncoadds = f.getNcoadds()
         
         log.info('OK, all  frames same type:')
         log.info('Filter=%s , TEXP=%f TYPE=%s' , f_filter, f_expt, f_type)
         
     
         #Clobber existing output images
-        iraf.clobber='yes'
+        iraf.clobber = 'yes'
         
         # STEP 2: Make the combine of dark subtracted Flat frames scaling by 'mode'
         # - Build the frame list for IRAF
         log.debug("Combining sky science frames...")
-        comb_flat_frame=(self.__output_file_dir+"/comb_sp_flats.fits").replace("//","/")
+        comb_flat_frame = (self.__output_file_dir+"/comb_sp_flats.fits").replace("//","/")
         misc.fileUtils.removefiles(comb_flat_frame)
-        i_darksublist=utils.listToString(framelist)
+        i_darksublist = utils.listToString(framelist)
         # - Call IRAF task
         iraf.imcombine(input=i_darksublist,
                         output=comb_flat_frame,
@@ -216,8 +211,8 @@ class MasterSuperFlat(object):
         # STEP 3 : If required, we subtract a valid MASTER_DARK (same EXPTIME and NCOADDS) 
         if self.__master_dark!=None:
             #check master dark (here only check TYPE and EXPTIME and NCOADDS) 
-            fdark=datahandler.ClFits ( master_dark )
-            texp_dark=fdark.expTime()
+            fdark = datahandler.ClFits ( master_dark )
+            texp_dark = fdark.expTime()
             if not fdark.isMasterDark() or (not self.m_force & (fdark.getNcoadds()!=f_ncoadds or texp_dark!=f_expt)):
                 log.error("Error, wrong master dark provided: %s. \nCheck TYPE or NCOADDS or EXPTIME", master_dark)
                 raise Exception("Error, wrong master dark provided -->%s" %(master_dark))
@@ -243,11 +238,11 @@ class MasterSuperFlat(object):
                 try:
                     f.writeto(ds_superflat, output_verify='ignore')
                     f.close()
-                    last_out=ds_superflat
+                    last_out = ds_superflat
                 except IOError:
                     raise ExError('Cannot write output to %s' % ds_superflat)
         else:
-            last_out=comb_flat_frame    
+            last_out = comb_flat_frame    
         
         if self.m_normaliz:
             # STEP 4: Normalize the flat-field
@@ -305,9 +300,9 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     source_file_list = ""
     output_filename = ""
-    master_dark=None # default
-    normaliz=True
-    force=False
+    master_dark = None # default
+    normaliz = True
+    force = False
     
     try:
         opts, args = getopt.getopt(args, "s:o:d:nf", ['source=', 'out=','dark='])
@@ -331,17 +326,17 @@ if __name__ == "__main__":
             master_dark = parameter
             print "Master Dark =", master_dark
         if option in ("-n"):
-            normaliz=False    
+            normaliz = False    
         if option in ("-f", "--force"):
-            force=True
+            force = True
                 
     if  source_file_list=="" or output_filename=="":
         usage()
         sys.exit(3)
     
-    filelist=[line.replace( "\n", "") for line in fileinput.input(source_file_list)]
+    filelist = [line.replace( "\n", "") for line in fileinput.input(source_file_list)]
     #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
-    mSFlat = MasterSuperFlat(filelist,output_filename, master_dark, "/tmp", normaliz, force)
+    mSFlat = MasterSuperFlat(filelist,output_filename, master_dark, "/tmp", 
+                             normaliz, force)
     mSFlat.createMaster()
     
-        

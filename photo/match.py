@@ -14,13 +14,15 @@ import copy
 
 def matchsorted(ra,dec,ra1,dec1,tol):
     """ Find closest ra,dec within tol to a target in an ra-sorted list of ra,dec.
-        Arguments:
+        Parameters
+        ----------
           ra - Right Ascension decimal degrees (numpy sorted in ascending order)
           dec - Declination decimal degrees (numpy array)
           ra1 - RA to match (scalar, decimal degrees)
           ra1 - Dec to match (scalar, decimal degrees)
           tol - Matching tolerance in decimal degrees. 
-        Returns:
+        Returns
+        ------
           ibest - index of the best match within tol; -1 if no match within tol
           sep - separation (defaults to tol if no match within tol)
     """

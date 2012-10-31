@@ -3,24 +3,24 @@ Introduction
 ============
 
 PAPI is an automatic image processing pipeline for data taken with the 
-PAnoramic Near Infrared Camera (PANIC) on the 2.2m and 3.5m Telescopes at Calar 
-Alto Observatory. The pipeline currently supports imaging data from camera and 
-is written in Python and C making it portable across many platforms. The 
-automated processing steps include basic calibration (removeing instrumental 
-signature), cosmic-ray removal, treatment for electronic ghosts (cross-talk), 
-sky subtraction, non-linear count-rate correction, artifact masking, robust 
-alignment and registration for large mosaics, weight map generation, and 
-drizzling onto a final image mosaic. 
+`PAnoramic Near Infrared Camera (PANIC) <http://www.iaa.es/PANIC>`_ for the 2.2m 
+and 3.5m Telescopes at `Calar Alto Observatory (CAHA) <http://www.caha.es>`_. 
+The pipeline is written in Python and developed at the `Institute of Astrophysics 
+of Andalusia (CSIC) <http://www.iaa.es/>`_. The automated processing steps 
+include basic calibration (removeing instrumental signature), cosmic-ray removal, 
+treatment for electronic ghosts (cross-talk), sky subtraction, non-linear 
+count-rate correction, artifact masking, robust alignment and registration for 
+large mosaics, weight map generation, and drizzling onto a final image mosaic. 
 
 **Development Team:** Jose M. Ibanez (IAA-CSIC)
 
 Caveats
 *******
 
-Currently it is only possible for PANIC to reduce data taken with the
-Observing Tool (OT), but not manually with GEIRS.
-PAPI was primarily developed and optimized for reducing broad-band imaging data of
-extragalactic sources (such as imaging data taken for field galaxy surveys and 
+Currently PAPI it is able to reduce data taken with the Observing Tool (OT) 
+defining the required observing blocks (OB), or manually through GEIRS scripts.
+PAPI was primarily developed and optimized for reducing broad-band imaging data 
+of extragalactic sources (such as imaging data taken for field galaxy surveys and 
 galaxy cluster surveys). Other types imaging data have been reduced with PAPI 
 but results can not be as good as desired. (See :ref:`troubleshooting` for tips).
 PAPI is **not** designed to reduce any kind of field taken with PANIC.  
@@ -30,51 +30,42 @@ PAPI is **not** designed to reduce any kind of field taken with PANIC.
 Prerequisites
 *************
 
-These software must be installed for PAPI to run:
+`Python 2.7 <http://www.python.org>`_ is required. In addition, PAPI requires the following packages 
+installed in order to work properly:
 
-	* `python <http://www.python.org>`_ (2.4 or 2.5)
-	* `sqlite <http://www.sqlite.org>`_ (v3.0 > if using Python 2.4)
-	* `pysqlite <http://initd.org/tracker/pysqlite>`_ (v2.2.0 > if using Python 2.4)
-	* `stsci_python <http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python>`_ (v2.2 >)
-	* `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (v2.3.2 >)
-	* `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (if applying user defined masks)
+    * `NumPy <http://numpy.scipy.org/>`_ 
+    * `SciPy <http://www.scipy.org>`_
+    * `IRAF <http://iraf.noao.edu/>`_
+    * `STSDAS/TABLES <http://www.stsci.edu/institute/software_hardware/stsdas/download-stsdas/>`_
+    * `stsci_python <http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python>`_ (> v2.2)
+    * `CDSClient <http://cdsarc.u-strasbg.fr/doc/cdsclient.html>`_
+    * `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (v2.3.2 >)
+    * `SCAMP <http://www.astromatic.net/software/scamp>`_
+    * `SWarp <http://www.astromatic.net/software/swarp>`_
+    * `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_
+
+Additional packages are optionally required:
+    * `sphinx`_  to build the documentation
 
 .. index:: installing, building, source, downloading
 
 Download
 ********
-
-Download the papi_latest.tgz file and the papi_reffiles.tgz file.
-
-
-    * `papi_latest.tgz <http://code.google.com/p/panicdrs/files/papi_latests.tgz>`_
-    * `papi_reffiles.tgz <http://code.google.com/p/panicdrs/files/papi_reffiles.tgz>`_
-
+The latest stable version of PAPI can be downloaded from `here <http://www.iaa.es/~jmiguel/software/papi.tgz>`_
 
 Installing
 **********
 
-1. Unzip and untar the PAPI files in a suitable location.
+To install PAPI, use the standard installation procedure:::
+
+    $ tar zxvf papi-X.Y.Z.tar.gz
+    $ cd papi-X.Y.Z
+    $ python setup.py install
 
 
-    * tar zxf papi_X.X.X.tgz
-    * ln -s papi_X.X.X papi
-    * cd papi
-    * tar zxf papi_reffiles.tgz
+Edit ``papi_setup`` script
 
-
-2. Build the source
-
-
-	* cd src
-	* make
-	* make install
-
-
-3. Edit ``papi_setup`` script
-
-
-    * Modify the PAPI_DIR and PAPI_PIPE in the papi_setup.[sh][.csh] file in the PAPI bin directory
+    * Modify the PAPI_HOME in the papi_setup.[sh][.csh] file in the PAPI bin directory
     * Add the papi_setup.[sh][.csh] to your .bash_profile or .cshrc (.tcshrc)
 
     	* Bash: ``. $PAPI_DIR/bin/papi_setup.sh``
@@ -90,9 +81,6 @@ Example papi_setup.sh::
 	# path to PAPI directory
 	export PAPI_DIR=${HOME}/pipelines/papi
 
-	# path to PAPI output data products
-	export PAPI_PIPE=${HOME}/Data
-
 	#------------------------------------------------------------------------------
 	# Fixed Settings
 	#------------------------------------------------------------------------------
@@ -100,3 +88,34 @@ Example papi_setup.sh::
 	export PAPI_REF=${PAPI_DIR}/PAPI_REF
 	export PATH=${PATH}:${PAPI_DIR}/bin
 	export PYTHONPATH=${PYTHONPATH}:${PAPI_DIR}/lib
+
+Development version
+*******************
+
+The development version can be checked out with:::
+
+    $ svn co https://www.iaa.es/~jmiguel/software/papi
+
+And then installed following the standard procedure:::
+
+    $ cd papi
+    $ python setup.py install
+
+Building the documentation
+**************************
+The PAPI documentation is base on `sphinx`_. With the package installed, the 
+html documentation can be built from the `doc` directory::
+
+  $ cd doc
+  $ make html
+  
+The documentation will be copied to a directory under `build/sphinx`.
+  
+The documentation can be built in different formats. The complete list will appear
+if you type `make`.
+ 
+
+.. _PANIC: http://www.iaa.es/PANIC
+.. _CAHA: http://www.caha.es
+.. _sphinx: http://sphinx.pocoo.org
+  

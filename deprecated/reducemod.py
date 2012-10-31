@@ -100,23 +100,11 @@ from misc.paLog import log
 class SimpleReduce:
  
     """
-    \brief
-        Do a simple data reduction to a single frame
-        Subtract sky from an image using only its own background for sky computing
+    Do a simple data reduction to a single frame
+    Subtract sky from an image using only its own background for sky computing
             
-    \par Description:
-         
-         Algorith to do a simple and fast reduction of an IR image
-         -------------------------- 
-            
-    \par Language:
-        Python
-    \param data
-        
-    \retval 0
-        If no error, the reduced image
-    \author
-        JMIbannez, IAA-CSIC
+    Description:
+    -----------
     """
     
     def __init__(self):
@@ -247,13 +235,20 @@ class SimpleReduce:
     def computeSkyBkg ( self, image_in, image_out, output_type='-BACKGROUND', params=None, sconfig=None):
      
         """
-        \brief Set SExtractor parameters and configuration and run.
-        
-        \param image_in: Detection (and measurement) image
-        \param image_out:  Measurement image
-        \param output_type: (optional) background |-background | objects | -objects (see SExtractor doc)
-        \param params: (optional) extra output parameters (Parameters object)
-        \param config: (optional) configuration options (Config object)
+        Set SExtractor parameters and configuration and run.
+       
+        Parameters:
+	----------
+        image_in: str
+	  Detection (and measurement) image
+        image_out:  str
+	  Measurement image
+        output_type: str
+	  (optional) background |-background | objects | -objects (see SExtractor doc)
+        params: str
+	  (optional) extra output parameters (Parameters object)
+        config: str
+	  (optional) configuration options (Config object)
         
         NOTE: If either params or config is not specified, the defaults will be
         used
@@ -288,7 +283,7 @@ class SimpleReduce:
 ################################################################################
 class ReductionBlock:
     """
-    \brief A class that contain a set of files with the same type, filter, mode, texp,... to reduce (science or calib)
+    A class that contain a set of files with the same type, filter, mode, texp,... to reduce (science or calib)
     """
     
     m_file_list = []         # original file list
@@ -526,13 +521,20 @@ class ReductionBlock:
     def computeSkyBkg ( self, image_in, image_out, output_type='-BACKGROUND', params=None, sconfig=None):
      
         """
-        \brief Set SExtractor parameters and configuration and run.
-        
-        \param image_in: Detection (and measurement) image
-        \param image_out:  Measurement image
-        \param output_type: (optional) background |-background | objects | -objects (see SExtractor doc)
-        \param params: (optional) extra output parameters (Parameters object)
-        \param config: (optional) configuration options (Config object)
+        Set SExtractor parameters and configuration and run.
+       
+        Parameters:
+	-----------
+        image_in: str
+	  Detection (and measurement) image
+        image_out: str
+	  Measurement image
+        output_type: str
+	  (optional) background |-background | objects | -objects (see SExtractor doc)
+        params: str
+	  (optional) extra output parameters (Parameters object)
+        config: str
+	  (optional) configuration options (Config object)
         
         NOTE: If either params or config is not specified, the defaults will be
         used
@@ -875,11 +877,19 @@ class ReductionBlock:
                 
             
     def computeSkyBackground_i(self, i_frame, n_frames, output_type='BACKGROUND', output_file=None ):
-        """\brief Compute the sky background for the frame 'i_frame', using the nearest 2*n_frames
-           \param i_frame index referenced frame to compute the related sky-background
-           \param n_frames number of nearest 2*frames to use for the sky backgorund
-           \param output_type: background | sub_background | objects
-           \param ouput_sky sky background returned
+        """
+	Compute the sky background for the frame 'i_frame', using the nearest 2*n_frames
+        
+	Parameters:
+	-----------
+	i_frame : 
+	   index referenced frame to compute the related sky-background
+	n_frames: int
+	   number of nearest 2*frames to use for the sky backgorund
+        output_type: str
+	   background | sub_background | objects
+	ouput_sky: str 
+	   sky background returned
         """
          
         
@@ -1261,10 +1271,18 @@ class ReductionBlock:
     ##################################################################################
     def applyBadPixelMask( self, i_frames, mask ):
         """
-        \brief Apply a previously created pixel mask to frame elements indexed by 'i_frames' list in the list of frames
-        \param i_frames list of indexes
-        \param mask badpixel mask file to apply
-        \return True or False
+        Apply a previously created pixel mask to frame elements indexed by 'i_frames' list in the list of frames
+        
+	Parameters:
+	-----------
+	i_frames: list
+	  list of indexes
+	mask: str
+	  badpixel mask file to apply
+        
+	Returns:
+	--------
+	True or False
         """
         
         t=misc.utils.clock()
@@ -1289,10 +1307,18 @@ class ReductionBlock:
     ##################################################################################
     def mathOp( self, operator, outputFile=None ):
         """
-        \brief Apply a math operation to the selected files (support MEF files)
-        \param operator (-, +, /)
-        \param outputFile (by default /tmp/op.fits)
-        \return True or False
+        Apply a math operation to the selected files (support MEF files)
+        
+	Parameters:
+	----------
+	operator: str
+	  (-, +, /)
+	outputFile: str 
+	  (by default /tmp/op.fits)
+	
+	Returns:
+        --------
+          True or False
         """
         t=misc.utils.clock()
         t.tic()

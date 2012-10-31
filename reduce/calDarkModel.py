@@ -57,41 +57,40 @@ from misc.paLog import log
 
 class MasterDarkModel(object):
     """
-    \brief Class used to build and manage a master calibration dark model
-    
-    \par Class:
-        MasterDarkModel
-    \par Purpose:
-        Create a master Dark Model from a list for dark files
+    Class used to build and manage a master calibration dark model
         
-    \par Description:
-         An input series dark exposures with a range of exposure times is given. 
-         A linear fit is done at each pixel position of data number versus 
-         exposure time. A each pixel position in the output map represents the 
-         slope of the fit done at that position and is thus the dark current 
-         expressed in units of data numbers per second.   
-    \par Language:
-        PyRaf
-    \param input_data
+    As input a series of dark exposures with a range of exposure times is given. 
+    A linear fit is done at each pixel position of data number versus 
+    exposure time. A each pixel position in the output map represents the 
+    slope of the fit done at that position and is thus the dark current 
+    expressed in units of data numbers per second.   
+    
+    Parameters
+    ----------
+    input_data: list
         A list of dark files
-    \param bpm
-        Input bad pixel mask or NULL
-    \retval 0
+    temp_dir: str
+    	Directory for temporal files
+    output_filename: str
+    	Filename for the master dark obtained
+    bpm: str
+        Input bad pixel mask or NULL (optional)
+    
+    Returns
+    -------
         If no error, a fits file (nx*ny) with 2 planes (extensions)
         plane 0 = dark current in DN/sec
         plane 1 = bias
         
         DARKCURRENT The median dark current in data numbers per second found 
         from the median value of the output dark current map.
-    \author
-        JMIbannez, IAA-CSIC
     
-    TODO:
-    
+    TODO
+    ---- 
         - Data model for MEF files (PANIC)
         
     """
-    def __init__(self, input_files, temp_dir, 
+    def __init__(self, input_files, temp_dir='/tmp/', 
                  output_filename="/tmp/mdarkmodel.fits", 
                  bpm=None):
         
@@ -102,7 +101,7 @@ class MasterDarkModel(object):
     def createDarkModel(self):
       
         """
-        \brief Create a master DARK model from the dark file list
+        Create a master DARK model from the dark file list
         """   
         log.debug("Start createDarkModel")
         start_time = time.time()

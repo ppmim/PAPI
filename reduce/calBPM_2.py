@@ -66,15 +66,9 @@ class ExError(Exception):
 
 class BadPixelMask(object):
     """
-    \brief
         Build a bad pixel mask (hot and cold pixels) from a set of images 
         ( lamp_on and lamp_off frames and darks) using iraf.ccdmask task 
             
-    \par Class:
-         BadPixelMask   
-    \par Purpose:
-        Work out the BPM
-    \par Description:
          
          Algorith to create the BPM
          -------------------------- 
@@ -87,14 +81,9 @@ class BadPixelMask(object):
          6: Create BPM (iraf.ccdmask)
 
             
-    \par Language:
-        Python
-    \param data
-        A list of dome flat and a master dark
-    \retval 0
+        Returns
+	-------
         If no error, the bad pixel mask (fits file)
-    \author
-        JMIbannez, IAA-CSIC
         
     """
     def __init__(self, i_file_list, master_dark, output_file=None, lsigma=20, 

@@ -98,7 +98,7 @@ def remove_crosstalk(in_image, out_image=None, overwrite=False):
         else:
             log.error("Instrument is not supported !")
             raise Exception("Instrument is not supported !")
-    except Exception,e:
+    except Exception, e:
         raise e
 
     
@@ -109,15 +109,15 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     
     The image structure expected is as follow:
     
-        +-----------------+
-        +        |        +
-        +   Q4   |   Q3   +
-        +        |        +
-        +-----------------+
-        +        |        +
-        +   Q1   |   Q2   +
-        +        |        +
-        +-----------------+
+        I-----------------I
+        I        I        I
+        I   Q4   I   Q3   I
+        I        I        I
+        I-----------------I
+        I        I        I
+        I   Q1   I   Q2   I
+        I        I        I
+        I-----------------I
         
     where each quadrant (Qn) is 1kx1k and has 8 horizontal (Q1,Q3) or vertical
     (Q2,Q4) stripes of 128 pixels of length (width or heigh). 
@@ -145,7 +145,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         if f_in[0].header['INSTRUME'].lower()!='omega2000':
             log.error("Only O2k instrument is supported !")
             raise Exception("Only O2k instrument is supported !")
-    except Exception,e:
+    except Exception, e:
         log.error("Error opening FITS file : %s"%in_image)
         raise e
     
@@ -163,15 +163,15 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     data_out = numpy.zeros([n_stripes*height_st*2, width_st*2], dtype=numpy.float32)
     median = numpy.zeros([4], dtype=numpy.float32)
     
-    for j in range (0,n_stripes):
+    for j in range (0, n_stripes):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
     
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median[0] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[0] = ",median[0]
+    print "CUBE_MEDIAN[0] = ", median[0]
         
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                  y_orig+0:y_orig+width_st] = (cube[j] - med_cube) + background # median[0]
@@ -183,13 +183,13 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     height_st = 128
     n_stripes = 8
 
-    for j in range (0,n_stripes):
+    for j in range (0, n_stripes):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
 
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median[2] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[2] = ",median[2]
+    print "CUBE_MEDIAN[2] = ", median[2]
         
     for j in range(0,n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
@@ -210,11 +210,11 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         cube [j] = data_in[x_orig:x_orig+height_st, 
                            y_orig+j*width_st:y_orig+(j+1)*width_st]
     
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median[1] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[1] = ",median[1]
+    print "CUBE_MEDIAN[1] = ", median[1]
     
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig:x_orig+height_st, 
                  y_orig+j*width_st:y_orig+(j+1)*width_st] = (cube[j] - med_cube) + background #median[1]
@@ -230,11 +230,11 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         cube [j] = data_in[x_orig:x_orig+height_st, 
                            y_orig+j*width_st:y_orig+(j+1)*width_st]
 
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median[3] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[3] = ",median[3]
+    print "CUBE_MEDIAN[3] = ", median[3]
     
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig:x_orig+height_st, 
                  y_orig+j*width_st:y_orig+(j+1)*width_st] = (cube[j] - med_cube) + background #median[3]
@@ -293,7 +293,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     try:
         hdulist.writeto(out_file, output_verify='ignore', clobber=overwrite)
         hdulist.close(output_verify='ignore')
-    except Exception,e:
+    except Exception, e:
         raise e
   
     log.debug("End of remove_crosstalk (O2k)")
@@ -305,15 +305,15 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     Remove cross-talk in PANIC images (4kx4k).
     The frame structure expected is as follow:
     
-        +-----------------+
-        +        |        +
-        +   Q4   |   Q3   +
-        +        |        +
-        +-----------------+
-        +        |        +
-        +   Q1   |   Q2   +
-        +        |        +
-        +-----------------+
+        I-----------------I 
+        I        I        I 
+        I   Q4   I   Q3   I 
+        I        I        I 
+        I-----------------I 
+        I        I        I 
+        I   Q1   I   Q2   I 
+        I        I        I 
+        I-----------------I 
         
     where each quadrant (Qn) is 2kx2k and has 32 horizontal stripes of 64 pixels
     of height. So, all the quadrant are processed in the same way.  
@@ -325,7 +325,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         out_file = in_image
     else:   
         if not out_image:
-            out_file = in_image.replace(".fits","_dx.fits")
+            out_file = in_image.replace(".fits", "_dx.fits")
         else:
             out_file = out_image
             
@@ -340,7 +340,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         if f_in[0].header['INSTRUME'].lower()!='panic':
             log.error("Instrument %s is not supported !"%f_in[0].header['INSTRUME'])
             raise Exception("Instrument is not supported !")
-    except Exception,e:
+    except Exception, e:
         log.error("Error openning FITS file : %s"%in_image)
         raise e
     
@@ -357,15 +357,15 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     cube = numpy.zeros([n_stripes, height_st, width_st], dtype=numpy.float)
     data_out = numpy.zeros([n_stripes*height_st*2, width_st*2], dtype=numpy.float32)
     
-    for j in range (0,n_stripes):
+    for j in range (0, n_stripes):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
     
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ",median
+    print "CUBE_MEDIAN = ", median
         
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                  y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
@@ -377,15 +377,15 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     x_orig = 2048
     y_orig = 2048
 
-    for j in range (0,n_stripes):
+    for j in range (0, n_stripes):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
 
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ",median
+    print "CUBE_MEDIAN = ", median
         
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                  y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
@@ -400,16 +400,16 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     
     cube = cube.reshape((n_stripes, height_st, width_st))
     
-    for j in range (0,n_stripes):
+    for j in range (0, n_stripes):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
 
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ",median
+    print "CUBE_MEDIAN = ", median
 
         
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                  y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
@@ -425,12 +425,12 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
 
-    med_cube = numpy.median(cube,0)
+    med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ",median
+    print "CUBE_MEDIAN = ", median
 
         
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
         data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                  y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
@@ -450,7 +450,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     try:
         hdulist.writeto(out_file, output_verify='ignore', clobber=overwrite)
         hdulist.close(output_verify='ignore')
-    except Exception,e:
+    except Exception, e:
         raise e
       
     log.debug("End of remove_crosstalk (PANIC)")

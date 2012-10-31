@@ -1,10 +1,20 @@
 ===============
-Developer Guide
+Reference Guide
 ===============
-This will contain instructions for developers of the application.
+:Release: |version|
+
+:Date: |today|
+
+.. warning::
+
+   This "Reference" is still a work in progress; some of the material
+   is not organized, and several aspects of PAPI are not yet covered
+   sufficient detail.
+   
+This will contain a reference guide for developers of the application.
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generated/ 
 
 :mod:`reduce.calDark` --- Dark combination
 ==========================================

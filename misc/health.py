@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -39,8 +39,7 @@
 # Import necessary modules
 from optparse import OptionParser
 import sys
-import os
-import math
+import itertools
 
 import atpy 
 import numpy
@@ -55,7 +54,7 @@ import pylab
 
 # Logging
 from misc.paLog import log
-import misc.utils
+from misc.utils import *
 import datahandler
 
 def stack_frames_B (frames, f_from, f_to, outframe, sigmaframe, 
@@ -109,7 +108,7 @@ def stack_frames_B (frames, f_from, f_to, outframe, sigmaframe,
             
     return outframe, sigmaframe
 
-def stack_frames (file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe, 
+def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe, 
                   data_range_low, data_range_high, kappa):
     """
     Computes average, median or mode for stack of frames
@@ -141,7 +140,7 @@ def stack_frames (file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     """
     
     # First, some checks
-    if os.path.exists(file_of_frames)<2:
+    if not os.path.exists(file_of_frames):
         raise Exception("File does not exists")
     
     irdr_path = "/home/panic/DEVELOP/PIPELINE/PANIC/trunk/irdr/bin"
@@ -159,37 +158,53 @@ def stack_frames (file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     # (use IRDR::cubemean)
     prog = irdr_path+"/cubemean "
     cmd  = prog + " " + file_of_frames + " " + outframe + " " + outweight + \
-            " " + "offset " + mean + " noweight float"
-    e = misc.utils.runCmd( cmd )
+            " " + "offset " + mode + " noweight float"
+    e = runCmd( cmd )
     if e==0:
         log.debug("Some error while running command %s", cmd)
         raise Exception("Some error while running command %s"%cmd)
         
     # Now, compute the sigmaframe
-    cmd  = prog + " " + file_of_frames + " " + outframe + " " + \
+    cmd  = prog + " " + file_of_frames + " " + sigmaframe + " " + \
             outweight + " " + "offset sigma noweight float"
             
-    e = misc.utils.runCmd( cmd )
+    e = runCmd( cmd )
     
     log.debug("Successful ending of stack_frames")
     
     return (outframe, sigmaframe)
             
     
-def run_health_check ( input_file, window='full-frame', out_filename="/tmp/hc_out.fits" ):
-    """
-    @summary: 
+def run_health_check ( input_file, start, end, packet_size, window='full-frame',
+                        out_filename="/tmp/hc_out.fits"):
+    """ 
     Takes a input catalog (ascii file) listing all the files to be used in the
     check-health analysis and performs the computation required for it. 
     
-    @note: It is based on JWF MIDAS routine. 
+    Parameters
+    ----------
+    cat1: str
+        Text file listing the files to use for checking 
+    start: int
+        File number where start the packet 
+    end: int
+        File number where end the packet 
+    packet_size: int
+        Size of the packet
+    window: str
+        Window in frame (Q1, Q2, Q3, Q4)
+    out_filename: str
+        filename where results will be saved
+
+    Returns
+    -------
+    out_filename: str
+        Filename where results where saved
     
-    @param cat1: Text file listing the files to use for checking 
-    @param start: File number where start the packet 
-    @param packet_size: Size of the packet size
-    @param window: max. error for finding objects within (arcseconds)
-    @param out_filename: filename where results will be saved
-    @return: filename where results where saved
+    Notes
+    -----
+    It is based on JWF MIDAS routine. 
+
     """
     
     
@@ -212,9 +227,20 @@ def run_health_check ( input_file, window='full-frame', out_filename="/tmp/hc_ou
     else: # or 'full-frame'
         area = [10,10, 4080, 4080] 
     
+        
+    #fileToList()
+    for packet in grouper(packet_size, filelist):
+        listToFile(packet, "/tmp/packet.txt")
+        stack_frames(packet, 'median', 1, 5, "/tmp/stack.fits",
+                     "/tmp/stack_sigma.fits", 10, 100000, 3)    
+        
+    
     return 0
 
-
+def grouper(n, iterable, fillvalue=None):
+    "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 ################################################################################
 # main
@@ -268,8 +294,11 @@ if __name__ == "__main__":
         sys.exit(0)
         
     try:
-        run_health_check(options.input_image, options.start, options.packet_size, 
-                     options.window, options.output_file)
+        stack_frames(options.input_images, 'median', 1, 5, "/tmp/stack.fits",
+                     "/tmp/stack_sigma.fits", 10, 100000, 3)
+        
+        #run_health_check(options.input_image, options.start, options.packet_size, 
+        #             options.window, options.output_file)
     except Exception,e:
         log.info("Some error while running Health-Check routine: %s"%str(e))
         sys.exit(0)

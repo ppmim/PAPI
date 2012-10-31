@@ -111,15 +111,15 @@ class MasterTwilightFlat (object):
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, flat_files, master_dark_model, 
-                 output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000, 
+    def __init__(self, flat_files, master_dark_model,
+                 output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000,
                  bpm=None, normal=True, temp_dir="/tmp/", median_smooth=False):
         
         """
         Initialization method.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         
         flat_files: list
         
@@ -160,7 +160,7 @@ class MasterTwilightFlat (object):
     def createMaster(self):
       
         """
-        @summary: Create a master Tw FLAT from the flat file list
+        Create a master Tw FLAT from the flat file list
         """   
         log.debug("Start createMasterTwilightFlat")
         

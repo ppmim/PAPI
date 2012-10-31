@@ -51,24 +51,16 @@ from misc.paLog import log
 
 class CheckQuality(object):
     """
-    \brief 
-        Class used to estimate the image quality values using SExtractor 
+    Class used to estimate the image quality values using SExtractor 
     
-    \par Class:
-         CheckQuailty   
-    \par Purpose:
-        Calculate some initial image quality estimations using SExtractor
-    \par Description:
-            
-    \par Language:
-        Python
-    \param data
+    Parameters
+    ----------
+    data: 
         A input image
-    \retval 0
-        If no error, a seeing estimation value
-    \author
-        JMIbannez, IAA-CSIC
-        
+    
+    Returns
+    -------
+       If no error, a seeing estimation value
     """
     def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge=200, 
                  pixsize=0.45, write=False, verbose=False, bpm=None):
@@ -87,7 +79,6 @@ class CheckQuality(object):
     
     def estimateFWHM(self):
         """ 
-        @summary: 
          FWHM estimation
          --------------- 
          Generating a ascii text catalog with Sextractor, we can read the FWHM values 
@@ -97,8 +88,10 @@ class CheckQuality(object):
          with a suitable value. In other case, we won't get any value for FWHM. 
         
          SNR estimation as FLUX_AUTO/FLUXERR_AUTO or FLUX_APER/FLUXERR_APER
-        
-        @return: a couple of values (fwhm,std) 
+       
+        Returns:
+	-------
+        A couple of values (fwhm,std) 
     
         """
         

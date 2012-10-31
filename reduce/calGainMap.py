@@ -189,7 +189,7 @@ class GainMap(object):
         """
         Initialization method
         
-        Parameters:
+        Parameters
         ----------
         
         flatfield: str

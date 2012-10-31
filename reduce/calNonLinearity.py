@@ -126,21 +126,9 @@ from misc.paLog import log
 
 class NonLinearityModel(object):
     """
-    \brief Class used to compute the Non-linearity model for the detectors
-    
-    \par Class:
-         NonLinearityModel   
-    \par Purpose:
-        Compute the non-linearity coefficients of the detector
-    \par Description:
-        Based on the algorithm described by T.H.Jarrett et all (1994) we compute the non-linearity coefficientes
-        of the model
-    \par Language:
-        PyRaf
-    \author
-        JMIbannez, IAA-CSIC
-    \todo 
-           
+    Class used to compute the Non-linearity model for the detectors
+    Based on the algorithm described by T.H.Jarrett et all (1994) we compute the non-linearity coefficientes
+    of the model
     """
     def __init__(self, input_files=None, output_dir="/tmp", output_filename="/tmp/NLC.fits"):
         """

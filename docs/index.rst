@@ -3,26 +3,34 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PAPI's documentation!
-================================
+PAPI documentation
+==================
 
+Welcome! This is the Documentation for PAPI (PANIC Pipeline, version |version|, date |today|). 
+
+.. warning::
+
+   This "Documentation" is still a work in progress; some of the material
+   is not organized, and several aspects of PAPI are not yet covered
+   with sufficient detail.
+   
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    
    intro
    running
    quick_look
-   user_guide
-   developer_guide
+   ref
+   reference_guide
    modules
    acknowledgments
    references
    citation
    license
-   appendix
+   glossary
 
 
 Indices and tables
