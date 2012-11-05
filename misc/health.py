@@ -36,28 +36,28 @@
 #       
 ################################################################################
 
-# Import necessary modules
+# System modules
 from optparse import OptionParser
 import sys
 import itertools
+import tempfile
+import os
 
-import atpy 
 import numpy
-
+import math
 import matplotlib
-
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import matplotlib.cm as cm
 import pylab
             
 
-# Logging
+# PAPI modules
 from misc.paLog import log
 from misc.utils import *
 import datahandler
 
-def stack_frames_B (frames, f_from, f_to, outframe, sigmaframe, 
+def stack_frames_2 (frames, f_from, f_to, outframe, sigmaframe, 
                   data_range_low, data_range_high, kappa):
     """
     Computes average, median or mode for stack of frames
@@ -90,20 +90,20 @@ def stack_frames_B (frames, f_from, f_to, outframe, sigmaframe,
     if len(frames)<2:
         raise Exception("Not enough number of frames")
     
-    cube = numpy.zeros([n_stripes, height_st, width_st], dtype=numpy.float)
-    data_out = numpy.zeros([n_stripes*height_st*2, width_st*2], dtype=numpy.float32)
-    median = numpy.zeros([4], dtype=numpy.float32)
+    #cube = numpy.zeros([n_stripes, height_st, width_st], dtype=numpy.float)
+    #data_out = numpy.zeros([n_stripes*height_st*2, width_st*2], dtype=numpy.float32)
+    #median = numpy.zeros([4], dtype=numpy.float32)
     
     for i_frame in frames:
         try:
-            f = pyfits.open(i_frame)
-        except Exception,e:
+            pf = pyfits.open(i_frame)
+        except Exception, e:
             raise e
         
-        if len(f)>1:
+        if len(pf)>1:
             raise Exception("MEF files not yet supported.")
         
-        cube[i] = f[0].data
+        #cube[i] = f[0].data
         
             
     return outframe, sigmaframe
@@ -148,9 +148,11 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     
     #/tmp/darks.txt /tmp/mean_dark.fits /tmp/weight.fits offset sigma noweight float
     # Compute the outframe
-    mode ='mean'
-    if type_comb=='mean': mode = 'mode'
-    elif type_comb=='median': mode = 'median'
+    mode = 'mean'
+    if type_comb == 'mean': 
+        mode = 'mode'
+    elif type_comb == 'median': 
+        mode = 'median'
     else:
         log.error("Type of stacking not supported")
         raise Exception("Type of stacking not supported")
@@ -169,6 +171,9 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
             outweight + " " + "offset sigma noweight float"
             
     e = runCmd( cmd )
+    if e==0:
+        log.debug("Some error while running command %s", cmd)
+        raise Exception("Some error while running command %s"%cmd)
     
     log.debug("Successful ending of stack_frames")
     
@@ -176,15 +181,15 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
             
     
 def run_health_check ( input_file, start, end, packet_size, window='full-frame',
-                        out_filename="/tmp/hc_out.fits"):
+                        out_filename="/tmp/hc_out.pdf"):
     """ 
     Takes a input catalog (ascii file) listing all the files to be used in the
     check-health analysis and performs the computation required for it. 
     
     Parameters
     ----------
-    cat1: str
-        Text file listing the files to use for checking 
+    input_file: str
+        Text file listing the files to use for health computation 
     start: int
         File number where start the packet 
     end: int
@@ -214,32 +219,146 @@ def run_health_check ( input_file, start, end, packet_size, window='full-frame',
     else:
         raise Exception("Input file %s does not exist"%input_file)
     
-    if window=='Q1':
+    if window == 'Q1':
+        x1 = 10
+        y1 = 10
+        x2 = 2030
+        y2 = 2030
         area = [10, 10, 2030, 2030]
-    elif window=='Q2':
+    elif window == 'Q2':
+        x1 = 2100
+        y1 = 10
+        x2 = 4080
+        y2 = 2100
         area = [2100, 10, 4080, 2100]    
-    elif window=='Q3':
+    elif window == 'Q3':
+        x1 = 2100
+        y1 = 2100
+        x2 = 4080
+        y2 = 4080
         area = [2100, 2100, 4080, 4080]    
-    elif window=='Q4':
+    elif window == 'Q4':
+        x1 = 10
+        y1 = 2100
+        y2 = 2100
+        x2 = 4080
         area = [10, 2100, 2100, 4080]
-    elif window=='central':
+    elif window == 'central':
+        x1 = 512
+        y1 = 512
+        x2 = 3584
+        y2 = 3584
         area = [512, 512, 3584, 3584]
     else: # or 'full-frame'
-        area = [10,10, 4080, 4080] 
+        x1 = 10
+        x2 = 10
+        y1 = 4080
+        y2 = 4080
+        area = [10, 10, 4080, 4080] 
     
-        
+    print "Selected area = ",area
+    print "Packet size", packet_size
+    print "Files", filelist    
     #fileToList()
+    #tmp_file, _ = tempfile.mkstemp()
+    tmp_file = "/tmp/packet.txt"
+    n = 0
     for packet in grouper(packet_size, filelist):
-        listToFile(packet, "/tmp/packet.txt")
-        stack_frames(packet, 'median', 1, 5, "/tmp/stack.fits",
-                     "/tmp/stack_sigma.fits", 10, 100000, 3)    
+        if len(packet)==packet_size and not (None in packet):
+            listToFile(packet, tmp_file)
+            try:
+                stack_frames(tmp_file, 'median', 1, 5, "/tmp/stack%02d.fits"%n,
+                             "/tmp/stack_sigma%02d.fits"%n, 10, 100000, 3)    
+            except Exception, e:
+                raise e
+            n = n + 1
+
+            
+    #Get stats from images
+    stat_values = {}
+    itime = numpy.zeros([n], dtype=numpy.float32)
+    signal = numpy.zeros([n], dtype=numpy.float32)
+    std = numpy.zeros([n], dtype=numpy.float32)
+    
+    for i in range(n):
+        try:
+            print "Reading file %s"%("/tmp/stack%02d.fits"%i) 
+            pf = pyfits.open("/tmp/stack%02d.fits"%i)
+            pf2 = pyfits.open("/tmp/stack_sigma%02d.fits"%i)
+        except Exception, e:
+            log.error("Cannot open file %s"%("/tmp/stack%02d.fits"%i))
+            continue
+        signal[i] = numpy.mean(pf[0].data[x1:x2, y1:y2])
+        std[i] = numpy.std(pf2[0].data[x1:x2, y1:y2])
+        if 'ITIME' in pf[0].header: 
+            itime[i] = pf[0].header['ITIME']
+            
+        else:
+            itime[i] = NaN
+        stat_values[i] = [itime[i], signal[i], std[i]]
+        pf.close()
+        pf2.close()
         
     
+    print "Signal",signal
+    print "Std",std
+    print "Itimes",itime
+    
+    # Compute the linear fit signal VS variance
+    res = numpy.polyfit(signal, std**2, 1, None, True)
+    a = res[0][1] # intercept
+    b = res[0][0] # slope
+    r = res[3][1] # regression coeff ??? not exactly
+    
+    print "Coeffs =", res
+    
+    
+    # Plot the Signal VS Variance
+    pol = numpy.poly1d(res[0])
+    plt.plot(signal, std**2, '.', signal, pol(signal), '-')
+    #Note: gain = 1/slope
+    #Note: intercept = (RON/gain)**2 => RON = gain*sqrt(intercept)
+    gain = 1.0 / b
+    ron = gain/math.sqrt(a)
+    print "Gain = %s [e-/ADU]"%gain
+    print "RON = %s e-"%ron
+    plt.title("Poly fit: %f X + %f  r=%f Gain=%s RON=%s" %(b, a, r, 
+                                                           gain, ron))
+    plt.xlabel("Signal / ADU")
+    plt.ylabel("Variance  / ADU")
+    plt.savefig(out_filename)
+    plt.show()
+    
+    ##
+    # Fit and Plot the Signal VS ITime
+    ##
+    res = numpy.polyfit(signal, itime, 1, None, True)
+    a = res[0][1] # intercept
+    b = res[0][0] # slope
+    r = res[3][1] # regression coeff ??? not exactly
+    
+    pol = numpy.poly1d(res[0])
+    plt.plot(signal, itime, '.', signal, pol(signal), '-')
+    gain = 1.0 / b
+    ron = gain/math.sqrt(a)
+    print "Gain = %s [e-/ADU]"%gain
+    print "RON = %s e-"%ron
+    plt.title("Poly fit: %f X + %f  r=%f Gain=%s RON=%s" %(b, a, r, 
+                                                           gain, ron))
+    plt.xlabel("Signal / ADU")
+    plt.ylabel("Variance  / ADU")
+    plt.savefig(out_filename)
+    plt.show()
+    
+    
+    # remove tmp files
+    os.unlink(tmp_file)
+
     return 0
 
-def grouper(n, iterable, fillvalue=None):
+def grouper(group_size, iterable, fillvalue=None):
     "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
-    args = [iter(iterable)] * n
+    args = [iter(iterable)] * group_size
     return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 ################################################################################
@@ -264,15 +383,19 @@ if __name__ == "__main__":
                   default='full-detector')
     
     parser.add_option("-s", "--start_packet",
-                  action="store", dest="star_packet", type=int, default=1,
+                  action="store", dest="start_packet", type=int, default=1,
                   help="File where start the packet (default=%default)")
+    
+    parser.add_option("-e", "--end_packet",
+                  action="store", dest="end_packet", type=int, default=10,
+                  help="File where end the packet (default=%default)")
     
     parser.add_option("-p", "--packet-size",
                   action="store", dest="packet_size", type=int, default=10,
                   help="Number of files per packet (default=%default)")
                   
     parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", 
+                  action="store", dest="output_file", 
                   help="output plot filename (default = %default)",
                   default="health_check.pdf")
     
@@ -294,12 +417,13 @@ if __name__ == "__main__":
         sys.exit(0)
         
     try:
-        stack_frames(options.input_images, 'median', 1, 5, "/tmp/stack.fits",
-                     "/tmp/stack_sigma.fits", 10, 100000, 3)
+        #stack_frames(options.input_images, 'median', 1, 5, "/tmp/stack.fits",
+        #             "/tmp/stack_sigma.fits", 10, 100000, 3)
         
-        #run_health_check(options.input_image, options.start, options.packet_size, 
-        #             options.window, options.output_file)
-    except Exception,e:
-        log.info("Some error while running Health-Check routine: %s"%str(e))
+        run_health_check(options.input_images, options.start_packet, 
+                         options.end_packet, options.packet_size, 
+                         options.window, options.output_file)
+    except Exception, e:
+        log.error("Some error while running Health-Check routine: %s"%str(e))
         sys.exit(0)
         
