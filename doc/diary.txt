@@ -1414,6 +1414,47 @@ photon-transfer technique of Janesick et al. (Optical Engineering Vol. 26 (10)
 """
 
 
+2012-10-31
+==========  
+- Continuo con health.py.
+
+
+2012-11-05
+==========
+- Nos manda Matilde un mail pidiendo lo siguiente:
+
+"""
+Muy buenas a todos,
+
+  como todos los annos, en la reunion del Comite Ejecutivo de Calar Alto presentaremos dos dispositivas sobre PANIC.
+  Para preparar estas dispositivas, me podeis mandar un par de frases o tres sobre la situacion actual de lo que estais llevando cada uno?
+  Alguien tiene alguna foto reciente o relevante?
+
+Me gustaria montar esto el miercoles por la mannana.
+ 
+"""
+Yo le respondo con:
+
+
+Hola Matilde,
+
+te adjunto un párrafo que creo que resumen de forma general el estado
+del pipeline. Modúlalo como tu veas más conveniente, y en su caso, **
+completa ** algunos datos que faltan de tu proyecto.
+
+
+"""
+Concerning the Pipeline and quick-look tool, the development and
+debugging was continued, making improvements to some processing
+routines and adding new features. In addition, the pipeline was run
+successfully with a observing campaign of the project <xxxxxxx>  of
+<xxxxxx> nights with Omega2000 at CA.
+Currently, the pipeline debugging and improvement are being continued,
+the computer system is about to be ordered, and a second software
+integration to be hold early next year is being prepared.
+"""
+
+  
 
 FOR NEXT VIDEOCONF
 ==================

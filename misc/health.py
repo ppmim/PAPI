@@ -120,9 +120,10 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     type_comb: str
         type of combination to make (mean, median, sigma)
     f_from: int
-        frame from start the stacking
-    f_to: int 
+        frame from start the stacking [0,...,N-1], where N = number of files
+    f_to: int [1,...,N], where N = number of files
         frame to end the stacking
+    (Both indexes follow python 0-index)
     outframe: str
          filename where stack frame is saved to
     sigmaframe: str 
@@ -137,16 +138,19 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     Returns
     -------
     outframe, sigmaframe 
+    
+    TODO
+    ----
+     - Implement the use of data_range and kappa for clipping -->cubemean
     """
     
     # First, some checks
     if not os.path.exists(file_of_frames):
         raise Exception("File does not exists")
-    
+
     irdr_path = "/home/panic/DEVELOP/PIPELINE/PANIC/trunk/irdr/bin"
     outweight = "/tmp/weight.fits"
     
-    #/tmp/darks.txt /tmp/mean_dark.fits /tmp/weight.fits offset sigma noweight float
     # Compute the outframe
     mode = 'mean'
     if type_comb == 'mean': 
@@ -156,10 +160,23 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     else:
         log.error("Type of stacking not supported")
         raise Exception("Type of stacking not supported")
+
+    # Limit the number of frames
+    tmp_list = fileToList(file_of_frames)
+    if f_from != 0 or f_to != len(tmp_list):
+        new_file_of_frames = file_of_frames + ".ranged"
+        if f_from >= 0 and f_to <=len(tmp_list):
+            listToFile(tmp_list[f_from : f_to], new_file_of_frames)
+        else:
+            print "Len=", len(tmp_list)
+            print "f_to", f_to
+            raise Exception("list index out of range")
+    else:
+        new_file_of_frames = file_of_frames
     
     # (use IRDR::cubemean)
     prog = irdr_path+"/cubemean "
-    cmd  = prog + " " + file_of_frames + " " + outframe + " " + outweight + \
+    cmd  = prog + " " + new_file_of_frames + " " + outframe + " " + outweight + \
             " " + "offset " + mode + " noweight float"
     e = runCmd( cmd )
     if e==0:
@@ -167,7 +184,7 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
         raise Exception("Some error while running command %s"%cmd)
         
     # Now, compute the sigmaframe
-    cmd  = prog + " " + file_of_frames + " " + sigmaframe + " " + \
+    cmd  = prog + " " + new_file_of_frames + " " + sigmaframe + " " + \
             outweight + " " + "offset sigma noweight float"
             
     e = runCmd( cmd )
@@ -180,7 +197,7 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     return (outframe, sigmaframe)
             
     
-def run_health_check ( input_file, start, end, packet_size, window='full-frame',
+def run_health_check ( input_file, f_from, t_to, packet_size, window='full-frame',
                         out_filename="/tmp/hc_out.pdf"):
     """ 
     Takes a input catalog (ascii file) listing all the files to be used in the
@@ -190,9 +207,9 @@ def run_health_check ( input_file, start, end, packet_size, window='full-frame',
     ----------
     input_file: str
         Text file listing the files to use for health computation 
-    start: int
+    f_from: int [0,...,N-1], where N = number of files
         File number where start the packet 
-    end: int
+    t_to: int [1,...,N], where N = number of files
         File number where end the packet 
     packet_size: int
         Size of the packet
@@ -208,7 +225,11 @@ def run_health_check ( input_file, start, end, packet_size, window='full-frame',
     
     Notes
     -----
-    It is based on JWF MIDAS routine. 
+    It is based on JWF MIDAS routine.
+    
+    TODO
+    ----
+      - Implement usage of f_from, f_to 
 
     """
     
@@ -267,7 +288,7 @@ def run_health_check ( input_file, start, end, packet_size, window='full-frame',
         if len(packet)==packet_size and not (None in packet):
             listToFile(packet, tmp_file)
             try:
-                stack_frames(tmp_file, 'median', 1, 5, "/tmp/stack%02d.fits"%n,
+                stack_frames(tmp_file, 'median', 1, 3, "/tmp/stack%02d.fits"%n,
                              "/tmp/stack_sigma%02d.fits"%n, 10, 100000, 3)    
             except Exception, e:
                 raise e
@@ -304,7 +325,7 @@ def run_health_check ( input_file, start, end, packet_size, window='full-frame',
     print "Std",std
     print "Itimes",itime
     
-    # Compute the linear fit signal VS variance
+    # Compute the linear fit signal VS variance ( var = a*signal+b )
     res = numpy.polyfit(signal, std**2, 1, None, True)
     a = res[0][1] # intercept
     b = res[0][0] # slope
@@ -313,13 +334,13 @@ def run_health_check ( input_file, start, end, packet_size, window='full-frame',
     print "Coeffs =", res
     
     
-    # Plot the Signal VS Variance
+    # Plot the Signal(x) VS Variance(y)
     pol = numpy.poly1d(res[0])
     plt.plot(signal, std**2, '.', signal, pol(signal), '-')
     #Note: gain = 1/slope
     #Note: intercept = (RON/gain)**2 => RON = gain*sqrt(intercept)
     gain = 1.0 / b
-    ron = gain/math.sqrt(a)
+    ron = gain/math.sqrt(math.fabs(a))
     print "Gain = %s [e-/ADU]"%gain
     print "RON = %s e-"%ron
     plt.title("Poly fit: %f X + %f  r=%f Gain=%s RON=%s" %(b, a, r, 
@@ -330,24 +351,20 @@ def run_health_check ( input_file, start, end, packet_size, window='full-frame',
     plt.show()
     
     ##
-    # Fit and Plot the Signal VS ITime
+    # Fit and Plot the ITime(x) VS Signal(y)
     ##
-    res = numpy.polyfit(signal, itime, 1, None, True)
+    res = numpy.polyfit(itime, signal, 1, None, True)
     a = res[0][1] # intercept
     b = res[0][0] # slope
     r = res[3][1] # regression coeff ??? not exactly
     
     pol = numpy.poly1d(res[0])
-    plt.plot(signal, itime, '.', signal, pol(signal), '-')
-    gain = 1.0 / b
-    ron = gain/math.sqrt(a)
-    print "Gain = %s [e-/ADU]"%gain
-    print "RON = %s e-"%ron
-    plt.title("Poly fit: %f X + %f  r=%f Gain=%s RON=%s" %(b, a, r, 
-                                                           gain, ron))
-    plt.xlabel("Signal / ADU")
-    plt.ylabel("Variance  / ADU")
-    plt.savefig(out_filename)
+    plt.clf()
+    plt.plot(itime, signal, '.', itime, pol(itime), '-')
+    plt.title("Poly fit: %f X + %f  r=%f " %(b, a, r))
+    plt.xlabel("ITime / s")
+    plt.ylabel("Signal  / ADU")
+    plt.savefig(out_filename+"_2.pdf")
     plt.show()
     
     

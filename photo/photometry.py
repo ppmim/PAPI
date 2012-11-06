@@ -33,24 +33,23 @@
 # Created    : 25/05/2011    jmiguel@iaa.es -
 # Last update: 
 # TODO
-#       
+#   - Add Extintion coefficient computation using Airmass
+#   
 ################################################################################
 
 # Import necessary modules
 from optparse import OptionParser
 import sys
 import os
-import math
 
 import atpy 
 import numpy
 
-import matplotlib
+#import matplotlib
 #matplotlib.use('TkAgg')
 
 import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
-import matplotlib.cm as cm
+#import matplotlib.mlab as mlab
 import pylab
             
 import catalog_query
@@ -90,7 +89,7 @@ def MAD(a, c=0.6745, axis=0):
         d = numpy.median(a[good], axis=axis)
         # I don't want the array to change so I have to copy it?
         if axis > 0:
-            aswp = swapaxes(a[good],0,axis)
+            aswp = swapaxes(a[good], 0, axis)
         else:
             aswp = a[good]
         m = numpy.median(numpy.fabs(aswp - d) / c, axis=0)
@@ -186,7 +185,7 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
     ## where FLUX_BEST is obtained from SExtractor output catalog
     
     input = input_catalog
-    output_1 ="/tmp/output_1.xml"
+    output_1 = "/tmp/output_1.xml"
     
     command_line = STILTSwrapper._stilts_pathname + " tpipe " + \
                     " ifmt=votable" + \
@@ -195,7 +194,7 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
 
     rcode = misc.utils.runCmd(command_line)
     
-    if rcode==0 or not os.path.exists(output_1):
+    if rcode == 0 or not os.path.exists(output_1):
         log.error("Some error while running command: %s", command_line)
         raise CmdException("STILTS command failed !")
     
@@ -520,11 +519,11 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
             raise Exception("Found wrong RA,Dec,EXPTIME or FILTER value.")
         
         # Checking Filter    
-        if filter=='J':
+        if filter == 'J':
             two_mass_col_name = 'j_m'
-        elif filter=='H':
+        elif filter == 'H':
             two_mass_col_name = 'h_m'
-        elif filter=='K' or filter=='K-PRIME' or filter=='KS':
+        elif filter == 'K' or filter == 'K-PRIME' or filter == 'KS':
             two_mass_col_name = 'k_m'   
         #elif filter=='OPEN':
         #    two_mass_col_name = 'j_m'
@@ -532,7 +531,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
             log.error("Filter %s not supported" %filter)
             raise Exception("Filter %s not supported"%filter)
             
-    except Exception,e:
+    except Exception, e:
         log.error("Cannot read properly FITS file : %s:", str(e))
         raise e
     
@@ -554,7 +553,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     
     try:
         sex.run(input_image, updateconfig=True, clean=False)
-    except Exception,e:
+    except Exception, e:
         log.error("Canno't create SExtractor catalog : %s", str(e))
         raise e 
     
@@ -568,7 +567,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
                                      catalog_query.ICatalog.cat_names['2MASS'], 
                                      out_base_catalog, 'votable')[0]
         log.debug("Output file generated : %s", res_file) 
-    except Exception,e:
+    except Exception, e:
         log.error("Sorry, cann't solve the query to ICatalog: %s", str(e))
         raise e
 
@@ -579,7 +578,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
                                    out_xmatch_file, out_format='votable', 
                                    error=1.0 ) 
         log.debug("XMatch done !")
-    except Exception,e:
+    except Exception, e:
         log.error("XMatch failed %s", str(e))
         raise e
     
@@ -594,7 +593,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
                            two_mass_col_name, output_filename, snr )[0]
         log.info("Estimated ZP_err=%s"%est_zp_err)
         #sys.exit(0)
-    except Exception,e:
+    except Exception, e:
         log.error("Sorry, some error while computing linear fit or\
         ploting the results: %s", str(e))
         raise e
@@ -610,7 +609,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
                                               output_filename_2, 
                                               out_format='pdf')
         log.debug("Plot file generated : %s", plot_file) 
-    except Exception,e:
+    except Exception, e:
         log.error("Sorry, some error while computing linear fit or \
         ploting the results: %s", str(e))
         raise e
@@ -631,7 +630,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     
     try:
         sex.run(input_image, updateconfig=True, clean=False)
-    except Exception,e:
+    except Exception, e:
         log.error("Canno't create SExtractor catalog : %s", str(e))
         raise e 
 
@@ -685,7 +684,7 @@ if __name__ == "__main__":
         parser.print_help()
         parser.error("wrong number of arguments " )
     if not options.output_filename:
-        options.output_filename=None
+        options.output_filename = None
     
 
     if not os.path.exists(options.input_image):
@@ -696,7 +695,7 @@ if __name__ == "__main__":
         catalog = "2MASS"
         doPhotometry(options.input_image, catalog, options.output_filename, 
                      options.snr, options.zero_point)
-    except Exception,e:
+    except Exception, e:
         log.info("Some error while running photometric calibration: %s"%str(e))
         sys.exit(0)
         
