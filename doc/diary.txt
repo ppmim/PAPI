@@ -1454,7 +1454,57 @@ the computer system is about to be ordered, and a second software
 integration to be hold early next year is being prepared.
 """
 
+2012-11-07
+==========
+- Encuentro información que me aclara bastante como hacer el calculo de la
+Gain y RON de un CCD (o IR detector) en :
+
+    http://spiff.rit.edu/classes/phys445/lectures/gain/gain.html
+
+- A partir de la web anterior, pero ahora en :
+
+http://spiff.rit.edu/classes/phys445/lectures/align/pipeline.html
+
+encuentro el artículo:
+    "FOCAS Automatic Catalog Matching Algorithms"
+    
+que describe como hacer el matching de catalogos de forma eficiente.
+
+- Hablo con Jessica de DELL acerca de los problemas con openSuSE en el
+equipo DELL y me dice lo siguiente:
+    
+    1) Probablemente no tengamos problema con la distribucion openSuSE (o 
+    cualquier otra open), pero no nos pueden garantizar que no haya problemas
+    con algún driver de alguna controladora, pues es por eso que no esta
+    certificado.
+    
+    2) Incluso, tambien podriamos tener problemas con el soporte tecnico, pues
+    en cuanto le digamos que tenemos openSUSE, pues incluso por el fallo de un
+    disco nos pueden negar el soporte.
   
+    3) Hemos quedado que maniana me pasara un presupuesto con el coste de la 
+    licencia para SuSE entreprise para 3 y 5 anios.
+
+- Hago mejoras en health.py :
+
+    - estimacion del full-well
+    - chequeo de tamaño ventana
+    - rango de ficheros en el paquete
+ 
+  Pero todo esto quedaría pendiente de probar con datos reales de PANIC o
+  cualquier otro instrumento.
+  
+  Todo:
+  ----
+    - temporal_noise (cfr. vianak)
+    - usar numpy en lugar de cubemean
+    - implementar chequeo de rango y sigma-clipping  !
+    
+2012-11-08
+==========
+- implemento spatial_noise.py para calcular el RON a partir de la ganancia
+y de una serie de parejas de imagenes con el mismo TEXP
+
 
 FOR NEXT VIDEOCONF
 ==================

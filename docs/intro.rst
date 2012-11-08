@@ -39,7 +39,7 @@ installed in order to work properly:
     * `STSDAS/TABLES <http://www.stsci.edu/institute/software_hardware/stsdas/download-stsdas/>`_
     * `stsci_python <http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python>`_ (> v2.2)
     * `CDSClient <http://cdsarc.u-strasbg.fr/doc/cdsclient.html>`_
-    * `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (v2.3.2 >)
+    * `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (> v2.3.2)
     * `SCAMP <http://www.astromatic.net/software/scamp>`_
     * `SWarp <http://www.astromatic.net/software/swarp>`_
     * `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_

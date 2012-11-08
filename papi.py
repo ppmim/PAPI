@@ -33,6 +33,8 @@ __date__ = "$Date$"
 __author__ = "$Author$"
 __revision__ = "$Rev$"
 
+__version__ = "1.0.1"
+
 '''User command line interface of PAPI.'''
 
     ####################################################################
@@ -79,13 +81,13 @@ def main(arguments = None):
     # Get and check command-line options
     
     description = \
-    "This module in the main application for the PANIC data reduction system "
+    "This is the main module of the PANIC data reduction system (PAPI)"
 
     #wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
     parser = OptionParser(description = description, 
                                    #formatter = wider_format, 
                                    usage = "%prog [OPTION]... DIRECTORY...", 
-                                   version = "%prog 1.0")
+                                   version = "%prog "+__version__)
     # general options
 
     parser.add_option("-c", "--config", type = "str",
