@@ -12,6 +12,8 @@ treatment for electronic ghosts (cross-talk), sky subtraction, non-linear
 count-rate correction, artifact masking, robust alignment and registration for 
 large mosaics, weight map generation, and drizzling onto a final image mosaic. 
 
+
+
 **Development Team:** Jose M. Ibanez (IAA-CSIC)
 
 Caveats
@@ -25,7 +27,7 @@ galaxy cluster surveys). Other types imaging data have been reduced with PAPI
 but results can not be as good as desired. (See :ref:`troubleshooting` for tips).
 PAPI is **not** designed to reduce any kind of field taken with PANIC.  
 
-.. index:: prerequisites, requirements
+.. index:: prerequisites, requirements, pipeline
 
 Prerequisites
 *************
@@ -74,20 +76,23 @@ Edit ``papi_setup`` script
 
 Example papi_setup.sh::
 	
-	#---------------------------------------------------------------------------
-	# User Configurable Settings
-	#---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
+    # User Configurable Settings
+    #---------------------------------------------------------------------------
 
-	# path to PAPI directory
-	export PAPI_HOME=${HOME}/pipelines/papi
+    # path to PAPI directory
+    export PAPI_HOME=${HOME}/pipelines/papi
 
-	#---------------------------------------------------------------------------
-	# Fixed Settings
-	#---------------------------------------------------------------------------
-	# path to PAPI reference files
-	export PAPI_CONFIG=${PAPI_HOME}/config_files
-	export PATH=${PATH}:${PAPI_HOME}/bin
-	export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}/lib
+    # path to PAPI output data products
+    export PAPI_PROD=${HOME}/DataProd
+
+    #---------------------------------------------------------------------------
+    # Fixed Settings
+    #---------------------------------------------------------------------------
+    # path to PAPI reference files
+    export PAPI_CONFIG=${PAPI_HOME}/config_files
+    export PATH=${PATH}:${PAPI_HOME}/bin
+    export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}/lib
 
 Development version
 *******************

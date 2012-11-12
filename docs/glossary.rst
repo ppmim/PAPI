@@ -26,7 +26,12 @@ Glossary
    PAPI
     PANIC Pipeline
    
-   recipe
+   Pipeline
+    An automated data reduction pipeline can be defined as a set of contiguous 
+    data processing operations designed to automatically transform data from one 
+    functional level to another.
+   
+   Recipe
     A software object that processes the data obtained with
     a given observing mode of the instrument
 

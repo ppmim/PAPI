@@ -1,16 +1,13 @@
 Modules
 =======
 
-The PAPI pipeline includes N processing steps from basic calibration 
-to generating final co-added registered mosaics (See table below). Among these
-steps are steps for successfully handling three of the most common PANIC 
-anomalies: electronic ghosting, the pedestal effect and cosmic-ray persistence. 
-Electronic ghosts occur when a bright object is observed in one of the four 
-quadrants on a PANIC detector. This results in an echo of the bright object 
-in the other three quadrants. The module undopuft attempts to remove these 
-artifacts. The pedestal effect is the result of variable biases in each of the four 
-PANIC quadrants - leaving a significant pedestal signature in the processed 
-data. 
+The PAPI pipeline consists of a set of processing modules which implement from 
+basic calibration to generating final co-added registered mosaics (See table below).
+These modules can be run as a stand alone routines depending of your needs, e.g. 
+to create a master dark or flat-field for calibration, or you can use them as a
+pipeline calling the main script ``papi``, which will use each of the modules 
+as they are needed in order to accomplish a complete data reduction of a set of raw images.   
+ 
 
 .. index:: modules
 
@@ -19,7 +16,7 @@ data.
 ====================     ===========
 Module                   Description
 ====================     ===========
-``papi``                 Main pipeline module to start the entire data reduction process 
+``papi``                 Main pipeline script to start the entire data reduction process 
 ``calDark``              Creates a master dark by combination of a dark sequence
 ``calDarkModel``         Creates a master dark model from a dark series
 ``calBPM``               Creates a master Bad Pixel Mask from a set of darks and flats calibration files
@@ -32,7 +29,7 @@ Module                   Description
 ``applyDarkFlat``        Finds out the best Focus value from a focus series
 ``eval_focus_serie``     Finds out the best Focus value from a focus series
 ``skyfilter``            Subtracts sky background to a dither sequence of frames
-``astrowarp``            Creates final aligned and coadded frame using SEx,SCAMP and SWARP 
+``astrowarp``            Creates final aligned and coadded frame using SEx, SCAMP and SWARP 
 ``photometry``           Performs a photometric calibration comparison with 2MASS
 ``genLogsheet``          Creates a log sheet from a set of FITS files
 ``makeobjmask``          Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
@@ -44,10 +41,10 @@ Module                   Description
 ``papi``
 ********
 
-The ``papi`` module is the main PAPI routine that start the data reduction.  
-It starts by creating a subdirectory in the ``PAPI_DIR`` using the run name 
-give on the command line.  Within the run directory the following
-subdirectories are created:
+The ``papi`` module is the main PAPI script that run the data reduction.  
+It starts by creating a subdirectory in the ``PAPI_PROD`` directory using the 
+run name give on the command line.  Within the run directory the following
+sub-directories are created:
 
 
 .. automodule:: papi
@@ -60,27 +57,14 @@ subdirectories are created:
 =========   ===========  
 Directory   Description
 =========   ===========
-``CALIB``   A copy of all the uncalibrated input data and the output processed data products for modules ``undupuft`` through ``nonlincor``
-``ALIGN``   Output processed data products for modules ``weightmap`` through ``mdrizzle``
+``CALIB``   A copy of all the calibration created (master dark, master flat, ...)
+``TMP``     Temporal data products needed for data reduction, normally purged
 ``FINAL``   The final data products (final image mosiacs, weightmaps and context images)
 =========   ===========
 
-PAPI creates a SQLite_ database to store the uncalibrated input data fits 
-headers and pipeline metadata:
+PAPI creates a in-memory SQLite_ database to store the uncalibrated input data fits 
+headers and pipeline metadata. 
 
-.. index:: log, logging, status, FITS, headers
-
-.. tabularcolumns:: |r|l|
-
-==============   ===========  
-Table            Description
-==============   ===========
-``headers``      Select FITS header keywords for all input images 
-``run_log``      Runtime log messages
-``run_pars``     Value of each runtime option
-``run_status``   Runtime status information for each module
-``raw``          A *VIEW* of the header table listing only the raw FITS image headers
-==============   ===========
 
 .. _SQLite: http://www.sqlite.org
 
@@ -90,8 +74,7 @@ Table            Description
 ***********
 
 The ``calDark`` module creates a master dark image from a set of dark frames.
-In addition computes the Read-Out Noise of the detectors along with several
-statistics.
+In addition computes several statistics of the detectors.
 
 Options::
 
