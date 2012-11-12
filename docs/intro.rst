@@ -68,26 +68,26 @@ Edit ``papi_setup`` script
     * Modify the PAPI_HOME in the papi_setup.[sh][.csh] file in the PAPI bin directory
     * Add the papi_setup.[sh][.csh] to your .bash_profile or .cshrc (.tcshrc)
 
-    	* Bash: ``. $PAPI_DIR/bin/papi_setup.sh``
-    	* CSH: ``source $PAPI_DIR/bin/papi_setup.csh``
+    	* Bash: ``. $PAPI_HOME/bin/papi_setup.sh``
+    	* CSH: ``source $PAPI_HOME/bin/papi_setup.csh``
 
 
 Example papi_setup.sh::
 	
-	#------------------------------------------------------------------------------
+	#---------------------------------------------------------------------------
 	# User Configurable Settings
-	#------------------------------------------------------------------------------
+	#---------------------------------------------------------------------------
 
 	# path to PAPI directory
-	export PAPI_DIR=${HOME}/pipelines/papi
+	export PAPI_HOME=${HOME}/pipelines/papi
 
-	#------------------------------------------------------------------------------
+	#---------------------------------------------------------------------------
 	# Fixed Settings
-	#------------------------------------------------------------------------------
+	#---------------------------------------------------------------------------
 	# path to PAPI reference files
-	export PAPI_REF=${PAPI_DIR}/PAPI_REF
-	export PATH=${PATH}:${PAPI_DIR}/bin
-	export PYTHONPATH=${PYTHONPATH}:${PAPI_DIR}/lib
+	export PAPI_CONFIG=${PAPI_HOME}/config_files
+	export PATH=${PATH}:${PAPI_HOME}/bin
+	export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}/lib
 
 Development version
 *******************

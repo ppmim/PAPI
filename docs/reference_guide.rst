@@ -13,8 +13,6 @@ Reference Guide
    
 This will contain a reference guide for developers of the application.
 
-.. autosummary::
-   :toctree: generated/ 
 
 :mod:`reduce.calDark` --- Dark combination
 ==========================================
@@ -59,7 +57,7 @@ This will contain a reference guide for developers of the application.
 :mod:`reduce.calGainMap` --- Gain Map generation
 ================================================
 
-.. automodule:: reduce.calTwFlat
+.. automodule:: reduce.calGainMap
    :synopsis: Gain Map generation from a master flat
    :members:
    :undoc-members:
@@ -104,14 +102,6 @@ This will contain a reference guide for developers of the application.
    :members:
    :undoc-members:   
 
-:mod:`reduce.dxtak` --- Cross-talk correction
-=============================================
-
-.. automodule:: reduce.dxtalk
-   :synopsis: Cross-talk correction
-   :members:
-   :undoc-members:   
-
 :mod:`astromatic.swarp` --- SWARP wrapper
 =========================================
 
@@ -128,3 +118,4 @@ This will contain a reference guide for developers of the application.
     :synopsis: Image astrometry
     :members:
     :undoc-members:
+    

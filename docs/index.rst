@@ -24,6 +24,7 @@ Contents:
    running
    quick_look
    ref
+   reference_guide
    modules
    acknowledgments
    references

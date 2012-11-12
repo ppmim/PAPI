@@ -32,14 +32,10 @@ during the night.
 
 The next figure shows a snapshot of the PQL:
   
-.. image:: _static/pql_1.jpg
+.. image:: _static/pql_main.png
    :align: center
-   :height: 725 px
-   :width: 993 px 
-   :scale: 75 %
-   :name: PQL snapshot 
+   :scale: 65 %
    
-
 
 .. index:: quick-look, running
 
