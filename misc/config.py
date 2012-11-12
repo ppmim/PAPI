@@ -586,53 +586,12 @@ def read_config_file(config_file = default_config_file()):
     
     options["astrometry"] = astrometry  
     
-    
-    ####################### "fits" section #################################
-    ## ACTUALIZAR LLAMADAS a read_parameter()
-    # This options, although loaded from the configuration file, are not used
-    # by our Python code, but instead by the IRDR offsets.c code. However, we
-    # are loading them here in order to check that all the required parameters
-    # are present, so that errors can be detected early.
-
-    fits = {}
-
-    cannot_be_left_empty = ["right_ascension", "declination", "posang"]
-    may_be_left_empty = ["scale_arcsec_per_pix", "pixel_sixe_in_x_microns",
-                         "pixel_sixe_in_y_microns", "focus_scale_mm"]
-
-    for option_name in cannot_be_left_empty + may_be_left_empty:
-        fits[option_name] = read_parameter(config, "fits", option_name, str)
-
-        # Abort execution if a required option was not defined
-        if option_name in cannot_be_left_empty and not fits[option_name]:
-            print style.prefix() + "In section 'fits', the value of '" + \
-                  option_name + "' cannot be left empty."
-            sys.exit(style.error_exit_message())
-
-    # If no value was given for the option 'scale_arcsec_per_pix', the options
-    # (1) 'pixel_sixe_in_x_microns', (2) 'pixel_sixe_in_y_microns' and 
-    # (3) 'focus_scale_mm' will be used instead, so they must have been
-    # defined in the configuration file.
-    if not fits["scale_arcsec_per_pix"] and \
-       (not fits["pixel_sixe_in_x_microns"] or \
-        not fits["pixel_sixe_in_y_microns"] or \
-        not fits["focus_scale_mm"]):
-        print style.prefix() + "In section 'fits', if the value of " \
-              "'scale_arcsec_per_pix' is left empty\n" + style.prefix() + \
-              "the options 'pixel_sixe_in_x_microns', " \
-              "'pixel_sixe_in_y_microns' and\n" + style.prefix() + \
-              "'focus_scale_mm' must be defined."
-        sys.exit(style.error_exit_message())
-
-    options["fits"] = fits
-
 
 
     #################### FITS Keywords #####################
     keywords = {}
     keywords["object_name"] = read_parameter(config, "keywords", "object_name", str, True, config_file)
     keywords["julian_date"] = read_parameter(config, "keywords", "julian_date", str, True, config_file)
-    keywords["file_creation"] = read_parameter(config, "keywords", "file_creation", str, True, config_file)    
     keywords["x_size"] = read_parameter(config, "keywords", "x_size", str, True, config_file)        
     keywords["y_size"] = read_parameter(config, "keywords", "y_size", str, True, config_file)        
     keywords["ra"] = read_parameter(config, "keywords", "ra", str, True, config_file)      
