@@ -272,9 +272,9 @@ class MainGUI(panicQL):
         
         ## PRUEBAS !!!! #####
         #self.listView_config.setItem(1,1, QComboBox())
-        elem = QCheckListItem( self.listView_config, "check1" )
-        elem.setRenameEnabled(0,1)
-        elem.setText (0, "test")
+        #elem = QCheckListItem( self.listView_config, "check1" )
+        #elem.setRenameEnabled(0,1)
+        #elem.setText (0, "test")
         #self.listView_config.setRenameEnabled(1,0)
         self.listView_config.setSorting(-1)
         ### FIN DE PRUEBAS #####

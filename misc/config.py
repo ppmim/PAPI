@@ -59,8 +59,8 @@ def check_required_option(option_name, option_value):
     """
 
     if not option_value:
-         print style.prefix() + "The option '" + option_name + "' cannot be left empty"
-         sys.exit(style.error_exit_message())
+        print style.prefix() + "The option '" + option_name + "' cannot be left empty"
+        sys.exit(style.error_exit_message())
 
 
 

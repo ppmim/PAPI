@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Copyright (c) 2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -28,25 +28,6 @@
 #
 # Created    : 29/03/2012    jmiguel@iaa.es -
 # Last update: #! /usr/bin/env python
-
-# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
-#
-# This file is part of PAPI (PANIC Pipeline)
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# TODO
 ################################################################################
 """
 A trick to combine domeFF and skyFF :
@@ -57,24 +38,26 @@ sky. You also have a limited number of twilight flats or dark-sky images that ca
 be combined to make a dark-sky flat, but the total counts per pixel in either set of
 flats is not very high. A fairly standard procedure is to 'median-smooth' dome
 and twilight or dark-sky flat. A median smoothing replaces each pixel with the
-median of the pixel values in a box of a given size on a side. The result is an image
-that has been smoothed on the scale of the smoothing box size.
+median of the pixel values in a box of a given size on a side. The result is an 
+image that has been smoothed on the scale of the smoothing box size.
 A procedure for taking advantage of the facts that the large-scale flat-field
-variation of the dark-sky flat match that of the program frames and the dome flats
-have very high S/N in each pixel goes as follows:
+variation of the dark-sky flat match that of the program frames and the dome 
+flats have very high S/N in each pixel goes as follows:
  
- (a) Median smooth the combined, dark-sky flat -this improves the S/N and
+(a) Median smooth the combined, dark-sky flat -this improves the S/N and
 preserves the large-scale features of the flat.
- (b) Median smooth the combined dome flats using the same filter size as was
+
+(b) Median smooth the combined dome flats using the same filter size as was
 used for the dark-sky flat.
- (c) Divide the combined dome flat by it's median smoothed-version. The result is
+
+(c) Divide the combined dome flat by it's median smoothed-version. The result is
 a frame that is flat on large scales but contains all the high spatial frequency
 flat-field information.
- (d) Now multiply the smoothed dark-sky frame and the result of the division in
+
+(d) Now multiply the smoothed dark-sky frame and the result of the division in
 the previous step. You now have a flat-field with the low spatial frequency
 properties of the dark-sky flat combined with the high S/N, high spatial
 frequency properties of the dome flat.
-
 """
 
 # Import necessary modules

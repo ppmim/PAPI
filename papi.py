@@ -182,32 +182,25 @@ def main(arguments = None):
         
     (init_options, i_args) = parser.parse_args (args = arguments)
     
-    """ TODO 
-    try:
-        papi_dir2 = os.environ['PAPI_DIR']
-        papi_dir2 = os.environ['NICRED_REF']
-        papi_dir3 = os.environ['NICRED_PIPE']
-    except KeyError, error:
-        print 'PAPI_DIR enviroment variable %s not found!' % error
-        sys.exit()
-    if len(args) <= 1:
-        parser.print_help()
-        sys.exit()
-    """
     
     # Check required modules and versions
     if init_options.check_modules:
         misc.check_papi_modules.check_modules()
         return
     
-    # Read the default configuration file if none was specified by the user
+    # Read the default configuration file
+    # If none was specified by the user, environment variable will be used
     if not init_options.config_file:
-        config_file = misc.config.default_config_file()       
+        try:
+            config_file = os.environ['PAPI_CONFIG']
+        except KeyError, error:
+            print 'Environment variable PAPI_CONFIG not found!'
+            sys.exit()
     else:
         config_file = init_options.config_file
     
-    # now, we "mix" the invokation parameter values with the values in the config file,
-    # having priority the invokation values over config file values
+    # now, we "mix" the invokation parameter values with the values in the 
+    #config file, having priority the invokation values over config file values
     # note: only values of the 'general' section can be invoked
     options = misc.config.read_options(init_options, 'general', config_file)
 
@@ -218,7 +211,7 @@ def main(arguments = None):
     
     #print "options = ",options
     
-    if i_args:    # i_args is the leftover positional arguments after all options have been processed
+    if i_args: # i_args is the leftover positional arguments after all options have been processed
         parser.print_help()
         sys.exit(2) 
     

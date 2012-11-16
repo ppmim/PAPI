@@ -77,7 +77,17 @@ def MAD(a, c=0.6745, axis=0):
 
     c = 0.6745 is the constant to convert from MAD to std; it is used by
     default
-
+    
+    Parameters
+    ----------
+    
+    a : array 
+        data array
+    c : float
+        coeff to convert from MAD to std; 0.6745 default 
+    axis : int
+        axis direction in which to compute
+    
     """
 
     good = (a==a)
@@ -98,7 +108,7 @@ def MAD(a, c=0.6745, axis=0):
 
 def nanmedian(arr):
     """
-    Returns median ignoring NAN
+    Returns median ignoring NAN values
     """
     return numpy.median(arr[arr==arr])
 
@@ -107,26 +117,27 @@ def nanmedian(arr):
 
 def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     """
-    @summary: Takes two input catalogues (VOTables) and performs a cross match to 
+    Takes two input catalogues (VOTables) and performs a cross match to 
     find objects within 'error' arcseconds of each other. 
     The result is a new VOTable (default) containing only rows where a match 
     was found. 
     
-    @note: It runs without explicit specification of the sky position columns 
-    in either table (OBS_RA,OBS_DEC). It will work only if those columns are 
-    identified with appropriate UCDs, for instance pos.eq.ra;meta.main and 
-    pos.eq.dec:meta.main. If no suitable UCDs are in place this invocation will
-    fail with an error. 
+    .. note:: 
+        It runs without explicit specification of the sky position columns 
+        in either table (OBS_RA,OBS_DEC). It will work only if those columns are 
+        identified with appropriate UCDs, for instance pos.eq.ra;meta.main and 
+        pos.eq.dec:meta.main. If no suitable UCDs are in place this invocation will
+        fail with an error. 
     
-    @param cat1,cat2: catalogs for cross-matching
-    @param err: max. error for finding objects within (arcseconds)
-    @param out_filename: filename where results will be saved
-    @param out_format: format of the output generated; current options 
+    :param cat1,cat2: catalogs for cross-matching
+    :param err: max. error for finding objects within (arcseconds)
+    :param out_filename: filename where results will be saved
+    :param out_format: format of the output generated; current options 
             available are:
-        - VO Table (XML) (votable) (default)
-        - SVC (Software handshaking structure) message (svc)
-        - ASCII table (ascii)
-    @return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+            - VO Table (XML) (votable) (default)
+            - SVC (Software handshaking structure) message (svc)
+            - ASCII table (ascii)
+    :return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
     """
     
     in1 = cat1
@@ -156,26 +167,26 @@ def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 )
 def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 , 
                               out_filename=None, out_format='pdf'):
     """
-    @summary: generate a photometry comparison plot, comparing instrumental magnitude
-              versus 2MASS photometry
+    Generate a photometry comparison plot, comparing instrumental magnitude
+    versus 2MASS photometry.
     
-    @param catalog : VOTABLE catalog  having the photometric values (instrumental and 2MASS);
-    @param filter : NIR wavelength filter (J,H,K,Z)
-    @param expt : exposure time of original input image; needed to 
+    :param catalog: VOTABLE catalog  having the photometric values (instrumental and 2MASS);
+    :param filter: NIR wavelength filter (J,H,K,Z)
+    :param expt: exposure time of original input image; needed to 
                 compute the Instrumental Magnitude (Inst_Mag)  
-    @param out_filename: filename where results will be saved;if absent, 
-            the location will be a tempfile with a generated name
-    @param out_format: format of the output generated; current options available are:
+    :param out_filename: filename where results will be saved;if absent, 
+                the location will be a tempfile with a generated name
+    :param out_format: format of the output generated; current options available are:
         - 'pdf' (default)
         - 'jpg' 
         - 'gif'
         - for more formats, see  http://www.star.bris.ac.uk/~mbt/stilts/sun256/plot2d-usage.html
         
-    @return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+    :return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
     
-    @note: > stilts tpipe  ifmt=votable cmd='addcol MyMag_K "-2.5*log10(FLUX_BEST/46.0)"' omode=out in=/home/panic/SOFTWARE/STILTS/match_double.vot out=match_D_b.vot
-           > stilts plot2d in=match_S_b.vot subsetNS='j_k<=1.0 & k_snr>10' lineNS=LinearRegression xdata=k_m ydata=MyMag_k xlabel="2MASS k_m / mag" ylabel="PAPI k_m / mag"
-
+    Example:
+      > stilts tpipe  ifmt=votable cmd='addcol MyMag_K "-2.5*log10(FLUX_BEST/46.0)"' omode=out in=/home/panic/SOFTWARE/STILTS/match_double.vot out=match_D_b.vot
+      > stilts plot2d in=match_S_b.vot subsetNS='j_k<=1.0 & k_snr>10' lineNS=LinearRegression xdata=k_m ydata=MyMag_k xlabel="2MASS k_m / mag" ylabel="PAPI k_m / mag"
 
     """
     
@@ -230,13 +241,13 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
 def compute_regresion ( vo_catalog, column_x, column_y , 
                         output_filename="/tmp/linear_fit.pdf", min_snr=10.0):
     """
-    @summary: Compute and Plot the linear regression of two columns of the 
-              input vo_catalog
-    @param column_x: column number for X values of the regression (MAG_AUTO)
-    @param column_y: column number for Y values of the regression ( 2MASS 
+    Compute and Plot the linear regression of two columns of the input vo_catalog
+    
+    :param column_x: column number for X values of the regression (MAG_AUTO)
+    :param column_y: column number for Y values of the regression ( 2MASS 
                      column name for photometric value )
     
-    @return: tuple with linear fit parameters and a Plot showing the fit
+    :return: tuple with linear fit parameters and a Plot showing the fit
              a - intercept (ZP)
              b - slope of the linear fit
              r - estimated error
@@ -439,23 +450,21 @@ class STILTSwrapper (object):
         super (STILTSwrapper, self).__init__ (*a, **k)
         
     
-    def runXMatch(self, cat1, cat2, out_filename=None, out_format='votable', error=2.0):    
+    def runXMatch(self, cat1, cat2, out_filename=None, out_format='votable', 
+                  error=2.0):    
         """
-        @summary: do catalogs cross-match
+        Do catalogs cross-match
         
-        @param cat1,cat2: catalogs for cross-matching
-        
-	    @param err: max. error for finding objects within (arcseconds)
-        
-	    @param out_filename: filename where results will be saved;if absent, 
-            the location will be a tempfile with a generated name
-        
-	    @param out_format: format of the output generated; current options available are:
+        :param cat1,cat2: catalogs for cross-matching
+	    :param err: max. error for finding objects within (arcseconds)
+	    :param out_filename: file name where results will be saved; if absent,
+            the location will be a tempfile with a generated name.
+	    :param out_format: format of the output generated; current options available are:
             - VO Table (XML) (votable) (default)
             - SVC (Software handshaking structure) message (svc)
             - ASCII table (ascii)
         
-	    @return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+	    :return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
         """
         
         in1 = cat1
@@ -486,17 +495,19 @@ class STILTSwrapper (object):
 
 def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     """
-    @summary: Run the rough photometric calibraiton
+    Run the rough photometric calibraiton
     
-    @param input_image: reduced science image
+    :param input_image: reduced science image
     
-    @param catalog: photometric catalog to compare to
+    :param catalog: photometric catalog to compare to
     
-    @param output_filename: file where output figure will be saved
+    :param output_filename: file where output figure will be saved
     
-    @param snr : minimum SNR of stars used of linear fit
+    :param snr: minimum SNR of stars used of linear fit
     
-    @param zero_point: initial magnitud zero point for SExtractor (default 0.0)
+    :param zero_point: initial magnitud zero point for SExtractor (default 0.0)
+    
+    :return: if all was ok, return ouput_filename
     """
     
     

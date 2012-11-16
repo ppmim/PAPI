@@ -1506,6 +1506,22 @@ equipo DELL y me dice lo siguiente:
 y de una serie de parejas de imagenes con el mismo TEXP
 
 
+2012-11-12
+==========
+- Continuo con la documentación con Sphinx de PAPI; me esta dado un monton
+de WARNINGS que al generar el latex se convierten en un error. 
+Todo es por estar usando la extensión de Numpy `sphinxext`.
+
+- Envio a Josef para la videoconf lo siguiente:
+
+    * Added some kind of detector health-check routines (gain and noise computation)
+    * PAPI doc in progress (http://www.iaa.es/~jmiguel/PANIC/PAPI/html/)
+    * Defined the PANIC computer ?
+
+2012-11-13
+==========
+
+
 FOR NEXT VIDEOCONF
 ==================
 

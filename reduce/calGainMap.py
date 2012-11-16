@@ -143,7 +143,7 @@ class TwlightGainMap(object):
 class DomeGainMap(object):
     """ Compute the gain map from a list of dome (lamp-on,lamp-off) frames """
     
-    def __init_(self, filelist,  output_filename="/tmp/domeFlat.fits",  bpm=None):
+    def __init_(self, filelist,  output_filename="/tmp/domeFlat.fits", bpm=None):
         """ """
         self.framelist = filelist
         self.output = output_filename
@@ -174,11 +174,11 @@ class DomeGainMap(object):
                  
 class GainMap(object):
     """
-    Description:
+    Description
     -----------
     Build a Gain Map from a Flat Field image (dome, twilight, science-sky)  
             
-    Author:
+    Author
     ------
     JMIbanez, IAA-CSIC
         
@@ -247,7 +247,7 @@ class GainMap(object):
         Given a NOT normalized flat field, compute the gain map taking 
         into account the input parameters and an optional Bad Pixel Map (bpm)
         
-        Return:
+        Return
         ------
         If success, return the output filename of the Gain Map generated.
         

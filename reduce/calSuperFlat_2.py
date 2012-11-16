@@ -61,10 +61,6 @@ from iraf import ccdred
 # Interact with FITS files
 import pyfits
 
-# Import Pyro core
-import Pyro.core
-import Pyro.naming
-
 # Logging
 from misc.paLog import log
 

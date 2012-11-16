@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Module to do query to on-line catalogs"""
+"""Module to query on-line catalogs"""
 
 ################################################################################
 #
@@ -49,8 +49,9 @@ from misc.paLog import log
 
 
 class ICatalog (object):
-    """ Class to query on-line catalogs through Gator, the IRSA's 
-        Catalog Search engine 
+    """ 
+    Class to query on-line catalogs through Gator, the IRSA's 
+    Catalog Search engine 
     """
     
     cat_names = {'2MASS':'fp_psc', 
@@ -71,17 +72,18 @@ class ICatalog (object):
     def queryCatalog(self, ar, dec, sr=1, cat_name=None, 
                      out_filename=None, out_format='votable'):    
         """
-        @summary: Query the catalog and return the output file format selected
-        @param ra,dec: Right Ascension & Declination of center of conesearch
-        @param sr: search radious (arcsecs)
-        @param cat_name: catalog name where search will be done
-        @param out_filename: filename where results will be saved;if absent, 
+        Query the catalog and return the output file format selected
+        
+        :param ra,dec: Right Ascension & Declination of center of conesearch
+        :param sr: search radious (arcsecs)
+        :param cat_name: catalog name where search will be done
+        :param out_filename: filename where results will be saved;if absent, 
                 the location will be a tempfile with a generated name
-        @param out_format: format of the output generated; current options available are:
-            - VO Table (XML) (votable) (default)
-            - SVC (Software handshaking structure) message (svc)
-            - ASCII table (ascii)
-        @return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+        :param out_format: format of the output generated; current options available are:
+                - VO Table (XML) (votable) (default)
+                - SVC (Software handshaking structure) message (svc)
+                - ASCII table (ascii)
+        :return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
         """
         
         params={}
@@ -103,7 +105,6 @@ class ICatalog (object):
 
         #query = self.url + "?" + out_fmt + "&" +  radius + "&" + objstr + "&" \
         #        + spatial + "&" + catalog 
-        
         
         log.debug("Query: %s", get_url)        
 
@@ -132,8 +133,10 @@ if __name__ == "__main__":
     res_file = None
 
     try:
-        res_file = icat.queryCatalog(243.298750, +54.600278, 500, ICatalog.cat_names['2MASS'], 
-                      "/tmp/prueba.xml", 'votable')[0]
+        res_file = icat.queryCatalog(243.298750, +54.600278, 500, 
+                                     ICatalog.cat_names['2MASS'], 
+                                     "/tmp/prueba.xml", 
+                                     'votable')[0]
         log.debug("Output file generated : %s", res_file) 
     except Exception,e:
         log.error("Sorry, cann't solve the query")
