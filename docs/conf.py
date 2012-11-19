@@ -91,6 +91,16 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+# -----------------------------------------------------------------------------
+# Autosummary
+# -----------------------------------------------------------------------------
+
+import glob
+#autosummary_generate = glob.glob("reference/*.rst")
+
+# Turn off numpydoc autosummary tables
+###jmim##Turn off numpydoc flag to silence warnings 
+numpydoc_show_class_members = False
 
 # -- Options for HTML output ---------------------------------------------------
 

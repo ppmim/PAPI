@@ -2,9 +2,8 @@
 #cp /disk-a/caha/cafos/TMP/panicQL.* .
 
 pyuic panicQL.ui > panicQL.py
-/home/panic/SOFTWARE/PAPI/PyQt-x11-gpl-4.9.4/pyuic/pyuic4 panicQL_4.ui > panicQL_4.py
 
-if [[ `hostname -s` = udit43* ]]; then
+if [[ `hostname -s` = udit22* ]]; then
 	python runQL.py  -c ../config_files/papi_suse11.cfg
 else
 	#python runQL.py  -c ../config_files/papi_irws2.cfg

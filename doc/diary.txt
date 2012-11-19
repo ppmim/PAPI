@@ -1518,14 +1518,36 @@ Todo es por estar usando la extensión de Numpy `sphinxext`.
     * PAPI doc in progress (http://www.iaa.es/~jmiguel/PANIC/PAPI/html/)
     * Defined the PANIC computer ?
 
-2012-11-13
+2012-11-16
+==========
+
+- Avanzo bastante con la migracion a PyQt4 !! al menos puedo lanzar el QL, aunque
+hay bastantes metodos que aun hay que migrar y actualizar, y para ellos hay
+que ir probando la GUI por completo !
+
+
+2012-11-19
+==========
+- Encuentro buscando por la red como "silenciar" los warnings de sphinx con la 
+extension numpydoc:
+
+numpydoc_show_class_members = False
+
+Con esto ya no da los warnings, y se genera el latex+pdf bien. 
+No obstante, parece que para generar bien la documentación habría que usar
+un generador propio en python, como hacen otros proyectos (incluido el propio
+numpy) como:
+
+    http://www.pymvpa.org/index.html
+    http://scikit-image.org/docs/dev/
+
+2012-11-20
 ==========
 
 
 FOR NEXT VIDEOCONF
 ==================
 
-- New quote about PANIC-computer.
 - I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
 
 

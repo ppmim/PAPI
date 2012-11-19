@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1049</width>
-    <height>830</height>
+    <width>961</width>
+    <height>729</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,7 +40,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -100,7 +100,7 @@
      <widget class="QPushButton" name="pushButton_remove">
       <property name="geometry">
        <rect>
-        <x>755</x>
+        <x>738</x>
         <y>390</y>
         <width>70</width>
         <height>23</height>
@@ -122,7 +122,7 @@
      <widget class="QPushButton" name="pushButton_add">
       <property name="geometry">
        <rect>
-        <x>663</x>
+        <x>662</x>
         <y>390</y>
         <width>70</width>
         <height>23</height>
@@ -148,7 +148,7 @@
        </rect>
       </property>
       <property name="pixmap">
-       <pixmap>../../../../../.designer/backup/image0</pixmap>
+       <pixmap>images/logo_PANIC.jpg</pixmap>
       </property>
       <property name="scaledContents">
        <bool>true</bool>
@@ -160,7 +160,7 @@
      <widget class="QPushButton" name="pushButton_clear">
       <property name="geometry">
        <rect>
-        <x>848</x>
+        <x>818</x>
         <y>390</y>
         <width>70</width>
         <height>23</height>
@@ -204,6 +204,43 @@
         <height>21</height>
        </rect>
       </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>244</red>
+            <green>244</green>
+            <blue>244</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
       <property name="readOnly">
        <bool>true</bool>
       </property>
@@ -233,6 +270,43 @@
         <height>20</height>
        </rect>
       </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>244</red>
+            <green>244</green>
+            <blue>244</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
       <property name="toolTip">
        <string>Generated files location</string>
       </property>
@@ -248,6 +322,43 @@
         <width>290</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>244</red>
+            <green>244</green>
+            <blue>244</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
       </property>
       <property name="toolTip">
        <string>Temporal files location</string>
@@ -485,6 +596,43 @@
         <height>23</height>
        </rect>
       </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>207</red>
+            <green>33</green>
+            <blue>17</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>207</red>
+            <green>33</green>
+            <blue>17</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>207</red>
+            <green>33</green>
+            <blue>17</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
       <property name="text">
        <string>START processing</string>
       </property>
@@ -498,6 +646,43 @@
         <height>24</height>
        </rect>
       </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>207</red>
+            <green>136</green>
+            <blue>86</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>207</red>
+            <green>136</green>
+            <blue>86</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>207</red>
+            <green>136</green>
+            <blue>86</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
       <property name="text">
        <string>Subtract-Last2</string>
       </property>
@@ -510,6 +695,43 @@
         <width>290</width>
         <height>21</height>
        </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>244</red>
+            <green>244</green>
+            <blue>244</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
       </property>
       <property name="toolTip">
        <string>Received files location</string>
@@ -526,6 +748,43 @@
         <width>60</width>
         <height>21</height>
        </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>244</red>
+            <green>244</green>
+            <blue>244</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
       </property>
       <property name="text">
        <string>*.fits</string>
@@ -545,6 +804,9 @@
         <width>891</width>
         <height>191</height>
        </rect>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::ExtendedSelection</enum>
       </property>
       <attribute name="headerStretchLastSection">
        <bool>true</bool>
@@ -686,6 +948,43 @@
          <height>21</height>
         </rect>
        </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>137</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>137</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>244</red>
+             <green>244</green>
+             <blue>244</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
+        </palette>
+       </property>
        <property name="text">
         <string>900</string>
        </property>
@@ -714,6 +1013,43 @@
          <width>50</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>137</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>137</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>244</red>
+             <green>244</green>
+             <blue>244</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
+        </palette>
        </property>
        <property name="text">
         <string>150</string>
@@ -1799,7 +2135,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1049</width>
+     <width>961</width>
      <height>20</height>
     </rect>
    </property>
@@ -1867,7 +2203,7 @@
   <action name="fileOpenAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image1</normaloff>../../../../../.designer/backup/image1</iconset>
+     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1888,7 +2224,7 @@
   <action name="fileDirAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image2</normaloff>../../../../../.designer/backup/image2</iconset>
+     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -1909,7 +2245,7 @@
   <action name="fileShow">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image3</normaloff>../../../../../.designer/backup/image3</iconset>
+     <normaloff>../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</normaloff>../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Show</string>
@@ -2164,7 +2500,7 @@
   <action name="fileSearchAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image11</normaloff>../../../../../.designer/backup/image11</iconset>
+     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2179,7 +2515,7 @@
   <action name="quitAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image12</normaloff>../../../../../.designer/backup/image12</iconset>
+     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2194,7 +2530,7 @@
   <action name="irafConsoleAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image13</normaloff>../../../../../.designer/backup/image13</iconset>
+     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2241,8 +2577,8 @@
    <slot>autocheck_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>454</x>
+     <y>107</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2257,8 +2593,8 @@
    <slot>checkOutDir_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>455</x>
+     <y>140</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2273,8 +2609,8 @@
    <slot>slot_classFilter()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>392</x>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2513,8 +2849,8 @@
    <slot>add_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>677</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2529,8 +2865,8 @@
    <slot>clear_mainlist_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>862</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2545,8 +2881,8 @@
    <slot>createMasterDark_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>30</x>
+     <y>342</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2561,8 +2897,8 @@
    <slot>setDarks_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>33</x>
+     <y>116</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2577,8 +2913,8 @@
    <slot>setDataSourceDir_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>33</x>
+     <y>103</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2593,8 +2929,8 @@
    <slot>setDFlats_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>194</x>
+     <y>116</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2609,8 +2945,8 @@
    <slot>filename_filter_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>580</x>
+     <y>106</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2625,8 +2961,8 @@
    <slot>pushB_sel_masteDark_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>26</x>
+     <y>385</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2641,8 +2977,8 @@
    <slot>pushB_sel_masterFlat_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>25</x>
+     <y>414</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2657,8 +2993,8 @@
    <slot>pushB_sel_masterMask_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>26</x>
+     <y>444</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2673,8 +3009,8 @@
    <slot>setOutputDir_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>33</x>
+     <y>137</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2689,8 +3025,8 @@
    <slot>del_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>769</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2705,8 +3041,8 @@
    <slot>setSFlat_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>374</x>
+     <y>116</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2721,8 +3057,8 @@
    <slot>pushB_start_stop_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>791</x>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2737,24 +3073,8 @@
    <slot>setTempDir_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_test1</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>testSlot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>34</x>
+     <y>169</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2833,8 +3153,8 @@
    <slot>findOS_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>214</x>
+     <y>96</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2849,8 +3169,8 @@
    <slot>createCalibs_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>792</x>
+     <y>206</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2865,8 +3185,8 @@
    <slot>pushB_subtract_last2_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>664</x>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -2875,4 +3195,7 @@
    </hints>
   </connection>
  </connections>
+ <slots>
+  <slot>listView_popup_slot()</slot>
+ </slots>
 </ui>

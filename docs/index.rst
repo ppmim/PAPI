@@ -26,6 +26,7 @@ Contents:
    ref
    modules
    photo
+   reference
    acknowledgments
    references
    citation

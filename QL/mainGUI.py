@@ -276,7 +276,7 @@ class MainGUI(panicQL):
         #elem.setRenameEnabled(0,1)
         #elem.setText (0, "test")
         #self.listView_config.setRenameEnabled(1,0)
-        self.listView_config.setSorting(-1)
+        #self.listView_config.setSorting(-1)
         ### FIN DE PRUEBAS #####
     
     def __initDBs(self):

@@ -78,27 +78,35 @@ class MasterDark(object):
     """
     Create a master Dark from a list for dark files (single or MEF files); all
     must have the same properties (TEXP, NCOADDS, READMODE).
+    
+    Parameters
+    ----------
+    
+    file_list : list
+        A list of dark files
+    temp_dir: str
+        Directory where temp files will be created
+    output_filename: str
+        Ouput filename of the master dark file to be created
+    texp_scale: bool
+        If true, scale the darks before the combination.
+    bpm: str
+        Bad pixel Map filename
+    normalize: str
+        Whether true, a normalization to 1 second is done after darks combination.
+        It means, the master dark is supposed to have the count level of a
+        dark frame of 1 second.
+    show_stats: bool
+        Whether true, some statistics will be be shown
+    no_type_checking: bool
+        Whether true, the type of file (dark, flat, ...) will no be checked
+        in the input files
     """
     def __init__(self, file_list, temp_dir, output_filename="/tmp/mdark.fits", 
                  texp_scale=False, bpm=None, normalize=False,
                  show_stats=False, no_type_checking=False):
         """
-        
-        :param file_list: A list of dark files
-        :type file_list: list 
-        :param temp_dir: Input bad pixel mask or NULL
-        :type temp_dir: str
-        :param output_filename: Output filename of the master dark file created.
-        :type output_filename: str
-        :param texp_scale: If true, scale the darks before the combination.
-        :type texp_scale: bool
-        :param bpm: Bad pixel Map filename
-        :type bpm: str
-        :param normalize:
-            If true, a normalization to 1 second is done after darks combination.
-            It means, the master dark is supposed to have the count level of a
-            dark frame of 1 second.
-        :type normalize: bool
+        Initialize the object
         """
         
         self.__file_list = file_list
