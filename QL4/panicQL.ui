@@ -40,7 +40,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -1773,33 +1773,33 @@
        <string>Test1</string>
       </property>
      </widget>
-     <widget class="QListView" name="listView_dark">
+     <widget class="QListWidget" name="listBox_SkyF">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>350</x>
         <y>80</y>
-        <width>141</width>
-        <height>171</height>
+        <width>151</width>
+        <height>181</height>
        </rect>
       </property>
      </widget>
-     <widget class="QListView" name="listView_domeF">
+     <widget class="QListWidget" name="listBox_domeF">
       <property name="geometry">
        <rect>
         <x>170</x>
         <y>80</y>
-        <width>141</width>
-        <height>171</height>
+        <width>151</width>
+        <height>181</height>
        </rect>
       </property>
      </widget>
-     <widget class="QListView" name="listView_SkyF">
+     <widget class="QListWidget" name="listBox_darks">
       <property name="geometry">
        <rect>
-        <x>354</x>
+        <x>10</x>
         <y>80</y>
-        <width>141</width>
-        <height>171</height>
+        <width>131</width>
+        <height>181</height>
        </rect>
       </property>
      </widget>

@@ -208,7 +208,8 @@ class ReductionSet(object):
                     log.error("File %s does not exists or not has '.fits' extension", f)
                     raise ReductionSetException ("File %s does not exist or \
                     has not '.fits' extension"%f)
-                    
+
+        
         # Main directories
         self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
         # Temporal directory for temporal files created during the data reduction process
@@ -219,6 +220,8 @@ class ReductionSet(object):
                 self.temp_dir = "/tmp/"
         else:
             self.temp_dir = temp_dir
+        
+
 
         # Output directory for the results of the data reduction process            
         if out_dir == None:
@@ -257,7 +260,7 @@ class ReductionSet(object):
         self.check_data = check_data # flat to indicate if data checking need 
                                      # to be done (see checkData() method)
          
-        
+                
         if self.config_dict:
             self.m_terapix_path = self.config_dict['config_files']['terapix_bin']
             self.m_irdr_path = self.config_dict['config_files']['irdr_bin']
@@ -322,6 +325,7 @@ class ReductionSet(object):
                             self.ext_db_files.append((cal_dir+"/"+file).replace('//','/'))
         else:
             self.ext_db_files = external_db_files    
+
 
         # Print config_dictonary values in log file for debugging
         log.info("[ReductionSet] CONFIGURATION VALUES OF RS ------------------")
@@ -1137,8 +1141,11 @@ class ReductionSet(object):
         log.debug("Start subtractNearSky")
         
         # default values
-        if near_list==None: near_list = self.rs_filelist
-        if out_filename==None: out_filename=self.out_file
+        if near_list==None: 
+            near_list = self.rs_filelist
+        if out_filename==None: 
+            out_filename = self.out_file
+        
         
         # Some previus checks
         if file_pos<0 or file_pos>len(near_list):
@@ -1149,9 +1156,10 @@ class ReductionSet(object):
             log.error("Wrong number of sky frames provided. Min number of sky frame is %d", 
                       self.MIN_SKY_FRAMES)
             return None
+
         
         # 0.1 Get the gain map
-        if not os.path.exists( self.master_flat ):
+        if not self.master_flat or not os.path.exists( self.master_flat ):
             #raise Exception("Error, gain map file <%s> not found"%gain)
             #TODO: --> DONE try to compute GainMap using the given images !!!
             log.debug("---> creating gain map <----")
@@ -1172,6 +1180,7 @@ class ReductionSet(object):
                 log.error("Error while creating gain map : %s", str(e))
                 raise
         else: l_gainMap = self.master_flat
+
         
         #0.2 Check if GainMap need to be split
         gain_ext, g_next = self.split([l_gainMap])

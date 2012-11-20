@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-# Copyright (c) 2009 Jose M. Ibanez. All rights reserved.
-# Institute of Astrophysics of Andalusia, IAA-CSIC
+# Copyright (c) 2008-2012 IAA-CSIC  - All rights reserved. 
+# Author: Jose M. Ibanez. 
+# Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #
@@ -24,7 +25,7 @@
 #
 # mainGUI.py
 #
-# Last update 13/Sep/2011
+# Last update 20/Nov/2012
 #
 ################################################################################
 
@@ -93,6 +94,8 @@ from PyQt4.QtGui import QTreeWidgetItemIterator
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
+
+__version__ = "1.0.2"
 
 #-------------------------------------------------------------------------------
 def _pickle_method(method):
@@ -213,12 +216,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.group_by = self.config_opts['general']['group_by'].lower()
             
         
-        self.logConsole.info("Wellcome to the PANIC QuickLook tool v1.0" )
+        self.logConsole.info("Welcome to the PANIC QuickLook tool version %s"%__version__)
         
 
         self.__initializeGUI()
         self.createActions()
-        #self.createMenus()
         
         ## Init in memory Database
         ## -----------------------
@@ -249,7 +251,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ## Task management using Threads (ExecTaskThread)
         ## ----------------------------------------------
         self._task = None                       # Pointer to task/thread that is running 
-        #self._task_event = threading.Event()    # Event to syncronize ExecTaskThread and ExecTaskThread
+        #self._task_event = threading.Event()    # Event to synchronize ExecTaskThread and ExecTaskThread
         self._task_info = None
         self._task_info_list = []               # Queue-list where task status is saved
         
@@ -288,27 +290,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                QtCore.SIGNAL(_fromUtf8("itemClicked(QTreeWidgetItem*,int)")), 
                                self.selected_file_slot)
         
+        QtCore.QObject.connect(self.listView_dataS, 
+                               QtCore.SIGNAL(_fromUtf8("itemDoubleClicked(QTreeWidgetItem*,int)")), 
+                               self.display_slot)
+        
         ## Init Panel widgets values
         self.lineEdit_sourceD.setText(self.m_sourcedir)
         self.lineEdit_outputD.setText(self.m_outputdir)
         self.lineEdit_tempD.setText(self.m_tempdir)
+        
         ## Init calibration files
         self.lineEdit_masterDark.setText(QString(self.m_masterDark))
         self.lineEdit_masterFlat.setText(QString(self.m_masterFlat))
         self.lineEdit_masterMask.setText(QString(self.m_masterMask))
         
-        
-        ## PRUEBAS !!!! #####
-        #self.listView_config.setItem(1,1, QComboBox())
-        #elem = QCheckListItem( self.listView_config, "check1" )
-        #elem.setRenameEnabled(0,1)
-        #elem.setText (0, "test")
-        #self.listView_config.setRenameEnabled(1,0)
-        #self.listView_config.setSorting(-1)
-        ### FIN DE PRUEBAS #####
-    
     def __initDBs(self):
-        """This method initializes the in memory DBs used for input and output files"""
+        """
+        This method initializes the in memory DBs used for input and output files
+        """
         
         # Inputs DB
         try:
@@ -329,10 +328,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             raise Exception("Error while OUTPUT data base initialization")    
         
     def new_file_func_out(self, filename):
-        """Callback used when a new file is detected in output dir"""
+        """
+        Callback used when a new file is detected in output dir
+        """
                      
         self.new_file_func(filename, fromOutput=True)
-        
             
     def new_file_func(self, filename, fromOutput=False):
         """ Function executed when a new file is detected into the data source dir or into the out_dir"""
@@ -517,17 +517,22 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
     def getCalibFor(self, sci_obj_list):
         """
-        @summary: Given a list of frames belonging to a observing sequence for 
+        Given a list of frames belonging to a observing sequence for 
         a given object (star, galaxy, whatever),return the most recently created 
         calibration files (master dark,flat,bpm) in order to reduce the sequence.
         The search of the calibration files is done, firstly in the local DB, but
         if no results, then in the external DB if it was provided.
           
-        @return:  3 calibration files (dark, flat, bpm); If more than one master
+        Returns
+        -------
+          
+        Returns 3 calibration files (dark, flat, bpm); If more than one master
         were found, the most recently created (according to MJD) is returned.
         If some master were not found, None is returned.
     
-        @note: This function is also equally implemented in ReductionSet 
+        Notes
+        -----
+        This function is also equally implemented in ReductionSet 
         """
         
         log.debug("Looking for calibration files into DB")
@@ -663,7 +668,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     
     def setDataSourceDir_slot_B(self):
         """
-        deprecated
+        Deprecated
         """
         
         dir = ""
@@ -694,7 +699,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elem.setText (4, str(date)+"::"+str(ut_time))
             
             if self.m_show_imgs: 
-              display.showFrame(str(dir)+"/"+filename) 
+                display.showFrame(str(dir)+"/"+filename) 
             
             #self.listView_dataS.insertItem(str(filename))
         self.inputsDB.ListDataSet()
@@ -937,9 +942,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Otherwise, False will be returned (and the unfinished currenct list) and
         no reduction can still be done.
         
-        Note: It even works for calibration frame sequences (dark, flats, ...)
+        Notes
+        -----
+        It even works for calibration frame sequences (dark, flats, ...)
 
-        @return: a triplet as follow:
+        Returns
+        -------
+        A triplet as follow:
             - True if EOS was found, otherwise False
             - if True, the list of files of the sequence
             - if True, the type of sequence (DARK, FLAT, SCIENCE, etc ...)
@@ -1065,10 +1074,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def checkFunc(self):
         """
         Receiver function signaled by QTimer 'self.timer_dc' object.
-        Funtion called periodically to check for new files (only if no frame is being processed)
+        Funtion called periodically to check for new files (only if no frame 
+        is being processed)
         """
-        #print "---------------------->m_processing=", self.m_processing
-        #if not self.m_processing:
         if True:
             self.dc.check()
             if self.checkBox_outDir_autocheck.isChecked():
@@ -1083,8 +1091,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def data_grouping_slot(self):
         """
         Slot called when the 'checkBox_data_grouping' is clicked.
-        If checked, then data grouping will be done using OB_ID, OB_PAT, FILTER keywords
-        (or whatever we decide at the moment).
+        If checked, then data grouping will be done using OB_ID, OB_PAT, 
+        FILTER keywords (or whatever we decide at the moment).
         If not checked, tha data grouping will be done using RA,Dec values.
         """
         
@@ -1154,15 +1162,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         
         print "FL=", str(filelist.first())
-        a=[]
+        a = []
         for fs in filelist:
             a.append(str(fs))
             
-        self.m_frameList_dark=a
+        self.m_frameList_dark = a
         
         if not filelist.isEmpty():
             for filename in filelist:
-                self.listBox_darks.insertItem(str(filename))
+                self.listBox_darks.insertItem(0, str(filename))
 
     def setDFlats_slot(self):
         """
@@ -1175,11 +1183,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                 "FITS files (*.fit*)")
         if not filenames.isEmpty():
             for file in filenames:
-                self.listBox_domeF.insertItem(str(file))  
+                self.listBox_domeF.insertItem(0, str(file))  
 
     def clear_mainlist_slot(self):
-      
-        """ Remove all files from ListView, DataCollector and DB """
+        """
+        Remove all files from ListView, DataCollector and DB 
+        """
          
         self.listView_dataS.clear()
         self.dc.Clear()
@@ -1187,7 +1196,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
 
     def add_slot(self):
-      
         """
         Add a new file to the main list panel, but not to the DataCollector 
         list (dc), so it might be already inside 
@@ -1202,26 +1210,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.new_file_func(str(file))
         
     def del_slot(self):
-        
         """ 
         Delete the current selected file from the main list view panel, 
         but we do not remote from the DataCollector neither file system
         """
         
         self.m_popup_l_sel = []
-        it = QTreeWidgetItemIterator(self.listView_dataS)
-        listViewItem = it.current()
-        while listViewItem: 
-            if listViewItem.isSelected():
-                fileName=str(listViewItem.text(0))
-                self.listView_dataS.takeItem(listViewItem)
-                #self.dc.Clear(fileName)
-                self.inputsDB.delete( fileName )
-                ##self.m_popup_l_sel.append(str(listViewItem.text(0)))
-                print "SELECTED TO REMOVE=", fileName
-            else:
-                it+=1
-            listViewItem = it.current()
+        listViewItem = QTreeWidgetItemIterator(self.listView_dataS,
+                                               QTreeWidgetItemIterator.Selected)
+        while listViewItem.value():
+            fileName = str(listViewItem.value().text(0))
+            indx = self.listView_dataS.indexOfTopLevelItem(listViewItem.value())
+            self.listView_dataS.takeTopLevelItem(indx)
+            #self.dc.Clear(fileName)
+            self.inputsDB.delete( fileName )
+            #listViewItem +=1 # because of remove, we do not need an increment
           
         #self.inputsDB.ListDataSetNames()
     
@@ -1248,24 +1251,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.listView_dataS.clear()
             sequences = []
             seq_types = []
-            """
-            files = self.inputsDB.GetFiles()
-            # Now, we instantiate a ReductionSet, only to get the sequences, but
-            # not for data reduction purposes. 
-            try:
-                rs = RS.ReductionSet( files, self.m_outputdir, out_file=None, \
-                                            obs_mode="dither", dark=None, 
-                                            flat=None, bpm=None, red_mode="quick", \
-                                            group_by=self.config_opts['general']['group_by'], 
-                                            check_data=True, config_dict=self.config_opts)
-                
-                sequences, seq_types = rs.getSequences()
-                del rs # we do not need anymore
-            except Exception, e:
-                log.error("Error while creating Reduction set")
-                raise e
-            """
-            #look for sequences
+            
+            #Look for sequences
             sequences, seq_types = self.inputsDB.GetSequences(self.group_by) 
             
             #look for un-groupped files
@@ -1310,58 +1297,33 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     e_child.setText (6, str(ra))
                     e_child.setText (7, str(dec))
                 k+=1
-        elif self.comboBox_classFilter.currentText()=="GROUP_OLD":
-            self.listView_dataS.clear()
-            parList,fileList = self.inputsDB.GetSeqFiles()
-            k = 0
-            for seq in parList:
-                # create the father
-                elem = QTreeWidgetItem( self.listView_dataS )
-                # OB_ID + OB_PAT + FILTER
-                elem.setText(0, "OB_ID="+str(seq[0]) + " ** OB_PAT=" + 
-                             str(seq[1])+" ** FILTER=" + str(seq[2]) + 
-                             " ** #imgs="+str(len(fileList[k])) ) 
-                #elem.setText (1, str(seq[1])) # OB_PAT
-                #elem.setText (2, str(seq[2])) # FILTER
-                for file in fileList[k]:
-                    (date, ut_time, type, filter, texp, detector_id, 
-                     run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
-                    e_child = QTreeWidgetItem(elem)
-                    e_child.setText (0, str(file))
-                    e_child.setText (1, str(type))
-                    e_child.setText (2, str(filter))
-                    e_child.setText (3, str(texp))
-                    e_child.setText (4, str(date)+"::"+str(ut_time))
-                    e_child.setText (5, str(object))
-                    e_child.setText (6, str(ra))
-                    e_child.setText (7, str(dec))
-                k+=1
         else:
             #############################################    
             ## No grouping, only filtering by given type
             #############################################
             self.listView_dataS.clear()
-            db=None
+            db = None
             if str(self.comboBox_classFilter.currentText())=="ALL":
                 fileList = self.inputsDB.GetFilesT("ANY")
-                db=self.inputsDB
+                db = self.inputsDB
                 #db.ListDataSet()
             elif str(self.comboBox_classFilter.currentText())=="OUTS":
                 fileList = self.outputsDB.GetFilesT("ANY")
-                db=self.outputsDB
+                db = self.outputsDB
                 #db.ListDataSet()
             elif str(self.comboBox_classFilter.currentText())=="SKY_FLAT":
                 fileList = self.inputsDB.GetFilesT("SKY_FLAT")
-                db=self.inputsDB
+                db = self.inputsDB
             else:
-                type=str(self.comboBox_classFilter.currentText())
+                type = str(self.comboBox_classFilter.currentText())
                 fileList = self.inputsDB.GetFilesT(type)
-                db=self.inputsDB
+                db = self.inputsDB
 
-            elem=None
+            elem = None
             for file in fileList:
                 elem = QTreeWidgetItem( self.listView_dataS )
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=db.GetFileInfo(file)
+                (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
+                 dec, object, mjd)=db.GetFileInfo(file)
                 elem.setText (0, str(file))
                 elem.setText (1, str(type))
                 elem.setText (2, str(filter))
@@ -1396,7 +1358,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Create actions used in the Pop-Up menu (contextMenuEvent)
         """
-        #### Create Actions
+        
+        #### Main Pop-up actions
         self.dispAct = QtGui.QAction("&Display image", self,
             shortcut="Ctrl+D",
             statusTip="Display current selected image", 
@@ -1413,32 +1376,32 @@ class MainGUI(QtGui.QMainWindow, form_class):
             triggered=self.createMasterDark_slot)
         
         self.mDFlatAct = QtGui.QAction("&Build Master Dome Flat", self,
-            shortcut="Ctrl+M",
+            shortcut="Ctrl+F",
             statusTip="Build master dome flat with selected files", 
             triggered=self.createMasterDFlat_slot)
         
         self.mDTwFlatAct = QtGui.QAction("&Build Master Twlight Flat", self,
-            shortcut="Ctrl+M",
+            shortcut="Ctrl+T",
             statusTip="Build master twlight flat with selected files", 
             triggered=self.createMasterTwFlat_slot)
         
         self.mGainMapAct = QtGui.QAction("&Build Gain Map", self,
-            shortcut="Ctrl+M",
+            shortcut="Ctrl+G",
             statusTip="Build master gain map with selected files", 
             triggered=self.createGainMap_slot)
         
         self.mBPMAct = QtGui.QAction("&Build BPM", self,
-            shortcut="Ctrl+M",
+            shortcut="Ctrl+P",
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
         self.subOwnSkyAct = QtGui.QAction("Subtract self-sky", self,
-            shortcut="Ctrl+M",
+            shortcut="Ctrl+S",
             statusTip="Subtract self-sky", 
             triggered=self.subtract_ownSky_slot)
         
         self.subNearSkyAct = QtGui.QAction("Subtract near-Sky", self,
-            shortcut="Ctrl+M",
+            shortcut="Ctrl+N",
             statusTip="Subtract near sky", 
             triggered=self.subtract_nearSky_slot)
         
@@ -1448,22 +1411,22 @@ class MainGUI(QtGui.QMainWindow, form_class):
             triggered=self.do_quick_reduction_slot)
         
         self.stackFrameAct = QtGui.QAction("Stack Frames", self,
-            shortcut="Ctrl+S",
+            shortcut="Ctrl+F",
             statusTip="Stack selected files", 
             triggered=self.createStackedFrame_slot)
         
         self.astroAct = QtGui.QAction("Astrometric Calib.", self,
-            shortcut="Ctrl+S",
+            shortcut="Ctrl+a",
             statusTip="Run astrometric calibration of selected file", 
             triggered=self.do_raw_astrometry)
         
         self.photoAct = QtGui.QAction("Photometric Calib.", self,
-            shortcut="Ctrl+P",
+            shortcut="Ctrl+p",
             statusTip="Run photometric calibration of selected file", 
             triggered=self.do_raw_photometry)
         
         self.statsAct = QtGui.QAction("Statistics", self,
-            shortcut="Ctrl+P",
+            shortcut="Ctrl+s",
             statusTip="Get statistincs of selected file", 
             triggered=self.show_stats_slot)
         
@@ -1473,11 +1436,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             triggered=self.fwhm_estimation_slot)
         
         self.bckgroundAct = QtGui.QAction("Background estimation", self,
-            shortcut="Ctrl+B",
+            shortcut="Ctrl+b",
             statusTip="Get image background of selected file", 
             triggered=self.background_estimation_slot)
             
-        # Sub-menu Math
+        # Sub-menu Math actions
         self.subAct = QtGui.QAction("&Subtract Images", self,
             shortcut="Ctrl+-",
             statusTip="Subtract selected files", 
@@ -1493,17 +1456,27 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Divide selected files", 
             triggered=self.divideFrames_slot)
 
-        # Sub-menu fits        
+        # Sub-menu fits actions       
         self.splitAct = QtGui.QAction("Split MEF", self,
-            shortcut="Ctrl+P",
+            shortcut="Ctrl+m",
             statusTip="Split currect selected MEF file", 
             triggered=self.splitMEF_slot)
         
         self.joinAct = QtGui.QAction("Join MEF", self,
-            shortcut="Ctrl+J",
+            shortcut="Ctrl+j",
             statusTip="Join currect selected files into a MEF", 
             triggered=self.joinMEF_slot)
         
+        # Group-menu actions
+        self.redSeqAct = QtGui.QAction("Reduce Sequence", self,
+            shortcut="Ctrl+r",
+            statusTip="Reduce the selected sequence", 
+            triggered=self.reduceSequence_slot)
+        
+        self.copyGAct = QtGui.QAction("&Copy files to clipboard", self,
+            shortcut="Ctrl+c",
+            statusTip="Copy current selected files to clipboard", 
+            triggered=self.copy_files_slot)
         
         
     def listView_popup_slot(self, listItem, mouse_pointer):
@@ -1519,48 +1492,37 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         #### Get items selected in the ListView
         self.m_popup_l_sel = []
-        #it = QTreeWidgetItemIterator(self.listView_dataS)
         listViewItem = QTreeWidgetItemIterator(self.listView_dataS, 
                                                QTreeWidgetItemIterator.Selected)
-        #listViewItem = it.current()
         father = None
-        
         while listViewItem.value(): 
-            if 1:#listViewItem.isSelected():
-                print "TEXT=",str(listViewItem.value().text(0))
-                self.m_popup_l_sel.append(str(listViewItem.value().text(0)))
-                # if a parent of the group, no popup to show 
-                if (self.comboBox_classFilter.currentText()=="GROUP" and \
-                    listViewItem.firstChild()!=None): # is a parent of a group
-                    father = listViewItem
-                    self.m_listView_first_item_selected = father
-                    break
+            self.m_popup_l_sel.append(str(listViewItem.value().text(0)))
+            # if a parent of the group, no popup to show 
+            if (self.comboBox_classFilter.currentText()=="GROUP" and \
+                listViewItem.value().childCount()!=0): # is a parent of a group
+                father = listViewItem.value()
+                self.m_listView_first_item_selected = father
+                break
             listViewItem +=1
-            #it+=1
-            #listViewItem = it.current()
 
-        print "SELECTED=",self.m_popup_l_sel
-        
         if len(self.m_popup_l_sel)<=0:
             return
+            
         #print "LIST=", self.m_popup_l_sel
         
         # we have selected a group father
         if father: # we have selected a group father
-            #### Create the Group Popup menu
+            #### Create the 'Group' Popup menu
             popUpMenu = QMenu()
-            popUpMenu.insertItem("Reduce Obs. Sequece", self.reduceSequence_slot, 0, 1 )
-            popUpMenu.insertItem("Copy files to clipboard", self.copy_files_slot, 0, 2 )
+            popUpMenu.addAction(self.redSeqAct)
+            popUpMenu.addAction(self.copyGAct)
                
             group_files = []
-            child = father.firstChild()
-            while child:
-                group_files.append(str(child.text(0)))
-                child = child.nextSibling()
-            #print "CHILDS=",group_files
+            for ic in range(father.childCount()):
+                group_files.append(father.child(ic).text(0))
+                
         else:
-            
-            #### Create the Files Popup menu 
+            #### Create the 'Files' Popup menu 
             popUpMenu = QMenu()
             popUpMenu.addAction(self.dispAct)
             popUpMenu.addAction(self.copyAct)
@@ -1597,33 +1559,30 @@ class MainGUI(QtGui.QMainWindow, form_class):
             newAction.setMenu(subMenu_fits)
             
 
-#            
-#    
-#            ## Disable some menu items depeding of the number of item selected in the list view
-#            if len(self.m_popup_l_sel)==1:
-#                popUpMenu.setItemEnabled(2, False)
-#                popUpMenu.setItemEnabled(3, False)
-#                popUpMenu.setItemEnabled(4, False)
-#                popUpMenu.setItemEnabled(5, False)
-#                popUpMenu.setItemEnabled(6, False)
-#                #popUpMenu.setItemEnabled(10, False)
-#                subPopUpMenu.setItemEnabled(1,False)
-#                subPopUpMenu.setItemEnabled(2,False)
-#                #subPopUpMenu.setItemEnabled(3,False)
-#            elif len(self.m_popup_l_sel)>1:
-#                popUpMenu.setItemEnabled(1, False)
-#                popUpMenu.setItemEnabled(7, False)
-#                popUpMenu.setItemEnabled(8, False)
-#                #popUpMenu.setItemEnabled(11, False)
-#            elif len(self.m_popup_l_sel)>2:
-#                subPopUpMenu.setItemEnabled(1,False)
-#                subPopUpMenu.setItemEnabled(3,False)
-#            
-#            if len(self.m_popup_l_sel)<5:
-#                popUpMenu.setItemEnabled(9, False)
+            ## Disable some menu items depeding of the number of item selected 
+            ## in the list view
+            if len(self.m_popup_l_sel)==1:
+                self.copyAct.setEnabled(False)
+                self.mDarkAct.setEnabled(False)
+                self.mDFlatAct.setEnabled(False)
+                self.mDTwFlatAct.setEnabled(False)
+                self.mGainMapAct.setEnabled(False)
+                self.mBPMAct.setEnabled(False)
+                self.subAct.setEnabled(False)
+                self.sumAct.setEnabled(False)
+                self.divAct.setEnabled(False)
+            elif len(self.m_popup_l_sel)>1:
+                self.dispAct.setEnabled(False)
+                self.mBPMAct.setEnabled(False)
+                self.subOwnSkyAct.setEnabled(False)
+            elif len(self.m_popup_l_sel)>2:
+                self.subAct.setEnabled(False)
+                self.sumAct.setEnabled(False)
+
+            if len(self.m_popup_l_sel)<5:
+                self.subNearSkyAct.setEnabled(False)
             
         ## Finally, execute the popup
-        #popUpMenu.exec_loop(QCursor.pos()) event.globalPos()  
         popUpMenu.exec_(event.globalPos())
         
     def reduceSequence_slot(self):
@@ -1633,16 +1592,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         
         group_files = []
-        child = self.m_listView_first_item_selected.firstChild()
-        while child:
-            group_files.append(str(child.text(0)))
-            child = child.nextSibling()
-        #print "CHILDS=",group_files
+        #child = self.m_listView_first_item_selected.firstChild()
+        #while child:
+        #    group_files.append(str(child.text(0)))
+        #    child = child.nextSibling()
+        father = self.m_listView_first_item_selected
+        for ic in range(father.childCount()):
+                group_files.append(str(father.child(ic).text(0)))
         
         try:
             return self.processFiles(group_files)
         except Exception,e:
-            QMessageBox.critical(self, "Error", "Error while group data reduction: \n%s"%str(e))
+            QMessageBox.critical(self, "Error", 
+                                 "Error while group data reduction: \n%s"%str(e))
             raise e
 
     def copy_files_slot(self):
@@ -1651,11 +1613,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         clipboard in order to allow copy&paste
         """
         
-        text=""
-        child = self.m_listView_first_item_selected.firstChild()
-        while child:
-            text=text+str(child.text(0))+"\n"
-            child=child.nextSibling()    
+        text = ""
+        father = self.m_listView_first_item_selected
+        for ic in range(father.childCount()):
+            text = text + str(father.child(ic).text(0)) + "\n"
         
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
@@ -1666,29 +1627,32 @@ class MainGUI(QtGui.QMainWindow, form_class):
         allow copy&paste
         """
         
-        text=""
+        text = ""
         for filename in self.m_popup_l_sel:
-            text=text+str(filename)+"\n"
+            text = text + str(filename) + "\n"
         
         clipboard = QApplication.clipboard()
         clipboard.setText(text)    
             
     def splitMEF_slot(self):
-        """Split each MEF selected file from the list view into NEXT separate single FITS file, where NEXT is number of extensions.
-           As result, NEXT files should be created
+        """
+        Split each MEF selected file from the list view into NEXT separate 
+        single FITS file, where NEXT is number of extensions.
+        As result, NEXT files should be created
         """
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
                 mef.doSplit(".%02d.fits")
             except Exception,e:
-                log.debug("Cannot split file %s. Maybe it's not a MEF file",str(e))
+                log.debug("Cannot split file %s. Maybe it's not a MEF file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file"%(file))
                 #self.logConsole.info(QString(str(line)))
     
     def joinMEF_slot(self):
-        """Join/stitch a MEF file to stitch them together
-           As result, one single FITS file with the stitched image should be created
+        """
+        Join/stitch a MEF file to stitch them together
+        As result, one single FITS file with the stitched image should be created
         """
         for file in self.m_popup_l_sel:
             try:
@@ -1699,24 +1663,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QMessageBox.critical(self, "Error", "Cannot stitch file: %s. \n Maybe it's not a MEF file"%(file))
     
     def selected_file_slot(self, listItem):
-        """To know which item is selected """
+        """
+        To know which item is selected 
+        """
                 
         if listItem:
-            if self.comboBox_classFilter.currentText()=="GROUP" and listItem.firstChild()!=None: # it'a a parent
+            if (self.comboBox_classFilter.currentText()=="GROUP" and 
+                listItem.childCount()!=0): # it'a a parent
                 self.m_listView_item_selected = None # for consistency
                 return
             else: self.m_listView_item_selected = str(listItem.text(0))
     
     def imexam_slot(self):
-        """Imexam the currect filename selected 
+        """
+        Imexam the currect filename selected - not used because it fails 
         """
         
         try:
             #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-            thread = reduce.ExecTaskThread(self.run_imexam, self._task_info_list, self.m_popup_l_sel[0] )
+            thread = reduce.ExecTaskThread(self.run_imexam, 
+                                           self._task_info_list, 
+                                           self.m_popup_l_sel[0] )
             thread.start()
         except Exception,e:
-            QMessageBox.critical(self, "Error", "Error while Imexam with image %s"%(self.m_popup_l_sel[0]))
+            QMessageBox.critical(self, "Error", 
+                                 "Error while Imexam with image %s"%(self.m_popup_l_sel[0]))
             raise e
         
     def run_imexam(self, filename):
@@ -1764,13 +1735,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
         return
     
     def listbox_dataSource_popup(self):
+        """
+        Not finished ! To be completed
+        """
         #QMessageBox.critical(self,"Error", "Could not save the current document")
         popUpMenu = QMenu()
-        popUpMenu.insertItem("Create Master Dark")
-        popUpMenu.insertItem("Create Master Dome-Flat")
-        popUpMenu.insertItem("Create Master Sky-Flat")
+        popUpMenu.addAction("Create Master Dark")
+        popUpMenu.addAction("Create Master Dome-Flat")
+        popUpMenu.addAction("Create Master Sky-Flat")
         #actions["act1"].addTo(fileMenu)
-        popUpMenu.exec_loop(QCursor.pos())
+        popUpMenu.exec_(QCursor.pos())
+        
         return
 
     def iraf_console_slot(self):
@@ -1778,7 +1753,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         os.system("cd $HOME/iraf;/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 100x30 -bg grey -fg black -e cl &")
         
     def start_ds9_slot(self):
-        """Start DS9 display, and if exixts, open the currect selected file in the list view"""
+        """
+        Start DS9 display, and if exixts, open the currect selected file in 
+        the list view.
+        """
         
         if self.m_listView_item_selected!="":
             display.showFrame(self.m_listView_item_selected)
@@ -1790,31 +1768,33 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def start_aladin_slot(self):
         """Start Aladin tool"""
-        
-        
+
         os.system('echo "load %s ;sync; get vizier(2mass)" |/usr/local/bin/aladin -nobanner &' %(self.m_listView_item_selected))
         self.logConsole.info("Aladin launched !")
         
         # utils.runCmd does not allow launch in background !!
-        #if utils.runCmd("/usr/local/bin/aladin &")==0: # some error
-            #log.error("Error starting Aladin application")
-            #raise Exception("Error executing command Aladin")
-            #QMessageBox.warning(self,"Error","Error starting Alading application")
-        #else:    
-            #self.logConsole.info("Aladin launched !!!")
 
     def pushB_sel_masteDark_slot(self):
-        source=QFileDialog.getOpenFileName( self.m_default_data_dir, "Master file (*.fit*)",  self, "Source Dialog","select master")
+        """
+        Called to create a master dark - to be deprecated
+        """
+        source = QFileDialog.getOpenFileName( self,
+                                              self.m_default_data_dir, 
+                                              "Select master dark file",  
+                                              "(*.fit*")
 
         if str(source):
             self.lineEdit_masterDark.setText(source)
-            self.m_masterDark=str(source)
+            self.m_masterDark = str(source)
 
     def pushB_sel_masterFlat_slot(self):
         """
-        @summary: to be done
+        Called to create a master flat - to be deprecated
         """
-        source=QFileDialog.getOpenFileName( self.m_default_data_dir, "Master file (*.fit*)",  self, "Source Dialog","select master")
+        source = QFileDialog.getOpenFileName( self,
+                                              self.m_default_data_dir, 
+                                              "Select master flat file",  
+                                              "(*.fit*)")
 
         if str(source):
             fits = datahandler.ClFits(str(source))
@@ -1832,11 +1812,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                
 
     def pushB_sel_masterMask_slot(self):
-        source=QFileDialog.getOpenFileName( self.m_default_data_dir, "Master file (*.fit*)",  self, "Source Dialog","select master")
+        source=QFileDialog.getOpenFileName( self,
+                                            self.m_default_data_dir, 
+                                            "Select Master BPM", 
+                                            "(*.pl*, *.fit*)")
 
         if str(source):
             self.lineEdit_masterMask.setText(source)
-            self.m_masterMask=str(source)                       
+            self.m_masterMask = str(source)                       
 
     def pushB_subtract_last2_slot(self):
         """
@@ -1955,7 +1938,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
 
     def divideFrames_slot(self):
-        """This methot is called to divide two images selected from the File List View"""
+        """
+        This methot is called to divide two images selected from the File List View
+        """
 
         if (len(self.m_popup_l_sel)!=2):
             QMessageBox.critical(self, "Error", "You need to select  2 files")
@@ -1982,8 +1967,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     raise
 
     def createMasterDark_slot(self):
+        """
+        Called when Create button pressed in tab 'Calibrations'
+        """
 
-        if len(self.m_popup_l_sel)<=1:
+        listItems = self.listBox_darks.findItems(QString("*"), 
+                                                 Qt.MatchWrap | Qt.MatchWildcard)
+        # Build list
+        l_list = [ str(item.text()) for item in listItems]
+
+        if len(l_list)<3:
             QMessageBox.information(self,"Info","Not enough frames !")
             return
 
@@ -1995,7 +1988,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 texp_scale = False
                 QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, 
+                self._task = reduce.calDark.MasterDark(l_list, 
                                                        self.m_tempdir, 
                                                        str(outfileName), 
                                                        texp_scale)
@@ -2030,9 +2023,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
     def createMasterDFlat_slot(self):
         
-        """Create a master dome flat field from selected frames"""
+        """
+        Create a master dome flat field from selected frames
+        """
         
-        if len(self.m_popup_l_sel)>2:
+        listItems = self.listBox_domeF.findItems(QString("*"), 
+                                                 Qt.MatchWrap | Qt.MatchWildcard)
+        # Build list
+        l_list = [ str(item.text()) for item in listItems]
+
+        if len(l_list)>2:
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename to save under",
                                                       self.m_outputdir + "/master_dflat.fits", 
@@ -2040,8 +2040,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if not outfileName.isEmpty():
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calDomeFlat.MasterDomeFlat (self.m_popup_l_sel, self.m_tempdir , str(outfileName))
-                    thread=reduce.ExecTaskThread(self._task.createMaster, self._task_info_list)
+                    self._task = reduce.calDomeFlat.MasterDomeFlat(l_list, 
+                                                                   self.m_tempdir, 
+                                                                str(outfileName))
+                    thread=reduce.ExecTaskThread(self._task.createMaster, 
+                                                 self._task_info_list)
                     thread.start()
                 except:
                     self.setCursor(Qt.arrowCursor)
@@ -2052,9 +2055,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
     def createMasterTwFlat_slot(self):
       
-        """Create a master twilight flat field from selected frames"""
+        """
+        Create a master twilight flat field from selected frames
+        """
+        listItems = self.listBox_SkyF.findItems(QString("*"), 
+                                                 Qt.MatchWrap | Qt.MatchWildcard)
+        # Build list
+        l_list = [ str(item.text()) for item in listItems]
         
-        if len(self.m_popup_l_sel)>2:
+        if len(l_list)>2:
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename to save under",
                                                       self.m_outputdir+"/master_twflat.fits", 
@@ -2062,7 +2071,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if not outfileName.isEmpty():
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel, 
+                    self._task = reduce.calTwFlat.MasterTwilightFlat (l_list, 
                                                                       self.m_masterDark, 
                                                                       str(outfileName))
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
@@ -2234,8 +2243,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 my_list = ""
                 for file in near_list:
                     my_list = my_list + file + "\n"
-                    if (file==self.m_listView_item_selected): file_n=p
-                    else: p+=1
+                    if (file==self.m_listView_item_selected): 
+                        file_n=p
+                    else: 
+                        p+=1
                 
                 # Ask user validation
                 res = QMessageBox.information(self, "Info", 
@@ -2376,10 +2387,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def createStackedFrame_slot(self):
         """ 
-            Compute a stacked frame (subtract sky, shift and align) from a set of nearest (ra,dec, mjd) 
-            frames, selected by user or automatic search.
-            Actually, it is basically a quick-reduction !!! (see do_quick_reduction_slot), with the only difference
-            that here we can look for the files to be reduced in automatic way or use the ones selected  by the user (as in do_quick_reduction_slot)
+        Compute a stacked frame (subtract sky, shift and align) from a set of 
+        nearest (ra,dec, mjd) frames, selected by user or automatic search.
+        Actually, it is basically a quick-reduction !!! 
+        (see do_quick_reduction_slot), with the only difference that here we 
+        can look for the files to be reduced in automatic way or use the ones 
+        selected  by the user (as in do_quick_reduction_slot)
         """
         
         file_n = 0 # really, not used for the moment
@@ -2413,8 +2426,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             view_list = ""
             i=1
             for file in near_list:
-                if file==self.m_listView_item_selected: file_n=i
-                else: i=i+1
+                if file==self.m_listView_item_selected: 
+                    file_n=i
+                else: 
+                    i=i+1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", 
                                          QString("File %1 is not a science frame").arg(file))
@@ -3016,9 +3031,9 @@ class LoggingConsole (object):
     def append(self, message='', tag=None):
         
         if self.textEdit_w1 is not None: 
-            self.textEdit_w1.append(self.logMsg(message,tag))
+            self.textEdit_w1.append(self.logMsg(message, tag))
         if self.textEdit_w2 is not None:
-            self.textEdit_w2.append(self.logMsg(message,tag))
+            self.textEdit_w2.append(self.logMsg(message, tag))
     
     def info(self, message):
         self.append(message, "INFO")
@@ -3039,39 +3054,27 @@ class LoggingConsole (object):
         """
         
         if tag=="INFO":
-            prefix = "<info_tag>"
-            suffix = "</info_tag>"
             if self.textEdit_w1 is not None:
-                self.textEdit_w1.setStyleSheet("background-color: yellow")
+                self.textEdit_w1.setTextColor(QColor("blue"))
+                self.textEdit_w2.setTextColor(QColor("blue"))
         elif tag=="WARNING":
-            prefix = "<warning_tag>"
-            suffix = "</warning_tag>"
             if self.textEdit_w1 is not None:
-                self.textEdit_w1.setStyleSheet("background-color: red")
-
+                self.textEdit_w1.setTextColor(QColor("darkRed"))
+                self.textEdit_w2.setTextColor(QColor("darkRed"))
         elif tag=="ERROR":
-            prefix = "<error_tag>"
-            suffix = "</error_tag>"
             if self.textEdit_w1 is not None:
-                self.textEdit_w1.setStyleSheet("background-color: black")
-
+                self.textEdit_w1.setTextColor(QColor("red"))
+                self.textEdit_w2.setTextColor(QColor("red"))
         elif tag=="DEBUG":
-            prefix = "<debug_tag>"
-            suffix = "</debug_tag>"
             if self.textEdit_w1 is not None:
-                self.textEdit_w1.setStyleSheet("background-color: green")
-
-        else:
-            prefix = ""
-            suffix = ""    
+                self.textEdit_w1.setTextColor(QColor("darkGreen"))
+                self.textEdit_w2.setTextColor(QColor("darkGreen"))
+    
             
-            
-        #s_time = time.strftime("[%Y%m%d-%H:%M:%S] ", time.gmtime())
-        s_time = "["+datetime.datetime.utcnow().isoformat()+"] "
-        prefix += s_time 
+        s_time = time.strftime("[%Y%m%d-%H:%M:%S] ", time.gmtime())
+        #s_time = "["+datetime.datetime.utcnow().isoformat()+"] "
         
-        #return prefix + msg + suffix
-        return msg
+        return s_time + " " + msg
 
 
 ################################################################################

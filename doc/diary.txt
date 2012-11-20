@@ -1543,11 +1543,17 @@ numpy) como:
 
 2012-11-20
 ==========
+- Continuo con la migracion a PyQt4 
+
+- Ejemplo  muy interesante para la un Editor de la configuración:
+ 
+ > /home/panic/SOFTWARE/PAPI/PyQt-x11-gpl-4.9.4/examples/tools/settingseditor
+
 
 
 FOR NEXT VIDEOCONF
 ==================
-
+- QL GUI: Migration from PyQt3 to PyQt4
 - I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
 
 
