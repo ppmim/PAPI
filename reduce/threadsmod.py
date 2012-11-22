@@ -47,7 +47,7 @@ class ExecTaskThread(threading.Thread):
             self._task_info._return      = None
             self._task_info._exit_status = 1             # EXIT_FAILURE, some error happened
             self._task_info._exc = e
-            raise e
+            #raise e # If it is raised, I do not know where/how to catch it ??
         finally:
             self._task_info_list.append(self._task_info)
             lock.release()    

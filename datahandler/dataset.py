@@ -191,50 +191,56 @@ class DataSet(object):
     ############################################################        
     def GetFile( self, detectorId, type, texp, filter, date, runId=None):
         """
-          \brief Return the filename/s (with path) from the data frames with specified fields. 
-          We can ask for any type of file (calib, science, master calib, reduced, ...)
+        Return the filename/s (with path) from the data frames with specified fields. 
+        We can ask for any type of file (calib, science, master calib, reduced, ...)
 
-          \param detectorId
-          \param type
-          \param texp
-          \param filter
-          \param date
-          \param runId
+        Parameters
+        ----------
+        
+        detectorId : str
+        type :  str
+        texp :  float
+        filter :   str
+        date : str
+        runId : str
 
-          \return A list with the filenames that match the specified fields, otherwise None
+        Returns
+        -------
+        
+        A list with the filenames that match the specified fields, otherwise None
         """
 
         try:
             #The run id may no be specified
             if runId==None or runId=='*':
-                s_run_id="run_id like '%'"
-                runId=""
+                s_run_id = "run_id like '%'"
+                runId = ""
             else:
-                s_run_id="run_id=?"
+                s_run_id = "run_id=?"
             
             #The master flat does not have a 'texp' requirement 
             if type=='MASTER_DOME_FLAT' or type=='MASTER_SKY_FLAT':
                 s_texp="texp>? and texp<?"
-                ROUND=10000
+                ROUND = 10000
             else:
-                s_texp="texp>? and texp<?"
-                ROUND=0.5  # We do not need an accurate value !
+                s_texp = "texp>? and texp<?"
+                ROUND = 0.5  # We do not need an accurate value !
 
             #The master dark does not have a 'filter' requirement
             if type=='MASTER_DARK' or filter=="ANY":
-                s_filter="filter like '%'"
-                filter=""
+                s_filter = "filter like '%'"
+                filter = ""
             else:
                 s_filter="filter=?"
 
-            s_select="select filename from dataset where detector_id=? and  type=? and %s and %s and date=? and %s" %(s_texp,s_filter, s_run_id)
+            s_select = "select filename from dataset where detector_id=? and  type=? and %s and %s and date=? and %s" %(s_texp,s_filter, s_run_id)
             print s_select
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             #cur.execute("select filename from dataset where detector_id=? and  type=? and texp>? and texp<?  and filter=? and date=? and run_id=?",
             #                 (detectorId, type, texp-ROUND, texp+ROUND, filter, date, runId))
             cur.execute(s_select,(detectorId, type, texp-ROUND, texp+ROUND, filter, date, runId))
             
-            rows=cur.fetchall()
+            rows = cur.fetchall()
             if len(rows)==0:
                 # Any match
                 return None
@@ -255,23 +261,38 @@ class DataSet(object):
                   mjd=55000, ra=0, dec=0, delta_pos=360*3600/2, 
                   delta_time=9999999, runId=None):
         """
-          \brief Return the filenames (with path) from the data set with specified 
-          fields. We can ask for any type of file (calib, science, master calib, 
-          reduced, ...). The files are ascending sorted by the MJD. 
+        Return the filenames (with path) from the data set with specified 
+        fields. We can ask for any type of file (calib, science, master calib, 
+        reduced, ...). The files are ascending sorted by the MJD. 
 
-          \param detectorId
-          \param type
-          \param texp
-          \param filter
-          \param mjd           Modified julian date of observation (days)
-          \param ra
-          \param dec
-          \param delta_pos     arcsec for ra/dec search box
-          \param delta_time    secs for data-time obs search time window
-          \param runId
+        Parameters
+        ----------
 
-          \return A MJD ascending sorted list with the filenames that match the 
-                  specified fields, otherwise an empty list []
+          detectorId : str
+              Detector type
+          type : srt
+              Image type to look for
+          texp : float
+              Exposition time to look for
+          filter : str
+              Image filter used
+          mjd : float
+              Modified julian date of observation (days)
+          ra : float
+              Right ascension coordinate
+          dec : float
+              Declination coordinate
+          delta_pos : float
+              arcsec for ra/dec search box
+          delta_time: float
+              secs for data-time obs search time window
+          runId : str
+          
+
+        Returns
+        -------
+        A MJD ascending sorted list with the filenames that match the 
+        specified fields, otherwise an empty list []
         """
 
         res_list = []
@@ -279,21 +300,21 @@ class DataSet(object):
             # NOT USED !!! RUN_ID !!! NOT USED 
             #RUNID: The run id may no be specified
             if runId==None or runId=='*':
-                s_run_id="run_id like '%'"
-                runId=""
+                s_run_id = "run_id like '%'"
+                runId = ""
             else:
-                s_run_id="run_id=?"
+                s_run_id = "run_id=?"
             
             #Type: The type of the image (ANY, DARK, FLAT,SCIENCE, ....)
             if type=='ANY':
                 s_type="type>=?"
-                type=""
+                type = ""
             elif type=='DOME_FLAT':
                 s_type="type like 'DOME_FLAT%' or type=?"
-                type=""
+                type = ""
             elif type=='SKY_FLAT':
                 s_type="type like 'TW_FLAT%' or type like 'SKY_FLAT%' or type=?"
-                type=""
+                type = ""
             else:
                 s_type="type=?"
                 
@@ -306,24 +327,24 @@ class DataSet(object):
                 
             #TEXP: Any 'texp' requirement 
             if  texp==-1:
-                s_texp="texp>=%f" %(texp)
+                s_texp = "texp>=%f" %(texp)
             else:
-                ROUND=10  # We do not need an accurate value !
-                s_texp="texp>%f and texp<%f" %(texp-ROUND, texp+ROUND)
+                ROUND = 0.5  # We do not need an accurate value !
+                s_texp = "texp>%f and texp<%f" %(texp-ROUND, texp+ROUND)
 
             #FILTER: The master dark does not have a 'filter' requirement
             if type=='MASTER_DARK' or filter=="ANY":
-                s_filter="filter>=?"
-                filter=""
+                s_filter = "filter>=?"
+                filter = ""
             else:
-                s_filter="filter=?"
+                s_filter = "filter=?"
 
             #AR
-            s_ar="ra>%s and ra<%s" %(ra-delta_pos, ra+delta_pos)
+            s_ar = "ra>%s and ra<%s" %(ra-delta_pos, ra+delta_pos)
             #DEC
-            s_dec="dec>%s and dec<%s" %(dec-delta_pos, dec+delta_pos)
+            s_dec = "dec>%s and dec<%s" %(dec-delta_pos, dec+delta_pos)
             #MJD
-            s_mjd="mjd>%s and mjd<%s" %(mjd-delta_time, mjd+delta_time)
+            s_mjd = "mjd>%s and mjd<%s" %(mjd-delta_time, mjd+delta_time)
             
             s_select = "select filename from dataset where %s and %s and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd)
             print s_select
@@ -963,24 +984,28 @@ class DataSet(object):
             log.exception("Error in DataSet.GetFile function...")
             raise
 
-     ############################################################    
+    ############################################################    
     def GetMasterDark( self, detectorId, texp, date, create=False, runId=None):
         """
-          \brief TBC
-          \brief Return the filename (with path) of a master dark with the specified features.
+        Return the filename (with path) of a master dark with the specified features.
 
-          \param detectorId
-          \param texp
-          \param date
-          \param create : If the required master filename does not exist, it will be created whether create=True,
-          otherwise None will be returned
-          \param runId
+        Parameters
+        ----------
+        detectorId : str
+        texp : float
+        date : str
+        create : bool 
+            If the required master filename does not exist, it will be created whether create=True,
+                therwise None will be returned
+        runId : str
 
-          \return A list with the filenames that match the specified fields, otherwise None
+        Returns
+        -------
+        A list with the filenames that match the specified fields, otherwise None
         """
 
-        ROUND=0.5
-        type='MASTER_DARK'
+        ROUND = 0.5
+        type = 'MASTER_DARK'
         try:
             cur=self.con.cursor()
             #The run id may no be specified
@@ -1003,8 +1028,9 @@ class DataSet(object):
             raise
             return []
 
-     ############################################################    
-    def GetMasterFlat( self, detectorId, type, filter, date, create=False, runId=None):
+    ############################################################    
+    def GetMasterFlat( self, detectorId, type, filter, date, create=False, 
+                       runId=None):
         """
           \brief TBC
           

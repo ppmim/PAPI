@@ -1541,13 +1541,53 @@ numpy) como:
     http://www.pymvpa.org/index.html
     http://scikit-image.org/docs/dev/
 
-2012-11-20
+2012-11-21
 ==========
-- Continuo con la migracion a PyQt4 
+- Continuo con la migracion a PyQt4.
+- Me surge la duda sobre si para los Master TwLight flats es imprescindible
+un dark model o bastaría con un simple master_dark ?? Ahora mismo sólo
+se calculan con un master_dark_model.
+- Intento instalar en el portatil la version QL4, pero como no me deja instalar
+PyQt4; parece que la version de PyQt4 no es compatible con la libreria Qt4 que
+tengo instalada en el sistama ...
+Lo mejor será esperar a migrar a openSuSE 12.2.
 
-- Ejemplo  muy interesante para la un Editor de la configuración:
+
+2012-11-22
+==========
+- Richard Mattar me manda una nueva version de geirs2Panic; la compilo, aunque
+el '-Ofast' no me funciona (solo para GCC >= 4.7.x), pero con -O2 si compila
+y se ejecuta en 1.5secs.
+
+Lo pruebo aniadiendolo en en ~/GEIRS/scripts/QueueFiles
+
+OJO: Geirs2Panic no puede ser lanzado aquí en background, pues si no GEIRS
+se creería que ha terminado y continuaría con la secuencia que estuvise 
+ejecutando ...
+
+""
+modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
+/home/panic/DEVELOP/GEIRS/geirs2Panic/src/geirs2Panic $1 $1_r.fits -r
+export ret=$?
+if [ $ret -eq 0 ]; then
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` $1_r.fits   >>~/tmp/fitsfiles.corrected
+else
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` "ERROR $ret in modifying fits-header of $1"  >>~/tmp/fitsfiles.corrected
+fi
+exit $ret
+""
+
+y lanzo varias secuencias del OT con dicha modificación y perece que el QL
+no se queja. Aunque habría que ver los efecto en el proceso de reducción....
+De momento eso no lo voy a probar, pues no se muy bien si se usará el Geirs2Panic ....
  
- > /home/panic/SOFTWARE/PAPI/PyQt-x11-gpl-4.9.4/examples/tools/settingseditor
+
+
+- Decido quitar en ExecTaskThread.run el "raise e" pues no se como capturarla
+después y la saca por la de forma fea por la stdout.
+No creo que sea necesario elevar la exceptio, pues el error se detecta de todas
+formas; parece que no tendrá efectos colaterales.
+ 
 
 
 
@@ -1556,6 +1596,8 @@ FOR NEXT VIDEOCONF
 - QL GUI: Migration from PyQt3 to PyQt4
 - I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
 
+
+ExecTaskThread
 
 
 KDD con MATILDE (15-May-2012)
@@ -1681,6 +1723,10 @@ quizás incluirlo en el logfile !!!
 
 DOUBTS FOR MATILDE (next)
 ================================
+
+- Me surge la duda sobre si para los Master TwLight flats es imprescindible
+un dark model o bastaría con un simple master_dark ?? Ahora mismo sólo
+se calculan con un master_dark_model.
 
 - New module for mix dome & sky FF : calCombineFF()
 - show MF PAPI CL interface:

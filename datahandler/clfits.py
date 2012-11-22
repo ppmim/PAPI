@@ -112,8 +112,14 @@ class ClFits (object):
         
         self.recognize()
 
-    def getType(self):
-        return self.type 
+    def getType(self, distinguish_domeflat=True):
+        
+        # Because in some special case (on-line PQL detecting sequences)
+        # we might need to not distinguish between DOME_FLAT_ON and DOME_FLAT_OFF
+        if distinguish_domeflat and self.isDomeFlat():
+            return "DOME_FLAT"
+        else:
+            return self.type
     
     def getFilter(self):
         return self.filter
@@ -771,7 +777,7 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True,
     
     # First file as reference
     if len(file_list)>0 and file_list[0]:
-            f=ClFits ( file_list[0] )
+            f = ClFits( file_list[0] )
             m_type = f.getType()
             m_filter = f.getFilter()
             m_texp = f.expTime()
@@ -785,11 +791,11 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True,
             if debug:
                 print 'FILE=',file
                 print '------------------------'
-                print 'TYPE=',f.getType()
-                print 'FILTER=',f.getFilter()
-                print 'TEXP=',f.expTime()
-                print 'NCOADDS=',f.getNcoadds()
-                print 'READMODE=',f.getReadMode()
+                print 'TYPE=', f.getType()
+                print 'FILTER=', f.getFilter()
+                print 'TEXP=', f.expTime()
+                print 'NCOADDS=', f.getNcoadds()
+                print 'READMODE=', f.getReadMode()
             
             if (  (c_type and m_type!=f.getType()) or 
                   (c_filter and m_filter!=f.getFilter()) or 

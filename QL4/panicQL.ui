@@ -1196,7 +1196,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>GroupBox</string>
+       <string>Lazy Mode</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>

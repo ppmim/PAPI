@@ -398,7 +398,7 @@ class DataCollector (object):
                     self.callback_func(file)
                     # Only then, send message to the receiver client
                     #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12
-                    print '[DC] Found new file ....%s' %file
+                    #print '[DC] Found new file ....%s' %file
             else:
                 print "[DC] Warning, %s not a compliant file or does not exist !!" %file
 

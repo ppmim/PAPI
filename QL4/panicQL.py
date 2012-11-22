@@ -765,7 +765,7 @@ class Ui_panicQL(object):
         self.MenuBar.addAction(self.helpMenu.menuAction())
 
         self.retranslateUi(panicQL)
-        self.tabWidget3.setCurrentIndex(2)
+        self.tabWidget3.setCurrentIndex(1)
         self.comboBox_skyWindow.setCurrentIndex(3)
         QtCore.QObject.connect(self.checkBox_autocheck, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.autocheck_slot)
         QtCore.QObject.connect(self.checkBox_outDir_autocheck, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.checkOutDir_slot)
@@ -884,7 +884,7 @@ class Ui_panicQL(object):
         self.comboBox_AstromCatalog.setItemText(5, QtGui.QApplication.translate("panicQL", "FILE", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_doRegrig.setText(QtGui.QApplication.translate("panicQL", "Apply (re-grid)", None, QtGui.QApplication.UnicodeUTF8))
         self.textLabel1_2.setText(QtGui.QApplication.translate("panicQL", "Catalog", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_4.setTitle(QtGui.QApplication.translate("panicQL", "GroupBox", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_4.setTitle(QtGui.QApplication.translate("panicQL", "Lazy Mode", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_show_imgs.setText(QtGui.QApplication.translate("panicQL", "Only display image", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_subDark.setText(QtGui.QApplication.translate("panicQL", "Dark subtraction", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_appBPM.setText(QtGui.QApplication.translate("panicQL", "Apply Bad Pixel Mask (BPM)", None, QtGui.QApplication.UnicodeUTF8))

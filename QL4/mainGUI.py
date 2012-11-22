@@ -167,10 +167,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # check we have R/W access to temp and out directories
         if not os.access(self.m_tempdir,os.R_OK|os.W_OK):
             log.error("Directory %s has not R/W access",self.m_tempdir)
-            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access").arg(self.m_tempdir)))
+            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access")
+                                      .arg(self.m_tempdir)))
         if not os.access(self.m_outputdir,os.R_OK|os.W_OK):
             log.error("Directory %s has not R/W access",self.m_outputdir)
-            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access").arg(self.m_outputdir)))
+            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access")
+                                      .arg(self.m_outputdir)))
             
     
         self.m_frameList_dark = ''
@@ -186,7 +188,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.isOTrunning = True
         self.last_filter = ''  # filter name (J,H,Ks, ...) of the last dataframe received
         self.last_ob_id = -1   # Obseving Block ID (unique) of the last dataframe received
-        self.last_img_type = None # image type (DARK, FLAT, SCIENCE, ...) of last received image
+        # last image type (DARK, DFLAT, TWFLAT, SCIENCE, ...) of last received image
+        # Note: in that variable, we do NOT distinguish DFLAT_ON and D_FLAT_OFF
+        self.last_img_type = None 
         self.last_ra = -1
         self.last_dec = -1
         self.last_filename = None  # last filename of the FITS received
@@ -440,7 +444,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if type!="SCIENCE":
             return
 
-        self.logConsole.info(" [processLazy] Processing file %s "%filename)
+        self.logConsole.info("[processLazy] Processing file %s "%filename)
         
         # ###########################################################################################
         # According to what options have been selected by the user, we do a processing or other...
@@ -449,17 +453,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 log.debug("En-queue the task ....")
                 #Look for (last received) calibration files
                 mDark, mFlat, mBPM = self.getCalibFor([filename])
+                if not self.checkBox_appFlat.isChecked():
+                    mFlat = None
+                if not self.checkBox_subDark.isChecked():
+                    mDark = None    
                 # Both master_dark and master_flat are optional
                 if mDark or mFlat:
-                    #Change cursor
-                    #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    #self._task = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
-                    #                                  self.m_outputdir)
-                    #thread = reduce.ExecTaskThread(self._task.apply, 
-                    #                             self._task_info_list)
-                    #thread.start()
-                    
                     #Put into the queue the task to be done
                     func_to_run = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
                                                      self.m_outputdir)
@@ -467,7 +466,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     self._task_queue.put([(func_to_run.apply, params)])
                     
                 else:
-                    QMessageBox.critical(self, "Error", "Error, cannot find the master calibration files")
+                    self.logConsole.error("[processLazy] Cannot find the appropriate master calibration for file %s"%filename)
+                    #QMessageBox.critical(self, 
+                    #                     "Error", 
+                    #                     "Error, cannot find the master calibration files")
             except Exception, e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 #self.m_processing = False
@@ -553,7 +555,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #DARK - Do NOT require equal EXPTIME Master Dark ???
         master_dark = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark)==0 and self.outputsDB!=None:
-            master_dark = self.outputsDB.GetFilesT('MASTER_DARK', -1) 
+            master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime) 
         #FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
@@ -776,10 +778,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                     log.debug("Updating DB...")
                                     self.outputsDB.insert(file)
                                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                            self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(r)).arg(str(str_list))))
-                            QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(r)).arg(str(str_list)))
+                            self.logConsole.debug(str(QString("%1 file/s created : \n %2")
+                                                      .arg(len(r))
+                                                      .arg(str(str_list))))
+                            # To avoid interrup the user with lots of QMessageBoxes,
+                            # we only show the information on the logConsole
+                            #QMessageBox.information(self,"Info", 
+                            #                        QString("%1 file/s created:  \n %2")
+                            #                        .arg(len(r))
+                            #                        .arg(str(str_list)))
                     elif type(r)==type("") and os.path.isfile(r):
-                        self.logConsole.debug(str(QString(">>New file %1 created ").arg(r)))
+                        self.logConsole.debug(str(QString("New file %1 created ")
+                                                  .arg(r)))
                         if r.endswith(".fits"):
                             display.showFrame(r)
                         # Keep updated the out-DB for future calibrations
@@ -845,11 +855,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                         log.debug("Updating DB...")
                                         self.outputsDB.insert(file)
                                     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                self.logConsole.debug(str(QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list))))
-                                QMessageBox.information(self,"Info", QString("%1 files created: \n %1").arg(len(self._task_info._return)).arg(str(str_list)))
+                                self.logConsole.debug(str(QString("%1 files created: \n %2")
+                                                          .arg(len(self._task_info._return))
+                                                          .arg(str(str_list))))
+                                QMessageBox.information(self,"Info", 
+                                                        QString("%1 files created: \n %2")
+                                                        .arg(len(self._task_info._return))
+                                                        .arg(str(str_list)))
                         elif type(self._task_info._return)==type("") and \
                                     os.path.isfile(self._task_info._return):
-                            self.logConsole.debug(str(QString(">>New file %1 created ").arg(self._task_info._return)))
+                            self.logConsole.debug(str(QString("New file %1 created.")
+                                                      .arg(self._task_info._return)))
                             if self._task_info._return.endswith(".fits"):
                                 display.showFrame(self._task_info._return)
                             # Keep updated the out-DB for future calibrations
@@ -865,8 +881,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     else:
                         self.logConsole.info("Nothing returned !")
                 else:
-                    self.logConsole.error(str(QString("Sequence processing failed \n %1").arg(str(self._task_info._exc))))
-                    QMessageBox.critical(self, "Error", "Error while running task. "+str(self._task_info._exc))
+                    self.logConsole.error(str(QString("Sequence processing failed \n %1")
+                                              .arg(str(self._task_info._exc))))
+                    QMessageBox.critical(self, 
+                                         "Error", 
+                                         "Error while running task. "+ str(self._task_info._exc))
             except Exception,e:
                 raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:
@@ -997,7 +1016,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
                 log.debug("EOS-0 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
-                if self.last_img_type!=None and fits.getType()!=self.last_img_type:
+                if self.last_img_type!=None and \
+                fits.getType()!=self.last_img_type \
+                and not fits.isDomeFlat():
                     #skip/remove the current/last file, type mismatch !
                     self.curr_sequence = self.curr_sequence[:-1]
                     log.error("Detected file type mismatch. File %s skipped"%(filename))
@@ -1231,7 +1252,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def display_slot(self):
         
         if self.m_listView_item_selected:
-            print "Display image !!"
             display.showFrame(self.m_listView_item_selected)
         else:
             print "Error, no file selected !"
@@ -1968,18 +1988,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
     def createMasterDark_slot(self):
         """
-        Called when Create button pressed in tab 'Calibrations'
+        Called to create a master dark frame
         """
 
-        listItems = self.listBox_darks.findItems(QString("*"), 
-                                                 Qt.MatchWrap | Qt.MatchWildcard)
-        # Build list
-        l_list = [ str(item.text()) for item in listItems]
-
-        if len(l_list)<3:
+        if len(self.m_popup_l_sel)<3:
             QMessageBox.information(self,"Info","Not enough frames !")
             return
 
+        #listItems = self.listBox_darks.findItems(QString("*"), 
+        #                                    Qt.MatchWrap | Qt.MatchWildcard)
+        # Build list
+        #l_list = [ str(item.text()) for item in listItems]
+
+        #if len(l_list)<3:
+        #    QMessageBox.information(self,"Info","Not enough frames !")
+        #    return
+        
+        print "LIST =", self.m_popup_l_sel
         outfileName = QFileDialog.getSaveFileName(self,
                                                   "Choose a filename to save under",
                                                   self.m_outputdir + "/master_dark.fits", 
@@ -1988,7 +2013,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 texp_scale = False
                 QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                self._task = reduce.calDark.MasterDark(l_list, 
+                self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, 
                                                        self.m_tempdir, 
                                                        str(outfileName), 
                                                        texp_scale)
@@ -2027,12 +2052,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Create a master dome flat field from selected frames
         """
         
-        listItems = self.listBox_domeF.findItems(QString("*"), 
-                                                 Qt.MatchWrap | Qt.MatchWildcard)
+        #listItems = self.listBox_domeF.findItems(QString("*"), 
+        #                                         Qt.MatchWrap | Qt.MatchWildcard)
         # Build list
-        l_list = [ str(item.text()) for item in listItems]
+        #l_list = [ str(item.text()) for item in listItems]
 
-        if len(l_list)>2:
+        
+        if len(self.m_popup_l_sel)>2:
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename to save under",
                                                       self.m_outputdir + "/master_dflat.fits", 
@@ -2040,7 +2066,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if not outfileName.isEmpty():
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calDomeFlat.MasterDomeFlat(l_list, 
+                    self._task = reduce.calDomeFlat.MasterDomeFlat(self.m_popup_l_sel, 
                                                                    self.m_tempdir, 
                                                                 str(outfileName))
                     thread=reduce.ExecTaskThread(self._task.createMaster, 
@@ -2058,12 +2084,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Create a master twilight flat field from selected frames
         """
-        listItems = self.listBox_SkyF.findItems(QString("*"), 
-                                                 Qt.MatchWrap | Qt.MatchWildcard)
+        #listItems = self.listBox_SkyF.findItems(QString("*"), 
+        #                                         Qt.MatchWrap | Qt.MatchWildcard)
         # Build list
-        l_list = [ str(item.text()) for item in listItems]
+        #l_list = [ str(item.text()) for item in listItems]
         
-        if len(l_list)>2:
+        if len(self.m_popup_l_sel)>2:
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename to save under",
                                                       self.m_outputdir+"/master_twflat.fits", 
@@ -2071,7 +2097,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if not outfileName.isEmpty():
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calTwFlat.MasterTwilightFlat (l_list, 
+                    self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel, 
                                                                       self.m_masterDark, 
                                                                       str(outfileName))
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
@@ -2080,7 +2106,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 except:
                     self.setCursor(Qt.arrowCursor)
                     log.error("Error creating master Twilight Flat file")
-                    raise
+        else:
+            QMessageBox.information(self,"Info","Error, not enough frames (>2) !")
     
     def createGainMap_slot(self):
 
@@ -2250,7 +2277,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
                 # Ask user validation
                 res = QMessageBox.information(self, "Info", 
-                                              QString("Selected near frames are:\n %1").arg(my_list), 
+                                              QString("Selected near frames are:\n %1")
+                                              .arg(my_list), 
                                               QMessageBox.Ok, QMessageBox.Cancel)
                 if res==QMessageBox.Cancel:
                     return
@@ -2357,7 +2385,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:     
             img=cq.estimateBackground(self.m_outputdir+"/bckg.fits")
             
-            values = (iraf.mscstat (images=img,
+            values = (iraf.mscstat(images=img,
             fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
             #file,mean,mode,stddev,min,max=values[0].split()
             self.logConsole.info(str(QString("Background estimation :")))
@@ -2377,10 +2405,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             fwhm,std=cq.estimateFWHM()
             if fwhm>0:
-                self.logConsole.info(str(QString("FWHM = %1 (pixels) std= %2").arg(fwhm).arg(std)))
+                self.logConsole.info(str(QString("FWHM = %1 (pixels) std= %2")
+                                         .arg(fwhm)
+                                         .arg(std)))
             else:
                 self.logConsole.error("ERROR: Cannot estimage FWHM with selected image")           
-        
         except Exception,e:
             self.logConsole.error("ERROR: something wrong while computing background")
             raise e
@@ -2396,7 +2425,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         
         file_n = 0 # really, not used for the moment
-        file_list=[]
+        file_list = []
         
         ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
         time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
@@ -2424,7 +2453,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             # Create nearest file list (ar,dec,mjd) from current selected science file
             view_list = ""
-            i=1
+            i = 1
             for file in near_list:
                 if file==self.m_listView_item_selected: 
                     file_n=i
@@ -2432,13 +2461,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     i=i+1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", 
-                                         QString("File %1 is not a science frame").arg(file))
+                                         QString("File %1 is not a science frame")
+                                         .arg(file))
                 else:
                     file_list.append(file)
                     view_list +=  file + "\n"
             
             resp=QMessageBox.information(self, "Info", 
-                                         QString("Selected near frames are:\n %1").arg(view_list),
+                                         QString("Selected near frames are:\n %1")
+                                         .arg(view_list),
                                          QMessageBox.Ok, QMessageBox.Cancel)
             if resp==QMessageBox.Cancel:
                 return
@@ -2451,7 +2482,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Create file list from current selected science files
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
-                    QMessageBox.critical(self, "Error", QString("File %1 is not a science frame").arg(file))
+                    QMessageBox.critical(self, "Error", QString("File %1 is not a science frame")
+                                         .arg(file))
                     return
                 else: file_list.append(file)
             file_n=-1 # actually, not used
@@ -2479,16 +2511,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
         TODO : here is only a scheme of the routine !!!!
         Create an stitched wide-mosaic of next frames
         """
-        QMessageBox.information(self, "Info", "Sorry, funtion not yet implemented !")
+        QMessageBox.information(self, 
+                                "Info", 
+                                "Sorry, funtion not yet implemented !")
         
         # Next code is only a raw template 
         # Check list lenght
         if len(self.m_popup_l_sel)<1:
-            QMessageBox.information(self, "Info", "Not enough science pre-reduced frames selected")
+            QMessageBox.information(self, 
+                                    "Info", "Not enough science pre-reduced frames selected")
             return
         
         if len(self.m_popup_l_sel)==1:
-            QMessageBox.information(self, "Info", "Only one file was selected, automatic file grouping will be done.")
+            QMessageBox.information(self, 
+                                    "Info", 
+                                    "Only one file was selected, automatic file grouping will be done.")
             return
             # NEED TO BE DONE
         # Stack frame user selected  
@@ -2498,7 +2535,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             file_lst = open( listfile, "w" )
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE_REDUCED'):
-                    QMessageBox.critical(self, "Error", QString("File %1 is not a science reduced frame").arg(file))
+                    QMessageBox.critical(self, "Error", 
+                                         QString("File %1 is not a science reduced frame")
+                                         .arg(file))
                     file_lst.close()
                     return
                 else:
@@ -2681,11 +2720,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.proc_started == True:
             self.proc_started = False
             self.pushButton_start_proc.setText("Start Processing")
-            self.pushButton_start_proc.setPaletteBackgroundColor(QColor(205,64,64))
+            #Set Red background
+            self.pushButton_start_proc.setAutoFillBackground(True)
+            self.pushButton_start_proc.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(0, 0, 0)")
         else:    
             self.proc_started = True
             self.pushButton_start_proc.setText("Stop Processing")
-            self.pushButton_start_proc.setPaletteBackgroundColor(QColor(34,139,34))
+            #Set Green background
+            self.pushButton_start_proc.setAutoFillBackground(True)
+            self.pushButton_start_proc.setStyleSheet("background-color: rgb(0, 128, 0); color: rgb(0, 0, 0)")
             
             # Ask if we with to process only the next files coming or also the
             # current ones in the source_dir and then the new ones
@@ -2739,16 +2782,26 @@ source directory (If no, only the new ones coming will be processed) ?"),
             
     def processFiles(self, files=None, group_by=None):
         """
-        @summary: Process the files provided; if any files were given, all the files 
+        Process the files provided; if any files were given, all the files 
         in the current Source List View (but not the output files) will be
         processed. The processing task will be inserted into the _task_queue
         to be processed as soon as the current (if any) processing has finished
         (m_processing=False).  
         
-        @param files: files list to be processed; if None, all the files in the
-        current List View will be used !
+        Parameters
+        ----------
+        files: list
+            files list to be processed; if None, all the files in the
+            current List View will be used !
         
-        @note: When the RS object is created, we provide the outputDB as the 
+        group_by: str
+            if 'ot' the data grouping will be done using OT keywords,
+            of if equal to 'filter', data grouping will be done using
+            AR, Dec and Filter keywords. 
+        
+        Notes
+        -----
+        When the RS object is created, we provide the outputDB as the 
         external DB for the RS; this way fomer master calibration files can be
         used for the current data reduction (e.g., TwFlats who need a master dark)
         """
@@ -2856,8 +2909,8 @@ source directory (If no, only the new ones coming will be processed) ?"),
         """
         
         func, args = input.get()[0]
-        print "FUNC=",func
-        print "ARGS=",args
+        #print "FUNC=",func
+        #print "ARGS=",args
         
         log.debug("[worker] Worker start to work ...")
         try:
@@ -2981,52 +3034,6 @@ class LoggingConsole (object):
 
         self.textEdit_w1 = textEdit1
         self.textEdit_w2 = textEdit2
-        """
-        ## Create log tags
-        if self.textEdit_w1 is not None:
-            # Error
-            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "error_tag" )
-            item.setColor( QColor("red") )
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-            # Warning
-            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "warning_tag" )
-            item.setColor( QColor("blue") )
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-            # Info
-            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "info_tag" )
-            item.setColor( QColor("black") )
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-            # Debug
-            item = QStyleSheetItem( self.textEdit_w1.styleSheet(), "debug_tag" )
-            item.setColor( QColor("#1C731C") ) # dark green
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-        
-        if self.textEdit_w2 is not None:
-            # Error
-            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "error_tag" )
-            item.setColor( QColor("red") )
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-            # Warning
-            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "warning_tag" )
-            item.setColor( QColor("blue") )
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-            # Info
-            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "info_tag" )
-            item.setColor( QColor("black") )
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-            # Debug
-            item = QStyleSheetItem( self.textEdit_w2.styleSheet(), "debug_tag" )
-            item.setColor( QColor("#1C731C") ) # dark green
-            item.setFontWeight( QFont.Bold )
-            item.setFontUnderline( False )
-        """
 
     def append(self, message='', tag=None):
         
