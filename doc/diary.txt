@@ -1589,11 +1589,21 @@ No creo que sea necesario elevar la exceptio, pues el error se detecta de todas
 formas; parece que no tendrá efectos colaterales.
  
 
+2012-11-23
+==========
+
+- Instalacion de todo el software de PAPI en openSUSE12.2
+- Actualizo el documento de instalación
+- Pruebo 'casi' todo, y parece que ve bien: QL4, reduccion de HAWK-I-3, photometric calib, ...
+- SCAMP con soporte para graficos PNG : es lo que mas guerra me dió !!! la libraria plplot-5.9.9 y cia.;
+se me habia olvidado copiar la nueva libplplotd a /usr/lib64 y por eso no me funcionaba; el PLPLOT_LIB no hace falta !!
 
 
 FOR NEXT VIDEOCONF
 ==================
 - QL GUI: Migration from PyQt3 to PyQt4
+- Migracion a openSUSE12.2
+
 - I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
 
 

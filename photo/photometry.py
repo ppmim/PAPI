@@ -442,7 +442,7 @@ class STILTSwrapper (object):
               'ascii': 1
               }
     
-    _stilts_pathname = "/home/panic/SOFTWARE/STILTS/stilts"
+    _stilts_pathname = "/home/panic/SOFTWARE/PAPI/STILTS/stilts"
     #_stilts_pathname = "/home/panicmgr/PAPI/downloads/STILTS/stilts"
     
     def __init__(self, *a, **k):

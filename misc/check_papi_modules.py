@@ -9,7 +9,7 @@ import string
 
 
 bold = "\033[1m"         # print bold
-probbold = "\033[1;34m"  # print bold blue
+probbold = "\033[1;31m"  # print bold red 
 reset = "\033[0;0m"      # reset special print settings
 
 
