@@ -21,6 +21,7 @@ import datahandler
 import os
 import sys
 import math
+import fileinput
 
 ###### Enable logging
 from misc.paLog import log
@@ -31,16 +32,18 @@ __docformat__ = "restructuredtext"
 class DataSet(object):  
 
     """
-    
     Class used to define a data set of frames load from a local directory or a Data Base  
-    
     """
+
+    ############################################################
     TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
                     ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
                 
-    MAX_MJD_DIFF = 6.95e-3 # Maximun seconds (10min=600secs aprox) of temporal 
-                           # distant allowed between two consecutive frames (1/86400.0)*10*60
+    # Maximun seconds (10min=600secs aprox) of temporal distant allowed between 
+    # two consecutive frames (1/86400.0)*10*60
+    MAX_MJD_DIFF = 6.95e-3  
     ############################################################
+
     def __init__( self , source ):
         """
         \brief The constructor
@@ -57,8 +60,7 @@ class DataSet(object):
     ############################################################    
     def createDB (self):
         """
-        \brief Create the dataset table
-
+        Create the dataset table
         """
         
         self.con = sqlite.connect(":memory:")
@@ -70,8 +72,7 @@ class DataSet(object):
     def load( self , source=None ):
 
         """
-        \brief Load the source for files and insert them into the dataset DB
-
+        Load the source for files and insert them into the dataset DB
         """
 
         log.debug("Loading DB ...")
@@ -854,6 +855,7 @@ class DataSet(object):
 
     def GetSeqFilesC(self, filter=None, type=None):
         """
+        !!! NOT USED !!!
         
         NEW VERSION WITH FRAMENUM for distinguish-FITS
         ==============================================
@@ -862,27 +864,36 @@ class DataSet(object):
         
             - start with PAT_EXPN=1 and end with the PAT_EXPN=PAT_NEXP
             
-        INPUTS
-        @param filter:  filter can be specified to restrict the search
+        Parameters
+        ----------
+        filter: str
+            filter can be specified to restrict the search
           
-        @param type: it can be SCIENCE, DARKs,FLATs  (None=any type)
+        type: str
+            it can be SCIENCE, DARKs,FLATs  (None=any type)
           
-        @note: this method is thought to work fine for SCIENCE sequences;
+        Notes
+        -----
+        This method is thought to work fine for SCIENCE sequences;
         for calibration sequences need improvements
         
-        @return: two lists:
+        Returns
+        -------
+        Two lists:
              - a list of list, having each list the list of files beloging 
                to the sequence.
              - a list with the Types for each sequence found (DARK, DOME_FLAT, 
              TW_FLAT, SCIENCE)
     
-        @see: GetSeqFiles()
+        See also
+        --------
+        GetSeqFiles()
             
         """
         
         if filter==None:
             s_filter = "filter>=?"
-            filter=""
+            filter = ""
         else:
             s_filter = "filter=?"
               
@@ -915,7 +926,7 @@ class DataSet(object):
             if fits[7].count('MASTER'): 
                 print "--------> Found a MASTER calibration file; it will not be grouped !!!<----------"
                 continue
-            if fits[3]==1 and framenum==1: #expn == 1 ?
+            if fits[3]==1 : #and framenum==1: #expn == 1 ?
                 group = [str(fits[0])] #filename
                 found_first = True # update flag
                 # special case of only-one-file sequences

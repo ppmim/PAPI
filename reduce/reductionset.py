@@ -177,12 +177,13 @@ class ReductionSet(object):
         
         external_db_files : str or list
             File list or Directory used as an external calibration database.
-            Then, if during the reduction of a ReductionSet(RS) no calibration (dark, flat) 
-            are found in the current RS, then PAPI will look for them into this directory.
-            If the directory does not exists, of no calibration are found, then no calibrations
-            will be used for the data reduction.
-            Note that the calibrations into the current RS have always higher priority than
-            the ones in the external calibration DB.   
+            Then, if during the reduction of a ReductionSet(RS) no calibration 
+            (dark, flat) are found in the current RS, then PAPI will look for 
+            them into this directory.
+            If the directory does not exists, of no calibration are found, then
+            no calibrations will be used for the data reduction.
+            Note that the calibrations into the current RS have always higher 
+            priority than the ones in the external calibration DB.   
         
         ....
         
@@ -324,7 +325,7 @@ class ReductionSet(object):
                         if file.endswith(".fits") or file.endswith(".fit"):
                             self.ext_db_files.append((cal_dir+"/"+file).replace('//','/'))
         else:
-            self.ext_db_files = external_db_files    
+            self.ext_db_files = external_db_files  
 
 
         # Print config_dictonary values in log file for debugging
@@ -334,14 +335,19 @@ class ReductionSet(object):
   
     def __initDB(self):
         """
-        @summary: Initialize the Data Bases (local and external), loading the full frame list.
+        Initialize the Data Bases (local and external), loading the full frame 
+        list.
         
-        @attention: 
-        If we initialize the DB in the constructor __init__(), we will have problems
-        if we use the DB from any method of ReductionSet and then from other thread,
-        i.e.,sqlite3 do not support access from multiple threads.
-        For more info, see http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency
-                           http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
+        Notes
+        ----- 
+        If we initialize the DB in the constructor __init__(), we will have 
+        problems if we use the DB from any method of ReductionSet and then from 
+        other thread, i.e.,sqlite3 do not support access from multiple threads.
+        For more info, see :
+        
+        http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency
+        http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
+        
         """
         #Local DataBase (in memory)
         log.info("Initializing Local DataBase")
@@ -378,8 +384,8 @@ class ReductionSet(object):
             self.ext_db = None
                 
         
-    def checkData(self, chk_shape=True, chk_filter=True, chk_type=True, chk_expt=True,
-                  chk_itime=True, chk_ncoadd=True, chk_cont=True,
+    def checkData(self, chk_shape=True, chk_filter=True, chk_type=True, 
+                  chk_expt=True, chk_itime=True, chk_ncoadd=True, chk_cont=True,
                   chk_readmode=True, file_list=None):
         """
         Check if data properties match in the current file list.
@@ -723,14 +729,17 @@ class ReductionSet(object):
 
     def getCalibFor(self, sci_obj_list):
         """
-        @summary: Given a list of frames belonging to a observing sequence for 
+        Given a list of frames belonging to a observing sequence for 
         a given object (star, galaxy, whatever),return the most recently created 
         calibration files (master dark,flat,bpm) in order to reduce the sequence.
-        The search of the calibration files is done, firstly in the local DB, but
-        if no results, then in the external DB if it was provided.
-          
-        @return:  3 calibration files (dark, flat, bpm); If more than one master
-        were found, the most recently created (according to MJD) is returned.
+        The search of the calibration files is done, firstly in the local DB, 
+        but if no results, then in the external DB if it was provided.
+        
+        Returns
+        -------  
+        A triplet with the calibration files (dark, flat, bpm) found; If more 
+        than one master were found, the most recently created (according to MJD) 
+        is returned.
         If some master were not found, None is returned.
     
         """
@@ -1757,7 +1766,7 @@ class ReductionSet(object):
     
     def reduceSet(self, red_mode=None, seqs_to_reduce=None):
         """
-        @summary: This is the main method for full DataSet reduction supposed 
+        This is the main method for full DataSet reduction supposed 
         it was obtained with the PANIC OT. 
         
         Main steps:
@@ -1769,14 +1778,20 @@ class ReductionSet(object):
             ReduceSeq(seq)
             
          3. Insert the results into the local DB 
-         
-        @param red_mode: reduction mode (lemon, quick, science); default mode 
-        is 'quick'.
         
-        @param seqs_to_reduce: list of sequence number [0,N-1] to be reduced;
-        default (None), all sequences found will be reduced.
+        Parameters
+        ----------
+         
+        red_mode: str
+            reduction mode (lemon, quick, science); default mode is 'quick'.
+        
+        seqs_to_reduce: list
+            list of sequence number [0,N-1] to be reduced;
+            default (None), all sequences found will be reduced.
            
-        @return: the number of sequences successfully reduced.
+        Returns
+        -------
+            The number of sequences successfully reduced.
         
         """
         
@@ -1893,13 +1908,20 @@ class ReductionSet(object):
         """
         Reduce/process a produced OT-sequence of files (calibration, science).
     
-       
-        @param sequence: list of files of the sequence to be reduced
-        @param type: type of sequence (see ClFits.type) (currently not used !) 
+        Parameters
+        ----------
+        sequence: list
+            list of files of the sequence to be reduced
         
-        @return: list of filenames created by the reduction proccess
+        type: str
+            type of sequence (see ClFits.type) (currently not used !) 
+        
+        Returns
+        -------
+            List of filenames created by the reduction proccess
 
-        NOTE: 
+        Notes
+        -----
         Calibration files will not be splited for the building of the master 
         calibration file, but science files will be splitted. 
         In principle, not too much time could be saved if we split the calibration
@@ -2318,11 +2340,15 @@ class ReductionSet(object):
             3.5 create_joined_mef(out)
             3.6 Add objects to catalog (?)
             
-         
-        @return: Return a list of N files produced as result of the data reduction of
+        
+        Returns
+        ------- 
+        Return a list of N files produced as result of the data reduction of
         the N sequecend found.
         
-        @attention: Must be 
+        Notes
+        -----
+        Depretated ! 
         """
        
         log.info("Starting Reduction of data set ...")

@@ -142,7 +142,7 @@ class MasterDomeFlat(object):
         self.__normal = normal
         self.__median_smooth = median_smooth
         
-        self.MIN_FLATS = 4
+        self.MIN_FLATS = 3
         
     
     def createMaster(self):

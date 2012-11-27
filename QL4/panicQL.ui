@@ -33,14 +33,14 @@
    <widget class="QTabWidget" name="tabWidget3">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>0</y>
       <width>940</width>
       <height>460</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -808,6 +808,9 @@
       <property name="selectionMode">
        <enum>QAbstractItemView::ExtendedSelection</enum>
       </property>
+      <property name="sortingEnabled">
+       <bool>true</bool>
+      </property>
       <attribute name="headerStretchLastSection">
        <bool>true</bool>
       </attribute>
@@ -851,6 +854,75 @@
         <string>Dec</string>
        </property>
       </column>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_queue_size">
+      <property name="geometry">
+       <rect>
+        <x>494</x>
+        <y>80</y>
+        <width>60</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>244</red>
+            <green>244</green>
+            <blue>244</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
+      <property name="text">
+       <string>0</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight</set>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>572</x>
+        <y>81</y>
+        <width>120</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Seqs. in the queue</string>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="TabPage">
@@ -1186,7 +1258,7 @@
        </property>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox_4">
+     <widget class="QGroupBox" name="groupBox_LazyMode">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -1268,7 +1340,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QGroupBox" name="groupBox_5">
+     <widget class="QGroupBox" name="groupBox_PrereductionMode">
       <property name="geometry">
        <rect>
         <x>310</x>
@@ -1280,7 +1352,7 @@
       <property name="title">
        <string>Pre-Reduction Mode</string>
       </property>
-      <widget class="QComboBox" name="comboBox_skyWindow">
+      <widget class="QComboBox" name="comboBox_pre_skyWindow">
        <property name="geometry">
         <rect>
          <x>27</x>
@@ -1318,7 +1390,7 @@
         </property>
        </item>
       </widget>
-      <widget class="QCheckBox" name="checkBox8_2_3_2_2">
+      <widget class="QCheckBox" name="checkBox_pre_QM">
        <property name="geometry">
         <rect>
          <x>196</x>
@@ -1347,7 +1419,7 @@
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox8_2_3">
+      <widget class="QCheckBox" name="checkBox_pre_MA">
        <property name="geometry">
         <rect>
          <x>196</x>
@@ -1363,7 +1435,7 @@
         <bool>true</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox8_2_3_2">
+      <widget class="QCheckBox" name="checkBox_pre_compDM">
        <property name="geometry">
         <rect>
          <x>196</x>
@@ -1379,7 +1451,7 @@
         <bool>true</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox7_2">
+      <widget class="QCheckBox" name="checkBox_pre_subD">
        <property name="geometry">
         <rect>
          <x>30</x>
@@ -1395,7 +1467,7 @@
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox8_2">
+      <widget class="QCheckBox" name="checkBox_pre_appMF">
        <property name="geometry">
         <rect>
          <x>30</x>
@@ -1411,7 +1483,7 @@
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox8_2_2">
+      <widget class="QCheckBox" name="checkBox_pre_appSF">
        <property name="geometry">
         <rect>
          <x>30</x>
@@ -1427,7 +1499,7 @@
         <bool>true</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox7_3">
+      <widget class="QCheckBox" name="checkBox_pre_BS">
        <property name="geometry">
         <rect>
          <x>198</x>
@@ -2212,7 +2284,7 @@
     <string>Open</string>
    </property>
    <property name="toolTip">
-    <string>Add new file list</string>
+    <string>Add a new file to 'Data List View'</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -3191,6 +3263,54 @@
     <hint type="destinationlabel">
      <x>20</x>
      <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_pre_appSF</sender>
+   <signal>clicked()</signal>
+   <receiver>checkBox_pre_appMF</receiver>
+   <slot>toggle()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>433</x>
+     <y>303</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>433</x>
+     <y>278</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_pre_appSF</sender>
+   <signal>clicked()</signal>
+   <receiver>checkBox_pre_subD</receiver>
+   <slot>toggle()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>433</x>
+     <y>303</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>413</x>
+     <y>252</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_pre_appMF</sender>
+   <signal>clicked()</signal>
+   <receiver>checkBox_pre_appSF</receiver>
+   <slot>toggle()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>433</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>433</x>
+     <y>303</y>
     </hint>
    </hints>
   </connection>

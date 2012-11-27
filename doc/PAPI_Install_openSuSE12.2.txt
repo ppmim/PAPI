@@ -8,6 +8,53 @@ openSuSE 12.2-64 bit
 Updated from openSuSE11.4 64bit (23-Nov-2012).
 
  
+***********
+** GEIRS **
+***********
+Requirements
+------------
+
+*) sudo zypper install readline5
+
+
+*) system setup
+
+root> echo 134217728  > /proc/sys/kernel/shmmax
+
+*) geirs2Panic 
+
+--
+Install external packages first:
+  - cfitsio from http://heasarc.gsfc.nasa.gov/fitsio/
+  - CCfits from http://heasarc.gsfc.nasa.gov/fitsio/CCfits/
+
+cd src
+
+Edit Makefile to have the compiler and linker find the associate
+headers and libraries.
+
+Type
+    make
+
+Move the executable geirs2Panic according to your PATH
+or link it to a directory so your shell will find it.
+
+R. J. Mathar, www.mpia.de/~mathar, 2012-10-23
+--
+
+wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio3310.tar.gz
+wget http://heasarc.gsfc.nasa.gov/fitsio/CCfits/CCfits-2.4.tar.gz
+wget http://www.mpia-hd.mpg.de/~mathar/progs/geirs2Panic.tar.gz
+
+Note: 
+----
+On openSuSE12.2 I had to add the lines
+
+#include <unistd.h>
+
+to heade files in order to compile the sources.
+
+ 
 ********
 ** OT **
 ********
@@ -40,7 +87,7 @@ http://download.netbeans.org/netbeans/7.0.1/final/bundles/netbeans-7.0.1-ml-java
 ======================
 zypper install tcl tk  tcl-devel tk-devl python-tk
 zypper install python-sphinx
-
+zypper install python-qt4-devel
 
 
 1-Python v2.7.3 : (default in openSuSE12.2)
@@ -324,8 +371,10 @@ openSuSE12.2 --> zypper install python-matplotlib python-matplotlib-tk
 ========
 
 zypper install python-qt4 
-zypper install python-qt4-devel (optional)
-
+zypper install python-qt4-devel (optional, pero necesario para pyuic4)
+(The following NEW packages are going to be installed:
+  python-qt4-devel python-qt4-utils python-sip-bin python-sip-devel)
+  
 
 6. PyQt3 (any more required, now using PyQt4)
 ========
@@ -414,14 +463,14 @@ But, also from source:
 > python setup.py install
 
 
-11. VO.table + ATpy
+11. VO.table + ATpy (en el futuro serán parate de astropy)
 ===================
 - vo.table v.0.7.2 from http://stsdas.stsci.edu/astrolib/vo-0.8.tar.gz
 
 - atpy v.0.9.6.0 from http://atpy.github.com/
 wget https://github.com/downloads/atpy/atpy/ATpy-0.9.6.tar.gz
 
-vo.table
+vo.table (lo necesita ATpy)
 --------
 > unpack .tar.gz
 > python setup.py install
@@ -1053,3 +1102,4 @@ wget http://iraf.net/ftp/iraf/x11iraf/x11iraf-v1.5DEV-bin.redhat.tar.gz
 
 
 = END =
+

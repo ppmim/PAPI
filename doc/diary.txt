@@ -325,7 +325,8 @@ que según E.Bertin es debido a :
 
 """
 Hi.
-Given the fairly large size of your image, different memory settings (and/or aperture settings) can lead to a different number of sources. This may seem like a bug but it isn't (in principle!). The reason is that the SExtractor engine was originally written at a time when computer memory was scarse (a good workstation had ~16MB of memory back then, and SExtractor was meant to work with 1.8 GB Schmidt plate scans). Hence memory usage had to be kept under strict control, which explains the buffer limit settings. These limits may be reached if your image is populated with many and/or very large objects and/or if some measurements require large apertures. In that case, SExtractor has to make choices: change the order in which objects are extracted and/or measured, change details about the cleaning of spurious sources around bright sources, and, for the most critical cases, give up on extracting and/or deblending and/or measuring objects. Obviously, decisions of statistical significance are accompanied by a proper flagging of the detections involved (see the SExtractor documentation). Most of the time, this will concern bright, saturated stars or large image artifacts (halos, bad columns, satellite trails, etc.). It may however affect "normal" sources if inappropriate detection parameters are used: exceedingly low detection thresholds and/or unsuitable background mapping parameters (the detection algorithm has to percolate through the background noise and deblend large "empty" areas), exceedly high deblending contrast in very crowded fields...
+Given the fairly large size of your image, different memory settings (and/or aperture settings) can lead to a different number of sources. This may seem like a bug but it isn't (in principle!). The reason is that the SExtractor engine was originally written at a time when computer memory was scarse (a good workstation had ~16MB of memory back then, and SExtractor was meant to work with 1.8 GB Schmidt plate scans). Hence memory usage had to be kept under strict control, which explains the buffer limit settings. These limits may be reached if your image is populated with many and/or very large objects and/or if some measurements require large apertures. In that case, SExtractor has to make choices: change the order in which objects are extracted and/or measured, change details about the cleaning of spurious sources around bright sources, and, for the most critical cases, give up on extracting and/or deblending and/or measuring objects. Obviously, decisions of statistical significance are accompanied by a 
+proper flagging of the detections involved (see the SExtractor documentation). Most of the time, this will concern bright, saturated stars or large image artifacts (halos, bad columns, satellite trails, etc.). It may however affect "normal" sources if inappropriate detection parameters are used: exceedingly low detection thresholds and/or unsuitable background mapping parameters (the detection algorithm has to percolate through the background noise and deblend large "empty" areas), exceedly high deblending contrast in very crowded fields...
 In suspicious cases, I would recommend checking SEGMENTATION check-images and
 source FLAGS to verify that SExtractor is operating in the intended regime.
 
@@ -1599,6 +1600,41 @@ formas; parece que no tendrá efectos colaterales.
 se me habia olvidado copiar la nueva libplplotd a /usr/lib64 y por eso no me funcionaba; el PLPLOT_LIB no hace falta !!
 
 
+2012-11-26
+==========
+
+- Instalo la ultima version de OT y la vieja de GEIRS para seguir con las
+  pruebas.
+- Le escribo a Clemens diciendole que igual es mejor comprar los equipos aquí
+  para evitar que yo tenga que viajar a HD para la instalación.
+- Bug fix.:
+Al lanzar el designer, me da varios errores y no deja lanzarlo. Buscado en
+  google encuentro una forma "chapucerilla" para que funcione, y es creado el
+  fichero  ~/.config/ibus/bus.
+
+
+"""
+Every KDE and QT GUI application complains on startup:
+
+QInotifyFileSystemWatcherEngine::addPaths: inotify_add_watch failed: No such file or directory
+QFileSystemWatcher: failed to add paths: /home/allee-o/.config/ibus/bus
+
+that very disturbing when working on the command line, e.g. with kate or okular etc.
+
+Creating the directory ~/.config/ibus/bus makes the error go away. I installed ibus-daemon
+"""
+
+2012-10-27
+==========  
+
+- Instalo la nueva versioń de Eclipse (4.2.1 - Juno) junto con la extensión
+para los Color Theme (Oblion).
+De paso encuentro una versión "custom" de eclipse para Python (+php,web,ruby) : Aptana Studio 3!!
+Habrá que probarla.
+
+
+
+
 FOR NEXT VIDEOCONF
 ==================
 - QL GUI: Migration from PyQt3 to PyQt4
@@ -1621,7 +1657,7 @@ KDD con MATILDE (15-May-2012)
  3) how to proceed with windowed/binned images ? 
    --> MF preguntara a la gente de Barcelona sobre las ventanas 
    y como se podrian reducir (sky, astrometry, etc). (pendiente)
-   --> JM Preguntara CS sobre el binning: CS responde que no, que en IR no hay binning 
+   --> JM Preguntara CS sobre el binning: CS responde que no, que en IR no hay binning 116
  4) JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? 
    --> MF le preguntara a JF que quiere exactamente; MF no ve muy interesante el ir viendo la Mag de cada
    estrella al marcarla en el display. Es mucho más útil la grafica de magnitud instrumental VS magnitud catalogo.

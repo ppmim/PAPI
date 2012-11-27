@@ -53,6 +53,8 @@ import matplotlib.pyplot as plt
 import pylab
             
 import catalog_query
+import photo.coords as coords
+
 
 # Logging
 from misc.paLog import log
@@ -69,6 +71,105 @@ class CmdException(Exception):
 ##################################       
 #from scipy.stats import norm, median
 #from scipy.stats.stats import nanmedian,_nanmedian
+
+
+def join(table1, table2):
+
+    import numpy as np
+
+    # Check that primary key is set in Table 1
+    if table1._primary_key is None:
+        raise Exception("Primary key of table 1 has to be set")
+
+    # Check that primary key is set in Table 2
+    if table2._primary_key is None:
+        raise Exception("Primary key of table 2 has to be set")
+
+    # Find all unique keys between the two tables
+    keys = np.unique(np.hstack([table1[table1._primary_key],
+                                table2[table2._primary_key]]))
+
+    # Sort by increasing key
+    keys.sort()
+
+    # Find list of columns in final table (and meta-data)
+
+    columns = []
+    dtype = []
+    units = []
+    descriptions = []
+    formats = []
+    nulls = []
+
+    for column in table1.columns:
+        columns.append(column)
+        dtype.append((column, table1.data[column].dtype))
+        units.append(table1.columns[column].unit)
+        descriptions.append(table1.columns[column].description)
+        formats.append(table1.columns[column].format)
+        nulls.append(table1.columns[column].null)
+
+    for column in table2.columns:
+        if column in columns:
+            table2.rename_column(column, column + ".2")
+            # raise Exception("Column %s already exists in Table 1" % column)
+
+    for column in table2.columns:
+        if column != table2._primary_key:
+            columns.append(column)
+            dtype.append((column, table2.data[column].dtype))
+            units.append(table2.columns[column].unit)
+            descriptions.append(table2.columns[column].description)
+            formats.append(table2.columns[column].format)
+            nulls.append(table2.columns[column].null)
+
+    # Need to take into account vector columns
+    # Need to use column header object, rather than doing it this long way
+
+    dtype = np.dtype(dtype)
+
+    # Create the new table and set it up
+    table = atpy.Table()
+    table._setup_table(len(keys), dtype=dtype, units=units,
+                                  descriptions=descriptions,
+                                  formats=formats, nulls=nulls)
+
+    # Place the primary keys in the table
+    table[table1._primary_key][:] = keys[:]
+    table.set_primary_key(table1._primary_key)
+
+    # Create lookup table to match IDs in Tables 1 and 2 to new Table
+    t1_keys = dict(zip(table1[table1._primary_key], range(len(table1))))
+    t2_keys = dict(zip(table2[table2._primary_key], range(len(table2))))
+
+    # Find row number of Tables 1/2 containing rows of new Table (in order)
+    from_table1 = [t1_keys[key] if key in t1_keys else -1
+                   for key in table[table._primary_key]]
+    from_table2 = [t2_keys[key] if key in t2_keys else -1
+                   for key in table[table._primary_key]]
+
+    # Convert to arrays
+    from_table1 = np.array(from_table1)
+    from_table2 = np.array(from_table2)
+
+    # Figure out which rows in the new table have a match in Tables 1/2
+    in_table1 = from_table1 >= 0
+    in_table2 = from_table2 >= 0
+
+    # Only use these to match data
+    from_table1 = from_table1[in_table1]
+    from_table2 = from_table2[in_table2]
+
+    # Copy over the data to the new table
+    for column in table1.columns:
+        if column != table1._primary_key:
+            table.data[column][in_table1] = table1.data[column][from_table1]
+    for column in table2.columns:
+        if column != table2._primary_key:
+            table.data[column][in_table2] = table2.data[column][from_table2]
+
+    return table
+
 def MAD(a, c=0.6745, axis=0):
     """
     Median Absolute Deviation along given axis of an array:
@@ -99,7 +200,7 @@ def MAD(a, c=0.6745, axis=0):
         d = numpy.median(a[good], axis=axis)
         # I don't want the array to change so I have to copy it?
         if axis > 0:
-            aswp = swapaxes(a[good], 0, axis)
+            aswp = numpy.swapaxes(a[good], 0, axis)
         else:
             aswp = a[good]
         m = numpy.median(numpy.fabs(aswp - d) / c, axis=0)
@@ -115,7 +216,7 @@ def nanmedian(arr):
 
 ######### End of useful functions #################
 
-def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
+def catalog_xmatch( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     """
     Takes two input catalogues (VOTables) and performs a cross match to 
     find objects within 'error' arcseconds of each other. 
@@ -162,8 +263,93 @@ def catalog_xmatch ( cat1, cat2, out_filename, out_format='votable', error=2.0 )
         log.error("Some error while running command: %s", command_line)
         raise CmdException("XMatch failed")
     else:
-        return out   
+        return out
 
+def catalog_xmatch2 ( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
+    """
+    Takes two input catalogues (VOTables) and performs a cross match to 
+    find objects within 'error' arcseconds of each other. 
+    The result is a new VOTable (default) containing only rows where a match 
+    was found. 
+    
+    Notes
+    -----
+    It runs without explicit specification of the sky position columns 
+    in either table (OBS_RA,OBS_DEC). It will work only if those columns are 
+    identified with appropriate UCDs, for instance pos.eq.ra;meta.main and 
+    pos.eq.dec:meta.main. If no suitable UCDs are in place this invocation will
+    fail with an error. 
+    
+    Parameters
+    ----------
+    cat1: str
+        filename of image vo-catalog 
+    cat2: str
+        filename of reference (2MASS, USNO, ...) vo-catalog for cross-matching
+    err: float
+        max. error for finding objects within tolerance (arcseconds) 
+    out_filename: str
+        filename where results will be saved
+    out_format: str
+        format of the output generated; current options available are:
+            - VO Table (XML) (votable) (default)
+            - SVC (Software handshaking structure) message (svc)
+            - ASCII table (ascii)
+    
+    Returns
+    -------
+        Filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+    """
+    
+    
+    
+    # del old instances
+    if os.path.exists(out_filename): 
+        os.remove(out_filename)
+    
+    # Read vo-catalogs and convert to ...
+    try:
+        table1 = atpy.Table(cat1)
+    except Exception:
+        log.error("Canno't read the input catalog %s"%cat1)
+        return None
+    try:
+        table2 = atpy.Table(cat2)
+    except Exception:
+        log.error("Canno't read the input catalog %s"%cat2)
+        return None
+    
+    
+#    table1_new = table.where( (table1.FLAGS==0) & (table.FLUX_BEST > 0) &
+#                             (table.j_snr>min_snr) & (table.h_snr>min_snr) &
+#                             (table.k_snr>min_snr) & (table.j_k<1.0) &
+#                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
+    
+    
+#    new_cat1 = numpy.array(zip(table1['ar'], table1['dec'], table1['k_m']))
+#    new_cat2 = numpy.array(zip(table1['ar'], table1['dec'], table1['k_m']))
+    
+    try:
+        ind1, ind2 = coords.indmatch(table1['ra'], table1['dec'], 
+                                     table2['X_WORLD'], table2['Y_WORLD'], 
+                                     error)
+    except Exception, e:
+        log.error("Erron in xmatch-ing tables :%s"%str(e))
+
+    table1_xmatch = table1.where(ind1)
+    #table1_xmatch.write(out_filename)
+    table2_xmatch = table1.where(ind2)
+    #table2_xmatch.write(out_filename)
+    
+    table1_xmatch.set_primary_key('id')
+    table2_xmatch.set_primary_key('NUMBER')
+    
+    joined_table = join(table1_xmatch, table2_xmatch)
+
+    return joined_table
+
+
+    
 def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 , 
                               out_filename=None, out_format='pdf'):
     """
@@ -198,6 +384,7 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
     input = input_catalog
     output_1 = "/tmp/output_1.xml"
     
+    #create a new column
     command_line = STILTSwrapper._stilts_pathname + " tpipe " + \
                     " ifmt=votable" + \
                     " cmd='addcol Inst_Mag \"-2.5*log10(FLUX_BEST/%f)\"'" % expt + \
@@ -238,13 +425,13 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
         else: return 'stdout'
 
 
-def compute_regresion ( vo_catalog, column_x, column_y , 
+def compute_regresion( vo_catalog, column_x, column_y , 
                         output_filename="/tmp/linear_fit.pdf", min_snr=10.0):
     """
     Compute and Plot the linear regression of two columns of the input vo_catalog
     
     :param column_x: column number for X values of the regression (MAG_AUTO)
-    :param column_y: column number for Y values of the regression ( 2MASS 
+    :param column_y: column number for Y values of the regression (2MASS 
                      column name for photometric value )
     
     :return: tuple with linear fit parameters and a Plot showing the fit
@@ -574,10 +761,10 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     out_base_catalog = os.getcwd() + "/catalog_region.xml"
     sr = 500 # arcsec
     try:
-        res_file = icat.queryCatalog(ra, dec, sr, 
+        i_catalog = icat.queryCatalog(ra, dec, sr, 
                                      catalog_query.ICatalog.cat_names['2MASS'], 
                                      out_base_catalog, 'votable')[0]
-        log.debug("Output file generated : %s", res_file) 
+        log.debug("Output file generated : %s", i_catalog) 
     except Exception, e:
         log.error("Sorry, cann't solve the query to ICatalog: %s", str(e))
         raise e
@@ -585,7 +772,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     ## 2- XMatch the catalogs (image_catalog VS just base_catalog generated)          
     out_xmatch_file = os.getcwd() + "/xmatch.xml"
     try:
-        match_cat = catalog_xmatch( image_catalog, res_file, 
+        match_cat = catalog_xmatch( image_catalog, i_catalog, 
                                    out_xmatch_file, out_format='votable', 
                                    error=1.0 ) 
         log.debug("XMatch done !")
@@ -600,7 +787,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     log.debug("Compute & Plot regression !!!")    
     est_zp_err = zero_point
     try:
-        est_zp_err = compute_regresion (out_xmatch_file, 'MAG_AUTO', 
+        est_zp_err = compute_regresion(match_cat, 'MAG_AUTO', 
                            two_mass_col_name, output_filename, snr )[0]
         log.info("Estimated ZP_err=%s"%est_zp_err)
         #sys.exit(0)
@@ -616,7 +803,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
         exptime = 1.0 # SWARP normalize flux to 1 sec
         file_ext = os.path.splitext(output_filename)[1]
         output_filename_2 = output_filename.replace(file_ext, "_b"+file_ext) 
-        plot_file = generate_phot_comp_plot ( match_cat, two_mass_col_name, exptime, 
+        plot_file = generate_phot_comp_plot( match_cat, two_mass_col_name, exptime, 
                                               output_filename_2, 
                                               out_format='pdf')
         log.debug("Plot file generated : %s", plot_file) 

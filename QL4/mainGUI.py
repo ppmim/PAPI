@@ -431,7 +431,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             - checkBox_data_grouping
             - checkBox_doRegrig
             - comboBox_AstromCatalog
-            - comboBox_skyWindow
+            - comboBox_pre_skyWindow
             
         """
         
@@ -662,7 +662,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 else:
                     self.timer_dc = QTimer( self )
                     self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), self.checkFunc )
-                    self.timer_dc.start(1500) ## 1 seconds single-shoot timer
+                    self.timer_dc.start(1500) ## 1 seconds continuous timer
                     
             else:
                 #The same dir, nothing to do
@@ -713,12 +713,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.checkBox_autocheck.isChecked():
             if self.timer_dc !=None and not self.timer_dc.isActive():
                 # Already created in a former user action 
-                self.timer_dc.start(1500, False)
+                self.timer_dc.setSingleShot(False)
+                self.timer_dc.start(1500)
             else:
                 ##Create QTimer for the data collector
                 self.timer_dc = QTimer( self )
                 self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), self.checkFunc )
-                self.timer_dc.start(1500) ## 1 seconds single-shot timer
+                self.timer_dc.setSingleShot(False)
+                self.timer_dc.start(1500) ## 1,5 seconds continuous timer
         else:
             self.checkBox_outDir_autocheck.setChecked(False)
             #Stop the DataCollector timer
@@ -863,7 +865,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                         .arg(len(self._task_info._return))
                                                         .arg(str(str_list)))
                         elif type(self._task_info._return)==type("") and \
-                                    os.path.isfile(self._task_info._return):
+                            os.path.isfile(self._task_info._return):
                             self.logConsole.debug(str(QString("New file %1 created.")
                                                       .arg(self._task_info._return)))
                             if self._task_info._return.endswith(".fits"):
@@ -2441,8 +2443,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.information(self, "Info", "Only one file was selected, automatic file grouping will be done.")
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
-                near_list = self.inputsDB.GetFiles('ANY', 'SCIENCE', -1, fits.filter, fits.mjd, fits.ra, fits.dec,  ra_dec_near_offset*2, time_near_offset, runId=0)
-                print "NEAR_LIST=", near_list
+                near_list = self.inputsDB.GetFiles('ANY', 'SCIENCE', -1, 
+                                                   fits.filter, 
+                                                   fits.mjd, fits.ra, fits.dec, 
+                                                   ra_dec_near_offset*2, 
+                                                   time_near_offset, runId=0)
+                #print "NEAR_LIST=", near_list
                 # For the moment, the minimun number of nearest is >0
                 if len(near_list)==0:
                     QMessageBox.information(self, "Info", "Not enough science frames found")  
@@ -2824,7 +2830,9 @@ source directory (If no, only the new ones coming will be processed) ?"),
         #Create working thread that process the files
         try:
             # generate a random filename for the master, to ensure we do not overwrite any file
-            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', prefix='redObj_', dir=self.m_outputdir)
+            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', 
+                                                      prefix='redObj_', 
+                                                      dir=self.m_outputdir)
             os.close(output_fd)
             os.unlink(outfilename) # we only need the name
             ###self._task = RS.ReductionSet(files, self.m_outputdir, out_file=outfilename,
@@ -2845,12 +2853,19 @@ source directory (If no, only the new ones coming will be processed) ?"),
             if group_by==None: l_group_by = self.group_by
             else: l_group_by = group_by
             
+            # Here, it is decided if last calibration files will be used 
+            if (self.checkBox_pre_subD.checkState()==Qt.Checked 
+                and self.checkBox_pre_appMF.checkState()==Qt.Checked): 
+                calib_db_files = self.outputsDB.GetFiles()
+            else:
+                calib_db_files = None
+            #
             params = [(files, self.m_outputdir, outfilename,
                       "dither", None, 
                       None, None, "quick",
                       l_group_by, True,
                       self.config_opts,
-                      self.outputsDB.GetFiles(), None)]
+                      calib_db_files, None)]
             
             func_to_run = RS.ReductionSet(*(params[0])).reduceSet
             self._task_queue.put([(func_to_run,())])
@@ -2867,6 +2882,11 @@ source directory (If no, only the new ones coming will be processed) ?"),
         """
         Procedure that continuisly in checking the task of pending task to be done
         """
+        
+        # Update the number of sequences in to queue to be processed !
+        
+        self.lineEdit_queue_size.setText(str(self._task_queue.qsize()))
+        
         if not self._task_queue.empty() and not self.m_processing:
             log.debug("Something new in the TaskQueue !")
             try:
