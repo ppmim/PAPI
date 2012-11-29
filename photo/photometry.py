@@ -66,156 +66,6 @@ class CmdException(Exception):
     pass
 
 
-##################################
-### Some useful functions ########
-##################################       
-#from scipy.stats import norm, median
-#from scipy.stats.stats import nanmedian,_nanmedian
-
-
-def join(table1, table2):
-
-    import numpy as np
-
-    # Check that primary key is set in Table 1
-    if table1._primary_key is None:
-        raise Exception("Primary key of table 1 has to be set")
-
-    # Check that primary key is set in Table 2
-    if table2._primary_key is None:
-        raise Exception("Primary key of table 2 has to be set")
-
-    # Find all unique keys between the two tables
-    keys = np.unique(np.hstack([table1[table1._primary_key],
-                                table2[table2._primary_key]]))
-
-    # Sort by increasing key
-    keys.sort()
-
-    # Find list of columns in final table (and meta-data)
-
-    columns = []
-    dtype = []
-    units = []
-    descriptions = []
-    formats = []
-    nulls = []
-
-    for column in table1.columns:
-        columns.append(column)
-        dtype.append((column, table1.data[column].dtype))
-        units.append(table1.columns[column].unit)
-        descriptions.append(table1.columns[column].description)
-        formats.append(table1.columns[column].format)
-        nulls.append(table1.columns[column].null)
-
-    for column in table2.columns:
-        if column in columns:
-            table2.rename_column(column, column + ".2")
-            # raise Exception("Column %s already exists in Table 1" % column)
-
-    for column in table2.columns:
-        if column != table2._primary_key:
-            columns.append(column)
-            dtype.append((column, table2.data[column].dtype))
-            units.append(table2.columns[column].unit)
-            descriptions.append(table2.columns[column].description)
-            formats.append(table2.columns[column].format)
-            nulls.append(table2.columns[column].null)
-
-    # Need to take into account vector columns
-    # Need to use column header object, rather than doing it this long way
-
-    dtype = np.dtype(dtype)
-
-    # Create the new table and set it up
-    table = atpy.Table()
-    table._setup_table(len(keys), dtype=dtype, units=units,
-                                  descriptions=descriptions,
-                                  formats=formats, nulls=nulls)
-
-    # Place the primary keys in the table
-    table[table1._primary_key][:] = keys[:]
-    table.set_primary_key(table1._primary_key)
-
-    # Create lookup table to match IDs in Tables 1 and 2 to new Table
-    t1_keys = dict(zip(table1[table1._primary_key], range(len(table1))))
-    t2_keys = dict(zip(table2[table2._primary_key], range(len(table2))))
-
-    # Find row number of Tables 1/2 containing rows of new Table (in order)
-    from_table1 = [t1_keys[key] if key in t1_keys else -1
-                   for key in table[table._primary_key]]
-    from_table2 = [t2_keys[key] if key in t2_keys else -1
-                   for key in table[table._primary_key]]
-
-    # Convert to arrays
-    from_table1 = np.array(from_table1)
-    from_table2 = np.array(from_table2)
-
-    # Figure out which rows in the new table have a match in Tables 1/2
-    in_table1 = from_table1 >= 0
-    in_table2 = from_table2 >= 0
-
-    # Only use these to match data
-    from_table1 = from_table1[in_table1]
-    from_table2 = from_table2[in_table2]
-
-    # Copy over the data to the new table
-    for column in table1.columns:
-        if column != table1._primary_key:
-            table.data[column][in_table1] = table1.data[column][from_table1]
-    for column in table2.columns:
-        if column != table2._primary_key:
-            table.data[column][in_table2] = table2.data[column][from_table2]
-
-    return table
-
-def MAD(a, c=0.6745, axis=0):
-    """
-    Median Absolute Deviation along given axis of an array:
-
-    median(abs(a - median(a))) / c
-
-    c = 0.6745 is the constant to convert from MAD to std; it is used by
-    default
-    
-    Parameters
-    ----------
-    
-    a : array 
-        data array
-    c : float
-        coeff to convert from MAD to std; 0.6745 default 
-    axis : int
-        axis direction in which to compute
-    
-    """
-
-    good = (a==a)
-    a = numpy.asarray(a, numpy.float64)
-    if a.ndim == 1:
-        d = numpy.median(a[good])
-        m = numpy.median(numpy.fabs(a[good] - d) / c)
-    else:
-        d = numpy.median(a[good], axis=axis)
-        # I don't want the array to change so I have to copy it?
-        if axis > 0:
-            aswp = numpy.swapaxes(a[good], 0, axis)
-        else:
-            aswp = a[good]
-        m = numpy.median(numpy.fabs(aswp - d) / c, axis=0)
-
-    return m
-
-def nanmedian(arr):
-    """
-    Returns median ignoring NAN values
-    """
-    return numpy.median(arr[arr==arr])
-
-
-######### End of useful functions #################
-
 def catalog_xmatch( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     """
     Takes two input catalogues (VOTables) and performs a cross match to 
@@ -223,32 +73,39 @@ def catalog_xmatch( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     The result is a new VOTable (default) containing only rows where a match 
     was found. 
     
-    .. note:: 
-        It runs without explicit specification of the sky position columns 
-        in either table (OBS_RA,OBS_DEC). It will work only if those columns are 
-        identified with appropriate UCDs, for instance pos.eq.ra;meta.main and 
-        pos.eq.dec:meta.main. If no suitable UCDs are in place this invocation will
-        fail with an error. 
+    Notes
+    -----
+    It runs without explicit specification of the sky position columns 
+    in either table (OBS_RA,OBS_DEC). It will work only if those columns are 
+    identified with appropriate UCDs, for instance pos.eq.ra;meta.main and 
+    pos.eq.dec:meta.main. If no suitable UCDs are in place this invocation will
+    fail with an error. 
     
-    :param cat1,cat2: catalogs for cross-matching
-    :param err: max. error for finding objects within (arcseconds)
-    :param out_filename: filename where results will be saved
-    :param out_format: format of the output generated; current options 
+    Parameters
+    ----------
+    
+    cat1, cat2: str
+        catalogs for cross-matching
+    err: float
+        max. error for finding objects within (arcseconds)
+    out_filename: str
+        filename where results will be saved
+    out_format: str
+        format of the output generated; current options 
             available are:
             - VO Table (XML) (votable) (default)
             - SVC (Software handshaking structure) message (svc)
             - ASCII table (ascii)
-    :return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+    
+    Returns
+    -------
+        Filename where results where saved (VOTABLE, ASCII_TABLE, ...)
     """
     
     in1 = cat1
     in2 = cat2
     out = out_filename
     s_error = str(error)
-    ar1 = ''
-    dec1 = ''
-    ar2 = ''
-    dec2 = ''
     
     # del old instances
     if os.path.exists(out): os.remove(out)
@@ -265,7 +122,7 @@ def catalog_xmatch( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     else:
         return out
 
-def catalog_xmatch2 ( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
+def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
     """
     Takes two input catalogues (VOTables) and performs a cross match to 
     find objects within 'error' arcseconds of each other. 
@@ -283,18 +140,13 @@ def catalog_xmatch2 ( cat1, cat2, out_filename, out_format='votable', error=2.0 
     Parameters
     ----------
     cat1: str
-        filename of image vo-catalog 
+        filename of sextractor image vo-catalog 
     cat2: str
         filename of reference (2MASS, USNO, ...) vo-catalog for cross-matching
     err: float
         max. error for finding objects within tolerance (arcseconds) 
-    out_filename: str
-        filename where results will be saved
-    out_format: str
-        format of the output generated; current options available are:
-            - VO Table (XML) (votable) (default)
-            - SVC (Software handshaking structure) message (svc)
-            - ASCII table (ascii)
+    min_snr: float
+        min. SNR value for matched stars
     
     Returns
     -------
@@ -302,51 +154,67 @@ def catalog_xmatch2 ( cat1, cat2, out_filename, out_format='votable', error=2.0 
     """
     
     
-    
-    # del old instances
-    if os.path.exists(out_filename): 
-        os.remove(out_filename)
-    
-    # Read vo-catalogs and convert to ...
+    # Read vo-catalogs
+    #Sextractor catalog
     try:
-        table1 = atpy.Table(cat1)
+        table1 = atpy.Table(cat1, type='vo', tid=0)
     except Exception:
         log.error("Canno't read the input catalog %s"%cat1)
         return None
+    
+    # References (2MASS) catalog
     try:
-        table2 = atpy.Table(cat2)
+        table2 = atpy.Table(cat2, type='vo', tid=0)
     except Exception:
         log.error("Canno't read the input catalog %s"%cat2)
         return None
     
-    
-#    table1_new = table.where( (table1.FLAGS==0) & (table.FLUX_BEST > 0) &
-#                             (table.j_snr>min_snr) & (table.h_snr>min_snr) &
-#                             (table.k_snr>min_snr) & (table.j_k<1.0) &
-#                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
-    
-    
-#    new_cat1 = numpy.array(zip(table1['ar'], table1['dec'], table1['k_m']))
-#    new_cat2 = numpy.array(zip(table1['ar'], table1['dec'], table1['k_m']))
-    
     try:
-        ind1, ind2 = coords.indmatch(table1['ra'], table1['dec'], 
-                                     table2['X_WORLD'], table2['Y_WORLD'], 
+        ind1, ind2 = coords.indmatch(table1['X_WORLD'], table1['Y_WORLD'], 
+                                     table2['ra'], table2['dec'],
                                      error)
     except Exception, e:
         log.error("Erron in xmatch-ing tables :%s"%str(e))
+        raise e
 
-    table1_xmatch = table1.where(ind1)
-    #table1_xmatch.write(out_filename)
-    table2_xmatch = table1.where(ind2)
-    #table2_xmatch.write(out_filename)
+    table1_xm = table1.where(ind1)
+    table2_xm = table2.where(ind2)
     
-    table1_xmatch.set_primary_key('id')
-    table2_xmatch.set_primary_key('NUMBER')
     
-    joined_table = join(table1_xmatch, table2_xmatch)
+    # Because Atpy does not support table merging, a new xmatch is done with
+    # selected rows.
+    # Firstly, selection
+    table2_tmp = table2_xm.where( (table2_xm.j_snr > min_snr) & 
+                                  (table2_xm.h_snr > min_snr) &
+                                  (table2_xm.k_snr > min_snr) & 
+                                  (table2_xm.j_k < 1.0) )
+    
+    # if there is no enough stars, then don't use color cut (J-K)<1 
+    if len(table2_tmp)<25:
+        table2_tmp = table2_xm.where( (table2_xm.j_snr > min_snr) & 
+                                      (table2_xm.h_snr > min_snr) &
+                                      (table2_xm.k_snr > min_snr))
+        
+    table1_tmp = table1_xm.where( (table1_xm.FLAGS==0) & 
+                                  (table1_xm.FLUX_BEST > 0) &
+                                  (table1_xm.FLUX_AUTO/table1_xm.FLUXERR_AUTO > min_snr))
+    
+    
 
-    return joined_table
+    #Sencondly, new xmatch
+    try:
+        ind1_p, ind2_p = coords.indmatch(table1_tmp['X_WORLD'], table1_tmp['Y_WORLD'], 
+                                     table2_tmp['ra'], table2_tmp['dec'], 
+                                     error)
+    except Exception, e:
+        log.error("Erron in xmatch-ing tables :%s"%str(e))
+        raise e
+
+    #table_res = table1_tmp.where(ind1)
+
+    log.info("Number of matched stars :%s"%(len(ind1_p)))
+        
+    return table1_tmp.where(ind1_p)['MAG_AUTO'], table2_tmp.where(ind2_p)[filter_column]
 
 
     
@@ -356,19 +224,30 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
     Generate a photometry comparison plot, comparing instrumental magnitude
     versus 2MASS photometry.
     
-    :param catalog: VOTABLE catalog  having the photometric values (instrumental and 2MASS);
-    :param filter: NIR wavelength filter (J,H,K,Z)
-    :param expt: exposure time of original input image; needed to 
-                compute the Instrumental Magnitude (Inst_Mag)  
-    :param out_filename: filename where results will be saved;if absent, 
-                the location will be a tempfile with a generated name
-    :param out_format: format of the output generated; current options available are:
+    Parameters
+    ----------
+    catalog: str 
+        VOTABLE catalog  having the photometric values (instrumental and 2MASS);
+    
+    filter: str 
+        NIR wavelength filter (J,H,K,Z)
+    
+    expt: float 
+        exposure time of original input image; needed to compute the 
+        Instrumental Magnitude (Inst_Mag)  
+    out_filename: str
+        filename where results will be saved;if absent, the location will be a 
+        tempfile with a generated name
+    out_format: str
+        format of the output generated; current options available are:
         - 'pdf' (default)
         - 'jpg' 
         - 'gif'
         - for more formats, see  http://www.star.bris.ac.uk/~mbt/stilts/sun256/plot2d-usage.html
-        
-    :return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+    
+    Returns
+    -------    
+        Filename where results where saved (VOTABLE, ASCII_TABLE, ...)
     
     Example:
       > stilts tpipe  ifmt=votable cmd='addcol MyMag_K "-2.5*log10(FLUX_BEST/46.0)"' omode=out in=/home/panic/SOFTWARE/STILTS/match_double.vot out=match_D_b.vot
@@ -424,22 +303,193 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
         if out_filename: return out_filename
         else: return 'stdout'
 
+def compute_regresion2( column_x, column_y , filter_name,
+                        output_filename="/tmp/linear_fit.pdf"):
+    """
+    Compute and Plot the linear regression of two columns of the input vo_catalog
+    
+    Parameters
+    ----------
+    
+    column_x: str
+        column name/number for X values of the regression (MAG_AUTO)
+        
+    column_y: str
+        column name/number for Y values of the regression (2MASS column name 
+        for photometric value )
+    
+    Returns
+    -------
+    3-tuple with linear fit parameters and a Plot showing the fit
+             a - intercept (ZP)
+             b - slope of the linear fit
+             r - estimated error
+             
+    None if happen some error  
+    """
+    
+    
+    X = column_x # MAG_AUTO = -2.5 * numpy.log10(table_new['FLUX_AUTO']/1.0)
+    Y = column_y # 2MASS photometric value
+   
+   
+    #remove the NaN values 
+    validdata_X = ~numpy.isnan(X)
+    validdata_Y = ~numpy.isnan(Y)
+    validdataBoth = validdata_X & validdata_Y
+    n_X = X[validdataBoth] #- (0.5*0.05) # a row extinction correction
+    n_Y = Y[validdataBoth] 
+
+    if len(n_X)<3 or len(n_Y)<3:
+        raise Exception("Not enough number of data, only %d points found"%len(n_X))
+
+    # Compute the linear fit
+    res = numpy.polyfit(n_X, n_Y, 1, None, True)
+    a = res[0][1] # intercept == Zero Point
+    b = res[0][0] # slope
+    r = res[3][1] # regression coeff ??? not exactly
+    
+    print "Coeffs =", res
+    
+    # Plot the results
+    pol = numpy.poly1d(res[0])
+    plt.plot(n_X, n_Y, '.', n_X, pol(n_X), '-')
+    plt.title("Filter %s  -- Poly fit: %f X + %f  r=%f ZP=%f" %(filter_name, b,a,r,a))
+    plt.xlabel("Inst_Mag (MAG_AUTO) / mag")
+    plt.ylabel("2MASS Mag  / mag")
+    plt.savefig(output_filename)
+    plt.show()
+    log.debug("Zero Point (from polyfit) =%f", a)
+    
+    
+    # Compute the ZP as the median of all per-star ZP=(Mag_2mass-Mag_Inst)
+    zps = n_Y - n_X 
+    zp = numpy.median(zps)
+    #zp = a
+    log.debug("Initial ZP(median) = %f"%zp)
+    zp_sigma = numpy.std(zps)
+    #print "ZPS=",zps
+    # do a kind of sigma-clipping
+    zp_c = numpy.median(zps[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)])
+    log.debug("ZP_sigma=%f"%zp_sigma)
+    log.debug("Clipped ZP = %f"%zp_c)
+    zp = zp_c
+    #zp = a
+    
+    # Now, compute the histogram of errors
+    m_err_for_radial_systematic = n_Y - (n_X + zp)
+    n_X = n_X[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)]
+    n_Y = n_Y[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)]
+    log.debug("Number of points = %d"%len(n_X))
+    #m_err = n_Y - (n_X*b + zp ) 
+    m_err = n_Y - (n_X + zp)
+    rms = numpy.sqrt( numpy.mean( (m_err)**2 ) )
+    MAD = numpy.median( numpy.abs(m_err-numpy.median(m_err)))
+    std = numpy.std(m_err)
+    #std2 = numpy.std(m_err[numpy.where(numpy.abs(m_err)<std*2)])
+    
+
+    log.debug("ZP = %f"%zp)
+    log.debug("MAD(m_err) = %f"%MAD)
+    log.debug("MEAN(m_err) = %f"%numpy.mean(m_err))
+    log.debug("MEDIAN(m_err) = %f"%numpy.median(m_err))
+    log.debug("STD(m_err) = %f"%std)
+    log.debug("RMS(m_err) = %f"%rms)
+    #log.debug("STD2 = %f"%std2)
+    
+    #my_mag = n_X*b + zp
+    my_mag = n_X + zp
+    #plt.plot( my_mag[numpy.where(m_err<std*2)], m_err[numpy.where(m_err<std*2)], '.')
+    plt.plot( my_mag, m_err, '.')
+    plt.xlabel("Inst_Mag")
+    plt.ylabel("2MASS_Mag-Inst_Mag")
+    plt.title("(1) Calibration with 2MASS - STD = %f"%std)
+    #plt.plot((b * n_X + a), m_err, '.')
+    plt.grid(color='r', linestyle='-', linewidth=1)
+    plt.savefig("/tmp/phot_errs.pdf")
+    plt.show()
+    
+    # Plot radial distance VS m_err
+#    radial_distance = numpy.sqrt((table_new['X_IMAGE']-1024)**2 
+#                                 + (table_new['Y_IMAGE']-1024)**2)*0.45 #arcsecs
+#    
+#    plt.plot( radial_distance, m_err_for_radial_systematic, '.')
+#    plt.xlabel("Radial distance ('arcsec')")
+#    plt.ylabel("2MASS_Mag-Inst_Mag")
+#    plt.title("(1) Spatial systematics - STD = %f"%std)
+#    plt.savefig("/tmp/espatial_systematics_errs.pdf")
+#    plt.show()
+    
+    
+    # Second ZP
+    log.debug("Second iteration")
+    temp = n_Y - n_X 
+    print "LEN1=",len(temp)
+    print "LEN2=",len(temp[numpy.where(numpy.abs(m_err)<std*2)])
+    zp2 = numpy.median( temp[numpy.where(numpy.abs(m_err)<std*2)])
+    m_err2 = n_Y - (n_X + zp2) 
+    rms2 = numpy.sqrt( numpy.mean( (m_err2)**2 ) )
+    std2 = numpy.std(m_err2)
+    MAD2 = numpy.median( numpy.abs(m_err2-numpy.median(m_err2)))
+    MAD2b = numpy.sqrt( numpy.median( (m_err2-numpy.median(m_err2))**2 ) )
+    #std3 = numpy.std(m_err[numpy.where(numpy.abs(m_err2)<std2*2)])
+
+    log.debug("ZP2 = %f"%zp2)
+    log.debug("MAD2(m_err2) = %f"%MAD2)
+    log.debug("MAD2b(m_err2) = %f"%MAD2b)
+    log.debug("MEAN2(m_err2) = %f"%numpy.mean(m_err2))
+    log.debug("STD(m_err2) = %f"%std2)
+    log.debug("RMS(m_err2) = %f"%rms2)
+
+    #log.debug("STD3 = %f"%std3)
+    
+    
+    
+
+    #print m_err
+    # Lo normal es que coincida la RMS con la STD, pues la media de m_err en este caso es 0
+    my_mag = n_X+zp2
+    plt.plot( my_mag[numpy.where(m_err<std*2)], m_err[numpy.where(m_err<std*2)], '.')
+    plt.xlabel("Inst_Mag")
+    plt.ylabel("2MASS_Mag-Inst_Mag")
+    plt.title("(2) Calibration with 2MASS - STD = %f"%std2)
+    #plt.plot((b * n_X + a), m_err, '.')
+    plt.savefig("/tmp/phot_errs.pdf")
+    plt.show()
+    
+    
+    pylab.hist(m_err2, bins=50, normed=0)
+    pylab.title("Mag error Histogram - RMS = %f mag STD = %f"%(rms2,std2))
+    pylab.xlabel("Mag error")
+    pylab.ylabel("Frequency")
+    plt.savefig("/tmp/phot_hist.pdf")
+    pylab.show()
+    
+    return (zp, b, r)
+
 
 def compute_regresion( vo_catalog, column_x, column_y , 
                         output_filename="/tmp/linear_fit.pdf", min_snr=10.0):
     """
     Compute and Plot the linear regression of two columns of the input vo_catalog
     
-    :param column_x: column number for X values of the regression (MAG_AUTO)
-    :param column_y: column number for Y values of the regression (2MASS 
-                     column name for photometric value )
+    Parameters
+    ----------
+    column_x: str
+        column number for X values of the regression (MAG_AUTO)
     
-    :return: tuple with linear fit parameters and a Plot showing the fit
+    column_y: str
+        column number for Y values of the regression (2MASS column name for 
+        photometric value )
+    
+    Returns
+    -------
+    3-tuple with linear fit parameters and a Plot showing the fit
              a - intercept (ZP)
              b - slope of the linear fit
              r - estimated error
              
-             None if happen some error  
+    None if happen some error  
     """
     
     try:
@@ -462,7 +512,7 @@ def compute_regresion( vo_catalog, column_x, column_y ,
                              (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
     
     """
-    print ">> Number of matched points = ",len(table_new)
+    print ">> Number of matched points = ", len(table_new)
     
     # If there aren't enough 2MASS objects, don't use color cut (J-K)<1
     if len(table_new)<25:
@@ -642,26 +692,29 @@ class STILTSwrapper (object):
         """
         Do catalogs cross-match
         
-        :param cat1, cat2: catalogs for cross-matching
-        :param err: max. error for finding objects within (arcseconds)
-        :param out_filename: file name where results will be saved; if absent,
-            the location will be a tempfile with a generated name.
-        :param out_format: format of the output generated; current options available are:
+        Parameters
+        ----------
+        cat1, cat2: str
+            catalogs for cross-matching
+        err: float
+            max. error for finding objects within (arcseconds)
+        out_filename: str
+            file name where results will be saved; if absent, the location will 
+            be a tempfile with a generated name.
+        out_format: str
+            format of the output generated; current options available are:
             - VO Table (XML) (votable) (default)
             - SVC (Software handshaking structure) message (svc)
             - ASCII table (ascii)
         
-        :return: filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+        Returns
+        -------
+        Filename where results where saved (VOTABLE, ASCII_TABLE, ...)
         """
         
         in1 = cat1
         in2 = cat2
         out = out_filename
-        s_error = str(error)
-        ar1 = ''
-        dec1 = ''
-        ar2 = ''
-        dec2 = ''
         
         command_line = STILTSwrapper._stilts_pathname + " tskymatch2 " + \
              " in1=" + in1 + " in2=" + in2 + " out=" + out + \
@@ -684,17 +737,26 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     """
     Run the rough photometric calibraiton
     
-    :param input_image: reduced science image
+    Parameters
+    ----------
+    input_image: str 
+        filename reduced science image
     
-    :param catalog: photometric catalog to compare to
+    catalog: str
+        photometric catalog to compare to (2MASS, USNO-B, ...)
     
-    :param output_filename: file where output figure will be saved
+    output_filename: str
+        filename where output figure will be saved
     
-    :param snr: minimum SNR of stars used of linear fit
+    snr: float
+        minimum SNR of stars used of linear fit
     
-    :param zero_point: initial magnitud zero point for SExtractor (default 0.0)
+    zero_point: float 
+        initial magnitud zero point for SExtractor (default 0.0)
     
-    :return: if all was ok, return ouput_filename
+    Returns
+    -------
+    if all was ok, return ouput_filename
     """
     
     
@@ -759,9 +821,12 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     ## 1 - Generate region of base catalog (2MASS)
     icat = catalog_query.ICatalog ()
     out_base_catalog = os.getcwd() + "/catalog_region.xml"
-    sr = 500 # arcsec
+    pixel_scale = 0.45 # Panic at 2.2m
+    sc_area = 0.9 # percentage of area used (default 90%) 
+    search_radius = numpy.minimum(my_fits.getNaxis1(), 
+                                  my_fits.getNaxis2())*pixel_scale*sc_area/2
     try:
-        i_catalog = icat.queryCatalog(ra, dec, sr, 
+        i_catalog = icat.queryCatalog(ra, dec, search_radius, 
                                      catalog_query.ICatalog.cat_names['2MASS'], 
                                      out_base_catalog, 'votable')[0]
         log.debug("Output file generated : %s", i_catalog) 
@@ -772,9 +837,12 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     ## 2- XMatch the catalogs (image_catalog VS just base_catalog generated)          
     out_xmatch_file = os.getcwd() + "/xmatch.xml"
     try:
-        match_cat = catalog_xmatch( image_catalog, i_catalog, 
-                                   out_xmatch_file, out_format='votable', 
-                                   error=1.0 ) 
+        #match_cat = catalog_xmatch( image_catalog, i_catalog, 
+        #                           out_xmatch_file, out_format='votable',
+        #                           error=1.0 ) 
+        
+        xm, ym = catalog_xmatch2( image_catalog, i_catalog, two_mass_col_name, 
+                                   error=1.0 , min_snr=snr)
         log.debug("XMatch done !")
     except Exception, e:
         log.error("XMatch failed %s", str(e))
@@ -787,8 +855,10 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     log.debug("Compute & Plot regression !!!")    
     est_zp_err = zero_point
     try:
-        est_zp_err = compute_regresion(match_cat, 'MAG_AUTO', 
-                           two_mass_col_name, output_filename, snr )[0]
+        #est_zp_err = compute_regresion(match_cat, 'MAG_AUTO', 
+        #                   two_mass_col_name, output_filename, snr )[0]
+        est_zp_err = compute_regresion2(xm, ym, filter, output_filename)[0] 
+        
         log.info("Estimated ZP_err=%s"%est_zp_err)
         #sys.exit(0)
     except Exception, e:
@@ -801,12 +871,12 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     ###### using STILTS
     try:
         exptime = 1.0 # SWARP normalize flux to 1 sec
-        file_ext = os.path.splitext(output_filename)[1]
-        output_filename_2 = output_filename.replace(file_ext, "_b"+file_ext) 
-        plot_file = generate_phot_comp_plot( match_cat, two_mass_col_name, exptime, 
-                                              output_filename_2, 
-                                              out_format='pdf')
-        log.debug("Plot file generated : %s", plot_file) 
+        #file_ext = os.path.splitext(output_filename)[1]
+        #output_filename_2 = output_filename.replace(file_ext, "_b"+file_ext) 
+        #plot_file = generate_phot_comp_plot( match_cat, two_mass_col_name, exptime, 
+        #                                      output_filename_2, 
+        #                                      out_format='pdf')
+        #log.debug("Plot file generated : %s", plot_file) 
     except Exception, e:
         log.error("Sorry, some error while computing linear fit or \
         ploting the results: %s", str(e))
@@ -823,7 +893,7 @@ def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
     sex.config['CATALOG_NAME'] = image_catalog
     sex.config['DETECT_THRESH'] = 1.5
     sex.config['DETECT_MINAREA'] = 5
-    sex.config['MAG_ZEROPOINT'] = est_zp_err+zero_point
+    sex.config['MAG_ZEROPOINT'] = est_zp_err + zero_point
     
     
     try:

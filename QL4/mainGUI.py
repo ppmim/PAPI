@@ -273,12 +273,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # Timer for DoneQueue (tasks already done)
         self._queue_timer_done = QTimer( self )
-        self.connect( self._queue_timer_done, QtCore.SIGNAL("timeout()"), self.checkDoneQueue )
+        self.connect( self._queue_timer_done, QtCore.SIGNAL("timeout()"), 
+                      self.checkDoneQueue )
         self._queue_timer_done.start(1000)    # 1 second continuous timer
         
         # Timer for TaskQueue (pending tasks)
         self._queue_timer_todo = QTimer( self )
-        self.connect( self._queue_timer_todo, QtCore.SIGNAL("timeout()"), self.TaskRunner )
+        self.connect( self._queue_timer_todo, QtCore.SIGNAL("timeout()"), 
+                      self.TaskRunner )
         self._queue_timer_todo.start(1000)    # 1 second continuous timer
         
         ##Start display (DS9)
@@ -473,7 +475,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             except Exception, e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 #self.m_processing = False
-                #self.setCursor(Qt.arrowCursor)
+                #QApplication.restoreOverrideCursor()
                 raise e    
         # ##########################################################################################
         elif self.checkBox_subLastFrame.isChecked():
@@ -504,7 +506,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             except Exception,e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 #self.m_processing = False
-                #self.setCursor(Qt.arrowCursor)
+                #QApplication.restoreOverrideCursor()
                 raise e
         # ##########################################################################################
         elif self.checkBox_subSky.isChecked():
@@ -2023,7 +2025,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                self._task_info_list)
                 thread.start()
             except Exception, e:
-                self.setCursor(Qt.arrowCursor)
+                QApplication.restoreOverrideCursor() 
                 QMessageBox.critical(self, "Error", 
                                      "Error while creating master Dark. \n"+str(e))
                 raise e
@@ -2075,7 +2077,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                  self._task_info_list)
                     thread.start()
                 except:
-                    self.setCursor(Qt.arrowCursor)
+                    QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "Error", "Error while creating master Dome Flat")
                     raise
         else:
@@ -2106,7 +2108,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                  self._task_info_list)
                     thread.start()
                 except:
-                    self.setCursor(Qt.arrowCursor)
+                    QApplication.restoreOverrideCursor()
                     log.error("Error creating master Twilight Flat file")
         else:
             QMessageBox.information(self,"Info","Error, not enough frames (>2) !")
@@ -2139,7 +2141,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
                 except Exception, e:
-                    self.setCursor(Qt.arrowCursor)
+                    QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
                     raise e
             elif flat_type.count("DOME_FLAT"):
@@ -2151,7 +2153,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
                 except Exception, e:
-                    self.setCursor(Qt.arrowCursor)
+                    QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
                     raise e
             elif flat_type.count("SKY_FLAT"):
@@ -2164,7 +2166,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
                 except Exception, e:
-                    self.setCursor(Qt.arrowCursor)
+                    QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
                     raise e
             else:
@@ -2226,7 +2228,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else:
                 display.showFrame(out_file)
             finally:
-                self.setCursor(Qt.arrowCursor)
+                QApplication.restoreOverrideCursor()
         else:
             log.error("Sorry, selected file does not look a science file  ")
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             
@@ -2473,7 +2475,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     file_list.append(file)
                     view_list +=  file + "\n"
             
-            resp=QMessageBox.information(self, "Info", 
+            resp = QMessageBox.information(self, "Info", 
                                          QString("Selected near frames are:\n %1")
                                          .arg(view_list),
                                          QMessageBox.Ok, QMessageBox.Cancel)
@@ -2869,6 +2871,7 @@ source directory (If no, only the new ones coming will be processed) ?"),
             
             func_to_run = RS.ReductionSet(*(params[0])).reduceSet
             self._task_queue.put([(func_to_run,())])
+            log.debug("New task queued") 
             #self._task_queue.put(params) #default function supposed!
             
             ##Process(target=self.worker, 
@@ -2880,11 +2883,11 @@ source directory (If no, only the new ones coming will be processed) ?"),
         
     def TaskRunner(self):
         """
-        Procedure that continuisly in checking the task of pending task to be done
+        Procedure that continuisly in checking the task of pending task to be 
+        done.
         """
-        
+ 
         # Update the number of sequences in to queue to be processed !
-        
         self.lineEdit_queue_size.setText(str(self._task_queue.qsize()))
         
         if not self._task_queue.empty() and not self.m_processing:
@@ -2901,7 +2904,7 @@ source directory (If no, only the new ones coming will be processed) ?"),
                 log.error("Error in task Runner: %s"%(str(e)))
                 self.logConsole.debug("Error in TaskRunner")
                 self.m_processing = False
-                self.setCursor(Qt.arrowCursor)
+                QApplication.restoreOverrideCursor()
             finally:
                 log.debug("End of TaskRunner")
                  

@@ -239,7 +239,9 @@ class ReductionSet(object):
         
         # Main output file resulted from the data reduction process
         if out_file==None: # if no filename, we choose a random filename
-            output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', prefix='red_set_', dir=self.out_dir)
+            output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', 
+                                                        prefix='red_set_', 
+                                                        dir=self.out_dir)
             os.close(output_fd)
             os.unlink(self.out_file) # we only need the name
         else:    
@@ -1175,7 +1177,7 @@ class ReductionSet(object):
             output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
             os.close(output_fd)
             os.unlink(l_gainMap) # we only need the name
-            output_fd, files_list= tempfile.mkstemp(suffix='.list', dir=self.out_dir)
+            output_fd, files_list = tempfile.mkstemp(suffix='.list', dir=self.out_dir)
             os.close(output_fd)
             os.unlink(files_list) # we only need the name
             try:
@@ -1259,7 +1261,8 @@ class ReductionSet(object):
         # STEP 1: Create SExtractor OBJECTS images
         suffix='_'+self.m_filter+'.skysub.fits'
         #output_list_file=self.out_dir+"/gpo_objs.pap"
-        output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', dir=self.out_dir)
+        output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', 
+                                                       dir=self.out_dir)
         os.close(output_fd)
         os.unlink(output_list_file) # we only need the name
         
@@ -2782,13 +2785,13 @@ class ReductionSet(object):
             self.m_LAST_FILES = res.apply()
 
         ########################################################################
-        # 4.2 - LEMON connection - End here for LEMON-1 processing    
+        # 4.2 - LEMON connection - End here for Quick-LEMON-1 processing    
         ########################################################################
-        """if self.red_mode=='lemon':
+        if self.red_mode=='quick-lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
             log.info("1st Skysubtraction done !")
             #return out_dir+"/files_skysub.list"
-        """                   
+                           
         ########################################################################
         # 5 - Quality assessment (FWHM, background, sky transparency, 
         # ellipticity, PSF quality)  

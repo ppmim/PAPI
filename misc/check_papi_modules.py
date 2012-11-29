@@ -28,10 +28,10 @@ def testmodule(modulename, moduleversion):
     try:
         mod = __import__(modulename)
         refversion = string.split(moduleversion, ".")
-        if modulename=="qt":
-            cv = mod.qVersion()
-            cv = ''.join([c for c in cv if c in '1234567890.'])
-            currversion = string.split(cv, ".")
+        if modulename=="PyQt4.QtCore":
+            cv = mod.QtCore.PYQT_VERSION_STR
+            currversion = string.split(cv , ".")
+            currversion = [ a.split('-')[0] for a in currversion ]
         else:
             cv = mod.__version__
             currversion = string.split(cv , ".")
@@ -75,7 +75,7 @@ def check_modules():
     # Define the Python modules, and the versions we need
     # ----------------------------------------------------
     PAPImodules = { 'numpy' : '1.6', 'pyraf' : '1.1', 'pyfits' : '3.0',  
-                   'matplotlib' : '0.98.1', 'scipy': '0.10', 'qt': '3.3',
+                   'matplotlib' : '0.98.1', 'scipy': '0.10', 'PyQt4.QtCore': '4.8',
                    'pywcs': '1.11', 'vo': '0.7', 'atpy': '0.9.5'  }
     
     # -----------------

@@ -1632,6 +1632,26 @@ para los Color Theme (Oblion).
 De paso encuentro una versión "custom" de eclipse para Python (+php,web,ruby) : Aptana Studio 3!!
 Habrá que probarla.
 
+2012-10-28
+==========  
+- Modificación de photometry.py con la implementación de xmatching de catalogos
+usando un modulo de python coords.py que encontre en :
+   >>> https://bitbucket.org/nhmc/pyserpens/src/6e805f1f08ef/coord.py
+
+Eché de menos el 'merge' de catalogos en AtPy, así que me tuve que buscar la vida
+con otro xmatch para mezclarlos.
+De esta forma me evito el tener que usar STILTS (java app), que aunque funciona 
+muy bien, me crea otra dependencia externa a python.
+Lo pruebo y parece que va bien, al menos obtengo identicos resultados que con
+STILTS, y en un poco de menos tiempo de CPU.
+De momento decido dejar las dos implementaciones de xmatching, con stilts y sin el.
+Nota: habría tambien la posibilidad de usar gmatch, un modulo python de Sergio
+Pascual de la UCM que usa KDTree, pero como coords.py es simple, funciona bien,y
+en principio los xmatch serán con pocas estrellas y no nos preocupa mucha la 
+eficiencia, para liar más la cosas con un module de la UCM ?
+Si viesemos que la eficiencia es importante, entoces lo usariamos...
+
+
 
 
 
@@ -1639,6 +1659,7 @@ FOR NEXT VIDEOCONF
 ==================
 - QL GUI: Migration from PyQt3 to PyQt4
 - Migracion a openSUSE12.2
+- improvements in photometry.py (avoid STILTS)
 
 - I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
 

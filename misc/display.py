@@ -23,7 +23,6 @@ import os
 #import messageLog
 
 # Utilities
-import datetime
 import sys
 import time
 
@@ -38,60 +37,68 @@ MAX_FRAMES_NO = 4
 ################################################################################
 # Launch the DS9 display
 def startDisplay():
-  """ funtion to launch the DS9 display, checking previusly if it is already started"""
+    """
+    funtion to launch the DS9 display, checking previusly if it is already 
+    started
+    """
 
-  #First all, check if already is running
-  stdout_handle=os.popen("/sbin/pidofproc ds9","r")
-  if stdout_handle.read() =='':
-    print "DS9 not running "
-    # DS9 is not running, so we start it  
-    os.system(("%s/ds9 &" % ds9_path))
-    time.sleep(4)
-    stdout_handle=os.popen("/sbin/pidofproc ds9","r")
+    #First all, check if already is running
+    stdout_handle = os.popen("/sbin/pidofproc ds9","r")
     if stdout_handle.read() =='':
-        time.sleep(2)
-    time.sleep(1)
-    for i in range(0,MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
-        os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
-          
-  else:
-    # DS9 is already running...
-    print "Warning, display is already running"
-    #os.system(("%s/xpaset -p ds9 frame delete all" % ds9_path))
+        #print "DS9 not running "
+        # DS9 is not running, so we start it  
+        os.system(("%s/ds9 &" % ds9_path))
+        time.sleep(4)
+        stdout_handle = os.popen("/sbin/pidofproc ds9","r")
+        if stdout_handle.read() =='':
+            time.sleep(2)
+        time.sleep(1)
+        for i in range(0,MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
+            os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
+            
+    else:
+        pass
+        # DS9 is already running...
+        #print "Warning, display is already running"
+        #os.system(("%s/xpaset -p ds9 frame delete all" % ds9_path))
       
 def startDisplay2():
    
-  """ NOT USED, because Esta funcion da muchos problemas cuando se llama desde el QL, por eso no la usamos"""
+    """ 
+    NOT USED, because Esta funcion da muchos problemas cuando se llama 
+    desde el QL, por eso no la usamos
+    """
 
-  #messageLog.put('Starting DS9 display...')
-  # First all, check if already is running
-  pid = os.fork()
-  if pid ==0:
-    ## The child 
-    #First all, check if already is running
-    stdout_handle=os.popen("/sbin/pidofproc ds9","r")
-    if stdout_handle.read() =='':
-      print "DS9 not running "
-      #messageLog.put_warning("Display is not running, so we start it")
-      # DS9 is not running, so we start it  
-      #os.execl(("%sds9" % ds9_path), "ds9","-cmap","Heat")  ## ojo, reemplaza al proceso actual, hace un fork
-      os.system(("%s/ds9 &" % ds9_path))
-      time.sleep(1)
-      #os.execl(("/usr/local/bin/ds9"), "ds9", "-cmap", "Heat")
-      # Now, we create 4 new frames and enable #1  
-      os.system(("%s/xpaset -p ds9 frame new" % ds9_path)) #2
-      os.system(("%s/xpaset -p ds9 frame new " % ds9_path)) #3
-      os.system(("%s/xpaset -p ds9 frame new" % ds9_path)) #4
-      os.system(("%s/xpaset -p ds9 frame frameno 1" % (ds9_path)))
+    #messageLog.put('Starting DS9 display...')
+    # First all, check if already is running
+    pid = os.fork()
+    if pid ==0:
+        ## The child 
+        #First all, check if already is running
+        stdout_handle = os.popen("/sbin/pidofproc ds9","r")
+        if stdout_handle.read() =='':
+            #print "DS9 not running "
+            #messageLog.put_warning("Display is not running, so we start it")
+            # DS9 is not running, so we start it  
+            #os.execl(("%sds9" % ds9_path), "ds9","-cmap","Heat")  ## ojo, reemplaza al proceso actual, hace un fork
+            os.system(("%s/ds9 &" % ds9_path))
+            time.sleep(1)
+            #os.execl(("/usr/local/bin/ds9"), "ds9", "-cmap", "Heat")
+            # Now, we create 4 new frames and enable #1  
+            os.system(("%s/xpaset -p ds9 frame new" % ds9_path)) #2
+            os.system(("%s/xpaset -p ds9 frame new " % ds9_path)) #3
+            os.system(("%s/xpaset -p ds9 frame new" % ds9_path)) #4
+            os.system(("%s/xpaset -p ds9 frame frameno 1" % (ds9_path)))
+        else:
+            pass
+            # DS9 is already running...
+            #messageLog.put_warning("Display ALREADY is running")
+            #print "Warning, display is already running"
+            #os.system(("%s/xpaset -p ds9 frame delete all" % ds9_path))
+            #sys.exit(0)
     else:
-      # DS9 is already running...
-      #messageLog.put_warning("Display ALREADY is running")
-      print "Warning, display is already running"
-      #os.system(("%s/xpaset -p ds9 frame delete all" % ds9_path))
-    sys.exit(0)
-  else:
-    # The parent 
-    os.wait()[0]
+        # The parent 
+        os.wait()[0]
     
 ################################################################################
 # Show the current frame into DS9 display
