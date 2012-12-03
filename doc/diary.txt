@@ -1828,6 +1828,8 @@ DOUBTS FOR MATILDE (next)
 ================================
 - ¿ que valor usar para la normalización ? y tenía la moda, pero he visto
 que me puede dar problemas (filtro z), y en HAWK-I usan la mediana.
+Lo he cambiado todo par ausar la mediana.
+
 
 - Me surge la duda sobre si para los Master TwLight flats es imprescindible
 un dark model o bastaría con un simple master_dark ?? Ahora mismo sólo
@@ -1878,6 +1880,8 @@ FAQ:
 
 NEXT TODOs
 ==========
+- usar robust.polyfit() en photometry.py 
+- ver donde uso np.mean() y ver si puedo cambiarlo por robust.mean()
 - configurar ayudas iraf !!! no funcionan en 2.16 !!
 - ver notas libreta sobre si se reduce o no HAWK-I-4
 - ver notas libreta sobre si se reduce o no HAWK-I-5; 
