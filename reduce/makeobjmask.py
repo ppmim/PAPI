@@ -153,18 +153,19 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
             # NOTE we update/overwrite the image and don't create a new one
             myfits=pyfits.open(fn+".objs", mode="update")
             if len(myfits)>1: # is a MEF file
-                next=len(myfits)-1
+                next = len(myfits)-1
             else: 
-              next=1
+                next = 1
             for ext in range(next):
-                if next==1: data=myfits[0].data
-                else: data=myfits[ext+1].data
+                if next==1: data = myfits[0].data
+                else: data = myfits[ext+1].data
                 data[:]=0 # set to 0 all pixels
                 x_size = len(data[0])
                 y_size = len(data)
                 #stars = read_stars(fn + ".ldac")
                 try:
-                    cat = astromatic.ldac.openObjectFile(fn+".ldac", table='LDAC_OBJECTS')
+                    cat = astromatic.ldac.openObjectFile(fn+".ldac", 
+                                                         table='LDAC_OBJECTS')
                     if len(cat)<=0: continue
                     for star in cat:
                         if round(star['X_IMAGE'])<x_size and round(star['Y_IMAGE'])<y_size:

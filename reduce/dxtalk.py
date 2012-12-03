@@ -169,7 +169,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     
     med_cube = numpy.median(cube, 0)
     median[0] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[0] = ", median[0]
+    #print "CUBE_MEDIAN[0] = ", median[0]
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
@@ -189,7 +189,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
 
     med_cube = numpy.median(cube, 0)
     median[2] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[2] = ", median[2]
+    #print "CUBE_MEDIAN[2] = ", median[2]
         
     for j in range(0,n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
@@ -212,7 +212,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     
     med_cube = numpy.median(cube, 0)
     median[1] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[1] = ", median[1]
+    #print "CUBE_MEDIAN[1] = ", median[1]
     
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
@@ -232,7 +232,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
 
     med_cube = numpy.median(cube, 0)
     median[3] = numpy.median(med_cube)
-    print "CUBE_MEDIAN[3] = ", median[3]
+    #print "CUBE_MEDIAN[3] = ", median[3]
     
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
@@ -363,7 +363,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     
     med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ", median
+    #print "CUBE_MEDIAN = ", median
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
@@ -383,7 +383,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
 
     med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ", median
+    #print "CUBE_MEDIAN = ", median
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
@@ -406,7 +406,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
 
     med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ", median
+    #print "CUBE_MEDIAN = ", median
 
         
     for j in range(0, n_stripes):
@@ -427,7 +427,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
 
     med_cube = numpy.median(cube, 0)
     median = numpy.median(med_cube)
-    print "CUBE_MEDIAN = ", median
+    #print "CUBE_MEDIAN = ", median
 
         
     for j in range(0, n_stripes):

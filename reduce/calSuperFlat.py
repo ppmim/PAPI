@@ -148,7 +148,6 @@ class SuperSkyFlat(object):
         
         # Check data integrity (all have the same properties)
         m_filelist = self.filelist
-        #print "LISTA =", m_filelist
             
         if not datahandler.checkDataProperties( m_filelist ):
             log.error("Data integrity ERROR, some files not having same properties (FILTER, EXPTIME, NCOADDS or READMODE)")
@@ -159,7 +158,6 @@ class SuperSkyFlat(object):
         misc.fileUtils.removefiles(tmp1)
         log.info("Combining images...(images are scaled to have the same median)")
         misc.utils.listToFile(m_filelist, self.temp_dir + "/files.txt") 
-        #time.sleep(2)
         # Combine the images to find out the super Flat using sigma-clip algorithm;
         # the input images are scaled to have the same median, the pixels containing 
         # objects are rejected by an algorithm based on the measured noise (sigclip),
@@ -170,8 +168,8 @@ class SuperSkyFlat(object):
                     ccdtype='',
                     offset='none',
                     reject='sigclip',
-                    lsigma=1.5,
-                    hsigma=1.5,
+                    lsigma=3.0,
+                    hsigma=3.0,
                     scale='median',
                     zero='none',
                     statsec='' #'[350:130,480:220]' # default, entire image or [*,*]
@@ -210,14 +208,22 @@ class SuperSkyFlat(object):
                 naxis2 = f[1].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                mode = (3*numpy.median(f[chip].data[offset1:naxis1-offset1,
-                                                    offset2:naxis2-offset2])-
-                        2*numpy.mean(f[chip].data[offset1:naxis1-offset1, 
-                                                  offset2:naxis2-offset2]))
+                median = numpy.median(f[chip].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])
+                mean = numpy.mean(f[chip].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2])
+                mode = 3*median -2*mean
+                
+                log.debug("MEDIAN = ", median)
+                log.debug("MEAN = ", mean)
+                log.debug("MODE(estimated) = ", mode)
                 msg = "Normalization of MEF master flat frame wrt chip 1. (MODE=%d)"%mode
                 # Do the normalization wrt chip 1
                 for i_ext in xrange(1, len(f)):
-                    f[i_ext].data = f[i_ext].data / mode
+                    f[i_ext].data = f[i_ext].data / mean
+                    norm_mean = numpy.mean(f[i_ext].data)
+                    if norm_mean<0.8 or norm_mean>1.2:
+                        log.warning("Wrong [ext]normalized super flat obtained. Mean value =%f"%norm_mean)
                 
             # PANIC multi-chip full frame
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME']=='panic'
@@ -228,27 +234,45 @@ class SuperSkyFlat(object):
                 naxis2 = f[0].header['NAXIS2']/2
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                mode = (3*numpy.median(f[0].data[offset1:naxis1-offset1,
-                                                    offset2:naxis2-offset2])-
-                        2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
-                                                  offset2:naxis2-offset2]))
+                median = numpy.median(f[0].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])
+                mean = numpy.mean(f[0].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2])
+                
+                mode = 3*median -2*mean
+                log.debug("MEDIAN = ", median)
+                log.debug("MEAN = ", mean)
+                log.debug("MODE(estimated) = ", mode)
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MODE=%d)"%mode
-                f[0].data = f[0].data / mode
-            # O2k or splitted PANIC frame   
+                f[0].data = f[0].data / mean
+                norm_mean = numpy.mean(f[0].data)
+                if norm_mean<0.8 or norm_mean>1.2:
+                    log.warning("Wrong normalized super flat obtained. Mean value =%f"%norm_mean)
+                    
+            # O2k or split PANIC frame   
             else:
                 naxis1 = f[0].header['NAXIS1']
                 naxis2 = f[0].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                mode = (3*numpy.median(f[0].data[offset1:naxis1-offset1,
-                                                    offset2:naxis2-offset2])-
-                        2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
-                                                  offset2:naxis2-offset2]))
-                msg = "Normalization of master (O2k? or PANIC-splitted frame) flat frame. (MODE=%d)"%mode
-                f[0].data = f[0].data / mode
-
+                median = numpy.median(f[0].data[offset1:naxis1-offset1,
+                                                    offset2:naxis2-offset2])
+                mean = numpy.mean(f[0].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2])
+                mode = 3*median - 2*mean
+                log.debug("MEDIAN = %d"%median)
+                log.debug("MEAN = %d"%mean)
+                log.debug("MODE(estimated) = %d"%mode)
+                
+                msg = "Normalization of master (O2k? or PANIC-split frame) flat frame(MODE=%d)"%mode
+                f[0].data = f[0].data / mean
+                norm_mean = numpy.mean(f[0].data)
+                if norm_mean<0.8 or norm_mean>1.2:
+                    log.warning("Wrong normalized super flat obtained. Mean value =%f"%norm_mean)
+                    
             log.debug(msg)
 
+            
             # Update FITS header 
             f[0].header.add_history("[calSuperFlat] Normalized Super-Flat created from : %s"%str(m_filelist))
             f[0].header.add_history(msg)

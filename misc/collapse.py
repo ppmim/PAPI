@@ -51,8 +51,8 @@ def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
         f = pyfits.open(frame_i)
         # First, we need to check if we have MEF files
         if len(f)>1 and len(f[1].data.shape)==3:
-            log.error("MEF-cubes files cannot be collapsed. First need to be splitted !")
-            raise Exception("MEF-cubes files cannot be collapsed. First need to be splitted !")
+            log.error("MEF-cubes files cannot be collapsed. First need to be split !")
+            raise Exception("MEF-cubes files cannot be collapsed. First need to be split !")
         elif len(f)>1 and len(f[1].data.shape)==2:
             log.debug("MEF file has no cubes, no collapse required.")
             new_frame_list.append(frame_i)
@@ -103,8 +103,8 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
         f = pyfits.open(frame_i)
         # First, we need to check if we have MEF files
         if len(f)>1 and len(f[1].data.shape)==3:
-            log.error("MEF-cubes files cannot be collapsed. First need to be splitted !")
-            raise Exception("MEF-cubes files cannot be collapsed. First need to be splitted !")
+            log.error("MEF-cubes files cannot be collapsed. First need to be split !")
+            raise Exception("MEF-cubes files cannot be collapsed. First need to be split !")
         elif len(f[0].data.shape)==2:
             log.debug("Found a 2D-image: %s:"%frame_i)
             new_frame_list.append(frame_i)

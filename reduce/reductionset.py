@@ -202,7 +202,7 @@ class ReductionSet(object):
         # Input files
         if len(rs_filelist) <= 0:
             log.error("Empy file list, no files to reduce ...")
-            raise ReductionSetException ("Empy file list, no files to reduce ...")
+            raise ReductionSetException ("Empty file list, no files to reduce ...")
         else:
             for f in rs_filelist:
                 if not os.path.exists(f) or not os.path.splitext(f)[1] == ".fits":
@@ -239,11 +239,15 @@ class ReductionSet(object):
         
         # Main output file resulted from the data reduction process
         if out_file==None: # if no filename, we choose a random filename
-            output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', 
+            with pyfits.open(rs_filelist[0]) as myhdulist:
+                if 'DATE-OBS' in myhdulist[0].header:
+                    self.out_file = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                else:
+                    output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', 
                                                         prefix='red_set_', 
                                                         dir=self.out_dir)
-            os.close(output_fd)
-            os.unlink(self.out_file) # we only need the name
+                    os.close(output_fd)
+                    os.unlink(self.out_file) # we only need the name
         else:    
             self.out_file = out_file  # final reduced data file (out)
             
@@ -1037,36 +1041,43 @@ class ReductionSet(object):
     def skyFilter( self, list_file, gain_file, mask='nomask', 
                    obs_mode='dither', skymodel=None ):
         """
-        @summary: For 'each' (really not each, depend on dither pattern, e.g., 
+        For 'each' (really not each, depend on dither pattern, e.g., 
         extended sources) input image, a sky frame is computed by combining a 
         certain number of the closest images, then this sky frame is subtracted
         to the image and the result is divided by the master flat; 
-                         
-        This function is a wrapper for skyfilter.c (IRDR)              
         
-        @param list_file: a text file containing the suited structure in 
-        function of the observing_mode (the list shall be sorted by obs-date)
+        
+        Parameters
+        ----------
+        list_file: str
+            a text file containing the suited structure in 
+            function of the observing_mode (the list shall be sorted by obs-date)
 
-        @param gain_file: gain map file used as bad pixel mask
+        gain_file: str
+            gain map file used as bad pixel mask
         
-        @param mask: [mask|nomask] flag used to indicate if a object mask was 
-        especified into the 'list_file'
+        mask: str
+            [mask|nomask] flag used to indicate if a object mask was 
+            especified into the 'list_file'
         
-        @param obs_mode: [dither|other] dither or other(e.g., nodding) pattern 
-        to process
+        obs_mode: str
+            [dither|other] dither or other(e.g., nodding) pattern 
+            to process
           
-        @param skymodel: [median|min] sky model used for sky subtraction. Only 
-        required if obs_mode=dither. (median=coarse fields, min=crowded fields)
+        skymodel: str
+            [median|min] sky model used for sky subtraction. Only 
+            required if obs_mode=dither. (median=coarse fields, min=crowded fields)
            
-        @return: 
+        Returns
+        -------
         The function generate a set of sky subtrated images (*.skysub.fits) and
         Return ONLY filtered images; when extended-source-mode ,sky 
         frames are not included in the returned file list. 
         The out-file-list is previously ordered by obs-data.             
-    
-        @version: 1.0, 20090909 by jmiguel@iaa.es
-    
-        @todo: extended objects !!
+
+        Notes
+        -----                 
+        This function is a wrapper for skyfilter.c (IRDR).              
         """               
         
         # Skyfilter parameters
@@ -1107,10 +1118,12 @@ class ReductionSet(object):
                 out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
             """
             # look for sky subtracted images created by irdr::skyfilter            
-            files = [line.split(" ")[0].replace("\n","") for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
+            files = [line.split(" ")[0].replace("\n","") 
+                     for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
             for file in files:
                 if os.path.exists(file+".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
-                    shutil.move(file.replace(".fits", ".fits.skysub"), file.replace(".fits", ".skysub.fits"))
+                    shutil.move(file.replace(".fits", ".fits.skysub"), 
+                                file.replace(".fits", ".skysub.fits"))
                     out_files.append(file.replace(".fits", ".skysub.fits"))
             
             ## Compose the output file list
@@ -1174,17 +1187,19 @@ class ReductionSet(object):
             #raise Exception("Error, gain map file <%s> not found"%gain)
             #TODO: --> DONE try to compute GainMap using the given images !!!
             log.debug("---> creating gain map <----")
-            output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+            output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', 
+                                                    dir=self.out_dir)
             os.close(output_fd)
             os.unlink(l_gainMap) # we only need the name
-            output_fd, files_list = tempfile.mkstemp(suffix='.list', dir=self.out_dir)
+            output_fd, files_list = tempfile.mkstemp(suffix='.list', 
+                                                     dir=self.out_dir)
             os.close(output_fd)
             os.unlink(files_list) # we only need the name
             try:
                 misc.utils.listToFile(near_list, files_list)
                 # Note: we must normalize wrt chip 1, so norm=True
-                superflat = reduce.SuperSkyFlat(files_list, l_gainMap, bpm=None, 
-                                                norm=True, 
+                superflat = reduce.SuperSkyFlat(files_list, l_gainMap, 
+                                                bpm=None, norm=True, 
                                                 temp_dir=self.temp_dir)
                 superflat.create()
             except Exception,e:
@@ -1196,7 +1211,7 @@ class ReductionSet(object):
         #0.2 Check if GainMap need to be split
         gain_ext, g_next = self.split([l_gainMap])
         if g_next==1: gain_ext*=4
-        print "\nGAINEXT=",gain_ext
+        #print "\nGAINEXT=",gain_ext
         
         # 1. Split MEF file (into the self.out_dir)
         obj_ext, next = self.split(near_list)
@@ -1237,22 +1252,29 @@ class ReductionSet(object):
             
         return out_filename
     
-    def getPointingOffsets (self, images_in=None,  p_offsets_file='/tmp/offsets.pap'):
-        """DESCRIPTION
-                Derive pointing offsets between each image using SExtractor OBJECTS (makeObjMask) and offsets (IRDR)
+    def getPointingOffsets (self, images_in=None, 
+                            p_offsets_file='/tmp/offsets.pap'):
+        """
+        Derive pointing offsets between each image using SExtractor OBJECTS 
+        (makeObjMask) and offsets (IRDR)
+        
+        Parameters
+        ----------
                 
-           INPUTS
-                images_in        filename of list file (if = None, then use all .skysub.fits files in the out directory --> TB removed !) 
-                 
-                p_min_area       minimun area for a detected object (SExtractor DETECT_MINAREA)
-                 
-                p_mask_thresh    threshold for object detection (SExtractor DETECT_THRESH)
-                      
-           OUTPUTS
-                offsets          two dimensional array with offsets
+        images_in: str
+            filename of list file (if = None, then use all .skysub.fits files 
+            in the out directory --> TB removed !) 
+        p_offsets_file: str
+            filename of file where offset will be saved (it can be used
+            later by dithercubemean)
+        
+        Returns
+        -------    
+        offsets: narray          
+                two dimensional array with offsets
                 
-           NOTE
-                Assumes that North is up and East is left
+        Notes:
+            It assumed that North is up and East is left.
         """
             
         log.info("Starting getPointingOffsets....")
@@ -1291,8 +1313,8 @@ class ReductionSet(object):
         
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
-        search_box=10 # half_width of search box in arcsec (default 10)
-        offsets_cmd=self.m_irdr_path+'/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
+        search_box = 10 # half_width of search box in arcsec (default 10)
+        offsets_cmd = self.m_irdr_path+'/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
             log.critical("Some error while computing dither offsets")
             raise Exception("Some error while computing dither offsets")
@@ -1413,8 +1435,11 @@ class ReductionSet(object):
                                         
     
     def cleanUpFiles(self, list_dirs):
-        """Clean up files from the working directory, probably from the last execution"""
-        """ TB reviewed """
+        """
+        Clean up fomer files from the working directory, probably from the 
+        last data reduction.
+        It is called just before starting a data sequence reduction.
+        """
         
         for out_dir in list_dirs:
             misc.fileUtils.removefiles(out_dir+"/*.fits")
@@ -1428,7 +1453,8 @@ class ReductionSet(object):
 
     def purgeOutput(self):
         """
-        Purge the output dir in order to remove all the intermediate files
+        Purge the output directory in order to remove all the intermediate files.
+        It is called just after finishing a data sequence reduction.
         """
         
         log.info("Purging the output dir ...")
@@ -1440,9 +1466,15 @@ class ReductionSet(object):
         misc.fileUtils.removefiles(out_dir+"/coadd1*", out_dir+"/*_D.fits",
                                        out_dir+"/*_F.fits", out_dir+"/*_D_F.fits" )
         misc.fileUtils.removefiles(out_dir+"/gain*.fits", out_dir+"/masterObjMask.fits",
-                                       out_dir+"/*.pap", out_dir+"/*.list", out_dir+"/superFlat.fits")
+                                       out_dir+"/*.pap", out_dir+"/*.list", 
+                                       out_dir+"/superFlat.fits")
         misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
                                        out_dir+"/*.xml")#, out_dir+"/*.png")
+        
+        # Remove extension directories
+        for i in range(4):
+            if os.path.exists(self.out_dir+"/Q%02d"%(i+1)):
+                shutil.rmtree(self.out_dir+"/Q%02d"%(i+1), True)
         
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
@@ -1926,10 +1958,10 @@ class ReductionSet(object):
         Notes
         -----
         Calibration files will not be splited for the building of the master 
-        calibration file, but science files will be splitted. 
+        calibration file, but science files will be split. 
         In principle, not too much time could be saved if we split the calibration
         files during the building of master calibrations.
-        However, the master calibration files will be splitted at the stage of
+        However, the master calibration files will be split at the stage of
         the processing of scince files. 
         
         """
@@ -2256,7 +2288,7 @@ class ReductionSet(object):
                             raise e
         
             # If red_mode is 'lemon',then no warping of frames is required
-            if self.red_mode=='lemon':
+            if self.red_mode=='lemon' or self.red_mode=='quick-lemon':
                 files_created = out_ext
                 log.info("*** Obs. Sequence LEMON-reduced. ***") 
                 return files_created
@@ -2323,230 +2355,6 @@ class ReductionSet(object):
             
         return files_created
  
-    def reduceSet_deprecated(self, red_mode="quick"):
-        """
-        The main method for full DataSet reduction.
-        
-        Main steps:
-        
-         1. Build master calibration files
-        
-         2. Find out Objects/pointings/filter
-        
-         3. For each object/pointing/filter do :
-         
-            3.1 c=get_calibration_files (depend on filter/text)
-            3.2 o = get_objects/pointings()
-            3.3 exts=split(c,o)
-            3.4 for each extension e do:
-                out+=reduce_obj(o_e, c_e)
-            3.5 create_joined_mef(out)
-            3.6 Add objects to catalog (?)
-            
-        
-        Returns
-        ------- 
-        Return a list of N files produced as result of the data reduction of
-        the N sequecend found.
-        
-        Notes
-        -----
-        Depretated ! 
-        """
-       
-        log.info("Starting Reduction of data set ...")
-        
-        # Clean old files in out_dir's
-        self.cleanUpFiles([self.out_dir]) #"/data/out2","/data/out3","/data/out4"])
-        
-        # Init DB
-        if self.db==None: self.__initDB()
-        
-        if red_mode=="quick": # we suppose it's Quick-Look mode, thus not use calibration files
-            log.debug("Quick reduction mode, no calibration files will be built")
-        else:
-            log.debug("Building calibration for the whole files ...")
-            
-            if self.master_dark==None:
-                log.debug("Building Master darks ...")
-                try:
-                    self.buildMasterDarks()
-                except Exception,e:
-                    log.error("Cannot build Master Darks !: %s",str(e))
-            
-            if self.master_flat==None:
-                log.debug("Building Master flats and gainmaps ...")
-                try:     
-                    self.buildMasterDomeFlats()
-                except Exception,e:
-                    log.error("Cannot build Master Dome Flats !: %s",str(e))
-                
-                try:    
-                    self.buildMasterTwFlats()
-                except Exception,e:
-                    log.error("Cannot build Master Tw Flats !: %s",str(e))
-                
-                try:    
-                    self.buildGainMaps(type="sky")
-                except Exception,e:
-                    log.error("Cannot build Sky Gain Maps !: %s",str(e))
-                
-                try:    
-                    self.buildGainMaps(type="twlight")
-                except Exception,e:
-                    log.error("Cannot build TwLight Gain Maps !: %s",str(e))
-                    
-                try:    
-                    self.buildGainMaps(type="dome")
-                except Exception,e:
-                    log.error("Cannot build  Gain Maps !: %s",str(e))    
-        
-            # TODO: and BPM ???
-            
-        
-        #### Get all the SCIENCE sequences ###
-        sequences = self.getObjectSequences()
-        
-        i = 0 # index for object sequences 
-        out_ext = [] # it will store the partial extension reduced output filenames
-        seq_result_outfile = "" # will store the full-frame out filename of the current reduced sequence  
-        seq_outfile_list = [] # will store the full-frame result for each sequence-data-reduction 
-        
-        # For each object-sequence, split and reduce de sequence
-        for obj_seq in sequences:  #sequences is a list of list, and obj_seq is a list
-            log.debug("===> Reduction of obj_seq %d",i)
-            if len(obj_seq)<4:
-                log.info("Found and skipping  SHORT Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
-                continue # continue with next sequence !!
-                #raise Exception("Found a short Obs. object sequence. Only %d frames found. Required >4 frames",len(obj_seq))
-                #return []
-            else:
-                #avoid call getCalibFor() when red_mode="quick"
-                if red_mode == "quick":
-                    dark,flat,bpm = None,None,None
-                else:
-                    dark, flat, bpm = self.getCalibFor(obj_seq)
-                    # return 3 filenames of master calibration frames (dark, flat, bpm)
-                obj_ext, next = self.split(obj_seq) # it must return a list of list (one per each extension)
-                dark_ext, cext = self.split([dark])
-                flat_ext, cext = self.split([flat])
-                bpm_ext, cext = self.split([bpm])
-                parallel = self.config_dict['general']['parallel']
-                
-                if parallel==True:
-                    log.info("Entering parallel data reduction ...")
-                    try:
-                        # Map the parallel process
-                        n_cpus = self.config_dict['general']['ncpus']
-                        results = pprocess.Map(limit=n_cpus, reuse=1) 
-                        # IF reuse=0, it block the application !! I don't know why ?? 
-                        # though in pprocess examples it works! 
-                        calc = results.manage(pprocess.MakeReusable(self.reduceSingleObj))
-                        for n in range(next):
-                            log.info("===> (PARALLEL) Reducting extension %d", n+1)
-                            ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
-                            if dark_ext==[]: mdark = None
-                            else: mdark=dark_ext[n][0] # At the moment, we take the first calibration file found for each extension
-                            if flat_ext==[]: mflat = None
-                            else: mflat=flat_ext[n][0] # At the moment, we take the first calibration file found for each extension
-                            if bpm_ext==[]: mbpm = None
-                            else: mbpm = bpm_ext[n][0] # At the moment, we take the first calibration file found for each extension
-                            
-                            l_out_dir = self.out_dir + "/Q%02d" % (n+1)
-                            if not os.path.isdir(l_out_dir):
-                                try:
-                                    os.mkdir(l_out_dir)
-                                except OSError:
-                                    log.error("Cannot create output directory %s",l_out_dir)
-                            else: self.cleanUpFiles([l_out_dir])
-                            
-                            # async call to procedure
-                            extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            calc( obj_ext[n], mdark, mflat, mbpm, red_mode, l_out_dir, extension_outfilename)
-                        
-                        # Here is where we WAIT (BLOCKING) for the results (iteration is a blocking call)
-                        for result in results:
-                            #print "RESULT=",result
-                            out_ext.append(result)
-
-                        log.critical("DONE PARALLEL REDUCTION ")
-                            
-                        #pool=multiprocessing.Pool(processes=2)
-                        # !! ERROR !!, because multiprocessing.pool.map() does not support class methods
-                        #pool.map(self.reduceSingleObj,[[obj_ext[0], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q01.fits"],\
-                        #                     [obj_ext[1], mdark, mflat, mbpm, red_mode, self.out_dir+"/out_Q02.fits"]])
-                            
-                    except Exception,e:
-                        log.error("Error while parallel data reduction ! --> %s",str(e))
-                        raise e
-                    
-                else:
-                    for n in range(next):
-                        log.info("Entering sequencial data reduction ...")    
-                        ################## only for debug purposes
-                        #if n!=2: continue
-                        ################## end of debug 
-                        log.info("===> (SERIAL) Reducting extension %d", n+1)
-                        ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
-                        if dark_ext==[]: mdark=None
-                        else: mdark=dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                        if flat_ext==[]: mflat=None
-                        else: mflat=flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
-                        if bpm_ext==[]: mbpm=None
-                        else: mbpm=bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
-                        try:
-                            out_ext.append(self.reduceSingleObj(obj_ext[n], mdark, mflat, mbpm, red_mode, out_dir=self.out_dir,\
-                                                          output_file=self.out_dir+"/out_Q%02d.fits"%(n+1)))
-                        except Exception,e:
-                            log.error("Some error while reduction of extension %d of object sequence %d", n+1, i)
-                            raise e
-                            #continue
-        
-            # if all reduction were fine, now join/stich back the extensions in a widther frame
-            seq_result_outfile = self.out_file.replace(".fits","_SEQ%02d.fits" %(i))
-            if len(out_ext) >1 :
-                log.debug("*** Creating final output file *WARPING* single output frames....***")
-                #option 1: create a MEF with the results attached, but not warped
-                #mef=misc.mef.MEF(outs)
-                #mef.createMEF(self.out_file)
-                #option 2(current): SWARP resulted images to register the N-extension into one wide-single extension
-                log.debug("*** Coadding/Warping overlapped files....")
-                swarp = astromatic.SWARP()
-                swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
-                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
-                swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
-                swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")
-                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-                swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
-                swarp.run(out_ext, updateconfig=False, clean=False)
-                
-                seq_outfile_list.append(seq_result_outfile)
-                log.info("*** Obs. Sequence reduced. File %s created.  ***", 
-                         seq_result_outfile)
-                
-            elif len(out_ext)==1:
-                shutil.move(out_ext[0], seq_result_outfile)
-                
-                seq_outfile_list.append(seq_result_outfile)
-                log.info("*** Obs. Sequence reduced. File %s created.  ***", 
-                         seq_result_outfile)
-            else:
-                log.error("No output files generated by the current Obj.Seq. \
-                data reduction ....review your logs files")
-                
-            i+=1
-            
-                    
-            
-        #log.critical(" TBD : for each object sequence, we need a different final output file !!!!")
-        log.info("*******************************************************************")
-        log.info("*** All Obs.Sequences (%d) has been reduced. Congratulations !!****", i)
-        log.info("*******************************************************************")
-        
-        for f in seq_outfile_list: self.db.insert(f)
-        self.db.ListDataSet()
-        
-        return seq_outfile_list
         
     def reduceSingleObj(self, obj_frames, master_dark, master_flat, master_bpm, 
                   red_mode, out_dir, output_file):
@@ -2790,7 +2598,7 @@ class ReductionSet(object):
         if self.red_mode=='quick-lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
             log.info("1st Skysubtraction done !")
-            #return out_dir+"/files_skysub.list"
+            return out_dir+"/files_skysub.list"
                            
         ########################################################################
         # 5 - Quality assessment (FWHM, background, sky transparency, 
@@ -2859,7 +2667,7 @@ class ReductionSet(object):
             reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
                                            self.config_dict['astrometry']['catalog'], 
                                            config_dict=self.config_dict, 
-                                           do_votable=True)
+                                           do_votable=False)
              
             log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
@@ -2976,7 +2784,7 @@ class ReductionSet(object):
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, 
                                             coadded_file=output_file, 
                                             config_dict=self.config_dict,
-                                            do_votable=True)
+                                            do_votable=False)
             try:
                 aw.run()
             except Exception,e:
@@ -2985,7 +2793,6 @@ class ReductionSet(object):
             log.info("Sucessful end of Pipeline (I hope!)")
             return output_file
         
-            
     
         ########################################################################
         # 10b.1 - Create second coadded image of the dithered stack using new sky 
@@ -3000,8 +2807,9 @@ class ReductionSet(object):
         ########################################################################
         log.info("**** Computing Astrometric calibration of coadded (2nd) result frame ****")
         reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
-                                      self.config_dict['astrometry']['catalog'] , 
-                                      config_dict=self.config_dict)
+                                      self.config_dict['astrometry']['catalog'], 
+                                      config_dict=self.config_dict,
+                                      do_votable=False)
         
         log.info("Generated output file ==>%s", output_file)
         

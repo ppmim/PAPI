@@ -154,8 +154,8 @@ def runCmd( str_cmd, p_shell=True ):
     (stdoutdata, stderrdata) = p.communicate()
     err = stdoutdata + " " + stderrdata
 
-    if len(err)>1: 
-        print "Some error happen. STDOUT + STDERR = ", err
+    if len(err)>1:
+        print "[runCmd]: STDOUT + STDERR = ", err
     
     
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!

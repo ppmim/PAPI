@@ -341,7 +341,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.new_file_func(filename, fromOutput=True)
             
     def new_file_func(self, filename, fromOutput=False):
-        """ Function executed when a new file is detected into the data source dir or into the out_dir"""
+        """ 
+        Function executed when a new file is detected into the data source 
+        dir or into the out_dir.
+        """
         
         log.debug("New file (in source or out_dir) notified: %s",filename)
         ####################################################
@@ -2508,7 +2511,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 #because choosen files might not be a complete sequence we
                 #set group_by to 'filter'
-                self.processFiles(file_list, group_by='filter') 
+                self.processFiles(file_list, group_by='filter', 
+                                  outfilename=str(outfileName))
             except Exception, e:
                 QMessageBox.critical(self, "Error", "Error while building stack")
                 raise e
@@ -2788,7 +2792,7 @@ source directory (If no, only the new ones coming will be processed) ?"),
             print "ARGS=", args
             output.put(RS.ReductionSet(args).func())
             
-    def processFiles(self, files=None, group_by=None):
+    def processFiles(self, files=None, group_by=None, outfilename=None):
         """
         Process the files provided; if any files were given, all the files 
         in the current Source List View (but not the output files) will be
@@ -2800,12 +2804,15 @@ source directory (If no, only the new ones coming will be processed) ?"),
         ----------
         files: list
             files list to be processed; if None, all the files in the
-            current List View will be used !
+            current List View will be used, doing a previous data grouping.
         
         group_by: str
             if 'ot' the data grouping will be done using OT keywords,
             of if equal to 'filter', data grouping will be done using
             AR, Dec and Filter keywords. 
+        
+        outfile: str
+            Filename of the final ouput file (aligned & stacked) produced
         
         Notes
         -----
@@ -2831,12 +2838,16 @@ source directory (If no, only the new ones coming will be processed) ?"),
             
         #Create working thread that process the files
         try:
-            # generate a random filename for the master, to ensure we do not overwrite any file
-            output_fd, outfilename = tempfile.mkstemp(suffix='.fits', 
+            if outfilename==None:
+                # generate a random filename for the master, to ensure we do not overwrite any file
+                output_fd, outfilename = tempfile.mkstemp(suffix='.fits', 
                                                       prefix='redObj_', 
                                                       dir=self.m_outputdir)
-            os.close(output_fd)
-            os.unlink(outfilename) # we only need the name
+                os.close(output_fd)
+                os.unlink(outfilename) # we only need the name
+            
+            outfilename = None # SOLO PARA PROBAR !! TO REMOVE !!!
+    
             ###self._task = RS.ReductionSet(files, self.m_outputdir, out_file=outfilename,
             ###                                obs_mode="dither", dark=None, 
             ###                                flat=None, bpm=None, red_mode="quick",

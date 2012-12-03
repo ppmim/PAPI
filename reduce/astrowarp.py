@@ -198,7 +198,8 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
     should be modified in case you need to adjust their operation so that they better suit
     your needs.
 
-    Keyword arguments:
+    Parameters
+    ----------
   
     input_image  - path to the FITS image whose astrometry is to be done.
     output_image - path to which the astrometically calibrated version of the
@@ -209,8 +210,14 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
 
     config_dict  - dictionary with config arguments
     
-    do_votable   - If True, build-out a VO-Table (SEx) with the fields required 
-                   for the photometry calibration. 
+    do_votable   - If True, build-out a VO-Table with the Sextractor catalog 
+                including the fields required for the photometry calibration. 
+    
+    Returns
+    -------
+    
+    Filename of astrometic calibrated image obtained.
+     
     """
     
     log.debug("[doAstrometry] *** Start Astrometric calibration ***")
@@ -378,7 +385,8 @@ class AstroWarp(object):
     """ Astrometric warping """
 
     def __init__(self, input_files, catalog=None, 
-                 coadded_file="/tmp/astrowarp.fits", config_dict=None, do_votable=False):
+                 coadded_file="/tmp/astrowarp.fits", config_dict=None, 
+                 do_votable=False):
         """ Instantiation method for AstroWarp class
 
         Keyword arguments:

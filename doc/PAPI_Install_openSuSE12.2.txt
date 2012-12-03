@@ -21,6 +21,28 @@ Requirements
 
 root> echo 134217728  > /proc/sys/kernel/shmmax
 
+From Clemens:
+"""
+I needed to use as root:
+- install gnuplot
+- set /proc/sys/kernel/shm* to larger sizes
+- set kernel.shm* in /etc/sysctl.conf to get correct shm-setting after a reboot:
+
+kernel.shmall = 128000000000
+kernel.shmmax = 4000000000
+kernel.shmseg = 40960
+
+
+- install /usr/src/PlxLinux[_v6.50]
+"""
+
+* after launch GEIRS (start_panic_new), create next empty file:
+
+    ~/tmp/fitsheader_panic.txt
+
+
+* Remove  ~/tmp/irmotor_lfpos.panic for simulation mode ???
+
 *) geirs2Panic 
 
 --
