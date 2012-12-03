@@ -51,6 +51,7 @@ import time
 
 import misc.fileUtils
 import misc.utils as utils
+import misc.robust as robust
 import calGainMap 
 
 # Interact with FITS files
@@ -199,6 +200,9 @@ class SuperSkyFlat(object):
 
         
         # (optional) Normalize wrt chip 1
+        # Note: the robust estimator used for normalizing the flat-flied is
+        # median, however here we are using robust.mean() that produces a similar
+        # result. 
         if self.norm:
             f = pyfits.open(tmp1, 'update', ignore_missing_end=True )
             #MEF frame
@@ -212,16 +216,19 @@ class SuperSkyFlat(object):
                                                     offset2:naxis2-offset2])
                 mean = numpy.mean(f[chip].data[offset1:naxis1-offset1, 
                                                   offset2:naxis2-offset2])
+            
                 mode = 3*median -2*mean
-                
-                log.debug("MEDIAN = ", median)
-                log.debug("MEAN = ", mean)
+                rob_mean = robus.mean(f[chip].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2])
+                log.debug("MEDIAN = %f"%median)
+                log.debug("MEAN = %f"%mean)
+                log.debug("ROB_MEAN = %f"%rob_mean)
                 log.debug("MODE(estimated) = ", mode)
-                msg = "Normalization of MEF master flat frame wrt chip 1. (MODE=%d)"%mode
+                msg = "Normalization of MEF master flat frame wrt chip 1. (value=%f)"%rob_mean
                 # Do the normalization wrt chip 1
                 for i_ext in xrange(1, len(f)):
-                    f[i_ext].data = f[i_ext].data / mean
-                    norm_mean = numpy.mean(f[i_ext].data)
+                    f[i_ext].data = f[i_ext].data / rob_mean
+                    norm_mean = robust.mean(f[i_ext].data)
                     if norm_mean<0.8 or norm_mean>1.2:
                         log.warning("Wrong [ext]normalized super flat obtained. Mean value =%f"%norm_mean)
                 
@@ -239,13 +246,16 @@ class SuperSkyFlat(object):
                 mean = numpy.mean(f[0].data[offset1:naxis1-offset1, 
                                                   offset2:naxis2-offset2])
                 
+                rob_mean = robust.mean(f[0].data[offset1:naxis1-offset1, 
+                                                  offset2:naxis2-offset2])
                 mode = 3*median -2*mean
-                log.debug("MEDIAN = ", median)
-                log.debug("MEAN = ", mean)
+                log.debug("MEDIAN = %f"%fmedian)
+                log.debug("MEAN = %f"%mean)
+                log.debug("ROB_MEAN %f=%rob_mean")
                 log.debug("MODE(estimated) = ", mode)
-                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MODE=%d)"%mode
-                f[0].data = f[0].data / mean
-                norm_mean = numpy.mean(f[0].data)
+                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (value = %d)"%rob_mean
+                f[0].data = f[0].data / rob_mean
+                norm_mean = robust.mean(f[0].data)
                 if norm_mean<0.8 or norm_mean>1.2:
                     log.warning("Wrong normalized super flat obtained. Mean value =%f"%norm_mean)
                     
@@ -257,16 +267,20 @@ class SuperSkyFlat(object):
                 offset2 = int(naxis2*0.1)
                 median = numpy.median(f[0].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
-                mean = numpy.mean(f[0].data[offset1:naxis1-offset1, 
+                mean = numpy.mean(f[0].data[offset1:naxis1-offset1,
+                                                  offset2:naxis2-offset2])
+                rob_mean = robust.mean(f[0].data[offset1:naxis1-offset1,
                                                   offset2:naxis2-offset2])
                 mode = 3*median - 2*mean
-                log.debug("MEDIAN = %d"%median)
-                log.debug("MEAN = %d"%mean)
-                log.debug("MODE(estimated) = %d"%mode)
+                log.debug("MEDIAN = %f"%median)
+                log.debug("MEAN = %f"%mean)
+                log.debug("MEAN_ROB = %f"%rob_mean)
+                log.debug("MODE(estimated) = %f"%mode)
                 
-                msg = "Normalization of master (O2k? or PANIC-split frame) flat frame(MODE=%d)"%mode
-                f[0].data = f[0].data / mean
-                norm_mean = numpy.mean(f[0].data)
+                msg = "Normalization of master (O2k? or PANIC-split frame) flat frame by value = %d)"%rob_mean
+                f[0].data = f[0].data / rob_mean
+                norm_mean = robust.mean(f[0].data)
+                log.debug("NORM_MEAN = %f"%norm_mean)
                 if norm_mean<0.8 or norm_mean>1.2:
                     log.warning("Wrong normalized super flat obtained. Mean value =%f"%norm_mean)
                     

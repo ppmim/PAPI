@@ -86,7 +86,7 @@ class ApplyDarkFlat(object):
     dark
         Master dark to subtract
     mflat
-        Master flat to divide by
+        Master flat to divide by (not normalized !)
     
     Returns
     -------
@@ -127,7 +127,8 @@ class ApplyDarkFlat(object):
         dmef = False # flag to indicate if dark is a MEF file or not
         fmef = False # flag to indicate if flat is a MEF file or not
         n_ext = 1 # number of extension of the MEF file (1=simple FITS file)
-        mode = 1 # mode of the flat frame (if mef, mode of chip 0)
+        median = 1 # median of the flat frame (if mef, mode of chip 0) 
+        # default value used if normalization is not done
         
         # #######################
         # Master DARK reading:
@@ -192,19 +193,20 @@ class ApplyDarkFlat(object):
                     ext = 1
                 else: 
                     ext = 0
+                # Normalization is done with a robust estimator --> np.median() 
                 median = np.median(flat[ext].data[200:naxis1-200, 200:naxis2-200])
                 mean = np.mean(flat[ext].data[200:naxis1-200, 200:naxis2-200])
                 mode = 3*median-2*mean
                 log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
                            median, mean, mode)
-                log.debug("Flat-field will be normalized by MODE ( %f ) value", mode)
+                log.debug("Flat-field will be normalized by MEDIAN ( %f ) value", median)
                 out_suffix = out_suffix.replace(".fits","_F.fits")
                 log.debug("Found master FLAT to divide by: %s"%self.__mflat)
         else:
             log.debug("No master flat to be divided by")
             flat_data = 1.0
             flat_filter = None
-            mode = 1 
+            modian = 1 
         
         # Get the user-defined list of flat frames
         framelist = self.__sci_files
@@ -270,8 +272,10 @@ class ApplyDarkFlat(object):
                         else: dark_data = 0
                     
                         # Get normalized flat
-                        if self.__mflat!=None: flat_data = flat[chip+1].data/mode # normalization wrt chip 0
-                        else: flat_data = 1
+                        if self.__mflat!=None: 
+                            flat_data = flat[chip+1].data/median # normalization wrt chip 0
+                        else: 
+                            flat_data = 1
                         sci_data = f[chip+1].data 
                     #Single
                     else:

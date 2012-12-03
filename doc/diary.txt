@@ -1676,6 +1676,20 @@ El valos más sensible es el mingain !
 
 TODO: Tengo que ver bien como afectan los BPM en todo el proceso de reducción !!!!!
  
+2012-12-03
+==========
+- Dandole vueltas a como hacer la normalización de los flats, veo que en el
+pipeline de HAWK-I hacen la normalización con la mediana, que es un estimador
+"robusto", mientras que la "mean" no lo es !!!
+Por tanto, me pongo a modificar la todas la rutinas que hacen normalización:
+Sin embargo, encuentro unas rutinas para calcular un estimador "robusto" de la
+media:
+http://fornax.phys.unm.edu/lwa/subversion/trunk/lsl/lsl/statistics/robust.py
+
+Comparando los resultados de robust.mean() y numpy.median() los resultados son
+muy parecidos. De momento vamos a usar la mediana.
+Modifico en todas las rutinas la normalización por la median en lugar de por la moda !!
+ 
 
 FOR NEXT VIDEOCONF
 ==================
@@ -1812,6 +1826,8 @@ quizás incluirlo en el logfile !!!
 
 DOUBTS FOR MATILDE (next)
 ================================
+- ¿ que valor usar para la normalización ? y tenía la moda, pero he visto
+que me puede dar problemas (filtro z), y en HAWK-I usan la mediana.
 
 - Me surge la duda sobre si para los Master TwLight flats es imprescindible
 un dark model o bastaría con un simple master_dark ?? Ahora mismo sólo
@@ -1862,13 +1878,13 @@ FAQ:
 
 NEXT TODOs
 ==========
+- configurar ayudas iraf !!! no funcionan en 2.16 !!
 - ver notas libreta sobre si se reduce o no HAWK-I-4
 - ver notas libreta sobre si se reduce o no HAWK-I-5; 
 en el portatil lo hace, pero el resultado no es muy bueno, 
 incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-- graficos SCAMP de distorsion !!!
 
 
 DEPENDENCIAS DE IRDR

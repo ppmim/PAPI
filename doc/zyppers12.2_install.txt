@@ -1,0 +1,11 @@
+zypper install libreadline5
+zypper install tcl tk  tcl-devel tk-devl python-tk
+zypper install python-sphinx
+zypper install python-qt4-devel
+zypper install python-devel
+zypper install ipython
+zypper install python-numpy python-numpy-devel
+zypper install python-scipy
+zypper install python-matplotlib python-matplotlib-tk
+zypper install python-qt4 
+zypper install libXmu6-32bit

@@ -158,7 +158,7 @@ class BadPixelMask(object):
                         scale='mode'
                         )
                         
-        # STEP 2: Divide the resulting combined flat by its median
+        # STEP 2: Divide the resulting combined flat by its median (robust estimator)
         # Compute the mean of the image
         log.debug("Divide the resulting combined flat by its median...")
         median = float(iraf.imstat (

@@ -117,7 +117,7 @@ zypper install python-qt4-devel
 
 1.1 python-devel 
 
->zypper install python-devel
+> zypper install python-devel
 
 1.2 IPython 0.12.1 (optional)
 
@@ -245,7 +245,7 @@ PLPLOT para SCAMP (para generar ficheros png's):
        > cd plplot-5.9.9
        > mkdir build
        > cd build 
-       > :q
+       > cmake -DCMAKE_INSTALL_PREFIX=/usr/local/plplot599 -DBUILD_TEST=ON ../../plplot-5.9.9 >&cmake.out
        > ccmake ..
          y editar a mano 
  
@@ -342,7 +342,7 @@ B.5) SWARP:
 ===============
 * With zypper:
 
->zypper install python-numpy python-numpy-devel
+> zypper install python-numpy python-numpy-devel
 
 * From source:
 
@@ -552,8 +552,8 @@ Download birany from : http://www.stsci.edu/resources/software_hardware/stsdas/d
 
 > cp stsci_iraf-3.15.linux.tar.gz /iraf/extern
 > cd /iraf/extern
-> tar zxf stsci_iraf-3.14.linux.tar.gz
-> cd stsci_iraf-3.14
+> tar zxf stsci_iraf-3.15.linux.tar.gz
+> cd stsci_iraf-3.15
 > ./install_helper
  
 This script will show you the name of your iraf extern.pkg file and several
@@ -587,6 +587,7 @@ extenal IRAF packages)
 - Set appropiate links:
 
 > ln -s bin.redhat bin.linux
+> ln -s bin.redhat bin.linux64
 > ln -s bin.redhat bin 
 
 
