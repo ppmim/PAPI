@@ -59,7 +59,7 @@ import numpy
 # Logging
 from misc.paLog import log
 
-import ext_util.cosmics.cosmics as cosmics
+import thirdparty.cosmics.cosmics as cosmics
 
 
 def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):

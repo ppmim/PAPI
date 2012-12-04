@@ -1,0 +1,6 @@
+PAPI data reduction package
+===========================
+
+Primary authors:
+
+ * Jose M. Ibáñez <jmiguel@iaa.es>

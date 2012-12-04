@@ -1,0 +1,13 @@
+Version 1.0.0 (28 Nov 2012)
+Changes:
+  * New module coords.py
+  * New function 'catalog_xmatch' without using STILTS
+
+Bugfixes:
+  * Removed ...
+
+
+Version 0.0.1
+-------------
+(12 March 2009, from /papi/trunk)
+Internal release

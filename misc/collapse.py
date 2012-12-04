@@ -146,7 +146,9 @@ if __name__ == "__main__":
     # Get and check command-line options
         
     USAGE = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(USAGE)
+    desc = "Collapse (sum) each cube of a list files into a single 2D image"
+    
+    parser = OptionParser(USAGE, description=desc)
     
     parser.add_option("-i", "--input_image",
                   action="store", dest="input_image", 

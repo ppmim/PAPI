@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: papi
+Version: 1.0.0
+Summary: PANIC data reduction pipeline
+Home-page: https://github.com/ppmim/papi
+Author: Jose M. Ibanez
+Author-email: jmiguel@iaa.es
+License: GPLv3
+Description: UNKNOWN
+Platform: linux
+Classifier: Programming Language :: Python
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Other Environment
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering :: Astronomy
+Requires: numpy scipy

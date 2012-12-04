@@ -1689,13 +1689,36 @@ http://fornax.phys.unm.edu/lwa/subversion/trunk/lsl/lsl/statistics/robust.py
 Comparando los resultados de robust.mean() y numpy.median() los resultados son
 muy parecidos. De momento vamos a usar la mediana.
 Modifico en todas las rutinas la normalización por la median en lugar de por la moda !!
+
+Me surge la duda de si la campania de Matilde con O2k se redujo bien; miro las
+imágenes reducidas y veo que al menos la secuencia 120103-27a31 "se ven estrellas";
+esa se redujeron con flast de cielo, y por eso quizás el gain.fits no se calculó
+del todo mal.
  
+
+2012-12-04
+==========
+
+- Encuentro el paquete de reducción del LSST, y hay cosas muy interesantes:
+
+    http://www.astro.princeton.edu/~bick/lsstdox/userLsst/mast-1413/python/lsst/
+
+- Intentado usar la funcion robust.polyfit(), pero me doy cuenta de que tiene
+un par de bugs, entre ellos que la funcion __processPoly() no está implementada...
+De todas formas, puedo llegar a comparar el resultado vs np.polyfit(), pero en
+el ejemplo que pruebo los resultados son muy parecidos.
+
+Sin embargo, habría otra opción, y es usar fit.polyfitr() que es una copia
+de la que encontré en pyserpens. 
+
+
 
 FOR NEXT VIDEOCONF
 ==================
 - QL GUI: Migration from PyQt3 to PyQt4
 - Migracion a openSUSE12.2
 - improvements in photometry.py (avoid STILTS)
+- improvements in flat_field normalization (robust median instead of mean)
 
 - I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
 
@@ -1877,20 +1900,6 @@ FAQ:
    - skyfilter
    - dithercubemean
 
-
-NEXT TODOs
-==========
-- usar robust.polyfit() en photometry.py 
-- ver donde uso np.mean() y ver si puedo cambiarlo por robust.mean()
-- configurar ayudas iraf !!! no funcionan en 2.16 !!
-- ver notas libreta sobre si se reduce o no HAWK-I-4
-- ver notas libreta sobre si se reduce o no HAWK-I-5; 
-en el portatil lo hace, pero el resultado no es muy bueno, 
-incluso la astrometria no parece funcionar
-
-- escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-
-
 DEPENDENCIAS DE IRDR
 ====================
 - skyfilter
@@ -1994,4 +2003,19 @@ PIPELINE
 6-Hago la estadística usando IDL
 
 7-Incluyo la estadística en la cabecera de la imagen con las ftools
+
+ 
+NEXT TODOs
+==========
+- ver las diferencias entre calBPM.py y calBPM_2.py (este último es el que se 
+esta usando)
+- implementar main() en remove_cosmics.py
+- usar fit.polyfitr() en photometry 
+- ver notas libreta sobre si se reduce o no HAWK-I-4
+- ver notas libreta sobre si se reduce o no HAWK-I-5; 
+en el portatil lo hace, pero el resultado no es muy bueno, 
+incluso la astrometria no parece funcionar
+
+- escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
+- graficos SCAMP de distorsion !!!
  

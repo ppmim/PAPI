@@ -43,6 +43,9 @@ from misc.paLog import log
 import reduce.reductionset as RS
 import misc.config
 
+
+""""  TO BE COMPLETED !!!! """
+
 def do_stack(in_filelist, out_image=None, s_type='median', run_offsets=True, 
              overwrite=False, config_file=None):
     """

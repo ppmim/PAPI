@@ -25,7 +25,7 @@
 #
 # reductionset.py
 #
-# Last update 30/Nov/2010
+# Last update 04/Dic/2012
 #
 ################################################################################
     
@@ -63,7 +63,7 @@ import reduce
 import misc.fileUtils
 import misc.utils
 from reduce.makeobjmask import *
-import reduce.imtrim
+import misc.imtrim
 import reduce.remove_cosmics
 import reduce.astrowarp
 import misc.mef 
@@ -2800,7 +2800,7 @@ class ReductionSet(object):
         ########################################################################
         log.info("**** Coadding image free distorion frames ****")
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd2.fits')
-        reduce.imtrim.imgTrim(out_dir+'/coadd2.fits')
+        misc.imtrim.imgTrim(out_dir+'/coadd2.fits')
         
         ########################################################################
         # 10b.2 - Make Astrometry

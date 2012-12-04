@@ -61,6 +61,7 @@ from misc.paLog import log
 import misc.utils
 import astromatic
 import datahandler
+import misc.robust as robust
 
 class CmdException(Exception): 
     pass
@@ -349,6 +350,13 @@ def compute_regresion2( column_x, column_y , filter_name,
     b = res[0][0] # slope
     r = res[3][1] # regression coeff ??? not exactly
     
+    
+    # testing robust.polyfit()
+    #res = robust.polyfit(n_X, n_Y, 1)
+    #a = res[0]
+    #b = res[1]
+    #r = 0
+    # end of test
     print "Coeffs =", res
     
     # Plot the results
@@ -547,6 +555,12 @@ def compute_regresion( vo_catalog, column_x, column_y ,
     a = res[0][1] # intercept == Zero Point
     b = res[0][0] # slope
     r = res[3][1] # regression coeff ??? not exactly
+    
+    # testing robust.polyfit()
+    #res = robust.polyfit(n_X, n_Y, 1)
+    #a = res[0]
+    #b = res[1]
+    #r = 0
     
     print "Coeffs =", res
     

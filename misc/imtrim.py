@@ -65,7 +65,7 @@ def imgTrim (inputfile):
               
         """ 
         ### Start the script #####
-        file=inputfile.replace("//","/") # clean double slash (//) due to problems in IRAF
+        file = inputfile.replace("//","/") # clean double slash (//) due to problems in IRAF
         
         log.debug("Start imgTrim ....")
         
@@ -79,35 +79,35 @@ def imgTrim (inputfile):
             raise
         # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , UNKNOW)  
         try:
-            nx=indata[0].header['NAXIS1']
-            ny=indata[0].header['NAXIS2']
+            nx = indata[0].header['NAXIS1']
+            ny = indata[0].header['NAXIS2']
         except:
             raise
         
                     
-        xmin=0
+        xmin = 0
         lasti = 0
-        start=1
-        step=128
-        std=0.0
+        start = 1
+        step = 128
+        std = 0.0
         
         ####### 1st loop #############################
-        i=start
+        i = start
         while i<=nx:
             if lasti==i:
-                std=1.0
+                std = 1.0
             else:
-                print "FILE =", file+"["+str(i)+",*]"
-                std= float(iraf.imstat (
+                #print "FILE =", file+"["+str(i)+",*]"
+                std = float(iraf.imstat (
                     images=file+"["+str(i)+",*]",
                     fields='stddev', format='no', Stdout=1)[0])
             if (std!=0.0) :
                 if (i==1):
-                    xmin=1
+                    xmin = 1
                     break
                 else:
                     if (step==1):
-                        xmin=1
+                        xmin = 1
                         break
                     else:
                         lasti = i
@@ -121,63 +121,63 @@ def imgTrim (inputfile):
             print "No data in file " , file
             sys.exit()
         
-        print "XMIN= ", xmin
+        #print "XMIN= ", xmin
         
         #### 2nd loop ###############################  
         
         lasti = 0
-        start=nx
-        step=128
-        i=start
+        start = nx
+        step = 128
+        i = start
         while i>=1:
             if (lasti==i):
-                std=1.0
+                std = 1.0
             else:
                 print "DEBUG (i,std,lasti):" , i, std, lasti
-                std= float(iraf.imstat (
+                std = float(iraf.imstat (
                     images=file+"["+str(i)+",*]",
                     fields='stddev',format='no',Stdout=1)[0])
             
             if (std!=0.0):
                 if (i==nx):
-                    xmax=nx
+                    xmax = nx
                     break
                 else:
                     if (step==1):
-                        xmax=i
+                        xmax = i
                         break
                     else:
                         lasti = i
                         step = step/2
-                        i=i+2*step
+                        i = i+2*step
                 
             else:
                 pass
             i-=step    
             
-        print "XMAX= ", xmax
+        #print "XMAX= ", xmax
         ##### 3rd loop  ####################  
         
         lasti = 0
-        start=1
-        step=128
-        i=start
+        start = 1
+        step = 128
+        i = start
         while i<=ny:
             if (lasti==i):
-                std=1.0
+                std = 1.0
             else:
-                std= float(iraf.imstat (
+                std = float(iraf.imstat (
                     images=file+"[*,"+str(i)+"]",
                     fields='stddev',format='no',Stdout=1)[0])
                 print "debud --> I, STD, LASTI", i, std, lasti
             
             if (std!=0.0):
                 if (i==1):
-                    ymin=1
+                    ymin = 1
                     break
                 else:
                     if (step==1):
-                        ymin=i
+                        ymin = i
                         break
                     else:
                         lasti = i
@@ -187,29 +187,29 @@ def imgTrim (inputfile):
                 pass
             i+=step
         
-        print "YMIN= ", ymin
+        #print "YMIN= ", ymin
         ##### 4th loop  ####################  
         
         lasti = 0
-        start=ny
-        step=128
-        i=start
+        start = ny
+        step = 128
+        i = start
         while i>=1:
             if (lasti==i):
                 std=1.0
             else:
                 print "debud --> I, STD, LASTI", i, std, lasti
-                std= float(iraf.imstat (
+                std = float(iraf.imstat (
                     images=file+"[*,"+str(i)+"]",
                     fields='stddev',format='no',Stdout=1)[0])
             
             if (std!=0.0):
                 if (i==ny):
-                    ymax=ny
+                    ymax = ny
                     break
                 else:
                     if (step==1):
-                        ymax=i
+                        ymax = i
                         break
                     else:
                         lasti = i
@@ -219,7 +219,7 @@ def imgTrim (inputfile):
                 pass
             i-=step
                 
-        print "YMAX= ", ymax          
+        #print "YMAX= ", ymax          
         
         
         
@@ -233,7 +233,7 @@ def imgTrim (inputfile):
                     output=file)
         
         
-        ima_sec=file.replace(".fits", ".weight.fits")
+        ima_sec = file.replace(".fits", ".weight.fits")
         if os.path.exists(ima_sec):
             iraf.imcopy(input=ima_sec+"["+str(xmin)+":"+str(xmax)+","+str(ymin)+":"+str(ymax)+"]", output=ima_sec)
         
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     nopts = len(opts)
       
     
-    verbose= False
+    verbose = False
     inputfile=''
             
     for option, par in opts:

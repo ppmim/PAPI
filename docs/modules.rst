@@ -17,23 +17,38 @@ as they are needed in order to accomplish a complete data reduction of a set of 
 Module                   Description
 ====================     ===========
 ``papi``                 Main pipeline script to start the entire data reduction process 
+``applyDarkFlat``        Finds out the best Focus value from a focus series
+``astrowarp``            Creates final aligned and coadded frame using SEx, SCAMP and SWARP 
+``calBPM``               Creates a master Bad Pixel Mask from a set of darks and flats calibration files
+``calCombineFF``         Combine a dome Flat-field and a sky Flat-field into a new Flat-field
 ``calDark``              Creates a master dark by combination of a dark sequence
 ``calDarkModel``         Creates a master dark model from a dark series
-``calBPM``               Creates a master Bad Pixel Mask from a set of darks and flats calibration files
 ``calDomeFlat``          Creates a master Dome Flat 
-``calTwFlat``            Creates a master Twilight Flat
 ``calSuperFlat``         Creates a master Super Flat from a set of object or sky frames
+``calTwFlat``            Creates a master Twilight Flat
 ``calGainMap``           Creates a Gain Map from any master flat
-``calNonLinearity``      Corrects the images pixel values for non-linearity
-``checkQuality``         Computes some quality values from the image (FWHM, STD, RMS)
-``applyDarkFlat``        Finds out the best Focus value from a focus series
-``eval_focus_serie``     Finds out the best Focus value from a focus series
-``skyfilter``            Subtracts sky background to a dither sequence of frames
-``astrowarp``            Creates final aligned and coadded frame using SEx, SCAMP and SWARP 
-``photometry``           Performs a photometric calibration comparison with 2MASS
-``genLogsheet``          Creates a log sheet from a set of FITS files
+``calNonLinearity``      Corrects the images pixel values for non-linearity (TBC)
+``dxtalk``               Removes cross-talk spots from input images
 ``makeobjmask``          Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
+``photometry``           Performs a photometric calibration comparison with 2MASS
 ====================     ===========
+
+.. tabularcolumns:: |r|l|
+
+=====================    ===========
+Utilities                Description
+=====================    ===========
+``checkQuality``         Computes some quality values from the image (FWHM, STD, RMS)
+``check_papi_modules``   Check whether all python modules required by PAPI are installed
+``collapse``             Collapse (sum) each cube of a list of files into a single 2D image
+``eval_focus_serie``     Finds out the best Focus value from a focus series
+``genLogsheet``          Creates a log sheet from a set of FITS files
+``health``               Compute the Gain and Noise from a set of flat images grouped in packets and with increased level of Integration Time
+``imtrim``               Cut/crop edges of the input image
+``modFits``              Modifies a keyword inside a FITS header
+``skyfilter``            Subtracts sky background to a dither sequence of frames
+``spatial_noise``        Compute the Spatial Noise from a set of dark images grouped in pairs with the same Integration Time
+=====================    ===========
 
 .. index:: setup, sqlite
 

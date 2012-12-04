@@ -6,7 +6,7 @@ Publications
 
 - Ibáñez Mengual, J.M., Fernández, M., Rodríguez Gómez, J. R., García Segura, A. J., Storz, C., "The PANIC software system", `Proc. SPIE 7740`_, 77402E (2010)
 
-- Ibáñez Mengual,J.M, García A.J, Storz C., Fried J. W., Fernández M., Rodríguez J. F., "Advanced PANIC quick-look tool using Python", `Proc. SPIE 8451`_, (2012)
+- Ibáñez Mengual, J.M, García A.J, Storz C., Fried J. W., Fernández M., Rodríguez J. F., "Advanced PANIC quick-look tool using Python", `Proc. SPIE 8451`_, (2012)
 
 Webpages
 --------

@@ -472,7 +472,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 		if lsqFit == 0:
 			cc = numpy.polyfit(u, v, order)
 			yFit = numpy.polyval(cc, u)
-			sigma, fracDev, nGood, biweights, scaledResids = checkfit(yp, yFit, __epsilon, __delta)
+			sigma, fracDev, nGood, biweights, scaledResids = checkfit(v, yFit, __epsilon, __delta)
 			if nGood == 0:
 				return __processPoly(x0, y0, order, cc)
 			nGood = n - nGood

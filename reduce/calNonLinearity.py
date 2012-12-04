@@ -328,8 +328,8 @@ if __name__ == "__main__":
     parser.add_option("-a", "--apply_model",
                   action="store_true", dest="apply_model", default=False,
                   help="Apply to input the given non-linearity model [default],\
-                  otherwise, the model will be computed with input files if they \
-                  fit to requirements for model computation")
+otherwise, the model will be computed with input files if they \
+fit to requirements for model computation")
     
     ## not sure if required
     """
