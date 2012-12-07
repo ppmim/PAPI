@@ -315,11 +315,11 @@ if __name__ == "__main__":
     
     
     usage = "usage: %prog [options] arg1 arg2"
-    parser = OptionParser(usage)
+    desc = """This module receives a series of FITS images (science)  and 
+creates the master super flat-field and computes several statistics."""
+
+    parser = OptionParser(usage, description = desc)
     
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
     
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
@@ -329,17 +329,17 @@ if __name__ == "__main__":
                   action="store", dest="output_filename", help="output file to write SuperFlat")
     
     parser.add_option("-b", "--bpm",
-                  action="store", dest="bpm", help="bad pixel map file (optional)", default=None)
+                  action="store", dest="bpm", help="bad pixel map file (default=%default)", default=None)
 
     
     parser.add_option("-N", "--norm",
-                  action="store_true", dest="norm", help="normalize output \
-                  SuperFlat. If image is multi-chip, normalization wrt chip 1 \
-                  is done. (optional)", default=False)
+                  action="store_true", dest="norm", help="""normalize output
+SuperFlat. If image is multi-chip, normalization wrt chip 1 is done (default=%default)""", 
+                    default=True)
     
     parser.add_option("-m", "--median_smooth",
                   action="store_true", dest="median_smooth", default=False,
-                  help="Median smooth the combined flat-field [default False]")    
+                  help="Median smooth the combined flat-field (default=%default)")    
 
     (options, args) = parser.parse_args()
     

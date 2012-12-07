@@ -42,6 +42,7 @@ import sys
 import os
 import fileinput
 import time
+from optparse import OptionParser
 
 import misc.fileUtils
 import misc.utils as utils
@@ -361,51 +362,56 @@ def usage ():
 if __name__ == "__main__":
     
     # Get and check command-line options
-    args = sys.argv[1:]
-    source_file_list = None
-    dark_file = None
-    flat_file = None
-    out_dir = "/tmp/"
-    debug = False
+    usage = "usage: %prog [options] arg1 arg2 ..."
+    desc = """
+This module receives a series of FITS images and subtract and divide by the given
+calibration files (master dark and master flat-field). 
+"""
+    parser = OptionParser(usage, description=desc)
+    
+                  
+    parser.add_option("-s", "--source",
+                  action="store", dest="source_file_list",
+                  help="Source file listing the filenames of raw frames")
+    
+    parser.add_option("-d", "--dark",
+                  action="store", dest="dark_file", 
+                  help="Master dark to be subtracted")
+    
+    parser.add_option("-f", "--flat-field",
+                  action="store", dest="flat_file",
+                  help="Master flat-field to be divided by")
+    
+    parser.add_option("-o", "--out_dir",
+                  action="store", dest="out_dir", default="/tmp/",
+                  help="Directory where output files will be saved")
+   
+    
+    (options, args) = parser.parse_args()
+    
+    
+    if not options.source_file_list:
+        parser.print_help()
+        parser.error("Incorrect number of arguments " )
+    
+    
+    if os.path.isdir(options.source_file_list):
+        parser.print_help()
+        parser.error("Source must be a file, not a directory")
+    
+    if options.dark_file is None and options.flat_file is None:
+        parser.print_help()
+        parser.error("Incorrect number of arguments " )
+        
+    filelist = [line.replace( "\n", "") 
+                for line in fileinput.input(options.source_file_list)]
     
     try:
-        opts, args = getopt.getopt(args, "s:d:f:o:v", ['source=', 'dark=', \
-                                                       'flat=', 'out_dir='])
-    except getopt.GetoptError:
-        # print help information and exit:
-        usage()
-        sys.exit(1)
-
+        res = ApplyDarkFlat(filelist, options.dark_file, options.flat_file, 
+                            options.out_dir)
+        res.apply() 
+    except Exception,e:
+        log.erro("Error running task %s"%str(e))
+        sys.exit(0)
     
-    for option, parameter in opts:
-        if option in ("-s", "--source"):
-            source_file_list = parameter
-            print "Source file list =", source_file_list
-            if not os.path.isfile(source_file_list):
-                print 'Error, file list does not exists :', source_file_list
-                sys.exit(1)
-        if option in ("-d", "--dark"):
-            dark_file = parameter
-            print "Dark file =", dark_file
-        if option in ("-f", "--flat"):
-            flat_file = parameter
-            print "Flat file =", flat_file
-            
-        if option in ("-o", "--out_dir"):
-            out_dir = parameter
-            print "Out dir =", out_dir
-                
-        if option in ("-v"):
-            debug = True
-            
-    if source_file_list == None or (flat_file == None and dark_file == None):
-        usage()
-        sys.exit(3)
-    
-    filelist = [line.replace( "\n", "") for line in fileinput.input(source_file_list)]
-    #filelist = ['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', 
-    #'/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
-    print "Files:", filelist
-    res = ApplyDarkFlat(filelist, dark_file, flat_file, out_dir)
-    res.apply()
     

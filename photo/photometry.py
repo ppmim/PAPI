@@ -928,11 +928,14 @@ if __name__ == "__main__":
     # Get and check command-line options
         
     usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    desc = """This module receives a reduced image of any known NIR filter and
+match to 2MASS catalog performing a fit in order to get a estimation of the 
+Zero Point.""" 
+    parser = OptionParser(usage, description=desc)
     
     parser.add_option("-i", "--input_image",
                   action="store", dest="input_image", 
-                  help="input image to calibrate to do photometric comparison with")
+                  help="Input image to calibrate to do photometric comparison with")
                   
     parser.add_option("-c", "--base_catalog (2MASS, USNO-B)",
                   action="store", dest="base_catalog",
@@ -941,7 +944,7 @@ if __name__ == "__main__":
     
     parser.add_option("-S", "--snr",
                   action="store", dest="snr", type=int,
-                  help="min SNR of stars used for linear fit (default = %default)",
+                  help="Min SNR of stars used for linear fit (default = %default)",
                   default=10.0)
     
     parser.add_option("-z", "--zero_point",
@@ -950,12 +953,9 @@ if __name__ == "__main__":
                   
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 
-                  help="output plot filename (default = %default)",
+                  help="Output plot filename (default = %default)",
                   default="photometry.pdf")
     
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
     
                                 
     (options, args) = parser.parse_args()

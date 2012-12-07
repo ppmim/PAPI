@@ -1,7 +1,10 @@
+.. _papi:
+
 Running PAPI
 ============
 
 .. index:: quickstart, running
+
 
 Quickstart
 **********

@@ -330,21 +330,32 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
 
 def filter_area(cat_filename, max_size=200):
     """
-    @summary: Filter the input catalog dropping out the objects with an area
-    bigger than max_size
-
-    @param cat_name: filename of the LDAC catalog
-    @param max_size: maximun area size of objects; objects with a higher value
-    are removed.
+    Filter the input catalog dropping out the objects with an area
+    bigger than max_size.
     
-    @requires: the input catalog must be a LDAC catalog (SExtractor FITS_LDAC)
+    Parameters
+    ----------
+
+    cat_name: str
+        filename of the LDAC catalog (SExtractor generated)
+    
+    max_size: int 
+        maximun area size of objects; objects with a higher value are removed.
+    
     LDAC = Leiden Data Analysis Center
     
-    @note: the input filename will be overwritten
+    Notes
+    -----
+    The input filename will be overwritten.
+    LDAC = Leiden Data Analysis Center
     
-    @return: filename of the new catalog, otherwise None or exception
+    Returns
+    -------
+    Filename of the new catalog, otherwise None or exception
     
-    @todo: test if works fine   ! not yet tested 
+    Todo
+    ----
+    Test if works fine, not yet tested ! 
     
     """
     
@@ -526,10 +537,13 @@ class AstroWarp(object):
 if __name__ == "__main__":
     
     log.debug( 'Start AstroWarp....')
-
+    
     # Get and check command-line options
     usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    desc = """Performs the alignment and warping of a set of images,
+in principle previously reduced, but not mandatory.
+"""
+    parser = OptionParser(usage, description=desc)
     
     parser.add_option("-c", "--config_file",
                   action="store", dest="config_file", help="config file")

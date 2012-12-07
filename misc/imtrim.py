@@ -77,7 +77,6 @@ def imgTrim (inputfile):
         except:
             print('Could not open frame - something wrong with input data')
             raise
-        # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , UNKNOW)  
         try:
             nx = indata[0].header['NAXIS1']
             ny = indata[0].header['NAXIS2']

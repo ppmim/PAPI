@@ -24,11 +24,12 @@ Contents:
    running
    quick_look
    ref
-   modules
+   data
    photo
    reference
    acknowledgments
    references
+   troubleshooting
    citation
    license
    glossary

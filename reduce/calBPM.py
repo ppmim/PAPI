@@ -29,6 +29,7 @@
 #              03/03/2010    jmiguel@iaa.es Added READMODE checking 
 # 
 # TODO:
+#  NOT USED !!!! 
 # - include master dark subtraction !!!
 # - NO FUNCIONA BIEN, muy conservador ??! no da mascaras buenas !! 
 #   da pocos pixeles malos ????
@@ -101,7 +102,7 @@ class BadPixelMask(object):
             more than a set number of times, then it is defined as bad
         """
         
-        t=utils.clock()
+        t = utils.clock()
         t.tic()
         
         
@@ -109,8 +110,8 @@ class BadPixelMask(object):
         filelist = [line.replace( "\n", "") for line in fileinput.input(self.input_file)]
         
         # Here we could check if each frame is a good dome flat !!!
-        good_flats=[]
-        f_readmode=-1
+        good_flats = []
+        f_readmode = -1
         for iframe in filelist:
             fits=datahandler.ClFits(iframe)
             log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
@@ -305,9 +306,13 @@ def main(arguments=None):
         print "Sorry, dark subtraction not yet implemented."
         return 1
     
-    bpm = BadPixelMask(options.source_file_list, options.output_filename, 
+    try:
+        bpm = BadPixelMask(options.source_file_list, options.output_filename, 
                        options.lthr, options.hthr)
-    bpm.create()
+        bpm.create()
+    except Exception, e:
+        log.error("Error creating BPM")
+        return 0
         
 ###############################################################################
 if __name__ == "__main__":

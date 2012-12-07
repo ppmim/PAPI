@@ -332,19 +332,21 @@ class MasterDark(object):
 ################################################################################
 # main
 if __name__ == "__main__":
-    print 'Start MasterDark....'
     # Get and check command-line options
-    
     usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    desc = """This module receives a series of FITS images (darks) and
+creates the master dark and computes several statistics.
+"""
+    parser = OptionParser(usage, description=desc)
     
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
-                  help="Source file list of data frames. It can be a file or directory name.")
+                  help="Source file listing the filenames of dark frames.")
     
     parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", help="final coadded output image")
+                  action="store", dest="output_filename", 
+                  help="final coadded output image")
     
     parser.add_option("-n", "--normalize",
                   action="store_true", dest="normalize", default=False,
@@ -371,12 +373,15 @@ if __name__ == "__main__":
     
     if not options.source_file_list or not options.output_filename:
         parser.print_help()
-        parser.error("incorrect number of arguments " )
+        parser.error("Incorrect number of arguments " )
     
     
-    filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
-    #print "Files:",filelist
+    if os.path.isdir(options.source_file_list) or os.path.isdir(options.output_filename):
+        parser.print_help()
+        parser.error("Source and output must be a file, not a directory")
+        
+    filelist = [line.replace( "\n", "") 
+                for line in fileinput.input(options.source_file_list)]
     
     try:
         mDark = MasterDark(filelist, "/tmp", options.output_filename, 
@@ -385,7 +390,6 @@ if __name__ == "__main__":
         mDark.createMaster()
     except Exception,e:
         log.error("Task failed. Some error was found")
-        raise e
     
     
         

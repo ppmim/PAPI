@@ -278,7 +278,7 @@ class MasterTwilightFlat (object):
         # Prepare input list on IRAF string format
             
         log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark)   
-        #Open DARK
+        #Read Master Dark Model
         try:
             cdark = datahandler.ClFits ( self.__master_dark )
             mdark = pyfits.open(self.__master_dark, ignore_missing_end=True)
@@ -286,7 +286,7 @@ class MasterTwilightFlat (object):
             if not cdark.isMasterDarkModel():
                 log.error("File %s does not look a Master Dark Model"%self.__master_dark)
                 raise Exception("Cannot find a scaled dark to apply")
-        except Exception,e:
+        except Exception, e:
             mdark.close()
             raise e
         
@@ -381,7 +381,8 @@ class MasterTwilightFlat (object):
                     ywindow=20,
                     outtype="median"
                     )
-            shutil.move(comb_flat_frame.replace(".fits","_smooth.fits"),comb_flat_frame)
+            shutil.move(comb_flat_frame.replace(".fits","_smooth.fits"), 
+                        comb_flat_frame)
             
         #Or using scipy ( a bit slower then iraf...)
         #from scipy import ndimage
@@ -499,20 +500,21 @@ def makemasterframe(list_or_array):
 ################################################################################
 # main
 if __name__ == "__main__":
-    print 'Starting MasterTwFlat....'
     # Get and check command-line options
-    
-    usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    usage = "usage: %prog [options] arg1 arg2 ..."  
+    desc = """This module receives a series of FITS images (twilight flats) and
+creates the master twilight flat-field and computes several statistics.
+"""
+    parser = OptionParser(usage, description = desc)
     
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
                   help="Source file list of data frames. It can be a file or directory name.")
     
-    parser.add_option("-d", "--master_dark",
+    parser.add_option("-d", "--master_dark_model",
                   action="store", dest="master_dark",
-                  help="Master dark to subtract each raw flat (it will be scaled by TEXP)")
+                  help="Master dark model to subtract each raw flat (it will be scaled by TEXP)")
     
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", help="final coadded output image")
@@ -526,7 +528,7 @@ if __name__ == "__main__":
     parser.add_option("-n", "--normalize",
                   action="store_true", dest="normalize", default=False,
                   help="normalize master flat by median. If image is multi-detector,\
-                  then normalization wrt chip 1 is done)[default False]")
+then normalization wrt chip 1 is done)[default False]")
     
     parser.add_option("-m", "--median_smooth",
                   action="store_true", dest="median_smooth", default=False,

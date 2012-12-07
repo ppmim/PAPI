@@ -29,7 +29,7 @@
 #              19/04/2010    jmiguel@iaa.es - added master dark checking
 #
 # TODO:
-#  - escalar el master dark antes de restar !!!!
+#   - scale master dark before subtraction
 ################################################################################
 
 
@@ -66,24 +66,24 @@ class ExError(Exception):
 
 class BadPixelMask(object):
     """
-        Build a bad pixel mask (hot and cold pixels) from a set of images 
-        ( lamp_on and lamp_off frames and darks) using iraf.ccdmask task 
-            
-         
-         Algorith to create the BPM
-         -------------------------- 
-         1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
-            and and check whether there are enough calib frames
-         2: Check the master dark (Texp)
-         3: Substrac the master dark to each dome flat
-         4: Combine dome dark subtracted flats (on/off)
-         5: Compute flat_low/flat_high
-         6: Create BPM (iraf.ccdmask)
+    Build a bad pixel mask (hot and cold pixels) from a set of images 
+    ( lamp_on and lamp_off frames and darks) using iraf.ccdmask task 
+        
+     
+     Algorithm to create the BPM
+     -------------------------- 
+     1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF, DARKS)
+        and and check whether there are enough calib frames
+     2: Check the master dark (Texp)
+     3: Subtract the master dark to each dome flat
+     4: Combine dome dark subtracted flats (on/off)
+     5: Compute flat_low/flat_high
+     6: Create BPM (iraf.ccdmask)
 
-            
-        Returns
-	-------
-        If no error, the bad pixel mask (fits file)
+        
+    Returns
+    -------
+    If no error, the bad pixel mask (fits file)
         
     """
     def __init__(self, i_file_list, master_dark, output_file=None, lsigma=20, 
@@ -172,13 +172,13 @@ class BadPixelMask(object):
         #and create string list for IRAF tasks
         for file in filelist:
             f = datahandler.ClFits(file)
-            if f.getType()=='DOME_FLAT_LAMP_OFF':
+            if f.isDomeFlatOFF():
                 flats_off_frames.append(f.pathname)
-            elif f.getType()=='DOME_FLAT_LAMP_ON':
+            elif f.isDomeFlatON():
                 flats_on_frames.append(f.pathname)
             else:
                 # reject the frame
-                log.error("DISCARTING: Frame %s is not dome_flat", f.pathname)
+                log.error("DISCARTING: Frame %s is not dome_flat. Type = %s"%(f.pathname, f.getType()))
                 
         #Check whether there are enough calib frames
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10):
@@ -533,12 +533,12 @@ def main(arguments=None):
         arguments = sys.argv[1:] # argv[0] is the script name
     (options, args) = parser.parse_args(args = arguments)
 
-    if len(args) !=0:
+    if options.source_file_list is None or not os.path.exists(options.source_file_list):
         parser.print_help()
-        return 2 # used for command line syntax errors
-    
+        parser.error("Wrong source file given")
+        
     # Make sure we are not overwriting an existing file 
-    if os.path.exists(options.output_filename):
+    if options.output_filename and os.path.exists(options.output_filename):
         print "Error. The output file '%s' already exists."  % \
               (options.output_filename)
         return 1
@@ -546,11 +546,14 @@ def main(arguments=None):
         print "Error, The master dark frame does not exists."
         return 1
     
-    bpm = BadPixelMask(options.source_file_list, options.master_dark,
-                       options.output_filename, 
-                       options.lthr, options.hthr)
-    bpm.create_IRAF()
-        
+    try:
+        bpm = BadPixelMask(options.source_file_list, options.master_dark,
+                           options.output_filename, 
+                           options.lthr, options.hthr)
+        bpm.create_IRAF()
+    except Exception, e:
+        log.error("Error creating BPM %s"%str(e))
+        return 0
 ###############################################################################
 if __name__ == "__main__":
     print 'Start BadPixelMap....'

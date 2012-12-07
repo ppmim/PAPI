@@ -1711,6 +1711,14 @@ el ejemplo que pruebo los resultados son muy parecidos.
 Sin embargo, habría otra opción, y es usar fit.polyfitr() que es una copia
 de la que encontré en pyserpens. 
 
+2012-12-05
+==========
+
+- Continuo con la documentacion.
+- A la vez voy mejorando algunos modulos (calDark, calDarkModel, ...) tanto
+la documentacion/ayuda y actualizando para usar OptionParser que en algunos
+no estaba actualizado aún.
+
 
 
 FOR NEXT VIDEOCONF
@@ -2007,6 +2015,10 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- crear "bateria" de tests para lanzar de forma automatica con un conjunto de
+datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
+
+- ver como "quitar" los "Reference pixel"  (http://bit.ly/YP5heF)
 - ver las diferencias entre calBPM.py y calBPM_2.py (este último es el que se 
 esta usando)
 - implementar main() en remove_cosmics.py

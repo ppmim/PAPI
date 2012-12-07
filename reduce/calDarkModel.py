@@ -34,16 +34,16 @@
 
 # Import necessary modules
 
-import getopt
+from optparse import OptionParser
 import sys
 import os
-import logging
 import fileinput
 import time
 
 import misc.fileUtils
 import misc.utils as utils
 import datahandler
+import misc.robust as robust
 
 # Interact with FITS files
 import pyfits
@@ -92,11 +92,13 @@ class MasterDarkModel(object):
     """
     def __init__(self, input_files, temp_dir='/tmp/', 
                  output_filename="/tmp/mdarkmodel.fits", 
-                 bpm=None):
+                 bpm=None, show_stats=True):
         
         self.__input_files = input_files
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__bpm = bpm
+        self.show_stats = show_stats
+        
     
     def createDarkModel(self):
       
@@ -169,18 +171,20 @@ class MasterDarkModel(object):
         
         #loop the images
         counter = 0
-        for i in range(0,nframes):
+        for i in range(0, nframes):
             if darks[i]==1:
                 file = pyfits.open(framelist[i])
                 f = datahandler.ClFits ( framelist[i] )
                 temp[counter, :,:] = file[0].data
                 times[counter] = float(f.expTime())
                 _mean = numpy.mean(file[0].data)
+                _robust_mean = robust.mean(file[0].data)
                 _median = numpy.median(file[0].data)
                 _mode = 3*_median - 2*_mean
                 #m_mode = my_mode(file[0].data)[0][0]
                 #scipy_mode = scipy.stats.stats.mode ( file[0].data ) # extremely low !!
-                log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s"%(f.expTime(),f.getItime(),_mean, _median))
+                if self.show_stats:
+                    log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s ROBUST_MEAN=%s"%(f.expTime(), f.getItime(), _mean, _median, _robust_mean))
                 counter = counter+1
                 file.close()
                 
@@ -238,21 +242,9 @@ class MasterDarkModel(object):
             log.error("Error writing dark model %s"%self.__output_filename)
             raise e
         
-        #--only tests
-        #hdr0 = pyfits.getheader(framelist[np.where(darks==1][0])
-        #hdr0.update('sup-dark', 'super-dark created by IR.py')
-        #pyfits.writeto(_sdark, superdark, header=hdr0, clobber=clobber)
-
-        #hdu.data=out[0,:,:]
-        #f_dark=pyfits.HDUList([hdu])
-        #f_dark.writeto("/tmp/darkc.fits")
-        #hdu.data=out[1,:,:]
-        #f_bias=pyfits.HDUList([hdu])
-        #f_bias.writeto("/tmp/bias.fits")
-        #--
-        
         log.debug('Saved DARK Model to %s' , self.__output_filename)
         log.debug("createDarkModel' finished %s", t.tac() )
+
         
         return self.__output_filename
         
@@ -284,39 +276,50 @@ def my_mode(data):
 
 # main
 if __name__ == "__main__":
-    print 'Start MasterDarkModel....'
-    # Get and check command-line options
-    args = sys.argv[1:]
-    source_file_list = ""
-    output_filename = ""
+    usage = "usage: %prog [options] arg1 arg2 ..."
+    desc = """
+This module receives a series of FITS images (darks) with increasing exposure 
+time and creates the master dark model and computes several statistics.
+"""
+    
+    parser = OptionParser(usage, description=desc)
+                  
+    parser.add_option("-s", "--source",
+                  action="store", dest="source_file_list",
+                  help="Source file listing the filenames of dark frames.")
+    
+    parser.add_option("-o", "--output",
+                  action="store", dest="output_filename", 
+                  help="final coadded output image")
+    
+    parser.add_option("-S", "--show_stats",
+                  action="store_true", dest="show_stats", default=False,
+                  help="Show frame stats [default False]")    
+    
+    (options, args) = parser.parse_args()
+    
+    
+    if not options.source_file_list or not options.output_filename:
+        parser.print_help()
+        parser.error("Incorrect number of arguments " )
+    
+    
+    if os.path.isdir(options.source_file_list) or os.path.isdir(options.output_filename):
+        parser.print_help()
+        parser.error("Source and output must be a file, not a directory")
+        
+    filelist = [line.replace( "\n", "") 
+                for line in fileinput.input(options.source_file_list)]
+    
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:o:", ["source=","out="])
-    except getopt.GetoptError:
-        # print help information and exit:
-        usage()
-        sys.exit(1)
-
+        mDark = MasterDarkModel(filelist, "/tmp", 
+                                options.output_filename,
+                                options.show_stats)
+        mDark.createDarkModel()
+    except Exception,e:
+        log.error("Error computing dark model: %s"%str(e))
+        sys.exit(0)
     
-    for option, parameter in opts:
-        print "OPTION=", opts
-        if option in ("-s", "--source"):
-            source_file_list = parameter
-            print "Source file list =", source_file_list
-            if not os.path.exists(os.path.dirname(source_file_list)):
-                print 'Error, file list does not exists'
-                sys.exit(1)
-        if option in ("-o", "--out"):
-            output_filename = parameter
-            print "Output file =", output_filename
-            
-    if  source_file_list=="" or output_filename=="":
-        usage()
-        sys.exit(3)
     
-    filelist = [line.replace( "\n", "") for line in fileinput.input(source_file_list)]
-    #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
-    print "Files:",filelist
-    mDark = MasterDarkModel(filelist, "/tmp", output_filename)
-    mDark.createDarkModel()
-    
+        
         
