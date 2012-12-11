@@ -117,6 +117,9 @@ ones:
 
 Examples
 ********
+
+.. _config:
+
 Main config file
 ----------------
 

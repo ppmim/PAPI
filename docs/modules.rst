@@ -349,13 +349,45 @@ Example::
 **************
 
 The ``calGainMap`` module creates a master gain map from a master flat field (dome, twilight or superflat)
-previously created.
+NOT normalized and previously created. 
+The flatfield will be normalized to make a gainmap and set bad pixels to 0.
 
+Usage::
+
+Options:
+  -h, --help            show this help message and exit
+  -s SOURCE_FILE, --source=SOURCE_FILE
+                        Flat Field image NOT normalized. It has to be a fullpath file name (required)
+  -o OUTPUT_FILENAME, --output=OUTPUT_FILENAME
+                        output file to write the Gain Map
+  -L MINGAIN, --low=MINGAIN
+                        pixel below this gain value  are considered bad (default=0.5)
+  -H MAXGAIN, --high=MAXGAIN
+                        pixel above this gain value are considered bad (default=1.5)
+  -x NXBLOCK, --nx=NXBLOCK
+                        X dimen. (pixels) to compute local bkg (even) (default=16)
+  -y NYBLOCK, --ny=NYBLOCK
+                        Y dimen. (pixels) to compute local bkg (even) (default=16)
+  -n NSIGMA, --nsigma=NSIGMA
+                        number of (+|-)stddev from local bkg to be bad pixel (default=5)
+  -N, --normal          if true, the input flat-field will be normalized before build the gainmap (default=True)
+
+
+Example::
+
+    $ calGainMap.py -s /tmp/masterTF.fits -o /tmp/masterGain.fits
+    $ calGainMap.py -s /tmp/masterTF.fits -o /tmp/masterGain.fits -L 0.7 -H 1.2
+    
+    
 .. index:: flat-field, super-flat 
 
 
 ``calNonLinearity``
 *******************
+In the moment of writing this manual is not known if PANIC detectors (HAWAII-2RG_) 
+will need a non-linearity correction, thus that procedure is not completed yet.
+During the commissioning phase of the instrument will be decided if the correction
+is needed and what is the correction to apply.  
 
 The ``calNonLinearity`` module corrects PANIC images for their count-rate dependent 
 non-linearity. It used the header keywords READMODE and FILTER to determine the 
@@ -369,11 +401,86 @@ dependent non-linearity <http://www.iaa.es/PANIC/papi/documents/nonlinearity.pdf
 
 ``dxtalk``               
 **********
-Removes cross-talk spots from input images
+In the moment of writing this manual is not known if PANIC detectors (HAWAII-2RG_) 
+will have a crosstalk effect between the data transfer lines of the different
+channels. However, because PAPI can be also used to reduce Omega2000 images which show
+this effect and in order to be ready to remove this crosstalk effect if it appears
+in PANIC, a de-crosstalk routine has been included in the pipeline. It can be activated 
+or deactivated in the :ref:`config` (remove_crosstalk=True|False).
 
+During the commissioning phase of the instrument will be checked if there is any
+crosstalk effect and this routine could be debugged and tuned.
+
+
+
+"Characterization, Testing and Operation of Omega2000 Wide Field Infrared
+Camera", Zoltan Kovacs et.al.
+
+Although bright stars can saturate the detector, resetting of the full array
+prevents this excess in the pixel values from causing any residual image 
+effects in the following image of the dithering. Nevertheless, the satured
+pixels generate a crosstalk between the data transfer lines of the different
+channels of the quadrant in which they are situated. The data lines of the 
+channels are organized in parallel and there might be an interference between 
+the data lines transferring the high video signal and the neighbour ones. As a 
+result of this crosstalk, a series of spots with the distances of 128 pixels 
+from each other appeares in the whole quadrant, corresponding to each channel. 
+The average values of the spots were lower than the background signal and their
+difference was few percent, which is large enough to degrade the photometric
+correctness at the place they are situated. These spots could not be measured
+in the raw images but they were well discernible in the reduced frames (Fig. 9). 
+This effect was a general feature of the operation of all the  HAWAII-2 detectors 
+we tested and should be considered for the choice of pointing positions in any 
+field of next observations.  
+
+Usage::
+
+    Options:
+      -h, --help            show this help message and exit
+      -i INPUT_IMAGE, --input_image=INPUT_IMAGE
+                            input image to remove crosstalk
+      -o OUTPUT_IMAGE, --output=OUTPUT_IMAGE
+                            output filename (default = dxtalk.fits)
+      -O, --overwrite       overwrite the original image with the corrected one
+
+Example::
+    
+    $ ./dxtalk.py -i /tmp/pruebaDC.fits -O
+    $ ./dxtalk.py -i /tmp/pruebaDC.fits -o /tmp/pruebaDC_dx.fits
+    
 ``makeobjmask``          
 ***************
-Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
+Creates object masks (SExtractor_ OBJECTS images) for a list of FITS images or a 
+single FITS image.
+Expects the command "sex" (SExtractor Version 2+) in path.  If weight maps
+exist they will be used (assume weight map filename given by replacing .fits
+with .weight.fits).
+
+The module can produce single poing masks,i.e, a single pixel set to 1 per each
+detected object if `single_poing` option is true.
+
+Usage::
+
+    Options:
+      -h, --help            show this help message and exit
+      -s INPUTFILE, --file=INPUTFILE
+                            It can be a source file listing data frames or a single FITS file to process.
+      -o OUTPUTFILE, --output=OUTPUTFILE
+                            Output text file including the list of objects mask files created by SExtractor ending with '.objs' suffix
+      -m MINAREA, --minarea=MINAREA
+                            SExtractor DETECT_MINAREA (default=5)
+      -t THRESHOLD, --threshold=THRESHOLD
+                            SExtractor DETECT_THRESH (default=2.0)
+      -l SATURLEVEL, --saturlevel=SATURLEVEL
+                            SExtractor SATUR_LEVEL (default=300000)
+      -1, --single_point    Create a single point object mask (default=False)
+
+
+
+  
+Example::
+    $ ./makeobjmask.py -s /tmp/reduced_SEQ.fits -o /tmp/obj_mask.txt
+    $ ./makeobjmask.py -s /tmp/reduced_SEQ.fits -o /tmp/obj_mask.txt -1 -l 100000 -m 10
 
 
 ``photometry``
@@ -404,9 +511,9 @@ Example::
     
 
 .. _astromatic: http://www.astromatic.net/
-.. _sextractor: http://www.astromatic.net/software/sextractor
+.. _SExtractor: http://www.astromatic.net/software/sextractor
 .. _scamp: http://www.astromatic.net/software/scamp
 .. _swarp: http://www.astromatic.net/software/swarp
 .. _SQLite: http://www.sqlite.org
-
+.. _HAWAII-2RG: http://w3.iaa.es/PANIC/index.php/gb/workpackages/detectors
 

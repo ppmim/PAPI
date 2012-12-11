@@ -930,7 +930,8 @@ if __name__ == "__main__":
     usage = "usage: %prog [options] arg1 arg2 ..."
     desc = """This module receives a reduced image of any known NIR filter and
 match to 2MASS catalog performing a fit in order to get a estimation of the 
-Zero Point.""" 
+Zero Point."""
+ 
     parser = OptionParser(usage, description=desc)
     
     parser.add_option("-i", "--input_image",

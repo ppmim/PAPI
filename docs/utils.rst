@@ -165,7 +165,7 @@ For more details on ``skyfilter`` see the Appendix section :ref:`skyfilter`.
 
 
 .. _astromatic: http://www.astromatic.net/
-.. _sextractor: http://www.astromatic.net/software/sextractor
+.. _Sextractor: http://www.astromatic.net/software/sextractor
 .. _scamp: http://www.astromatic.net/software/scamp
 .. _swarp: http://www.astromatic.net/software/swarp
 

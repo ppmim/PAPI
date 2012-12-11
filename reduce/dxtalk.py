@@ -150,7 +150,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         raise e
     
     background = numpy.median(data_in)
-    print "Image background estimation = ", background
+    #print "Image background estimation = ", background
     
     #### Q1 #### left-bottom, horizontal stripes 
     n_stripes = 8 # = no. channels
@@ -345,7 +345,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         raise e
     
     background = numpy.median(data_in)
-    print "Image background estimation = ", background
+    #print "Image background estimation = ", background
 
     #### Q1 #### left-bottom, horizontal stripes 
     n_stripes = 32 # = no. channels
@@ -460,10 +460,10 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
 # main
 if __name__ == "__main__":
     
-    print "\nStarting to remove image crosstalk ..."
     
     usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    desc = "Remove the cross-talk spots in the input image."
+    parser = OptionParser(usage, description=desc)
     
     parser.add_option("-i", "--input_image",
                   action="store", dest="input_image", 
@@ -478,9 +478,10 @@ if __name__ == "__main__":
                   action="store_true", dest="overwrite", default=False,
                   help="overwrite the original image with the corrected one")
 
-    parser.add_option("-S", "--check_stars",
-                  action="store_true", dest="check_stars", default=False,
-                  help="check if there are bright stars and take them into account for the cube median")  
+    # TODO
+    #parser.add_option("-S", "--check_stars",
+    #              action="store_true", dest="check_stars", default=False,
+    #              help="check if there are bright stars and take them into account for the cube median")  
                                 
     (options, args) = parser.parse_args()
     
@@ -494,9 +495,9 @@ if __name__ == "__main__":
 
     try:    
         remove_crosstalk(options.input_image, options.output_image, 
-                         options.overwrite, options.check_stars)
+                         options.overwrite)
     except Exception, e:
-        log.error("Fail of Crosstalk procedure")
-        raise e
-    print "\nWell done !"
+        log.error("Fail of Crosstalk procedure: %s"%str(e))
+    else:
+        log.info("Well done!")
     

@@ -1720,6 +1720,16 @@ la documentacion/ayuda y actualizando para usar OptionParser que en algunos
 no estaba actualizado aún.
 
 
+2012-12-11
+==========
+Le envio a JF las notas para la videoconf:
+"""
+- QL: GUI migration from Qt3 to Qt4
+- Pipeline & QL running on openSUSE12.2
+- several improvements in (flats, photometry)
+- documentation: in progress
+"""
+
 
 FOR NEXT VIDEOCONF
 ==================

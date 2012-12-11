@@ -12,9 +12,17 @@ treatment for electronic ghosts (cross-talk), sky subtraction, non-linear
 count-rate correction, artifact masking, robust alignment and registration for 
 large mosaics, weight map generation, and drizzling onto a final image mosaic. 
 
+The purpose of this document is to describe a typical PANIC data reduction procedure 
+using the PAPI pipeline.
+
+This manual is a complete description of the data reduction recipes implemented 
+by the PAPI pipeline, showing the status of the current PAPI pipeline version.
 
 
-**Development Team:** Jose M. Ibanez (IAA-CSIC)
+In addition to this html version of the manual, there is also a pdf_ version to download.
+
+
+**Development Team:** José M. Ibáñez (IAA-CSIC)
 
 Caveats
 *******
@@ -123,4 +131,5 @@ if you type `make`.
 .. _PANIC: http://www.iaa.es/PANIC
 .. _CAHA: http://www.caha.es
 .. _sphinx: http://sphinx.pocoo.org
+.. _pdf: http://www.iaa.es/~jmiguel/PANIC/PAPI/PAPI.pdf
   

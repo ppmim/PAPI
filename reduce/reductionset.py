@@ -1382,7 +1382,7 @@ class ReductionSet(object):
                 log.debug("Some error while running command %s", cmd)
                 return (None,None)
             else:
-                log.debug("Succesful ending of coaddStackImages")
+                log.debug("Successful ending of coaddStackImages")
                 return (output, weight_file)
         #elif type_comb=='median': # (use IRAF::imcombine)
                 
@@ -1428,7 +1428,7 @@ class ReductionSet(object):
             if e==0:
                 log.debug("Some error while running command %s", cmd)
             else:
-                log.debug("Succesful ending of createMasterObjMask")
+                log.debug("Successful ending of createMasterObjMask")
                 
 
         return output_master_obj_mask
@@ -2790,7 +2790,7 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("Some error while running Astrowarp....")
                 raise e
-            log.info("Sucessful end of Pipeline (I hope!)")
+            log.info("Successful end of Pipeline (I hope!)")
             return output_file
         
     

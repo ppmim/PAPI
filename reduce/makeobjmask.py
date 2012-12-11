@@ -77,7 +77,8 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
           saturlevel   Pixel Saturation level 
                 
           single_point  If true, means the image will be reduced to a 
-                        single point object mask
+                        single point object mask,i.e., a single pixel set to 1
+                        for each detected object.
                 
        OUTPUTS
          outputfile   Filepath containig the list of objects mask files 
@@ -151,7 +152,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         # while object masking in skysubtraction
         if single_point==True:
             # NOTE we update/overwrite the image and don't create a new one
-            myfits=pyfits.open(fn+".objs", mode="update")
+            myfits = pyfits.open(fn+".objs", mode="update")
             if len(myfits)>1: # is a MEF file
                 next = len(myfits)-1
             else: 
@@ -159,7 +160,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
             for ext in range(next):
                 if next==1: data = myfits[0].data
                 else: data = myfits[ext+1].data
-                data[:]=0 # set to 0 all pixels
+                data[:] = 0 # set to 0 all pixels
                 x_size = len(data[0])
                 y_size = len(data)
                 #stars = read_stars(fn + ".ldac")
@@ -169,11 +170,10 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
                     if len(cat)<=0: continue
                     for star in cat:
                         if round(star['X_IMAGE'])<x_size and round(star['Y_IMAGE'])<y_size:
-                            data[round(star['Y_IMAGE']),round(star['X_IMAGE'])]=1 # Note: be careful with X,Y coordinates position
+                            data[round(star['Y_IMAGE']),round(star['X_IMAGE'])] = 1 # Note: be careful with X,Y coordinates position
                 except Exception,e:
                     print "Y_IMAGE=",star['Y_IMAGE']
                     print "X_IMAGE=",star['X_IMAGE']
-                    
                     myfits.close(output_verify='ignore')
                     raise Exception("Error while creating single point object mask :%s"%str(e))
                 
@@ -187,7 +187,8 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
             
     sex.clean(config=False, catalog=True, check=False)
     f_out.close()
-    log.debug("Succesful ending of makeObjMask => %d object mask files created", n)
+    log.debug("Successful ending of makeObjMask => %d object mask files created", n)
+    return outputfile
     
     
 ################################################################################
@@ -196,44 +197,54 @@ if __name__ == "__main__":
     print 'Start makeObjMask....'
     
     usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    desc = """ Creates object masks (SExtractor OBJECTS images) for a list of FITS images.
+Expects the command "sex" (SExtractor Version 2+) in path.  If weight maps
+exist they will be used (assume weight map filename given by replacing .fits
+with .weight.fits)."""
+
+    parser = OptionParser(usage, description=desc)
     
                   
     parser.add_option("-s", "--file", type="str",
                   action="store", dest="inputfile",
-                  help="Source file list of data frames.")
+                  help="It can be a source file listing data frames or a single FITS file to process.")
     
     parser.add_option("-o", "--output", type="str",
                   action="store", dest="outputfile", 
-                  help="output file with the list of catalogs")
+                  help="Output text file including the list of objects mask files created by SExtractor ending with '.objs' suffix")
     
     parser.add_option("-m", "--minarea", type="int", default=5,
                   action="store", dest="minarea", 
-                  help="SExtractor DETECT_MINAREA (int)")
+                  help="SExtractor DETECT_MINAREA (default=%default)")
                   
-    parser.add_option("-t", "--threshold",  type="float", default=2.0,
+    parser.add_option("-t", "--threshold", type="float", default=2.0,
                   action="store", dest="threshold", 
-                  help="SExtractor DETECT_THRESH (float)")
+                  help="SExtractor DETECT_THRESH (default=%default)")
     
     parser.add_option("-l", "--saturlevel", type="int", default=300000,
                   action="store", dest="saturlevel",
-                  help="SExtractor SATUR_LEVEL (int)")
+                  help="SExtractor SATUR_LEVEL (default=%default)")
     
     parser.add_option("-1", "--single_point", default=False,
                   action="store_true", dest="single_point",
-                  help="Create a single point object mask")
+                  help="Create a single point object mask (default=%default)")
     
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
     
                                 
     (options, args) = parser.parse_args()
     
-    if not options.inputfile or not options.outputfile or len(args)!=0: # args is the leftover positional arguments after all options have been processed
+    # args is the leftover positional arguments after all options have been 
+    # processed
+    if not options.inputfile or not options.outputfile or len(args)!=0: 
         parser.print_help()
         parser.error("Incorrect number of arguments " )
         
-
-    makeObjMask( options.inputfile, options.minarea, options.threshold, options.saturlevel, options.outputfile, options.single_point)
-    
+    try:
+        makeObjMask( options.inputfile, options.minarea, options.threshold, 
+                     options.saturlevel, options.outputfile, 
+                     options.single_point)
+    except Exception, e:
+        log.error("Error while running 'makeobjectmask' %s"%str(e))
+    else:
+        log.debug("Well done!")
+        

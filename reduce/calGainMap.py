@@ -30,9 +30,10 @@
 #
 # Created    : 23/09/2010    jmiguel@iaa.es -
 # Last update: 23/09/2009    jmiguel@iaa.es - 
-#              21/10/2019    jmiguel@iaa.es - Add normalization wrt chip 1 and support for MEF
-# TODO
-#  
+#              21/10/2019    jmiguel@iaa.es - Add normalization wrt chip 1 and 
+#                                             support for MEF
+# TODO:
+#  - include bpm 
 ################################################################################
 
 ################################################################################
@@ -156,7 +157,9 @@ class DomeGainMap(object):
         try:
             output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
             os.close(output_fd)
-            domeflat = reduce.calDomeFlat.MasterDomeFlat(self.framelist, temp_dir="/tmp", output_filename=tmp_output_path)
+            domeflat = reduce.calDomeFlat.MasterDomeFlat(self.framelist, 
+                                                         temp_dir="/tmp", 
+                                                         output_filename=tmp_output_path)
             domeflat.create()
         except Exception,e:
             log.error("Error while creating master dome flat: %s", str(e))
@@ -198,7 +201,7 @@ class GainMap(object):
         output_filename: str
             Output filename of the gainmap to build
         
-        bpm: str (optional)
+        bpm: str (optional) -- NOT USED YET
             Bad pixel mask to use optionally for the gainmap build 
         
         do_normalization: bool
@@ -238,7 +241,7 @@ class GainMap(object):
         self.m_NXBLOCK = nxblock #image size should be multiple of block size 
         self.m_NYBLOCK = nyblock
         self.m_NSIG = nsigma  #badpix if sensitivity > NSIG sigma from local bkg
-        self.m_BPM = bpm   #external BadPixelMap to take into account   
+        self.m_BPM = bpm   #external BadPixelMap to take into account   (TODO) 
                 
                
     def create(self):
@@ -389,7 +392,7 @@ class GainMap(object):
             # Add each extension
             for chip in range(0, nExt):
                 hdu = pyfits.ImageHDU(data=gain[chip], header=myflat[chip+1].header)
-                hdu.scale('float32') # importat to set first data type ??
+                hdu.scale('float32') # important to set first data type ??
                 #hdu.header.update('EXTVER',1)
                 fo.append(hdu)
                 del hdu
@@ -409,12 +412,12 @@ if __name__ == "__main__":
     # Get and check command-line options
     
     usage = "usage: %prog [options] arg1 arg2"
-    parser = OptionParser(usage)
+    desc = """Creates a master gain map from a master flat field (dome, twilight or superflat)
+NOT normalized and previously created. The flatfield will be normalized to make 
+a gainmap and set bad pixels to 0."""
     
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
-                  
+    parser = OptionParser(usage, description=desc)
+    
     parser.add_option("-s", "--source", type="str",
                   action="store", dest="source_file",
                   help="Flat Field image NOT normalized. It has to be a fullpath file name (required)")
@@ -423,9 +426,10 @@ if __name__ == "__main__":
                   action="store", dest="output_filename", 
                   help="output file to write the Gain Map")
     
-    parser.add_option("-b", "--bpm", type="str",
-                  action="store", dest="bpm", 
-                  help="Bad pixel map file (optional)")
+    #TODO
+    #parser.add_option("-b", "--bpm", type="str",
+    #              action="store", dest="bpm", 
+    #              help="Input Bad pixel map file (optional)")
    
     parser.add_option("-L", "--low", type="float", default=0.5,
                   action="store", dest="mingain", 
@@ -460,7 +464,7 @@ if __name__ == "__main__":
         parser.error("incorrect number of arguments " )
    
     try:
-        gainmap = GainMap(options.source_file, options.output_filename, options.bpm,
+        gainmap = GainMap(options.source_file, options.output_filename, bpm=None,
                       do_normalization=options.normal,
                       mingain=options.mingain, maxgain=options.maxgain, 
                       nxblock=options.nxblock, nyblock=options.nyblock, 
