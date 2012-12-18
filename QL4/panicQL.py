@@ -784,7 +784,7 @@ class Ui_panicQL(object):
         self.MenuBar.addAction(self.helpMenu.menuAction())
 
         self.retranslateUi(panicQL)
-        self.tabWidget3.setCurrentIndex(1)
+        self.tabWidget3.setCurrentIndex(0)
         self.comboBox_pre_skyWindow.setCurrentIndex(3)
         QtCore.QObject.connect(self.checkBox_autocheck, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.autocheck_slot)
         QtCore.QObject.connect(self.checkBox_outDir_autocheck, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.checkOutDir_slot)

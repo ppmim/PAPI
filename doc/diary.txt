@@ -1731,6 +1731,14 @@ Le envio a JF las notas para la videoconf:
 """
 
 
+2012-12-17
+==========
+- Demo de sw de PANIC:
+
+$ rcrpcbind start
+$ mount udit36.iaa.es:/home/panic/tmp /mnt/tmp/
+$ mount udit36.iaa.es:/home/panic/DATA /mnt/DATA
+
 FOR NEXT VIDEOCONF
 ==================
 - QL GUI: Migration from PyQt3 to PyQt4

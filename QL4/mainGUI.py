@@ -1612,7 +1612,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.sumAct.setEnabled(False)
             elif len(self.m_popup_l_sel)==2:
                 self.subAct.setEnabled(True)
-                self.sumAct.setEnabled()
+                self.sumAct.setEnabled(True)
                 
             if len(self.m_popup_l_sel)<5:
                 self.subNearSkyAct.setEnabled(False)
@@ -2112,7 +2112,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if not outfileName.isEmpty():
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel, 
+                    self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel,
                                                                       self.m_masterDark, 
                                                                       str(outfileName))
                     thread = reduce.ExecTaskThread(self._task.createMaster, 

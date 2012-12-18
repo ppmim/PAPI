@@ -2030,7 +2030,7 @@ class ReductionSet(object):
                 else:
                     log.info("Found a dark series of frames with different EXPTIME: Dark model will be created")
                     use_dark_model = True
-                    if use_dark_model==True and self.red_mode !="quick":
+                    if use_dark_model==True:# and self.red_mode !="quick":
                         # Build master dark model from a dark serie
                         task = reduce.calDarkModel.MasterDarkModel (sequence, 
                                                                     self.temp_dir, 
