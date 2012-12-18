@@ -130,7 +130,7 @@ def main(arguments = None):
     parser.add_option("-l", "--list",
                   action="store_true", dest="list", default = False,
                   help="""Generate a list with all the source files read from 
-                  the source only sorted by MJD""")
+                  the source and sorted by MJD""")
 
     parser.add_option("-M", "--red_mode", type = "str",
                   action = "store", dest = "reduction_mode", 

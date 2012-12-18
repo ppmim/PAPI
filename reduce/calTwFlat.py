@@ -335,7 +335,8 @@ class MasterTwilightFlat (object):
             
             # Write output to outframe (data object actually still points to input data)
             try:
-                f.writeto(my_frame, output_verify='ignore')
+                f.writeto(my_frame, output_verify='fix')#'ignore')
+                log.debug("Writing %s"%my_frame)
             except IOError:
                 raise ExError('Cannot write output to %s' % my_frame)
                      
@@ -445,8 +446,7 @@ class MasterTwilightFlat (object):
                     result=self.__output_filename.replace("//","/"),
                     )
         else:
-            os.rename(comb_flat_frame, self.__output_filename ) 
-        
+            shutil.move(comb_flat_frame, self.__output_filename)
         
         # Change back to the original working directory
         iraf.chdir()
@@ -556,21 +556,19 @@ then normalization wrt chip 1 is done)[default False]")
     
     # Start proceduce
     
-    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list )]
-    #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
-    print "Files:",filelist
+    filelist=[line.replace( "\n", "") 
+              for line in fileinput.input(options.source_file_list )]
     try:
         mTwFlat = MasterTwilightFlat(filelist, options.master_dark,
                                      options.output_filename, options.minlevel,
                                      options.maxlevel,
                                      options.master_bpm,
                                      options.normalize,
-                                     "/tmp/",
+                                     "/tmp",
                                      median_smooth=options.median_smooth)
         mTwFlat.createMaster()
     except Exception,e:
         log.error("Unexpected error: %s", str(e))
-        raise e
         sys.exit(1)
     
         

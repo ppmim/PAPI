@@ -1860,7 +1860,7 @@ Los pixeles malos(BP) se comportan de la siguiente manera:
 que tengo que mirarlo en los logs, pero que lo que puede que haya cambiado es el fichero de configuración !!!
 
 - TODO: implementar en PAPI algo para hacer una copia del fichero de configuración usado en cada reducción,
-quizás incluirlo en el logfile !!!
+quizás incluirlo en el logfile !!! - DONE !
 
 
 
@@ -1871,6 +1871,7 @@ DOUBTS FOR MATILDE (next)
 que me puede dar problemas (filtro z), y en HAWK-I usan la mediana.
 Lo he cambiado todo par ausar la mediana.
 
+- Reference pixel, ¿ algún tratamiento ? de momento descarto
 
 - Me surge la duda sobre si para los Master TwLight flats es imprescindible
 un dark model o bastaría con un simple master_dark ?? Ahora mismo sólo

@@ -1589,7 +1589,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             ## Disable some menu items depeding of the number of item selected 
             ## in the list view
             if len(self.m_popup_l_sel)==1:
-                self.copyAct.setEnabled(False)
+                self.dispAct.setEnabled(True)
                 self.mDarkAct.setEnabled(False)
                 self.mDFlatAct.setEnabled(False)
                 self.mDTwFlatAct.setEnabled(False)
@@ -1601,11 +1601,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elif len(self.m_popup_l_sel)>1:
                 self.dispAct.setEnabled(False)
                 self.mBPMAct.setEnabled(False)
+                self.mDarkAct.setEnabled(True)
+                self.mDFlatAct.setEnabled(True)
+                self.mDTwFlatAct.setEnabled(True)
+                self.mGainMapAct.setEnabled(True)
+                self.mBPMAct.setEnabled(True)
                 self.subOwnSkyAct.setEnabled(False)
             elif len(self.m_popup_l_sel)>2:
                 self.subAct.setEnabled(False)
                 self.sumAct.setEnabled(False)
-
+            elif len(self.m_popup_l_sel)==2:
+                self.subAct.setEnabled(True)
+                self.sumAct.setEnabled()
+                
             if len(self.m_popup_l_sel)<5:
                 self.subNearSkyAct.setEnabled(False)
             

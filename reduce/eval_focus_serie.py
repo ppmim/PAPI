@@ -179,9 +179,9 @@ if __name__ == "__main__":
        The FWHM is computation is based on the SExtractor catalog generated.
     
     Example:
-       - eval_focus_serie.py -s /data-dir/focus -o fwhm_values.txt
+       - eval_focus_serie.py -s /data-dir/focus -o fwhm_values.pdf
     
-       - eval_focus_serie.py -s /data-dir/focus.list -o fwhm_values.txt
+       - eval_focus_serie.py -s /data-dir/focus.list -o fwhm_values.pdf
     
     Known Bugs/Shortcomings:
     
@@ -194,8 +194,8 @@ if __name__ == "__main__":
                       help="name of input directory or list file (default: %default)",
                       default="")
     parser.add_option("-o", "--output", dest="output",
-                      help="name of output [jpg] file with results (default: %default)",
-                      default="output.jpg")
+                      help="name of output [pdf] file with results (default: %default)",
+                      default="output.pdf")
     
     (options, args) = parser.parse_args()
     

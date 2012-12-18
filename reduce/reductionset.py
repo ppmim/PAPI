@@ -884,7 +884,9 @@ class ReductionSet(object):
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
 
-        # Print out the groups
+        # Print out the groups. It can be used to copy&paste the sequence files
+        # because is a "clean" list of full path-names of files, instead of
+        # files printed in "debug" output 
         if show:
             k=0
             print "\n ========================================================="
@@ -897,7 +899,8 @@ class ReductionSet(object):
                           len(seqs[k]))
                 print "-------------------------------------------------------------------"
                 for file in seqs[k]:
-                    print file + " type= %s"%self.db.GetFileInfo(file)[2]
+                    #print file + " type= %s"%self.db.GetFileInfo(file)[2]
+                    print file 
                 k+=1
             log.debug("Found %d groups of files", len(seq_types))
         
@@ -2564,7 +2567,7 @@ class ReductionSet(object):
                   verbose='yes'
                   )
                 #replace old gain file
-                os.rename(gainmap.replace(".fits","_bpm.fits"), gainmap)
+                shutil.move(gainmap.replace(".fits","_bpm.fits"), gainmap)
                         
         ########################################################################
         # 4 - First Sky subtraction (IRDR) - sliding window technique

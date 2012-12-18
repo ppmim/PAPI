@@ -303,7 +303,7 @@ class SuperSkyFlat(object):
 
         f[0].header.update('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         f.close(output_verify='ignore')
-        os.rename(tmp1, self.output_filename) 
+        shutil.move(tmp1, self.output_filename) 
         log.debug("Image created : %s", self.output_filename)
 
         return self.output_filename
