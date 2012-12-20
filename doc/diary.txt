@@ -1733,11 +1733,50 @@ Le envio a JF las notas para la videoconf:
 
 2012-12-17
 ==========
-- Demo de sw de PANIC:
+- Preparación de la demo de sw de PANIC:
+
+En mi portatil (openSuSE12.2 x86_64) debo hacer lo siguiente:
 
 $ rcrpcbind start
 $ mount udit36.iaa.es:/home/panic/tmp /mnt/tmp/
 $ mount udit36.iaa.es:/home/panic/DATA /mnt/DATA
+$ ln -s /mnt/tmp /home/panic/tmp
+
+
+
+2012-12-18
+==========
+- Demo de sw de PANIC:
+
+A las 10.15 aprox. comenzamos, asistiendo : MF, JR, CC, VT, AG, JM
+
+- Revisar los valores RA,Dec,Time offset del setup usados para el agrupamiento
+de datasets no observados con el OT.
+- Cambiar el color botón "Start Processing" y modificar la funcionalidad t.q.:
+ "Process all, only new files, Cancel"
+
+- Revisar agrupamiento de serie de darks; en 'Build Calibrations' parece que lo hace
+de forma distinta.
+- Añadir otro parametro 'max. número ficheros/grupo' para el agrupamiento de 
+datos no observados con el OT;
+- Intentar obtener la matriz de distorsión, bien a partir de SCAMP preguntando
+a E.Bertín o bien implementando el procedimiento para calcularla.
+
+- Revisar el procedimiento del cálculo del FWHM, psf, ...
+
+
+2012-12-19
+==========
+
+- Rapaso notas tomadas de la demo-review de sw
+
+2012-12-20
+==========
+- Empiezo con la implementación de sugerencias/bugs en el QL:
+
+  * bug photometry
+  
+
 
 FOR NEXT VIDEOCONF
 ==================
@@ -1875,6 +1914,10 @@ quizás incluirlo en el logfile !!! - DONE !
 
 DOUBTS FOR MATILDE (next)
 ================================
+
+- la raw_photometry() sólo esta disponible para los filtros de 2MASS (J, H, Ks), 
+pero, ¿ se podría hacer otra aproximación con los filtro que vaya a tener PANIC ??
+
 - ¿ que valor usar para la normalización ? y tenía la moda, pero he visto
 que me puede dar problemas (filtro z), y en HAWK-I usan la mediana.
 Lo he cambiado todo par ausar la mediana.

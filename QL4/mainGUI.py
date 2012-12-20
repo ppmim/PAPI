@@ -860,7 +860,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                     # done there (I hope), and not here !
                                     if not self.checkBox_outDir_autocheck.isChecked():   
                                         log.debug("Updating DB...")
-                                        self.outputsDB.insert(file)
+                                        if (os.path.isfile(file) and
+                                            file.endswith(".fits") or 
+                                            file.endswith(".fit")):
+                                            self.outputsDB.insert(file)
                                     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                 self.logConsole.debug(str(QString("%1 files created: \n %2")
                                                           .arg(len(self._task_info._return))
@@ -879,7 +882,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             # See comments above
                             if not self.checkBox_outDir_autocheck.isChecked():
                                 log.debug("Updating DB...")
-                                self.outputsDB.insert(self._task_info._return)
+                                ret_file = self._task_info._return
+                                if (os.path.isfile(ret_file) and
+                                    ret_file.endswith(".fits") or 
+                                    ret_file.endswith(".fit")):
+                                    self.outputsDB.insert(self._task_info._return)
                             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         else:
                             # Cannot identify the type of the results...for sure
@@ -2725,6 +2732,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
                 raise
     
+    def helpIndex(self):
+        """Show help on the default browser"""
+        
+        import webbrowser
+        new = 2 # open in a new tab, if possible
+
+        # open a public URL, in this case, the webbrowser docs
+        url = "http://www.iaa.es/~jmiguel/PANIC/PAPI/html/index.html"
+        try:
+            webbrowser.open(url,new=new)
+        except Exception,e:
+            log.erro("Cannot open URL: %s"%str(e))
+
+        # open an HTML file on my own (Windows) computer
+        #url = "file://X:/MiscDev/language_links.html"
+        #webbrowser.open(url,new=new)
+    
     def testSlot(self):
         """
         Not implemeted
@@ -2740,15 +2764,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.proc_started == True:
             self.proc_started = False
             self.pushButton_start_proc.setText("Start Processing")
-            #Set Red background
-            self.pushButton_start_proc.setAutoFillBackground(True)
-            self.pushButton_start_proc.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(0, 0, 0)")
-        else:    
-            self.proc_started = True
-            self.pushButton_start_proc.setText("Stop Processing")
             #Set Green background
             self.pushButton_start_proc.setAutoFillBackground(True)
             self.pushButton_start_proc.setStyleSheet("background-color: rgb(0, 128, 0); color: rgb(0, 0, 0)")
+        else:    
+            self.proc_started = True
+            self.pushButton_start_proc.setText("Stop Processing")
+            #Set Red background
+            self.pushButton_start_proc.setAutoFillBackground(True)
+            self.pushButton_start_proc.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(0, 0, 0)")
             
             # Ask if we with to process only the next files coming or also the
             # current ones in the source_dir and then the new ones
@@ -2761,7 +2785,23 @@ source directory (If no, only the new ones coming will be processed) ?"),
                 return
             else:
                 self.processFiles()
+ 
+            msgBox = QMessageBox()
             
+            
+  """      
+        QMessageBox msgBox;
+ QPushButton *connectButton = msgBox.addButton(tr("Connect"), QMessageBox.ActionRole);
+ QPushButton *abortButton = msgBox.addButton(QMessageBox.Abort);
+
+ msgBox.exec_();
+
+ if (msgBox.clickedButton() == connectButton) {
+     // connect
+ } else if (msgBox.clickedButton() == abortButton) {
+     // abort
+ }    
+ """
  
         """
         it = QListViewItemIterator (self.listView_OS)
@@ -3053,14 +3093,32 @@ source directory (If no, only the new ones coming will be processed) ?"),
     def editFind(self):
         print "panicQL.editFind(): Not implemented yet"
 
-    def helpIndex(self):
-        print "panicQL.helpIndex(): Not implemented yet"
-
     def helpContents(self):
         print "panicQL.helpContents(): Not implemented yet"
 
     def helpAbout(self):
-        print "panicQL.helpAbout(): Not implemented yet"
+        QMessageBox.about(self,
+                          "PANIC Quick-Look Tool",
+"""
+PQL version: 1.2.0\nCopyright (c) 2008-2012 IAA-CSIC  - All rights reserved.\n
+Author: Jose M. Ibanez.
+Instituto de Astrofisica de Andalucia, IAA-CSIC
+
+This software is part of PAPI (PANIC Pipeline)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+""")
 
     def setSFlat_slot(self):
         print "panicQL.setSFlat_slot(): Not implemented yet"

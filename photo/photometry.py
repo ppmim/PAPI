@@ -747,7 +747,8 @@ class STILTSwrapper (object):
         ./stilts plot2d in=match_S_b.vot subsetNS='j_k<=1.0 & k_snr>10' lineNS=LinearRegression xdata=k_m ydata=MyMag_k xlabel="2MASS k_m / mag" ylabel="PAPI k_m / mag"
         """
 
-def doPhotometry(input_image, catalog, output_filename, snr, zero_point=0.0):
+def doPhotometry(input_image, catalog, output_filename, 
+                 snr=10.0, zero_point=0.0):
     """
     Run the rough photometric calibraiton
     

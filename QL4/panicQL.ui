@@ -148,7 +148,7 @@
        </rect>
       </property>
       <property name="pixmap">
-       <pixmap>images/logo_PANIC.jpg</pixmap>
+       <pixmap>../../../../../.designer/backup/images/logo_PANIC.jpg</pixmap>
       </property>
       <property name="scaledContents">
        <bool>true</bool>
@@ -599,34 +599,412 @@
       <property name="palette">
        <palette>
         <active>
+         <colorrole role="WindowText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
          <colorrole role="Button">
           <brush brushstyle="SolidPattern">
            <color alpha="255">
-            <red>207</red>
-            <green>33</green>
-            <blue>17</blue>
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Light">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>192</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Midlight">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>160</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Dark">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Mid">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>85</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Text">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="BrightText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ButtonText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Window">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Shadow">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="AlternateBase">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ToolTipBase">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>220</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ToolTipText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
            </color>
           </brush>
          </colorrole>
         </active>
         <inactive>
+         <colorrole role="WindowText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
          <colorrole role="Button">
           <brush brushstyle="SolidPattern">
            <color alpha="255">
-            <red>207</red>
-            <green>33</green>
-            <blue>17</blue>
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Light">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>192</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Midlight">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>160</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Dark">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Mid">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>85</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Text">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="BrightText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ButtonText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Window">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Shadow">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="AlternateBase">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ToolTipBase">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>220</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ToolTipText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
            </color>
           </brush>
          </colorrole>
         </inactive>
         <disabled>
+         <colorrole role="WindowText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
          <colorrole role="Button">
           <brush brushstyle="SolidPattern">
            <color alpha="255">
-            <red>207</red>
-            <green>33</green>
-            <blue>17</blue>
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Light">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>192</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Midlight">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>160</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Dark">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Mid">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>85</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Text">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="BrightText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>255</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ButtonText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>64</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Window">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="Shadow">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="AlternateBase">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>128</green>
+            <blue>0</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ToolTipBase">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>220</blue>
+           </color>
+          </brush>
+         </colorrole>
+         <colorrole role="ToolTipText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>0</red>
+            <green>0</green>
+            <blue>0</blue>
            </color>
           </brush>
          </colorrole>
@@ -1915,7 +2293,7 @@
        </rect>
       </property>
       <property name="pixmap">
-       <pixmap>../../../../../.designer/backup/image0</pixmap>
+       <pixmap>../../../../../../../../.designer/backup/image0</pixmap>
       </property>
       <property name="scaledContents">
        <bool>true</bool>
@@ -2263,6 +2641,7 @@
     </property>
     <addaction name="helpIndexAction"/>
     <addaction name="separator"/>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="fileMenu"/>
    <addaction name="editMenu"/>
@@ -2275,7 +2654,7 @@
   <action name="fileOpenAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</iconset>
+     <normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -2296,7 +2675,7 @@
   <action name="fileDirAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</iconset>
+     <normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -2317,7 +2696,7 @@
   <action name="fileShow">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</normaloff>../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</iconset>
+     <normaloff>../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</normaloff>../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Show</string>
@@ -2352,7 +2731,7 @@
   <action name="filePrintAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image4</normaloff>../../../../../.designer/backup/image4</iconset>
+     <normaloff>../../../../../../../../.designer/backup/image4</normaloff>../../../../../../../../.designer/backup/image4</iconset>
    </property>
    <property name="text">
     <string>&amp;Print...</string>
@@ -2384,7 +2763,7 @@
   <action name="editUndoAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image5</normaloff>../../../../../.designer/backup/image5</iconset>
+     <normaloff>../../../../../../../../.designer/backup/image5</normaloff>../../../../../../../../.designer/backup/image5</iconset>
    </property>
    <property name="text">
     <string>&amp;Undo</string>
@@ -2402,7 +2781,7 @@
   <action name="editRedoAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image6</normaloff>../../../../../.designer/backup/image6</iconset>
+     <normaloff>../../../../../../../../.designer/backup/image6</normaloff>../../../../../../../../.designer/backup/image6</iconset>
    </property>
    <property name="text">
     <string>&amp;Redo</string>
@@ -2420,7 +2799,7 @@
   <action name="editCutAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image7</normaloff>../../../../../.designer/backup/image7</iconset>
+     <normaloff>../../../../../../../../.designer/backup/image7</normaloff>../../../../../../../../.designer/backup/image7</iconset>
    </property>
    <property name="text">
     <string>Cu&amp;t</string>
@@ -2438,7 +2817,7 @@
   <action name="editCopyAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image8</normaloff>../../../../../.designer/backup/image8</iconset>
+     <normaloff>../../../../../../../../.designer/backup/image8</normaloff>../../../../../../../../.designer/backup/image8</iconset>
    </property>
    <property name="text">
     <string>&amp;Copy</string>
@@ -2456,7 +2835,7 @@
   <action name="editPasteAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image9</normaloff>../../../../../.designer/backup/image9</iconset>
+     <normaloff>../../../../../../../../.designer/backup/image9</normaloff>../../../../../../../../.designer/backup/image9</iconset>
    </property>
    <property name="text">
     <string>&amp;Paste</string>
@@ -2474,7 +2853,7 @@
   <action name="editFindAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/backup/image10</normaloff>../../../../../.designer/backup/image10</iconset>
+     <normaloff>../../../../../../../../.designer/backup/image10</normaloff>../../../../../../../../.designer/backup/image10</iconset>
    </property>
    <property name="text">
     <string>&amp;Find...</string>
@@ -2497,7 +2876,7 @@
     <string>Index</string>
    </property>
    <property name="shortcut">
-    <string/>
+    <string>F1</string>
    </property>
    <property name="name" stdset="0">
     <cstring>helpIndexAction</cstring>
@@ -2572,7 +2951,7 @@
   <action name="fileSearchAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</iconset>
+     <normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2587,7 +2966,7 @@
   <action name="quitAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</iconset>
+     <normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2602,7 +2981,7 @@
   <action name="irafConsoleAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</normaloff>../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</iconset>
+     <normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</normaloff>../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2636,6 +3015,11 @@
    </property>
    <property name="name" stdset="0">
     <cstring>Action_3</cstring>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
    </property>
   </action>
  </widget>
@@ -3314,8 +3698,42 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>helpIndexAction</sender>
+   <signal>activated()</signal>
+   <receiver>panicQL</receiver>
+   <slot>helpIndex()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAbout</sender>
+   <signal>activated()</signal>
+   <receiver>panicQL</receiver>
+   <slot>helpAbout()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>listView_popup_slot()</slot>
+  <slot>helpIndex()</slot>
+  <slot>helpAbout()</slot>
  </slots>
 </ui>
