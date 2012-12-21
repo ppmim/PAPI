@@ -2753,6 +2753,26 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Not implemeted
         """
+        
+        msgBox = QMessageBox()
+        msgBox.setText("Starting to process files.")
+        msgBox.setInformativeText("Which files do you wish to process ?")
+        button1 = msgBox.addButton("Process all", QMessageBox.ActionRole)
+        button2 = msgBox.addButton("Process new", QMessageBox.ActionRole)
+        button3 = msgBox.addButton("Cancel", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button2)
+        
+        msgBox.exec_()
+        
+        if msgBox.clickedButton()== button1:
+            print "Button1"
+        elif msgBox.clickedButton()== button2:
+            print "Button2"
+        elif msgBox.clickedButton()== button3:
+            print "Button3"
+        else:
+            print "[Default] button3"
+        
         pass
     
     def pushB_start_stop_slot(self):
@@ -2767,71 +2787,30 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #Set Green background
             self.pushButton_start_proc.setAutoFillBackground(True)
             self.pushButton_start_proc.setStyleSheet("background-color: rgb(0, 128, 0); color: rgb(0, 0, 0)")
+            self.stopProcessing()
         else:    
-            self.proc_started = True
-            self.pushButton_start_proc.setText("Stop Processing")
-            #Set Red background
-            self.pushButton_start_proc.setAutoFillBackground(True)
-            self.pushButton_start_proc.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(0, 0, 0)")
-            
             # Ask if we with to process only the next files coming or also the
             # current ones in the source_dir and then the new ones
-            res = QMessageBox.information(self, "Info", 
-                                QString("Process also the current files in the \
-source directory (If no, only the new ones coming will be processed) ?"), 
-                                QMessageBox.Ok, QMessageBox.Cancel)
-            
-            if res==QMessageBox.Cancel:
-                return
-            else:
-                self.processFiles()
- 
             msgBox = QMessageBox()
+            msgBox.setText("Starting to process files.")
+            msgBox.setInformativeText("Which files do you wish to process ?")
+            button_all = msgBox.addButton("Process all", QMessageBox.ActionRole)
+            button_new = msgBox.addButton("Process new", QMessageBox.ActionRole)
+            button_cancel = msgBox.addButton("Cancel", QMessageBox.ActionRole)
+            msgBox.setDefaultButton(button_new)
             
+            msgBox.exec_()
             
-  """      
-        QMessageBox msgBox;
- QPushButton *connectButton = msgBox.addButton(tr("Connect"), QMessageBox.ActionRole);
- QPushButton *abortButton = msgBox.addButton(QMessageBox.Abort);
-
- msgBox.exec_();
-
- if (msgBox.clickedButton() == connectButton) {
-     // connect
- } else if (msgBox.clickedButton() == abortButton) {
-     // abort
- }    
- """
- 
-        """
-        it = QListViewItemIterator (self.listView_OS)
-        listViewItem = it.current()
-        while listViewItem: 
-            if listViewItem.isSelected():
-                print "1st CHILD=", listViewItem.firstChild()
+            if msgBox.clickedButton()== button_all or msgBox.clickedButton()==button_new:
+                self.proc_started = True
+                self.pushButton_start_proc.setText("Stop Processing")
+                #Set Red background
+                self.pushButton_start_proc.setAutoFillBackground(True)
+                self.pushButton_start_proc.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(0, 0, 0)")
+                if msgBox.clickedButton()== button_all:
+                    self.processFiles()
                 
-            it+=1
-            listViewItem = it.current()
-        """
-        """
-        return 
-        
-        name="Pepe"
-        msg = QString ("Me llamo %1").arg( name )
-        QMessageBox.critical(self,"Error",msg)
-
-        self.listView_1.addColumn( "C_X" );
-        elem = QListViewItem( self.listView_1 )
-        elem.setText(0,"HOLA")
-        elem.setText(1,"ADIOS")
-        
-        item =QStyleSheetItem( self.textEdit_log.styleSheet(), "mytag" )
-        item.setColor( QColor("red") )
-        item.setFontWeight( QFont.Bold )
-        item.setFontUnderline( True )
-        self.textEdit_log.append("HOLA me llamo <mytag> Jose Miguel </mytag>")
-        """
-    
+ 
     
     def worker1(self, input, output):
         #print "arg_1=",input.get()
@@ -2860,7 +2839,10 @@ source directory (If no, only the new ones coming will be processed) ?"),
             AR, Dec and Filter keywords. 
         
         outfile: str
-            Filename of the final ouput file (aligned & stacked) produced
+            Filename of the final output file (aligned & stacked) produced.
+            If no outfile name is given, the result of each sequence reduced
+            will be saved with a filename as: 'PANIC.[DATE-OBS].fits',
+            where DATE-OBS is the keyword value of the first file in the sequence.
         
         Notes
         -----
@@ -2886,15 +2868,6 @@ source directory (If no, only the new ones coming will be processed) ?"),
             
         #Create working thread that process the files
         try:
-            if outfilename==None:
-                # generate a random filename for the master, to ensure we do not overwrite any file
-                output_fd, outfilename = tempfile.mkstemp(suffix='.fits', 
-                                                      prefix='redObj_', 
-                                                      dir=self.m_outputdir)
-                os.close(output_fd)
-                os.unlink(outfilename) # we only need the name
-            
-            outfilename = None # SOLO PARA PROBAR !! TO REMOVE !!!
     
             ###self._task = RS.ReductionSet(files, self.m_outputdir, out_file=outfilename,
             ###                                obs_mode="dither", dark=None, 

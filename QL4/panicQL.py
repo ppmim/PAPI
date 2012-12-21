@@ -912,7 +912,7 @@ class Ui_panicQL(object):
         self.MenuBar.addAction(self.helpMenu.menuAction())
 
         self.retranslateUi(panicQL)
-        self.tabWidget3.setCurrentIndex(0)
+        self.tabWidget3.setCurrentIndex(2)
         self.comboBox_pre_skyWindow.setCurrentIndex(3)
         QtCore.QObject.connect(self.checkBox_autocheck, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.autocheck_slot)
         QtCore.QObject.connect(self.checkBox_outDir_autocheck, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.checkOutDir_slot)
@@ -958,6 +958,7 @@ class Ui_panicQL(object):
         QtCore.QObject.connect(self.checkBox_pre_appMF, QtCore.SIGNAL(_fromUtf8("clicked()")), self.checkBox_pre_appSF.toggle)
         QtCore.QObject.connect(self.helpIndexAction, QtCore.SIGNAL(_fromUtf8("activated()")), panicQL.helpIndex)
         QtCore.QObject.connect(self.actionAbout, QtCore.SIGNAL(_fromUtf8("activated()")), panicQL.helpAbout)
+        QtCore.QObject.connect(self.pushButton_test1, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.testSlot)
         QtCore.QMetaObject.connectSlotsByName(panicQL)
 
     def retranslateUi(self, panicQL):

@@ -40,7 +40,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -3730,10 +3730,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton_test1</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>testSlot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>857</x>
+     <y>122</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>822</x>
+     <y>-8</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>listView_popup_slot()</slot>
   <slot>helpIndex()</slot>
   <slot>helpAbout()</slot>
+  <slot>testSlot()</slot>
  </slots>
 </ui>

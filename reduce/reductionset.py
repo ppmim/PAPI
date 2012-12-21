@@ -165,6 +165,11 @@ class ReductionSet(object):
         out_dir : str
             output dir where output files will be generated
         
+        out_file: str
+            Filename of the final result file (reduced seq.) produced
+            If no outfile name is given, the result of each sequence reduced
+            will be saved with a filename as: 'PANIC.[DATE-OBS].fits',
+            where DATE-OBS is the keyword value of the first file in the sequence
         obs_mode : str
             'dither' - files belong to a dither pattern observation
             'other' - 
@@ -238,7 +243,8 @@ class ReductionSet(object):
             raise Exception("Output dir does not exist.")
         
         # Main output file resulted from the data reduction process
-        if out_file==None: # if no filename, we choose a random filename
+        if out_file==None: 
+            # if no filename, we take the DATE-OBS of the first file of the SEQ
             with pyfits.open(rs_filelist[0]) as myhdulist:
                 if 'DATE-OBS' in myhdulist[0].header:
                     self.out_file = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
@@ -1147,28 +1153,29 @@ class ReductionSet(object):
     
     def subtractNearSky(self, near_list=None, file_pos=0, out_filename=None):
         """
-            Compute and subtract the nearest sky to the image in position 'fn' 
-            in the given frame list (near_list). 
-                         
-            This function make use of skyfilter_single.c (IRDR)              
-            
-            INPUT
-                file_pos : file position in sci file list (the list is supposed 
-                to be sorted by obs-date)
-            
-            OUTPUT
-                The function generate a sky subtrated image (*.skysub.fits)
-            
-            VERSION
-                1.1, 20101103 by jmiguel@iaa.es
-                1.2, 20110297 added out_dir parameter to skyfilter_single
+        Compute and subtract the nearest sky to the image in position 'fn' 
+        in the given frame list (near_list). 
+                     
+        This function make use of skyfilter_single.c (IRDR)              
         
-            TODO: extended objects !!!!
+        INPUT
+            file_pos : file position in sci file list (the list is supposed 
+            to be sorted by obs-date)
+        
+        OUTPUT
+            The function generate a sky subtrated image (*.skysub.fits)
+        
+        VERSION
+            1.1, 20101103 by jmiguel@iaa.es
+            1.2, 20110297 added out_dir parameter to skyfilter_single
+    
+        TODO: extended objects !!!!
         """
+        
         log.debug("Start subtractNearSky")
         
         # default values
-        if near_list==None: 
+        if near_list==None:
             near_list = self.rs_filelist
         if out_filename==None: 
             out_filename = self.out_file
@@ -2213,7 +2220,8 @@ class ReductionSet(object):
                             else: self.cleanUpFiles([l_out_dir])
                             
                             # async call to procedure
-                            extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
+                            #extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
+                            extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% (n+1)
                             ##calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
                             
                             red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
@@ -2253,7 +2261,6 @@ class ReductionSet(object):
                         #close() or terminate() before using join().
                         pool.join()
                         log.critical("[reduceSeq] DONE PARALLEL REDUCTION ")
-                            
                     except Exception,e:
                         log.error("[reduceSeq] Error while parallel data reduction ! --> %s",str(e))
                         raise e
@@ -2298,12 +2305,28 @@ class ReductionSet(object):
             
             # If all reduction were fine, now join/stich back the extensions in 
             # a wider frame.
-            seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
+            #seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
+            
+            # Get the output filename for the reduced sequence
+            try:
+                with pyfits.open(obj_ext[0][0]) as myhdulist:
+                    if 'DATE-OBS' in myhdulist[0].header:
+                        seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                    else:
+                        output_fd, seq_result_outfile = tempfile.mkstemp(suffix='.fits', 
+                                                            prefix='PANIC_SEQ_', 
+                                                            dir=self.out_dir)
+                        os.close(output_fd)
+                        os.unlink(seq_result_outfile) # we only need the name
+            except Exception,e:
+                log.error("Error: %s"%str(e))
+                raise e
+            
             if len(out_ext) >1:
                 log.debug("[reduceSeq] *** Creating final output file *WARPING* single output frames....***")
                 #option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
-                #mef.createMEF(self.out_file)
+                #mef.createMEF(seq_result_outfile)
                 #option 2(current): SWARP result images to register the N-extension into one wide-single extension
                 log.debug("*** Coadding/Warping overlapped files....")
                 
@@ -2311,7 +2334,7 @@ class ReductionSet(object):
                 swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
                 swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
-                swarp.ext_config['WEIGHTOUT_NAME'] = self.out_file.replace(".fits",".weight.fits")
+                swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
                 swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
                 
