@@ -280,7 +280,7 @@ class ReductionSet(object):
             # update config values from config_dict
             self.HWIDTH = self.config_dict['skysub']['hwidth'] # half width of sky filter window in frames
             self.MIN_SKY_FRAMES = self.config_dict['skysub']['min_frames']  # Minimum number of sky frames required in the sliding window for the sky subtraction
-            self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] # Maximum exposition time difference (seconds) between frames
+            self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] /86400.0 # Maximum exposition time difference (days) between two consecutive frames
             self.MIN_CORR_FRAC = self.config_dict['offsets']['min_corr_frac'] # Minimum overlap correlation fraction between offset translated images (from irdr::offset.c)
         else:
             print "Program should not enter here  !!!"
@@ -885,7 +885,10 @@ class ReductionSet(object):
         #elif self.group_by=='none':
         elif self.group_by=='filter':
             if self.db==None: self.__initDB()
-            seqs, seq_types = self.db.GetSequences(group_by='filter')
+            seqs, seq_types = self.db.GetSequences(group_by='filter',
+                                                   max_mjd_diff=self.config_dict['general']['max_mjd_diff']/86400.0,
+                                                   max_ra_dec_diff=self.config_dict['general']['max_ra_dec_offset'],
+                                                   max_nfiles=self.config_dict['general']['max_num_files'])
         else:
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
@@ -997,7 +1000,11 @@ class ReductionSet(object):
         seq_par = []
         
         if self.group_by=="filter":
-            (seq_list, seq_par) = self.db.GetSequences(group_by='filter') # return a list of SCIENCE (or SKY) frames grouped by FILTER
+            # return a list of SCIENCE (or SKY) frames grouped by FILTER
+            (seq_list, seq_par) = self.db.GetSequences(group_by='filter',
+                                                       max_mjd_diff=self.config_dict['general']['max_mjd_diff']/86400.0,
+                                                       max_ra_dec_diff=self.config_dict['general']['max_ra_dec_offset'],
+                                                       max_nfiles=self.config_dict['general']['max_num_files'])
                 
         return seq_list
     
@@ -2601,10 +2608,24 @@ class ReductionSet(object):
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
         # return only filtered images; in exteded-sources, sky frames  are not included 
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
-                                           gainmap, 'nomask', self.obs_mode)       
+                                           gainmap, 'nomask', self.obs_mode)
+        
+        ########################################################################
+        # 4.1 - Remove crosstalk - (only if bright stars are present)
+        #       (if red_mode!=quick, then crosstalk will be done later)
+        ########################################################################
+        if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
+            self.config_dict['general']['remove_crosstalk']):
+            log.info("**** Removing crosstalk ****")
+            try:
+                res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
+                            [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
+                self.m_LAST_FILES = res
+            except Exception,e:
+                raise e      
 
         ########################################################################
-        # 4.1 - Divide by the master flat after sky subtraction ! 
+        # 4.2 - Divide by the master flat after sky subtraction ! 
         # some people think it is better do it now (M.J.Irwing, CASU)
         # But, dark is not applied/required, as it was implicity done when sky subtr.
         # However, it does not produce good results, it looks like if we undo the 
@@ -2621,7 +2642,7 @@ class ReductionSet(object):
             self.m_LAST_FILES = res.apply()
 
         ########################################################################
-        # 4.2 - LEMON connection - End here for Quick-LEMON-1 processing    
+        # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
         ########################################################################
         if self.red_mode=='quick-lemon':
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
@@ -2643,7 +2664,7 @@ class ReductionSet(object):
         prueba = False  
         if prueba:
             if self.obs_mode!='dither' or self.red_mode=="quick":
-                log.info("**** Doing Astrometric calibration and  coaddition result frame ****")
+                log.info("**** Doing Astrometric calibration and coaddition result frame ****")
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
                 coadded_file=output_file, config_dict=self.config_dict)
@@ -2762,7 +2783,7 @@ class ReductionSet(object):
                             [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
             except Exception,e:
-                raise
+                raise e
 
         ########################################################################
         # 9.2 - Remove Cosmic Rays -    

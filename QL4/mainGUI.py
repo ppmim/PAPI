@@ -222,7 +222,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.checkBox_data_grouping_OT.setCheckState(Qt.Checked)
             self.lineEdit_ra_dec_near_offset.setEnabled(False)
             self.lineEdit_time_near_offset.setEnabled(False)
-                
+            self.lineEdit_max_num_files.setEnabled(False)
+        else:
+            self.checkBox_data_grouping_OT.setCheckState(Qt.Unchecked)
+            self.lineEdit_ra_dec_near_offset.setText(str(self.config_opts['general']['max_ra_dec_offset']))
+            self.lineEdit_time_near_offset.setText(str(self.config_opts['general']['max_mjd_diff']))
+            self.lineEdit_max_num_files.setText(str(self.config_opts['general']['max_num_files']))
+            self.lineEdit_ra_dec_near_offset.setEnabled(True)
+            self.lineEdit_time_near_offset.setEnabled(True)
+            self.lineEdit_max_num_files.setEnabled(True)    
         
         self.logConsole.info("Welcome to the PANIC QuickLook tool version %s"%__version__)
         
@@ -1142,10 +1150,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.group_by = 'ot'
             self.lineEdit_ra_dec_near_offset.setEnabled(False)
             self.lineEdit_time_near_offset.setEnabled(False)
+            self.lineEdit_max_num_files.setEnabled(False)
         else:
             self.group_by = 'filter'
             self.lineEdit_ra_dec_near_offset.setEnabled(True)
-            self.lineEdit_time_near_offset.setEnabled(True)      
+            self.lineEdit_time_near_offset.setEnabled(True)
+            self.lineEdit_max_num_files.setEnabled(True)      
                   
     def setOutputDir_slot(self):
         """Select Ouput Directory for processing products"""
@@ -1296,14 +1306,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
             seq_types = []
             
             #Look for sequences
-            if self.group_by.lower()=='filter':
-                ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0] #arcsec
-                time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0 #secs
-                sequences, seq_types = self.inputsDB.GetFilterFiles(max_mjd_diff=time_near_offset,
-                                                        max_ra_dec_diff=ra_dec_near_offset, 
-                                                        max_nfiles=50)
-            else:
-                sequences, seq_types = self.inputsDB.GetSequences(self.group_by) 
+            ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0] #arcsec
+            time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0 #day units
+            max_number_files = self.lineEdit_max_num_files.text().toInt()[0]
+            
+            sequences, seq_types = self.inputsDB.GetSequences(self.group_by,
+                                                    max_mjd_diff=time_near_offset,
+                                                    max_ra_dec_diff=ra_dec_near_offset, 
+                                                    max_nfiles=max_number_files) 
             
             #look for un-groupped files
             temp = set([])

@@ -47,7 +47,7 @@ class DataSet(object):
     # allowed between two consecutive frames.
     MAX_RA_DEC_DIFF = 600
     
-    # Maximum number or files allowed in a non 'OT' sequence (filter groupued)
+    # Maximum number or files allowed in a non 'OT' sequence (filter grouped)
     MAX_NFILES = 50
     ############################################################
 
@@ -55,8 +55,8 @@ class DataSet(object):
         """
         Initialize the object.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         source : str
             Can be a 'directory' name, a 'filename' containing the
             list file or python list havind the files of the DataSet
@@ -117,13 +117,13 @@ class DataSet(object):
         """
         Insert new FITS file into dateset
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         filename : str
             input filename to insert into the dataset
 
-        Returns:
-        --------
+        Returns
+        -------
         0 if all was successful, otherwise <0
         """
 
@@ -163,10 +163,16 @@ class DataSet(object):
     def delete ( self, filename, date=None ):
 
         """
-          \brief Delete a row file from the dataset table
+        Delete a row file from the dataset table
 
-          \paran filename file to be deleted from dataset
-          \return 0 if all was successful, otherwise <0
+        Parameters
+        ----------
+        filename: str
+            file to be deleted from dataset
+        
+        Returns
+        -------
+        0 if all was successful, otherwise <0
           
         """
         
@@ -714,7 +720,8 @@ class DataSet(object):
         return  new_seq_list, new_seq_par
 
                          
-    def GetSequences(self, group_by='ot'):
+    def GetSequences(self, group_by='ot', max_mjd_diff=None, 
+                     max_ra_dec_diff=None, max_nfiles=None ):
         """
         General function to look for Sequences in the current data base of files
         
@@ -724,6 +731,17 @@ class DataSet(object):
             parameter to decide what kind of data grouping will be done;
             if 'ot', OT keywords will be used, otherwise ('filter'), Filter and TExp will be
             taken into account for the data grouping.
+        
+        max_mjd_diff: float
+            Maximum seconds of temporal distant allowed between two consecutive 
+            frames.
+        
+        max_ra_dec_diff: float
+            Maximum seconds of spatial distant allowed between two consecutive 
+            frames.
+        
+        max_nfiles: int
+            Maximum number of files allowed into a sequence.
         
         Returns
         -------
@@ -737,7 +755,7 @@ class DataSet(object):
         if group_by.lower()=='ot': 
             return self.GetSeqFilesB()
         elif group_by.lower()=='filter':
-            return self.GetFilterFiles()
+            return self.GetFilterFiles(max_mjd_diff, max_ra_dec_diff, max_nfiles)
         elif group_by.lower()=='none':
             seqs = []
             seq_types = []
@@ -1028,13 +1046,13 @@ class DataSet(object):
         """
         Query the database fields of a specified filaname.
 
-        Parameteres:
-        ------------
+        Parameteres
+        -----------
         filename: str
             filename to query
 
-        Returns:
-        --------
+        Returns
+        -------
         A list with some database fields, i.e.:
                       
             date(0), ut_time(1), type(2), filter(3), texp(4), detector_id(5),
@@ -1147,7 +1165,6 @@ class DataSet(object):
                 #Then, we try to compute it
                 #TODO
                 pass
-                return None
             elif len(rows)>1:
                 for row in rows:
                     print row #only for debug
@@ -1158,9 +1175,8 @@ class DataSet(object):
         except sqlite.DatabaseError:
             log.exception("Error in DataSet.GetMasterFlat function...")
             raise
-            return None
         
-     ############################################################    
+    ############################################################    
     def ListDataSet( self ):
         """
            \brief List all entries in the dataset

@@ -430,7 +430,9 @@ def read_config_file(config_file = default_config_file()):
     general["purge_output"] = read_parameter(config, "general", "purge_output", bool, False, config_file)
     
     
-    general["max_mjd_diff"] = read_parameter(config, "general", "max_mjd_diff", float, False, config_file)
+    general["max_mjd_diff"] = read_parameter(config, "general", "max_mjd_diff", int, False, config_file)
+    general["max_ra_dec_offset"] = read_parameter(config, "general", "max_ra_dec_offset", int, False, config_file)
+    general["max_num_files"] = read_parameter(config, "general", "max_num_files", int, False, config_file)
     
     
     general["apply_dark_flat"] = read_parameter(config, "general", "apply_dark_flat", int, True, config_file)
