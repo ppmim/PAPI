@@ -77,7 +77,8 @@ class MEF (object):
     def doJoin(self, output_filename_suffix = ".join.fits", output_dir = None):
         """
         @summary:  Method used to join a MEF into a single FITS frames, 
-        coping all the header information required
+        copying all the header information required.
+        Basically used to run test with HAWK-I images, converting them to PANIC format.
         
         
         @param param: output_filename_suffix : suffix for the new joined FITS files.
@@ -160,7 +161,7 @@ class MEF (object):
                  copy_keyword = None):
         """ 
         @summary: Method used to split a MEF into single FITS frames, 
-        coping all the header information required                           
+        copying all the header information required                           
         """
         log.info("Starting SplitMEF")
         

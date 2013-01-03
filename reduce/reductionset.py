@@ -245,7 +245,7 @@ class ReductionSet(object):
         # Main output file resulted from the data reduction process
         if out_file==None: 
             # if no filename, we take the DATE-OBS of the first file of the SEQ
-            with pyfits.open(rs_filelist[0]) as myhdulist:
+            with pyfits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
                 if 'DATE-OBS' in myhdulist[0].header:
                     self.out_file = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
                 else:
@@ -279,9 +279,9 @@ class ReductionSet(object):
             self.m_irdr_path = self.config_dict['config_files']['irdr_bin']
             # update config values from config_dict
             self.HWIDTH = self.config_dict['skysub']['hwidth'] # half width of sky filter window in frames
-            self.MIN_SKY_FRAMES = self.config_dict['skysub']['min_frames']  # minimun number of sky frames required in the sliding window for the sky subtraction
-            self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] # Maximun exposition time difference (seconds) between frames
-            self.MIN_CORR_FRAC = self.config_dict['offsets']['min_corr_frac'] # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
+            self.MIN_SKY_FRAMES = self.config_dict['skysub']['min_frames']  # Minimum number of sky frames required in the sliding window for the sky subtraction
+            self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] # Maximum exposition time difference (seconds) between frames
+            self.MIN_CORR_FRAC = self.config_dict['offsets']['min_corr_frac'] # Minimum overlap correlation fraction between offset translated images (from irdr::offset.c)
         else:
             print "Program should not enter here  !!!"
             # some "default" config values (see below how they are updated from the config_dict)
@@ -289,7 +289,7 @@ class ReductionSet(object):
             """
             self.m_terapix_path = os.environ['TERAPIX']
             self.m_irdr_path = os.environ['IRDR_BIN']
-            self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
+            self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximum seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
             self.HWIDTH = 2 #half width of sky filter window in frames
             self.MIN_SKY_FRAMES = 5  # minimun number of sky frames required in the sliding window for the sky subtraction
             self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
@@ -1883,9 +1883,11 @@ class ReductionSet(object):
                     # what it is very useful for the QL
                     failed_sequences +=1
                     log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
-                    log.debug("[reduceSet] Procceding to next sequence...")
                     if len(sequences)==1:
                         raise e
+                    elif len(sequences)>1:
+                        log.debug("[reduceSet] Procceding to next sequence...")
+                    
             k = k + 1
     
         # print out the results
@@ -2309,7 +2311,7 @@ class ReductionSet(object):
             
             # Get the output filename for the reduced sequence
             try:
-                with pyfits.open(obj_ext[0][0]) as myhdulist:
+                with pyfits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
                     if 'DATE-OBS' in myhdulist[0].header:
                         seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
                     else:

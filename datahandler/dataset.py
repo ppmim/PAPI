@@ -39,19 +39,28 @@ class DataSet(object):
     TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
                     ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
                 
-    # Maximun seconds (10min=600secs aprox) of temporal distant allowed between 
+    # Maximum seconds (10min=600secs aprox) of temporal distant allowed between 
     # two consecutive frames (1/86400.0)*10*60
-    MAX_MJD_DIFF = 6.95e-3  
+    MAX_MJD_DIFF = 6.95e-3
+    
+    # Maximum arc seconds (10 arcmin=600arcsecs aprox.) of spatial distant 
+    # allowed between two consecutive frames.
+    MAX_RA_DEC_DIFF = 600
+    
+    # Maximum number or files allowed in a non 'OT' sequence (filter groupued)
+    MAX_NFILES = 50
     ############################################################
 
     def __init__( self , source ):
         """
-        \brief The constructor
+        Initialize the object.
         
-        \param source : can be a 'directory' name, a 'filename' containing the
-                        list file or python list havind the files of the DataSet
+        Parameters:
+        -----------
+        source : str
+            Can be a 'directory' name, a 'filename' containing the
+            list file or python list havind the files of the DataSet
     
-        :param source: can be a directory name bla bla....
         """
         self.con = None #connection
         self.source = source
@@ -106,11 +115,16 @@ class DataSet(object):
     ############################################################
     def insert ( self, filename ):
         """
-          \brief Insert new FITS file into dateset
+        Insert new FITS file into dateset
 
-          \param filename : input filename to insert into the dataset
+        Parameters:
+        -----------
+        filename : str
+            input filename to insert into the dataset
 
-          \return 0 if all was successful, otherwise <0
+        Returns:
+        --------
+        0 if all was successful, otherwise <0
         """
 
         log.debug("Inserting file %s into dataset" % filename)
@@ -408,45 +422,67 @@ class DataSet(object):
         
         # Finally, look for files of each OB_ID
         for ob_id in ob_id_list:
-            s_select="select filename from dataset where ob_id=? order by mjd"    
+            s_select = "select filename from dataset where ob_id=? order by mjd"    
             #print s_select
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             cur.execute(s_select,(int(ob_id),))
             #print "done !"
-            rows=cur.fetchall()
+            rows = cur.fetchall()
             if len(rows)>0:
                 ob_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             #print "%d files found in OB %d" %(len(rows), int(ob_id))
             
         return ob_id_list, ob_file_list
     
-    def GetFilterFiles(self, max_mjd_diff=None ):
+    def GetFilterFiles(self, max_mjd_diff=None, max_ra_dec_diff=None, 
+                       max_nfiles=None):
         """ 
-        @summary: Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
+        Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
         ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
         
         In addition, MJD is checked in order to look for time gaps into a (Filter,Type) 
         sequence. It will be quite useful for data grouping when the OT was not used 
         during the observing run.
         
-        @param max_mjd_diff: Maximun seconds of temporal distant allowed between 
-        two consecutive frames
+        Parameters
+        ----------
+        max_mjd_diff: float
+            Maximum seconds of temporal distant allowed between two consecutive 
+            frames.
+        
+        max_ra_dec_diff: float
+            Maximum seconds of spatial distant allowed between two consecutive 
+            frames.
+        
+        max_nfiles: int
+            Maximum number of files allowed into a sequence.
          
-        @return: the list of types [DARK, FLAT, etc] and list of list,
-        having each list the list of files beloging to.
+        Returns
+        -------
+        A List of types [DARK, FLAT, etc] and list of list, having each list 
+        the list of files beloging to.
 
-        @note: it is mainly useful when the OT is not used for the data acquisition
+        Notes
+        -----
+        It is mainly useful when the OT is not used for the data acquisition
                     
         """
         
-        if max_mjd_diff==None: max_mjd_diff=DataSet.MAX_MJD_DIFF
+        if max_mjd_diff==None: 
+            max_mjd_diff = DataSet.MAX_MJD_DIFF
         
+        if max_ra_dec_diff==None:
+            max_ra_dec_diff = DataSet.MAX_RA_DEC_DIFF
+        
+        if max_nfiles==None:
+            max_nfiles = DataSet.MAX_NFILES
+    
         par_list = [] # parameter tuple list (filter,texp)
         filter_file_list = [] # list of file list (one per each filter)
               
         # First, look for Filters on SCIENCE files
         #s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' order by mjd"
-        s_select="select DISTINCT filter,type from dataset where type<>'DOME_FLAT_LAMP_OFF' and type<>'DOME_FLAT_LAMP_ON' order by mjd"
+        s_select = "select DISTINCT filter,type from dataset where type<>'DOME_FLAT_LAMP_OFF' and type<>'DOME_FLAT_LAMP_ON' order by mjd"
         
 
         cur = self.con.cursor()
@@ -454,8 +490,8 @@ class DataSet(object):
         rows = cur.fetchall()
         par_list = []
         if len(rows)>0:
-            par_list = [ [str(f[0]), str(f[1])]  for f in rows] # important to apply str() ??
-        print "Total rows selected:  %d" %(len(par_list))
+            par_list = [[str(f[0]), str(f[1])] for f in rows] # important to apply str() ??
+        print "Total rows selected:  %d"%(len(par_list))
         print "Filters found :\n ", par_list
         
         # Look for DOME_FLATS_ON/OFF
@@ -487,28 +523,50 @@ class DataSet(object):
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             #print "====> %d files found for Filter %s" %(len(rows), par[0])
 
-        # Now, look for temporal gap inside the current sequences were found
+        # Now, look for temporal/spatial/size gap inside the current sequences found
         new_seq_list = []
         new_seq_par = []
         k = 0
+        
         for seq in filter_file_list:
             group = []
-            mjd_0 = self.GetFileInfo(seq[0])[10]
+            mjd_0 = self.GetFileInfo(seq[0])[10] # reference for temporal gap
+            ra_0 = self.GetFileInfo(seq[0])[7]*3600  # reference for spatial gap
+            dec_0 = self.GetFileInfo(seq[0])[8]*3600 # reference for spatial gap
+            #print "RA_0=",ra_0
+            #print "DEC_0=",dec_0
             for file in seq:
                 t = self.GetFileInfo(file)[10]
-                if math.fabs(t-mjd_0)<max_mjd_diff:
+                ra = self.GetFileInfo(file)[7]*3600 # arcsecs
+                dec = self.GetFileInfo(file)[8]*3600 #arcsecs
+                #print "DIF_RA=",math.fabs(ra-ra_0)
+                #print "RA0=",ra_0
+                #print "RA=",ra
+                #print "DIF_DEC=",math.fabs(dec-dec_0)
+                #print "LEN_GROUP=",len(group)
+                if (math.fabs(t-mjd_0) < max_mjd_diff and
+                    math.fabs(ra-ra_0) < max_ra_dec_diff and
+                    math.fabs(dec-dec_0) < max_ra_dec_diff and
+                    len(group) < max_nfiles):
+                    group.append(file)
+                    mjd_0 = t
+                # Darks do not have coordinates restrictions
+                elif (self.GetFileInfo(seq[0])[2]=='DARK' and 
+                      math.fabs(t-mjd_0)< max_mjd_diff and len(group) < max_nfiles):
                     group.append(file)
                     mjd_0 = t
                 else:
-                    #log.debug("Sequence split due to temporal gap between sequence frames")
+                    log.debug("Sequence split due to temporal gap between sequence frames")
                     new_seq_list.append(group[:]) # very important, lists are mutable !
                     new_seq_par.append(par_list[k][1])
                     mjd_0 = t
+                    ra_0 = ra
+                    dec_0 = dec
                     group = [file]
             new_seq_list.append(group[:]) # very important, lists are mutable !
             new_seq_par.append(par_list[k][1])
             k+=1    
-            
+
         return  new_seq_list, new_seq_par
                  
     def GetFilterFiles_BUENO(self, max_mjd_diff=None ):
@@ -520,7 +578,7 @@ class DataSet(object):
         sequence. It will be quite useful for data grouping when the OT was not used 
         during the observing run.
         
-        @param max_mjd_diff: Maximun seconds of temporal distant allowed between 
+        @param max_mjd_diff: Maximum seconds of temporal distant allowed between 
         two consecutive frames
          
         @return: the list of types [DARK, FLAT, etc] and list of list,
@@ -592,13 +650,13 @@ class DataSet(object):
         sequence. It will be quite useful for data grouping when the OT was not used 
         during the observing run.
         
-        @param max_mjd_diff: Maximun seconds of temporal distant allowed between 
+        @param max_mjd_diff: Maximum seconds of temporal distant allowed between 
         two consecutive frames
          
         @return: the list of parameter-tuples [filter, texp] and list of list,
         having each list the list of files beloging to.
         
-        @note: it is mainly useful when the OT is not used for the data acquisition
+        @note: currently NOT USED !!!
             
         """
         
@@ -658,13 +716,18 @@ class DataSet(object):
                          
     def GetSequences(self, group_by='ot'):
         """
-        @summary: General function to look for Sequences in the current data base of files
+        General function to look for Sequences in the current data base of files
         
-        @param group_by: parameter to decide what kind of data grouping will be done;
-        if 'ot', OT keywords will be used, otherwise ('filter'), Filter and TExp will be
-        taken into account for the data grouping.
+        Parameters
+        ----------
+        group_by: str
+            parameter to decide what kind of data grouping will be done;
+            if 'ot', OT keywords will be used, otherwise ('filter'), Filter and TExp will be
+            taken into account for the data grouping.
         
-        @return: two lists:
+        Returns
+        -------
+        Two lists:
              - a of list, having each list the list of files beloging 
                to the sequence.
              - a list with the Types for each sequence found (DARK, DOME_FLAT, 
@@ -963,12 +1026,19 @@ class DataSet(object):
     ############################################################    
     def GetFileInfo( self, filename ):
         """
-          @summary: query the database fields of a specified filaname.
+        Query the database fields of a specified filaname.
 
-          @param filename: filename to query
+        Parameteres:
+        ------------
+        filename: str
+            filename to query
 
-          @return: a list with database fields (date, ut_time, type, filter, 
-                  texp, detector_id, run_id, object, mjd)
+        Returns:
+        --------
+        A list with some database fields, i.e.:
+                      
+            date(0), ut_time(1), type(2), filter(3), texp(4), detector_id(5),
+            run_id(6), ra(7), dec(8), object(9), mjd(10)
         """
 
         try:

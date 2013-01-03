@@ -70,7 +70,7 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
                 shutil.copy(file, new_file)
                 os.chmod(new_file, 0644)
             except IOError,e:
-                print '\n**** Error coping file %s ****\n %s'%(file,str(e))
+                print '\n**** Error copying file %s ****\n %s'%(file,str(e))
                 sys.exit(1)
         else:
             new_file = file

@@ -40,7 +40,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -1370,25 +1370,6 @@
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_data_grouping">
-       <property name="geometry">
-        <rect>
-         <x>11</x>
-         <y>70</y>
-         <width>271</width>
-         <height>19</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Use header keywords POINT_NO, DITH_NO, EXPO_NO for data grouping</string>
-       </property>
-       <property name="text">
-        <string>Header (POINT_NO, DITH_NO, EXPO_NO)</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
       <widget class="QLineEdit" name="lineEdit_time_near_offset">
        <property name="geometry">
         <rect>
@@ -1543,14 +1524,17 @@
       <widget class="QCheckBox" name="checkBox_data_grouping_OT">
        <property name="geometry">
         <rect>
-         <x>260</x>
-         <y>30</y>
+         <x>10</x>
+         <y>70</y>
          <width>140</width>
          <height>19</height>
         </rect>
        </property>
        <property name="text">
         <string>OT Keywords</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
        </property>
       </widget>
      </widget>
@@ -3746,11 +3730,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>checkBox_data_grouping_OT</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>data_grouping_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>266</x>
+     <y>164</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>634</x>
+     <y>-8</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>listView_popup_slot()</slot>
   <slot>helpIndex()</slot>
   <slot>helpAbout()</slot>
   <slot>testSlot()</slot>
+  <slot>data_grouping_slot()</slot>
  </slots>
 </ui>

@@ -1782,7 +1782,25 @@ a E.Bertín o bien implementando el procedimiento para calcularla.
   correctamente (se machacaba el fichero de salida) todo un directorio de datos
   con multiples secuencias.
   
-  
+2012-12-28
+==========
+  * Soluciono BUG en setEnabled's del popup menu del QL
+
+
+2013-01-03
+==========
+
+FELIZ AÑO NUEVO !!!
+
+  * Modifico DS::GetFilterFiles() para además de encontrar gaps temporal, poder:
+     - limitar la distancia en AR,DEC máxima entre dos ficheros consecutivos de un grupo;
+     si se supera dicha distancia (parametro) se 'parte' el grupo.
+     - liminar el número máximo de ficheros dentro de un grupo.
+  * Modifico QL::worker() y QL::checkDoneQueue() para atrapar excepciones de 
+    errores que solo salian por la consola (terminal) y no en la pantalla del QL.
+
+  * Modifico QL para que en el Tab 'Setting' el grouping tenga efecto
+
 
 FOR NEXT VIDEOCONF
 ==================
@@ -2099,4 +2117,9 @@ incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
 - graficos SCAMP de distorsion !!!
- 
+
+BUGS QL
+=======
+- Si selecionamos varios science con distinto filtro y le decimos "reduce",
+no lo hace pero no dice el porqué !
+- checkQuality usa la variable TERAPIX !!

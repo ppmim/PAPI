@@ -218,7 +218,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.comboBox_QL_Mode.setCurrentIndex(0)
         
         self.group_by = self.config_opts['general']['group_by'].lower()
-            
+        if self.group_by=='ot':
+            self.checkBox_data_grouping_OT.setCheckState(Qt.Checked)
+            self.lineEdit_ra_dec_near_offset.setEnabled(False)
+            self.lineEdit_time_near_offset.setEnabled(False)
+                
         
         self.logConsole.info("Welcome to the PANIC QuickLook tool version %s"%__version__)
         
@@ -420,7 +424,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     
     def processLazy(self, filename):
         """
-        Do some  operations to the last file detected. It depend on:
+        Do some operations to the last file detected. It depend on:
         
             - checkBox_show_imgs
             - checkBox_subDark
@@ -760,7 +764,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 log.info("Get from Queue: %s"%str(r))
                 
                 if r!=None:
-                    if type(r)==type(list()):
+                    if type(r)==type(Exception()):
+                        self.logConsole.error(str(r))
+                        self.logConsole.error("No processing results obtained")
+                    elif type(r)==type(list()):
                         if len(r)==0 :
                             self.logConsole.info(str(QString("No value returned")))
                             #QMessageBox.information(self, "Info", "No value returned")
@@ -810,7 +817,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         # something was wrong...
                         self.logConsole.error("No processing results obtained")
                 else:
-                    self.logConsole.warning("Nothing returned; processing may be failed !")
+                    self.logConsole.warning("Nothing returned; processing maybe failed !")
             except Exception,e:
                 raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:
@@ -1125,16 +1132,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
     def data_grouping_slot(self):
         """
-        Slot called when the 'checkBox_data_grouping' is clicked.
+        Slot called when the 'checkBox_data_grouping_OT' is clicked.
         If checked, then data grouping will be done using OB_ID, OB_PAT, 
         FILTER keywords (or whatever we decide at the moment).
         If not checked, tha data grouping will be done using RA,Dec values.
         """
         
-        if self.checkBox_data_grouping.isChecked():
+        if self.checkBox_data_grouping_OT.isChecked():
+            self.group_by = 'ot'
             self.lineEdit_ra_dec_near_offset.setEnabled(False)
             self.lineEdit_time_near_offset.setEnabled(False)
         else:
+            self.group_by = 'filter'
             self.lineEdit_ra_dec_near_offset.setEnabled(True)
             self.lineEdit_time_near_offset.setEnabled(True)      
                   
@@ -1287,7 +1296,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
             seq_types = []
             
             #Look for sequences
-            sequences, seq_types = self.inputsDB.GetSequences(self.group_by) 
+            if self.group_by.lower()=='filter':
+                ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0] #arcsec
+                time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0 #secs
+                sequences, seq_types = self.inputsDB.GetFilterFiles(max_mjd_diff=time_near_offset,
+                                                        max_ra_dec_diff=ra_dec_near_offset, 
+                                                        max_nfiles=50)
+            else:
+                sequences, seq_types = self.inputsDB.GetSequences(self.group_by) 
             
             #look for un-groupped files
             temp = set([])
@@ -1542,7 +1558,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if len(self.m_popup_l_sel)<=0:
             return
             
-        #print "LIST=", self.m_popup_l_sel
+        print "LIST=", self.m_popup_l_sel
         
         # we have selected a group father
         if father: # we have selected a group father
@@ -1557,7 +1573,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
         else:
             #### Create the 'Files' Popup menu 
-            popUpMenu = QMenu()
+            popUpMenu = QtGui.QMenu("QL popup menu", self)
             popUpMenu.addAction(self.dispAct)
             popUpMenu.addAction(self.copyAct)
             popUpMenu.addSeparator()
@@ -1594,35 +1610,60 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
 
             ## Disable some menu items depeding of the number of item selected 
-            ## in the list view
+            ## in the list view.
+            ## Non mentioned actions are always Enabled (e.g.: self.copyGAct,
+            ##  self.splitAct, self.joinAct)
+            ## Then, only is needed to set non enabled action.
+            
+            # Restore default values, because an former call could have changed
+            # the state.
+            self.dispAct.setEnabled(True)
+            self.mDarkAct.setEnabled(True)
+            self.mDFlatAct.setEnabled(True)
+            self.mDTwFlatAct.setEnabled(True)
+            self.mGainMapAct.setEnabled(True)
+            self.mBPMAct.setEnabled(True)
+            self.subOwnSkyAct.setEnabled(True)
+            self.subNearSkyAct.setEnabled(True)
+            self.quickRedAct.setEnabled(True)
+            self.astroAct.setEnabled(True)
+            self.photoAct.setEnabled(True)
+            self.fwhmAct.setEnabled(True)
+            self.bckgroundAct.setEnabled(True)
+            self.subAct.setEnabled(True)
+            self.sumAct.setEnabled(True)
+            self.divAct.setEnabled(True)
+            
             if len(self.m_popup_l_sel)==1:
-                self.dispAct.setEnabled(True)
+                #print "#SEL_1=",len(self.m_popup_l_sel)
                 self.mDarkAct.setEnabled(False)
                 self.mDFlatAct.setEnabled(False)
                 self.mDTwFlatAct.setEnabled(False)
                 self.mGainMapAct.setEnabled(False)
                 self.mBPMAct.setEnabled(False)
+                self.subNearSkyAct.setEnabled(False)
                 self.subAct.setEnabled(False)
                 self.sumAct.setEnabled(False)
                 self.divAct.setEnabled(False)
-            elif len(self.m_popup_l_sel)>1:
+                
+            if len(self.m_popup_l_sel)>1:
+                #print "#SEL_2",len(self.m_popup_l_sel)
                 self.dispAct.setEnabled(False)
-                self.mBPMAct.setEnabled(False)
-                self.mDarkAct.setEnabled(True)
-                self.mDFlatAct.setEnabled(True)
-                self.mDTwFlatAct.setEnabled(True)
-                self.mGainMapAct.setEnabled(True)
-                self.mBPMAct.setEnabled(True)
                 self.subOwnSkyAct.setEnabled(False)
-            elif len(self.m_popup_l_sel)>2:
+                self.astroAct.setEnabled(False)
+                self.photoAct.setEnabled(False)
+                self.fwhmAct.setEnabled(False)
+                self.bckgroundAct.setEnabled(False)
+
+            if len(self.m_popup_l_sel)!=2:
                 self.subAct.setEnabled(False)
                 self.sumAct.setEnabled(False)
-            elif len(self.m_popup_l_sel)==2:
-                self.subAct.setEnabled(True)
-                self.sumAct.setEnabled(True)
+                self.divAct.setEnabled(False)
                 
             if len(self.m_popup_l_sel)<5:
+                #print "#SEL_5-",len(self.m_popup_l_sel)
                 self.subNearSkyAct.setEnabled(False)
+                self.quickRedAct.setEnabled(False)
             
         ## Finally, execute the popup
         popUpMenu.exec_(event.globalPos())
@@ -1643,7 +1684,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 group_files.append(str(father.child(ic).text(0)))
         
         try:
-            return self.processFiles(group_files)
+            self.processFiles(group_files)
         except Exception,e:
             QMessageBox.critical(self, "Error", 
                                  "Error while group data reduction: \n%s"%str(e))
@@ -2254,10 +2295,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def subtract_nearSky_slot(self, last_files=False):
         """ Subtract nearest sky using skyfiler from IRDR package"""
       
-        if self.checkBox_data_grouping.isChecked():
-            log.error("Sorry, data grouping with POINT_NO, DITH_NO, EXPO_NO not yet implemented ")
-            QMessageBox.information(self, "Info", "Sorry, data grouping with POINT_NO, DITH_NO, EXPO_NO not yet implemented ")
-            return
         
         # #####################################
         # Look for files in search-radius mode
@@ -2405,7 +2442,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
         try:     
-            img=cq.estimateBackground(self.m_outputdir+"/bckg.fits")
+            img = cq.estimateBackground(self.m_outputdir+"/bckg.fits")
             
             values = (iraf.mscstat(images=img,
             fields="image,mean,mode,stddev,min,max",format='yes',Stdout=1))
@@ -2425,7 +2462,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
         try:
-            fwhm,std=cq.estimateFWHM()
+            fwhm,std = cq.estimateFWHM()
             if fwhm>0:
                 self.logConsole.info(str(QString("FWHM = %1 (pixels) std= %2")
                                          .arg(fwhm)
@@ -2456,10 +2493,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # CASE 1: Automatic search for nearest frames (ra, dec, mjd) 
         if len(self.m_popup_l_sel)==1:
-            if self.checkBox_data_grouping.isChecked():
-                log.error("Sorry, data grouping with POINT_NO, DITH_NO, EXPO_NO not yet implemented ")
-                QMessageBox.information(self, "Info", "Sorry, data grouping with POINT_NO, DITH_NO, EXPO_NO not yet implemented ")
-                return
             QMessageBox.information(self, "Info", "Only one file was selected, automatic file grouping will be done.")
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE':
@@ -2533,100 +2566,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 raise e
         
         
-    def createSuperMosaic_slot(self):
-        """
-        TODO : here is only a scheme of the routine !!!!
-        Create an stitched wide-mosaic of next frames
-        """
-        QMessageBox.information(self, 
-                                "Info", 
-                                "Sorry, funtion not yet implemented !")
-        
-        # Next code is only a raw template 
-        # Check list lenght
-        if len(self.m_popup_l_sel)<1:
-            QMessageBox.information(self, 
-                                    "Info", "Not enough science pre-reduced frames selected")
-            return
-        
-        if len(self.m_popup_l_sel)==1:
-            QMessageBox.information(self, 
-                                    "Info", 
-                                    "Only one file was selected, automatic file grouping will be done.")
-            return
-            # NEED TO BE DONE
-        # Stack frame user selected  
-        elif len(self.m_popup_l_sel)>1:
-            # Create file list from current selected science files
-            listfile = self.m_tempdir+"/mosaic_files.list"      
-            file_lst = open( listfile, "w" )
-            for file in self.m_popup_l_sel :
-                if (datahandler.ClFits(file).getType()!='SCIENCE_REDUCED'):
-                    QMessageBox.critical(self, "Error", 
-                                         QString("File %1 is not a science reduced frame")
-                                         .arg(file))
-                    file_lst.close()
-                    return
-                else:
-                    file_lst.write( file +"\n")
-            file_lst.close()
-        
-        # Call external script (SWARP)
-        os.chdir(self.m_tempdir)
-        #Change to working directory
-        os.chdir(self.m_tempdir)
-        #Restore cursor
-        QApplication.restoreOverrideCursor()
-
-        # Prepare SWARP call
-        swarp = astromatic.SWARP()
-        swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf']
-        basename, extension = os.path.splitext(self.m_popup_l_sel[0])
-        swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"  # very important !
-        if not os.path.isfile(self.m_popup_l_sel[0]+".head"):
-            raise Exception ("Cannot find required .head file")
-            
-        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY'
-        swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.m_popup_l_sel[0]) + "/coadd_tmp.fits"
-        if os.path.isfile(basename + ".weight" + extension):
-            swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-            swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
-            swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.m_popup_l_sel[0]) + "/coadd_tmp.weight.fits"
-        
-        """
-        #IMPORTANT: Rename the .head files in order to be found by SWARP
-        #but it's much efficient modify the HEADER_SUFFIX value (see above)
-        for aFile in self.input_files:
-            basename, extension = os.path.splitext(aFile)
-            shutil.move(aFile+".head", basename +".head")  # very important !!
-        """    
-        
-        #Create working thread that compute sky-frame
-        try:
-            updateconfig = False
-            clean = False
-            thread = reduce.ExecTaskThread(swarp.run, 
-                                           self._task_info_list,
-                                           #args of the doAstrometry function
-                                           self.m_popup_l_sel, updateconfig, clean) 
-            thread.start()
-        except:
-            QMessageBox.critical(self, "Error", "Error while running SWARP")
-            raise
-                
       
       
     def do_raw_astrometry(self):
         """
-        @summary: Compute an astrometric solution for the selected file in the 
+        Compute an astrometric solution for the selected file in the 
         main list view panel.
         Basically, it is SCAMP is called and compared to 2MASS catalog 
         (or GSC2.3, USNO-B) to compute astrometric calibration. 
         A new WCS is added to the header.
         
-        @return: None, but produce an astrometrically calibrated image.
+        Returns
+        -------
+        None, but produce an astrometrically calibrated image.
           
-        @todo: we should check the image is pre-reduced or at least, with 
+        Todo
+        ---- 
+        We should check the image is pre-reduced or at least, with 
         enough objects 
         """
         
@@ -2877,7 +2833,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             ###                                external_db_files=self.outputsDB.GetFiles())
             # provide the outputDB files as the external calibration files for the RS 
             
-            log.debug("ReductionSet created !")
             # New approach using multiprocessing
             #rs_filelist, out_dir=None, out_file=None, obs_mode="dither", 
             #     dark=None, flat=None, bpm=None, red_mode="quick", 
@@ -2891,6 +2846,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if (self.checkBox_pre_subD.checkState()==Qt.Checked 
                 and self.checkBox_pre_appMF.checkState()==Qt.Checked): 
                 calib_db_files = self.outputsDB.GetFiles()
+                log.debug("ext-calibretion DB loaded")
             else:
                 calib_db_files = None
             #
@@ -2901,7 +2857,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                       self.config_opts,
                       calib_db_files, None)]
             
+            log.debug("Let's create a ReductionSet ...")
             func_to_run = RS.ReductionSet(*(params[0])).reduceSet
+            log.debug("ReductionSet created !")
             self._task_queue.put([(func_to_run,())])
             log.debug("New task queued") 
             #self._task_queue.put(params) #default function supposed!
@@ -2915,7 +2873,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def TaskRunner(self):
         """
-        Procedure that continuisly in checking the task of pending task to be 
+        Procedure that continuisly in checking the queue of pending tasks to be 
         done.
         """
  
@@ -2933,6 +2891,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 Process(target=self.worker, 
                     args=(self._task_queue, self._done_queue)).start()
             except Exception,e:
+                #NOTE: I think this point will never be reached !!!
                 log.error("Error in task Runner: %s"%(str(e)))
                 self.logConsole.debug("Error in TaskRunner")
                 self.m_processing = False
@@ -2972,8 +2931,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             output.put(func(*args))
             log.info("[worker] task done !")
         except Exception,e:
-            log.error("[worker] Error while processing task\n %s"%str(e))
-            output.put(None) # the DoneQueue will detect it
+            log.error("[worker] Error while processing task: %s"%str(e))
+            # Because excetions cannot be catched in TaskRunner due to a 
+            # multiprocessing.Process exception is inserted in output queue 
+            # and then recognized
+            output.put(e) # the DoneQueue will detect it
         finally:
             self.m_processing = False
             log.debug("Worker finished its task !")
