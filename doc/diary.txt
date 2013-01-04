@@ -1802,6 +1802,28 @@ FELIZ AÑO NUEVO !!!
   * Modifico QL para que en el Tab 'Setting' el grouping tenga efecto
 
 
+2013-01-04
+==========
+- Currently, this code will not distinguish between next
+  dark sequences:
+     - 2s 2s 2s  5s 5s 5s 10s 10s 10s 20s 20s 20s ...
+     - 2s 5s 10s 20s ...
+ both will be classified as dark_model sequences, but
+ if max_nfiles=3, then they will be distinguished, although
+ it will also affect the other sequences.
+
+- Modifico RS::reduceSet() para poder reducir sequencias según su tipo;
+  de esta forma corrijo RS::buildCalibrations() para que reduzca sólo las
+  secuencias de calibracion; antes se usaba buildMasterDarks(), buildMasterDomeFlats(), etc
+  que hacia su propio agrupamiento pero de forma incorrecta, sin atender
+  a grouping por 'ot' ni 'filter'.
+  Por tanto, buildMasterDarks() & cia. ya no son necesarias.
+ 
+- Implemento QL:stopProcessing() para detener/abortar la reducción en el QL.
+- Elimino la 'tab-Pipeline' de la GUI del QL, pues no hacia nada.
+
+
+
 FOR NEXT VIDEOCONF
 ==================
 - QL GUI: Migration from PyQt3 to PyQt4

@@ -860,16 +860,17 @@ class ReductionSet(object):
     def getSequences(self, show=True):
         """
         Look for sequences (calib,science) in the current data set following the
-        grouping criteria given by self.group_by and orderted by MJD
+        grouping criteria given by self.group_by and orderted by MJD.
         
-        @param show: if True, print out in std output the found sequences
+        Parameters
+        ----------
+        show: bool
+            if True, print out in std output the found sequences.
         
-        @return: a list of lists of sequence files and their types (DARK, TW_FLAT, 
-                DOME_FLAT, SCIENCE) ; see ClFits class for further details)
-        
-                In case of group_by, only 'SCIENCE' type is returned
-        
-        @attention: if group_by FILTER, only science sequences will be found
+        Returns
+        -------
+        A list of lists of sequence files and their types (DARK, TW_FLAT, 
+        DOME_FLAT, SCIENCE) ; see ClFits class for further details).
         
         """
         
@@ -879,16 +880,12 @@ class ReductionSet(object):
         
         if self.group_by=='ot':
             seqs, seq_types = self.getOTSequences(show)
-        #elif self.group_by=='filter':
-        #    seqs = self.getObjectSequences() # only look for science sequences !
-        #    seq_types = ['SCIENCE']*len(seqs)
-        #elif self.group_by=='none':
         elif self.group_by=='filter':
             if self.db==None: self.__initDB()
             seqs, seq_types = self.db.GetSequences(group_by='filter',
-                                                   max_mjd_diff=self.config_dict['general']['max_mjd_diff']/86400.0,
-                                                   max_ra_dec_diff=self.config_dict['general']['max_ra_dec_offset'],
-                                                   max_nfiles=self.config_dict['general']['max_num_files'])
+               max_mjd_diff=self.config_dict['general']['max_mjd_diff']/86400.0,
+               max_ra_dec_diff=self.config_dict['general']['max_ra_dec_offset'],
+               max_nfiles=self.config_dict['general']['max_num_files'])
         else:
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
@@ -1505,6 +1502,30 @@ class ReductionSet(object):
         if self.db==None: self.__initDB()
         master_files = []
         try:
+            master_files += self.reduceSet(self.red_mode, seqs_to_reduce=None, 
+                                           types_to_reduce=['DARK','DOME_FLAT',
+                                                           'SKY_FLAT'])
+        except Exception,e:
+            log.error("Some error while builing master calibration files...: %s", str(e))
+            raise e
+        
+        finally:
+            log.debug("Calibration files created : %s", master_files)
+            return master_files
+        
+    def buildCalibrations_orig(self):
+        """
+        ANY MORE USED !!!
+        
+        Build the whole master calibration files from the currect calibrations files
+        found in the data set (darks, flats)
+        """
+        
+        log.debug("Start builing the whole calibration files ...")
+        # If not initialized, Init DB
+        if self.db==None: self.__initDB()
+        master_files = []
+        try:
             master_files += self.buildMasterDarks()
             master_files += self.buildMasterDomeFlats()
             master_files += self.buildMasterTwFlats()
@@ -1520,6 +1541,8 @@ class ReductionSet(object):
         
     def buildGainMaps(self, type="all"):
         """
+        ANY MORE USED !!!
+        
         Look for master flats (sky, twlight,dome or all) files in the data set, group them by
         FILTER and create the master gainmap, as many as found groups
         
@@ -1527,7 +1550,6 @@ class ReductionSet(object):
         
         TODO: take into account the possibility to found several master flats and then combine them
         to build a gain map; at the moment only the first one found is used
-        
         """
         
         log.debug("Building GainMap for %s Flats", type)
@@ -1535,15 +1557,21 @@ class ReductionSet(object):
         # 1. Look for master flat frames
         full_flat_list = []
         if type=="all":
-            full_flat_list = self.db.GetFilesT(type="MASTER_SKY_FLAT", texp=-1, filter="ANY")
-            full_flat_list+= self.db.GetFilesT(type="MASTER_TW_FLAT", texp=-1, filter="ANY")
-            full_flat_list+= self.db.GetFilesT(type="MASTER_DOME_FLAT", texp=-1, filter="ANY")
+            full_flat_list = self.db.GetFilesT(type="MASTER_SKY_FLAT", 
+                                               texp=-1, filter="ANY")
+            full_flat_list+= self.db.GetFilesT(type="MASTER_TW_FLAT", 
+                                               texp=-1, filter="ANY")
+            full_flat_list+= self.db.GetFilesT(type="MASTER_DOME_FLAT",
+                                               texp=-1, filter="ANY")
         elif type=="sky":
-            full_flat_list = self.db.GetFilesT(type="MASTER_SKY_FLAT", texp=-1, filter="ANY")
+            full_flat_list = self.db.GetFilesT(type="MASTER_SKY_FLAT",
+                                               texp=-1, filter="ANY")
         elif type=="twlight":
-            full_flat_list = self.db.GetFilesT(type="MASTER_TW_FLAT", texp=-1, filter="ANY")
+            full_flat_list = self.db.GetFilesT(type="MASTER_TW_FLAT", 
+                                               texp=-1, filter="ANY")
         elif type=="dome":
-            full_flat_list = self.db.GetFilesT(type="MASTER_DOME_FLAT", texp=-1, filter="ANY")
+            full_flat_list = self.db.GetFilesT(type="MASTER_DOME_FLAT",
+                                               texp=-1, filter="ANY")
         else:
             log.error("Wrong type of master flat specified")
             raise Exception("Wrong type of master flat specified")
@@ -1615,6 +1643,8 @@ class ReductionSet(object):
 
     def buildMasterDarks(self):
         """
+        ANY MORE USED !!!
+        
         Look for dark files in the data set, group them by DIT,NCOADD and create
         the master darks, as many as found groups
         
@@ -1648,12 +1678,13 @@ class ReductionSet(object):
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
-                task = reduce.calDark.MasterDark (group, self.temp_dir, outfile, texp_scale=False)
+                task = reduce.calDark.MasterDark (group, self.temp_dir, 
+                                                  outfile, texp_scale=False)
                 out = task.createMaster()
                 l_mdarks.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("Some error while creating master dark: %s",str(e))
-                log.error("but, proceding with next dark group ...")
+                log.error("Proceding to next dark group ...")
                 #raise e
             if k<len(full_dark_list):
                 # reset the new group
@@ -1667,6 +1698,8 @@ class ReductionSet(object):
         
     def buildMasterDomeFlats(self):
         """
+        ANY MORE USED !!!
+        
         Look for DOME FLATS files in the data set, group them by FILTER and create
         the master DomeFlat, as many as found groups,i.e., filters.
         
@@ -1716,6 +1749,8 @@ class ReductionSet(object):
     
     def buildMasterTwFlats(self):
         """
+        ANY MORE USED !!!
+        
         Look for TwFlats files in the data set, group them by FILTER and create
         the master twflat, as many as found groups.
         
@@ -1777,6 +1812,8 @@ class ReductionSet(object):
     
     def buildMasterSuperFlats(self):
         """
+        ANY MORE USED !!!
+        
         Look for science/sky files in the data set, group them by FILTER and
         temporal proximity and then create the master superFlats, as many as
         found groups.
@@ -1816,14 +1853,14 @@ class ReductionSet(object):
         self.db.ListDataSet()  
         return l_mflats # a list of master super flats created
     
-    def reduceSet(self, red_mode=None, seqs_to_reduce=None):
+    def reduceSet(self, red_mode=None, seqs_to_reduce=None, types_to_reduce=['all']):
         """
-        This is the main method for full DataSet reduction supposed 
-        it was obtained with the PANIC OT. 
+        This is the main method for full DataSet reduction supposed it was 
+        obtained with the PANIC OT or grouped as 'filter'. 
         
         Main steps:
         
-         1. Get all OT sequences
+         1. Get all OT/filter sequences
          
          2. For seq in Sequence
     
@@ -1840,10 +1877,12 @@ class ReductionSet(object):
         seqs_to_reduce: list
             list of sequence number [0,N-1] to be reduced;
             default (None), all sequences found will be reduced.
+        types_to_reduces: str
+            Types of sequences to reduce (all, DARK, DOME_FLAT, TW_FLAT, SCIENCE). 
            
         Returns
         -------
-            The number of sequences successfully reduced.
+            The result files of sequences successfully reduced.
         
         """
         
@@ -1878,7 +1917,7 @@ class ReductionSet(object):
         
         k = 0
         for seq,type in zip(sequences, seq_types):
-            if k in seqs_to_reduce:
+            if k in seqs_to_reduce and ('all' in types_to_reduce or type in types_to_reduce):
                 log.debug("A Sequence is going to be reduced ... ")
                 try:
                     files_created += self.reduceSeq(seq, type)
@@ -1977,7 +2016,7 @@ class ReductionSet(object):
         Notes
         -----
         Calibration files will not be splited for the building of the master 
-        calibration file, but science files will be split. 
+        calibration file, but science files will. 
         In principle, not too much time could be saved if we split the calibration
         files during the building of master calibrations.
         However, the master calibration files will be split at the stage of

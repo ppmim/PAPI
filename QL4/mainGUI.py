@@ -204,6 +204,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.m_processing = False
         self.proc_started = False # QL processing activated (True) or deactivated (False)
         self._proc = None # variable to handle QProcess tasks
+        self._process = None # pointer to the current running multiprocessing.Process
         self.read_error_files = {} # a dictionary to track the error while reading/detecting FITS files
         
         
@@ -604,31 +605,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
     #####################################################
     ### SLOTS ###########################################
     #####################################################
-
-    def findOS_slot(self):
-        """ ONLY FOR A TEST - to be removed """
-        
-        parList,fileList = self.inputsDB.GetSeqFiles()
-        k=0
-        for seq in parList:
-            # create the father
-            elem = QTreeWidgetItem( self.listView_OS )
-            elem.setText (0, "OB_ID="+str(seq[0])+" OB_PAT="+seq[1]+" FILTER="+seq[2] ) # OB_ID + OB_PAT + FILTER
-            #elem.setText (1, str(seq[1])) # OB_PAT
-            #elem.setText (2, str(seq[2])) # FILTER
-            for file in fileList[k]:
-                (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
-                 dec, object, mjd) = self.inputsDB.GetFileInfo(file)
-                e_child = QTreeWidgetItem (elem)
-                e_child.setText (0, str(file))
-                e_child.setText (1, str(type))
-                e_child.setText (2, str(filter))
-                e_child.setText (3, str(texp))
-                e_child.setText (4, str(date)+"::"+str(ut_time))
-                e_child.setText (5, str(object))
-                e_child.setText (6, str(ra))
-                e_child.setText (7, str(dec))
-            k+=1    
     
     def setDataSourceDir_slot(self):
         """
@@ -1292,7 +1268,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def filename_filter_slot(self):
         """ Modify filename filter for the data collector"""
 
-        new_filter, ok = QInputDialog.getText("New filter","Enter filename filter:")
+        new_filter, ok = QInputDialog.getText(self, "New filter",
+                                              "Enter filename filter:")
         if ok and not new_filter.isEmpty():
             self.lineEdit_filename_filter.setText( str(new_filter) )
             self.dc.SetFileFilter( str(new_filter) )
@@ -2674,7 +2651,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def createCalibs_slot(self):
         
         """
-        Given the current data set files, compute the whole master calibration files
+        Given the current dataset files, compute the whole master calibration 
+        files found in the DB dataset.
         """
         
         fileList = self.inputsDB.GetFilesT("ANY")
@@ -2684,19 +2662,28 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
             
             try:
-                self._task = RS.ReductionSet( fileList, self.m_outputdir, out_file=self.m_outputdir+"/red_result.fits", \
-                                            obs_mode="dither", dark=None, flat=None, bpm=None, red_mode="quick",\
-                                            group_by=self.group_by, check_data=True, config_dict=self.config_opts )
+                self._task = RS.ReductionSet( fileList, self.m_outputdir, 
+                                            out_file=self.m_outputdir+"/red_result.fits",
+                                            obs_mode="dither", dark=None, 
+                                            flat=None, bpm=None, 
+                                            red_mode="quick",
+                                            group_by=self.group_by, 
+                                            check_data=True, 
+                                            config_dict=self.config_opts )
                 
-                thread=reduce.ExecTaskThread(self._task.buildCalibrations, self._task_info_list)
+                thread = reduce.ExecTaskThread(self._task.buildCalibrations, 
+                                             self._task_info_list)
                 thread.start()
-            except:
-                #Anyway, restore cursor
-                # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
-                # thus the ExecTaskThread can't restore the cursor
+            except Exception,e:
+                # Anyway, restore cursor.
+                # Although it should be restored in checkLastTask, could happend 
+                # an exception while creating the class RS, thus the 
+                # ExecTaskThread can't restore the cursor.
                 QApplication.restoreOverrideCursor() 
                 QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
-                raise
+                raise e
+        else:
+            QMessageBox.information(self,"Info", QString("No files found"))
     
     def helpIndex(self):
         """Show help on the default browser"""
@@ -2777,7 +2764,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     self.processFiles()
                 
  
-    
+    def stopProcessing(self):
+        """Stop the processing throwing away all the tasks in the queue"""
+        while not self._task_queue.empty():
+            self._task_queue.get_nowait()
+            log.debug("Queue empted")
+        
+        if self._process!=None and self._process.is_alive():
+            self._process.terminate()
+        #else:
+        #    print "da igual, lo paro"
+        #    self._process.terminate()
+        
+        self.m_processing = False
+        QApplication.restoreOverrideCursor()
+        log.info("Processing stopped !")
+        self.logConsole.debug("Processing stopped !")
+            
+        
     def worker1(self, input, output):
         #print "arg_1=",input.get()
         for func, args in iter(input.get, 'STOP'):
@@ -2898,8 +2902,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                 #'mutex' variable 
                 self.m_processing = True
-                Process(target=self.worker, 
-                    args=(self._task_queue, self._done_queue)).start()
+                self._process = Process(target=self.worker, 
+                    args=(self._task_queue, self._done_queue))
+                self._process.start()
             except Exception,e:
                 #NOTE: I think this point will never be reached !!!
                 log.error("Error in task Runner: %s"%(str(e)))

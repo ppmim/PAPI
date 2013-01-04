@@ -465,7 +465,7 @@ class DataSet(object):
          
         Returns
         -------
-        A List of types [DARK, FLAT, etc] and list of list, having each list 
+        A List of types [DARK, DOME_FLAT, TW_FLAT, SCIENCE] and list of list, having each list 
         the list of files beloging to.
 
         Notes
@@ -507,7 +507,7 @@ class DataSet(object):
         rows = cur.fetchall()
         par_list2 = []
         if len(rows)>0:
-            par_list2 = [ [str(f[0]), "DOME_FLAT"]  for f in rows] # important to apply str() ??
+            par_list2 = [ [str(f[0]), "DOME_FLAT"] for f in rows] # important to apply str() ??
         print "(2nd) Total rows selected:  %d" %(len(par_list2))
         print "(2nd) Filters found :\n ", par_list2
 
@@ -529,7 +529,10 @@ class DataSet(object):
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             #print "====> %d files found for Filter %s" %(len(rows), par[0])
 
-        # Now, look for temporal/spatial/size gap inside the current sequences found
+        #
+        # Now, look for temporal/spatial/size gap inside the current sequences 
+        # found.
+        #
         new_seq_list = []
         new_seq_par = []
         k = 0
@@ -550,6 +553,14 @@ class DataSet(object):
                 #print "RA=",ra
                 #print "DIF_DEC=",math.fabs(dec-dec_0)
                 #print "LEN_GROUP=",len(group)
+
+                #Note: Currently, this code will not distinguish between next
+                # dark sequences:
+                #     - 2s 2s 2s  5s 5s 5s 10s 10s 10s 20s 20s 20s ...
+                #     - 2s 5s 10s 20s ...
+                # both will be classified as dark_model sequences, but
+                # if max_nfiles=3, then they will be distinguished, although
+                # it will also affect the other sequences. 
                 if (math.fabs(t-mjd_0) < max_mjd_diff and
                     math.fabs(ra-ra_0) < max_ra_dec_diff and
                     math.fabs(dec-dec_0) < max_ra_dec_diff and
