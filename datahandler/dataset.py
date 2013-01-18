@@ -131,6 +131,14 @@ class DataSet(object):
         if filename==None: return 0
         
         try:
+            if self.GetFileInfo(filename)!=None:
+                log.error("File %s not inserted, it is already in Database."%filename)
+                return 0
+        except Exception,e:
+            log.exception( "Unexpected error reading FITS file %s" %filename )
+            raise e
+        
+        try:
             fitsf = datahandler.ClFits ( filename )
         except Exception,e:
             log.exception( "Unexpected error reading FITS file %s" %filename )
@@ -418,9 +426,9 @@ class DataSet(object):
         #s_select="select ob_id from dataset where %s group by ob_id" %(s_filter)
         s_select="select DISTINCT ob_id from dataset where %s" %(s_filter)
         #print s_select
-        cur=self.con.cursor()
+        cur = self.con.cursor()
         cur.execute(s_select,(filter,))
-        rows=cur.fetchall()
+        rows = cur.fetchall()
         if len(rows)>0:
             ob_id_list = [str(f[0]) for f in rows] # important to apply str() !!
         print "Total rows selected:  %d" %(len(ob_id_list))
@@ -1073,13 +1081,13 @@ class DataSet(object):
         try:
             # CAUTION: if we modify the query values in the SELECT, it will 
             # affect a lot of code in PAPI !!!! need to be re-writed !!
-            s_select="select date, ut_time, type, filter, texp, detector_id,\
+            s_select = "select date, ut_time, type, filter, texp, detector_id,\
              run_id, ra, dec, object, mjd from dataset where filename=?"
              
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             cur.execute(s_select, (filename,))
             
-            rows=cur.fetchall()
+            rows = cur.fetchall()
             if len(rows)==0:
                 # Any match
                 return None

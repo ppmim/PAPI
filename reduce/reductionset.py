@@ -1938,6 +1938,9 @@ class ReductionSet(object):
     
         # print out the results
         #failed_sequences = len(seqs_to_reduce)-reduced_sequences
+        if failed_sequences==len(sequences):
+            raise Exception("All sequences to reduce failed !")
+        
         log.debug("[reduceSet] All sequences processed.")
         log.debug("[reduceSet] Files generated # %d #: ***"%len(files_created))
         for r_file in files_created: log.debug("\t    - %s"%r_file)

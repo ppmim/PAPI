@@ -314,75 +314,6 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_tempD">
-      <property name="geometry">
-       <rect>
-        <x>141</x>
-        <y>94</y>
-        <width>290</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="palette">
-       <palette>
-        <active>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>137</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </active>
-        <inactive>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>255</red>
-            <green>255</green>
-            <blue>137</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </inactive>
-        <disabled>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>244</red>
-            <green>244</green>
-            <blue>244</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </disabled>
-       </palette>
-      </property>
-      <property name="toolTip">
-       <string>Temporal files location</string>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButton_tempD">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>93</y>
-        <width>110</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="toolTip">
-       <string>Browse the temporal file location</string>
-      </property>
-      <property name="text">
-       <string>Temporary Dir</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="pushButton_outputD">
       <property name="geometry">
        <rect>
@@ -402,9 +333,9 @@
      <widget class="QPushButton" name="pushButton_file_filter">
       <property name="geometry">
        <rect>
-        <x>566</x>
+        <x>558</x>
         <y>30</y>
-        <width>151</width>
+        <width>131</width>
         <height>23</height>
        </rect>
       </property>
@@ -415,8 +346,8 @@
      <widget class="QPushButton" name="pushButton_createCalibs">
       <property name="geometry">
        <rect>
-        <x>778</x>
-        <y>130</y>
+        <x>770</x>
+        <y>110</y>
         <width>140</width>
         <height>23</height>
        </rect>
@@ -428,8 +359,8 @@
      <widget class="QLabel" name="textLabel4_2_3">
       <property name="geometry">
        <rect>
-        <x>8</x>
-        <y>170</y>
+        <x>20</x>
+        <y>150</y>
         <width>110</width>
         <height>20</height>
        </rect>
@@ -450,8 +381,8 @@
      <widget class="QLabel" name="textLabel4_2">
       <property name="geometry">
        <rect>
-        <x>378</x>
-        <y>140</y>
+        <x>18</x>
+        <y>101</y>
         <width>110</width>
         <height>20</height>
        </rect>
@@ -472,8 +403,8 @@
      <widget class="QComboBox" name="comboBox_classFilter">
       <property name="geometry">
        <rect>
-        <x>378</x>
-        <y>160</y>
+        <x>18</x>
+        <y>121</y>
         <width>110</width>
         <height>21</height>
        </rect>
@@ -525,8 +456,8 @@
      <widget class="QComboBox" name="comboBox_QL_Mode">
       <property name="geometry">
        <rect>
-        <x>514</x>
-        <y>160</y>
+        <x>154</x>
+        <y>121</y>
         <width>110</width>
         <height>21</height>
        </rect>
@@ -568,8 +499,8 @@
      <widget class="QLabel" name="textLabel4_2_2">
       <property name="geometry">
        <rect>
-        <x>520</x>
-        <y>139</y>
+        <x>160</x>
+        <y>100</y>
         <width>80</width>
         <height>20</height>
        </rect>
@@ -590,8 +521,8 @@
      <widget class="QPushButton" name="pushButton_start_proc">
       <property name="geometry">
        <rect>
-        <x>777</x>
-        <y>160</y>
+        <x>770</x>
+        <y>140</y>
         <width>140</width>
         <height>23</height>
        </rect>
@@ -1019,7 +950,7 @@
       <property name="geometry">
        <rect>
         <x>650</x>
-        <y>160</y>
+        <y>139</y>
         <width>111</width>
         <height>24</height>
        </rect>
@@ -1178,9 +1109,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>190</y>
+        <y>170</y>
         <width>911</width>
-        <height>191</height>
+        <height>211</height>
        </rect>
       </property>
       <property name="selectionMode">
@@ -1237,7 +1168,7 @@
       <property name="geometry">
        <rect>
         <x>494</x>
-        <y>80</y>
+        <y>64</y>
         <width>60</width>
         <height>21</height>
        </rect>
@@ -1292,14 +1223,20 @@
      <widget class="QLabel" name="label">
       <property name="geometry">
        <rect>
-        <x>572</x>
-        <y>81</y>
-        <width>120</width>
+        <x>563</x>
+        <y>65</y>
+        <width>141</width>
         <height>20</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
       <property name="text">
-       <string>Seqs. in the queue</string>
+       <string>#Seqs. in the queue</string>
       </property>
      </widget>
     </widget>
@@ -1313,7 +1250,7 @@
         <x>20</x>
         <y>10</y>
         <width>181</width>
-        <height>81</height>
+        <height>131</height>
        </rect>
       </property>
       <property name="title">
@@ -1340,6 +1277,63 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_tempD">
+         <property name="toolTip">
+          <string>Browse the temporal file location</string>
+         </property>
+         <property name="text">
+          <string>Temporary Dir</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit_tempD">
+         <property name="palette">
+          <palette>
+           <active>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>137</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </active>
+           <inactive>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>137</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </inactive>
+           <disabled>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>244</red>
+               <green>244</green>
+               <blue>244</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </disabled>
+          </palette>
+         </property>
+         <property name="toolTip">
+          <string>Temporal files location</string>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QGroupBox" name="groupBox_2">
@@ -1348,7 +1342,7 @@
         <x>230</x>
         <y>10</y>
         <width>421</width>
-        <height>101</height>
+        <height>131</height>
        </rect>
       </property>
       <property name="title">
@@ -1626,7 +1620,7 @@
         <x>660</x>
         <y>10</y>
         <width>251</width>
-        <height>101</height>
+        <height>131</height>
        </rect>
       </property>
       <property name="title">
@@ -1706,9 +1700,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>130</y>
+        <y>153</y>
         <width>271</width>
-        <height>261</height>
+        <height>260</height>
        </rect>
       </property>
       <property name="title">
@@ -1788,7 +1782,7 @@
       <property name="geometry">
        <rect>
         <x>310</x>
-        <y>130</y>
+        <y>152</y>
         <width>601</width>
         <height>271</height>
        </rect>
@@ -2348,6 +2342,24 @@
         <width>901</width>
         <height>391</height>
        </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Page</string>
+     </attribute>
+     <widget class="QListView" name="listView_preferences">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>20</y>
+        <width>691</width>
+        <height>121</height>
+       </rect>
+      </property>
+      <property name="viewMode">
+       <enum>QListView::IconMode</enum>
       </property>
      </widget>
     </widget>
@@ -3345,22 +3357,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_tempD</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>setTempDir_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>34</x>
-     <y>169</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>quitAction</sender>
    <signal>activated()</signal>
    <receiver>panicQL</receiver>
@@ -3463,12 +3459,12 @@
    <slot>toggle()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>433</x>
-     <y>303</y>
+     <x>437</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
-     <x>433</x>
-     <y>278</y>
+     <x>437</x>
+     <y>297</y>
     </hint>
    </hints>
   </connection>
@@ -3479,12 +3475,12 @@
    <slot>toggle()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>433</x>
-     <y>303</y>
+     <x>437</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
-     <x>413</x>
-     <y>252</y>
+     <x>417</x>
+     <y>271</y>
     </hint>
    </hints>
   </connection>
@@ -3495,12 +3491,12 @@
    <slot>toggle()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>433</x>
-     <y>278</y>
+     <x>437</x>
+     <y>297</y>
     </hint>
     <hint type="destinationlabel">
-     <x>433</x>
-     <y>303</y>
+     <x>437</x>
+     <y>322</y>
     </hint>
    </hints>
   </connection>
@@ -3559,12 +3555,28 @@
    <slot>data_grouping_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>266</x>
-     <y>164</y>
+     <x>494</x>
+     <y>172</y>
     </hint>
     <hint type="destinationlabel">
      <x>634</x>
      <y>-8</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_tempD</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>setTempDir_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>178</x>
+     <y>174</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>485</x>
+     <y>-7</y>
     </hint>
    </hints>
   </connection>
@@ -3575,5 +3587,6 @@
   <slot>helpAbout()</slot>
   <slot>testSlot()</slot>
   <slot>data_grouping_slot()</slot>
+  <slot>setTempDir_slot()</slot>
  </slots>
 </ui>

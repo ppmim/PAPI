@@ -29,23 +29,21 @@
 # Last update: 23/06/2009    jmiguel@iaa.es
 #              17/09/2010    jmiguel@iaa.es - Added support to MEF files
 #              22/10/2010    jmiguel@iaa.es - Updated the way to find out MEF files
+#              17/01/2013    jmiguel@iaa.es - Modified the call to Sextractor,
+#                                             now using astromatic package.
 ################################################################################
 # Import necessary modules
 
-import datetime
-import getopt
+from optparse import OptionParser
 import numpy
 import numpy.ma as ma 
 import os
 import pyfits
 import sys
-import subprocess
-
-import numpy
-import fileinput
 
 
 import misc.utils as utils
+import astromatic
 
 from misc.paLog import log
 
@@ -63,10 +61,9 @@ class CheckQuality(object):
        If no error, a seeing estimation value
     """
     def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge=200, 
-                 pixsize=0.45, write=False, verbose=False, bpm=None):
+                 pixsize=0.45, write=False):
         
         self.input_file = input_file
-        self.bpm = bpm
         # Default parameters values
         self.isomin = float(isomin)
         self.ellipmax = float(ellipmax)
@@ -79,29 +76,53 @@ class CheckQuality(object):
     
     def estimateFWHM(self):
         """ 
-         FWHM estimation
-         --------------- 
-         Generating a ascii text catalog with Sextractor, we can read the FWHM values 
-         and give an estimation of the FWHM computing the median of all the values
+        A FWHM of the current image is estimated using the 'best' stars on it.
+        Generating an ascii text catalog with Sextractor, we can read the FWHM 
+        values and give an estimation of the FWHM computing the median of the 
+        'best' values/stars than fulfill some requirements, ie., ellipticity, 
+        snr, location, etc. 
         
-         It is very important that sextractor config file has the SATUR_LEVEL parameter
-         with a suitable value. In other case, we won't get any value for FWHM. 
+        It is very important that sextractor config file has the SATUR_LEVEL 
+        parameter with a suitable value. In other case, we won't get any value 
+        for FWHM. 
         
-         SNR estimation as FLUX_AUTO/FLUXERR_AUTO or FLUX_APER/FLUXERR_APER
-       
-        Returns:
-	-------
-        A couple of values (fwhm,std) 
-    
+        SNR estimation as FLUX_AUTO/FLUXERR_AUTO or FLUX_APER/FLUXERR_APER
+        
+        Returns
+        -------
+        A couple of values (efwhm, std):
+        
+        efwhm : float
+            Estimated FWHM.
+        std: float
+            Standard deviation of the FWHM.
         """
-        
-        # Sextractor config
 
+        # SExtractor configuration
         
-        sex_exe = os.environ['TERAPIX']+"/sex"
-        sex_cnf = os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
+        catalog_file = "test.cat"
+        sex_cnf = os.environ['PAPI_HOME'] + "/irdr/src/config/default.sex"
+        sex = astromatic.SExtractor()
+        #sex.config['CONFIG_FILE']= "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
+        sex.config['CONFIG_FILE']= sex_cnf
+        #sex.config['PARAMETERS_NAME'] = os.environ['PAPI_HOME'] + "/irdr/src/config/default.param"
+        #sex.config['CATALOG_TYPE'] = "ASCII"
+        #sex.config['CHECKIMAGE_TYPE'] = "NONE"
+        #sex.config['PIXEL_SCALE'] = 0.45
+        #sex.config['GAIN'] = 4.15
+        #sex.config['SATUR_LEVEL'] = 1500000
+        #sex.config['CATALOG_NAME'] = catalog_file
+        #sex.config['DETECT_THRESH'] = config_dict['astrometry']['mask_thresh']
+        #sex.config['DETECT_MINAREA'] = config_dict['astrometry']['mask_minarea']
         
-        ## Sextractor Catalog columns
+        # SExtractor execution
+        try:
+            sex.run(self.input_file, updateconfig=False, clean=False)
+        except Exception,e:
+            log.error("Error running SExtractor: %s"%str(e))  
+            raise e
+        
+        ## SExtractor Catalog columns required and expected
         #0  NUMBER
         #1  X_IMAGE
         #2  Y_IMAGE
@@ -118,23 +139,8 @@ class CheckQuality(object):
         #13 FLUX_APER
         #14 FLUXERR_APER
         
-        catalog_file = "test.cat"
-        
-        sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + \
-        " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " + "-CHECKIMAGE_TYPE NONE" + \
-        " -CATALOG_TYPE ASCII -CATALOG_NAME  " + catalog_file
-        
-        # SExtractor execution
-        
-        try:
-            if utils.runCmd( sex_cmd )==0:
-                raise Exception("Some error happended while running SExtractor")
-        except Exception,e:
-            log.error("Some error while runCmd")
-            raise e
-        
         source_file = catalog_file
-        
+
         try:
             if self.write: fits_file = pyfits.open(self.input_file, 'update')
             else: fits_file = pyfits.open(self.input_file, 'readonly')
@@ -154,15 +160,17 @@ class CheckQuality(object):
             raise Exception("Error while reading FITS header NAXIS keywords")
             
         
+        # Now, read the SEx catalog
         #fwhm_world=[float(line.split()[7]) for line in fileinput.input(source_file)]
         #matrix=[line.split() for line in fileinput.input(source_file)]
         #b=numpy.array(matrix)
+        
         a = numpy.loadtxt(source_file)
         
         good_stars = []
         # Select 'best' stars for the estimation
         std = numpy.std(a[:,8])
-        print "STD=",std
+        print "Initial STD of FWHM=",std
         for i in range(0, a.shape[0]):
             x = a[i,1]
             y = a[i,2]
@@ -174,7 +182,11 @@ class CheckQuality(object):
             flags = a[i,12]
             #fa=a[i,13]
             #fea=a[i,14]
-            snr = flux/flux_err
+            if flux_err!=0:
+                snr = flux/flux_err
+                #print "SNR=",snr
+            else:
+                continue
             if x>self.edge and x<naxis1-self.edge and y>self.edge and y<naxis2-self.edge \
                and ellipticity<self.ellipmax and fwhm>0.1 and fwhm<20 and flags==0  \
                and isoarea>float(self.isomin) and snr>20.0: # and fwhm<5*std it does not work many times
@@ -195,11 +207,11 @@ class CheckQuality(object):
         
         if len(m_good_stars)>self.MIN_NUMBER_GOOD_STARS:
             std = numpy.std(m_good_stars[:,8])
-            print "STD2=",std
+            print "STD2 = ",std
             efwhm = numpy.median(m_good_stars[:,8])
-            print "best-FWHM-median(pixels)", efwhm
+            print "best-FWHM-median(pixels) = ", efwhm
             print "FLUX_RADIUS (as mentioned in Terapix T0004 explanatory table) =", numpy.median(m_good_stars[:,9])
-            print "Masked-mean=", ma.masked_outside(m_good_stars[:,8], 0.01, 3*std).mean()
+            print "Masked-mean = ", ma.masked_outside(m_good_stars[:,8], 0.01, 3*std).mean()
             
             if self.write:
                 fits_file[0].header.update('hierarch PAPI.SEEING', efwhm*self.pixsize)
@@ -212,7 +224,6 @@ class CheckQuality(object):
         
         #print "FWHM-median(pixels)= ", numpy.median(fwhm_world), numpy.amin(fwhm_world), numpy.amax(fwhm_world)
         #print "FWHM-mean(pixels)= ", numpy.mean(fwhm_world)
-        print "\n----------"
         
         fits_file.close(output_verify='ignore')
         
@@ -223,120 +234,107 @@ class CheckQuality(object):
       
     def estimateBackground(self, output_file):
         """ 
-         Background estimation
-         ---------------------- 
-         Run SExtractor to esimte the image background 
-         
+        Runs SExtractor to estimate the image background.
+        
+        Parameters
+        ----------
+        output_file: str
+            Filename of the image background to be generated.
+            
+        Returns
+        ------- 
+        The image background file obtained by SEextractor,ie, output_file. 
         """
         
         # Sextractor config
-
-        sex_exe = os.environ['TERAPIX']+"/sex "
-        sex_cnf = os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
-        background_image = output_file
         
-        sex_cmd = sex_exe + " " + self.input_file + " -c " + sex_cnf + " -PIXEL_SCALE 0.45 -GAIN 4.15 -SATUR_LEVEL 1500000 " +\
-        " -CHECKIMAGE_TYPE  BACKGROUND -CHECKIMAGE_NAME  " + background_image
+        sex_cnf = os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
+        sex = astromatic.SExtractor()
+        #sex.config['CONFIG_FILE']= "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
+        sex.config['CONFIG_FILE']= sex_cnf
+        #sex.config['CATALOG_TYPE'] = "ASCII"
+        sex.config['CHECKIMAGE_TYPE'] = "BACKGROUND"
+        #sex.config['PIXEL_SCALE'] = 0.45
+        #sex.config['GAIN'] = 4.15
+        #sex.config['SATUR_LEVEL'] = 1500000
+        sex.config['CHECKIMAGE_NAME'] = output_file
         
         # SExtractor execution
-        #os.chdir("/disk-a/caha/panic/DEVELOP/PIPELINE/PAPI/")
-        
-        if utils.runCmd( sex_cmd )==0:
-            raise Exception("Some error happended while running SExtractor")
+        try:
+            sex.run(self.input_file, updateconfig=False, clean=False)
+        except Exception,e:
+            log.error("Error running SExtractor: %s"%str(e))  
+            raise e
         else:
-            return  background_image     
+            return output_file     
 
             
-#-----------------------------------------------------------------------
-
-def usage():
-    print ''
-    print 'NAME'
-    print '       checkQuality.py - FWHM estimation\n'
-    print 'SYNOPSIS'
-    print '       checkQuality.py [options] -f file.fits\n'
-    print 'DESCRIPTION'
-    print '       Give an estimation of the FWHM of the input image using'
-    print '       values computed with SExtractor'
-    print ' '
-    print 'OPTIONS'
-    print '       -v : verbose debugging output\n'
-    print '       -i --isomin 10      minimun SExtractor ISOAREA_IMAGE (float)'
-    print '       -e --ellipmax 0.2   maximun SExtractor ELLIPTICITY (float)'
-    print '       -d --edge 200       consider sources out of image borders (int)'
-    print '       -p --pixsize 0.45   pixel size (float)'
-    print '       -w --write          update header with PA_SEEING keyword (bool)'
-    print 'VERSION'
-    print '       23 June 2009'
-    print ''
-    raise SystemExit
-
-#-----------------------------------------------------------------------
-
-
-
 
 ################################################################################
 # main
 if __name__ == "__main__":
-    print 'Start CheckQuality....'
     
-    # Read command line parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:i:e:d:p:wv',['file=','isomin=','ellipmax=','edge=','pixsize=','write','verbose'])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2)
+    # Get and check command-line options
+        
+    usage = "usage: %prog [options] arg1 arg2 ..."
+    desc = """This module gives an estimation of the FWHM of the input image 
+using best stars of its SExtractor catalog
+"""
+ 
+    parser = OptionParser(usage, description=desc)
     
-    nargs = len(sys.argv[1:])
-    nopts = len(opts)
-      
+    parser.add_option("-f", "--input_image",
+                  action="store", dest="input_image", 
+                  help="Input image to computer FWHM estimation.")
+                  
+    parser.add_option("-i", "--isoarea_min",
+                  action="store", dest="isoarea_min",type=int,
+                  help="Minimum value of ISOAREA (default = %default)",
+                  default=10)
     
-    isomin = 10
-    ellipmax = 0.3
-    edge = 200
-    pixsize =0.45
-    write = False
-    verbose = False
-    inputfile =''
-            
-    for option, par in opts:
-        if option in ('-v','--verbose'):      # verbose debugging output
-            verbose = True
-            print "Verbose true"
-        if option in ("-f", "--file"):
-            inputfile = par
-            print "inputfile=", inputfile
-        if option in ("-i", "--isomin"):
-            isomin = par
-            print "isomin=", isomin
-        if option in ("-e", "--ellipmax"):
-            ellipmax = par
-            print "ellipmax=",ellipmax
-        if option in ("-d", "--edge"):
-            edge = par
-            print "edge=", edge
-        if option in ("-p", "--pixsize"):
-            pixsize = par
-            print "pixsize=",pixsize
-        if option in ("-w", "--write"):
-            write = True
-            print "write=", write
-                
+    parser.add_option("-S", "--snr",
+                  action="store", dest="snr", type=int,
+                  help="Min SNR of stars to use (default = %default)",
+                  default=10)
     
-    # Error checking:
-    if not os.path.exists(inputfile):      # check whether input file exists
-        print inputfile, 'Input file does not exist'
-        usage()
+    parser.add_option("-e", "--ellipmax",
+                  action="store", dest="ellipmax", type=float, default=0.2,
+                  help="Maximum SExtractor ELLIPTICITY (default = %default)")
+                  
+    parser.add_option("-d", "--edge",
+                  action="store", dest="edge", type=int, 
+                  help="Consider sources out of image borders(default = %default)",
+                  default=200)
     
-    print '...reading', inputfile
-    try:
-        cq = CheckQuality(inputfile, isomin, ellipmax, edge, pixsize, write, verbose)
-        cq.estimateFWHM()
-    except:
-        log.error("There was some error !!")
-        raise
-    
-    print 'ending application....'
+    parser.add_option("-p", "--pixsize",
+                  action="store", dest="pixsize", type=float, 
+                  help="Pixel scale of the input image (default = %default)",
+                  default=0.45)
 
+    parser.add_option("-w", "--write",
+                  action="store_true", dest="write", default=True,
+                  help="update header with PA_SEEING keyword  [default=%default]")
+                                
+    (options, args) = parser.parse_args()
+    
+    
+    if not options.input_image or len(args)!=0: 
+    # args is the leftover positional arguments after all options have been processed
+        parser.print_help()
+        parser.error("wrong number of arguments " )
+    
+
+    if not os.path.exists(options.input_image):
+        log.error ("Input image %s does not exist", options.input_image)
+        sys.exit(0)
+        
+    try:
+        cq = CheckQuality(options.input_image, options.isoarea_min, options.ellipmax, 
+                          options.edge, options.pixsize, options.write)
+        cq.estimateFWHM()
+    except Exception,e:
+        log.error("There was some error: %s "%str(e))
+        sys.exit(0)
+        
+    print "Good job !"
     

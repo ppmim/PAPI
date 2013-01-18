@@ -254,8 +254,9 @@ def doAstrometry( input_image, output_image=None, catalog='2MASS',
     sex.config['DETECT_MINAREA'] = config_dict['astrometry']['mask_minarea']
     try:
         sex.run(input_image, updateconfig=True, clean=False)
-    except: 
-        raise
+    except Exception,e:
+        log.error("Error running SExtractor: %s"%str(e)) 
+        raise e
     
     # A test to apply single point mask
     #filter_area(input_image + ".ldac",100)

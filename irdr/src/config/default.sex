@@ -36,11 +36,11 @@ PHOT_APERTURES	5		# MAG_APER aperture diameter(s) in pixels
 PHOT_AUTOPARAMS	2.5, 3.5	# MAG_AUTO parameters: <Kron_fact>,<min_radius>
 PHOT_FLUXFRAC    0.5
 
-SATUR_LEVEL	300000.0		# level (in ADUs) at which arises saturation
+SATUR_LEVEL	1500000.0		# level (in ADUs) at which arises saturation
 
 MAG_ZEROPOINT	30.0		# magnitude zero-point
 MAG_GAMMA	4.0		# gamma of emulsion (for photographic scans)
-GAIN		8.0		# detector gain in e-/ADU.
+GAIN		4.15		# detector gain in e-/ADU.
 PIXEL_SCALE     0.45		# size of pixel in arcsec (0=use FITS WCS info).
 
 #------------------------- Star/Galaxy Separation ----------------------------
@@ -58,7 +58,7 @@ BACKPHOTO_THICK	24		# thickness of the background LOCAL annulus (*)
 
 #------------------------------ Check Image ----------------------------------
 
-CHECKIMAGE_TYPE	OBJECTS # can be one of "NONE", "BACKGROUND",
+CHECKIMAGE_TYPE	NONE # can be one of "NONE", "BACKGROUND",
 				# "MINIBACKGROUND", "-BACKGROUND", "OBJECTS",
 				# "-OBJECTS", "SEGMENTATION", "APERTURES",
 				# or "FILTERED" (*)

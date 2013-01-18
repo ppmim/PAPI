@@ -1823,6 +1823,27 @@ FELIZ AÑO NUEVO !!!
 - Elimino la 'tab-Pipeline' de la GUI del QL, pues no hacia nada.
 
 
+2013-01-17
+==========
+- Retomo modificaciones en QL:
+  
+   * cambio de sitio el TempDir, pues es algo no importante para el usuario;
+   lo muevo a la pestaña Setup
+   * elimino la opción "Stack-Frames" del Pop-up, y la "fundo" con "Quick-red",
+   pues al fin las dos estaban haciendo lo mismo, excepto que Stack-frames
+   buscaba los proximos en caso de solo seleccionar uno.
+- Modifico RS:reduceSet() para que en caso de que fallen todas la secuencias,
+lanze una excepción.
+
+- Elimino el bug que provocaba que se insertaran dos veces algunos de los ficheros
+generados por el QL, por ejemplo, al terminar de reducir se insertan en la outputDB,
+y al hacer click en "OutDir" se revisa el outdir y se insertan todos los que hubiese
+en dicho directorio, sin comprobar si ya habian sido insertados previamente.
+Para solucionarlo, compruebo en DB::insert(filename) si el filaname ya está en 
+la BD, de esta forma nunca podrá haber dos ficheros con el mismo nombre en la BD,
+entendiendo como nombre del fichero (path+filaname). 
+
+
 
 FOR NEXT VIDEOCONF
 ==================

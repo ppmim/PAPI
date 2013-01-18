@@ -810,7 +810,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.m_processing = False
                 # Return to the previus working directory
                 os.chdir(self._ini_cwd)
-                #Good moment to update the master calibration files    
+                #Good moment to update the master calibration files in widgets   
                 self._update_master_calibrations()
                 
                     
@@ -1432,9 +1432,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
-        self.subOwnSkyAct = QtGui.QAction("Subtract self-sky", self,
+        self.subOwnSkyAct = QtGui.QAction("Subtract own-sky", self,
             shortcut="Ctrl+S",
-            statusTip="Subtract self-sky", 
+            statusTip="Subtract own-sky", 
             triggered=self.subtract_ownSky_slot)
         
         self.subNearSkyAct = QtGui.QAction("Subtract near-Sky", self,
@@ -1446,11 +1446,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             shortcut="Ctrl+Q",
             statusTip="Run quick data reduction of selected files", 
             triggered=self.do_quick_reduction_slot)
-        
-        self.stackFrameAct = QtGui.QAction("Stack Frames", self,
-            shortcut="Ctrl+F",
-            statusTip="Stack selected files", 
-            triggered=self.createStackedFrame_slot)
         
         self.astroAct = QtGui.QAction("Astrometric Calib.", self,
             shortcut="Ctrl+a",
@@ -1573,7 +1568,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.subOwnSkyAct)
             popUpMenu.addAction(self.subNearSkyAct)
             popUpMenu.addAction(self.quickRedAct)
-            popUpMenu.addAction(self.stackFrameAct)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.astroAct)
             popUpMenu.addAction(self.photoAct)
@@ -1650,7 +1644,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if len(self.m_popup_l_sel)<5:
                 #print "#SEL_5-",len(self.m_popup_l_sel)
                 self.subNearSkyAct.setEnabled(False)
-                self.quickRedAct.setEnabled(False)
+                #self.quickRedAct.setEnabled(False)
             
         ## Finally, execute the popup
         popUpMenu.exec_(event.globalPos())
@@ -2079,22 +2073,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             pass
 
     
-    def do_quick_reduction_slot(self):
-        """ 
-        Run a quick reduction of the current user selected science files 
-        in the list view panel.
-        """
-            
-        if len(self.m_popup_l_sel)<5:
-            QMessageBox.information(self,"Info","Error, not enough frames selected to reduce (>=5) !")
-            return
-              
-        #Create working thread that compute sky-frame
-        try:
-            self.processFiles(self.m_popup_l_sel)
-        except Exception,e:
-            QMessageBox.critical(self, "Error", "Error while Quick data reduction: \n%s"%str(e))
-            raise e
 
     def createMasterDFlat_slot(self):
         
@@ -2459,15 +2437,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         except Exception,e:
             self.logConsole.error("ERROR: something wrong while computing background")
             raise e
-        
-    def createStackedFrame_slot(self):
+    
+    def do_quick_reduction_slot(self):
         """ 
-        Compute a stacked frame (subtract sky, shift and align) from a set of 
-        nearest (ra,dec, mjd) frames, selected by user or automatic search.
-        Actually, it is basically a quick-reduction !!! 
-        (see do_quick_reduction_slot), with the only difference that here we 
-        can look for the files to be reduced in automatic way or use the ones 
-        selected  by the user (as in do_quick_reduction_slot)
+        Run a quick-reduction (subtract sky, shift and align) from the set of 
+        frames, selected by user or automatic search based of nearest 
+        (ra,dec, mjd) ones.
         """
         
         file_n = 0 # really, not used for the moment
@@ -2521,10 +2496,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 return
                     
         # CASE 2: Stack frames selected by user in the list_view
-        elif len(self.m_popup_l_sel)>1 and len(self.m_popup_l_sel)<4:
+        elif len(self.m_popup_l_sel)>1 and len(self.m_popup_l_sel)<5:
             QMessageBox.information(self,"Info","Error, not enough frames selected to reduce (>4) !")
             return    
-        elif len(self.m_popup_l_sel)>=4:
+        elif len(self.m_popup_l_sel)>=5:
             # Create file list from current selected science files
             for file in self.m_popup_l_sel :
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
