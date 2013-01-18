@@ -1843,6 +1843,15 @@ Para solucionarlo, compruebo en DB::insert(filename) si el filaname ya está en
 la BD, de esta forma nunca podrá haber dos ficheros con el mismo nombre en la BD,
 entendiendo como nombre del fichero (path+filaname). 
 
+2013-01-18
+==========
+- continuo depurando checkQuality para homogeneizar y que lea los ficheros de
+configuración de PAPI_CONF en lugar de irdr/conf/....
+Importante: actualizo los ficheros de configuracion de Sex del config_files con
+los que usaba checkQuality y que estaban dentro del directorio de IRDR de PAPI.
+
+- Añado a RS::reduceSingleObject la opcion de calcular el FWHM al final de 
+una quick-reduction; tb. lo añado como opción del fichero de configuracion de PAPI.
 
 
 FOR NEXT VIDEOCONF

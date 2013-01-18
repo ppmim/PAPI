@@ -61,7 +61,7 @@ class CheckQuality(object):
        If no error, a seeing estimation value
     """
     def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge=200, 
-                 pixsize=0.45, write=False):
+                 pixsize=0.45, gain = 4.15, sat_level=1500000, write=False):
         
         self.input_file = input_file
         # Default parameters values
@@ -69,6 +69,8 @@ class CheckQuality(object):
         self.ellipmax = float(ellipmax)
         self.edge = int(edge)
         self.pixsize = float(pixsize)
+        self.gain = float(gain)
+        self.satur_level = sat_level
         self.write = False
         self.verbose = False
         self.MIN_NUMBER_GOOD_STARS = 5
@@ -101,19 +103,23 @@ class CheckQuality(object):
         # SExtractor configuration
         
         catalog_file = "test.cat"
-        sex_cnf = os.environ['PAPI_HOME'] + "/irdr/src/config/default.sex"
+        try:
+            sex_cnf = os.environ['PAPI_HOME'] + "/config_files/sextractor.sex"
+        except Exception,e:
+            log.error("Error, variable PAPI_HOME not defined.")
+            raise e
+        
         sex = astromatic.SExtractor()
-        #sex.config['CONFIG_FILE']= "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
         sex.config['CONFIG_FILE']= sex_cnf
         #sex.config['PARAMETERS_NAME'] = os.environ['PAPI_HOME'] + "/irdr/src/config/default.param"
-        #sex.config['CATALOG_TYPE'] = "ASCII"
-        #sex.config['CHECKIMAGE_TYPE'] = "NONE"
-        #sex.config['PIXEL_SCALE'] = 0.45
-        #sex.config['GAIN'] = 4.15
-        #sex.config['SATUR_LEVEL'] = 1500000
-        #sex.config['CATALOG_NAME'] = catalog_file
-        #sex.config['DETECT_THRESH'] = config_dict['astrometry']['mask_thresh']
-        #sex.config['DETECT_MINAREA'] = config_dict['astrometry']['mask_minarea']
+        sex.ext_config['CATALOG_TYPE'] = "ASCII"
+        sex.ext_config['CHECKIMAGE_TYPE'] = "NONE"
+        sex.ext_config['PIXEL_SCALE'] = self.pixsize
+        sex.ext_config['GAIN'] = self.gain
+        sex.ext_config['SATUR_LEVEL'] = self.satur_level
+        sex.ext_config['CATALOG_NAME'] = catalog_file
+        #sex.ext_config['DETECT_THRESH'] = config_dict['astrometry']['mask_thresh']
+        #sex.ext_config['DETECT_MINAREA'] = config_dict['astrometry']['mask_minarea']
         
         # SExtractor execution
         try:
@@ -122,7 +128,7 @@ class CheckQuality(object):
             log.error("Error running SExtractor: %s"%str(e))  
             raise e
         
-        ## SExtractor Catalog columns required and expected
+        ## SExtractor Catalog columns required and expected (sextractor.param)
         #0  NUMBER
         #1  X_IMAGE
         #2  Y_IMAGE
@@ -247,17 +253,20 @@ class CheckQuality(object):
         """
         
         # Sextractor config
-        
-        sex_cnf = os.environ['PAPI_HOME']+"/irdr/src/config/default.sex"
+        try:
+            sex_cnf = os.environ['PAPI_HOME'] + "/config_files/sextractor.sex"
+        except Exception,e:
+            log.error("Error, variable PAPI_HOME not defined.")
+            raise e
         sex = astromatic.SExtractor()
         #sex.config['CONFIG_FILE']= "/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
         sex.config['CONFIG_FILE']= sex_cnf
         #sex.config['CATALOG_TYPE'] = "ASCII"
-        sex.config['CHECKIMAGE_TYPE'] = "BACKGROUND"
-        #sex.config['PIXEL_SCALE'] = 0.45
-        #sex.config['GAIN'] = 4.15
-        #sex.config['SATUR_LEVEL'] = 1500000
-        sex.config['CHECKIMAGE_NAME'] = output_file
+        sex.ext_config['CHECKIMAGE_TYPE'] = "BACKGROUND"
+        sex.ext_config['PIXEL_SCALE'] = self.pixsize
+        sex.ext_config['GAIN'] = self.gain
+        sex.ext_config['SATUR_LEVEL'] = self.satur_level
+        sex.ext_config['CHECKIMAGE_NAME'] = output_file
         
         # SExtractor execution
         try:
@@ -310,10 +319,20 @@ using best stars of its SExtractor catalog
                   action="store", dest="pixsize", type=float, 
                   help="Pixel scale of the input image (default = %default)",
                   default=0.45)
-
+    
+    parser.add_option("-g", "--gain",
+                  action="store", dest="gain", type=float, 
+                  help="Detector gain (default = %default)",
+                  default=4.15)
+    
+    parser.add_option("-l", "--satur_level",
+                  action="store", dest="satur_level", type=float, 
+                  help="Saturation level (default = %default)",
+                  default=1500000)
+    
     parser.add_option("-w", "--write",
                   action="store_true", dest="write", default=True,
-                  help="update header with PA_SEEING keyword  [default=%default]")
+                  help="Update header with PA_SEEING keyword  [default=%default]")
                                 
     (options, args) = parser.parse_args()
     
@@ -330,7 +349,8 @@ using best stars of its SExtractor catalog
         
     try:
         cq = CheckQuality(options.input_image, options.isoarea_min, options.ellipmax, 
-                          options.edge, options.pixsize, options.write)
+                          options.edge, options.pixsize, options.gain, 
+                          options.satur_level , options.write)
         cq.estimateFWHM()
     except Exception,e:
         log.error("There was some error: %s "%str(e))

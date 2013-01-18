@@ -428,6 +428,7 @@ def read_config_file(config_file = default_config_file()):
     general["remove_crosstalk"] = read_parameter(config, "general", "remove_crosstalk", bool, False, config_file)
     general["remove_cosmic_ray"] = read_parameter(config, "general", "remove_cosmic_ray", bool, False, config_file)
     general["purge_output"] = read_parameter(config, "general", "purge_output", bool, False, config_file)
+    general["estimate_fwhm"] = read_parameter(config, "general", "estimate_fwhm", bool, False, config_file)
     
     
     general["max_mjd_diff"] = read_parameter(config, "general", "max_mjd_diff", int, False, config_file)

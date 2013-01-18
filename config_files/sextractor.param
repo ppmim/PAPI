@@ -1,29 +1,27 @@
 NUMBER
-
 X_IMAGE
 Y_IMAGE
+ALPHA_J2000
+DELTA_J2000
 
-ALPHA_SKY
-DELTA_SKY
-
-XWIN_IMAGE      # parameter needed by SCAMP, do _not_ comment!
-YWIN_IMAGE      # parameter needed by SCAMP, do _not_ comment!
-
-ERRAWIN_IMAGE         # parameter needed by SCAMP, do _not_ comment!
-ERRBWIN_IMAGE         # parameter needed by SCAMP, do _not_ comment!
-ERRTHETAWIN_IMAGE     # parameter needed by SCAMP, do _not_ comment!
-
-# SCAMP advises (but it is not mandatory) to include optional SExtractor
-# catalogue fields: 
-#FLAGS
-#IMAFLAGS_ISO	# ... to filter out blended and corrupted detections
-FLUX_RADIUS	    # to identify small glitches or extended objects
+MAG_BEST
+ISOAREA_IMAGE
+ELLIPTICITY
+FWHM_IMAGE
+FLUX_RADIUS
+FLUX_APER
+FLUXERR_APER
+FLAGS
+#FLUX_AUTO
+#FLUXERR_AUTO
 
 
+#A_WORLD
 #FLUX_ISO
-FLUXERR_ISO
+#FLUXERR_ISO
 #MAG_ISO
 #MAGERR_ISO
+#B_WORLD
 
 #FLUX_ISOCOR
 #FLUXERR_ISOCOR
@@ -35,14 +33,14 @@ FLUXERR_ISO
 #MAG_APER(1)
 #MAGERR_APER(1)
 
-FLUX_AUTO         # parameter needed by SCAMP, do _not_ comment!
-FLUXERR_AUTO      # parameter needed by SCAMP, do _not_ comment!
+#FLUX_AUTO
+#FLUXERR_AUTO
 #MAG_AUTO
 #MAGERR_AUTO
 
 #FLUX_BEST
 #FLUXERR_BEST
-#MAG_BEST       # deprecated 
+#MAG_BEST
 #MAGERR_BEST
 
 #KRON_RADIUS
@@ -50,23 +48,22 @@ FLUXERR_AUTO      # parameter needed by SCAMP, do _not_ comment!
 
 #THRESHOLD
 #MU_THRESHOLD
-FLUX_MAX
+#FLUX_MAX
 #MU_MAX
-
-
-ISOAREAF_IMAGE  # Isophotal area (filtered) above Detection threshold (Pix^2)
-ISOAREAF_WORLD  # Isophotal area (filtered) above Detection threshold (Deg^2)
-ISOAREA_IMAGE
+#ISOAREA_IMAGE
+#ISOAREA_WORLD
 
 #XMIN_IMAGE
 #YMIN_IMAGE
 #XMAX_IMAGE
 #YMAX_IMAGE
 
-
+#X_IMAGE
+#Y_IMAGE
 #X_WORLD
 #Y_WORLD
-
+#ALPHA_SKY
+#DELTA_SKY
 #ALPHA_J2000
 #DELTA_J2000
 #ALPHA_B1950
@@ -97,8 +94,7 @@ ISOAREA_IMAGE
 #THETA_J2000
 #THETA_B1950
 
-# Do _not_ comment!
-ELONGATION
+#ELONGATION
 #ELLIPTICITY
 
 #ERRX2_IMAGE
@@ -138,7 +134,7 @@ ELONGATION
 #ISO6
 #ISO7
 
-FLAGS
+#FLAGS
 #IMAFLAGS_ISO(1)
 #NIMAFLAGS_ISO(1)
 

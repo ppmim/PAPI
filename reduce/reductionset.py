@@ -60,6 +60,7 @@ from misc.paLog import log
 #PAPI packages 
 import datahandler
 import reduce
+import reduce.checkQuality
 import misc.fileUtils
 import misc.utils
 from reduce.makeobjmask import *
@@ -2761,11 +2762,29 @@ class ReductionSet(object):
                                            do_votable=False)
              
             log.info("Generated output file ==>%s", output_file)
+
+            if self.config_dict['general']['estimate_fwhm']:
+                cq = reduce.checkQuality.CheckQuality(output_file)
+                try:
+                    (fwhm, std) = cq.estimateFWHM()
+                    if fwhm>0 and fwhm<20:
+                        log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
+                    elif fwhm<0 or fwhm>20:
+                        log.error("Wrong estimation of FWHM of file %s"%output_file)
+                        log.error("Please, review your data.")           
+                    else:
+                        log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
+                except Exception,e:
+                    self.logConsole.error("ERROR: something wrong while computing FWHM")
+                    raise e
+
             log.info("#########################################")
             log.info("##### End of QUICK data reduction ######")
             log.info("#########################################")
+
             return output_file 
         
+            
         ########################################################################
         # 8 - Create master object mask
         ########################################################################

@@ -1441,7 +1441,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             shortcut="Ctrl+N",
             statusTip="Subtract near sky", 
             triggered=self.subtract_nearSky_slot)
-        
+
         self.quickRedAct = QtGui.QAction("Quick-Reduction", self,
             shortcut="Ctrl+Q",
             statusTip="Run quick data reduction of selected files", 
@@ -2425,6 +2425,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def fwhm_estimation_slot (self):
         """ Give an FWHM estimation of the current selected image """
         
+        file_info = self.inputsDB.GetFileInfo(self.m_popup_l_sel[0])
+        if file_info!=None and file_info[2]!='SCIENCE':
+            QMessageBox.critical(self, "Error", "Selected file is not SCIENCE type")
+        elif file_info==None:
+            if self.outputsDB.GetFileInfo(self.m_popup_l_sel[0])[2]!='SCIENCE':
+                QMessageBox.critical(self, "Error", "Selected file is not SCIENCE type")
+            
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
         try:
             fwhm,std = cq.estimateFWHM()
@@ -2433,7 +2440,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                          .arg(fwhm)
                                          .arg(std)))
             else:
-                self.logConsole.error("ERROR: Cannot estimage FWHM with selected image")           
+                self.logConsole.error("ERROR: Cannot estimate FWHM with selected image")           
         except Exception,e:
             self.logConsole.error("ERROR: something wrong while computing background")
             raise e
