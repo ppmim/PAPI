@@ -1853,6 +1853,11 @@ los que usaba checkQuality y que estaban dentro del directorio de IRDR de PAPI.
 - Añado a RS::reduceSingleObject la opcion de calcular el FWHM al final de 
 una quick-reduction; tb. lo añado como opción del fichero de configuracion de PAPI.
 
+2013-01-21
+==========
+- Implementado refPixelCorrection.py para el tratamiento de los
+'ReferencePixels' basado en el métido de la WIRCAM (http://goo.gl/zdLdC)
+
 
 FOR NEXT VIDEOCONF
 ==================
@@ -1998,7 +2003,10 @@ pero, ¿ se podría hacer otra aproximación con los filtro que vaya a tener PAN
 que me puede dar problemas (filtro z), y en HAWK-I usan la mediana.
 Lo he cambiado todo par ausar la mediana.
 
-- Reference pixel, ¿ algún tratamiento ? de momento descarto
+- Reference pixel, ¿ algún tratamiento ? de momento descarto.
+  (ver como "quitar" los "Reference pixel"  en (http://bit.ly/YP5heF))
+  Implementado !! en refPixelCorrection.py, pero pendiente revisar resultados.
+
 
 - Me surge la duda sobre si para los Master TwLight flats es imprescindible
 un dark model o bastaría con un simple master_dark ?? Ahora mismo sólo
