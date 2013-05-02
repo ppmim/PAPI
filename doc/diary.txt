@@ -1858,6 +1858,62 @@ una quick-reduction; tb. lo añado como opción del fichero de configuracion de 
 - Implementado refPixelCorrection.py para el tratamiento de los
 'ReferencePixels' basado en el métido de la WIRCAM (http://goo.gl/zdLdC)
 
+2013-02-27
+==========
+- Retomo PAPI despues de varias semanas con el OSN (WeatherServer y nueva web meteo).
+- Me pongo a mejorar la rutina astrowarp para poder calibrar las imagenes de
+la CCDs del OSN (T150 y  T90). De entrada no funciona con ninguna, de queja SCAMP
+con el tipico mensaje de :
+
+    """
+    > Fixing the degrees of freedom
+    > WARNING: Not enough matched detections in instrument A1 
+    """
+
+  - Me doy cuenta de que la orientacion no sigue la norma de Norte arriba y Este
+  a izquierda. Hay que hacer un FlipY(vertical) para que las imagenes estén bien.
+  No se porque en los headers dice "Mirror/Rotate 90 CW", que es lo que está
+  seleccionado en Maxim/DL. Le pregunto a Fran a ver que me dice.
+
+- Instalo la ultima version de Astrometry.net en udit22 (opensuse12.2), pero
+no va bien. Da un error de dependencias de librerias .... y auque sigue trabajando,
+no es capaz de resolver los campos de Roper.
+
+
+2013-03-01
+==========
+
+- Reanudo pruebas de astrometría con SCAMP & Astrometry.net de cara a implementar
+la calibracion astrometrica en el archivo del OSN.
+
+
+2013-03-05
+==========
+-- Me descargo el nuevo "catalogo" de la serie index-40XX-YY.fits.bz2 que
+provienen de 2MASS:
+
+    wget -c -r -A .bz2 http://broiler.astrometry.net/~dstn/4000/ -o log.txt
+
+Des-cromprimidos ocupan 32GB !!!
+
+ - Lo pruebo con RoperT90 y aunque tarda mas que SCAMP, lo resulve:
+ 
+ solve-field --scale-units arcsecperpix --scale-low 0.7 --scale-high 0.8 /home/panic/as/90/new.fits --overwrite
+
+El mismo campo lo resuelve más rápido SCAMP usando astrowarp !!
+
+
+Astromatic.net (web service)
+----------------------------
+...get_or_create_image(df)
+  File "process_submissions.py", line 469, in get_or_create_image
+    img = create_source_list(df)
+  File "process_submissions.py", line 548, in create_source_list
+    raise e
+TypeError: cannot perform reduce with flexible type
+
+
+
 
 FOR NEXT VIDEOCONF
 ==================

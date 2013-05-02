@@ -543,6 +543,7 @@ class SCAMP:
         rcode = runCmd(commandline)
         
         if (rcode==1):
+            #print "ERROR!!!"
             raise SCAMP_Exception, \
                   "SCAMP command [%s] failed." % str(commandline)
         elif (rcode==2):

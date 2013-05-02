@@ -154,6 +154,10 @@ def refPixelCorrection(in_image, out_image=None, overwrite=False):
         med[i, 1] = numpy.median(im[lineQ12[i], 2048:4096])
         med[i, 2] = numpy.median(im[lineQ34[i], 0:2048])
         med[i, 3] = numpy.median(im[lineQ34[i], 2048:4096])
+        print "MED_line Q1 -->",med[:,0]
+        print "MED_line Q2 -->",med[:,1]
+        print "MED_line Q3 -->",med[:,2]
+        print "MED_line Q4 -->",med[:,3]
         #Apply offset so all columns have a median of zero
         reflines[i,:,0] = im[lineQ12[i], 0:2048] - med[i, 0]
         reflines[i,:,1] = im[lineQ12[i], 2048:4096] - med[i, 1]

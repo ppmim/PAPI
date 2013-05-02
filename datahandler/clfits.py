@@ -574,12 +574,18 @@ class ClFits (object):
                 #log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA']
+            elif 'OBJCTRA' in myfits[0].header:
+                a = myfits[0].header['OBJCTRA']
+                self._ra = float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
+                self._ra = self._ra * 360.0 / 24.0
             else:
                 raise Exception("No valid RA coordinate found")
         except Exception,e:
-            log.warning('Error reading RA keyword :%s',str(e))
+            log.error('Error reading RA keyword :%s',str(e))
             self._ra  = -1
-            
+        finally:
+            log.debug("RA = %s"%str(self._ra))
+
         #Dec-coordinate (in degrees)
         try:
             # WCS-coordinates are prefered than RA,DEC
@@ -591,17 +597,22 @@ class ClFits (object):
                 #log.debug("Read Dec-WCS coordinate =%s", self._dec)
             elif 'DEC' in myfits[0].header:
                 self._dec = myfits[0].header['DEC']
+            elif 'OBJCTDEC' in myfits[0].header:
+                a = myfits[0].header['OBJCTDEC']
+                self._dec = float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
             else:
                 raise Exception("No valid DEC coordinates found")
         except Exception,e:
-            log.warning('Error reading DEC keyword : %s', str(e))
+            log.error('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
+        finally:
+            log.debug("DEC = %s"%str(self._dec))
     
         try:
             self.equinox = myfits[0].header['EQUINOX']
         except KeyError:
             log.warning("EQUINOX keyword not found")
-            self.equinox=-1
+            self.equinox = -1
             
         #MJD-Modified julian date 'days' of observation
         try:

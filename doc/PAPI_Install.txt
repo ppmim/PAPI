@@ -132,7 +132,7 @@ PLPLOT para SCAMP (para generar ficheros png's):
     
       >hg clone https://bitbucket.org/pierrejoye/gd-libgd
       
-    2) Compilar dicha libraria (libgd):
+    2) Compilar dicha libreria (libgd):
        
        > cd gd-libgd
        > mkdir build
