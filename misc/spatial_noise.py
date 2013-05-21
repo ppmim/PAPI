@@ -58,7 +58,15 @@ def run_spatial_noise ( input_catalog, area, window, gain,
     """ 
     Takes a input catalog (ascii file) listing all the files to be used in the
     spatial noise analysis and performs the computation required for it. 
-    
+    RON is on the basis of two dark images with zero exposure. 
+    Both images have to be recorded at different time points with identical 
+    CCD settings. It can be used to check the noise value given by the 
+    manufacturer or to compare CCD cameras. The routine was inspired by:
+	
+	http://bit.ly/YUdJsD
+
+	Noise = stdDev(Darkframe1-Darkframe2)/sqrt(2)*AD-Factor/EM-Gain    
+ 
     Parameters
     ----------
     input_catalot: str

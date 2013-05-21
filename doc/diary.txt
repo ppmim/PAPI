@@ -1504,7 +1504,12 @@ equipo DELL y me dice lo siguiente:
 2012-11-08
 ==========
 - implemento spatial_noise.py para calcular el RON a partir de la ganancia
-y de una serie de parejas de imagenes con el mismo TEXP
+y de una serie de parejas de imagenes con el mismo TEXP.
+Esta basado en las rutinas que me pasó Josef Fried y en :
+  
+        http://bit.ly/YUdJsD
+
+        Noise = stdDev(Darkframe1-Darkframe2)/sqrt(2)*AD-Factor/EM-Gain
 
 
 2012-11-12
@@ -1912,20 +1917,130 @@ Astromatic.net (web service)
     raise e
 TypeError: cannot perform reduce with flexible type
 
+29-Abril-2013
+=============
+ 
+- Herramientas para medir prestaciones de la máquina:
+  
+* sysbench 
+Nota: para compilarla puede ser necesario cambiar lo siguiente:
+(http://www.randombugs.com/linux/compiling-sysbench-0412-debian.html)
+   En el fichero configure.ca
+    #AC_PROG_LIBTOOL 
+   AC_PROG_RANLIB
+
+Seeing this variable in configure.ca I just comment the variable and re run autogen.sh. This time all works flawlessly. After this I run
+
+./configure && make && make install
+with success.
+
+In short. Edit configure.ca:
+
+#AC_PROG_LIBTOOL
+AC_PROG_RANLIB
+and re-run
+
+./autogen.sh
+and your are ready to
+
+./configure && make && make install
+
+
+
+* Bonnie++
+* IoZone
+
+
+2013-05-02
+==========
+- Retomo la astrometría para ROPER del T150/T90:
+
+1- Hay que darle una matrix CDi_j que se aproxime.
+2- Probar con astrometry.net y astrowarp y ver cual funciona mejor
+
+
+2013-05-13
+==========
+- Test con Bonnie++
+"""
+panic@panic1:~/SOFTWARE/bonnie++-1.03e> ./bonnie++ -d /data1/bonie/
+Writing with putc()...done
+Writing intelligently...done
+Rewriting...done
+Reading with getc()...done
+Reading intelligently...done
+start 'em...done...done...done...
+Create files in sequential order...done.
+Stat files in sequential order...done.
+Delete files in sequential order...done.
+Create files in random order...done.
+Stat files in random order...done.
+Delete files in random order...done.
+Version 1.03e       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+panic1         126G 68870  86 87450  11 50864   8 103034  93 168632   7 442.5   1
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16 +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++
+panic1,126G,68870,86,87450,11,50864,8,103034,93,168632,7,442.5,1,16,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++
+"""
+
+
+"""
+panic@panic2:~/SOFTWARE/bonnie++-1.03e> ./bonnie++ -d /data2/prueba/
+Writing with putc()...done
+Writing intelligently...
+done
+Rewriting...
+
+done
+Reading with getc()...done
+Reading intelligently...done
+start 'em...done...done...done...
+Create files in sequential order...done.
+Stat files in sequential order...done.
+Delete files in sequential order...done.
+Create files in random order...done.
+Stat files in random order...done.
+Delete files in random order...done.
+Version 1.03e       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+panic2         126G 116656  99 306223  40 122402  17 107048  93 343784  19 545.2   1
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16 +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++
+panic2,126G,116656,99,306223,40,122402,17,107048,93,343784,19,545.2,1,16,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++
+"""
+
+
+21-Mayo-2013
+============
+- Sigo haciendo pruebas de las prestaciones de los RAIDs, ahora
+con la herramienta filebench, que parece muy interesante.
 
 
 
 FOR NEXT VIDEOCONF
 ==================
-- QL GUI: Migration from PyQt3 to PyQt4
-- Migracion a openSUSE12.2
-- improvements in photometry.py (avoid STILTS)
-- improvements in flat_field normalization (robust median instead of mean)
-
-- I think we'll need support for system Installation !!! opensuse12.2, RAIDs...!!
+- Computers received & partially installed (openSuSE 12.2 vs SLES 11SP2).
+- Running benchmarks to find out whether computers fit requirements.
+- Doing test with Astrometry.net with local catalog (alternative to SCAMP) 
 
 
-ExecTaskThread
+
+Questions:
+- Linearity values --> 15K ADUs for saturation
+- Readout modes for PANIC
+- GEIRS Upgrade for PANIC 
+- PICe Interface with ROE for testing with new computers ( ROE simulator ?)
+- How many serial ports are required ? or MOXA NPort (serial-ethernet converter) ? should also be tested !
+- any other interface
+- Ask CA about Archive interfece (run tests !)
+
 
 
 KDD con MATILDE (15-May-2012)

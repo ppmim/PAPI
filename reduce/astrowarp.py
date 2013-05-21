@@ -107,7 +107,7 @@ def initWCS( input_image, pixel_scale):
                     # CD matrix (the CDi_j elements) encode the sky position angle,
                     # the pixel scale, and a possible flipping.
                     # CD1_1 is <0 because East is supposed at Left = flipX
-                    # CD2_2 is >0 beceuse North is supposed at Up
+                    # CD2_2 is >0 because North is supposed at Up
                     # In addition, it must be noted that:
                     # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
                     # r = clockwise rotation_angle  
@@ -121,7 +121,7 @@ def initWCS( input_image, pixel_scale):
                     header.update("RA", ra, "Right Ascension (degree)")
                     header.update("DEC", dec, "Declination (degree)")
                     
-                # clean imcompatible CDi_j and CDELT matrices
+                # clean incompatible CDi_j and CDELT matrices
                 if "CDELT1" in header:
                     del header["CDELT1"]
                 if "CDELT2" in header:
