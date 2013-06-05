@@ -162,8 +162,8 @@ def checkWCS( header ):
     keywords_to_check=['NAXIS1','NAXIS2','CTYPE1','CTYPE2','CRVAL1','CRVAL2',
                        'CRPIX1','CRPIX2']
 
-
-    raise Exception("Forzamos la creacion de un nuevo header")
+    ## pruebas con CCD Roper OSN
+    ##raise Exception("Forzamos la creacion de un nuevo header")
 
     # Every header must have these keywords.
     for kw in keywords_to_check:

@@ -9,9 +9,10 @@
 # Modify some keyword value
 #
 # Created    : 25/11/2010    jmiguel@iaa.es -
-# Last update: 
+# Last update: 28/05/2013    jmiguel@iaa.es - 
+#             Adapted to work with old version of PyFITS (i.e., arch.osn.iaa.es)
 # TODO
-#       
+#     - Give a map of keyword-value as input
 ################################################################################
 
 ################################################################################
@@ -34,28 +35,41 @@ import numpy as np
 
 def modFits(files, keyword, value, ext=0):
     """
-    \brief Method used to modify some keywords in a list of FITS files
+    Method used to modify some keywords in a list of FITS files.
     
-    \par Description:
-        
-    \par Language:
-        Python, PyFITS
-    \param input_files
+    Parameters
+    ----------
+    input_files: sequence 
         A list FITS files
-    \param output_filename_suffix
-        (optional)Suffix to add to the outfile
-    \retval 0
-        If no error
-    \author
-        JMIbannez, IAA-CSIC
+        
+    output_filename_suffix: str
+        Optional suffix to add to the outfile
+
+    Returns
+    -------
+        Number of files modified
         
     """
            
     print "Starting modFits..."
-    n=0    
+    n = 0
+
+    pyfitsversion = pyfits.__version__.split(".")
+    pyfitsversion = [ a.split('-')[0] for a in pyfitsversion ]
+    if map(int, pyfitsversion) < map(int, ['2','4']):
+        old_version = True
+    else:
+        old_version = False
+        
     for file in files:        
         try:
-            hdulist = pyfits.open(file)
+            #To preserve image scale (BITPIX)--> do_not_scale_image_data (http://goo.gl/zYkc6)
+            #Other option, is use pyfits.ImageHDU.scale_back
+            if not old_version:
+                hdulist = pyfits.open(file, "update", do_not_scale_image_data=True)
+            else:
+                hdulist = pyfits.open(file, "update")
+                
         except IOError:
             print 'Error, can not open file %s' %(file)
             continue
@@ -66,18 +80,32 @@ def modFits(files, keyword, value, ext=0):
             continue
         
         try:
-            if keyword in hdulist[ext].header:
-                hdulist[ext].header.update(keyword,value)
-                hdulist.writeto(file,clobber=True)
+            if hdulist[ext].header[keyword] !=None:
+                if old_version:
+                    # store scaling information for later use, as this is deleted when the array is updated
+                    BZERO = hdulist[ext].header['BZERO']
+                    BSCALE = hdulist[ext].header['BSCALE']
+                    BITPIX = hdulist[ext].header['BITPIX']
+                    bitpix_designation = pyfits.ImageHDU.NumCode[BITPIX]
+    
+                hdulist[ext].header.update(keyword, value)
+                if old_version:
+                    hdulist[ext].scale(bitpix_designation, 'old')
+                    hdulist[ext].header.update('BZERO', BZERO)
+                    hdulist[ext].header.update('BSCALE', BSCALE)
+                    hdulist[ext].header.update('BITPIX', BITPIX)
+
+                hdulist.writeto(file, clobber=True, output_verify='ignore')
                 n+=1
             else:
                 print "[Error] Keyword  : %s does not exists !"%keyword
         except Exception,e:
-            print "[Error] Cannot modify keyword %s: \n %s"%(keyword,str(e))
+            print "[Error] Cannot modify keyword %s: \n %s"%(keyword, str(e))
         hdulist.close()    
     
     print "End of modFits. %d files modified"%n
-        
+    return n
+    
                                   
 ################################################################################
 # main
@@ -110,9 +138,9 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
     if options.fits:
-        filelist=[options.fits]
+        filelist = [options.fits]
     elif options.input_file_list:
-        filelist=[line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
+        filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
     else:
         parser.print_help()
         parser.error("incorrect number of arguments " )

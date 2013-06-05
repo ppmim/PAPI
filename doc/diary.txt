@@ -2022,7 +2022,85 @@ panic2,126G,116656,99,306223,40,122402,17,107048,93,343784,19,545.2,1,16,+++++,+
 - Sigo haciendo pruebas de las prestaciones de los RAIDs, ahora
 con la herramienta filebench, que parece muy interesante.
 
+22-Mayo-2013
+============
+-Parece que la herrmienta filebench no da siempre los mismos resultados,
+es decir, fluctuan bastante.
 
+
+
+23-Mayo-2013
+============
+-Actualización del documento de instalación de PAPI en openSuSE12.2, 
+para instalarlo en panic1/2.iaa.es y hacer pruebas.
+
+-Miro a ver si merece la pena instalar astropy pues integra PyFITS, pyvo, PyWCS, ...
+pero parece que puede haber algún problema con los imports que tengo yo
+en el código aunque se podrían solventar instalando los 'Compatibility packages'.
+Pero de momento lo voy a dejar.
+
+
+03-Junio-2013
+=============
+-Instalación de IRAF:
+
+* IRAF
+mkdir -p /iraf/iraf
+cd /iraf/iraf
+tar -xvzf /home/panic/SOFTWARE/PANIC/IRAF/iraf.lnux.x86_64.tar.gz 
+/iraf/iraf/unix/hlib/install
+
+* x11IRAF
+x11iraf (xgterm)
+----------------
+mkdir x11iraf (temporal directory used only for packege installation)
+cd x11iraf
+wget http://iraf.net/ftp/iraf/x11iraf/x11iraf-v1.5DEV-bin.redhat.tar.gz 
+tar xfz x11iraf-v1.5DEV-bin.redhat.tar.gz
+ln -s bin.redhat bin.suse
+ln -s lib.redhat lib.suse
+mkdir /usr/lib64/X11/app-defaults
+sudo ./install
+
+STSDAS And TABLES (v3.16)
+-------------------------
+
+cd /iraf/iraf/extern
+wget http://stsdas.stsci.edu/download/release_2013-03/stsci_iraf-3.16.redhat.tar.gz
+
+04-Junio-2013
+=============
+
+- Continuo con la instalación de PAPI en panic2 y comienzo pruebas de PAPI
+con datos de O2k.
+
+- Me doy cuenta de que la app kate vía ssh con panic2 va muy lenta; busco en
+la red y encuentro una solución:
+
+ > ssh -Y panic2.iaa.es  kate -graphicssystem native
+
+(http://lists.fedoraproject.org/pipermail/users/2012-May/417786.html)
+
+- Encuentro un bug en la version de pywcs (pywcs>=1.10.2) que usa stsci_python_2.14,
+respecto las keywords PV que genera SCAMP:
+
+""
+[PAPI]: 2013-06-04 19:01:06,044 ERROR    clfits:584: Error reading RA keyword :ERROR 6 in wcsset() at line 1561 of file wcslib/C/wcs.c:
+PV1_5 : Unrecognized coordinate transformation parameter.
+""
+-->https://github.com/astropy/astropy/issues/299
+
+Parece que de momento no hay parche, aunque con la pywcs_1.11 que yo usaba antes 
+también aparece el problema (comprobado en udit22).
+
+- Hago un :
+ 
+ > pip install pywcs --upgrade 
+ 
+ y se instala la ultima version de pywcs (1.11-4.7) pero el error sigue apareciendo!!!
+ 
+  """PV1_5 : Unrecognized coordinate transformation parameter"""
+ 
 
 FOR NEXT VIDEOCONF
 ==================

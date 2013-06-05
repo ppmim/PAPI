@@ -564,7 +564,7 @@ class ClFits (object):
         
         #RA-coordinate (in degrees)
         try:
-            # WCS-coordinates are prefered than RA,DEC
+            # WCS-coordinates are preferred than RA,DEC
             if ('CTYPE1' in myfits[0].header 
                             and myfits[0].header['CTYPE1']=='RA---TAN'):
                 
@@ -588,7 +588,7 @@ class ClFits (object):
 
         #Dec-coordinate (in degrees)
         try:
-            # WCS-coordinates are prefered than RA,DEC
+            # WCS-coordinates are preferred than RA,DEC
             if ('CTYPE2' in myfits[0].header 
                             and myfits[0].header['CTYPE2']=='DEC--TAN'):
                 wcs = pywcs.WCS(myfits[0].header)

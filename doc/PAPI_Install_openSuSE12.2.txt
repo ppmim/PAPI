@@ -303,11 +303,11 @@ B.1) Add science repository in order to install atlas/blas/lapack/fftw (etc):
 Add the file /etc/zypp/repos.d/science.repo with the next content:
 
 [science]
-name=Software for Scientists and Engineers (openSUSE_11.4)
+name=Software for Scientists and Engineers (openSUSE_12.2)
 type=rpm-md
-baseurl=http://download.opensuse.org/repositories/science/openSUSE_11.4/
+baseurl=http://download.opensuse.org/repositories/science/openSUSE_12.2/x86_64/
 gpgcheck=1
-gpgkey=http://download.opensuse.org/repositories/science/openSUSE_11.4/repodata/repomd.xml.key
+gpgkey=http://download.opensuse.org/repositories/science/openSUSE_12.2/repodata/repomd.xml.key
 enabled=1
 
 
