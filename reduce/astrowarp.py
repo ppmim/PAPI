@@ -65,7 +65,7 @@ def initWCS( input_image, pixel_scale):
             checkWCS(header)
             log.debug("FITS looks having a right WCS header")
         except Exception,e:
-            log.debug("No WCS compliant header, trying to create one ...")
+            log.warning("No WCS compliant header, trying to create one ...")
             try:
                 # Read some basic values
                 naxis1 = f.getNaxis1()
@@ -196,7 +196,7 @@ def checkWCS( header ):
 def doAstrometry(input_image, output_image=None, catalog='2MASS', 
                   config_dict=None, do_votable=False,
                   resample=True, subtract_back=True,
-                  pixel_scale=0.45):
+                  pixel_scale=0.1):
     """ Do the astrometric calibration to the input image (only one)
       
     The method does astrometry on the image entirely using Emmanuel Bertin's
