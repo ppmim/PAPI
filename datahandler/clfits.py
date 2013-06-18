@@ -28,6 +28,8 @@ import numpy
 
 from time import strftime
 
+import misc.wcsutil as wcsutil
+
 #Log
 from misc.paLog import log
 
@@ -565,13 +567,13 @@ class ClFits (object):
         #RA-coordinate (in degrees)
         try:
             # WCS-coordinates are preferred than RA,DEC
-            if ('CTYPE1' in myfits[0].header 
-                            and myfits[0].header['CTYPE1']=='RA---TAN'):
-                
-                wcs = pywcs.WCS(myfits[0].header)
-                center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
-                self._ra = wcs.wcs_pix2sky(center_pix, 1)[0][0] # ups, we are supposing naxis1 is RA axis
-                #log.debug("Read RA-WCS coordinate =%s", self._ra)
+            if ('CTYPE1' in myfits[0].header and
+                     (myfits[0].header['CTYPE1']=='RA---TAN' or
+                      myfits[0].header['CTYPE1']=='RA---TAN--SIP')):
+                log.debug("CTYPE1 present !")
+                wcs = wcsutil.WCS(myfits[0].header)
+                self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
+                log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA']
             elif 'OBJCTRA' in myfits[0].header:
@@ -589,12 +591,11 @@ class ClFits (object):
         #Dec-coordinate (in degrees)
         try:
             # WCS-coordinates are preferred than RA,DEC
-            if ('CTYPE2' in myfits[0].header 
-                            and myfits[0].header['CTYPE2']=='DEC--TAN'):
-                wcs = pywcs.WCS(myfits[0].header)
-                center_pix = numpy.array([[self.naxis1/2,self.naxis2/2]], numpy.float_)
-                self._dec = wcs.wcs_pix2sky(center_pix, 1)[0][1] # ups, we are supposing naxis2 is Declination axis
-                #log.debug("Read Dec-WCS coordinate =%s", self._dec)
+            if ('CTYPE2' in myfits[0].header and
+                     (myfits[0].header['CTYPE1']=='DEC--TAN' or
+                      myfits[0].header['CTYPE1']=='DEC--TAN--SIP')):
+                self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
+                log.debug("Read Dec-WCS coordinate =%s", self._dec)
             elif 'DEC' in myfits[0].header:
                 self._dec = myfits[0].header['DEC']
             elif 'OBJCTDEC' in myfits[0].header:

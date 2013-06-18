@@ -356,5 +356,4 @@ using best stars of its SExtractor catalog
         log.error("There was some error: %s "%str(e))
         sys.exit(0)
         
-    print "Good job !"
     

@@ -2100,13 +2100,86 @@ también aparece el problema (comprobado en udit22).
  y se instala la ultima version de pywcs (1.11-4.7) pero el error sigue apareciendo!!!
  
   """PV1_5 : Unrecognized coordinate transformation parameter"""
+
+
+07-Junio-2013
+=============
+- Instalo OPTPCI-e en panic2
+- Instalo driver  PlxLinux_v6.50_modified.tar.gz; con el warning del kernel ya conocido
+  La version PlxSdk_v6.50_modCL.tar.gz además del warning, da un error por asm/system.h.
+  En principio, comentandolo compila sin problemas, pero he optado por usar la 
+  version PlxLinux_v6.50_modified.tar.gz.
+  
+- Hago las pruebas que me dijo U.Mall según el punto 2.15.4 del documento CARMENES-FDR-04C2-NIR-Channel-ROE.pdf,
+pero no veo que el LED parpadee rapidamente como dice el manual cuando hacemos
+un (rotype dgen + read);
+
+- Además tengo algunas dudas sobre como instalar el driver para que lo lea
+en el arranque del sistema. La documentación no está completa, no encuentro
+el admin/plxload, aunque si hay un Plx_load/Plx_unload + argumento.
+Habrá que preguntar como se instala correctamente.
+
  
+12-Junio-2013
+=============
+- Videoconf de PANIC:
+  Sobre el sw, basicamente hablamos del problema detectado con las pruebas
+  de la OPTPCIe; sólo está Richard M., y dice que en un par de semanas
+  depurará el problema.
+ 
+- Ulrich me manda una rutina para que la compile y la pruebe en panic2 y le
+mande los resultados.
+ 
+13-Junio-2013
+=============
+- Pruebo la rutina de Ulrich M. con la version PLX_6.5 del driver. Antes tuve
+que aniadirle al fichero  OptPCI.h la siguiente linea:
+
+    typedef PLX_STATUS RETURN_CODE;
+
+pues la rutina que me mandó por lo visto era para la version PLX_6.31.
+
+- Le envio los resultados a Ulrich M. y me dice que son correctos, y que por
+tanto parece que la tarjeta está funcionando correctamente.
+Sin embargo, yo le comento que con la version PLX_7.00 no funciona su programa
+de pruebas. Me dice que lo depurará en la próxima semanas.
+
+
+14-Junio-2013
+=============
+- Encuentro bug importante en astrowarp debido a los cambios que estuve haciendo
+para la astrometría de la imagenes del OSN.
+
+
+17-Junio-2013
+=============
+- Encuentro una posible solución al problema que tiene pywcs con las keywords
+PVi_j:
+"""
+Error reading RA keyword :ERROR 6 in wcsset() at line 1561 of file pywcs/wcslib/C/wcs.c:
+PV1_5 : Unrecognized coordinate transformation parameter.
+"""
+
+La solución pasaría por usar el modulo wcsutil.py de http://code.google.com/p/esutil/.
+y usar image2sky/sky2image.
+
+
+- Otra opción sería convertir el modelos de distorsion de SCAMP (PVi_j) a la 
+proyección SIP, como describe el articulo "More Flexibility in representing
+geometric distortion in Astronomical Images", de David L.Shupe.
+Le escribí un email para ver si me podrían dejar el source de pv2sip/sip2pv pero
+me dijeron que no; que si quería que les mandase yo mi rutina y me dirían si
+estaba bien o no comparando los resultados.
+
+ 
+
 
 FOR NEXT VIDEOCONF
 ==================
-- Computers received & partially installed (openSuSE 12.2 vs SLES 11SP2).
-- Running benchmarks to find out whether computers fit requirements.
-- Doing test with Astrometry.net with local catalog (alternative to SCAMP) 
+- Tested OPTPCIe board with U.Mall routine (optpci_hw_test.c); results show 
+all is working well. (PLX_v6.5)
+
+
 
 
 
