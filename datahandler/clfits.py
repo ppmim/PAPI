@@ -538,10 +538,17 @@ class ClFits (object):
             
         #Number of coadds
         try:
-            self.ncoadds = myfits[0].header['NCOADDS']
+            if 'NCOADDS' in myfits[0].header:
+                self.ncoadds = myfits[0].header['NCOADDS']
+            elif 'NDIT' in myfits[0].header:
+                self.ncoadds = myfits[0].header['NDIT']
+            elif 'HIERARCH ESO DET NDIT' in myfits[0].header:
+                self.ncoadds = myfits[0].header['HIERARCH ESO DET NDIT']
+            else:
+                self.ncoadds = 1
         except KeyError:
-            log.warning('NCOADDS keyword not found')
-            self.ncoadds  = -1
+            log.warning('NCOADDS keyword not found. Taken default value (=1)')
+            self.ncoadds  = 1
                  
         #Read-Mode
         try:

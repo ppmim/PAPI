@@ -2216,6 +2216,19 @@ Además habrá que leer bien los comentarios de E.Bertin en el foro :
     http://www.astromatic.net/forum/showthread.php?tid=759
 
 
+21-Junio-2013
+=============
+- Me pongo a solucionar el problema de la propagacion de la key NCOADDS y 
+establacer en el fichero de configuracion cual es el SATURLEVEL que se debe
+usar.
+
+  * Propagacion NCOADDS/NDIT:
+     - dithercubemean - copia el header de la primera imagen, y por tanto
+     propaga bien para PAPI y O2k, pero no para HAWK-I, pues el split no
+     copia la key NDIT.
+     
+     
+
 
 
 

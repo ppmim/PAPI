@@ -1296,7 +1296,7 @@ class ReductionSet(object):
         offsets_mat=None
            
         # STEP 1: Create SExtractor OBJECTS images
-        suffix='_'+self.m_filter+'.skysub.fits'
+        suffix = '_' + self.m_filter+'.skysub.fits'
         #output_list_file=self.out_dir+"/gpo_objs.pap"
         output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', 
                                                        dir=self.out_dir)
@@ -1316,11 +1316,22 @@ class ReductionSet(object):
             satur_level = 300000
             single_p = True
             
-        if images_in==None: # then we use the images ending with suffing in the output directory
-            makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, satur_level, \
-                        output_list_file, single_point=single_p)
-        elif os.path.isfile(images_in): # we use the given list of images
-            makeObjMask( images_in , mask_minarea, mask_thresh, satur_level, \
+        # In order to set a real value for satur_level, we have to check the
+        # number of coadds of the images (NCOADDS or NDIT keywords).
+        try:
+            pf = datahandler.ClFits(images_in[0])
+            satur_level = satur_level * pf.getNcoadds()
+        except:
+            log.warning("Error read NCOADDS value. Taken default value (=1)")
+            satur_level = satur_level
+            
+        if images_in==None:
+            # then we use the images ending with suffing in the output directory
+            makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, 
+                         satur_level, output_list_file, single_point=single_p)
+        elif os.path.isfile(images_in): 
+            # we use the given list of images
+            makeObjMask( images_in , mask_minarea, mask_thresh, satur_level, 
                         output_list_file, single_point=single_p)
         else:
             log.error("Option not recognized !!!")
@@ -1419,9 +1430,19 @@ class ReductionSet(object):
             satur_level = self.config_dict['skysub']['satur_level']
         else:
             print "Program should never enter here !!!"
-            #mask_minarea = 5
-            #mask_thresh = 1.5
-            #satur_level = 300000
+            mask_minarea = 5
+            mask_thresh = 1.5
+            satur_level = 300000
+        
+        # In order to set a real value for satur_level, we have to check the
+        # number of coadds of the images (NCOADDS or NDIT keywords).
+        try:
+            pf = datahandler.ClFits(input_file)
+            satur_level = satur_level * pf.getNcoadds()
+        except:
+            log.warning("Error read NCOADDS value. Taken default value (=1)")
+            satur_level = satur_level
+            
                                
         # BUG ! -> input_file+"*" as first parameter to makeObjMask ! (2011-09-23)                                                               
         makeObjMask( input_file, mask_minarea, mask_thresh, satur_level,
@@ -2386,7 +2407,7 @@ class ReductionSet(object):
                 
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
-                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS'
+                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'

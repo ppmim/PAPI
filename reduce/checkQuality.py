@@ -332,7 +332,7 @@ using best stars of its SExtractor catalog
     
     parser.add_option("-w", "--write",
                   action="store_true", dest="write", default=True,
-                  help="Update header with PA_SEEING keyword  [default=%default]")
+                  help="Update header with PA_SEEING keyword [default=%default]")
                                 
     (options, args) = parser.parse_args()
     

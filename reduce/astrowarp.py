@@ -197,6 +197,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
                   config_dict=None, do_votable=False,
                   resample=True, subtract_back=True,
                   pixel_scale=0.1):
+    
     """ Do the astrometric calibration to the input image (only one)
       
     The method does astrometry on the image entirely using Emmanuel Bertin's
@@ -279,6 +280,17 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     sex.config['CATALOG_NAME'] = input_image + ".ldac"
     sex.config['DETECT_THRESH'] = config_dict['astrometry']['mask_thresh']
     sex.config['DETECT_MINAREA'] = config_dict['astrometry']['mask_minarea']
+    
+    # SATUR_LEVEL and NCOADD
+    try:
+        dh = datahandler.ClFits(input_image)
+        nc = dh.getNcoadds()
+    except:
+        log.warning("Cannot read NCOADDS. Taken default value (=1)")
+        nc = 1
+
+    sex.config['SATUR_LEVEL'] = nc * config_dict['astrometry']['satur_level']
+    
     try:
         sex.run(input_image, updateconfig=True, clean=False)
     except Exception,e:
@@ -305,7 +317,8 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     #scamp.ext_config['CHECKPLOT_TYPE'] = "NONE"
     scamp.ext_config['WRITE_XML'] = "N"
     cat_file = input_image + ".ldac"   # xxxxx.fits.ldac
-    #updateconfig=False means scamp will use the specified config file instead of the single config parameters
+    #updateconfig=False means scamp will use the specified config file instead 
+    #of the single config parameters
     #but, "ext_config" parameters will be used in any case
     try:
         scamp.run(cat_file, updateconfig=False, clean=False)
@@ -319,7 +332,9 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     swarp.config['CONFIG_FILE'] = config_dict['config_files']['swarp_conf']
     #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME'] = output_image
-    swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY'
+    swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,\
+                        FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,\
+                        NCOADDS,NDIT, '
     basename_o, extension_o = os.path.splitext(output_image)
     swarp.ext_config['WEIGHTOUT_NAME'] = basename_o + ".weight" + extension_o
     basename, extension = os.path.splitext(input_image)
@@ -362,6 +377,17 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
         sex.config['CATALOG_NAME'] = os.path.splitext(output_image)[0] + ".xml"
         sex.config['DETECT_THRESH'] = config_dict['skysub']['mask_thresh']
         sex.config['DETECT_MINAREA'] = config_dict['skysub']['mask_minarea']
+        # SATUR_LEVEL and NCOADD
+        try:
+            dh = datahandler.ClFits(input_image)
+            nc = dh.getNcoadds()
+        except:
+            log.warning("Cannot read NCOADDS. Taken default (=1)")
+            nc = 1
+    
+        sex.config['SATUR_LEVEL'] = nc * config_dict['astrometry']['satur_level']
+
+        
         try:
             sex.run(output_image, updateconfig=True, clean=False)
         except: 
@@ -511,6 +537,17 @@ class AstroWarp(object):
             sex.config['CATALOG_NAME'] = file + ".ldac"
             sex.config['DETECT_THRESH'] = self.config_dict['astrometry']['mask_thresh']
             sex.config['DETECT_MINAREA'] = self.config_dict['astrometry']['mask_minarea']
+            # SATUR_LEVEL and NCOADD
+            try:
+                dh = datahandler.ClFits(file)
+                nc = dh.getNcoadds()
+            except:
+                log.warning("Cannot read NCOADDS. Taken default (=1)")
+                nc = 1
+        
+            sex.config['SATUR_LEVEL'] = nc * self.config_dict['astrometry']['satur_level']
+
+            
             try:
                 sex.run(file, updateconfig=True, clean=False)
             except Exception,e:
