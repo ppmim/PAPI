@@ -622,16 +622,17 @@ class ReductionSet(object):
             #Suppose we have MEF files ...
             if datahandler.ClFits(frame_list[0]).getInstrument()=="HAWKI":
                 
-                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',\
-		  'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',\
-		  'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", "HIERARCH ESO TPL NEXP"\
-            ]   
+                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
+		  'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+		  'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", "HIERARCH ESO TPL NEXP",
+                  'NCOADDS','HIERARCH ESO DET NDIT','NDIT'
+                ]   
             else: # PANIC
-                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',\
-          'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',\
-          'FILTER', 'FILTER1', 'FILTER2', "OBS_TOOL", "OB_ID", "OB_PAT",\
-          "PAT_EXPN", "PAT_NEXP", "END_SEQ"\
-            ]
+                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
+                   'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+                   'FILTER', 'FILTER1', 'FILTER2', "OBS_TOOL", "OB_ID", "OB_PAT",
+                   "PAT_EXPN", "PAT_NEXP", "END_SEQ",'NCOADDS','HIERARCH ESO DET NDIT','NDIT'
+                ]
             
             if datahandler.ClFits(frame_list[0]).isFromGEIRS():
                 try:
@@ -1320,7 +1321,7 @@ class ReductionSet(object):
         # number of coadds of the images (NCOADDS or NDIT keywords).
         try:
             pf = datahandler.ClFits(images_in[0])
-            satur_level = satur_level * pf.getNcoadds()
+            satur_level = int(satur_level) * int(pf.getNcoadds())
         except:
             log.warning("Error read NCOADDS value. Taken default value (=1)")
             satur_level = satur_level
@@ -1438,7 +1439,7 @@ class ReductionSet(object):
         # number of coadds of the images (NCOADDS or NDIT keywords).
         try:
             pf = datahandler.ClFits(input_file)
-            satur_level = satur_level * pf.getNcoadds()
+            satur_level = int(satur_level) * int(pf.getNcoadds())
         except:
             log.warning("Error read NCOADDS value. Taken default value (=1)")
             satur_level = satur_level
@@ -1506,7 +1507,9 @@ class ReductionSet(object):
                                        out_dir+"/superFlat.fits")
         misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
                                        out_dir+"/*.xml")#, out_dir+"/*.png")
-        
+       
+        misc.fileUtils.removefiles(out_dir + "/*.Q0?.fits")
+ 
         misc.fileUtils.removefiles(out_dir + "/*.Q0?.fits")
         
         # Remove extension directories
@@ -2407,7 +2410,7 @@ class ReductionSet(object):
                 
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
-                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS'
+                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,NDIT'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
@@ -2789,7 +2792,18 @@ class ReductionSet(object):
             log.info("Generated output file ==>%s", output_file)
 
             if self.config_dict['general']['estimate_fwhm']:
-                cq = reduce.checkQuality.CheckQuality(output_file)
+                satur_level = self.config_dict['astrometry']['satur_level']
+                pix_scale = self.config_dict['general']['pix_scale']
+                
+                try:
+                    pf = datahandler.ClFits(output_file)
+                    satur_level = int(satur_level) * int(pf.getNcoadds())
+                except:
+                    log.warning("Cannot get NCOADDS. Taken default (=1)")
+                    satur_level = satur_level
+                    
+                cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
+                    ellipmax=0.3, edge=200, pixsize=pix_scale, gain=4.15, sat_level=satur_level)
                 try:
                     (fwhm, std) = cq.estimateFWHM()
                     if fwhm>0 and fwhm<20:

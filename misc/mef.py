@@ -157,7 +157,7 @@ class MEF (object):
                 hdu[0].header.update("NAXIS2", 4096)
                 # TODO: deduce RA,DEC pointing coordinates 
             except KeyError:
-                print 'Warning, some key cannot not be copied'
+                log.warning("Some key cannot be copied into header")
             
             hdu[0].header.add_history("[MEF.doJoin] MEF created with files %s"%str(self.input_files))                            
             hdu.writeto(out_filename, output_verify = 'ignore', clobber = True)
@@ -219,11 +219,14 @@ class MEF (object):
                     try:
                         value = hdulist[0].header.ascardlist ()[key].value
                         comment = hdulist[0].header.ascardlist ()[key].comment
-                        out_hdulist[0].header.update (key, value,comment)
+                        if key=='HIERARCH ESO DET NDIT':
+                            out_hdulist[0].header.update ('NDIT', value, comment)
+                        else:
+                            out_hdulist[0].header.update (key, value,comment)
                         # We DON'T need to update RA, DEC (pointing coordinates), because each 
                         # extension should have CRVAL/CRPIX values!!
                     except KeyError:
-                        print 'Warning, key %s cannot not be copied, is not in the header' % (key)
+                        log.warning("Key %s cannot be copied, is not in the header"%(key))
                 
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
@@ -447,11 +450,14 @@ class MEF (object):
                         try:
                             value = in_hdulist[0].header.ascardlist()[key].value
                             comment = in_hdulist[0].header.ascardlist()[key].comment
-                            hdu_i.header.update (key, value, comment)
+                            if key=='HIERARCH ESO DET NDIT':
+                                hdu_i.header.update ('NDIT', value, comment)
+                            else:
+                                hdu_i.header.update (key, value, comment)
                             # We DON'T need to update RA,DEC (pointing coordinates), because each 
                             # extension should have CRVAL/CRPIX values!!
                         except KeyError:
-                            print 'Warning, key %s cannot not be copied, is not in the header' % (key)
+                            log.warning("Key %s cannot be copied, is not in the header"%(key))
                     # Append new HDU to MEF
                     out_hdulist.append(hdu_i)
                     out_hdulist.verify('ignore')

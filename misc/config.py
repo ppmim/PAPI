@@ -437,6 +437,7 @@ def read_config_file(config_file = default_config_file()):
     
     
     general["apply_dark_flat"] = read_parameter(config, "general", "apply_dark_flat", int, True, config_file)
+    general["pix_scale"] = read_parameter(config, "general", "pix_scale", float, True, config_file)
     general["scale"] = read_parameter(config, "general", "scale", float, True, config_file)
     general["equinox"] = read_parameter(config, "general", "equinox", int, True, config_file)
     general["radecsys"] = read_parameter(config, "general", "radecsys", str, True, config_file)

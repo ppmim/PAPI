@@ -2226,10 +2226,25 @@ usar.
      - dithercubemean - copia el header de la primera imagen, y por tanto
      propaga bien para PAPI y O2k, pero no para HAWK-I, pues el split no
      copia la key NDIT.
+     Lo soluciono, pero parece que sería mejor crear una variable dentro
+     del fichero de configuracion con las keywords que habría que copiar,
+     pues aparece en varios sitios (mef.py, astrowarp, reductionset.py).
      
      
+  * El SATUR_LEVEL ahora es multiplicado por el NCOADDS.
+  
+  (P) ---> Sería tambien conveniente propagar NCOMBINE, aunque eso no afecte
+  al SATUR_LEVEL necessariamente !!!
+  
+  (P) ---> Usar ['general']['scale'] en lugar de valores por defecto !!!
 
+Keywords CANDIDATAS a incluir en el header de PANIC
+---------------------------------------------------
+- SATURATE
+- GAIN
+- PIXSCALE
 
+  
 
 
 FOR NEXT VIDEOCONF
@@ -2237,7 +2252,7 @@ FOR NEXT VIDEOCONF
 - Tested OPTPCIe board with U.Mall routine (optpci_hw_test.c); results show 
 all is working well (PLX_v6.5 & PLX_v7.00) on PANIC computer.
 - However, GEIRS simulation 'rotype dgen' still is not working.
-
+- SATUR_LEVEL parametrized with NDIT
 
 
 
