@@ -2171,13 +2171,61 @@ Le escribí un email para ver si me podrían dejar el source de pv2sip/sip2pv pe
 me dijeron que no; que si quería que les mandase yo mi rutina y me dirían si
 estaba bien o no comparando los resultados.
 
+
+18-Junio-2013
+=============
  
+19-Junio-2013
+=============
+-Dejo mas o menos operativo astrowarp tras modificar clfits.py con image2sky.
+
+-Intentando reducir el HAWK-I_3 (cualquier sequencia) veo que no hay manera !!!!
+Miro las notas de mi libreta, y parece que ya me dió problemas en su día, pero
+parece que el S3 si conseguí reducirlo sin problemas, pero no hay manera tampoco
+de reducir dicha secuencia. 
+Haciendo una busqueda en google, me doy con un post ***muuuy interesante *** en
+el foro de astromatic.net (http://www.astromatic.net/forum/showthread.php?tid=759)
+sobre esto. Parece que tengo que mejorar algunas cosas en PAPI !!!!!!!!!!!!!
+
+20-Junio-2013
+=============
+- Encuentro el problema que me traia loco con pixeles saturados en el catalogo
+que genera SExtractor. Todo venía porque las imagenes en cuestion tenian
+la keyword SATURATE 100000, y dicha variable mayor prioridad que SATUR_LEVEL,
+incluso si la damos por la linea de comandos a sextractor.
+
+- VTerron me anuncia que los coadds deberian tener en el header el NCOADDS para
+poder hacer la estimacion del limite de saturacion.
+
+
+- Encuentro el problema que impedia reducir el HAWK-I-3 (cualquier secuencia): 
+todo radicaba en los parametros siguientes del fichero de configuracion:
+
+
+    astrometry::mask_thresh = 5   # default 1.5
+    astrometry::mask_minarea = 20 # default 5
+
+Tras establecer esos nuevos valores, se reducen sin problemas todos las 
+secuencias de HAWK-I-3.
+
+El problame esta ahora en como "parametrizar" eso de forma "automatica" para
+todos los datasets (HAWKI, PANIC, O2k, ....). Quizás un fichero de configuración
+distinto para cada instrumento !!!! 
+Además habrá que leer bien los comentarios de E.Bertin en el foro :
+
+    http://www.astromatic.net/forum/showthread.php?tid=759
+
+
+
 
 
 FOR NEXT VIDEOCONF
 ==================
 - Tested OPTPCIe board with U.Mall routine (optpci_hw_test.c); results show 
-all is working well. (PLX_v6.5)
+all is working well (PLX_v6.5 & PLX_v7.00) on PANIC computer.
+- However, GEIRS simulation 'rotype dgen' still is not working.
+
+
 
 
 

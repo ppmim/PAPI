@@ -71,7 +71,7 @@ def initWCS( input_image, pixel_scale):
                 naxis1 = f.getNaxis1()
                 naxis2 = f.getNaxis2()
                 ra = f.ra
-                dec = f.dec
+                dec = f.dec 
                 equinox0 = f.getEquinox()
                 # 
                 # Transform RA,Dec to J2000 -->fk5prec(epoch0, 2000.0, &ra, &dec);
@@ -303,7 +303,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     scamp.ext_config['POSITION_MAXERR'] = 5
 
     #scamp.ext_config['CHECKPLOT_TYPE'] = "NONE"
-    scamp.ext_config['WRITE_XML'] = "Y"
+    scamp.ext_config['WRITE_XML'] = "N"
     cat_file = input_image + ".ldac"   # xxxxx.fits.ldac
     #updateconfig=False means scamp will use the specified config file instead of the single config parameters
     #but, "ext_config" parameters will be used in any case
@@ -319,7 +319,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     swarp.config['CONFIG_FILE'] = config_dict['config_files']['swarp_conf']
     #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
     swarp.ext_config['IMAGEOUT_NAME'] = output_image
-    swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC'
+    swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY'
     basename_o, extension_o = os.path.splitext(output_image)
     swarp.ext_config['WEIGHTOUT_NAME'] = basename_o + ".weight" + extension_o
     basename, extension = os.path.splitext(input_image)
@@ -547,7 +547,7 @@ class AstroWarp(object):
         if not os.path.isfile(self.input_files[0]+".head"):
             raise Exception ("Cannot find required .head file")
             
-        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY'
+        swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,RA,DEC'
         swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'

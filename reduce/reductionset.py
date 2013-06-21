@@ -1486,6 +1486,8 @@ class ReductionSet(object):
         misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
                                        out_dir+"/*.xml")#, out_dir+"/*.png")
         
+        misc.fileUtils.removefiles(out_dir + "/*.Q0?.fits")
+        
         # Remove extension directories
         for i in range(4):
             if os.path.exists(self.out_dir+"/Q%02d"%(i+1)):
@@ -2389,6 +2391,8 @@ class ReductionSet(object):
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
                 swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
+                swarp.ext_config['RESAMPLE'] = 'Y'
+                
                 
                 try:
                     swarp.run(out_ext, updateconfig=False, clean=False)
