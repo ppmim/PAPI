@@ -195,8 +195,7 @@ def checkWCS( header ):
     
 def doAstrometry(input_image, output_image=None, catalog='2MASS', 
                   config_dict=None, do_votable=False,
-                  resample=True, subtract_back=True,
-                  pixel_scale=0.1):
+                  resample=True, subtract_back=True):
     
     """ Do the astrometric calibration to the input image (only one)
       
@@ -257,6 +256,9 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
     #initwcs also converts to J2000.0 EQUINOX
     log.debug("[doAstrometry] ***Doing WCS-header initialization ...")
+    
+    pixel_scale = config_dict['general']['pix_scale']
+    
     try:
         initWCS(input_image, pixel_scale)
     except Exception,e:
@@ -462,8 +464,7 @@ class AstroWarp(object):
 
     def __init__(self, input_files, catalog=None, 
                  coadded_file="/tmp/astrowarp.fits", config_dict=None, 
-                 do_votable=False, resample=True, subtract_back=True,
-                 pixel_scale=0.45):
+                 do_votable=False, resample=True, subtract_back=True):
         """ 
         Instantiation method for AstroWarp class
 
@@ -492,7 +493,7 @@ class AstroWarp(object):
         self.do_votable = do_votable
         self.resample = resample
         self.subtract_back = subtract_back
-        self.pix_scale = pixel_scale
+        self.pix_scale = config_dict['general']['pix_scale']
         
     def run(self):
         """ Start the computing of the coadded image, following the next steps:
@@ -630,7 +631,7 @@ in principle previously reduced, but not mandatory.
     parser = OptionParser(usage, description=desc)
     
     parser.add_option("-c", "--config_file",
-                  action="store", dest="config_file", help="config file")
+                  action="store", dest="config_file", help="Mandatory PAPI configuration file.")
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
@@ -639,10 +640,6 @@ in principle previously reduced, but not mandatory.
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 
                   help="final coadded output image")
-    
-    parser.add_option("-p", "--pixel_scale",
-                  action="store", dest="pixel_scale", type=float, default="0.45",
-                  help="Pixel scale of the image")
     
     
     parser.add_option("-r", "--resample",
@@ -684,15 +681,15 @@ in principle previously reduced, but not mandatory.
             datahandler.fits_simple_verify(options.source_file)
             filelist=[options.source_file]
         except:
-            filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file)]
+            filelist=[line.replace( "\n", "") 
+                      for line in fileinput.input(options.source_file)]
             
         if len(filelist)==1:
             try:
                 doAstrometry(filelist[0], output_image=options.output_filename,
                           catalog='USNO-B1', config_dict=cfg_options, 
                           do_votable=False, resample=options.resample,
-                          subtract_back=options.subtract_back,
-                          pixel_scale=options.pixel_scale)
+                          subtract_back=options.subtract_back)
             except Exception,e:
                 log.error("Some error while doing astrometric calibration")
                 
@@ -701,8 +698,7 @@ in principle previously reduced, but not mandatory.
                                   coadded_file=options.output_filename, 
                                   config_dict=cfg_options,
                                   resample=options.resample,
-                                  subtract_back=options.subtract_back,
-                                  pixel_scale = options.pixel_scale)
+                                  subtract_back=options.subtract_back)
         
             try:
                 astrowarp.run()

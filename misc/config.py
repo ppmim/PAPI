@@ -420,6 +420,7 @@ def read_config_file(config_file = default_config_file()):
     general["master_flat"] = read_parameter(config, "general", "master_flat", str, False, config_file)
     general["master_bpm"] = read_parameter(config, "general", "master_bpm", str, False, config_file)
     
+    general["instrument"] = read_parameter(config, "general", "instrument", str, False, config_file)
     general["obs_mode"] = read_parameter(config, "general", "obs_mode", str, False, config_file)
     general["reduction_mode"] = read_parameter(config, "general", "reduction_mode", str, False, config_file)
     general["check_data"] = read_parameter(config, "general", "check_data", bool, False, config_file)

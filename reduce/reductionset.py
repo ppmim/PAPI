@@ -2803,7 +2803,8 @@ class ReductionSet(object):
                     satur_level = satur_level
                     
                 cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
-                    ellipmax=0.3, edge=200, pixsize=pix_scale, gain=4.15, sat_level=satur_level)
+                    ellipmax=0.3, edge=200, pixsize=pix_scale, gain=4.15, 
+                    sat_level=satur_level)
                 try:
                     (fwhm, std) = cq.estimateFWHM()
                     if fwhm>0 and fwhm<20:

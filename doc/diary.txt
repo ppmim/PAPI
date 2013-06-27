@@ -2238,6 +2238,20 @@ usar.
   
   (P) ---> Usar ['general']['scale'] en lugar de valores por defecto !!!
 
+
+26-Junio-2013
+=============
+- Modificación de astrowarp.py para que el pix_scale lo lea del fichero
+de configuración en lugar de ser un parametro de la CL o algo por defecto.
+Por tanto, cuando se llama a AstroWarp en reductionset.py, ya no es necesario
+indicarle el pix_scale, pues lo tomará (como otros parametros) del fichero
+de configuración.
+
+
+27-Junio-2013
+=============
+
+
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
 - SATURATE

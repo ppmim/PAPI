@@ -50,7 +50,7 @@ class FocusSerie(object):
         
     """
     
-    def __init__(self, input_files, output, *a, **k):
+    def __init__(self, input_files, output, pix_size, sat_level, *a, **k):
         """
         Init method
         """
@@ -58,6 +58,8 @@ class FocusSerie(object):
         super (FocusSerie, self).__init__ (*a,**k)
         self.input_files = input_files
         self.output = output
+        self.pix_size = pix_size
+        self.sat_level = sat_level
 
     def eval_serie(self):
         """
@@ -71,7 +73,9 @@ class FocusSerie(object):
         for file in self.input_files:
             try:
                 print "Evaluating %s\n"%file    
-                cq = checkQuality.CheckQuality(file)
+                cq = checkQuality.CheckQuality(file, 
+                                               pixsize=self.pix_size, 
+                                               sat_level=self.sat_level)
                 fwhm = cq.estimateFWHM()[0]
                 fwhm_values.append(fwhm)
                 focus = self.get_t_focus(file)
@@ -197,6 +201,14 @@ if __name__ == "__main__":
                       help="name of output [pdf] file with results (default: %default)",
                       default="output.pdf")
     
+    parser.add_option("-p", "--pix_scale", dest="pix_scale",
+                      help="Pixel scale (default: %default)",
+                      default=0.45)
+    
+    parser.add_option("-s", "--satur_level", dest="satur_level",
+                      help="Saturation level in ADUs. NCOADD is not taken into account.(default: %default)",
+                      default=50000)
+    
     (options, args) = parser.parse_args()
     
 
@@ -210,7 +222,6 @@ if __name__ == "__main__":
         for file in dircache.listdir(options.input):
             files.append(options.input+"/"+file)
     else:
-        sys.stderr.write("Wrong input '%s'\n" %options.input)
         parser.print_help()
         sys.exit(1)
     
