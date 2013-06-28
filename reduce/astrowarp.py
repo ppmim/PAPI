@@ -329,7 +329,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     
     ## STEP 3: Merge and Warp the astrometric parameters (.head keywords) with 
     ## SWARP, and using .head files created by SCAMP.
-    log.debug("Merging astrometric calibration parameters and resampling ...")
+    log.debug("Merging astrometric calibration parameters and re-sampling ...")
     swarp = astromatic.SWARP()
     swarp.config['CONFIG_FILE'] = config_dict['config_files']['swarp_conf']
     #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
@@ -347,15 +347,27 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
 
     if not subtract_back:
         swarp.ext_config['SUBTRACT_BACK'] = 'N'
-    
-    #Rename the external header produced by SCAMP (.head) to a filename to be looked for by SWARP 
-    #SWARP take into account for re-projection an external header for file 'xxxxx.ext' if exists 
-    #an 'xxxx.head' header ('ext' can be any string, i.e. fits, skysub, ....)
-    #We use splitext() to remove the LAST suffix after, thus 'xxx.fits.skysub' ---> has as extension '.skysub'
-    # mmmmm, it depends on HEADER_SUFFIX config variable !!!! so, above comments are not completely true
+   
+     
+    # Rename the external header produced by SCAMP (.head) to a filename to be 
+    # looked for by SWARP.
+    # SWARP take into account for re-projection an external header for 
+    # file 'xxxxx.ext' if exists 
+    # an 'xxxx.head' header ('ext' can be any string, i.e. fits, skysub, ....)
+    # We use splitext() to remove the LAST suffix after, thus 
+    # 'xxx.fits.skysub' ---> has as extension '.skysub'
+    # mmmmm, it depends on HEADER_SUFFIX config variable !!!! so, above comments 
+    # are not completely true.
     # But ...I'd rather to modify HEADER_SUFFIX than rename the file, efficiency !
+    
     ##basename, extension = os.path.splitext(input_image)
     ##shutil.move(input_image+".head", basename +".head")  # very important !!
+   
+    # To avoid any problem concerning SWARP because by chance could exist
+    # a old file about IMAGEOUT_NAME.head what would cause a bad resampling
+    # and combination of files, we remove any IMAGEOUT_NAME.head
+    if os.path.exists(swarp.ext_config['IMAGEOUT_NAME']+".head"):
+        os.remove(swarp.ext_config['IMAGEOUT_NAME']+".head")
     
     if os.path.isfile(basename + ".weight" + extension):
         swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
@@ -488,7 +500,7 @@ class AstroWarp(object):
             self.catalog = catalog
         else: 
             self.catalog = config_dict['astrometry']['catalog']
-        
+            
         self.coadded_file = coadded_file
         self.do_votable = do_votable
         self.resample = resample
@@ -590,6 +602,12 @@ class AstroWarp(object):
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
             swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
         
+        #To avoid any problem concerning SWARP because by chance could exist
+        #a old file about IMAGEOUT_NAME.head what would cause a bad resampling
+        #and combination of files, we remove any IMAGEOUT_NAME.head
+        if os.path.exists(swarp.ext_config['IMAGEOUT_NAME']+".head"):
+            os.remove(swarp.ext_config['IMAGEOUT_NAME']+".head")
+                
         """
         #IMPORTANT: Rename the .head files in order to be found by SWARP
         #but it's much efficient modify the HEADER_SUFFIX value (see above)

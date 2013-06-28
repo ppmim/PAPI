@@ -2250,6 +2250,28 @@ de configuración.
 
 27-Junio-2013
 =============
+* Definicion de los DATASETS de pruebas para PAPI:
+
+  - O2K:
+      - ALHAMBRA 
+      - Matilde
+      - Foco
+      - STDs
+  -  
+
+28-Junio-2013
+=============
+- Me doy cuenta de un problema que me trajo de cabeza probando astrowarp !
+Resulta que si al ejecutar SWARP -IMAGEOUT_NAME /tmp/coadd_tmp.fits ....
+existe un fichero /tmp/coadd_tmp.fits.head de una calibracion (fallida?)
+anterior con SCAMP, entonces SWARP falla pues intenta aplicar en primer lugar
+ese .head al fichero de salida antes de hacer el resampling+combine, por lo 
+que todo falla. Tardé mucho en darme cuenta !!! no había manera !!!
+
+Por este bug?, modifico astrowarp para que antes de lazar SWARP borre cualquier
+posible fichero .head que coincida con el fichero de salida.
+
+
 
 
 Keywords CANDIDATAS a incluir en el header de PANIC

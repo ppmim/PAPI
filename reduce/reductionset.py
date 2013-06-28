@@ -2732,7 +2732,7 @@ class ReductionSet(object):
         # parecidos, y en CPU tambien =, por tanto, opcion a considerar !!---
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        prueba = False  
+        prueba = True  
         if prueba:
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
