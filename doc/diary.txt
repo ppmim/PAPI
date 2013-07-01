@@ -2271,6 +2271,19 @@ que todo falla. Tardé mucho en darme cuenta !!! no había manera !!!
 Por este bug?, modifico astrowarp para que antes de lazar SWARP borre cualquier
 posible fichero .head que coincida con el fichero de salida.
 
+- Pruebas con Astrowarp en reductionset:
+  
+  Hago varias pruebas activando astrowarp en reductionset para el modo single,
+  pero no hay manera de que funcione bien con HAWK-I, aunque si con ALHAMBRA.
+  SCAMP no es capaz de calibrar Q0X (X=1,..,4); juego con varios valores de
+  sextractor (threshold, minarea) pero no hay manera...!!
+
+  La cosa es que SCAMP no se queja, pero las líneas salen en rojo, indicando
+  que no ha conseguido una buena calibración !!!
+  Esto me ocurre tanto con DS3-1, como con DS3-2 de HAWK-I.
+    
+01-Julio-2013
+=============
 
 
 

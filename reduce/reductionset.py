@@ -1319,8 +1319,10 @@ class ReductionSet(object):
             
         # In order to set a real value for satur_level, we have to check the
         # number of coadds of the images (NCOADDS or NDIT keywords).
+        filelist = [line.replace( "\n", "")
+                for line in fileinput.input(images_in)]
         try:
-            pf = datahandler.ClFits(images_in[0])
+            pf = datahandler.ClFits(filelist[0])
             satur_level = int(satur_level) * int(pf.getNcoadds())
         except:
             log.warning("Error read NCOADDS value. Taken default value (=1)")
@@ -1363,21 +1365,21 @@ class ReductionSet(object):
     def coaddStackImages(self, input='/tmp/stack.pap', gain=None, 
                          output=None, type_comb='average'):
         """
-            Register the aligned-stack of dithered FITS images listed in 'input'
-            file using offset specified inside, and calculate the mean plane.
+        Register the aligned-stack of dithered FITS images listed in 'input'
+        file using offset specified inside, and calculate the mean plane.
+        
+        INPUTS:
+            input   : file listing the file to coadd and the offsets between
+                      each one
+                      
+            gain    : gain map file to use for the coaddition (it take into account the BPM)
             
-            INPUTS:
-                input   : file listing the file to coadd and the offsets between
-                          each one
-                          
-                gain    : gain map file to use for the coaddition (it take into account the BPM)
-                
-                type_comb : type of combination to use (currently, only average available)
-                
-            OUTPUTS:
-                output : coadded image (and the weight map .weight.fits)
-                
-            TODO: allow other kind of combination (median, ...see iraf.imcombine)
+            type_comb : type of combination to use (currently, only average available)
+            
+        OUTPUTS:
+            output : coadded image (and the weight map .weight.fits)
+            
+        TODO: allow other kind of combination (median, ...see iraf.imcombine)
             
         """
                                                   
