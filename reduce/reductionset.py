@@ -1324,9 +1324,12 @@ class ReductionSet(object):
         try:
             pf = datahandler.ClFits(filelist[0])
             satur_level = int(satur_level) * int(pf.getNcoadds())
+            log.critical("SAT_LEVEL=%s"%satur_level)
         except:
             log.warning("Error read NCOADDS value. Taken default value (=1)")
             satur_level = satur_level
+            log.critical("SAT_LEVEL(def)=%s"%satur_level)
+
             
         if images_in==None:
             # then we use the images ending with suffing in the output directory
@@ -2734,7 +2737,7 @@ class ReductionSet(object):
         # parecidos, y en CPU tambien =, por tanto, opcion a considerar !!---
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        prueba = True  
+        prueba = False  
         if prueba:
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")

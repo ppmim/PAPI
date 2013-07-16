@@ -836,6 +836,7 @@ def isaFITS(filepath):
     """
     Check if a given filepath is a FITS file
     """
+    
     if os.path.exists(filepath):
         try:
             fd = pyfits.open(filepath, ignore_missing_end=True)
@@ -843,8 +844,7 @@ def isaFITS(filepath):
                 return True
             else:
                 return False
-        except Exception,e:
-            print str(e)
+        except Exception:
             return False
     else:
         return False

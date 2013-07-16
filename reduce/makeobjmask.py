@@ -58,31 +58,31 @@ import datahandler
 def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, 
                  outputfile="/tmp/out.txt", single_point=False):
     """
-        DESCRIPTION
-          Create an object mask of the inputfile/s based on SExtractor
-           
-        INPUTS
-          inputfile    it can be a regular expresion or a filename 
-                              containing a filelist
-                
-        OPTIONAL INPUTS
-                
-          outputfile   filename of file list with the object file/s 
-                       created by SExtractor
-                
-          minarea      SExtractor DETECT_MINAREA (minimun object area)
-                           
-          threshold    SExtractor DETECT_THRESH
-                
-          saturlevel   Pixel Saturation level 
-                
-          single_point  If true, means the image will be reduced to a 
-                        single point object mask,i.e., a single pixel set to 1
-                        for each detected object.
-                
-       OUTPUTS
-         outputfile   Filepath containig the list of objects mask files 
-                      created by SExtractor ending with '.objs' suffix
+    DESCRIPTION
+      Create an object mask of the inputfile/s based on SExtractor
+       
+    INPUTS
+      inputfile    it can be a regular expresion or a filename 
+                          containing a filelist
+            
+    OPTIONAL INPUTS
+            
+      outputfile   filename of file list with the object file/s 
+                   created by SExtractor
+            
+      minarea      SExtractor DETECT_MINAREA (minimun object area)
+                       
+      threshold    SExtractor DETECT_THRESH
+            
+      saturlevel   Pixel Saturation level 
+            
+      single_point  If true, means the image will be reduced to a 
+                    single point object mask,i.e., a single pixel set to 1
+                    for each detected object.
+            
+   OUTPUTS
+     outputfile   Filepath containig the list of objects mask files 
+                  created by SExtractor ending with '.objs' suffix
               
       """
          

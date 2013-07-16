@@ -15,6 +15,7 @@ Requirements
 ------------
 
 *) sudo zypper install readline5
+*) sudo zypper install gnuplot
 
 
 *) system setup
@@ -86,6 +87,9 @@ to heade files in order to compile the sources.
 - As root, you must download and install the next package:
 
 http://download.oracle.com/otn-pub/java/jdk/7u1-b08/jdk-7u1-linux-x64.rpm
+
+You might need to use the alternatives package for installation.
+
 
 
 2-NetBeans IDE 7.0.1
@@ -649,6 +653,16 @@ AttributeError: Unknown parameter requested: nresult
 
 Nadia Dencheva
 """
+
+
+In addition, is required to set next variable as follow to avoid problems
+with mscred package when calling with file templates:
+(16-Julio-2013)
+
+
+modificación en  /iraf/iraf/unix/hlib/zzsetenv.def:
+
+set     use_new_imt     = no
 
 
 

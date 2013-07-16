@@ -282,9 +282,9 @@ class MasterDark(object):
             darkframe[0].header.update('ITIME', 1.0)
             darkframe[0].header.update('NCOADDS',1)
         
-        m_std = numpy.std(darkframe[0].data)
-        print "M_STD=",m_std    
-        darkframe.close(output_verify='ignore') # This ignore any FITS standard violation and allow write/update the FITS file    
+        # 'ignore' will ignore any FITS standard violation and allow 
+        # write/update the FITS file
+        darkframe.close(output_verify='ignore')     
         
         log.debug('Saved master DARK to %s' , self.__output_filename)
         log.debug("createMasterDark' finished %s", t.tac() )
@@ -297,11 +297,13 @@ class MasterDark(object):
                     #print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
                     medians.append(numpy.median(pf[0].data[512:1536,512:1536]))
                 else:
-                    print "Error: MEF files not yet supported"
-                    return self.__output_filename
+                    print "MEF files now is supported !"
+                    for i_ext in range(1, len(pf)):
+                        medians.append(numpy.median(pf[i_ext].data[512:1536,512:1536]))
                 
                 # Get some stats from master dark (mean/median/rms)
-                values = (iraf.mscstat (images=i_frame,
+                print "I_FRAME=",i_frame
+                values = (iraf.mscstat(images=i_frame,
                                 fields="image,mean,mode,midpt,stddev,min,max",
                                 format='yes',Stdout=1))
                 for line in values:
@@ -318,8 +320,8 @@ class MasterDark(object):
             
                   
             # Get some stats from master dark (mean/median/rms)
-            print "Stats:"
-            print "----- "
+            print "Master dark Stats:"
+            print "------------------"
             values = (iraf.mscstat (images=self.__output_filename,
                                     fields="image,mean,mode,stddev,min,max",
                                     format='yes',Stdout=1))

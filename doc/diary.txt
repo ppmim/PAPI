@@ -2236,7 +2236,7 @@ usar.
   (P) ---> Sería tambien conveniente propagar NCOMBINE, aunque eso no afecte
   al SATUR_LEVEL necessariamente !!!
   
-  (P) ---> Usar ['general']['scale'] en lugar de valores por defecto !!!
+
 
 
 26-Junio-2013
@@ -2257,7 +2257,10 @@ de configuración.
       - Matilde
       - Foco
       - STDs
-  -  
+  - HAWK-I
+      - DS1 - pipeline sample
+      -  
+
 
 28-Junio-2013
 =============
@@ -2284,6 +2287,129 @@ posible fichero .head que coincida con el fichero de salida.
     
 01-Julio-2013
 =============
+- Soluciono un bug en RS:makeObjects()
+- Encuentro bug en calDark.py:
+   - iraf.mscstat no funciona !! ademas esta funcion se usa en más sitios de PAPI !!! (PENDIENTE) 
+    
+   === > ERROR: Bad extension version range list
+
+
+05-Julio-2013
+=============
+- Termino la primera versión de la nueva web de PANIC, que salgo la cabecera, 
+incluye todo lo de la anterior version.
+- Falta que Matilde le de el visto bueno antes de preguntar a J.Fried si le parece
+bien que la publiquemos.
+- Me doy cuenta de que tengo un lio de versiones de GEIRS y que no todas funcionan igual!
+Incluso, hay alguna que no funciona bien !
+Intento actualizar/sincronizar todas para tener una única version.
+
+  
+08-Julio-2013
+=============
+- Me doy cuenta que la version de GEIRS que habia probado con el patch para 
+el 'Data Generator' era con la version 6.5 del driver.
+- Cargo la version 7, y me doy cuenta de que GEIRS no funciona con 'rotype dgen'.
+Eso es porque el interfaz de la version 7 ha cambiado un poco.
+Intento compilar GEIRS con la version 7 (actualizo el link PlxLinux -> PlxLinux_v7.00),
+pero no compila, pues no tengo la versión correcta de GEIRS para la version 7 del driver.
+Tras varios email, Richard Mathar me manda la nueva version.
+
+
+12-Julio-2013
+=============
+
+- Cambiamos a la nueva web de panic (www.iaa.es/PANIC ---> panic.iaa.es)
+- Me pongo a terminar de compilar la última version de GEIRS que me mandó RM
+  y que está preparada para el PLX_SDKv7.0.
+  Tras instalar el jdk17-javac compilo sin mayores problemas.
+  Sin embargo, al probarla no funciona bien, ni en modo offline ni en modo dataGenerator;
+  tras varios read's da un SF y deja de leer.
+  Sin embargo, la version GEIRS.funciona que yo hice actualizando sólo los
+  ficheros que se veian afectados por el nuevo interfaz del PLX_SDK7.0, y tras
+  compilarlo, dicha version si va bien, y no casca tras varios reads !!!
+  Parece que hay algo en la version de RM que no termina de ir bien.
+  Le mando un mail a RM informándole del problema.
+
+
+16-Julio-2013
+=============
+- Encuentro la solución al problema de iraf.mscstat en calDark.py.
+Parece que es un bug en la nuevas versiones de IRAF, según he visto en el foro
+de IRAF, que tiene que ver con el nuevo esquema de image filaname template:
+
+    https://github.com/joequant/iraf/tree/master/sys/imio/imt
+
+
+
+mscred> mscstat @darks.txt
+ERROR: Bad extension version range list
+  "usigma=usigma, binwidth=binwidth, format=fmt)"
+     line 81: mscsrc$mscstat.cl
+     called as: `mscstat (images=@darks.txt)'
+     
+ 
+ Se soluciona desactivando el nuevo 'image template' de IRAF:
+ 
+ """
+ I think this is a problem in the new image template code. 
+ You can disable this and go back to the old code by doing 
+
+   cl> reset use_new_imt = no
+
+  If this fixes the problem, you can make the change permanent by editing 
+  the hlib$zzsetenv.def file where it is set, or by putting the above in your 
+  login.cl before the final 'keep' statement.
+     
+
+mscred> reset use_new_imt = no
+mscred> mscstat @darks.txt
+#               IMAGE      NPIX      MEAN    STDDEV       MIN       MAX
+ /data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:09:08.909.fits[CHIP1.INT1]   4194304     743.9    29018.  -254660.   7.946E6
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:09:08.909.fits[CHIP2.INT1]  4194304  820.4796  36062.24  -432327.  8688904.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:09:08.909.fits[CHIP4.INT1]  4194304  779.2797  34449.6  -315826.  8637139.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:09:08.909.fits[CHIP3.INT1]  4194304  797.3586  34720.7  -270844.  9214170.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:14:16.855.fits[CHIP1.INT1]  4194304  737.1  28678.22  -256921.  7796999.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:14:16.855.fits[CHIP2.INT1]  4194304  818.1779  35988.99  -434112.  8686048.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:14:16.855.fits[CHIP4.INT1]  4194304  779.1926  34424.16  -310828.  8622859.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:14:16.855.fits[CHIP3.INT1]  4194304  795.9526  34707.82  -273819.  9179541.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:19:24.807.fits[CHIP1.INT1]  4194304  734.7043  28655.27  -260967.  7762370.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:19:24.807.fits[CHIP2.INT1]  4194304  818.5728  36061.81  -431137.  8676647.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:19:24.807.fits[CHIP4.INT1]  4194304  778.5738  34418.44  -309162.  8672125.
+/data1/HAWK-I/DS1/raw/DARK/HAWKI.2008-12-02T09:19:24.807.fits[CHIP3.INT1]  4194304  795.5871  34785.65  -274652.  9242492.
+
+
+
+
+Finalmente, hice la modificación en  /iraf/iraf/unix/hlib/zzsetenv.def:
+
+set     use_new_imt     = no
+
+
+
+* Para solucionar el problema de la lentitud de la GUI del QL cuando es
+ejecutada remotamente (ssh -X), añado al QL4/compile.sh la variable siguiente
+para modificar el 'graphicssystem':
+
+QT_GRAPHICSSYSTEM=native
+export QT_GRAPHICSSYSTEM
+
+(The "native" graphics engine uses regular X11, which will probably
+always be best over SSH.)
+
+
+Otra forma de llamar a las aplicaciones podría ser tal que:
+
+    > ssh -Y panic2.iaa.es  kate -graphicssystem native
+    
+pero para el caso del QL no se como se podría llamar; mejor con la variable
+de entorno.
+
+
+
+
+17-Julio-2013
+=============
 
 
 
@@ -2300,7 +2426,8 @@ FOR NEXT VIDEOCONF
 ==================
 - Tested OPTPCIe board with U.Mall routine (optpci_hw_test.c); results show 
 all is working well (PLX_v6.5 & PLX_v7.00) on PANIC computer.
-- However, GEIRS simulation 'rotype dgen' still is not working.
+- PCIe board also well addressed bye GEIRS. Data generator working !
+
 - SATUR_LEVEL parametrized with NDIT
 
 
@@ -2330,7 +2457,7 @@ KDD con MATILDE (15-May-2012)
  3) how to proceed with windowed/binned images ? 
    --> MF preguntara a la gente de Barcelona sobre las ventanas 
    y como se podrian reducir (sky, astrometry, etc). (pendiente)
-   --> JM Preguntara CS sobre el binning: CS responde que no, que en IR no hay binning 116
+   --> JM Preguntara CS sobre el binning: CS responde que no, que en IR no hay binning
  4) JF: must be possible to check the photometry of a specific star selected in the display. Imexam ?? how ? 
    --> MF le preguntara a JF que quiere exactamente; MF no ve muy interesante el ir viendo la Mag de cada
    estrella al marcarla en el display. Es mucho más útil la grafica de magnitud instrumental VS magnitud catalogo.
@@ -2351,14 +2478,17 @@ KDD con MATILDE (15-May-2012)
  5) how to reduce 'other' readout modes (rrr-mpia, lir, mer, srr, cntsr) or only work for lir (line-interlaced-read)
    MF preguntara a CS, pues no sabe a priori de que diferencias puede haber pero tiene "curiosidad" por ver que quería decir CS 
    (aunque JF dijo que no había diferencias)
- 6) how to remove the stripe/quadrant background offsets in dxtalk.py --> MF no se le ocurre a priori como eliminarlo; 
- JM preguntara al Chino (WIRCAM); Otra opcion es ver si se puede restar solamente la estrella, lo estudiará JM.
+ 6) how to remove the stripe/quadrant background offsets in dxtalk.py 
+    --> MF no se le ocurre a priori como eliminarlo; 
+ JM preguntara al Chino (WIRCAM); Otra opcion es ver si se puede restar solamente 
+ la estrella, lo estudiará JM.
  JM--> Wei-Hao me responde:
    """
    How about a simple background subtraction in each stripe after
    the subtraction of the median?  Maybe this will solve the problem.
    """
-   Lo que dice Wei-hao (restar a cada stripe su propio cielo) podría funcionar, pero nuestra "triste" realidad (imagenes con gradiente en el background), 
+   Lo que dice Wei-hao (restar a cada stripe su propio cielo) podría funcionar, 
+   pero nuestra "triste" realidad (imagenes con gradiente en el background), 
    no puede funcionar.
    
 KDD con MATILDE (29-May-2012)
@@ -2475,9 +2605,10 @@ se calculan con un master_dark_model.
 
 TODO's for Clemens
 ==================
-  - Observo algo que parece una condición de carrera, y es que alguna vez puede ocurrir que aunque
-  el chequeo del FITS sea correcto, GEIRS no haya aún añadido las keywords que le da el OT y entonces
-  el QL no detecte bien el fichero pues no puede leer dichas keywords esenciales.
+  - Observo algo que parece una condición de carrera, y es que alguna vez puede 
+  ocurrir que aunque el chequeo del FITS sea correcto, GEIRS no haya aún 
+  añadido las keywords que le da el OT y entonces el QL no detecte bien el 
+  fichero pues no puede leer dichas keywords esenciales.
   Esto creo que no ocurre cuando usamos los modos 'file' el datacollector.
   
 
@@ -2492,7 +2623,8 @@ CRVAL2  =                  1.0
 CDELT1  =                  1.0
 CDELT2  =                  1.0
 
-- bug en la salida del comando median cuando se envia desde el OT con snd_panic_new, que ahora sólo devuleve OK
+- bug en la salida del comando median cuando se envia desde el OT con 
+  snd_panic_new, que ahora sólo devuleve OK
 
 
 FAQ:
@@ -2624,6 +2756,7 @@ incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
 - graficos SCAMP de distorsion !!!
+- implementar astrometry.net como alternativa a SCAMP !!!
 
 BUGS QL
 =======
