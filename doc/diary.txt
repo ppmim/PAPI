@@ -2408,6 +2408,46 @@ de entorno.
 
 17-Julio-2013
 =============
+TODO> Vamos a ver si PAPI puede contamplar el caso que necesitaría Conchi para las
+pruebas de laboratorio:
+
+   --> I1 = (Raw - Dark) / FF
+   --> FWHM = computeFWHM(I1)
+   
+   
+Implementación con PAPI:
+  
+  1- en el fichero de configuracion,  apply_dark_flat = 1
+  2- el MasterDark y MasterFlat hay que dárselo ? si !
+  
+
+Probado con el DataSet de O2k :
+
+> ./papi.py -s /data1/O2K/Jan.2012/120103/  -S 0 0  -g filter
+> ./papi.py -s /data1/O2K/Jan.2012/120103/  -S 45 45  -g filter
+> ./papi.py -s /data1/O2K/Jan.2012/120103/  -S 30 30  -g filter -M lab
+
+y parece que funciona. Habrá que ver si con eso basta para los test de laboratorio.
+   
+TODO> chequeo de instrumento en header (validación)
+TODO> ver headers (WCS) actuales de GEIRS y crear documento ???
+  
+
+- Encuentro un BUG importante en applyDarkFlat; basicamente consiste en que
+no se por qué, numpy encuentra valores NaN en imagenes (simuladas con GEIRS)
+que con el DS9 son valores = 0 !!!
+Lo que hago para 'solventar' dicho problema es sustituir los NaN (que parecen 
+que corresponden a 0s) con valores 0.0 y seguir pa lante !
+TODO> Habrá que ver en que más lugares de PAPI ocurre esto.
+
+
+- Modifico CheckQuality para que se pueda especificar edge_x y edge_y. La idea
+era poder indicar un 'box' específico para la estimación del FWHM, pero de 
+momento lo vamos a dejar así.
+
+
+18-Julio-2013
+=============
 
 
 

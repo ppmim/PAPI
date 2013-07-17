@@ -60,14 +60,15 @@ class CheckQuality(object):
     -------
        If no error, a seeing estimation value
     """
-    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge=200, 
+    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge_x=200, edge_y=200, 
                  pixsize=0.45, gain = 4.15, sat_level=1500000, write=False):
         
         self.input_file = input_file
         # Default parameters values
         self.isomin = float(isomin)
         self.ellipmax = float(ellipmax)
-        self.edge = int(edge)
+        self.edge_x = int(edge_x)
+        self.edge_y = int(edge_y)
         self.pixsize = float(pixsize)
         self.gain = float(gain)
         self.satur_level = sat_level
@@ -193,9 +194,12 @@ class CheckQuality(object):
                 #print "SNR=",snr
             else:
                 continue
-            if x>self.edge and x<naxis1-self.edge and y>self.edge and y<naxis2-self.edge \
-               and ellipticity<self.ellipmax and fwhm>0.1 and fwhm<20 and flags==0  \
-               and isoarea>float(self.isomin) and snr>20.0: # and fwhm<5*std it does not work many times
+            if (x>self.edge_x and x<naxis1-self.edge_x and 
+                y>self.edge_y and y<naxis2-self.edge_y and
+                ellipticity<self.ellipmax and fwhm>0.1 and 
+                fwhm<20 and flags==0 and   
+                isoarea>float(self.isomin) and snr>20.0): 
+                # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
                 #print "%s SNR_APER= %s " %(i, snr)
             else:
@@ -310,9 +314,14 @@ using best stars of its SExtractor catalog
                   action="store", dest="ellipmax", type=float, default=0.2,
                   help="Maximum SExtractor ELLIPTICITY (default = %default)")
                   
-    parser.add_option("-d", "--edge",
-                  action="store", dest="edge", type=int, 
-                  help="Consider sources out of image borders(default = %default)",
+    parser.add_option("-x", "--edge_x",
+                  action="store", dest="edge_x", type=int, 
+                  help="Consider sources out of image borders on X axis (default = %default)",
+                  default=200)
+    
+    parser.add_option("-y", "--edge_y",
+                  action="store", dest="edge_y", type=int, 
+                  help="Consider sources out of image borders on Y axis (default = %default)",
                   default=200)
     
     parser.add_option("-p", "--pixsize",
@@ -348,9 +357,10 @@ using best stars of its SExtractor catalog
         sys.exit(0)
         
     try:
-        cq = CheckQuality(options.input_image, options.isoarea_min, options.ellipmax, 
-                          options.edge, options.pixsize, options.gain, 
-                          options.satur_level , options.write)
+        cq = CheckQuality(options.input_image, options.isoarea_min, 
+                          options.ellipmax, options.edge_x, options.edge_y, 
+                          options.pixsize, options.gain, options.satur_level , 
+                          options.write)
         cq.estimateFWHM()
     except Exception,e:
         log.error("There was some error: %s "%str(e))

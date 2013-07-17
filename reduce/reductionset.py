@@ -719,7 +719,8 @@ class ReductionSet(object):
                 if not fits.isObject():
                     return 'other'
         else:
-            mode='other'
+            # it might be a lab test or whatever ...
+            mode = 'other'
                         
         return mode
                         
@@ -770,10 +771,17 @@ class ReductionSet(object):
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
-        #DARK - Do NOT require equal EXPTIME Master Dark ???
+        #DARK - Does require equal EXPTIME Master Dark ???
         master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark)==0 and self.ext_db!=None:
-            master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL', -1) 
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL', -1)
+        
+        # Hopefully, try to find a MASTER_DARK with equal expTime
+        if len(master_dark)==0:
+            log.info("Last chance to find a MASTER_DARK")
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime)
+        
+             
         #FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
@@ -2569,7 +2577,8 @@ class ReductionSet(object):
         # 000 - Find out dither mode
         ########################################################################
         try:
-            self.obs_mode = self.getObsMode()  # overwrite initial given observing mode
+            # overwrite initial given observing mode
+            self.obs_mode = self.getObsMode()  
         except:
             raise
         
@@ -2676,6 +2685,52 @@ class ReductionSet(object):
                   )
                 #replace old gain file
                 shutil.move(gainmap.replace(".fits","_bpm.fits"), gainmap)
+        
+        ########################################################################
+        # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
+        #      each raw frame. This mode try to fit 
+        ########################################################################
+        if self.red_mode=='lab':
+            log.info("**** Computing FWHM of each pre-reduced image ****")
+            # First, get input parameter for FWHM estimation
+            satur_level = self.config_dict['astrometry']['satur_level']
+            pix_scale = self.config_dict['general']['pix_scale']
+            fwhm_t = []
+            std_t = []
+            for r_file in self.m_LAST_FILES:
+                try:
+                    pf = datahandler.ClFits(r_file)
+                    satur_level = int(satur_level) * int(pf.getNcoadds())
+                except:
+                    log.warning("Cannot get NCOADDS. Taken default (=1)")
+                    satur_level = satur_level
+                
+                # Note that we could computer FWHM for a well-defined area
+                # using edge_x and edge_y parameters.    
+                cq = reduce.checkQuality.CheckQuality(r_file, isomin=10.0,
+                    ellipmax=0.3, edge_x=100, edge_y=100, pixsize=pix_scale, 
+                    gain=1, sat_level=satur_level)
+                try:
+                    (fwhm, std) = cq.estimateFWHM()
+                    if fwhm>0 and fwhm<20:
+                        log.info("File %s - FWHM = %s (pixels) std= %s"%(r_file, fwhm, std))
+                        fwhm_t.append(fwhm)
+                        std_t.append(std)
+                    elif fwhm<0 or fwhm>20:
+                        log.error("Wrong estimation of FWHM of file %s"%r_file)
+                        log.error("Please, review your data.")           
+                    else:
+                        log.error("ERROR: Cannot estimate FWHM of file %s"%r_file)           
+                except Exception,e:
+                    log.error("ERROR: something wrong while computing FWHM")
+                    raise e
+            
+            log.info("**********************************")
+            log.info("*** Mean-FWHM = %s"%numpy.mean(fwhm_t))
+            log.info("*** Mean-STD = %s"%numpy.mean(std_t))
+            log.info("*** END of Lab data reduction ****")
+            return self.m_LAST_FILES[0]
+            
                         
         ########################################################################
         # 4 - First Sky subtraction (IRDR) - sliding window technique
@@ -2820,7 +2875,7 @@ class ReductionSet(object):
                     else:
                         log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
                 except Exception,e:
-                    self.logConsole.error("ERROR: something wrong while computing FWHM")
+                    log.error("ERROR: something wrong while computing FWHM")
                     raise e
 
             log.info("#########################################")

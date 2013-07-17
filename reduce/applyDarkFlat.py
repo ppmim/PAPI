@@ -124,6 +124,8 @@ class ApplyDarkFlat(object):
         t.tic()
     
         # some variables 
+        cdark = None
+        cflat = None
         out_suffix = ".fits"
         dmef = False # flag to indicate if dark is a MEF file or not
         fmef = False # flag to indicate if flat is a MEF file or not
@@ -180,7 +182,7 @@ class ApplyDarkFlat(object):
                 #MEF
                 if cflat.next>1:
                     ###fmef = True
-                    if cdark.next != cflat.next:
+                    if cdark!=None and cdark.next != cflat.next:
                         raise Exception("Number of extensions does not match \
                         in Dark and Flat files!")
                     else: n_ext = cdark.next    
@@ -194,9 +196,14 @@ class ApplyDarkFlat(object):
                     ext = 1
                 else: 
                     ext = 0
-                # Normalization is done with a robust estimator --> np.median() 
-                median = np.median(flat[ext].data[200:naxis1-200, 200:naxis2-200])
-                mean = np.mean(flat[ext].data[200:naxis1-200, 200:naxis2-200])
+                    
+                # Replace NaN values with 0.0
+                dat = flat[ext].data[200:naxis1-200, 200:naxis2-200]
+                dat[np.isnan(dat)]= 0.0
+
+                # Normalization is done with a robust estimator --> np.median()
+                median = np.median(dat)
+                mean = np.mean(dat)
                 mode = 3*median-2*mean
                 log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
                            median, mean, mode)
