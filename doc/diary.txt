@@ -2285,15 +2285,6 @@ posible fichero .head que coincida con el fichero de salida.
   que no ha conseguido una buena calibración !!!
   Esto me ocurre tanto con DS3-1, como con DS3-2 de HAWK-I.
     
-01-Julio-2013
-=============
-- Soluciono un bug en RS:makeObjects()
-- Encuentro bug en calDark.py:
-   - iraf.mscstat no funciona !! ademas esta funcion se usa en más sitios de PAPI !!! (PENDIENTE) 
-    
-   === > ERROR: Bad extension version range list
-
-
 05-Julio-2013
 =============
 - Termino la primera versión de la nueva web de PANIC, que salgo la cabecera, 
@@ -2318,6 +2309,13 @@ Tras varios email, Richard Mathar me manda la nueva version.
 
 12-Julio-2013
 =============
+
+- Soluciono un bug en RS:makeObjects()
+- Encuentro bug en calDark.py:
+   - iraf.mscstat no funciona !! ademas esta funcion se usa en más sitios de PAPI !!! (PENDIENTE)
+
+   === > ERROR: Bad extension version range list
+
 
 - Cambiamos a la nueva web de panic (www.iaa.es/PANIC ---> panic.iaa.es)
 - Me pongo a terminar de compilar la última version de GEIRS que me mandó RM
