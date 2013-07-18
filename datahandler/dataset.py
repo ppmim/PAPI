@@ -97,9 +97,8 @@ class DataSet(object):
             log.debug("Loadding Source File %s" %source)
             contents = [line.replace( "\n", "") for line in fileinput.input(source)]
         else:
-            #TODO
-            log.error("Error, source not supported !!")
-            pass
+            log.error("Error, DB input source not supported !!")
+            raise Exception("Error, DB input source not supported")
 
         # 2. Insert loaded data into in memory DB
         #    -Load and check the FITS file
@@ -107,7 +106,7 @@ class DataSet(object):
         for file in contents:
             try:
                 self.insert( file )
-            except:
+            except Exception,e:
                 log.error("Error while inserting file %s " %file)
                 #raise
                 continue
@@ -144,7 +143,8 @@ class DataSet(object):
             log.exception( "Unexpected error reading FITS file %s" %filename )
             raise e
         
-        data = (self.id, fitsf.runID, fitsf.obID, fitsf.obPat, fitsf.pat_expno, fitsf.pat_noexp, 
+        data = (self.id, fitsf.runID, 
+                fitsf.obID, fitsf.obPat, fitsf.pat_expno, fitsf.pat_noexp, 
                 filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, 
                 fitsf.filter, fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object,
                 fitsf.detectorID)
@@ -1195,6 +1195,7 @@ class DataSet(object):
             log.exception("Error in DataSet.GetMasterFlat function...")
             raise
         
+            
     ############################################################    
     def ListDataSet( self ):
         """

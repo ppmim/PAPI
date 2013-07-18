@@ -217,9 +217,12 @@ class ReductionSet(object):
                     has not '.fits' extension"%f)
 
         
-        # Main directories
-        self.rs_filelist = rs_filelist # list containing the science data filenames to reduce
-        # Temporal directory for temporal files created during the data reduction process
+        # List containing the science data filenames to reduce
+        self.rs_filelist = rs_filelist 
+
+        # Main directories:
+        # Temporal directory for temporal files created during the data 
+        # reduction process
         if temp_dir == None:
             if self.config_dict !=None:
                 self.temp_dir = self.config_dict['general']['temp_dir']
@@ -248,7 +251,8 @@ class ReductionSet(object):
             # if no filename, we take the DATE-OBS of the first file of the SEQ
             with pyfits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
                 if 'DATE-OBS' in myhdulist[0].header:
-                    self.out_file = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                    self.out_file = self.out_dir + "/PANIC." + \
+                            myhdulist[0].header['DATE-OBS'] +".fits"
                 else:
                     output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', 
                                                         prefix='red_set_', 
@@ -264,28 +268,38 @@ class ReductionSet(object):
         self.master_flat = flat # master flat to use (input)
         self.master_bpm = bpm # master Bad Pixel Mask to use (input)
         self.apply_dark_flat = self.config_dict['general']['apply_dark_flat'] # 0=no, 1=before, 2=after
-        self.red_mode = red_mode # reduction mode (lemon=for LEMON pipeline, 
-                                 # quick=for QL, science=for science) 
-        log.debug("GROUP_BY = %s"%group_by)
-        self.group_by = group_by.lower() # flag to decide how classification 
-                                         # will be done, by OT (OB_ID, OB_PAT, 
-                                         # FILTER and TEXP kws) or by 
-                                         # FILTER (FILTER kw)
-        self.check_data = check_data # flat to indicate if data checking need 
-                                     # to be done (see checkData() method)
-         
+        
+        # Reduction mode (lemon=for LEMON pipeline, quick=for QL, science=for 
+        # science, lab=laboratory) 
+        self.red_mode = red_mode
+        
+        # Flag to decide how classification will be done, by OT (OB_ID, OB_PAT,
+        # FILTER and TEXP kws) or by FILTER (FILTER kw)
+        self.group_by = group_by.lower() 
+
+        # Flag to indicate if data checking need to be done (see checkData() 
+        # method)
+        self.check_data = check_data 
                 
         if self.config_dict:
             self.m_terapix_path = self.config_dict['config_files']['terapix_bin']
             self.m_irdr_path = self.config_dict['config_files']['irdr_bin']
             # update config values from config_dict
-            self.HWIDTH = self.config_dict['skysub']['hwidth'] # half width of sky filter window in frames
-            self.MIN_SKY_FRAMES = self.config_dict['skysub']['min_frames']  # Minimum number of sky frames required in the sliding window for the sky subtraction
-            self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] /86400.0 # Maximum exposition time difference (days) between two consecutive frames
-            self.MIN_CORR_FRAC = self.config_dict['offsets']['min_corr_frac'] # Minimum overlap correlation fraction between offset translated images (from irdr::offset.c)
+            # half width of sky filter window in frames
+            self.HWIDTH = self.config_dict['skysub']['hwidth'] 
+            # Minimum number of sky frames required in the sliding window for 
+            # the sky subtraction
+            self.MIN_SKY_FRAMES = self.config_dict['skysub']['min_frames']
+            # Maximum exposition time difference (days) between two consecutive 
+            # frames  
+            self.MAX_MJD_DIFF = self.config_dict['general']['max_mjd_diff'] /86400.0 
+            # Minimum overlap correlation fraction between offset translated 
+            # images (from irdr::offset.c)
+            self.MIN_CORR_FRAC = self.config_dict['offsets']['min_corr_frac'] 
         else:
             print "Program should not enter here  !!!"
-            # some "default" config values (see below how they are updated from the config_dict)
+            # Some "default" config values (see below how they are updated from 
+            # the config_dict)
             # Environment variables
             """
             self.m_terapix_path = os.environ['TERAPIX']
@@ -296,18 +310,29 @@ class ReductionSet(object):
             self.MIN_CORR_FRAC = 0.1 # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
             """
         
-        # real "variables" holding current reduction status
-        self.m_LAST_FILES = []   # Contain the files as result of the last 
-                                 # processing step (science processed frames). 
-                                 # Properly initialized in reduceSingleObj()
-        self.m_rawFiles = []     # Raw files (originals in the working directory)
-                                 # of the current sequence being reduced.
-        self.m_filter = ""       # Filter of the current data set (m_LAST_FILES)
-        self.m_type = ""         # Type (dark, flat, object, ...) of the current data set; should be always object !
-        self.m_expt = 0.0        # Exposition Time of the current data set files
-        self.m_ncoadd = 0        # Number of coadds of the current data set files
-        self.m_itime  = 0.0      # Integration Time of the current data set files
-        self.m_readmode = ""     # readout mode (must be the same for all data files)
+        # Variables holding current reduction status
+        
+        # (m_LAST_FILES) Contain the files as result of the last processing 
+        # step (science processed frames).Properly initialized in 
+        # reduceSingleObj()
+        self.m_LAST_FILES = []   
+
+        # Raw files (originals in the working directory) of the current 
+        # sequence being reduced.
+        self.m_rawFiles = []     
+        # Filter of the current data set (m_LAST_FILES)
+        self.m_filter = ""
+        # Type (dark, flat, object, ...) of the current data set; should be 
+        # always object !       
+        self.m_type = ""
+        # Exposition Time of the current data set files         
+        self.m_expt = 0.0
+        # Number of coadds of the current data set files        
+        self.m_ncoadd = 0  
+        # Integration Time of the current data set files      
+        self.m_itime  = 0.0 
+        # readout mode (must be the same for all data files)     
+        self.m_readmode = ""     
         
         
         ##Local DataBase (in memory)
@@ -399,7 +424,7 @@ class ReductionSet(object):
         
     def checkData(self, chk_shape=True, chk_filter=True, chk_type=True, 
                   chk_expt=True, chk_itime=True, chk_ncoadd=True, chk_cont=True,
-                  chk_readmode=True, file_list=None):
+                  chk_readmode=True, chk_instrument=True, file_list=None):
         """
         Check if data properties match in the current file list.
         
@@ -430,6 +455,11 @@ class ReductionSet(object):
         chk_readmode: bool
             Flag to indicate if type Readout mode  must be checked
 
+        chk_instrument: bool
+            Flag meaning if INSTRUME keyword must be checked to be equal.
+            In addition, INSTRUME keyword must match with value specified
+            in the configuration file.
+
         file_list : list
             A list having the FITS files to check
             
@@ -458,6 +488,7 @@ class ReductionSet(object):
         ncoadd_0 = f.getNcoadds()
         readmode_0 = f.getReadMode()
         shape_0 = f.shape
+        instrument_0 = f.getInstrument().lower()
         
         self.m_filter = filter_0
         self.m_type = type_0
@@ -465,7 +496,12 @@ class ReductionSet(object):
         self.m_itime = itime_0
         self.m_ncoadd = ncoadd_0
         self.m_readmode = readmode_0
+        self.m_instrument = instrument_0
         
+        if (chk_instrument and 
+            self.config_dict['general']['instrument'].lower()!=instrument_0):
+            log.error("INSTRUMENT value mismatch -- %s "%instrument_0)
+            return False 
         
         mismatch_filter = False
         mismatch_type = False
@@ -475,10 +511,16 @@ class ReductionSet(object):
         mismatch_cont = False
         mismatch_readmode = False
         mismatch_shape = False
+        mismatch_instrument = False
         
         prev_MJD = -1
         for file in files_to_check:
             fi = datahandler.ClFits( file )
+            if chk_instrument and not mismatch_instrument: 
+                if fi.getInstrument() != instrument_0:
+                    log.debug("File %s does not match INSTRUMENT", file)
+                    mismatch_instrument = True
+                    break
             if chk_shape and not mismatch_shape: 
                 if fi.shape != shape_0:
                     log.debug("File %s does not match SHAPE", file)
@@ -2103,8 +2145,9 @@ class ReductionSet(object):
                 sequence = misc.collapse.collapse(sequence)
                 
                 # Check for EXPT in order to know how to create the master dark (dark model or fixed EXPT)     
-                if (self.checkData(chk_shape=True, chk_filter=True, chk_type=True, chk_expt=True, 
-                                   chk_itime=True, chk_ncoadd=True, chk_cont=True, 
+                if (self.checkData(chk_shape=True, chk_filter=True, chk_type=True, 
+                                   chk_expt=True, chk_itime=True, 
+                                   chk_ncoadd=True, chk_cont=True, 
                                    chk_readmode=True, file_list=sequence)==True):
                     # Orthodox master dark -- same EXPTIME & NCOADDS
                     log.debug("Found dark series with equal EXPTIME. Master dark is going to be created")
@@ -2558,8 +2601,9 @@ class ReductionSet(object):
         # TODO : it could/should be done in reduceSeq, to avoid the spliting ...??
         log.info("**** Data Validation ****")
         if self.check_data:
-            if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, chk_expt=True, 
-                               chk_itime=True, chk_ncoadd=True, chk_readmode=True)==True):
+            if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, 
+                               chk_expt=True, chk_itime=True, chk_ncoadd=True, 
+                               chk_readmode=True, chk_instrument=True)==True):
                 log.debug("Data checking was OK !")
             else:
                 raise Exception("Mismatch in data checking !")
@@ -2737,7 +2781,8 @@ class ReductionSet(object):
         ########################################################################
         log.info("**** 1st Sky subtraction (without object mask) ****")
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
-        # return only filtered images; in exteded-sources, sky frames  are not included 
+        # Return only filtered images; in exteded-sources, sky frames  are not 
+        # included 
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
                                            gainmap, 'nomask', self.obs_mode)
         
@@ -2750,7 +2795,8 @@ class ReductionSet(object):
             log.info("**** Removing crosstalk ****")
             try:
                 res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
-                            [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
+                            [None]*len(self.m_LAST_FILES), 
+                            [True]*len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
             except Exception,e:
                 raise e      
@@ -2758,9 +2804,11 @@ class ReductionSet(object):
         ########################################################################
         # 4.2 - Divide by the master flat after sky subtraction ! 
         # some people think it is better do it now (M.J.Irwing, CASU)
-        # But, dark is not applied/required, as it was implicity done when sky subtr.
+        # But, dark is not applied/required, as it was implicity done when sky 
+        # subtraction.
         # However, it does not produce good results, it looks like if we undo the 
-        # sky subtraction, because sky subtraction is quite related with flatfielding
+        # sky subtraction, because sky subtraction is quite related with 
+        # flatfielding.
         # For further details, check TN and Wei-Hao (SIMPLE) mails. 
         # So, it is implemented here only for academic purposes !
         ########################################################################
@@ -2863,8 +2911,8 @@ class ReductionSet(object):
                     satur_level = satur_level
                     
                 cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
-                    ellipmax=0.3, edge=200, pixsize=pix_scale, gain=4.15, 
-                    sat_level=satur_level)
+                    ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
+                    gain=4.15, sat_level=satur_level)
                 try:
                     (fwhm, std) = cq.estimateFWHM()
                     if fwhm>0 and fwhm<20:
