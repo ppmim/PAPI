@@ -2429,8 +2429,6 @@ Probado con el DataSet de O2k :
 
 y parece que funciona. Habrá que ver si con eso basta para los test de laboratorio.
    
-TODO> chequeo de instrumento en header (validación)
-TODO> ver headers (WCS) actuales de GEIRS y crear documento ???
   
 
 - Encuentro un BUG importante en applyDarkFlat; basicamente consiste en que
@@ -2438,7 +2436,6 @@ no se por qué, numpy encuentra valores NaN en imagenes (simuladas con GEIRS)
 que con el DS9 son valores = 0 !!!
 Lo que hago para 'solventar' dicho problema es sustituir los NaN (que parecen 
 que corresponden a 0s) con valores 0.0 y seguir pa lante !
-TODO> Habrá que ver en que más lugares de PAPI ocurre esto.
 
 
 - Modifico CheckQuality para que se pueda especificar edge_x y edge_y. La idea
@@ -2448,6 +2445,48 @@ momento lo vamos a dejar así.
 
 18-Julio-2013
 =============
+- Añado chequeo de instrumento en header (validación);
+
+Added checking of INSTRUME keyword; first key must match with
+'instrument' value in config file(case-insensitive), and secondly all files 
+must match the same keyword.
+
+- ver headers (WCS) actuales de GEIRS y crear documento ???
+Parece que en la última version de GEIRS, ya no aparecen los keywords para
+el WCS (CTYPE, CDELT, CRVAL, ...) con valores incorrectos (=1).
+Ahora, no aparecen ninguna key de WCS, salvo RA y DEC.
+Sin embargo, dichas keys si la añadir el programita geirs2Panic.
+ 
+
+TODO> Habrá que ver en que más lugares de PAPI puede ocurre el problema de los NaN
+en los calculos con numpy (cfr. applyDarkFlat).
+
+
+19-Julio-2013
+=============
+- Me responde RM a la pregunta de incluir WCS keys. Básicamente me dice que 
+podemos usar su solucion con el fichero $CAMTMP/geirsPhduAdd.panic, aunque el
+piensa que la WCS es una tarea para el Pipeline, pues con los gap de 167px no
+se puede establecer una astrometría correcta. Sin embargo, yo le respondo
+que una WCS básica (scale + orientacion) es necesaria no solo para PAPI, sino 
+también para los usuarios que no usen el pipeline.
+
+Al hilo de esto le pregunta cual es la diferencia entre el Clemens' workaround:
+
+Escribir en ~/tmp/fitsheader_panic.txt la keys y en el fichero 
+GEIRS/scripts/QueueFiles tenemos una linea tq:
+
+   modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
+
+También el pregunto que opina de la posibilidad de MEF files.
+
+- Le escribo a Armin/Fried preguntándole que le parece la página de AIV, por
+si hay algún error. También le sigiero a Armin, que si quiere el podría ser
+el editor de la parte de AIV.
+
+
+
+
 
 
 
@@ -2462,25 +2501,34 @@ Keywords CANDIDATAS a incluir en el header de PANIC
 
 FOR NEXT VIDEOCONF
 ==================
-- Tested OPTPCIe board with U.Mall routine (optpci_hw_test.c); results show 
-all is working well (PLX_v6.5 & PLX_v7.00) on PANIC computer.
-- PCIe board also well addressed bye GEIRS. Data generator working !
-
 - SATUR_LEVEL parametrized with NDIT
+- New 'lab' reduction mode: dark, flat and FWHM. 
+- Check of INSTRUME keyword added
+- Next basic WCS keywords should be added by default by GEIRS. Currently,
+only added by external program geirs2Panic:
 
-
-
+    CUNIT1  = 'deg     '           / WCS units along axis 1                         
+    CUNIT2  = 'deg     '           / WCS units along axis 2                         
+    CTYPE1  = 'RA---TAN'           / WCS axis 1                                     
+    CTYPE2  = 'DEC--TAN'           / WCS axis 2                                     
+    CRVAL1  =                   0. / [deg] RA in center                             
+    CRVAL2  =                   0. / [deg] DEC in center                            
+    CRPIX1  =                 2047 /  RA and DEC center along axis 1                
+    CRPIX2  =                 2047 /  RA and DEC center along axis 2                
+    CD1_1   = -5.84166664339136E-05 /  [deg/px] WCS matrix diagonal                 
+    CD2_2   = 5.84166664339136E-05 /  [deg/px] WCS matrix diagonal                  
+    CD1_2   = 3.57687104420465E-21 /  [deg/px] WCS matrix outer diagonal            
+    CD2_1   = 3.57687104420465E-21 /  [deg/px] WCS matrix outer diagonal   
 
 
 
 Questions:
 - Linearity values --> 15K ADUs for saturation
 - Readout modes for PANIC
-- GEIRS Upgrade for PANIC 
-- PICe Interface with ROE for testing with new computers ( ROE simulator ?)
 - How many serial ports are required ? or MOXA NPort (serial-ethernet converter) ? should also be tested !
 - any other interface
 - Ask CA about Archive interfece (run tests !)
+
 
 
 
@@ -2612,7 +2660,7 @@ DOUBTS FOR MATILDE (next)
 ================================
 
 - la raw_photometry() sólo esta disponible para los filtros de 2MASS (J, H, Ks), 
-pero, ¿ se podría hacer otra aproximación con los filtro que vaya a tener PANIC ??
+pero, ¿ se podría hacer otra aproximación con los filtros que vaya a tener PANIC ??
 
 - ¿ que valor usar para la normalización ? y tenía la moda, pero he visto
 que me puede dar problemas (filtro z), y en HAWK-I usan la mediana.
@@ -2641,16 +2689,15 @@ se calculan con un master_dark_model.
 
 
 
-TODO's for Clemens
-==================
+TODO's for Clemens/RM
+=====================
   - Observo algo que parece una condición de carrera, y es que alguna vez puede 
   ocurrir que aunque el chequeo del FITS sea correcto, GEIRS no haya aún 
   añadido las keywords que le da el OT y entonces el QL no detecte bien el 
   fichero pues no puede leer dichas keywords esenciales.
   Esto creo que no ocurre cuando usamos los modos 'file' el datacollector.
-  
+ - comando para añadir cualquier keyword al header
 
-- comando para añadir cualquier keyword al header
 - WCS correcto en los headers, actualmente tiene
 TYPE1  = 'PIXEL'
 CTYPE2  = 'PIXEL'
@@ -2661,6 +2708,9 @@ CRVAL2  =                  1.0
 CDELT1  =                  1.0
 CDELT2  =                  1.0
 
+Ya ha sido eliminados en la nueva version de GEIRS; ver email 18-Jul-2013.
+
+
 - bug en la salida del comando median cuando se envia desde el OT con 
   snd_panic_new, que ahora sólo devuleve OK
 
@@ -2670,6 +2720,15 @@ FAQ:
 1) ¿ para que se usa en PAPI los gainmap ? 
    - skyfilter
    - dithercubemean
+
+2) Como funciona el workaround the Clemens para keys del OT:
+
+Escribir en ~/tmp/fitsheader_panic.txt la keys y en el fichero 
+GEIRS/scripts/QueueFiles tenemos una linea tq:
+
+   modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
+
+
 
 DEPENDENCIAS DE IRDR
 ====================
@@ -2683,7 +2742,7 @@ DUDAS OT
 - ¿ en un OB solo puede haber un calibration_series ?
 - en la pantalla de Telescope-Iterator, por que el valor de Cycles=5 cuando creas un patron cualquiera ? 
 (parace que es el valor que pone por defecto en Cycles en "Single Exposure")
-Yo pondría por defecto 1 cycle
+Yo pondría por defecto 1 cycle.
 
 
 ASTROMETRIA con Astrometry.net 
@@ -2782,7 +2841,8 @@ NEXT TODOs
 - crear "bateria" de tests para lanzar de forma automatica con un conjunto de
 datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
 
-- ver como "quitar" los "Reference pixel"  (http://bit.ly/YP5heF)
+- ver como "quitar" los "Reference pixel"  (http://bit.ly/YP5heF) -- DONE 
+también con geirs2Panic podemos eliminarlos (trim) del todo.
 - ver las diferencias entre calBPM.py y calBPM_2.py (este último es el que se 
 esta usando)
 - implementar main() en remove_cosmics.py
@@ -2793,11 +2853,12 @@ en el portatil lo hace, pero el resultado no es muy bueno,
 incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-- graficos SCAMP de distorsion !!!
 - implementar astrometry.net como alternativa a SCAMP !!!
 
-BUGS QL
-=======
-- Si selecionamos varios science con distinto filtro y le decimos "reduce",
+BUGS
+====
+QL> Si seleccionamos varios science con distinto filtro y le decimos "reduce",
 no lo hace pero no dice el porqué !
-- checkQuality usa la variable TERAPIX !!
+PAPI> checkQuality usa la variable TERAPIX !!
+PAPI> NaN values in Numpy computations ! need to be checked previosuly as in
+applyDarkFlat.py

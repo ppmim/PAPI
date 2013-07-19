@@ -81,7 +81,9 @@ def initWCS( input_image, pixel_scale):
                 #[new_ra, new_dec]=wcscon.wcscon(WCS_J2000, WCS_J2000, equinox0, 2000.0, ra, dec, 0)
                 # Find out PIXSCALE
                 if "PIXSCALE" in header:
+                    # scale must be in arcsec/pixel
                     scale = header['PIXSCALE']
+                    # now convert to deg/pixel
                     degscale = scale/3600.0
                 else:
                     scale = pixel_scale
@@ -95,12 +97,14 @@ def initWCS( input_image, pixel_scale):
                 if create_wcs:
                     #Create initial WCS
                     #
-                    header.update("CRPIX1", naxis1/2.0, "Ref. pixel in <axis direction>")
-                    header.update("CRPIX2", naxis2/2.0, "Ref. pixel in <axis direction>")
-                    header.update("CRVAL1", ra, "Coordinate value of ref. pixel")
-                    header.update("CRVAL2", dec, "Coordinate value of ref. pixel")
+                    header.update("CRPIX1", naxis1/2.0, "RA and DEC reference pixel along axis 1")
+                    header.update("CRPIX2", naxis2/2.0, "RA and DEC reference pixel along axis 2")
+                    header.update("CRVAL1", ra, "[deg] RA Coordinate value of ref. pixel")
+                    header.update("CRVAL2", dec, "[deg] DEC Coordinate value of ref. pixel")
                     #header.update("RA", new_ra, "Coordinate value of ref. pixel")
                     #header.update("DEC", new_dec, "Coordinate value of ref. pixel")
+                    header.update("CUNIT1", "deg", "WCS units along axis 1")
+                    header.update("CUNIT2", "deg", "WCS units along axis 2")
                     header.update("CTYPE1", "RA---TAN", "Pixel coordinate system")
                     header.update("CTYPE2", "DEC--TAN", "Pixel coordinate system")
                     #header.update("RADECSYS","FK5","Coordinate reference frame")
@@ -111,11 +115,11 @@ def initWCS( input_image, pixel_scale):
                     # In addition, it must be noted that:
                     # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
                     # r = clockwise rotation_angle  
-                    header.update("CD1_1", -degscale, "Translation matrix element")
-                    header.update("CD1_2", 0.0, "Translation matrix element")
-                    header.update("CD2_1", 0.0, "Translation matrix element")
-                    header.update("CD2_2", degscale, "Translation matrix element")
-                    header.update("SCALE", scale, "Image scale")
+                    header.update("CD1_1", -degscale, "[deg/px] Translation WCS matrix element")
+                    header.update("CD1_2", 0.0, "[deg/px] Translation WCS matrix element")
+                    header.update("CD2_1", 0.0, "[deg/px] Translation WCS matrix element")
+                    header.update("CD2_2", degscale, "[deg/px] Translation WCS matrix element")
+                    header.update("SCALE", scale, "[arcsec/px] Image scale")
                     #header.update("EQUINOX", 2000.0, "Standard FK5(years)")
                 else:
                     header.update("RA", ra, "Right Ascension (degree)")
