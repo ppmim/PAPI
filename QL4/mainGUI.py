@@ -2228,8 +2228,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             """
             self.m_processing = True
             
-            # Next implementation does not work because sex.run() doesn't return
-            # the output file created !
+            # Next implementation might not work properly because sex.run() 
+            # doesn't return the output file created !
             #
             input_file = self.m_listView_item_selected
             out_file = self.m_outputdir+"/"+os.path.basename(input_file.replace(".fits",".skysub.fits"))
@@ -2253,6 +2253,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 display.showFrame(out_file)
             finally:
                 QApplication.restoreOverrideCursor()
+                self.m_processing = False
         else:
             log.error("Sorry, selected file does not look a science file  ")
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             

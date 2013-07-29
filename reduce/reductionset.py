@@ -501,7 +501,7 @@ class ReductionSet(object):
         if (chk_instrument and 
             self.config_dict['general']['instrument'].lower()!=instrument_0):
             log.error("INSTRUMENT value mismatch -- %s "%instrument_0)
-            return False 
+            return (False, "chk_instrument") 
         
         mismatch_filter = False
         mismatch_type = False
@@ -520,21 +520,25 @@ class ReductionSet(object):
                 if fi.getInstrument() != instrument_0:
                     log.debug("File %s does not match INSTRUMENT", file)
                     mismatch_instrument = True
+                    info_mismatch = "chk_instrument"
                     break
             if chk_shape and not mismatch_shape: 
                 if fi.shape != shape_0:
                     log.debug("File %s does not match SHAPE", file)
                     mismatch_shape = True
+                    info_mismatch = "chk_shape"
                     break
             if chk_filter and not mismatch_filter: 
                 if fi.getFilter() != filter_0:
                     log.debug("File %s does not match FILTER", file)
                     mismatch_filter = True
+                    info_mismatch = "chk_filter"
                     break
             if chk_type and not mismatch_type: 
                 if fi.getType() != type_0:
                     log.debug("File %s does not match TYPE", file)
                     mismatch_type = True
+                    info_mismatch = "chk_type"
                     break
             if chk_expt and not mismatch_expt: 
                 if fi.expTime() != expt_0:
@@ -542,26 +546,31 @@ class ReductionSet(object):
                 #    (fi.expTime()-self.MAX_MJD_DIFF)>expt_0):   # more relaxed situation
                     log.debug("File %s does not match EXPTIME", file)
                     mismatch_expt = True
+                    info_mismatch = "chk_expt"
                     break
             if chk_itime and not mismatch_itime: 
                 if fi.getItime() != itime_0:
                     log.debug("File %s does not match ITIME", file)
                     mismatch_itime = True
+                    info_mismatch = "chk_itime"
                     break
             if chk_ncoadd and not mismatch_ncoadd: 
                 if fi.getNcoadds() != ncoadd_0:
                     log.debug("File %s does not match NCOADD", file)
                     mismatch_ncoadd = True
+                    info_mismatch = "chk_ncoadd"
                     break
             if chk_readmode and not mismatch_readmode: 
                 if fi.getReadMode() != readmode_0:
                     log.debug("File %s does not match READMODE", file)
                     mismatch_readmode = True
+                    info_mismatch = "chk_readmode"
                     break
             if chk_cont and not mismatch_cont:
                 if prev_MJD!=-1 and (fi.getMJD()-prev_MJD)>self.MAX_MJD_DIFF:
                     log.error("Maximmun time distant between two consecutives frames exceeded. File= %s",file)
                     mismatch_cont = True
+                    info_mismatch = "chk_cont"
                     break
                 else:
                     prev_MJD=fi.getMJD()
@@ -570,10 +579,10 @@ class ReductionSet(object):
             mismatch_itime or mismatch_ncoadd or mismatch_cont:
             log.error("Data checking found a mismatch....check your data files....")
             #raise Exception("Error while checking data (filter, type, ExpT, Itime, NCOADDs, MJD)")
-            return False             
+            return (False, info_mismatch)             
         else:    
             log.debug("All files match same file filter")
-            return True
+            return (True, None)
             
     def checkFilter(self):
         """
@@ -2145,11 +2154,14 @@ class ReductionSet(object):
                 sequence = misc.collapse.collapse(sequence)
                 
                 # Check for EXPT in order to know how to create the master dark (dark model or fixed EXPT)     
-                if (self.checkData(chk_shape=True, chk_filter=True, chk_type=True, 
+                # Orthodox master dark -- same EXPTIME & NCOADDS
+                r = self.checkData(chk_shape=True, chk_filter=True, chk_type=True, 
                                    chk_expt=True, chk_itime=True, 
                                    chk_ncoadd=True, chk_cont=True, 
-                                   chk_readmode=True, file_list=sequence)==True):
-                    # Orthodox master dark -- same EXPTIME & NCOADDS
+                                   chk_readmode=True, chk_instrument=True,
+                                   file_list=sequence)
+                                   
+                if (r[0]==True):
                     log.debug("Found dark series with equal EXPTIME. Master dark is going to be created")
                     task = reduce.calDark.MasterDark (sequence, self.temp_dir, 
                                                       outfile, texp_scale=False,
@@ -2168,7 +2180,7 @@ class ReductionSet(object):
                     pool.join()
 
                     
-                else:
+                elif (r[0]==False and r[1]=="chk_expt"):
                     log.info("Found a dark series of frames with different EXPTIME: Dark model will be created")
                     use_dark_model = True
                     if use_dark_model==True:# and self.red_mode !="quick":
@@ -2191,7 +2203,10 @@ class ReductionSet(object):
                         log.warning("Found a dark serie with diff EXPTIME, but dark model processing not activated")
                         #raise Exception("Dark series are not processed in quick mode")
                         out = None
-                 
+                else:
+                    log.error("Some kind of data checking was found. Review your data")
+                    raise Exception("Some kind of data checking was found. Review your data")
+                        
                 if out!=None: files_created.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DARK: %s",str(e))
@@ -2603,7 +2618,7 @@ class ReductionSet(object):
         if self.check_data:
             if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, 
                                chk_expt=True, chk_itime=True, chk_ncoadd=True, 
-                               chk_readmode=True, chk_instrument=True)==True):
+                               chk_readmode=True, chk_instrument=True)[0]==True):
                 log.debug("Data checking was OK !")
             else:
                 raise Exception("Mismatch in data checking !")

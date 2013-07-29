@@ -2162,6 +2162,9 @@ PV1_5 : Unrecognized coordinate transformation parameter.
 
 La solución pasaría por usar el modulo wcsutil.py de http://code.google.com/p/esutil/.
 y usar image2sky/sky2image.
+Esta es la opción que finalmente he adopatado hasta que publiquen algún parche para la PyWCS.
+V.Terrón me comentó (24-Jul-2013) que el también había encontrado dicho problema, o 
+Javier Blasco, el que está usando LEMON.
 
 
 - Otra opción sería convertir el modelos de distorsion de SCAMP (PVi_j) a la 
@@ -2485,6 +2488,13 @@ si hay algún error. También le sigiero a Armin, que si quiere el podría ser
 el editor de la parte de AIV.
 
 
+
+26-Julio-2013
+=============
+- Continuo con web PANIC; primera version ETC de JF
+- Pruebo el nuevo método sugerido por RM para añadir keywords a los header de PANIC (geirsPhduAdd.panic)
+y aviso a AGS para que lo implementemos en el OT.
+- Subo nueva version de GEIRS con las ultimas modificaciones y compilada con PLX_SDK7
 
 
 
