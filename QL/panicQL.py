@@ -1,1 +1,0 @@
-pyuic: command not found

@@ -95,7 +95,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
 
-__version__ = "1.0.2"
+__version__ = "1.0.3 - July 2013"
 
 #-------------------------------------------------------------------------------
 def _pickle_method(method):
@@ -234,6 +234,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.lineEdit_max_num_files.setEnabled(True)    
         
         self.logConsole.info("Welcome to the PANIC QuickLook tool version %s"%__version__)
+        self.logConsole.info("Instrument: %s"%self.config_opts['general']['instrument'])
+        self.logConsole.info("Group by: %s"%self.group_by)
         
 
         self.__initializeGUI()
@@ -328,9 +330,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         This method initializes the in memory DBs used for input and output files
         """
         
+        # Read the instrument for DB creation
+        instrument = self.config_opts['general']['instrument'].lower()
+        
         # Inputs DB
         try:
-            self.inputsDB = datahandler.dataset.DataSet(None)
+            self.inputsDB = datahandler.dataset.DataSet(None, instrument)
             self.inputsDB.createDB()
             #self.inputsDB.load()
         except Exception,e:
@@ -339,7 +344,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # Outputs DB
         try:
-            self.outputsDB = datahandler.dataset.DataSet(None)
+            self.outputsDB = datahandler.dataset.DataSet(None, instrument)
             self.outputsDB.createDB()
             #self.outputsDB.load()
         except Exception,e:
@@ -376,8 +381,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ## Insert into DB
         ######################
         #datahandler.dataset.initDB()
-        if fromOutput: self.outputsDB.insert(filename)
-        else: self.inputsDB.insert(filename)
+        inserted = False
+        if fromOutput: inserted = self.outputsDB.insert(filename)
+        else: inserted = self.inputsDB.insert(filename)
+
+        # If file insertion into DB failed, at least nothing else to do...        
+        if not inserted: 
+            return
+            
         ## Query DB
         #(date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=self.inputsDB.GetFileInfo(filename)
         #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
@@ -2406,7 +2417,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def background_estimation_slot(self):
         """ Give an background estimation of the current selected image """
         
-        cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
+        pix_scale = self.config_opts['general']['pix_scale']
+        cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0],
+                                              pixsize=pix_scale)
         try:     
             img = cq.estimateBackground(self.m_outputdir+"/bckg.fits")
             
@@ -2432,8 +2445,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         elif file_info==None:
             if self.outputsDB.GetFileInfo(self.m_popup_l_sel[0])[2]!='SCIENCE':
                 QMessageBox.critical(self, "Error", "Selected file is not SCIENCE type")
-            
-        cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0])
+        
+        pix_scale = self.config_opts['general']['pix_scale']
+        cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0], 
+                                              pixsize=pix_scale)
         try:
             fwhm,std = cq.estimateFWHM()
             if fwhm>0:

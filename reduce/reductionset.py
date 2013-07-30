@@ -346,12 +346,12 @@ class ReductionSet(object):
         # in other RS. Mainly used in Quick-Look !!    
         self.ext_db = None
         
-        # (optional) file list to build the external DB. We proceed this way, because
-        # if we give a DB connection to the ReductionSet class instead of a list of files,
-        # we can have problems because SQLite3 does not support access from multiple 
-        # threads, and the RS.reduceSet() can be executed from other thread than 
-        # it was created.
-        # --> If can be a list of files or a directory name having the files
+        # (optional) file list to build the external DB. We proceed this way, 
+        # because if we give a DB connection to the ReductionSet class instead 
+        # of a list of files, we can have problems because SQLite3 does not 
+        # support access from multiple  threads, and the RS.reduceSet() can 
+        # be executed from other thread than it was created.
+        # --> If can be a <list of files> or a <directory name> having the files
         # Further info: http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency  
         #               http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         self.ext_db_files = []
@@ -389,8 +389,9 @@ class ReductionSet(object):
         """
         #Local DataBase (in memory)
         log.info("Initializing Local DataBase")
+        instrument = self.config_dict['general']['instrument'].lower()
         try:
-            self.db = datahandler.dataset.DataSet(self.rs_filelist)
+            self.db = datahandler.dataset.DataSet(self.rs_filelist, instrument)
             self.db.createDB()
             self.db.load()
         except Exception,e:
@@ -410,7 +411,8 @@ class ReductionSet(object):
         if len(self.ext_db_files)>0:
             log.info("Initializing External DataBase")
             try:
-                self.ext_db = datahandler.dataset.DataSet(self.ext_db_files)
+                self.ext_db = datahandler.dataset.DataSet(self.ext_db_files,
+                                                          instrument)
                 self.ext_db.createDB()
                 self.ext_db.load()
             except Exception,e:
@@ -829,8 +831,11 @@ class ReductionSet(object):
         
         # Hopefully, try to find a MASTER_DARK with equal expTime
         if len(master_dark)==0:
-            log.info("Last chance to find a MASTER_DARK")
-            master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime)
+            log.info("Now, trying to find a MASTER_DARK")
+            master_dark = self.db.GetFilesT('MASTER_DARK', expTime)
+        if len(master_dark)==0 and self.ext_db!=None:
+            log.info("Last chance to find a MASTER_DARK in ext_DB")
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK', -1)
         
              
         #FLATS - Do NOT require equal EXPTIME, but FILTER

@@ -51,7 +51,7 @@ class DataSet(object):
     MAX_NFILES = 50
     ############################################################
 
-    def __init__( self , source ):
+    def __init__( self , source, instrument=None ):
         """
         Initialize the object.
         
@@ -60,11 +60,21 @@ class DataSet(object):
         source : str
             Can be a 'directory' name, a 'filename' containing the
             list file or python list havind the files of the DataSet
-    
+
+        instrument: str
+            Name of the source instrument of the data files. It must match
+            with the FITS keyword 'INSTRUME'; whether the keyword does not
+            exist, the file is inserted into DB.
         """
         self.con = None #connection
         self.source = source
         self.id = 0
+        
+        if instrument!=None:
+            self.instrument = instrument.lower()
+        else:
+            self.instrument = None
+            
 
     ############################################################    
     def createDB (self):
@@ -123,16 +133,16 @@ class DataSet(object):
 
         Returns
         -------
-        0 if all was successful, otherwise <0
+        True if all was successful, otherwise False
         """
 
         log.debug("Inserting file %s into dataset" % filename)
-        if filename==None: return 0
+        if filename==None: return False
         
         try:
             if self.GetFileInfo(filename)!=None:
                 log.error("File %s not inserted, it is already in Database."%filename)
-                return 0
+                return False
         except Exception,e:
             log.exception( "Unexpected error reading FITS file %s" %filename )
             raise e
@@ -152,19 +162,26 @@ class DataSet(object):
         print "dataDB_tuple = ", data
          
         cur = self.con.cursor()
-        
-        try:
-            cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +
-                        "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
-            self.con.commit()
 
-        except sqlite.DatabaseError,e:
-            self.con.rollback()
-            log.exception("error inserting into DB")
-            raise e
-
-        self.id+=1
-        return 0
+        # Check instrument id
+        if (self.instrument==None or 
+            (self.instrument==fitsf.getInstrument().lower())):
+            try:
+                cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +
+                            "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
+                self.con.commit()
+    
+            except sqlite.DatabaseError,e:
+                self.con.rollback()
+                log.exception("error inserting into DB")
+                raise e
+    
+            self.id+=1
+            return True
+            
+        else:
+            log.error("File %s does not match instrument"%filename)
+            return False
 
     
     ############################################################
