@@ -1037,7 +1037,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 and not fits.isDomeFlat():
                     #skip/remove the current/last file, type mismatch !
                     self.curr_sequence = self.curr_sequence[:-1]
-                    log.error("Detected file type mismatch. File %s skipped"%(filename))
+                    log.error("Detected file type mismatch. File %s skipped in sequence !"%(filename))
                 #Mid of sequence, continue adding file
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         # ############################################

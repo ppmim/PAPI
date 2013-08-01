@@ -2322,9 +2322,11 @@ class ReductionSet(object):
                 # Get calibration files
                 dark, flat, bpm = None, None, None
                 if self.red_mode == "quick":
+                    # Quick-Mode: optionally calibrations are used
                     if self.apply_dark_flat==1 or self.apply_dark_flat==2: 
                         dark, flat, bpm = self.getCalibFor(sequence)
                 else:
+                    # Science-Mode: always calibration are required !
                     dark, flat, bpm = self.getCalibFor(sequence)
                     # Return 3 filenames of master calibration frames (dark, flat, bpm), 
 

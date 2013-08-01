@@ -1919,15 +1919,15 @@ TypeError: cannot perform reduce with flexible type
 
 29-Abril-2013
 =============
- 
+ 
 - Herramientas para medir prestaciones de la máquina:
-  
+  
 * sysbench 
 Nota: para compilarla puede ser necesario cambiar lo siguiente:
 (http://www.randombugs.com/linux/compiling-sysbench-0412-debian.html)
-   En el fichero configure.ca
-    #AC_PROG_LIBTOOL 
-   AC_PROG_RANLIB
+   En el fichero configure.ca
+    #AC_PROG_LIBTOOL 
+   AC_PROG_RANLIB
 
 Seeing this variable in configure.ca I just comment the variable and re run autogen.sh. This time all works flawlessly. After this I run
 
@@ -2496,6 +2496,83 @@ el editor de la parte de AIV.
 y aviso a AGS para que lo implementemos en el OT.
 - Subo nueva version de GEIRS con las ultimas modificaciones y compilada con PLX_SDK7
 
+29-Julio-2013
+=============
+- básicamente con problemas del archivo del OSN, pero también probando
+el QL en panic2.
+
+
+30-Julio-2013
+=============
+- Añado chequeo de instrumento al insertar datos en BD; esto mejoró el
+comportamiento del pipeline y QL evitando la mezcla de ficheros de distintos
+instrumentos, lo cual me ocurria a veces con O2k, PANIC y HAWKI.
+Modifico por tanto el QL y PAPI en lo referente a esto.
+
+- Añado pix_scale en las llamadas a CheckQuality que hay en el QL.
+
+
+31-Julio-2013
+=============
+- Pruebo de nuevo las subwins en GEIRS: aunque dan mensajes de errores, funcionan (RM)
+- Investigo un poco por el tema de las multiples hebras que crea el OT.
+Parece que es una cuestion de la JVM (JVM System Threads) segun leo en internet:
+http://blog.jamesdbloom.com/JVMInternals.html
+
+Incluso creo una programilla tonto de java y ocurre lo mismo, creo un montón de hebras (24)
+y usa mucha memoria (17.9G) !!
+Podríamos instalar jconsole para depurar las aplicaciones de java o ver que 
+recursos consumen.
+
+- Encuentro un problema en el OT (o eso parece) al lanzar una secuecia de OBs:
+OB1 - dark_serie1
+OB2 - dark_serie2
+OB3 - domeflat_serie1
+
+En la segunda imagen del OB3, el header no contenia las keys propias del OT,
+aunque el resto de las imagenes si. Parece algun tipo de condición de carrera
+que se produce si no se actualiza a tiempo el fichero ~/tmp/fitsheader_panic.txt.
+Repito el test 2 veces y no ocurre el problema, pero en una tercera vez vuelve
+a ocurrir !!! y luego otra vez incluso el PQL no leyo "a tiempo" el fichero .fits
+y lo descartó !!!! a dicho fichero también le faltaba la cabecera del OT.
+
+Hago otra prueba, pero esta vez configura como destino de los datos a /data1/PANIC/LabTest,
+pues dicha particion no tiene la cache de escritura en disco; sin embargo, el
+problema ocurre de nuevo, y de forma evidente cuando esta corriendo el Pipeline
+reduciendo datos HAWK-I-DS3 !!!!! hay una correlación directa !!!
+
+Hago una prueba con ~/tmp/geirsPhduAdd.panic haciendo simplemente un enlace a 
+~/tmp/fitsheader_panic.txt y comentando la linea de GEIRS/scripts/QueueFiles para
+que no actue el modify_fits_hdr y no se producen errores !!! (hago 4 o 5 secuencias todas OK)
+Quizás la solucioń esté ahí, pues evidentemente la solucioń de RM es mucho 
+más eficiente.
+Regreso al método original de CS ~/tmp/fitsheader_panic.txt y vuelven a aparecer
+los errores en la cabeceras_OT de los FITS.
+De nuevo activo el método de RM y todo OK !!! 
+Parece que ~/tmp/geirsPhduAdd.panic es la solución, lo que no se es si sería
+necesario que se actualizara el fichero de log ~/tmp/fitsfiles.corrected ?
+(bueno, eso parece que lo sigue haciendo QueuFiles, pues el .log se sigue actualizando)
+
+
+Escribo a AGS para que lo veamos a la vuelta.
+
+
+01-Agosto-2013
+==============
+(Gracias MM !)
+
+- Continuo haciendo pruebas de integracion (OT-GEIRS-PQL-PAPI)
+- Encuentro bug en dh.isFromGEIRS() porque ha habido un cambio en la keyword
+'SOFTWARE' por 'CREATOR' en la nueva version de GEIRS.
+Este bug hacia que no se hiciera el split() de los frames para el procesamiento
+en paralelo.
+
+-Encuentro un ejemplo para reproducir sonidos (mp3) con PyQt4:
+
+from PyQt4.phonon import Phonon
+
+será para aniadir sonidos al PQL !!
+
 
 
 
@@ -2513,7 +2590,8 @@ FOR NEXT VIDEOCONF
 ==================
 - SATUR_LEVEL parametrized with NDIT
 - New 'lab' reduction mode: dark, flat and FWHM. 
-- Check of INSTRUME keyword added
+- Check of INSTRUME keyword added and now checked on QL and PAPI: only
+data files from INSTRUME=config.instrument will be added to PAPI DB.
 - Next basic WCS keywords should be added by default by GEIRS. Currently,
 only added by external program geirs2Panic:
 
@@ -2529,6 +2607,13 @@ only added by external program geirs2Panic:
     CD2_2   = 5.84166664339136E-05 /  [deg/px] WCS matrix diagonal                  
     CD1_2   = 3.57687104420465E-21 /  [deg/px] WCS matrix outer diagonal            
     CD2_1   = 3.57687104420465E-21 /  [deg/px] WCS matrix outer diagonal   
+
+- New 'workaround' to add keywords to headers --> ~/tmp/geirsPhduAdd.panic 
+- MEF are going to be finnaly implemted ? RM says is in 'experimental'
+(see RM's email by 29-Jul-2013)
+- Finally, will GEIRS add basic WCS keywords (see above) ?
+It might need to implement MEF, because we need 4 separate WCS headers due
+to gaps!
 
 
 
@@ -2668,7 +2753,7 @@ quizás incluirlo en el logfile !!! - DONE !
 
 DOUBTS FOR MATILDE (next)
 ================================
-
+- subwins ?? como reducirlas ??? pueden ser cada ventana de tamaño distinto !!!
 - la raw_photometry() sólo esta disponible para los filtros de 2MASS (J, H, Ks), 
 pero, ¿ se podría hacer otra aproximación con los filtros que vaya a tener PANIC ??
 
@@ -2701,12 +2786,15 @@ se calculan con un master_dark_model.
 
 TODO's for Clemens/RM
 =====================
-  - Observo algo que parece una condición de carrera, y es que alguna vez puede 
+- MEF for subwins ?
+
+- Observo algo que parece una condición de carrera, y es que alguna vez puede 
   ocurrir que aunque el chequeo del FITS sea correcto, GEIRS no haya aún 
   añadido las keywords que le da el OT y entonces el QL no detecte bien el 
   fichero pues no puede leer dichas keywords esenciales.
   Esto creo que no ocurre cuando usamos los modos 'file' el datacollector.
- - comando para añadir cualquier keyword al header
+- Comando para añadir cualquier keyword al header --> ~/tmp/geirsPhduAdd.panic
+
 
 - WCS correcto en los headers, actualmente tiene
 TYPE1  = 'PIXEL'
@@ -2847,6 +2935,10 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- añadir sonidos con from PyQt4.phonon import Phonon (ver sound.py en tests)
+- how to manage MEF calibration files ? (currently darks, flats are not splited !)
+- definir e implemetar detección de secuencias de foco con PAPI
+- como tratar en PAPI las imágenes de subwindows ??? -> _win.fits !!! mejor MEF !!
 - eliminar del todo RS::self.out_file
 - crear "bateria" de tests para lanzar de forma automatica con un conjunto de
 datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
@@ -2872,3 +2964,37 @@ no lo hace pero no dice el porqué !
 PAPI> checkQuality usa la variable TERAPIX !!
 PAPI> NaN values in Numpy computations ! need to be checked previosuly as in
 applyDarkFlat.py
+
+TO DO by AGS
+============
+- el OT debe permitir crear secuencias de serie de foco:
+        set filter/mode/etc        
+        point Teles
+        move focus
+        read&save image
+        move focus
+        read&save image
+        move focus
+        read&save image
+        move focus
+        read&save image
+        ...
+La secuencia de O2000 que me paso Ulli es así (ver arriba).
+
+- Implement new method to add keywords to headers using ~/tmp/geirsPhduAdd.panic
+It should exists an config file to setup which method to use, at least during
+develop & integration.
+- Software subwindows: it works in GEIRS producing _win.fits files !!! how to
+solve in PAPI ?
+
+- Encuentro un problema en el OT (o eso parece) al lanzar una secuecia de OBs:
+OB1 - dark_serie1
+OB2 - dark_serie2
+OB3 - domeflat_serie1
+
+En la segunda imagen del OB3, el header no contenia las keys propias del OT,
+aunque el resto de las imagenes si. Parece algun tipo de condición de carrera
+que se produce si no se actualiza a tiempo el fichero ~/tmp/fitsheader_panic.txt.
+Repito el test 2 veces y no ocurre el problema.
+
+Escribo a AGS para que lo veamos a la vuelta.

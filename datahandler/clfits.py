@@ -201,7 +201,7 @@ class ClFits (object):
         return (self.obs_tool)
     
     def isFromGEIRS(self):
-        if self.softwareVer.count("Panic_r"):
+        if self.softwareVer.count("GEIRS"):
             return True
         else:
             return False
@@ -363,9 +363,13 @@ class ClFits (object):
         else:
             self.obs_tool = False
         
-        #Software Version (GEIRS Version)
+        # Software Version (GEIRS Version):
+        # Old versions of GEIRS used 'SOFTWARE'
         if 'SOFTWARE' in myfits[0].header:
             self._softwareVer = myfits[0].header['SOFTWARE']
+        # New versions of GEIRS moved to CREATOR keyword for software version
+        if 'CREATOR' in myfits[0].header:
+            self._softwareVer = myfits[0].header['CREATOR']
         
         
         # IMAGE TYPE
