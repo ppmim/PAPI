@@ -2567,12 +2567,27 @@ Escribo a AGS para que lo veamos a la vuelta.
 Este bug hacia que no se hiciera el split() de los frames para el procesamiento
 en paralelo.
 
+- Encuentro un "bug" que en realidad no es tal; en caso de que PAPI y QL esten
+reduciendo datos usando el mismo directorio de salida (out), se produce una 
+colisión y las reducciones fallarán. Por tanto, la solución simplemente pasa
+por configurar dos directorios distintos en el fichero de configuración para
+PAPI y para el PQL !!! por ejemplo: out_papi / out_pql
+
+- Modifico RS para que al hacer el RS.split() de los ficheros, los .Q??.fits
+se creen en el directorio temporal configurado a tal efecto en el fichero 
+de configuración. Al final de la reducción, se borra dicho directorio al
+hacer el purgeOutput().
+De esta forme evitamos que en el QL aparezcan los .Q??.fits en la BD de outs y
+por tanto en la vista de OUTS.
+Realmente outs debería ser PRODUCTS !!
+
+
+
 -Encuentro un ejemplo para reproducir sonidos (mp3) con PyQt4:
 
 from PyQt4.phonon import Phonon
 
 será para aniadir sonidos al PQL !!
-
 
 
 
@@ -2967,6 +2982,9 @@ applyDarkFlat.py
 
 TO DO by AGS
 ============
+- si borras un OB y luego intentas crear otro, ya se hace un lio el OT y no
+actualiza bien la lista de OB al Validar !! hay que empezar de nuevo el OP ...
+
 - el OT debe permitir crear secuencias de serie de foco:
         set filter/mode/etc        
         point Teles

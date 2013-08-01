@@ -691,7 +691,7 @@ class ReductionSet(object):
                 try:
                     mef = misc.mef.MEF(frame_list)
                     (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
-                                                                   out_dir=self.out_dir)
+                                                                   out_dir=self.temp_dir)
                 except Exception,e:
                     log.debug("Some error while splitting GEIRS data set. %s",str(e))
                     raise
@@ -700,7 +700,7 @@ class ReductionSet(object):
                 try:
                     mef = misc.mef.MEF(frame_list)
                     (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
-                                                        out_dir=self.out_dir, 
+                                                        out_dir=self.temp_dir, 
                                                         copy_keyword=kws_to_cp)
                 except Exception,e:
                     log.debug("Some error while splitting data set. %s",str(e))
@@ -708,7 +708,7 @@ class ReductionSet(object):
             
             # now, generate the new output filenames        
             for n in range(1,nExt+1):
-                new_frame_list.append([self.out_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
+                new_frame_list.append([self.temp_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
                 """
                 for f in new_file_names:
                     #if re.search(".*(\.Q01)(.fits)$", f):
@@ -1566,6 +1566,7 @@ class ReductionSet(object):
         log.info("Purging the output dir ...")
         
         out_dir = self.out_dir
+        tmp_dir = self.temp_dir
                  
         misc.fileUtils.removefiles(out_dir+"/*.ldac",out_dir+"/py-sex*",
                                    out_dir+"/*.objs")
@@ -1580,6 +1581,9 @@ class ReductionSet(object):
         misc.fileUtils.removefiles(out_dir + "/*.Q0?.fits")
  
         misc.fileUtils.removefiles(out_dir + "/*.Q0?.fits")
+        
+        # Temporal directory is emptied
+        misc.fileUtils.removefiles(tmp_dir + "/*")
         
         # Remove extension directories
         for i in range(4):
@@ -2151,7 +2155,9 @@ class ReductionSet(object):
             try:
                 # Generate (and create the file) a random filename for the master, 
                 # to ensure we do not overwrite any file
-                output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDark_', dir=self.out_dir)
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
+                                                      prefix='mDark_', 
+                                                      dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 
@@ -2220,7 +2226,9 @@ class ReductionSet(object):
             log.debug("[reduceSeq] A DomeFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # generate a random filename for the master, to ensure we do not overwrite any file
-                output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mDFlat_', dir=self.out_dir)
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
+                                                      prefix='mDFlat_', 
+                                                      dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
 
@@ -2263,7 +2271,9 @@ class ReductionSet(object):
                 if len(master_dark)>0:
                     log.debug("[reduceSeq] MASTER_DARK_MODEL found --> %s"%master_dark[-1])
                     # generate a random filename for the masterTw, to ensure we do not overwrite any file
-                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', prefix='mTwFlat_', dir=self.out_dir)
+                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
+                                                          prefix='mTwFlat_', 
+                                                          dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
 
