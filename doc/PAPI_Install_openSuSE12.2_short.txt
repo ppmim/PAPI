@@ -639,7 +639,24 @@ Requirement already satisfied (use --upgrade to upgrade): numpy in /usr/lib64/py
 
 --
 
-13. MIDAS 10SEPpl1.1 (for CL environment)
+
+13. Aladin software tool (v7.5)
+===============================
+Not mandatory, but it might be useful for the observer during the observation 
+or data inspection/analysis.
+Aladin is an interactive software sky atlas allowing the user to visualize 
+digitized astronomical images, superimpose entries from astronomical catalogues
+ or databases, and interactively access related data and information from the 
+Simbad database, the VizieR service and other archives for all known sources 
+in the field.
+
+http://aladin.u-strasbg.fr/aladin.gml
+
+>download Aladin.tar
+>tar -xvf Aladin.tar
+>cp -av Aladin /usr/local/
+
+14. MIDAS 10SEPpl1.1 (for CL environment)
 =========================================
 See: http://www.eso.org/sci/software/esomidas/
 
@@ -651,7 +668,7 @@ Files to patch:
       - scc.c
 
 
-14. PAPI SOURCES
+15. PAPI SOURCES
 ================
 
 #> svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk/ papi

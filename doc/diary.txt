@@ -2583,12 +2583,26 @@ Realmente outs debería ser PRODUCTS !!
 
 
 
+
 -Encuentro un ejemplo para reproducir sonidos (mp3) con PyQt4:
 
 from PyQt4.phonon import Phonon
 
 será para aniadir sonidos al PQL !!
 
+
+02-Agosto-2013
+==============
+- Pienso en implementar el PQL alguna opcioń para histogramas y "cortes" en las
+imágenes, pero me doy cuenta que todo eso lo hace DS9, así que es mejor no
+reinvertar la rueda.
+
+- Añado boton 'Aladin' a la toolbar del QL.
+- Modifico en QL el #Seqs. por #Tasks y le añado la tarea actual que se esté
+procesando.
+- Modifico QL para que muestre cursor-reloj durante la "lectura" de un 
+directorio de entrada.
+- Encontrado un bug en RS.getCalibFor() en la búsqueda de darks
 
 
 

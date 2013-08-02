@@ -824,18 +824,19 @@ class ReductionSet(object):
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
-        #DARK - Does require equal EXPTIME Master Dark ???
+        # DARK - Does require equal EXPTIME Master Dark ???
+        # First, look for a DARK_MODEL
         master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark)==0 and self.ext_db!=None:
             master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL', -1)
         
-        # Hopefully, try to find a MASTER_DARK with equal expTime
+        # Secondly (hopefully), try to find a MASTER_DARK with equal expTime
         if len(master_dark)==0:
             log.info("Now, trying to find a MASTER_DARK")
             master_dark = self.db.GetFilesT('MASTER_DARK', expTime)
         if len(master_dark)==0 and self.ext_db!=None:
             log.info("Last chance to find a MASTER_DARK in ext_DB")
-            master_dark = self.ext_db.GetFilesT('MASTER_DARK', -1)
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime)
         
              
         #FLATS - Do NOT require equal EXPTIME, but FILTER

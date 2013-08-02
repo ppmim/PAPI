@@ -662,10 +662,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 ##Create QTimer for the data collector
                 if self.timer_dc !=None and self.timer_dc.isActive():
                     # Already created in a former user action 
-                    pass
+                    # Stop it to avoid collision
+                    self.timer_dc.stop()
+                
+                # Check for new files just now !
+                QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                self.dc.check()
+                # Restore the pointer-icon                    
+                QApplication.restoreOverrideCursor()                   
+                
+                # Activate DataCollector timer                 
+                if self.timer_dc!=None:
+                    self.timer_dc.start(1500)
                 else:
                     self.timer_dc = QTimer( self )
-                    self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), self.checkFunc )
+                    self.connect( self.timer_dc, 
+                                 QtCore.SIGNAL("timeout()"), 
+                                 self.checkFunc )
                     self.timer_dc.start(1500) ## 1 seconds continuous timer
                     
             else:
@@ -722,7 +735,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else:
                 ##Create QTimer for the data collector
                 self.timer_dc = QTimer( self )
-                self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), self.checkFunc )
+                self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), 
+                             self.checkFunc )
                 self.timer_dc.setSingleShot(False)
                 self.timer_dc.start(1500) ## 1,5 seconds continuous timer
         else:
@@ -1111,8 +1125,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def checkFunc(self):
         """
         Receiver function signaled by QTimer 'self.timer_dc' object.
-        Funtion called periodically to check for new files (only if no frame 
-        is being processed)
+        Funtion called periodically to check for new files.
         """
         if True:
             self.dc.check()
@@ -1844,7 +1857,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def start_aladin_slot(self):
         """Start Aladin tool"""
 
-        os.system('echo "load %s ;sync; get vizier(2mass)" |/usr/local/bin/aladin -nobanner &' %(self.m_listView_item_selected))
+        os.system('echo "load %s ;sync; get vizier(2mass)" |/usr/local/Aladin/Aladin -nobanner &' %(self.m_listView_item_selected))
         self.logConsole.info("Aladin launched !")
         
         # utils.runCmd does not allow launch in background !!
@@ -2889,8 +2902,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         done.
         """
  
-        # Update the number of sequences in to queue to be processed !
-        self.lineEdit_queue_size.setText(str(self._task_queue.qsize()))
+        # Update the number of tasks (not necessarialy equals to number of
+        # sequences) in to queue to be processed !
+        # Current processing will also be taken into account.
+        self.lineEdit_queue_size.setText(str(self._task_queue.qsize() + 
+                                            int(self.m_processing)))
         
         if not self._task_queue.empty() and not self.m_processing:
             log.debug("Something new in the TaskQueue !")
@@ -2932,9 +2948,20 @@ class MainGUI(QtGui.QMainWindow, form_class):
     
     def worker(self, input, output):
         """
-        Callback function used by Process task
+        Callback function used by Process task.
+        It is run in a separate/parallel process, similar to a thread.
+        
+        Parameters
+        ----------
+        
+        input : Queue
+            Input queue of tasks to be done
+        output : Queue
+            Output queue of tasks already done
+            
         """
         
+        # Get the next task from the queue
         func, args = input.get()[0]
         #print "FUNC=",func
         #print "ARGS=",args
@@ -2948,7 +2975,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Because excetions cannot be catched in TaskRunner due to a 
             # multiprocessing.Process exception is inserted in output queue 
             # and then recognized
-            output.put(e) # the DoneQueue will detect it
+            output.put(e) # the DoneQueue timer will detect it
         finally:
             self.m_processing = False
             log.debug("Worker finished its task !")

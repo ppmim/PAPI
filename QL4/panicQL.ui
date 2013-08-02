@@ -200,7 +200,7 @@
        <rect>
         <x>120</x>
         <y>390</y>
-        <width>520</width>
+        <width>311</width>
         <height>21</height>
        </rect>
       </property>
@@ -1236,7 +1236,7 @@
        </font>
       </property>
       <property name="text">
-       <string>#Seqs. in the queue</string>
+       <string>#Tasks in the queue</string>
       </property>
      </widget>
     </widget>
@@ -2389,6 +2389,7 @@
    <addaction name="fileDirAction"/>
    <addaction name="fileShow"/>
    <addaction name="fileSearchAction"/>
+   <addaction name="actionAladin"/>
    <addaction name="irafConsoleAction"/>
   </widget>
   <widget class="QToolBar" name="Toolbar">
@@ -2402,17 +2403,6 @@
     <bool>false</bool>
    </attribute>
    <addaction name="quitAction"/>
-  </widget>
-  <widget class="QToolBar" name="Toolbar_2">
-   <property name="label" stdset="0">
-    <string>Toolbar_2</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
   </widget>
   <widget class="QMenuBar" name="MenuBar">
    <property name="geometry">
@@ -2827,33 +2817,21 @@
     <cstring>irafConsoleAction</cstring>
    </property>
   </action>
-  <action name="Action">
-   <property name="iconText">
-    <string>Unnamed</string>
-   </property>
-   <property name="name" stdset="0">
-    <cstring>Action</cstring>
-   </property>
-  </action>
-  <action name="Action_2">
-   <property name="iconText">
-    <string>Unnamed</string>
-   </property>
-   <property name="name" stdset="0">
-    <cstring>Action_2</cstring>
-   </property>
-  </action>
-  <action name="Action_3">
-   <property name="iconText">
-    <string>Unnamed</string>
-   </property>
-   <property name="name" stdset="0">
-    <cstring>Action_3</cstring>
-   </property>
-  </action>
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionAladin">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/aladin_large.gif</normaloff>images/aladin_large.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Aladin</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Aladin application</string>
    </property>
   </action>
  </widget>
@@ -3577,6 +3555,22 @@
     <hint type="destinationlabel">
      <x>485</x>
      <y>-7</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAladin</sender>
+   <signal>activated()</signal>
+   <receiver>panicQL</receiver>
+   <slot>start_aladin_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>364</y>
     </hint>
    </hints>
   </connection>

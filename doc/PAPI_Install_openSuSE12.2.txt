@@ -682,9 +682,24 @@ http://www.stsci.edu/resources/software_hardware/stsci_python/Installation/#inst
 > python setup.py install
 
 
+13. Aladin software tool (v7.5)
+===============================
+Not mandatory, but it might be useful for the observer during the observation 
+or data inspection/analysis.
+Aladin is an interactive software sky atlas allowing the user to visualize 
+digitized astronomical images, superimpose entries from astronomical catalogues
+ or databases, and interactively access related data and information from the 
+Simbad database, the VizieR service and other archives for all known sources 
+in the field.
+
+http://aladin.u-strasbg.fr/aladin.gml
+
+>download Aladin.tar
+>tar -xvf Aladin.tar
+>cp -av Aladin /usr/local/
 
 
-13. MIDAS 10SEPpl1.1 (for CL environment)
+14. MIDAS 10SEPpl1.1 (for CL environment)
 =========================================
 See: http://www.eso.org/sci/software/esomidas/
 
@@ -696,7 +711,8 @@ Files to patch:
       - scc.c
 
 
-14. OTHER SOFTWARE REQUIRED
+
+15. OTHER SOFTWARE REQUIRED
 ===========================
 
 - STILTS (http://www.star.bris.ac.uk/~mbt/stilts/) : used by photometry.py for catalog xmatching
@@ -706,11 +722,12 @@ Files to patch:
 
 and copy to the directory specified by the _stilts_pathname variable in photometry.py (/home/panic/SOFTWARE/STILTS/stilts)
 
-TO BE CONFIRMED/ENHANCED !
+TO BE CONFIRMED/ENHANCED ! (any more required for the moment !)
 
 
 
-15. OTHER SYSTEM LIBS REQUIRED (openSUSE11.4)
+
+16. OTHER SYSTEM LIBS REQUIRED (openSUSE11.4)
 ============================== 
 
 - libcurl4-32bit (and maybe this link : usr/lib/libcurl.so.3 ->
@@ -719,7 +736,7 @@ TO BE CONFIRMED/ENHANCED !
 - libreadline3
 
 
-16. PAPI SOURCES
+17. PAPI SOURCES
 ================
 
 #> svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk/ papi
