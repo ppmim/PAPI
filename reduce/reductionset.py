@@ -2919,7 +2919,12 @@ class ReductionSet(object):
         fs.close()    
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
                               out_dir+'/coadd1.fits','average')
-                                      
+         
+        #        
+        # Remove (trim or crop) any frame around the image due to the coadd process        
+        #        
+        misc.imtrim.imgTrim(out_dir+'/coadd1.fits')
+                             
         ########################################################################
         # End of first cycle: SINGLE REDUCTION (quick mode or extended object !) 
         ########################################################################
@@ -2959,7 +2964,7 @@ class ReductionSet(object):
                 except Exception,e:
                     log.error("ERROR: something wrong while computing FWHM")
                     raise e
-
+                            
             log.info("#########################################")
             log.info("##### End of QUICK data reduction ######")
             log.info("#########################################")
@@ -3092,6 +3097,9 @@ class ReductionSet(object):
         ########################################################################
         log.info("**** Coadding image free distorion frames ****")
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd2.fits')
+        #        
+        # Remove (trim or crop) any frame around the image due to the coadd process        
+        #        
         misc.imtrim.imgTrim(out_dir+'/coadd2.fits')
         
         ########################################################################

@@ -2657,6 +2657,33 @@ de ejes (no creo pues para eso tiene la WCS) o por la escala tan baja.
 
 08-Agosto-2013
 ==============
+- Modifico los parametros del fichero de configuracion:
+
+    mask_minarea = 10   # sex:DETECT_MINAREA used for object masking
+    mask_thresh = 7.0
+
+pues son **críticos** para la calibración correcta con SCAMP !!!
+Y con esos valores ya si se reducen DS3.
+
+TODO: ¿ cómo encontrar unos valores  **universales** para dichos parametros ?
+
+- Modifico misc/imtrim.py pues tenía un bug importante y ademas no estaba muy
+python styled. Le añado el parametro 'step', sin embargo aún no hace del todo 
+bien el trimming, pues deja un marco, pero es debido a filas/columnas ruidosas
+que no de pueden detectar facilmente !! imtrim.py sólo busca filas/columnas
+constantes.
+Además compruebo que iraf.imcopy() hace la actualizacion correspondiente
+a WCS debida la recorte de la imagen !
+
+
+- Añando el imTrim en RS tambien en el caso de single_reduction, justo
+despues de crear el coadd1.fits
+
+(P) Ver el error en las cabeceras de las coadd1.fits !!!
+
+
+
+
 
 
 Keywords CANDIDATAS a incluir en el header de PANIC
@@ -3047,7 +3074,7 @@ PAPI> checkQuality usa la variable TERAPIX !!
 PAPI> NaN values in Numpy computations ! need to be checked previosuly as in
 applyDarkFlat.py
 
-TO DO by AGS
+TO DO by AGS (comentado 8-8-2013 a AGS)
 ============
 - si borras un OB y luego intentas crear otro, ya se hace un lio el OT y no
 actualiza bien la lista de OB al Validar !! hay que empezar de nuevo el OP ...
@@ -3069,6 +3096,7 @@ La secuencia de O2000 que me paso Ulli es así (ver arriba).
 - Implement new method to add keywords to headers using ~/tmp/geirsPhduAdd.panic
 It should exists an config file to setup which method to use, at least during
 develop & integration.
+
 - Software subwindows: it works in GEIRS producing _win.fits files !!! how to
 solve in PAPI ?
 
@@ -3077,9 +3105,8 @@ OB1 - dark_serie1
 OB2 - dark_serie2
 OB3 - domeflat_serie1
 
-En la segunda imagen del OB3, el header no contenia las keys propias del OT,
+(V)En la segunda imagen del OB3, el header no contenia las keys propias del OT,
 aunque el resto de las imagenes si. Parece algun tipo de condición de carrera
 que se produce si no se actualiza a tiempo el fichero ~/tmp/fitsheader_panic.txt.
 Repito el test 2 veces y no ocurre el problema.
 
-Escribo a AGS para que lo veamos a la vuelta.
