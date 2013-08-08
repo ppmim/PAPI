@@ -2606,6 +2606,59 @@ directorio de entrada.
 
 
 
+05-Agosto-2013
+==============
+- Hago pruebas con HAWK-I-4, un DS con 18 imagenes, y da un error al calcular
+los offsets. Intento averiguar por qué ocurre...
+Quizás haya que ampliar la ventana de búsqueda y por ende el MAXNCC en IRDR.
+
+
+06-Agosto-2013
+==============
+- Siguiendo con los problemas con HAWK-I-4, modifico los valores de Sextractor
+de DET_THRESHOLD, MIN_AREA para tener más estrellas.
+La cosa va algo mejor, pero sigue dando falsos offsets, pues el corr_fraction
+es muy bajo, y como tenía MINFRAC=0.001 pues siempre pasaba el "filtro".
+Por tanto, restauro MINFRAC=0.1, un valor más sensato (originalmente era 0.15),
+y ahora pues da errores por no superar dicho umbral MINFRAC !!
+
+Cambio la cte. MAXNCC de 300 a 1024 en correlate.h
+ 
+#define MAXNCC 1024      /* max dimension of cross-correlation image [pixels] */
+
+
+- Tras hacer esos cambios, ahora si hace bien el stack (coadd1.fits); sin embargo
+al hacer la astrometría, SCAMP no puede y falla. En primera instancia, pienso
+que un error importante puede estar en la astrometría inicial de la cabecera, que
+corresponde con la de la imagen0 del stack, y que no tiene por qué coincidir 
+con la astrometría de la coadd1.fits generada, dependerá de como hayan sido
+los offsets del dithering. Por tanto, habría que corregirla ....
+Quizás con SWARP esto se podría resover...
+Quizás añadiendo el "border" a CRVALn se corriga el error ??
+
+Habraía tambien que hacer el "trim" de la image coadd1.fits para quitarle el 
+marco negro que genera dithercubemean().
+
+(P) A las imagenes de coadd1.fits le falta el END
+(P) Hay que añadir el border (=NAXISn_orig-NAXISn_new) a CRVALn
+
+- Despues de los cambios en offsets.c y correlate.h
+
+07-Agosto-2013
+==============
+- Sigo con la pruebas en HAWK-I-4, pero no hay manera de que SCAMP
+los calibre !!! he probado de todoas formas, pero no hay manera. Sin embargo,
+Astrometry.net si lo hace a la primera sin problemas !!
+Incluso si le doy una imagen calibrada con Astrometry.net a SCAMP, este tampoco
+es capaz de calibrarla !!! No se si será por la falta de objetos, por el cambio
+de ejes (no creo pues para eso tiene la WCS) o por la escala tan baja.
+
+- Pruebo a reducir HAWK-I-DS3-3 y tampoco puede ! falla en la astrometría !
+
+08-Agosto-2013
+==============
+
+
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
 - SATURATE

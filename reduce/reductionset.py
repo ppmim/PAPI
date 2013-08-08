@@ -667,8 +667,7 @@ class ReductionSet(object):
             return [],0
             
         # First, we need to check if we have MEF files
-        if not datahandler.ClFits( frame_list[0] ).isMEF() and \
-            not datahandler.ClFits( frame_list[0] ).isFromGEIRS():
+        if not datahandler.ClFits( frame_list[0] ).isMEF():
             nExt = 1
             new_frame_list.append(frame_list)
         else:            
@@ -2869,8 +2868,10 @@ class ReductionSet(object):
         log.info("**** Data Quality Assessment **** (TBD)")                   
 
         ########################################################################
-        # -- una prueba con astrowarp : no va mal, a simple vista da resultados 
-        # parecidos, y en CPU tambien =, por tanto, opcion a considerar !!---
+        # -- una prueba con astrowarp : no va bien; a simple vista da resultados 
+        # parecidos, y en CPU tambien =, por tanto, opcion a considerar, pero
+        # no funciona en todos los casos, pues en cuento falla SCAMP no se
+        # puede hacer el stack !
         # 6b - Computer dither offsets and coadd
         ########################################################################
         prueba = False  
@@ -2918,7 +2919,7 @@ class ReductionSet(object):
         fs.close()    
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
                               out_dir+'/coadd1.fits','average')
-    
+                                      
         ########################################################################
         # End of first cycle: SINGLE REDUCTION (quick mode or extended object !) 
         ########################################################################

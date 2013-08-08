@@ -27,7 +27,7 @@
 #define HWID 10.0     /* default half-width of cross-corr search box, arcsec */
 #define MAXNFILES 999
 #define MAXNLIST 999999L
-#define MINFRAC  0.001      /* 0.15; correlation failed if overlap < MINFRAC */
+#define MINFRAC  0.1      /* 0.15; correlation failed if overlap < MINFRAC */
 
 static char *fn[MAXNFILES];              /* FITS OBJECTS frames filenames */
 static int n, x[MAXNLIST], y[MAXNLIST];       /* list of object pixels */
@@ -92,28 +92,34 @@ int main(int argc, char *argv[])
         frac = correlate(x, y, p, n, img, nx, ny, ixoff, iyoff, 
                             &xoff, &yoff, hwid);
     
-	    /*fprintf(stderr, "x = %d, y=%d, p=%f, n=%d, nx=%d, ny=%d, ixoff=%f, iyoff=%f, xoff=%f, yoff=%f, hwid=%d",
-	    x,y, p, n, nx, ny, ixoff, iyoff, xoff, yoff, hwid);*/
+	    fprintf(stderr, "\n[iter_0] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d\n",
+            	   frac, n, nx, ny, ixoff, iyoff, xoff, yoff, hwid);
         
-        fprintf(stderr, "-->First correlation overlap computed is : %f", frac);
+        /*fprintf(stderr, "-->First correlation overlap computed is : %f", frac);*/
 
         if (frac < MINFRAC) {                          /* cross-corr failed? */
             int maxhwid = MAXNCC / 2 - 1;
     
             fprintf(stderr, "-> Bad correlation (%f) overlap, increasing search radius to %d pix\n", frac, maxhwid);
     
-            frac = correlate(x, y, p, n, img, nx, ny, 0, 0, 
+            frac = correlate(x, y, p, n, img, nx, ny, 0, 0, /* no estimation are given this time */
                                 &xoff, &yoff, maxhwid);
-            fprintf(stderr, "-->Second correlation overlap computed is : %f", frac);
+            
+            fprintf(stderr, "\n[iter_1] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d\n",
+                	   frac, n, nx, ny, ixoff, iyoff, xoff, yoff, maxhwid);
+        
+            /*fprintf(stderr, "-->Second correlation overlap computed is : %f", frac);*/
+
             if (frac < MINFRAC) {
                 fprintf(stderr, "-> Still Bad correlation (%f) overlap; cannot find translation offsets overlap for this image\n", frac);
                 
             }    
         }
     
-	    corrx = corrx + xoff - ixoff ;	/* cumulate the corrections , to take into account with the next frame */
-	    corry = corry + yoff - iyoff ;
-    
+        corrx = corrx + xoff - ixoff ;	/* cumulate the corrections , to take into account with the next frame */
+        corry = corry + yoff - iyoff ;
+        fprintf(stderr, "\nCORRX = %f  CORRY=%f \n",corrx, corry);
+
         /*printf("%s %f %f %f (%d %d) \n", chomp(fn[i]), xoff, yoff, frac, ixoff, iyoff);*/
         /* print out the results (in pixels) to the std output, which will be dumped with ">" to a text file used in the next step in the pipeline */
         printf("%s %f %f %f (%d %d) \n", fn[i], xoff, yoff, frac, ixoff, iyoff);

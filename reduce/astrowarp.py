@@ -50,6 +50,8 @@ def initWCS( input_image, pixel_scale):
     Warning: The original file header (input_image) will be modified
     """
     
+    log.critical("Entering in initWCS!")
+    
     try:
         f = datahandler.ClFits ( input_image )
     except Exception,e:
@@ -58,9 +60,13 @@ def initWCS( input_image, pixel_scale):
     fits_file = pyfits.open(input_image, 'update', ignore_missing_end=True)
 
     if f.isMEF(): # is a MEF
-        raise Exception("Sorry, currently this function only works with simple FITS files with no extensions")
-    else:  # is a simple FITS
-        header = fits_file[0].header
+        #raise Exception("Sorry, currently this function only works with simple FITS files with no extensions")
+        log.warning("MEF file detected !")
+    
+    for ext in range(0,len(fits_file)):
+        if len(fits_file)>1: ext+=1
+    #else:  # is a simple FITS
+        header = fits_file[ext].header
         try:
             checkWCS(header)
             log.debug("FITS looks having a right WCS header")
@@ -68,14 +74,14 @@ def initWCS( input_image, pixel_scale):
             log.warning("No WCS compliant header, trying to create one ...")
             try:
                 # Read some basic values
-                naxis1 = f.getNaxis1()
-                naxis2 = f.getNaxis2()
+                naxis1 = header['NAXIS1']
+                naxis2 = header['NAXIS2']
                 ra = f.ra
                 dec = f.dec 
-                equinox0 = f.getEquinox()
                 # 
                 # Transform RA,Dec to J2000 -->fk5prec(epoch0, 2000.0, &ra, &dec);
                 # EQUINOX precessing is DONE by SCAMP !!!
+                #equinox0 = f.getEquinox()
                 WCS_J2000 = 1  #J2000(FK5) right ascension and declination
                 WCS_B1950 = 2  #B1950(FK4) right ascension and declination
                 #[new_ra, new_dec]=wcscon.wcscon(WCS_J2000, WCS_J2000, equinox0, 2000.0, ra, dec, 0)
@@ -138,8 +144,22 @@ def initWCS( input_image, pixel_scale):
                 fits_file.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
                 raise e
         
-        fits_file.close(output_verify='ignore')
-        log.debug("Right WCS info")
+        # Check whether CRPIXn need to be updated because of some kind of border
+        # was added around the image during a previus coadd.
+        if 'CRPIX1' in header and header['NAXIS1']>2048:
+            log.info("Updating CRPIX1 taking into account border pixels due to coadd")
+            log.debug("NAXIS1=%s  CRPIX1=%s"%(header['NAXIS1'],header['CRPIX1']))
+            value = header['CRPIX1'] + (header['NAXIS1']-2048)/2
+            header.update('CRPIX1', value )
+            log.debug("VALUE1=%s"%value)
+        if 'CRPIX2' in header and header['NAXIS2']>2048:
+            log.info("Updating CRPIX2 taking into account border pixels due to coadd")
+            value = header['CRPIX2'] + (header['NAXIS2']-2048)/2            
+            header.update('CRPIX2', value )
+            log.debug("VALUE2=%s"%value)
+
+    fits_file.close(output_verify='ignore')
+    log.debug("Right WCS info")
             
 def checkWCS( header ):
     """
@@ -175,10 +195,13 @@ def checkWCS( header ):
             log.debug("Keyword %s not found",kw)
             raise Exception("Keyword %s not found"%kw)
     
+    #
     # Check for the equinox, which can be specified in more than 1 way.
-    if 'EPOCH' not in header and 'EQUINOX' not in header:
-        log.debug("Missing keyword EPOCH or EQUINOX")
-        raise Exception("Missing keyword EPOCH or EQUINOX")
+    # I am not sure if required by SCAMP ?
+    #
+    #if 'EPOCH' not in header and 'EQUINOX' not in header:
+    #    log.debug("Missing keyword EPOCH or EQUINOX")
+    #    raise Exception("Missing keyword EPOCH or EQUINOX")
         
     # Check some values
     if header['CTYPE1']=='PIXEL' or header['CTYPE2']=='PIXEL':
@@ -194,7 +217,7 @@ def checkWCS( header ):
             if 'CDELT1' not in header or 'CDELT2' not in header:
                 log.debug("Couldn't find a complete set of CDi_j matrix or CDELT")
                 raise Exception("Couldn't find a complete set of CDi_j matrix or CDELT")
-                
+             
 
     
 def doAstrometry(input_image, output_image=None, catalog='2MASS', 
