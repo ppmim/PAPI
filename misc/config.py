@@ -459,7 +459,6 @@ def read_config_file(config_file = default_config_file()):
 
     ###################### Astromatic config files #####################################
     config_files = {}
-    config_files["terapix_bin"] = read_parameter(config, "config_files", "terapix_bin", str, False, config_file)
     config_files["irdr_bin"] = read_parameter(config, "config_files", "irdr_bin", str, False, config_file)
     config_files["sextractor_conf"] = read_file_parameter(config, "config_files", "sextractor_conf")
     config_files["sextractor_param"] = read_file_parameter(config, "config_files", "sextractor_param")

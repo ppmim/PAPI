@@ -9,7 +9,7 @@
 #                                             Reanamed isSkyFlat()  by isTwFlat()
 #              02/03/2010    jmiguel@iaa.es   Added READMODE checking
 # 
-################################################################################
+###############################################################################
 
 """
    Class for FITS data classifying
@@ -34,13 +34,13 @@ import misc.wcsutil as wcsutil
 from misc.paLog import log
 
 
-################################################################################
+###############################################################################
 class FitsTypeError(ValueError):
     """Raised when trying to classify a FITS file which is
     not supported or a special file (e.g. a non PANIC generated file)"""
 
 
-################################################################################
+###############################################################################
 class ClFits (object):
 
     """
@@ -581,7 +581,6 @@ class ClFits (object):
             if ('CTYPE1' in myfits[0].header and
                      (myfits[0].header['CTYPE1']=='RA---TAN' or
                       myfits[0].header['CTYPE1']=='RA---TAN--SIP')):
-                log.debug("CTYPE1 present !")
                 wcs = wcsutil.WCS(myfits[0].header)
                 self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 log.debug("Read RA-WCS coordinate =%s", self._ra)
@@ -605,6 +604,7 @@ class ClFits (object):
             if ('CTYPE2' in myfits[0].header and
                      (myfits[0].header['CTYPE2']=='DEC--TAN' or
                       myfits[0].header['CTYPE2']=='DEC--TAN--SIP')):
+                wcs = wcsutil.WCS(myfits[0].header)
                 self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 log.debug("Read Dec-WCS coordinate =%s", self._dec)
             elif 'DEC' in myfits[0].header:

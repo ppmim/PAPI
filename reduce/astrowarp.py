@@ -291,14 +291,6 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     except Exception,e:
         raise e
         
-    """
-    initwcs_path=config_dict['config_files']['irdr_bin']+"/initwcs" #os.environ['PAPI_HOME']+'/irdr/bin/initwcs'
-    args = [initwcs_path, input_image]
-    print "ARGS=", args
-    ret_code = subprocess.call(args)
-    if ret_code!=0:
-        raise RuntimeError("There was an error while running 'initwcs'")
-    """
     
     ## STEP 1: Create SExtractor catalog (.ldac)
     log.debug("*** Creating SExtractor catalog ....")

@@ -2639,10 +2639,9 @@ Quizás añadiendo el "border" a CRVALn se corriga el error ??
 Habraía tambien que hacer el "trim" de la image coadd1.fits para quitarle el 
 marco negro que genera dithercubemean().
 
-(P) A las imagenes de coadd1.fits le falta el END
-(P) Hay que añadir el border (=NAXISn_orig-NAXISn_new) a CRVALn
+(P) A las imagenes de coadd1.fits le falta el END (pues ahora no pasa ??)
+(P) Hay que añadir el border (=NAXISn_orig-NAXISn_new) a CRVALn --> Hecho !
 
-- Despues de los cambios en offsets.c y correlate.h
 
 07-Agosto-2013
 ==============
@@ -2679,10 +2678,69 @@ a WCS debida la recorte de la imagen !
 - Añando el imTrim en RS tambien en el caso de single_reduction, justo
 despues de crear el coadd1.fits
 
-(P) Ver el error en las cabeceras de las coadd1.fits !!!
+
+09-Agosto-2013
+==============
+- Modifica el RS.reduceSeq() para que al final se haga el imTrim(); sin embargo
+esto provoca un "error", pues iraf.imcopy() modifica el WCS_header, eliminando
+los valores CDi_j que son cero, lo que provoca luego que clfits de un error 
+pues wcsutil.py (E.Sheldom) necesita todos los CDi_j.
+De momento lo voy a dejar así, pues aunque podría modificar el wcsutil.py, no
+me quiero meter en eso de momento (a ver si mientras astropy lo soluciona).
+
+- Leyendo el documento "DR01/02 Topical Report:
+Background subtraction from imaging data" (http://bit.ly/17bykKb), leo un par
+de cosas interesantes:
+
+   (1) Parece que SCAMP podría también trabajar sin un catalogo de referencia ---> SOLVE_ASTROM = N
+   (2) SWARP hace el combine mediante un algorimo de media/mediana con 
+    pesos o sin pesos, pero no es capaz de hacerlo con un algoritmo de 
+    rechazo (sigma clip). Quizás sea mejor usar otro app (IRAF.imcombine)
+   (3) Es dificil conseguir unos parámetros universales  para cualquier 
+    data set. Sin embargo, podemos intentar tener unos parametros "robustos"
+    que funcionen para la mayoría de los casos, y también los parámetros 
+    "optimos" serán específicos para cada DS.
+   (4) Habría que "limpiar" el catalogo de Sextractor antes de pasarlo a SCAMP,
+    para quitarle objetos con baja SNR, CR, estrellas saturadas, etc ...
+ 
+
+(P) Ver el error en las cabeceras de las coadd1.fits !!! NO veo que está mal,
+de echo los coadd1.fits tienen su 'END'
+
+- Intento hacer con IRAF el stick del mosaico final calibrado con SCAMP, pero 
+no hay manera; pruebo con imcobine, combine, pero no lo hace bien, de echo
+crea una imagen que no se correspondo en nada con la que crea SWARP.
+Todo esto es a raiz del punto (2) de arriba para encontrar una alternativa
+a SWARP.
+Tendremos que seguir por tanto con SWARP.
+
+- Compilo la nueva version que me mandó RM el 31-Jul con soporte para MEFs.
+Le envio un mail con los siguientes comentarios:
+
+"""
+I have just tried your new version supporting MEF files. I am not sure if the 
+save command need some special parameter, but what I get when 
+run 'read' + 'save' is a MEF FITS file with:
+
+1-Primary header
+2-extended header with a not complete WCS (CRVALn need CRPIXn values)
+3-the 4kx4k image
+
+However, when sub-windows are used as you suggested, then a MEF file with 
+primary + 4 (extensions+image) is generated.
+
+I think that an extra parameter for the 'save' command (eg, -M) could be 
+used to produce MEF files without needing to define previously the sub-windows. 
+what do you think ? 
+"""
 
 
+- Le hecho un vistazo a Distribute for Python para instalar paquetes de python;
+en principio no parece obvio....
 
+http://pythonhosted.org/distribute/index.html
+
+Abrá que verlo con más detalle.
 
 
 
@@ -3070,7 +3128,6 @@ BUGS
 ====
 QL> Si seleccionamos varios science con distinto filtro y le decimos "reduce",
 no lo hace pero no dice el porqué !
-PAPI> checkQuality usa la variable TERAPIX !!
 PAPI> NaN values in Numpy computations ! need to be checked previosuly as in
 applyDarkFlat.py
 

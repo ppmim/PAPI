@@ -246,8 +246,9 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     #
     # Finaly, update (overwriting) the original images (.fits, 
     # .weight.fits, .objs.fits)
-    # Note that iraf.imcopy makes the WCS update accordingly to the image crop.
-    # 
+    # Note that iraf.imcopy makes the WCS update accordingly to the image crop,
+    # and modify WCS keywords on header (but not always as we'd wish, e.g.,
+    # remove CDi_j values equal to 0)
     iraf.imcopy(input=file+"["+str(xmin)+":"+str(xmax)+","+
             str(ymin)+":"+str(ymax)+"]", output=outputfile)
     

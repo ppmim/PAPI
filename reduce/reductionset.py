@@ -282,7 +282,6 @@ class ReductionSet(object):
         self.check_data = check_data 
                 
         if self.config_dict:
-            self.m_terapix_path = self.config_dict['config_files']['terapix_bin']
             self.m_irdr_path = self.config_dict['config_files']['irdr_bin']
             # update config values from config_dict
             # half width of sky filter window in frames
@@ -302,7 +301,6 @@ class ReductionSet(object):
             # the config_dict)
             # Environment variables
             """
-            self.m_terapix_path = os.environ['TERAPIX']
             self.m_irdr_path = os.environ['IRDR_BIN']
             self.MAX_MJD_DIFF = (1/86400.0)*10*60 #6.95e-3  # Maximum seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames 
             self.HWIDTH = 2 #half width of sky filter window in frames
@@ -2369,13 +2367,16 @@ class ReductionSet(object):
                             #if n!=0 and n!=1: continue
                             ## end-of-test
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
-                            ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
+                            
+                            #
+                            # For the moment, we have the first calibration file for each extension; what rule could we follow ?
+                            #                            
                             if dark_ext==[]: mdark = None
-                            else: mdark = dark_ext[n][0] # At the moment, we take the first calibration file found for each extension
+                            else: mdark = dark_ext[n][0] 
                             if flat_ext==[]: mflat = None
-                            else: mflat = flat_ext[n][0] # At the moment, we take the first calibration file found for each extension
+                            else: mflat = flat_ext[n][0]
                             if bpm_ext==[]: mbpm = None
-                            else: mbpm = bpm_ext[n][0] # At the moment, we take the first calibration file found for each extension
+                            else: mbpm = bpm_ext[n][0] 
                             
                             l_out_dir = self.out_dir + "/Q%02d" % (n+1)
                             if not os.path.isdir(l_out_dir):
@@ -2414,16 +2415,17 @@ class ReductionSet(object):
 
                         for result in results:
                             result.wait()
-                            out_ext.append(result.get()[0]) # the 0 index is *ONLY* required if map_async is used !!!
+                            # the 0 index is *ONLY* required if map_async is used !!!
+                            out_ext.append(result.get()[0]) 
 
                         ##for result in results:
                         ##    out_ext.append(result)
                             
-                        #Prevents any more tasks from being submitted to the pool. 
-                        #Once all the tasks have been completed the worker 
-                        #processes will exit.
+                        # Prevents any more tasks from being submitted to the pool. 
+                        # Once all the tasks have been completed the worker 
+                        # processes will exit.
                         pool.close()
-                        #Wait for the worker processes to exit. One must call 
+                        # Wait for the worker processes to exit. One must call 
                         #close() or terminate() before using join().
                         pool.join()
                         log.critical("[reduceSeq] DONE PARALLEL REDUCTION ")
@@ -2437,15 +2439,18 @@ class ReductionSet(object):
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
                         log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", n+1)
                         
-                        ## At the moment, we have the first calibration file for each extension; what rule could we follow ?
+                        #
+                        # For the moment, we take the first calibration file 
+                        # for each extension; what rule could we follow ?
+                        #                        
                         if dark_ext==[]: mdark = None
-                        else: mdark = dark_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        else: mdark = dark_ext[n][0]
                         
                         if flat_ext==[]: mflat = None
-                        else: mflat = flat_ext[n][0]  # At the moment, we have the first calibration file for each extension
+                        else: mflat = flat_ext[n][0]
                         
                         if bpm_ext==[]: mbpm = None
-                        else: mbpm = bpm_ext[n][0]    # At the moment, we have the first calibration file for each extension
+                        else: mbpm = bpm_ext[n][0]
                         
                         # Debug&Test
                         #if n==1: return None,None# only for a TEST !!!
@@ -2454,11 +2459,11 @@ class ReductionSet(object):
                         
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n],
-                                                                mdark, mflat,
-                                                                mbpm, self.red_mode,
-                                                                out_dir=self.out_dir,
-                                                                output_file = self.out_dir + \
-                                                                "/out_Q%02d.fits"%(n+1)))
+                                            mdark, mflat,
+                                            bpm, self.red_mode,
+                                            out_dir=self.out_dir,
+                                            output_file = self.out_dir + \
+                                            "/out_Q%02d.fits"%(n+1)))
                         except Exception,e:
                             log.error("[reduceSeq] Error while serial data reduction of extension %d of object sequence", n+1)
                             raise e
@@ -2469,11 +2474,14 @@ class ReductionSet(object):
                 log.info("*** Obs. Sequence LEMON-reduced. ***") 
                 return files_created
             
-            # If all reduction were fine, now join/stich back the extensions in 
-            # a wider frame.
+            # If all reduction were fine, now join/stick back the extensions in 
+            # a wider frame,i.e., build the mosaic.
             #seq_result_outfile = self.out_file.replace(".fits","_SEQ.fits")
+            #
             
+            #
             # Get the output filename for the reduced sequence
+            #            
             try:
                 with pyfits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
                     if 'DATE-OBS' in myhdulist[0].header:
@@ -2529,24 +2537,27 @@ class ReductionSet(object):
                 log.error("[reduceSeq] No output files generated by the current Obj.Seq. \
                 data reduction ....review your logs files")
             
-            # Add the list of original raw-files result image comes from
+            # Add the list of original raw-files to the result image header
             if len(out_ext)>0:
                 new_frame = pyfits.open(seq_result_outfile, 'update')
                 raw_frames = [os.path.basename(f) for f in sequence]
                 new_frame[0].header.add_history("RAW_FRAMES= %s"%str(raw_frames))
-                new_frame.close( )
+                new_frame.close()
                 
         else:
             log.error("[reduceSeq] Cannot identify the type of the sequence to reduce ...")
             raise Exception("[reduceSeq] Cannot identify the type of the sequence to reduce ...")    
         
-        # Insert all created files into the DB                
+        # Trim/crop the sticked created images and insert them into the DB
         for file in files_created:
+            # input image is overwritten
+            misc.imtrim.imgTrim(file)
             if file!=None: self.db.insert(file)
         
         # not sure if is better to do here ??? 
         #self.purgeOutput()
             
+        # Only one file it is expected to be returned
         return files_created
  
         
@@ -2914,7 +2925,7 @@ class ReductionSet(object):
         fs = open(out_dir+'/stack1.pap','w+')
         for line in fo:
             n_line = line.replace(".fits.objs", ".fits") 
-            fs.write( n_line )
+            fs.write(n_line)
         fo.close()
         fs.close()    
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
@@ -2922,8 +2933,10 @@ class ReductionSet(object):
          
         #        
         # Remove (trim or crop) any frame around the image due to the coadd process        
-        #        
-        misc.imtrim.imgTrim(out_dir+'/coadd1.fits')
+        # Finally, it was decided to be done at the end of reduceSeq(), because
+        # astrometric calibration (SWARP) is also adding a new border that 
+        # need to be removed as well.
+        #misc.imtrim.imgTrim(out_dir+'/coadd1.fits')
                              
         ########################################################################
         # End of first cycle: SINGLE REDUCTION (quick mode or extended object !) 
@@ -3054,10 +3067,10 @@ class ReductionSet(object):
                      len(self.m_LAST_FILES))
             return out_dir+"/files_skysub2.list"
     
-        ########################################################################
+        #######################################################################
         # 9.4 - Divide by the master flat after sky subtraction ! (see notes above)
         # (the same task as above 4.2) --> HAS NO SENSE !!! only for a test ??? or a.l.a. O2k 
-        ########################################################################
+        #######################################################################
         if self.apply_dark_flat==2 and master_flat!=None:
             log.info("**** Applying Flat AFTER sky subtraction ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
@@ -3066,12 +3079,12 @@ class ReductionSet(object):
                                        out_dir)
             self.m_LAST_FILES = res.apply()
             
-        ########################################################################
+        #######################################################################
         # 10a - Compute field distortion and final stack:
         #       1-Remove field distortion from individual images (SCAMP+SWARP)
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
-        ########################################################################
+        #######################################################################
         _astrowarp = False
         if _astrowarp:
             print "astrowarp--->LAST_FILES=",self.m_LAST_FILES
@@ -3091,20 +3104,24 @@ class ReductionSet(object):
             return output_file
         
     
-        ########################################################################
-        # 10b.1 - Create second coadded image of the dithered stack using new sky 
-        # subtracted frames (using the same offsets)
-        ########################################################################
+        #######################################################################
+        # 10b.1 - Create second coadded image of the dithered stack using new  
+        # sky subtracted frames (using the same offsets)
+        #######################################################################
         log.info("**** Coadding image free distorion frames ****")
-        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, out_dir+'/coadd2.fits')
+        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
+                              out_dir+'/coadd2.fits')
+        
         #        
         # Remove (trim or crop) any frame around the image due to the coadd process        
-        #        
-        misc.imtrim.imgTrim(out_dir+'/coadd2.fits')
+        # Finally, it was decided to be done at the end of reduceSeq(), because
+        # astrometric calibration (SWARP) is also adding a new border that 
+        # need to be removed as well.        
+        #misc.imtrim.imgTrim(out_dir+'/coadd2.fits')
         
-        ########################################################################
+        #######################################################################
         # 10b.2 - Make Astrometry
-        ########################################################################
+        #######################################################################
         log.info("**** Computing Astrometric calibration of coadded (2nd) result frame ****")
         reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
                                       self.config_dict['astrometry']['catalog'], 
