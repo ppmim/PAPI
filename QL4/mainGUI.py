@@ -310,7 +310,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         QtCore.QObject.connect(self.listView_dataS, 
                                QtCore.SIGNAL(_fromUtf8("itemClicked(QTreeWidgetItem*,int)")), 
                                self.selected_file_slot)
-        
+        #QtCore.QObject.connect(self.listView_dataS, 
+        #                       QtCore.SIGNAL(_fromUtf8("itemSelectionChanged()")), 
+        #                       self.selected_file_slot)
         QtCore.QObject.connect(self.listView_dataS, 
                                QtCore.SIGNAL(_fromUtf8("itemDoubleClicked(QTreeWidgetItem*,int)")), 
                                self.display_slot)
@@ -2616,22 +2618,25 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def do_raw_photometry(self):
         """
-        @summary: Compute an rough photometric solution for the selected file 
-        in the main list view panel.
+        Compute an rough photometric solution for the selected file in the main 
+        list view panel.
         Basically, It is compared to 2MASS catalog (or other) to compute photometric
         calibration, and obtain a zero-point estimation.
 
-        @return: None, but produce an photometric fitting curve and a Zero point
+        Returns
+        -------
+        None, but produce an photometric fitting curve and a Zero point
         estimation.
-          
-        @todo: we should check the image is pre-reduced or at least, with 
-        enough objects 
+        
+        Todo
+        ----  
+        Check the image is pre-reduced or at least, with enough objects 
         """
         
         if len(self.m_popup_l_sel)==1:
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE': 
-                ## Run astrometry parameters
+                ## Run photometry parameters
                 out_file = self.m_outputdir+"/" + \
                     os.path.basename(self.m_listView_item_selected.replace(".fits","_photo.pdf"))
                 # Catalog

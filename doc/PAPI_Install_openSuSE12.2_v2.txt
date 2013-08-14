@@ -1,11 +1,10 @@
 ========================================
 PANIC SOFTWARE INSTALLATION INSTRUCTIONS 
 ========================================
+21.May.2013
 
 The next are the installation instructions for the PANIC software on the
 openSuSE 12.2-64 bit
-
-Updated from openSuSE11.4 64bit (23-Nov-2012).
 
  
 ***********
@@ -15,7 +14,6 @@ Requirements
 ------------
 
 *) sudo zypper install readline5
-*) sudo zypper install gnuplot
 
 
 *) system setup
@@ -87,9 +85,6 @@ to heade files in order to compile the sources.
 - As root, you must download and install the next package:
 
 http://download.oracle.com/otn-pub/java/jdk/7u1-b08/jdk-7u1-linux-x64.rpm
-
-You might need to use the alternatives package for installation.
-
 
 
 2-NetBeans IDE 7.0.1
@@ -312,46 +307,7 @@ PLPLOT para SCAMP (para generar ficheros png's):
 
 > rpm -ivl swarp-2.19.1-1.x86_64.rpm
 
-B) Sources packages
-+++++++++++++++++++
 
-B.1) Add science repository in order to install atlas/blas/lapack/fftw (etc):
-
-Add the file /etc/zypp/repos.d/science.repo with the next content:
-
-[science]
-name=Software for Scientists and Engineers (openSUSE_12.2)
-type=rpm-md
-baseurl=http://download.opensuse.org/repositories/science/openSUSE_12.2/x86_64/
-gpgcheck=1
-gpgkey=http://download.opensuse.org/repositories/science/openSUSE_12.2/repodata/repomd.xml.key
-enabled=1
-
-
-B.2) Install atlas/blas/lapack/fftw development libraries :
-
-zypper install libatlas3-devel lapack-devel blas-devel
-
-B.3) Sextractor: 
-- Download the source tar ball
-- run configure, make & make install
-
-B.4) SCAMP: 
-- Download the source tar ball
-- run configure, make & make install
-
-At the linking stage, I got the next error (suse11.4):
-
-libtool: Version mismatch error.  This is libtool 2.4, but the
-libtool: definition of this LT_INIT comes from libtool 2.2.6b.
-libtool: You should recreate aclocal.m4 with macros from libtool 2.4
-libtool: and run autoconf again.
-
-??????
-
-B.5) SWARP: 
-- Download the source tar ball
-- run configure, make & make install
 
 
 
@@ -361,17 +317,7 @@ B.5) SWARP:
 
 > zypper install python-numpy python-numpy-devel
 
-* From source:
 
-- pre-requisite: gfortran 
->  zypper install gcc-fortran
-
-- download Numpy v1.6.2 from http://new.scipy.org/download.html --> sourceforge
- 
-> python setup.py build --fcompiler=gnu95 install
-
-NOTE: the binaryx86_64 rpm's files can not be installed, a lot of failed
-dependences (python 2.7 , etc....) 
 
 4.Scipy v0.10.1 (default in openSUSE-12.2) 
 ===============
@@ -399,11 +345,6 @@ BLAS/Lapack
 
 openSuSE12.2 --> zypper install python-matplotlib python-matplotlib-tk
 
-* From source
-- download from homepage : matplotlib.sourceforge
-
-> unpack
-> python setup.py install (as root)
 
 
 7. PyQt4 (default in openSUSE12.2)
@@ -414,57 +355,6 @@ zypper install python-qt4-devel (optional, pero necesario para pyuic4)
 (The following NEW packages are going to be installed:
   python-qt4-devel python-qt4-utils python-sip-bin python-sip-devel)
   
-
-6. PyQt3 (any more required, now using PyQt4)
-========
-* Homepage : http://www.riverbankcomputing.co.uk/software/pyqt/download3
-* Dependences:
-
- - qt3-devel
- - SIP : sip-4.13.tar.gz 
- - PyQt : PyQt-x11-gpl-3.18.1.tar.gz
-
-* qt3-devel
-
-> zypper install qt3-devel
-> zypper install qt3-devel-tools (ONLY for development:User Interface Builder and other tools (designer, assistant, linguist)
-
-
-* SIP : 
-
-> tar -xvzf sip-4.13.tar.gz
-> python configure.py
-> make
-> make install
-
-* PyQt
-
->export QTDIR=/usr/lib64/qt3
->tar -xvzf PyQt-x11-gpl-3.18.1.tar.gz
->python configure.py
->make
->make install
-
-7. PySqlite2 (python<2.5)
-=========================
-If you're using Python 2.5 and up, you already have a working version of pysqlite 2, bundled as sqlite3. You can stop here ;-)
-
-If you are using an older version of Python or you'd like to benefit from the latest and greatest version of pysqlite, grab Windows installer or the source .tar.gz from the official ​Downloads.
-*-++++++++++++++
-If you need to build from this .tar.gz, simply do after unpacking:
-
-python setup.py build_static install 
-
-This will fetch the latest SQLite version and bundle it within the extension.
-
-
-Home: http://trac.edgewall.org/wiki/PySqlite
-- Requirements: sqlite3, sqlite-devel
-> zypper install sqlite3 sqlite3-devel
-
-> download PySqlite v.2.6.3
->unpack tar.gz
->python setup.py build_static install 
 
 8. DS9 + XPA
 ============
@@ -494,12 +384,6 @@ wget ftp://sao-ftp.harvard.edu/pub/rd/xpa/xpa-2.1.14.tar.gz
 
 10. PyWCS (v.1.10-4.7) (included in stsci_python >=2.13)
 =====================
-But, also from source:
-
-- download from https://trac.assembla.com/astrolib
-- PyFITS is required, but PyWCS can be installed without it
-> unpack source tar.gz
-> python setup.py install
 
 
 11. VO.table + ATpy (en el futuro serán parate de astropy)
@@ -668,20 +552,10 @@ Nadia Dencheva
 """
 
 
-In addition, is required to set next variable as follow to avoid problems
-with mscred package when calling with file templates:
-(16-Julio-2013)
-
-
-modificación en  /iraf/iraf/unix/hlib/zzsetenv.def:
-
-set     use_new_imt     = no
-
-
 
 3) stsci_python 2.13
 --------------------
--Download source package from
+-Download source packag:e from
 http://www.stsci.edu/resources/software_hardware/stsci_python/current/download
 
 and follow the installation instructions from
@@ -695,24 +569,9 @@ http://www.stsci.edu/resources/software_hardware/stsci_python/Installation/#inst
 > python setup.py install
 
 
-13. Aladin software tool (v7.5)
-===============================
-Not mandatory, but it might be useful for the observer during the observation 
-or data inspection/analysis.
-Aladin is an interactive software sky atlas allowing the user to visualize 
-digitized astronomical images, superimpose entries from astronomical catalogues
- or databases, and interactively access related data and information from the 
-Simbad database, the VizieR service and other archives for all known sources 
-in the field.
-
-http://aladin.u-strasbg.fr/aladin.gml
-
->download Aladin.tar
->tar -xvf Aladin.tar
->cp -av Aladin /usr/local/
 
 
-14. MIDAS 10SEPpl1.1 (for CL environment)
+13. MIDAS 10SEPpl1.1 (for CL environment)
 =========================================
 See: http://www.eso.org/sci/software/esomidas/
 
@@ -724,8 +583,7 @@ Files to patch:
       - scc.c
 
 
-
-15. OTHER SOFTWARE REQUIRED
+14. OTHER SOFTWARE REQUIRED
 ===========================
 
 - STILTS (http://www.star.bris.ac.uk/~mbt/stilts/) : used by photometry.py for catalog xmatching
@@ -735,12 +593,11 @@ Files to patch:
 
 and copy to the directory specified by the _stilts_pathname variable in photometry.py (/home/panic/SOFTWARE/STILTS/stilts)
 
-TO BE CONFIRMED/ENHANCED ! (any more required for the moment !)
+TO BE CONFIRMED/ENHANCED !
 
 
 
-
-16. OTHER SYSTEM LIBS REQUIRED (openSUSE11.4)
+15. OTHER SYSTEM LIBS REQUIRED (openSUSE11.4)
 ============================== 
 
 - libcurl4-32bit (and maybe this link : usr/lib/libcurl.so.3 ->
@@ -749,7 +606,7 @@ TO BE CONFIRMED/ENHANCED ! (any more required for the moment !)
 - libreadline3
 
 
-17. PAPI SOURCES
+16. PAPI SOURCES
 ================
 
 #> svn co svn+ssh://integrador@arch.osn.iaa.es/home/integrador/Repository/PANIC/PAPI/trunk/ papi
