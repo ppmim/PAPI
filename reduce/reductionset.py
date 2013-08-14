@@ -2885,7 +2885,7 @@ class ReductionSet(object):
         # puede hacer el stack !
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        prueba = False  
+        prueba = False
         if prueba:
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
