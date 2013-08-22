@@ -6,7 +6,7 @@
 # Created    : 07/04/2008    jmiguel@iaa.es
 # Update     : 25/05/2009    jmiguel@iaa.es   Added object field
 #              14/12/2009    jmiguel@iaa.es   Renamed SKY_FLAT by TW_FLAT
-#                                             Reanamed isSkyFlat()  by isTwFlat()
+#                                             Reanamed isSkyFlat() by isTwFlat()
 #              02/03/2010    jmiguel@iaa.es   Added READMODE checking
 # 
 ###############################################################################
@@ -32,7 +32,7 @@ import misc.wcsutil as wcsutil
 
 #Log
 from misc.paLog import log
-
+#import logging as log
 
 ###############################################################################
 class FitsTypeError(ValueError):
@@ -72,43 +72,67 @@ class ClFits (object):
     def __init__(self, full_pathname, *a,**k):
       
         """
-        @param: pathname The full filename of the fits file to classify
+        Init the object
+          
+        Parameters
+        ----------
+        full_pathname: str
+            pathname The full filename of the fits file to classify
         """
         
         super (ClFits, self).__init__ (*a,**k)
       
-        self.pathname  = full_pathname # path_name + root_name
-        self.filename  = os.path.basename(self.pathname)  # root_name
-        self.type      = "UNKNOW"
-        self.naxis1    = -1
-        self.naxis2    = -1
-        self._shape    = () # shape of first HDU of the FITS =(naxis3, naxis2, naxis1)
-        self.runID     = -1 # exposition ID for the current night (unique for that night)
-        self.obID      = -1 # Observation Block ID (unique) provided by the OT
-        self.obPat     = -1 # Observation (dither) Pattern 
-        self.pat_expno = -1 # Exposure number within (dither) pattern
-        self.pat_noexp = -1 # Number of exposures within pattern
+        self.pathname = full_pathname # path_name + root_name
+        self.filename = os.path.basename(self.pathname)  # root_name
+        self.type = "UNKNOWN"
+        self.naxis1 = -1
+        self.naxis2 = -1
+        
+        # shape of first HDU of the FITS =(naxis3, naxis2, naxis1)
+        self._shape = ()
+        
+        # exposition ID for the current night (unique for that night)
+        self.runID = -1
+        
+        # Observation Block ID (unique) provided by the OT
+        self.obID = -1
+        
+        # Observation (dither) Pattern 
+        self.obPat = -1 
+        
+        # Exposure number within (dither) pattern
+        self.pat_expno = -1 
+        
+        # Number of exposures within pattern
+        self.pat_noexp = -1 
+
         self.instrument = ""
         self.processed = False
-        self.exptime   = -1
-        self.filter    = ""
-        self.mef       = False
-        self.next      = 0
+        self.exptime = -1
+        self.filter = ""
+        self.mef = False
+        self.next = 0
         self.datetime_obs = ""
-        self.detectorID= ""
-        self.date_obs  = ""
-        self.time_obs  = ""
-        self._ra       = -1
-        self._dec      = -1
-        self.equinox   = -1
-        self.mdj       = -1 # modified julian date of observation
-        self.object    = ""
-        self.chipcode  = 1
-        self.ncoadds   = -1
-        self.itime     = 0.0
-        self.readmode  = ""
+        self.detectorID = ""
+        self.date_obs = ""
+        self.time_obs = ""
+        self._ra = -1
+        self._dec = -1
+        self.equinox = -1
+        
+        # modified julian date of observation
+        self.mdj = -1 
+
+        self.object = ""
+        self.chipcode = 1
+        self.ncoadds = -1
+        self.itime = 0.0
+        self.readmode = ""
         self.my_header = None
-        self.obs_tool  = False
+        self.obs_tool = False
+        self.pix_scale = 1.0
+        self.binning = 1
+        self.telescope = "unknown"
         self._softwareVer = ''
         
         
@@ -220,6 +244,14 @@ class ClFits (object):
     @property
     def dec(self):
         return self._dec
+    
+    @property
+    def pixScale(self):
+        return pix_scale
+
+    @property
+    def Telescope(self):
+        return self.telescope
         
     @property
     def softwareVer(self):
@@ -577,7 +609,7 @@ class ClFits (object):
         
         #RA-coordinate (in degrees)
         try:
-            # WCS-coordinates are preferred than RA,DEC
+            # WCS-coordinates are preferred than RA,DEC (both in degrees)
             if ('CTYPE1' in myfits[0].header and
                      (myfits[0].header['CTYPE1']=='RA---TAN' or
                       myfits[0].header['CTYPE1']=='RA---TAN--SIP')):
@@ -585,10 +617,12 @@ class ClFits (object):
                 self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
-                self._ra = myfits[0].header['RA']
+                self._ra = myfits[0].header['RA'] # degrees supposed
             elif 'OBJCTRA' in myfits[0].header:
+                # Mainly for Roper CCDs
                 a = myfits[0].header['OBJCTRA']
                 self._ra = float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
+                # convert to degrees                
                 self._ra = self._ra * 360.0 / 24.0
             else:
                 raise Exception("No valid RA coordinate found")
@@ -611,7 +645,12 @@ class ClFits (object):
                 self._dec = myfits[0].header['DEC']
             elif 'OBJCTDEC' in myfits[0].header:
                 a = myfits[0].header['OBJCTDEC']
-                self._dec = float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
+                if a.split()[0][0]=='-':
+                    log.error("MENOOOOOOOs")
+                    self._dec = (-1.0) * float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
+                    self._dec*=-1.0
+                else:
+                    self._dec =  float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
             else:
                 raise Exception("No valid DEC coordinates found")
         except Exception,e:
@@ -738,11 +777,49 @@ class ClFits (object):
                 myfits[0].header.update('PRESS2', 0.0)
         except Exception,e:
             log.warning("Keyword not found : %s ->", str(e))
+
+
+        # Telescope
+        if 'TELESCOPE' in myfits[0].header:
+            self.telescope = myfits[0].header['TELESCOPE']
+        else:
+            self.telescope = "unknown"
         
+        # Binning 
+        if 'BINNING' in myfits[0].header:
+            self.binning = int(myfits[0].header['BINNING'])
+        elif 'XBINNING' in myfits[0].header:
+            self.binning = int(myfits[0].header['XBINNING'])
+        else:
+            self.binning = 1
+
+        # Pixel scale (updated with binning factor)
+        if 'PIXSCALE' in myfits[0].header:
+            self.pix_scale = float(myfits[0].header['PIXSCALE']) * self.binning
+        else:
+            if self.instrument=='omega2000':
+                self.pix_scale = 0.45 * self.binning
+            elif self.instrument=='panic':
+                self.pix_scale = 0.45 * self.binning
+            elif self.instrument=='roper':
+                self.pix_scale = 0.23 * self.binning
+            elif self.instrument=='roper90':
+                self.pix_scale = 0.386 * self.binning
+            elif self.instrument=='hawki':
+                self.pix_scale = 0.106 * self.binning
+            else:
+                # default scale ?
+                self.pix_scale = 0.45 * self.binning
+
+
+        # 
+        # Close the file. Some updates can be done (PRESS1, ...) but it mustn't
+        #            
         try:
             myfits.close(output_verify='ignore')
         except Exception, e:
-            log.error("Error while closing FITS file %s   : %s",self.pathname, str(e))
+            log.error("Error while closing FITS file %s   : %s",
+                      self.pathname, str(e))
         
             
     def addHistory(self, string_history):
