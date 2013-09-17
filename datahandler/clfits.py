@@ -8,7 +8,8 @@
 #              14/12/2009    jmiguel@iaa.es   Renamed SKY_FLAT by TW_FLAT
 #                                             Reanamed isSkyFlat() by isTwFlat()
 #              02/03/2010    jmiguel@iaa.es   Added READMODE checking
-# 
+#              20/08/2013    jmiguel@iaa.es   Addapted to support OSN CCDs 
+#
 ###############################################################################
 
 """
@@ -30,9 +31,12 @@ from time import strftime
 
 import misc.wcsutil as wcsutil
 
-#Log
-from misc.paLog import log
-#import logging as log
+# Logging (PAPI or Python built-in)
+try:
+    # PAPI logging module
+    from misc.paLog import log
+except ImportError:
+    import logging as log
 
 ###############################################################################
 class FitsTypeError(ValueError):
@@ -418,25 +422,16 @@ class ClFits (object):
                     #keyword_with_frame_type = 'OBJECT'
                 else:
                     keyword_with_frame_type = 'OBJECT'
-            else: keyword_with_frame_type = 'OBJECT' # default, even for 'Panic'    
+            else: keyword_with_frame_type = 'IMAGETYP' #default, even for Roper    
         except KeyError:
-            log.warning('INSTRUME keyword not found')
-            keyword_with_frame_type = 'OBJECT' #default
+            log.warning('IMAGETYP or OBJECT keywords not found')
+            keyword_with_frame_type = 'IMAGETYP' #default
             
-        # First, find out the type of frame ( DARK, DOME_FLAT_LAMP_ON/OFF, SKY_FLAT, SCIENCE , MASTER_calibration, UNKNOW)     
-        panic_types = {'dark':'DARK', 
-                       'lamp_on_flat':'DOME_FLAT_LAMP_ON', 
-                       'lamp_off_flat':'DOME_FLAT_LAMP_OFF',
-                       'tw_flat_dawn':'TW_FLAT_DAWN', 
-                       'tw_flat_dusk':'TW_FLAT_DUSK', 
-                       'sky_flat':'SKY_FLAT',
-                       'sky': 'SKY',
-                       'science': 'SCIENCE',
-                       'std':'STD',
-                       'focus':'FOCUS'
-                       }
-        #IMAGETYP = [DARK, LAMP_ON_FLAT, LAMP_OFF_FLAT, TW_FLAT_DUSK, TW_FLAT_DAWN, SKY_FLAT, SCIENCE, SKY, STD, FOCUS ]
-        #FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
+        # Find out the type of frame ( BIAS, DARK, DOME_FLAT_LAMP_ON/OFF, 
+        # SKY_FLAT, SCIENCE , MASTER_calibration, UNKNOW)     
+        # IMAGETYP = [BIAS, DARK, LAMP_ON_FLAT, LAMP_OFF_FLAT, TW_FLAT_DUSK, 
+        #               TW_FLAT_DAWN, SKY_FLAT, SCIENCE, SKY, STD, FOCUS ]
+        # FIELDTYP = [POINTLIKE, SPARSE_FIELD, CROWDED_FIELD, EXT_OBJECT ]
         if self.instrument =='panic':
             try:
                 # Self-typed file, created by PAPI
@@ -468,13 +463,6 @@ class ClFits (object):
                     else:
                         #By default, the image is classified as SCIENCE object
                         self.type = "SCIENCE"
-                    """        
-                    try:
-                        self.type = panic_types[ltype]
-                    except KeyError:
-                        log.error("Frame type '%s' does not match any kind !"%ltype)
-                        self.type = 'UNKNOW'
-                    """
             except KeyError:
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
@@ -504,12 +492,10 @@ class ClFits (object):
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
                 
-        else: #o2000, or ??
+        else: #o2000, Roper or  ??
             try:
-                if 'PAPITYPE' in myfits[0].header:
-                    self.type = myfits[0].header['PAPITYPE']
-                elif 'IMAGETYP' in myfits[0].header:
-                    self.type = myfits[0].header['IMAGETYP']
+                if myfits[0].header[keyword_with_frame_type].lower().count('bias') :
+                    self.type = "BIAS"
                 elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
                     self.type = "DARK"
                 elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
@@ -531,6 +517,9 @@ class ClFits (object):
                     #pero tiene pinta que fue  un despiste del operador !!!
                 elif myfits[0].header[keyword_with_frame_type].lower().count('science'):
                     self.type = "SCIENCE"
+                # CCD Roper (OSN)
+                elif myfits[0].header[keyword_with_frame_type].lower().count('light'):
+                    self.type = "SCIENCE"
                 else:
                     #By default, the image is classified as SCIENCE object
                     self.type = "SCIENCE"
@@ -539,7 +528,7 @@ class ClFits (object):
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
         
-        #Is pre-reduced the image ? by default, no
+        #Is pre-reduced the image ? by default, isn't
         self.processed = False
         
         #print "File :"+ self.pathname
@@ -552,7 +541,7 @@ class ClFits (object):
                     self.filter = myfits[0].header['FILTER1']
                 elif 'FILTER2' in myfits[0].header:
                     self.filter = myfits[0].header['FILTER2']
-            else: # PANIC, O2000, ...
+            else: # PANIC, O2000, Roper, ...
                 self.filter  = myfits[0].header['FILTER']
         except KeyError:
             log.warning('FILTER keyword not found')
@@ -637,7 +626,7 @@ class ClFits (object):
             # WCS-coordinates are preferred than RA,DEC
             if ('CTYPE2' in myfits[0].header and
                      (myfits[0].header['CTYPE2']=='DEC--TAN' or
-                      myfits[0].header['CTYPE2']=='DEC--TAN--SIP')):
+                      myfits[0].header['CTYPE2']=='DEC--TAN--SIP') ):
                 wcs = wcsutil.WCS(myfits[0].header)
                 self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 log.debug("Read Dec-WCS coordinate =%s", self._dec)
@@ -646,7 +635,6 @@ class ClFits (object):
             elif 'OBJCTDEC' in myfits[0].header:
                 a = myfits[0].header['OBJCTDEC']
                 if a.split()[0][0]=='-':
-                    log.error("MENOOOOOOOs")
                     self._dec = (-1.0) * float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
                     self._dec*=-1.0
                 else:
@@ -801,9 +789,9 @@ class ClFits (object):
                 self.pix_scale = 0.45 * self.binning
             elif self.instrument=='panic':
                 self.pix_scale = 0.45 * self.binning
-            elif self.instrument=='roper':
+            elif self.instrument=='roper':  # roperT150
                 self.pix_scale = 0.23 * self.binning
-            elif self.instrument=='roper90':
+            elif self.instrument=='ropert90':
                 self.pix_scale = 0.386 * self.binning
             elif self.instrument=='hawki':
                 self.pix_scale = 0.106 * self.binning

@@ -1718,20 +1718,22 @@ class ReductionSet(object):
                     nyblock = 16
                     nsigma = 5    
                 
-                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, do_normalization=True,
-                                               mingain=mingain, maxgain=maxgain, nxblock=nxblock,
-                                               nyblock=nyblock, nsigma=nsigma)
+                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, 
+                                               do_normalization=True,
+                                               mingain=mingain, maxgain=maxgain, 
+                                               nxblock=nxblock,nyblock=nyblock, 
+                                               nsigma=nsigma)
                 
-                out=None
-                out=task.create()
+                out = None
+                out = task.create()
                 l_gainmaps.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("Some error while creating gainmap: %s",str(e))
                 raise e
             if k<len(sorted_list):
                 # reset the new group
-                group=[]
-                last_filter=sorted_list[k][1]
+                group = []
+                last_filter = sorted_list[k][1]
 
         # insert products (gainmaps) into DB
         for f in l_gainmaps: self.db.insert(f)
@@ -2132,13 +2134,13 @@ class ReductionSet(object):
         n_cpus = self.config_dict['general']['ncpus']
         #n_cpus = multiprocessing.cpu_count()
 
-        #Finally, it was not possible to create 'pool' as a global variable becasue
-        #there are problems with sharing a global pool (or whatever variable) with
-        #the Process created in the QL module for dispatching the on-line reduction.
-        #So, what we do now is create a new pool everytime we need to do any iraf
-        #depending task. In general, we create the pool for whatever task in 
-        #this function, but in serial reduction of SCI seqs, the pool will not
-        #be used.
+        # Finally, it was not possible to create 'pool' as a global variable because
+        # there are problems with sharing a global pool (or whatever variable) with
+        # the Process created in the QL module for dispatching the on-line reduction.
+        # So, what we do now is create a new pool everytime we need to do any iraf
+        # depending task. In general, we create the pool for whatever task in 
+        # this function, but in serial reduction of SCI seqs, the pool will not
+        # be used.
         pool = multiprocessing.Pool(processes=n_cpus)
         
         files_created = []

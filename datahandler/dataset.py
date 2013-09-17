@@ -574,12 +574,16 @@ class DataSet(object):
                 ra = self.GetFileInfo(file)[7]*3600 # arcsecs
                 dec = self.GetFileInfo(file)[8]*3600 #arcsecs
                 #print "DIF_RA=",math.fabs(ra-ra_0)
+                #print "MaxRADecDiff=",max_ra_dec_diff
                 #print "RA0=",ra_0
                 #print "RA=",ra
                 #print "DIF_DEC=",math.fabs(dec-dec_0)
                 #print "LEN_GROUP=",len(group)
-
-                #Note: Currently, this code will not distinguish between next
+                #print "DIF_MJD=",(t-mjd_0)
+                #print "MAX_MJD=",max_mjd_diff
+                #print "TYPE=",self.GetFileInfo(seq[0])[2]
+                    
+                # Note: Currently, this code will not distinguish between next
                 # dark sequences:
                 #     - 2s 2s 2s  5s 5s 5s 10s 10s 10s 20s 20s 20s ...
                 #     - 2s 5s 10s 20s ...
@@ -594,6 +598,11 @@ class DataSet(object):
                     mjd_0 = t
                 # Darks do not have coordinates restrictions
                 elif (self.GetFileInfo(seq[0])[2]=='DARK' and 
+                      math.fabs(t-mjd_0)< max_mjd_diff and len(group) < max_nfiles):
+                    group.append(file)
+                    mjd_0 = t
+                # Flats (dome or sky) do not have coordinates restrictions
+                elif (self.GetFileInfo(seq[0])[2].find("DOME_FLAT")>=0 and 
                       math.fabs(t-mjd_0)< max_mjd_diff and len(group) < max_nfiles):
                     group.append(file)
                     mjd_0 = t

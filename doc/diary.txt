@@ -2744,6 +2744,189 @@ Abrá que verlo con más detalle.
 
 
 
+13-Agosto-2013
+==============
+- Instalación de astrometry.net en panic2 y todo el catálogo (index) para
+porder hacer pruebas y construir una rutina de astrometría robusta para el
+OSN y para PANIC.
+
+-Sobre Astrometry.net y la distorsión, encuentro en el foro lo siguiente de 
+Dustin: (https://groups.google.com/d/msg/astrometry/Ky1er5VpY3c/xkS6IWtvwfAJ)
+
+A couple of ideas for the distortion:
+
+1.  You could try increasing the matching distance: say, "solve-field -c 0.02" or 0.03 or whatever, to let the shape-matching be more accepting.
+
+2.  You could try taking the WCS from the central region (which solves) and using it as an initial guess for the whole image.  The "tweak" process then might be able to find matches in the middle part and "grow" the matching region out to the edges.  The only complication doing that is that when you plug the solved WCS back into the whole image, you will need to adjust the "CRPIX" values to compensate for the offset of the subimage.  That is, if your central subimage starts at pixel 1000,1000, then you want to add 1000 to CRPIX1 and CRPIX2 in the WCS FITS header before plugging it back into the whole image; you might want to use the "new-wcs" program to plug the WCS header into (a copy of) the original image.
+
+3.  More work: You could try to try to figure out the functional form of the distortion and remove it.  With a fish-eye lens, the distortion is probably all radial (you would hope!).  Try grabbing the largest sub-image that still solves and produces a good-looking "-indx.png" plot (red circles and green circles aligned).  In the ".corr" file you have a list of the X,Y,RA,Dec positions of stars in your image, and reference stars, that we think matched.  Plot the sqrt((field_x - XC)**2 + (field_y - YC)**2) vs sqrt((index_x - XC)**2 + (index_y - YC)**2), where XC,YC is the image center.  That is, plot the radial difference in the image stars and index stars.
+
+The catch is that by default we try to correct the distortion with SIP coefficients, so either turn that off with "solve-field --no-tweak", or try using wcs-rd2xy with the "-t" flag to ignore the SIP terms, to project the RA,Dec coordinates in the .corr file into (distorted) X,Y coordinates, and then make the plot as above.
+
+
+
+> However, I cannot find a way to open those FITS BINTABLEs. I just want to extract the coordinate, RA and DEC, as well as the magnitude from both the image and index files to get a ASCII file, such as .dat or .txt, but I cannot find a way to do that. Would you please to help me?
+
+Try the "tablist" program, eg     "tablist out.rdls"
+
+
+
+> Besides, when I tried to use: wcs-xy2rd -w wcs-file -i xy-list -o radec-list To convert a list of pixel coordinates to RA,Dec coordinates, it says that: 
+
+anwcs.c:957:anwcs_open_wcslib: Wcslib support was not compiled in anwcs.c:979:anwcs_open_wcstools: WCStools support was not compiled in wcs-xy2rd.c:57:wcs_xy2rd: Failed to read WCS file "wcs-file", extension 0 wcs-xy2rd-main.c:168:main: wcs-xy2rd failed
+
+You shouldn't need wcstools or wcslib.  Probably the "wcs-file" you told it to use doesn't exist.  What is the exact command-line you are using to run wcs-xy2rd?
+
+
+14-Agosto-2013
+==============
+- Probando HAWK-I-4 con Astrometry.net (v0.42) encuentro un bug y se lo mando a
+code2@astrometry.net:
+"""
+I think there is a bug in file (v0.42):
+
+astrometry/util/fits2fits.py , line 56
+
+it concerns 'cards' variable, what should be 'hdr.cards'.
+
+I hope it helps.
+"""
+
+Tras resolver yo el bug, Astrometry.net resuelve los campo de forma muy rápida
+sobre todo si le das RA, DEC,radius,scale como parémetros de entrada.
+
+
+(P) añadir from __future__ import division a PAPI
+
+
+19-Agosto-2013
+==============
+- Pruebo la nueva version que me mandó Dustin de 
+http://astrometry.net/downloads/astrometry.net-23260.tar.gz
+y ya soluciona el problema en fits2fits.py.
+
+- También pruebo el nuevo catálogo (index-42xx) para astrometry.net
+que me bajé en panic2, y parece que también funciona. 
+La actualizacion del catálogo fue realizada porque la serie 4000 tiene un bug.
+http://astrometry.net/doc/readme.html#getting-index-files
+
+- Continuo con la implementación del nuevo solver de astrometría basado
+en Astrometry.net:
+
+
+22-Agosto-2013
+==============
+- Continuo con implementación de solver con astrometric.net.
+
+23-Agosto-2013
+==============
+Ficheros no resueltos:
+['/data1/OSN/RoperT150/11_12_13/PG2213-006-001B.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-001U.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-003V.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-002U.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-001I.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-003B.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-001R.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-003U.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-002V.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-003B.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-001U.fit', '/data1/OSN/RoperT150/11_12_13/Campo GRB130606A-001I.fit', '/data1/OSN/RoperT150/11_12_13/PG2331-003U.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-002B.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-003I.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-002U.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-003R.fit', '/data1/OSN/RoperT150/11_12_13/PG2331-001U.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-002R.fit', '/data1/OSN/RoperT150/11_12_13/PG2331-002U.fit', '/data1/OSN/RoperT150/11_12_13/Campo GRB130606A-001R.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-003U.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-001B.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-001V.fit', '/data1/OSN/RoperT150/11_12_13/BE90_campo3-005U_600.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-002B.fit', '/data1/OSN/RoperT150/11_12_13/PG1633-003U.fit', '/data1/OSN/RoperT150/11_12_13/PG2213-006-002I.fit']
+
+26-Agosto-2013
+==============
+- Implemento la version Multiprocessing de solve-roper.py; hago pruebas
+y en principio funciona.
+
+
+29-Agosto-2013
+==============
+- Básicamente sigo haciendo mejoras y pruebas con solve-roper.py
+- Modificación a script para imagenes de Radar del OSN.
+
+
+30-Agosto-2013
+==============
+- Encuentro la herramienta Redmine como la mejor candidata para las 
+incidencias del OSN.
+
+- Básicamente sigo haciendo mejoras y pruebas con solve-roper.py
+
+- Intento resolver unas image de O2k que me bajo del archivo de CAHA,
+
+/data1/O2K/tests/o2k-20080121-23:05:03-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:06:26-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:10:43-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:17:51-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:19:16-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:36:09-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:38:52-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:40:13-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:42:56-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:49:44-sci-0801.fits
+
+Pero solve-roper no puede resolverlas de ninguna manera y aparentemente no
+veo ningun error.
+
+Sin embargo, subo una image al servicio de Astrometry.net y si es capaz de 
+resolverla pero usando el index-205-quad.fits.
+
+http://nova.astrometry.net/status/62246
+
+Como no se porqué pasa eso, copio algunos index-20xx.fits que tengo para que 
+también los use solve-field, pero tampoco es capaz de resolver el campo.
+
+Entonces, pregunto en el foro (Google) de Astrometry.net para ver por qué ocurre
+eso.
+
+
+- Luego, también me doy cuenta de que no se resuleven los siguientes imagenes:
+
+['/data1/OSN/RoperT150/11_12_13/SA110-266-002U.fit', '/data1/OSN/RoperT150/11_12_13/biasbin1-018.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-003B.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-003U.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-001U.fit', '/data1/OSN/RoperT150/11_12_13/Campo GRB130606A-001I.fit', '/data1/OSN/RoperT150/11_12_13/PG2331-003U.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-002B.fit', '/data1/OSN/RoperT150/11_12_13/PG2331-001U.fit', '/data1/OSN/RoperT150/11_12_13/flat-009V.fit', '/data1/OSN/RoperT150/11_12_13/PG2331-002U.fit', '/data1/OSN/RoperT150/11_12_13/Campo GRB130606A-001R.fit', '/data1/OSN/RoperT150/11_12_13/SA110-266-001B.fit', '/data1/OSN/RoperT150/11_12_13/BE90_campo3-005U_600.fit', '/data1/OSN/RoperT150/11_12_13/PG1633-003U.fit']
+
+y 
+
+02-Sep-2013
+==============
+- Tras la respuesta de Dustin (Astrometry.net) sobre downsample=2, pruebo
+con otra imagen de O2k, y ahora ni en el Web ni en local se resuelven:
+
+http://nova.astrometry.net/status/62794
+
+Sin embargo, en el archivo de CAHA me bajé también la misma imagen calibrada
+astrometricamante !! no se como pudieron hacerlo ???? realmente no hay casi
+fuentes !!!
+
+
+Por otro lado, encuentro un problema reduciendo el DS de O2k:
+
+/data1/O2K/tests/o2k-20080121-23:05:03-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:06:26-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:10:43-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:17:51-sci-0801.fits
+/data1/O2K/tests/o2k-20080121-23:19:16-sci-0801.fits
+
+
+no puede calcular bien los offsets !!!!
+Modifico en el fichero de configuración los valores para la sección [skysub]
+
+# Object mask
+mask_minarea = 10   # sex:DETECT_MINAREA used for object masking
+mask_thresh = 1.5   # sex:DETECT_THRESH used for object masking (1.5)
+
+dejando para la sección [offsets] 5 y 4.5 respectivamente. Ahora SI calcula 
+bien los offsets !!! Pues no tiene falsos objetos que es lo que ocurría antes,
+pero al subir mask_thresh= 4.5 no quitamos falsos objetos. En [skysub] si nos
+interesa por el contrario eliminar todos los objetos posibles, por eso lo dejamos
+más bajo ....
+
+Otro problema con este DS es que hay muchas "sombras" de objetos, es decir, que no
+los enmarcara bien para la resta del cielo !!! 
+Pruebo con varios parametros de [skysub:mask_thresh] = 1.5, y mejora, pero aún
+se notan sombras.
+(P) Probar con los ficheros de calibración (DARK, FLATS) para ver si lo
+se reducen mejor.
+
+
+17-Sep-2013
+===========
+- Modificación (menor) de modFITS.py para que pueda ser utilizado para
+actualizar los headers del OSN por los operadores.
+
+
+
+
+
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
 - SATURATE
