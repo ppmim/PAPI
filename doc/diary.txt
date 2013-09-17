@@ -2918,12 +2918,57 @@ se notan sombras.
 se reducen mejor.
 
 
+16-Sep-2013
+===========
+- Modificacion en dataset.py para eliminar la restricción de max_ra_dec_offset
+en los ficheros de calibracion (dark, flats), pues o tendría mucho sentido.
+
+
+
 17-Sep-2013
 ===========
 - Modificación (menor) de modFITS.py para que pueda ser utilizado para
 actualizar los headers del OSN por los operadores.
 
+- Bug: elimino el Trim de los productos de PAPI que sean calibraciones (master_dark, master_flats, etc),
+pues no tiene sentido hacerles un trim/crop. Eso solo tiene sentido en images
+de ciencia con dithering.
+ 
+- Reduciendo un DS de O2k que me bajé del archivo de CA, encuentro problemas
+con la identificacion de los MASTER de calibracion. Para solucionar el problema
+tuve que modificar clfits.py para que reconozca bien PAPITYPE y IMAGETYP.
 
+ IMAGETYP ---> lo 'escribe' el OT, GEIRS no lo genera
+ PAPITYPE ---> lo 'escribe' PAPI cuando genera ficheros de calibracion (MASTER_DARK, etc ...)
+ 
+- Encuentro (de nuevo) el problema de dividir por cero en applyDarkFlat.py.
+Para solucionarlo, se me ocurre que a igual que hace iraf.ccdproc con minrepl=1.0,
+sustituir los valores menores que un cierto __epsilon por 1.0 para evitar
+divisiones por cero.
+
+#sci_data = (sci_data - dark_data) / flat_data
+# To avoid NaN values due to zero division
+__epsilon = 1.0e-20
+flat_data = numpy.where(numpy.abs(flat_data)<__epsilon, 1.0, flat_data)
+
+Otra forma de hacerlos sería como sigue:
+ sci_data = numpy.where(flat_data==0.0, 
+                                     (sci_data - dark_data), 
+                                     (sci_data - dark_data) / flat_data )
+
+ minreplace = 1.
+        When processing flat  fields,  pixel  values  below  this  value
+        (after  all  other  processing  such as overscan, zero, and dark
+        corrections) are replaced  by  this  value.   This  allows  flat
+        fields  processed  by  ccdproc  to be certain to avoid divide by
+        zero problems when applied to object images.
+
+
+Lo probé y funcionó correctamente, o al menos no hubo fallos y el Warning
+de división por cero desapareció.
+
+(P) Ver dónde más es necesario solucionar la division por cero.
+    Me queda la duda de ver como lo soluciona iraf.imarith(...)
 
 
 

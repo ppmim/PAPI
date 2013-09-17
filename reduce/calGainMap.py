@@ -30,8 +30,9 @@
 #
 # Created    : 23/09/2010    jmiguel@iaa.es -
 # Last update: 23/09/2009    jmiguel@iaa.es - 
-#              21/10/2019    jmiguel@iaa.es - Add normalization wrt chip 1 and 
+#              21/10/2009    jmiguel@iaa.es - Add normalization wrt chip 1 and 
 #                                             support for MEF
+#              17/09/2013    jmiguel@iaa.es - prevent zero-division
 # TODO:
 #  - include bpm 
 ################################################################################
@@ -319,8 +320,13 @@ class GainMap(object):
 
                 else: median = 1.0 # normalization not required (but must be already done !!)
                 
-            flatM = flatM/median   
-            
+            # To avoid zero-division
+            __epsilon = 1.0e-20
+            if np.fabs(median)>__epsilon:
+                flatM = flatM/median
+            else:
+                flatM = flatM
+                
             # Check for bad pixel 
             gain[chip] = np.where( (flatM<self.m_MINGAIN) | (flatM>self.m_MAXGAIN), 0.0, flatM)
             m_bpm = np.where(gain[chip]==0.0, 1, 0) # bad pixel set to 1

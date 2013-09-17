@@ -285,9 +285,9 @@ class ApplyDarkFlat(object):
                         else: 
                             flat_data = 1
                         sci_data = f[chip+1].data 
-                    #Single
+                    # Single
                     else:
-                        #Get Dark
+                        # Get Dark
                         if self.__mdark != None: 
                             if time_scale != 1.0: # for dark_model time_scale==-1
                                 log.debug("Dark EXPTIME mismatch ! looking for dark model ...")
@@ -301,13 +301,21 @@ class ApplyDarkFlat(object):
                             else:
                                 dark_data = dark[0].data
                         else: dark_data = 0
-                        #Get normalized Flat
+                        # Get normalized Flat
                         if self.__mflat!=None: flat_data = flat[0].data/mode  # normalization
                         else: flat_data = 1     
                         sci_data = f[0].data
                                                                
-                    sci_data = (sci_data - dark_data) / flat_data
-                    #store back the new values
+                    #sci_data = (sci_data - dark_data) / flat_data
+                    # To avoid NaN values due to zero division
+                    __epsilon = 1.0e-20
+                    flat_data = numpy.where(numpy.fabs(flat_data)<__epsilon, 
+                                            1.0, flat_data)
+                    # Other way to solve the zero division in FF
+                    #sci_data = numpy.where(flat_data==0.0, 
+                    #                       (sci_data - dark_data), 
+                    #                       (sci_data - dark_data) / flat_data )
+                    # Store back the new values
                     if n_ext > 1: # it means, MEF
                         f[chip+1].data = sci_data
                     else:

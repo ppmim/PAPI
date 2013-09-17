@@ -2550,10 +2550,14 @@ class ReductionSet(object):
             log.error("[reduceSeq] Cannot identify the type of the sequence to reduce ...")
             raise Exception("[reduceSeq] Cannot identify the type of the sequence to reduce ...")    
         
-        # Trim/crop the sticked created images and insert them into the DB
+        # Trim/crop the sticked created (science) images and insert them into 
+        # the DB
         for file in files_created:
-            # input image is overwritten
-            misc.imtrim.imgTrim(file)
+            # if source image was a science one, then products should be also 
+            # science images
+            if fits.isScience():
+                # input image is overwritten
+                misc.imtrim.imgTrim(file)
             if file!=None: self.db.insert(file)
         
         # not sure if is better to do here ??? 

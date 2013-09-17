@@ -410,7 +410,12 @@ class ClFits (object):
         
         # IMAGE TYPE
         try:
-            if self.instrument=='omega2000' and 'OBJECT' in myfits[0].header:
+            if self.instrument=='omega2000' and 'PAPITYPE' in myfits[0].header:
+                keyword_with_frame_type = 'PAPITYPE'
+                # It happens if the image is product of PAPI 
+            elif self.instrument=='omega2000' and 'IMAGETYP' in myfits[0].header:
+                keyword_with_frame_type = 'IMAGETYP'
+            elif self.instrument=='omega2000' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
             elif self.instrument=='hawki' and 'IMAGETYP' in myfits[0].header:
                 keyword_with_frame_type = 'IMAGETYP'
@@ -494,9 +499,11 @@ class ClFits (object):
                 
         else: #o2000, Roper or  ??
             try:
-                if myfits[0].header[keyword_with_frame_type].lower().count('bias') :
+                if myfits[0].header[keyword_with_frame_type].lower().count('master'):
+                    self.type = myfits[0].header[keyword_with_frame_type]
+                elif myfits[0].header[keyword_with_frame_type].lower().count('bias'):
                     self.type = "BIAS"
-                elif myfits[0].header[keyword_with_frame_type].lower().count('dark') :
+                elif myfits[0].header[keyword_with_frame_type].lower().count('dark'):
                     self.type = "DARK"
                 elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
                     self.type = "DOME_FLAT_LAMP_OFF"
