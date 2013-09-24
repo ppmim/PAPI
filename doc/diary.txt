@@ -2982,6 +2982,19 @@ de división por cero desapareció.
 
 (P) Ver si sería conveniente usar 'expand_mask' en la mascara de objetos.
 
+
+
+24-09-2013
+----------
+
+- Conversion repositorio de SVN a GIT
+- Limpieza de irdr/makefile para que solo se compile lo que es necesario para PAPI
+- Encuentro (o reencuentro) la rutina irdr::nlinmap.c para el calculo de la no-linealidad;
+no obstante no se que entradas necesita dicha funcion.
+
+- (P) Pensar si merece la pena hacer el dilate de la mascara de objetos !!! 
+
+
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
 - SATURATE

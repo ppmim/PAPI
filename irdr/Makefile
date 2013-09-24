@@ -8,6 +8,7 @@ IFLAGS    = -I./src/include  -I./extern/wcstools -I./extern/wcstools/libwcs
 CFLAGS    = -O3 -Wall -ansi -pedantic
 # CFLAGS    = -g 
 RM        = rm -f
+MKDIR	  = mkdir -p
 RANLIB    = true
 AR        = ar
 ARFLAGS   = rcv
@@ -30,17 +31,13 @@ default: irdr
 
 all: clean wcs irdr
 
-irdr: cleanirdr irdrlib ./bin/statsmask ./bin/dithers \
-	./bin/cubemean ./bin/gainmap ./bin/mask ./bin/floatimage \
-	./bin/normalize ./bin/initwcs ./bin/unshiftimage \
-	./bin/shiftimage ./bin/dithercubemean ./bin/darkflat \
-	./bin/offsets ./bin/offsetsnowcs ./bin/flat ./bin/imcalc \
-	./bin/mosaic \
-	./bin/destripe ./bin/dilate ./bin/sky ./bin/parab \
-	./bin/printwcs ./bin/avgkey ./bin/stats ./bin/avgoffsets \
-	./bin/skyfilter ./bin/deshadow ./bin/imagegrid ./bin/defringe \
-	./bin/skyfilteronoff ./bin/skyfilteroffon ./bin/skyfilter_general \
-	./bin/linflat ./bin/lindarkflat ./bin/dark ./bin/skyfilter_single ./bin/my_mode ./bin/nlinmap
+
+# It has been modified to only have the binaries used by PAPI
+irdr: cleanirdr irdrlib  \
+	./bin/dithercubemean ./bin/offsets \
+	./bin/skyfilter ./bin/skyfilteronoff ./bin/skyfilteroffon ./bin/skyfilter_general \
+	./bin/skyfilter_single \
+	./bin/my_mode
 
 OBJ_FITSIO = src/fitsIO/fitsIO.o
 
@@ -71,6 +68,7 @@ OBJ_IRDR = $(OBJ_FITSIO) $(OBJ_MATH) $(OBJ_CUBE) $(OBJ_MISC) \
 		$(OBJ_OFFSETS) $(OBJ_REG) $(OBJ_CIRSI) $(OBJ_SKY)
 
 clean: cleanirdr cleanwcs
+	$(MKDIR) lib bin
 
 cleanirdr:
 	$(RM) src/*/*.o bin/* lib/*.a
@@ -105,26 +103,6 @@ irdrlib: ./lib/libirdr.a
 # Build irdr executables
 #
 
-./bin/stats: src/drivers/stats.c
-	$(CC) $(COMPFLAGS) src/drivers/stats.c \
-		-o bin/stats $(LINKFLAGS)
-
-./bin/imcalc: src/drivers/imcalc.c
-	$(CC) $(COMPFLAGS) src/drivers/imcalc.c \
-		-o bin/imcalc $(LINKFLAGS)
-
-./bin/floatimage: src/drivers/floatimage.c
-	$(CC) $(COMPFLAGS) src/drivers/floatimage.c \
-		-o bin/floatimage $(LINKFLAGS)
-
-./bin/statsmask: src/drivers/statsmask.c
-	$(CC) $(COMPFLAGS) src/drivers/statsmask.c \
-		-o bin/statsmask $(LINKFLAGS)
-
-./bin/normalize: src/drivers/normalize.c
-	$(CC) $(COMPFLAGS) src/drivers/normalize.c \
-		-o bin/normalize $(LINKFLAGS)
-
 ./bin/cubemean: src/drivers/cubemean.c
 	$(CC) $(COMPFLAGS) src/drivers/cubemean.c \
 		-o bin/cubemean $(LINKFLAGS)
@@ -133,81 +111,9 @@ irdrlib: ./lib/libirdr.a
 	$(CC) $(COMPFLAGS) src/drivers/dithercubemean.c \
 		-o bin/dithercubemean $(LINKFLAGS)
 
-./bin/mask: src/drivers/mask.c
-	$(CC) $(COMPFLAGS) src/drivers/mask.c \
-		-o bin/mask $(LINKFLAGS)
-
-./bin/destripe: src/drivers/destripe.c
-	$(CC) $(COMPFLAGS) src/drivers/destripe.c \
-		-o bin/destripe $(LINKFLAGS)
-
-./bin/flat: src/drivers/flat.c
-	$(CC) $(COMPFLAGS) src/drivers/flat.c \
-		-o bin/flat $(LINKFLAGS)
-
-./bin/darkflat: src/drivers/darkflat.c
-	$(CC) $(COMPFLAGS) src/drivers/darkflat.c \
-		-o bin/darkflat $(LINKFLAGS)
-
-./bin/gainmap: src/drivers/gainmap.c
-	$(CC) $(COMPFLAGS) src/drivers/gainmap.c \
-		-o bin/gainmap $(LINKFLAGS)
-
-./bin/shiftimage: src/drivers/shiftimage.c
-	$(CC) $(COMPFLAGS) src/drivers/shiftimage.c \
-		-o bin/shiftimage $(LINKFLAGS)
-
-./bin/unshiftimage: src/drivers/unshiftimage.c
-	$(CC) $(COMPFLAGS) src/drivers/unshiftimage.c \
-		-o bin/unshiftimage $(LINKFLAGS)
-
-./bin/dilate: src/drivers/dilate.c
-	$(CC) $(COMPFLAGS) src/drivers/dilate.c \
-		-o bin/dilate $(LINKFLAGS)
-
 ./bin/offsets: src/drivers/offsets.c
 	$(CC) $(COMPFLAGS) src/drivers/offsets.c \
 		-o bin/offsets $(LINKFLAGS)
-
-./bin/mosaic: src/drivers/mosaic.c
-	$(CC) $(COMPFLAGS) src/drivers/mosaic.c \
-		-o bin/mosaic $(LINKFLAGS)
-
-./bin/offsetsnowcs: src/drivers/offsetsnowcs.c
-	$(CC) $(COMPFLAGS) src/drivers/offsetsnowcs.c \
-		-o bin/offsetsnowcs $(LINKFLAGS)
-
-./bin/imagegrid: src/drivers/imagegrid.c
-	$(CC) $(COMPFLAGS) src/drivers/imagegrid.c \
-		-o bin/imagegrid $(LINKFLAGS)
-
-./bin/initwcs: src/cirsi/initwcs.c
-	$(CC) $(COMPFLAGS) src/cirsi/initwcs.c \
-		-o bin/initwcs $(LINKFLAGS)
-
-./bin/printwcs: src/cirsi/printwcs.c
-	$(CC) $(COMPFLAGS) src/cirsi/printwcs.c \
-		-o bin/printwcs $(LINKFLAGS)
-
-./bin/avgkey: src/drivers/avgkey.c
-	$(CC) $(COMPFLAGS) src/drivers/avgkey.c \
-		-o bin/avgkey $(LINKFLAGS)
-
-./bin/deshadow: src/cirsi/deshadow.c
-	$(CC) $(COMPFLAGS) src/cirsi/deshadow.c \
-		-o bin/deshadow $(LINKFLAGS)
-
-./bin/avgoffsets: src/cirsi/avgoffsets.c
-	$(CC) $(COMPFLAGS) src/cirsi/avgoffsets.c \
-		-o bin/avgoffsets $(LINKFLAGS)
-
-./bin/dithers: src/cirsi/dithers.c
-	$(CC) $(COMPFLAGS) src/cirsi/dithers.c \
-		-o bin/dithers $(LINKFLAGS)
-
-./bin/parab: src/drivers/parab.c
-	$(CC) $(COMPFLAGS) src/drivers/parab.c \
-		-o bin/parab $(LINKFLAGS)
 
 ./bin/skyfilter: src/drivers/skyfilter.c
 	$(CC) $(COMPFLAGS) src/drivers/skyfilter.c \
@@ -221,26 +127,6 @@ irdrlib: ./lib/libirdr.a
 	$(CC) $(COMPFLAGS) src/drivers/skyfilteroffon.c \
 		-o bin/skyfilteroffon $(LINKFLAGS)
 
-./bin/sky: src/drivers/sky.c
-	$(CC) $(COMPFLAGS) src/drivers/sky.c \
-		-o bin/sky $(LINKFLAGS)
-
-./bin/defringe: src/cirsi/defringe.c
-	$(CC) $(COMPFLAGS) src/cirsi/defringe.c \
-		-o bin/defringe $(LINKFLAGS)
-
-./bin/linflat: src/drivers/linflat.c
-	$(CC) $(COMPFLAGS) src/drivers/linflat.c \
-		-o bin/linflat $(LINKFLAGS)
-
-./bin/lindarkflat: src/drivers/lindarkflat.c
-	$(CC) $(COMPFLAGS) src/drivers/lindarkflat.c \
-		-o bin/lindarkflat $(LINKFLAGS)
-
-./bin/dark: src/drivers/dark.c
-	$(CC) $(COMPFLAGS) src/drivers/dark.c \
-		-o bin/dark $(LINKFLAGS)
-
 ./bin/skyfilter_single: src/drivers/skyfilter_single.c
 	$(CC) $(COMPFLAGS) src/drivers/skyfilter_single.c \
 		-o bin/skyfilter_single $(LINKFLAGS)
@@ -253,6 +139,3 @@ irdrlib: ./lib/libirdr.a
 	$(CC) $(COMPFLAGS) src/drivers/my_mode.c \
 		-o bin/my_mode $(LINKFLAGS)
 
-./bin/my_mode: src/drivers/nlinmap.c
-	$(CC) $(COMPFLAGS) src/drivers/nlinmap.c \
-		-o bin/nlinmap $(LINKFLAGS)		
