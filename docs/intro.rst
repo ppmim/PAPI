@@ -12,12 +12,13 @@ treatment for electronic ghosts (cross-talk), sky subtraction, non-linear
 count-rate correction, artifact masking, robust alignment and registration for 
 large mosaics, weight map generation, and drizzling onto a final image mosaic. 
 
-The purpose of this document is to describe a typical PANIC data reduction procedure 
-using the PAPI pipeline.
 
 This manual is a complete description of the data reduction recipes implemented 
-by the PAPI pipeline, showing the status of the current PAPI pipeline version.
+by the PAPI pipeline, showing the status of the current pipeline version
+and describing data reduction process of the PANIC data using PAPI.
 
+Although PAPI was developed for the PANIC camera, it also works with data from 
+Omega2000_ NIR camera at the 3.5m CAHA telescope and HAWK-I_ camera at the VLT.
 
 In addition to this html version of the manual, there is also a pdf_ version to download.
 
@@ -36,6 +37,7 @@ but results can not be as good as desired. (See :ref:`troubleshooting` for tips)
 PAPI is **not** designed to reduce any kind of field taken with PANIC.  
 
 .. index:: prerequisites, requirements, pipeline
+
 
 Prerequisites
 *************
@@ -130,6 +132,8 @@ if you type `make`.
 
 .. _PANIC: http://www.iaa.es/PANIC
 .. _CAHA: http://www.caha.es
+.. _Omega2000: http://www.caha.es/CAHA/Instruments/O2000/index.html
+.. _HAWK-I: http://www.eso.org/sci/facilities/paranal/instruments/hawki/
 .. _sphinx: http://sphinx.pocoo.org
 .. _pdf: http://www.iaa.es/~jmiguel/PANIC/PAPI/PAPI.pdf
   

@@ -27,6 +27,7 @@ Contents:
    data
    photo
    reference
+   processing
    acknowledgments
    references
    troubleshooting

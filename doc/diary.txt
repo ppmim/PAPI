@@ -2956,6 +2956,15 @@ Otra forma de hacerlos sería como sigue:
                                      (sci_data - dark_data), 
                                      (sci_data - dark_data) / flat_data )
 
+O tambien con máscaras, pero me gusta mucho menos:
+
+result = np.empty_like(data) 
+  mask = (data == 0) 
+  result[mask] = 0 
+  result[~mask] = 1.0/data[~mask] 
+
+Nota:
+iraf.ccdproc(...)  
  minreplace = 1.
         When processing flat  fields,  pixel  values  below  this  value
         (after  all  other  processing  such as overscan, zero, and dark
@@ -2963,6 +2972,7 @@ Otra forma de hacerlos sería como sigue:
         fields  processed  by  ccdproc  to be certain to avoid divide by
         zero problems when applied to object images.
 
+__fin_nota__
 
 Lo probé y funcionó correctamente, o al menos no hubo fallos y el Warning
 de división por cero desapareció.
@@ -2970,7 +2980,7 @@ de división por cero desapareció.
 (P) Ver dónde más es necesario solucionar la division por cero.
     Me queda la duda de ver como lo soluciona iraf.imarith(...)
 
-
+(P) Ver si sería conveniente usar 'expand_mask' en la mascara de objetos.
 
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
@@ -3394,4 +3404,16 @@ OB3 - domeflat_serie1
 aunque el resto de las imagenes si. Parece algun tipo de condición de carrera
 que se produce si no se actualiza a tiempo el fichero ~/tmp/fitsheader_panic.txt.
 Repito el test 2 veces y no ocurre el problema.
+
+
+Troubleshooting
+===============
+- Some black holes in single reduced images due to a poor skysubtraction or 
+over-estimation of skybackground when no object masking is done (see skyfilter).
+  Poor (over) sky-estimation in first pass (quick mode) is due median of stack for
+  sky-estimation is 'contamined' by bright stars, so in principle, on the second
+  pass of the sky-subtraction where an object mask is used, the sky-subtraction
+  is much better.
+  In addition and for crowded fields, we could set in the config file the    
+
 
