@@ -1,4 +1,3 @@
-
 This is PAPI, the PANIC data reduction PIpeline. 
 
 PAPI is distributed under GNU GPL, either version 3 of the License, 
