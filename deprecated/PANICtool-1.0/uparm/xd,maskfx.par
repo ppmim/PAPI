@@ -1,7 +1,0 @@
-inlist,s,a,,,,"The input image list"
-bpmasks,s,a,,,,"The bad pixel mask list"
-badvalue,i,a,,,,"The bad pixel value in the mask"
-forcefix,b,h,no,,,"Force the bad pixel fixing ?"
-imglist,*s,h,"",,,
-bplist,*s,h,"",,,
-mode,s,h,"ql",,,
