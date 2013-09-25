@@ -691,9 +691,10 @@ in principle previously reduced, but not mandatory.
                                 
     (options, args) = parser.parse_args()
     
-    print options
-    print args
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     # Read the default configuration file
     # If none was specified by the user, environment variable will be used
     if not options.config_file:

@@ -377,7 +377,7 @@ def usage ():
 if __name__ == "__main__":
     
     # Get and check command-line options
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     desc = """
 This module receives a series of FITS images and subtract and divide by the given
 calibration files (master dark and master flat-field). 
@@ -404,7 +404,10 @@ calibration files (master dark and master flat-field).
     
     (options, args) = parser.parse_args()
     
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     if not options.source_file_list:
         parser.print_help()
         parser.error("Incorrect number of arguments " )
