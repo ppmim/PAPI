@@ -8,7 +8,7 @@
 #              14/12/2009    jmiguel@iaa.es   Renamed SKY_FLAT by TW_FLAT
 #                                             Reanamed isSkyFlat() by isTwFlat()
 #              02/03/2010    jmiguel@iaa.es   Added READMODE checking
-#              20/08/2013    jmiguel@iaa.es   Addapted to support OSN CCDs 
+#              20/08/2013    jmiguel@iaa.es   Addapted to support OSN CCDs. 
 #
 ###############################################################################
 
