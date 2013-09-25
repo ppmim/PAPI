@@ -335,7 +335,7 @@ class MasterDark(object):
 # main
 if __name__ == "__main__":
     # Get and check command-line options
-    # The script doesn’t take any positional arguments, so only options
+    # The script doesnt take any positional arguments, so only options
     usage = "usage: %prog [options] "
     desc = """This module receives a series of FITS images (darks) and
 creates the master dark and computes several statistics.

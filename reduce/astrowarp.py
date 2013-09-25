@@ -661,7 +661,7 @@ if __name__ == "__main__":
     log.debug( 'Start AstroWarp....')
     
     # Get and check command-line options
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     desc = """Performs the alignment and warping of a set of images,
 in principle previously reduced, but not mandatory.
 """
