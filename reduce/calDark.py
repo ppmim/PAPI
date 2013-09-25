@@ -335,7 +335,8 @@ class MasterDark(object):
 # main
 if __name__ == "__main__":
     # Get and check command-line options
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    # The script doesn’t take any positional arguments, so only options
+    usage = "usage: %prog [options] "
     desc = """This module receives a series of FITS images (darks) and
 creates the master dark and computes several statistics.
 """
@@ -371,11 +372,14 @@ creates the master dark and computes several statistics.
                   help="verbose mode [default]")
     
     (options, args) = parser.parse_args()
-    
-    
+   
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     if not options.source_file_list or not options.output_filename:
         parser.print_help()
-        parser.error("Incorrect number of arguments " )
+        parser.error("incorrent number of arguments")
     
     
     if os.path.isdir(options.source_file_list) or os.path.isdir(options.output_filename):
