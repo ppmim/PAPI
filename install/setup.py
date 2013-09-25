@@ -9,7 +9,7 @@ setup(name='papi',
       url='https://github.com/ppmim/papi',
       license='GPLv3',
       packages=['papi'],
-      requires=['scipy'],
+      requires=['numpy','scipy','pyfits','pyraf'],
       classifiers=[
        "Programming Language :: Python",
        'Development Status :: 3 - Alpha',
