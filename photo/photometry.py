@@ -924,11 +924,8 @@ def doPhotometry(input_image, catalog, output_filename,
 ################################################################################
 if __name__ == "__main__":
 
-    log.debug( 'Testing Photometric calibration comparison with 2MASS')
-    
     # Get and check command-line options
-        
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     desc = """This module receives a reduced image of any known NIR filter and
 match to 2MASS catalog performing a fit in order to get a estimation of the 
 Zero Point."""
@@ -962,7 +959,10 @@ Zero Point."""
                                 
     (options, args) = parser.parse_args()
     
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     if not options.input_image or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()

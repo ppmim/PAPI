@@ -310,7 +310,13 @@ if __name__ == "__main__":
     
     
     usage = "usage: %prog [options]"
-    parser = OptionParser(usage)
+    desc= """Compute the non-linearity of the detector from a set of darks and
+flats frames.
+Optionaly an already computed non-linearity model is applied.
+
+NOTE: Not yet implemented !!
+"""
+    parser = OptionParser(usage, description=desc)
     
     # Basic inputs
     parser.add_option("-s", "--source",
@@ -348,6 +354,10 @@ fit to requirements for model computation")
     
     (options, args) = parser.parse_args()
     
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     #Check required parameters
     if (not options.source_file_list or not options.out_data 
         or not options.out_coeff_file  or len(args)!=0): # args is the leftover positional arguments after all options have been processed

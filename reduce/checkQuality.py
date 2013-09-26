@@ -289,7 +289,7 @@ if __name__ == "__main__":
     
     # Get and check command-line options
         
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     desc = """This module gives an estimation of the FWHM of the input image 
 using best stars of its SExtractor catalog
 """
@@ -345,6 +345,9 @@ using best stars of its SExtractor catalog
                                 
     (options, args) = parser.parse_args()
     
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
     
     if not options.input_image or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed

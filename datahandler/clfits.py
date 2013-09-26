@@ -975,7 +975,7 @@ if __name__ == "__main__":
     
     if len(sys.argv)>1:
         try:
-            dr = ClFits(sys.argv[1]) #"/disk-a/caha/panic/DATA/data_mat/skyflat0020.fits")
+            dr = ClFits(sys.argv[1])
             dr.print_info()
             print dr.isTwFlat()
         except Exception, e:

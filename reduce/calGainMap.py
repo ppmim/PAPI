@@ -417,7 +417,7 @@ class GainMap(object):
 if __name__ == "__main__":
     # Get and check command-line options
     
-    usage = "usage: %prog [options] arg1 arg2"
+    usage = "usage: %prog [options]"
     desc = """Creates a master gain map from a master flat field (dome, twilight or superflat)
 NOT normalized and previously created. The flatfield will be normalized to make 
 a gainmap and set bad pixels to 0."""
@@ -463,7 +463,10 @@ a gainmap and set bad pixels to 0."""
                   
     (options, args) = parser.parse_args()
     
-     
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+        
     # args is the leftover positional arguments after all options have been processed 
     if not options.source_file or not options.output_filename or len(args)!=0: 
         parser.print_help()

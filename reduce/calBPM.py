@@ -289,14 +289,20 @@ def main(arguments=None):
         arguments = sys.argv[1:] # argv[0] is the script name
     (options, args) = parser.parse_args(args = arguments)
 
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       return 2
+
     if len(args) !=0:
         parser.print_help()
         return 2 # used for command line syntax errors
     
     # Check mandatory arguments
     if not options.output_filename or not options.source_file_list:
-        print "Error, '-s' and '-o' options are mandatory"
-        return 1
+        parser.print_help()
+        parser.error("incorrect number of arguments " )
+        return 2
+        
     # Make sure we are not overwriting an existing file 
     if os.path.exists(options.output_filename):
         print "Error. The output file '%s' already exists."  % \

@@ -138,3 +138,48 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
     
     return out_file
         
+# main
+if __name__ == "__main__":
+    
+    
+    usage = "usage: %prog [options]"
+    desc = "Remove the cosmic ray hits in the input image."
+    parser = OptionParser(usage, description=desc)
+    
+    parser.add_option("-i", "--input_image",
+                  action="store", dest="input_image", 
+                  help="input image to remove cosmics")
+                  
+    parser.add_option("-o", "--output",
+                  action="store", dest="output_image", 
+                  help="output filename (default = %default)",
+                  default="without_cosmics.fits")
+    
+    parser.add_option("-O", "--overwrite",
+                  action="store_true", dest="overwrite", default=False,
+                  help="overwrite the original image with the corrected one")
+
+    parser.add_option("-m", "--mask",
+                  action="store_true", dest="want_mask", default=False,
+                  help="If true, the mask with cosmics detected and removed is written into a FITS file.")
+                                
+    (options, args) = parser.parse_args()
+    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+       
+    if not options.input_image or len(args)!=0: 
+        parser.print_help()
+        parser.error("wrong number of arguments " )
+
+    if not options.output_image:
+        options.output_image = None
+
+    try:    
+        remove_cr(options.input_image, options.output_image, 
+                         options.overwrite, options.want_mask)
+    except Exception, e:
+        log.error("Fail of remove_cr procedure: %s"%str(e))
+    else:
+        log.info("Well done!")

@@ -173,7 +173,7 @@ if __name__ == "__main__":
         def format_epilog(self, formatter):
             return self.epilog
     
-    usage = "%prog [Options] - compute the best focus value of a focus serie"
+    usage = "%prog [Options] "
     parser = MyParser(usage=usage, epilog=
     """
     Description:
@@ -212,6 +212,9 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     
 
+    if len(sys.argv[1:])<1 or len(args)!=0:
+       parser.print_help()
+       sys.exit(0)
 
     # Read input files
     files = []    
