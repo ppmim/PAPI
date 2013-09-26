@@ -3006,10 +3006,12 @@ Habrá que ver como puede luego hacer el merge de 'limpia' con 'master'
     1) nos movemos al brach 'limpia'
        > git checkout limpia
     2) hacemos el merge de 'limpia' con 'master'
-       > git merge master
+       > git merge master --strategy=ours
     Esto nos añade/mezcla todos los cambios realizados en master en los ficheros
     que sean comunes con limpia, pero no añade los que no existan.
-
+    En caso de conflicto, deja el fichero que haya en 'limpia': con esto evitamos
+    que los ficheros modificados de master que no esten en limpia den un conflicto.
+    
 
 - Comienzo la mejora del chequeo del numero de argumentos de la CL, que no lo 
 hacia del todo bien.
