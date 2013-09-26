@@ -1,5 +1,5 @@
-PAPI: The PANIC data reduction PIpeline
-=======================================
+PAPI 
+====
 
 This is PAPI, the PANIC data reduction PIpeline. 
 
@@ -30,7 +30,7 @@ Installing
     * cd papi
 
 
-2. Build the source
+2. Build the sources
 
         * cd papi/irdr/src
         * make all
@@ -43,6 +43,9 @@ Installing
 
         * Bash: . $PAPI_HOME/papi_setup.sh
         * CSH: source $PAPI_HOME/papi_setup.csh
+
+4. Have a look to config_files/ directory to set up the config file to use.
+
 
 
 Documentation

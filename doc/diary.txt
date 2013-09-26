@@ -3017,6 +3017,9 @@ Habrá que ver como puede luego hacer el merge de 'limpia' con 'master'
 
       > git merge master --strategy=ours
 
+      Realmente eso no funciona, y hay que borrar (git rm) lo que se haya
+      añadido de la rama master (git mergetool). No he encontrado otra forma...
+      
 
 - Comienzo la mejora del chequeo del numero de argumentos de la CL, que no lo 
 hacia del todo bien.
