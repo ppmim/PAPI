@@ -1,4 +1,0 @@
-image,s,a,,,,"image name"
-param,s,a,,,,"image parameter to be returned"
-value,s,h,"2048",,,"output value of image parameter"
-mode,s,h,"ql",,,
