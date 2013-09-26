@@ -316,7 +316,7 @@ if __name__ == "__main__":
     # Get and check command-line options
     
     
-    usage = "usage: %prog [options] arg1 arg2"
+    usage = "usage: %prog [options]"
     desc = """This module receives a series of FITS images (science)  and 
 creates the master super flat-field and computes several statistics."""
 
@@ -345,6 +345,10 @@ SuperFlat. If image is multi-chip, normalization wrt chip 1 is done (default=%de
 
     (options, args) = parser.parse_args()
     
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+       
     if not options.source_file_list or not options.output_filename or len(args)!=0: 
         # args is the leftover positional arguments after all options have been 
         # processed

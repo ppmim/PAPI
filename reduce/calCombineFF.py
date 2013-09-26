@@ -180,8 +180,8 @@ if __name__ == "__main__":
     
     parser = OptionParser(description = description, 
                                    #formatter = wider_format, 
-                                   usage = "usage: %prog [options] arg1 arg2 ...", 
-                                   version = "%prog 1.0")
+                                   usage = "usage: %prog [options]", 
+                                   version = "%prog 1.x")
     
     parser.add_option("-d", "--domeFF",
                   action="store", dest="domeFF", 
@@ -199,11 +199,15 @@ if __name__ == "__main__":
                                 
     (options, args) = parser.parse_args()
     
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
     
     if not options.domeFF or not options.skyFF or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("wrong number of arguments " )
+    
     if not options.output_image:
         options.output_image = None
 

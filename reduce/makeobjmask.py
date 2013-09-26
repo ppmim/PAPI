@@ -194,9 +194,8 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
 ################################################################################
 # main
 if __name__ == "__main__":
-    print 'Start makeObjMask....'
     
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     desc = """ Creates object masks (SExtractor OBJECTS images) for a list of FITS images.
 Expects the command "sex" (SExtractor Version 2+) in path.  If weight maps
 exist they will be used (assume weight map filename given by replacing .fits
@@ -230,8 +229,11 @@ with .weight.fits)."""
                   help="Create a single point object mask (default=%default)")
     
     
-                                
     (options, args) = parser.parse_args()
+
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
     
     # args is the leftover positional arguments after all options have been 
     # processed

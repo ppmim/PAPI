@@ -533,6 +533,10 @@ def main(arguments=None):
         arguments = sys.argv[1:] # argv[0] is the script name
     (options, args) = parser.parse_args(args = arguments)
 
+    if len(sys.argv[1:])<1 or len(args)!=0:
+       parser.print_help()
+       return 1
+
     if options.source_file_list is None or not os.path.exists(options.source_file_list):
         parser.print_help()
         parser.error("Wrong source file given")

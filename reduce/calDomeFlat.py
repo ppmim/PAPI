@@ -444,7 +444,7 @@ class MasterDomeFlat(object):
 if __name__ == "__main__":
     print 'Starting MasterDomeFlat....'
     
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     parser = OptionParser(usage)
     
                   
@@ -477,6 +477,9 @@ if __name__ == "__main__":
     
     (options, args) = parser.parse_args()
     
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
     
     if not options.source_file_list or not options.output_filename:
         parser.print_help()

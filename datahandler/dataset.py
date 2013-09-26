@@ -22,6 +22,8 @@ import os
 import sys
 import math
 import fileinput
+from optparse import OptionParser
+
 
 ###### Enable logging
 from misc.paLog import log
@@ -1276,48 +1278,53 @@ class DataSet(object):
                 print fieldValue.ljust(FIELD_MAX_WIDTH) ,
                     
             print # Finish the row with a newline.
+  
 
-
-#######################################################################################
-# Init Database instance (the same instance for all modules !!)
-filesDB=DataSet("directory")
-def initDB(source_directory=None):
-    filesDB.createDB()
-    if source_directory != None:
-        filesDB.load(source_directory)
-        
-    
-
-#######################################################################################
+################################################################################
 #This is only for testing purposes
-#######################################################################################
+################################################################################
 if __name__ == "__main__": 
 
-    #log.initLog("/tmp/panic.log",logging.DEBUG)
-   
-    t1=DataSet("directory")
-    t1.createDB()
-    #t1.load("/disk-a/caha/panic/DEVELOP/PIPELINE/PAPI/simu_panic14F/p1/")
-    t1.load("/disk-a/caha/panic/DATA/SIMU_PANIC_3/")
-    t1.ListDataSet()
-    print 'GET FILES !!!!!!!!!!!!!!!!!!!!!!!! 1/36=%f' %(1/36)
-    t1.GetFiles('ANY', 'SCIENCE', -1, 'ANY', 54846.85034991 , 83.9975, -5.240611, 10000, 10000, runId=0)
-    #(detectorId, type, texp, filter, mjd, ar, dec, delta_pos, delta_time, runId=None):
-    #print "\n--------> Now, we delete file orion0021_x4.fits " 
+    # Get and check command-line options
+    usage = "usage: %prog [options]"
+    desc = """
+This module load into a SQLite databse the files found in the input source. 
+"""
+    parser = OptionParser(usage, description=desc)
     
-    sys.exit()
+                  
+    parser.add_option("-s", "--source",
+                  action="store", dest="source",
+                  help="Source of files to insert into DB (file or directory)")
     
-    t1.delete("/disk-a/caha/panic/DATA/data_mat/QL1/orion0021_x4.fits","2007-10-18")
-    t1.ListDataSet()
+    
+    (options, args) = parser.parse_args()
+    
+    if len(sys.argv[1:])<1 or len(args)!=0:
+       parser.print_help()
+       sys.exit(0)
 
-    print "\n--------> Now, insert the file orion0021_x4.fits "
-    t1.insert("/disk-a/caha/panic/DATA/data_mat/QL1/orion0021_x4.fits")
-    t1.ListDataSet()
+    if not options.source:
+        parser.print_help()
+        parser.error("Incorrect number of arguments " )
+    
+    if os.path.isfile(options.source):
+        try:
+            ds = DataSet("file")
+            ds.createDB()
+            ds.load(options.source)
+        except Exception,e:
+            log.erro("Error running task %s"%str(e))
+            sys.exit(0)
+    elif os.path.isdir(options.source):
+        try:
+            ds = DataSet("directory")
+            ds.createDB()
+            ds.load(options.source)
+        except Exception,e:
+            log.erro("Error running task %s"%str(e))
+            sys.exit(0)
 
-    print "\n--------> Test for GetFile........"
-    r=t1.GetFile("O2k", "SCIENCE", 48, 'KS', '2007-10-18','0')
-    print "Result from GetFile : %s" %r 
-    
-    
-    
+    ds.ListDataSet()
 
+    sys.exit(0)

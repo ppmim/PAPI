@@ -38,6 +38,7 @@ TO BE DONE !!!! - NOT IMPLEMENTED YET !!!
 from optparse import OptionParser
 import os
 import fileinput
+import sys
 
 # Logging
 from misc.paLog import log
@@ -108,10 +109,12 @@ def do_skySubtration(in_filelist, out_dir=None, n_nearest=1,
 # main
 if __name__ == "__main__":
     
-    print "\nStarting to stack images ..."
-    
-    usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    usage = "usage: %prog [options]"
+    desc = """Subtract sky-background from the input image
+
+TO BE COMPLETED !!!!
+"""
+    parser = OptionParser(usage, description=desc)
     
     parser.add_option("-i", "--input_file",
                   action="store", dest="input_file", 
@@ -135,7 +138,10 @@ if __name__ == "__main__":
                                 
     (options, args) = parser.parse_args()
     
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     if not options.input_file or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()

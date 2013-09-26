@@ -501,7 +501,7 @@ def makemasterframe(list_or_array):
 # main
 if __name__ == "__main__":
     # Get and check command-line options
-    usage = "usage: %prog [options] arg1 arg2 ..."  
+    usage = "usage: %prog [options]"  
     desc = """This module receives a series of FITS images (twilight flats) and
 creates the master twilight flat-field and computes several statistics.
 """
@@ -549,6 +549,10 @@ then normalization wrt chip 1 is done)[default False]")
     (options, args) = parser.parse_args()
     
     
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+       
     if not options.source_file_list or not options.output_filename or not options.master_dark:
         parser.print_help()
         parser.error("incorrect number of arguments " )

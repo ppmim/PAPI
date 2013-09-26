@@ -605,7 +605,8 @@ class ReductionSet(object):
         
     def checkType(self, type_to_check=None):
         """
-        Return true is all files in file have the same type(science, dark, flat, ...), false otherwise
+        Return true is all files in file have the same type(science, dark, flat,
+        ...), false otherwise
         
         \param type_to_check (\c string) type to check to
         \return True or False
@@ -718,13 +719,15 @@ class ReductionSet(object):
     
     def getObsMode(self):
         """
-        Return the type of dither sequece followed in the currect  'm_LAST_FILES' list. It could be:
+        Return the type of dither sequece followed in the currect  
+        'm_LAST_FILES' list. It could be:
             - dither (T-T-T-T-T- ....)
             - dither_on_off (T-S-T-S-T-S-T-S-T-....)
             - dither_off_on (S-T-S-T-S-T-S-T-S-....)
             - other  (non defined sequence,unknown) (e.g,  T-S-T-T-S-T-T-S-T-....)
             
-            NOTE: To find out the dither/observing sequence then OBJECT keyword will be checked (see ClFits class)
+        NOTE: To find out the dither/observing sequence then OBJECT keyword 
+              will be checked (see ClFits class)
         """
                    
         mode='other' # default
@@ -776,7 +779,8 @@ class ReductionSet(object):
                         
     def getSkyFrames(self, list=None):
         """
-        Given a list of files(data set), return the files identified as 'sky' frames in the m_LAST_FILES
+        Given a list of files(data set), return the files identified as 
+        'sky' frames in the m_LAST_FILES
         """
        
         sky_list=[]
@@ -997,9 +1001,10 @@ class ReductionSet(object):
     
     def getOTSequences(self, show=True):
         """
-        Look for sequences (calib, science) in the current data set and print the results
-        The sequences must follow the PANIC Observing Tool schema, and basically are 
-        detected by the pair {PAT_EXPN, PAT_NEXP} :
+        Look for sequences (calib, science) in the current data set and print
+        the results.
+        The sequences must follow the PANIC Observing Tool schema, and basically 
+        are detected by the pair {PAT_EXPN, PAT_NEXP} :
         
         OBS_TOOL, OB_ID, OB_PAT, PAT_EXPN, PAT_NEXP, END_SEQ
          
@@ -1092,7 +1097,9 @@ class ReductionSet(object):
         return match_list # a list of tuples as (file,filter)
     
     def isaCalibSet(self):
-        """Check all the current files in the ReductionSet list to find out if they are all calibatrion frames"""
+        """
+        Check all the current files in the ReductionSet list to find out if 
+        they are all calibatrion frames"""
         
         """
         filelist = self.db.GetFilesT(type="SCIENCE", texp=-1, filter="ANY")
@@ -1434,12 +1441,14 @@ class ReductionSet(object):
         file using offset specified inside, and calculate the mean plane.
         
         INPUTS:
-            input   : file listing the file to coadd and the offsets between
-                      each one
+            input: file listing the file to coadd and the offsets between
+                   each one
                       
-            gain    : gain map file to use for the coaddition (it take into account the BPM)
+            gain: gain map file to use for the coaddition (it take into account 
+                  the BPM)
             
-            type_comb : type of combination to use (currently, only average available)
+            type_comb : type of combination to use (currently, only average 
+                        available)
             
         OUTPUTS:
             output : coadded image (and the weight map .weight.fits)
@@ -1591,8 +1600,8 @@ class ReductionSet(object):
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
         """
-        Build the whole master calibration files from the currect calibrations files
-        found in the data set (darks, flats)
+        Build the whole master calibration files from the currect calibrations 
+        files found in the data set (darks, flats)
         """
         
         log.debug("Start builing the whole calibration files ...")
@@ -1615,8 +1624,8 @@ class ReductionSet(object):
         """
         ANY MORE USED !!!
         
-        Build the whole master calibration files from the currect calibrations files
-        found in the data set (darks, flats)
+        Build the whole master calibration files from the currect calibrations 
+        files found in the data set (darks, flats).
         """
         
         log.debug("Start builing the whole calibration files ...")
@@ -1641,13 +1650,14 @@ class ReductionSet(object):
         """
         ANY MORE USED !!!
         
-        Look for master flats (sky, twlight,dome or all) files in the data set, group them by
-        FILTER and create the master gainmap, as many as found groups
+        Look for master flats (sky, twlight,dome or all) files in the data set, 
+        group them by FILTER and create the master gainmap, as many as found groups
         
         Return the list of gainmap created
         
-        TODO: take into account the possibility to found several master flats and then combine them
-        to build a gain map; at the moment only the first one found is used
+        TODO: take into account the possibility to found several master flats 
+        and then combine them to build a gain map; at the moment only the first 
+        one found is used.
         """
         
         log.debug("Building GainMap for %s Flats", type)
@@ -1698,9 +1708,12 @@ class ReductionSet(object):
                 k+=1
             #create the new master
             try:
-                #TODO: here we should check if we have more that one master flat, and if have, then combine them ... 
-                # generate a random filename for the master, to ensure we do not overwrite any file
-                output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                #TODO: here we should check if we have more that one master flat, 
+                # and if have, then combine them ... 
+                # generate a random filename for the master, to ensure we do not
+                # overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
+                                                    dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 # get gainmap parameters
@@ -1775,7 +1788,8 @@ class ReductionSet(object):
             try:
                 # Generate (and create the file) a random filename for the master, 
                 # to ensure we do not overwrite any file
-                output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
+                                                        dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 task = reduce.calDark.MasterDark (group, self.temp_dir, 
@@ -1825,12 +1839,15 @@ class ReductionSet(object):
                 k+=1
             #create the new master
             try:
-                # generate a random filename for the master, to ensure we do not overwrite any file
-                output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                # Generate a random filename for the master, to ensure we do 
+                # not overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
+                                                    dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 #outfile = self.out_dir+"/master_domeflat_%s.fits"%last_filter # added as suffix (FILTER)
-                task = reduce.calDomeFlat.MasterDomeFlat(group, self.temp_dir, outfile, None)
+                task = reduce.calDomeFlat.MasterDomeFlat(group, self.temp_dir, 
+                                                            outfile, None)
                 out=task.createMaster()
                 l_mflats.append(out) # out must be equal to outfile
             except Exception,e:
@@ -1877,8 +1894,10 @@ class ReductionSet(object):
                 master_dark = self.db.GetFilesT('MASTER_DARK_MODEL') # could be > 1 master darks, then use the last(mjd sorted)
                 # if required, master_dark will be scaled in MasterTwilightFlat class
                 if len(master_dark)>0:
-                    # generate a random filename for the master, to ensure we do not overwrite any file
-                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                    # Generate a random filename for the master, to ensure we do 
+                    # not overwrite any file
+                    output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
+                                                        dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
                     #outfile = self.out_dir+"/master_twflat_%s.fits"%last_filter # added as suffix (FILTER)
@@ -1935,16 +1954,20 @@ class ReductionSet(object):
         for seq in full_file_list:
             if len(seq)>1:
                 try:
-                    # generate a random filename for the master super flat, to ensure we do not overwrite any file
-                    output_fd, output_path = tempfile.mkstemp(suffix='.fits', dir=self.out_dir)
+                    # Generate a random filename for the master super flat, to 
+                    # ensure we do not overwrite any file
+                    output_fd, output_path = tempfile.mkstemp(suffix='.fits', 
+                                                            dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(output_path) # we only need the name
                     #outfile = self.out_dir+"/master_superflat_%s.fits"%last_filter # added as suffix (FILTER)
-                    superflat = reduce.SuperSkyFlat(seq, output_path, bpm=None, norm=False, temp_dir=self.temp_dir)
+                    superflat = reduce.SuperSkyFlat(seq, output_path, bpm=None, 
+                        norm=False, temp_dir=self.temp_dir)
                     out=superflat.create()
                     l_mflats.append(out)
                 except Exception,e:
-                    log.error("Some error while creating master SuperFlat: %s",str(e))
+                    log.error("Some error while creating master SuperFlat: %s",
+                        str(e))
                     log.error("but, proceding with next group ...")
                     #raise e
                 
@@ -1953,7 +1976,8 @@ class ReductionSet(object):
         self.db.ListDataSet()  
         return l_mflats # a list of master super flats created
     
-    def reduceSet(self, red_mode=None, seqs_to_reduce=None, types_to_reduce=['all']):
+    def reduceSet(self, red_mode=None, seqs_to_reduce=None, 
+                    types_to_reduce=['all']):
         """
         This is the main method for full DataSet reduction supposed it was 
         obtained with the PANIC OT or grouped as 'filter'. 
@@ -2164,7 +2188,8 @@ class ReductionSet(object):
                 #check and collapse if required (cube images)
                 sequence = misc.collapse.collapse(sequence)
                 
-                # Check for EXPT in order to know how to create the master dark (dark model or fixed EXPT)     
+                # Check for EXPT in order to know how to create the master dark 
+                # (dark model or fixed EXPT)     
                 # Orthodox master dark -- same EXPTIME & NCOADDS
                 r = self.checkData(chk_shape=True, chk_filter=True, chk_type=True, 
                                    chk_expt=True, chk_itime=True, 
@@ -2225,7 +2250,8 @@ class ReductionSet(object):
         elif fits.isDomeFlat():
             log.debug("[reduceSeq] A DomeFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
-                # generate a random filename for the master, to ensure we do not overwrite any file
+                # Generate a random filename for the master, to ensure we do not
+                # overwrite any file
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
                                                       prefix='mDFlat_', 
                                                       dir=self.out_dir)
@@ -2258,9 +2284,10 @@ class ReductionSet(object):
         elif fits.isTwFlat():
             log.debug("[reduceSeq] A TwFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
-                #Look for the required MasterDark (any ExpTime);first in the Local DB (current RS), 
-                #and if anyone found, then in the External DB
-                #Local (ExpTime is not a constraint)
+                # Look for the required MasterDark (any ExpTime);first in the 
+                # local DB (current RS), and if anyone found, then in the 
+                # external DB. 
+                # Local (ExpTime is not a constraint)
                 master_dark = self.db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
                 
                 #External (ExpTime is not a constraint)
@@ -2371,7 +2398,8 @@ class ReductionSet(object):
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
                             
                             #
-                            # For the moment, we have the first calibration file for each extension; what rule could we follow ?
+                            # For the moment, we have the first calibration file 
+                            # for each extension; what rule could we follow ?
                             #                            
                             if dark_ext==[]: mdark = None
                             else: mdark = dark_ext[n][0] 
@@ -2572,12 +2600,12 @@ class ReductionSet(object):
         
         """ 
         Main reduction procedure. 
-        Given a set of object(science) frames and (optionally) master calibration files,
-        run the data reduction of the observing object sequence, producing an reduced
-        ouput frame if no error; otherwise return None or raise exception.
+        Given a set of object(science) frames and (optionally) master calibration 
+        files, run the data reduction of the observing object sequence, producing 
+        an reduced ouput frame if no error; otherwise return None or raise exception.
             
-        NOTE: Currently this method only accepts single FITS files (not MEF), it means
-              the splitting must be done previusly to call this method.
+        NOTE: Currently this method only accepts single FITS files (not MEF), 
+        it means the splitting must be done previusly to call this method.
        
         Parameters
         ----------
@@ -3337,17 +3365,3 @@ Example:
 #So, what we do now is create a new pool everytime we need to do any iraf
 #depending task.
  
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-    
-        

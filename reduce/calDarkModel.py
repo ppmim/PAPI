@@ -249,16 +249,10 @@ class MasterDarkModel(object):
         return self.__output_filename
         
 ################################################################################
-# Functions       
-def usage ():
-    print "Unknown command line parameter. Required parameters are : "
-    print "-s / --source=      Source file list of data frames"
-    print "-o / --out=         Output dark model filename "
-
-################################################################################
 def my_mode(data):
     """
     An easy (efficient and precise ??) way to find out the mode stats of an array
+    (not used)
     """
     
     counts = {}
@@ -276,7 +270,7 @@ def my_mode(data):
 
 # main
 if __name__ == "__main__":
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     desc = """
 This module receives a series of FITS images (darks) with increasing exposure 
 time and creates the master dark model and computes several statistics.
@@ -298,7 +292,10 @@ time and creates the master dark model and computes several statistics.
     
     (options, args) = parser.parse_args()
     
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     if not options.source_file_list or not options.output_filename:
         parser.print_help()
         parser.error("Incorrect number of arguments " )

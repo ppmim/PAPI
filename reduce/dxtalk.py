@@ -461,7 +461,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
 if __name__ == "__main__":
     
     
-    usage = "usage: %prog [options] arg1 arg2 ..."
+    usage = "usage: %prog [options]"
     desc = "Remove the cross-talk spots in the input image."
     parser = OptionParser(usage, description=desc)
     
@@ -485,7 +485,10 @@ if __name__ == "__main__":
                                 
     (options, args) = parser.parse_args()
     
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+       
     if not options.input_image or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()

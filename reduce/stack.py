@@ -37,6 +37,7 @@
 from optparse import OptionParser
 import os
 import fileinput
+import sys
 
 # Logging
 from misc.paLog import log
@@ -134,10 +135,14 @@ def do_stack(in_filelist, out_image=None, s_type='median', run_offsets=True,
 # main
 if __name__ == "__main__":
     
-    print "\nStarting to stack images ..."
-    
-    usage = "usage: %prog [options] arg1 arg2 ..."
-    parser = OptionParser(usage)
+    usage = "usage: %prog [options]"
+    desc = """Do a stacking of images computing the offsets, doing the alignment 
+and finally the combination using the mean or median of the values.
+
+TO BE COMPLETED !!!!
+
+"""
+    parser = OptionParser(usage, description=desc)
     
     parser.add_option("-i", "--input_file",
                   action="store", dest="input_file", 
@@ -162,7 +167,10 @@ if __name__ == "__main__":
                                 
     (options, args) = parser.parse_args()
     
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     if not options.input_file or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()
