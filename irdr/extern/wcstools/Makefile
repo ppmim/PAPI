@@ -179,3 +179,4 @@ binclean:
 
 clean:
 	make objclean; make binclean
+	mkdir -p bin

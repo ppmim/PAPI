@@ -33,12 +33,6 @@ import style
 def default_config_file():
     """ Return the name of the default configuration file.
 
-    It is __very__ __important__ to keep in mind that if the current value of
-    the configuration file ("papi.cfg") is modified, the file
-    ./irdr_panic/src/fitsIO/fitsIO.c has to be updated and recompiled.
-    The reason for this is that the IRDR offsets code needs to read from it 
-    the name of the needed keywords in the FITS images.
-    
     """
 
     return "./config_files/papi.cfg"
@@ -130,7 +124,7 @@ def read_parameter(config_object, section, parameter, type, required = False,
 
 
 def read_file_parameter(config_object, section, parameter, \
-                        config_file = default_config_file()):
+                        config_file = default_config_file(), check_exist=False):
     """ Read a file path, specified in the config file, and check its existence.
 
     The method works exactly as read_parameter(), with the addition that it
@@ -141,28 +135,26 @@ def read_file_parameter(config_object, section, parameter, \
     config_object - the object of the configuration file.
     section - name of the section to which the parameter belongs.
     parameter - name of the parameter whose value is to be retrieved.
-    type - the data type of the parameter. The expected values are int, float,
-           bool or str. The parameter will be assumed to be str if a different
-           data type is specified.
-    required - if set to True, an error will be thrown if the parameter was
-               left empty. Otherwise, None will be returned when this happens.
     config_file - name of the configuration file, used only in order to display
                   a more helpful error message before aborting the execution.
 
     """
 
-    file_path = read_parameter(config_object, section, parameter, str, True, config_file)
-    if not os.path.exists(file_path):
-        print style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',"
-        print style.prefix() + "section '" + section + "' does not exist."
-        sys.exit(style.error_exit_message())
-    elif not os.path.isfile(file_path):
-        print style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',"
-        print style.prefix() + "section '" + section + "' does not refer to an existing file."
-        sys.exit(style.error_exit_message())
+    file_path = read_parameter(config_object, section, parameter, str, 
+                                True, config_file)
+    if check_exist:
+        if not os.path.exists(file_path):
+            print style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',"
+            print style.prefix() + "section '" + section + "' does not exist."
+            sys.exit(style.error_exit_message())
+        elif not os.path.isfile(file_path):
+            print style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',"
+            print style.prefix() + "section '" + section + "' does not refer to an existing file."
+            sys.exit(style.error_exit_message())
+        else:
+            return file_path
     else:
         return file_path
-
 
 def parse_list_of_strings(strings_list):
     """ Extract the substrings from a comma-delimited string. 
