@@ -221,6 +221,16 @@ class ReductionSet(object):
         self.rs_filelist = rs_filelist 
 
         # Main directories:
+
+        # PAPI_HOME
+        try:
+            self.papi_home = os.environ['PAPI_HOME']
+            if self.papi_home[-1]!='/':
+                self.papi_home+='/'
+        except Exception,e:
+            log.error("Error, variable PAPI_HOME not defined.")
+            raise e
+
         # Temporal directory for temporal files created during the data 
         # reduction process
         if temp_dir == None:
@@ -282,7 +292,7 @@ class ReductionSet(object):
         self.check_data = check_data 
                 
         if self.config_dict:
-            self.m_irdr_path = self.config_dict['config_files']['irdr_bin']
+            self.m_irdr_path = self.papi_home + self.config_dict['config_files']['irdr_bin']
             # update config values from config_dict
             # half width of sky filter window in frames
             self.HWIDTH = self.config_dict['skysub']['hwidth'] 
@@ -2535,7 +2545,7 @@ class ReductionSet(object):
                 log.debug("*** Coadding/Warping overlapped files....")
                 
                 swarp = astromatic.SWARP()
-                swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf'] 
+                swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
                 swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,NDIT'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")

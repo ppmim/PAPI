@@ -322,10 +322,19 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     #filter_area(input_image + ".ldac",100)
     ## end of test
     
+    # PAPI_HOME
+    try:
+        papi_home = os.environ['PAPI_HOME']
+        if papi_home[-1]!='/':
+            papi_home+='/'
+    except Exception,e:
+        log.error("Error, variable PAPI_HOME not defined.")
+        raise e
+
     ## STEP 2: Make astrometric calibration 
     log.debug("Doing astrometric calibration....")
     scamp = astromatic.SCAMP()
-    scamp.config['CONFIG_FILE'] = config_dict['config_files']['scamp_conf']
+    scamp.config['CONFIG_FILE'] = papi_home + config_dict['config_files']['scamp_conf']
     #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
     scamp.ext_config['ASTREF_CATALOG'] = catalog
     scamp.ext_config['SOLVE_PHOTOM'] = "N"
@@ -350,8 +359,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     ## SWARP, and using .head files created by SCAMP.
     log.debug("Merging astrometric calibration parameters and re-sampling ...")
     swarp = astromatic.SWARP()
-    swarp.config['CONFIG_FILE'] = config_dict['config_files']['swarp_conf']
-    #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+    swarp.config['CONFIG_FILE'] = papi_home + config_dict['config_files']['swarp_conf']
     swarp.ext_config['IMAGEOUT_NAME'] = output_image
     swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
     basename_o, extension_o = os.path.splitext(output_image)
@@ -508,6 +516,16 @@ class AstroWarp(object):
         pixel_scale   - default pixel scale of the image used for initWCS()
         """
         
+
+        # PAPI_HOME
+        try:
+            self.papi_home = os.environ['PAPI_HOME']
+            if self.papi_home[-1]!='/':
+                self.papi_home+='/'
+        except Exception,e:
+            log.error("Error, variable PAPI_HOME not defined.")
+            raise Exception("Error, variable PAPI_HOME not defined")
+
         # TODO: I have to provide an alternate way to get a default config dictionary ...
         if not config_dict:
             raise Exception("Config dictionary not provided ...")
@@ -537,26 +555,18 @@ class AstroWarp(object):
                SCAMP and containing the distortion model parameters
             4. Make the final astrometric calibration the the coadded frame (SExtractor+SCAMP)
             
-            @todo: final astrometric calibration does not work fine ...(2011-09-21)
+            TODO: final astrometric calibration does not work fine ...(2011-09-21)
         """
         
         log.info("*** Start Astrowarp ***")
 
         ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
         # initwcs also converts to J2000.0 EQUINOX
-        # TBD: re-implement in Python method the call to 'irdr:initwcs'
         log.debug("***Doing WCS-header initialization ...")
-        #initwcs_path=self.config_dict['config_files']['irdr_bin']+"/initwcs"
         for file in self.input_files:
             log.debug("file: %s",file)
             initWCS(file, self.pix_scale)
-            """
-            args = [initwcs_path, file]
-            #print "ARGS=", args
-            ret_code = subprocess.call(args)
-            if ret_code!=0:
-                raise RuntimeError("There was an error while running 'initwcs'")
-            """   
+
         ## STEP 1: Create SExtractor catalogs (.ldac)
         log.debug("*** Creating objects catalog (SExtractor)....")
         for file in self.input_files:
@@ -589,8 +599,7 @@ class AstroWarp(object):
         ## STEP 2: Make the multi-astrometric calibration for each file (all overlapped-files together)
         log.debug("*** Doing multi-astrometric calibration (SCAMP)....")
         scamp = astromatic.SCAMP()
-        scamp.config['CONFIG_FILE'] = self.config_dict['config_files']['scamp_conf']
-        #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+        scamp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['scamp_conf']
         scamp.ext_config['ASTREF_CATALOG'] = self.catalog
         scamp.ext_config['SOLVE_PHOTOM'] = "N"
         cat_files = [(f + ".ldac") for f in self.input_files]
@@ -607,8 +616,7 @@ class AstroWarp(object):
         # It requires the files are overlapped, i.e., have an common sky-area
         log.debug("*** Coadding overlapped files (SWARP)....")
         swarp = astromatic.SWARP()
-        swarp.config['CONFIG_FILE'] = self.config_dict['config_files']['swarp_conf']
-        #"/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
+        swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf']
         basename, extension = os.path.splitext(self.input_files[0])
         swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"  # very important !
         if not os.path.isfile(self.input_files[0]+".head"):

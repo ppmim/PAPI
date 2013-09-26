@@ -161,6 +161,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.m_tempdir = temp_dir
         self._ini_cwd = os.getcwd()
         
+        # PAPI_HOME
+        try:
+            self.papi_home = os.environ['PAPI_HOME']
+            if self.papi_home[-1]!='/':
+                self.papi_home+='/'
+        except Exception,e:
+            log.error("Error, variable PAPI_HOME not defined.")
+            raise e
+
+
         # Create LoggingConsole
         self.logConsole = LoggingConsole(self.textEdit_log, self.textEdit_log_2)
         
@@ -2234,10 +2244,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if not self.m_listView_item_selected:
             return
         fits = datahandler.ClFits(self.m_listView_item_selected)
+        
         if fits.getType()=='SCIENCE':
-            sex_config = self.config_opts['config_files']['sextractor_conf']
-            sex_param = self.config_opts['config_files']['sextractor_param']
-            sex_conv = self.config_opts['config_files']['sextractor_conv']
+            sex_config = self.papi_home + self.config_opts['config_files']['sextractor_conf']
+            sex_param = self.papi_home + self.config_opts['config_files']['sextractor_param']
+            sex_conv = self.papi_home + self.config_opts['config_files']['sextractor_conv']
             minarea =  self.config_opts['skysub']['mask_minarea']
             threshold = self.config_opts['skysub']['mask_thresh']
             input_file = self.m_listView_item_selected

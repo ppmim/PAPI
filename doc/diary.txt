@@ -3011,7 +3011,8 @@ Habrá que ver como puede luego hacer el merge de 'limpia' con 'master'
     que sean comunes con limpia, pero no añade los que no existan.
     En caso de conflicto, deja el fichero que haya en 'limpia': con esto evitamos
     que los ficheros modificados de master que no esten en limpia den un conflicto.
-    
+    Para mas detalles sobre el tema: http://goo.gl/GA73zM
+    ---> 'Prevent merging a file from master with Git'
 
 - Comienzo la mejora del chequeo del numero de argumentos de la CL, que no lo 
 hacia del todo bien.
@@ -3023,6 +3024,22 @@ todas las aplicaciones principales.
 
 - Añando "main" a remove_cosmics.py para que pueda ser llamado tambien desde la
 CL.
+
+
+* Create a new repository on the command line
+
+touch README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin git@github.com:ppmim/PAPI.git
+git push -u origin master
+
+* Push an existing repository from the command line
+
+git remote add origin git@github.com:ppmim/PAPI.git
+git push -u origin master
+
 
 
 Keywords CANDIDATAS a incluir en el header de PANIC
