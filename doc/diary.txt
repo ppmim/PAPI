@@ -3032,6 +3032,8 @@ todas las aplicaciones principales.
 - Añando "main" a remove_cosmics.py para que pueda ser llamado tambien desde la
 CL.
 
+- Undo a Git merge? --> http://goo.gl/We5IhI
+
 
 * Create a new repository on the command line
 
