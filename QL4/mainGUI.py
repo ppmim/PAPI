@@ -228,6 +228,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else: 
             self.comboBox_QL_Mode.setCurrentIndex(0)
         
+        # Set default values in any case (OT or Filter)
+        self.lineEdit_ra_dec_near_offset.setText(str(self.config_opts['general']['max_ra_dec_offset']))
+        self.lineEdit_time_near_offset.setText(str(self.config_opts['general']['max_mjd_diff']))
+        self.lineEdit_max_num_files.setText(str(self.config_opts['general']['max_num_files']))
+            
         self.group_by = self.config_opts['general']['group_by'].lower()
         if self.group_by=='ot':
             self.checkBox_data_grouping_OT.setCheckState(Qt.Checked)
@@ -236,9 +241,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.lineEdit_max_num_files.setEnabled(False)
         else:
             self.checkBox_data_grouping_OT.setCheckState(Qt.Unchecked)
-            self.lineEdit_ra_dec_near_offset.setText(str(self.config_opts['general']['max_ra_dec_offset']))
-            self.lineEdit_time_near_offset.setText(str(self.config_opts['general']['max_mjd_diff']))
-            self.lineEdit_max_num_files.setText(str(self.config_opts['general']['max_num_files']))
             self.lineEdit_ra_dec_near_offset.setEnabled(True)
             self.lineEdit_time_near_offset.setEnabled(True)
             self.lineEdit_max_num_files.setEnabled(True)    
@@ -919,7 +921,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         else:
                             # Cannot identify the type of the results...for sure
                             # something was wrong...
-                            self.logConsole.error("No processing results obtained")
+                            # Anycase, we show it !
+                            self.logConsole.info(str(QString("Value returned : %1")
+                                                      .arg(self._task_info._return)))
+                            #self.logConsole.error("No processing results obtained !")
                     else:
                         self.logConsole.info("Nothing returned !")
                 else:
@@ -1468,6 +1473,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
+        self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
+            shortcut="Ctrl+f",
+            statusTip="Run a telescope focus evaluation of a focus serie.", 
+            triggered=self.focus_eval)
+
         self.subOwnSkyAct = QtGui.QAction("Subtract own-sky", self,
             shortcut="Ctrl+S",
             statusTip="Subtract own-sky", 
@@ -1576,7 +1586,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if len(self.m_popup_l_sel)<=0:
             return
             
-        print "LIST=", self.m_popup_l_sel
         
         # we have selected a group father
         if father: # we have selected a group father
@@ -1600,6 +1609,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.mDTwFlatAct)
             popUpMenu.addAction(self.mGainMapAct)
             popUpMenu.addAction(self.mBPMAct)
+            popUpMenu.addAction(self.mFocusEval)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.subOwnSkyAct)
             popUpMenu.addAction(self.subNearSkyAct)
@@ -1640,6 +1650,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.mDTwFlatAct.setEnabled(True)
             self.mGainMapAct.setEnabled(True)
             self.mBPMAct.setEnabled(True)
+            self.mFocusEval.setEnabled(True)
             self.subOwnSkyAct.setEnabled(True)
             self.subNearSkyAct.setEnabled(True)
             self.quickRedAct.setEnabled(True)
@@ -1658,6 +1669,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.mDTwFlatAct.setEnabled(False)
                 self.mGainMapAct.setEnabled(False)
                 self.mBPMAct.setEnabled(False)
+                self.mFocusEval.setEnabled(False)
                 self.subNearSkyAct.setEnabled(False)
                 self.subAct.setEnabled(False)
                 self.sumAct.setEnabled(False)
@@ -2396,7 +2408,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             raise 
               
     def createBPM_slot(self):
-        """ Create a Bad Pixel Mask from a set of selected files (flats)
+        """ 
+        Create a Bad Pixel Mask from a set of selected files (flats)
+        It is run in interactively.
         """
                     
         if len(self.m_popup_l_sel)>3:
@@ -2429,19 +2443,55 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.critical(self, "Error","Error, not suitable frames selected (flat fields)")
 
 
+    def focus_eval(self):
+        """
+        Run the focus evaluation procedure of set of focus serie files.
+        It is run interactively.
+        """
+        if len(self.m_popup_l_sel)>3:
+            outfileName = QFileDialog.getSaveFileName(self,
+                                                      "Choose a filename so save under",
+                                                      "/tmp/focus_eval.pdf", 
+                                                      "pdf (*.pdf)", )
+            if not outfileName.isEmpty():
+                show = True
+                try:
+                    self.genFileList(self.m_popup_l_sel, "/tmp/focus.list")
+                    QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                    pix_scale = self.config_opts['general']['pix_scale']
+                    satur_level =  self.config_opts['skysub']['satur_level']
+                    self._task = reduce.eval_focus_serie.FocusSerie("/tmp/focus.list", 
+                                                               str(outfileName),
+                                                               pix_scale, 
+                                                               satur_level) 
+                    thread = reduce.ExecTaskThread(self._task.eval_serie, 
+                                                   self._task_info_list)
+                    thread.start()
+                except:
+                    #Restore cursor
+                    QApplication.restoreOverrideCursor()
+                    QMessageBox.critical(self, "Error", "Some erron evaluating focus serie\n")
+                    raise
+        else:
+            QMessageBox.critical(self, "Error","Error, not enough number of frames selected")
+
     def show_stats_slot(self):
         """Show image statistics in the log console of the files selected"""
         
-        self.logConsole.info("FILE                            MEAN         MODE       STDDEV       MIN       MAX  ")
-        for item in self.m_popup_l_sel:
-            values = (iraf.mscstat (images=item,
+        length_fn = len(self.m_popup_l_sel[0])
+        msg = "FILE" + (length_fn+15)*" " + "MEAN     MODE       STDDEV      MIN        MAX"
+        self.logConsole.info(msg)
+        for file in self.m_popup_l_sel:
+            values = (iraf.mscstat (images=file,
             fields="image,mean,mode,stddev,min,max",format='no',Stdout=1))
             for line in values:
                 #line=os.path.basename(values[0])
                 self.logConsole.info(str(QString(str(line))))
         
     def background_estimation_slot(self):
-        """ Give an background estimation of the current selected image """
+        """ 
+        Give an background estimation of the current selected image. 
+        """
         
         pix_scale = self.config_opts['general']['pix_scale']
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0],

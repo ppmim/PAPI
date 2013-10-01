@@ -36,3 +36,4 @@ from calGainMap import *
 from calSuperFlat import *
 from calDomeFlat import *
 from dxtalk import *
+from eval_focus_serie import *

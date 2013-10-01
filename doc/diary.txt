@@ -1862,6 +1862,9 @@ una quick-reduction; tb. lo añado como opción del fichero de configuracion de 
 ==========
 - Implementado refPixelCorrection.py para el tratamiento de los
 'ReferencePixels' basado en el métido de la WIRCAM (http://goo.gl/zdLdC)
+- Otra alternativa para eliminarlos (trim) completamente sería mediante
+el geirs2Panic de Richard M.
+
 
 2013-02-27
 ==========
@@ -3050,6 +3053,20 @@ git remote add origin git@github.com:ppmim/PAPI.git
 git push -u origin master
 
 
+01-10-2013
+----------
+
+- Añado opción de "Focus Evaluation" al QL
+- Modifico PAPI para que reconozca los ficheros de serie de foco de O2k (OBJECT=contain(focus)) 
+y en principio de PANIC tambien (IMAGETYP=FOCUS); sin embargo el Pipeline
+como tal no los "reducirá" pues no tiene sentido. Si se procesarán para calcular
+el foco óptimo desde la opcion "Focus Evaluation" del QL:Popup-menu, y por 
+supuesto desde la linea de comandos > eval_focus_serie.py
+
+- Soluciono problema con valores por defecto de max_diff_ra_dec, ... en Setup
+del QL.
+
+
 
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
@@ -3417,11 +3434,8 @@ NEXT TODOs
 - crear "bateria" de tests para lanzar de forma automatica con un conjunto de
 datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
 
-- ver como "quitar" los "Reference pixel"  (http://bit.ly/YP5heF) -- DONE 
-también con geirs2Panic podemos eliminarlos (trim) del todo.
 - ver las diferencias entre calBPM.py y calBPM_2.py (este último es el que se 
 esta usando)
-- implementar main() en remove_cosmics.py
 - usar fit.polyfitr() en photometry 
 - ver notas libreta sobre si se reduce o no HAWK-I-4
 - ver notas libreta sobre si se reduce o no HAWK-I-5; 
