@@ -56,7 +56,17 @@ class FocusSerie(object):
         """
         
         super (FocusSerie, self).__init__ (*a,**k)
-        self.input_files = input_files
+        #import pdb
+        #pdb.set_trace()
+
+        if type(input_files)!=type(list()) and os.path.isfile(input_files):
+            files = [line.replace("\n", "").replace('//','/')
+                     for line in fileinput.input(input_files)]
+
+            self.input_files = files
+        else:
+            self.input_files = input_files
+
         self.output = output
         self.pix_size = pix_size
         self.sat_level = sat_level
@@ -105,7 +115,7 @@ class FocusSerie(object):
             plt.xlim(np.min(focus_values),np.max(focus_values))
             plt.ylim(pol(xp).min(), np.max(fwhm_values))
             plt.savefig(self.output)
-            plt.show()
+            plt.show(block=True)
 
         else:
             print "Not enough data for fitting"
@@ -228,10 +238,10 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
     
-    
     # Eval the focus exposures
     try:
-        focus_serie = FocusSerie( files , options.output )
+        focus_serie = FocusSerie( files , options.output, 
+            options.pix_scale, options.satur_level )
         best_focus = focus_serie.eval_serie()
         print "BEST_FOCUS =",best_focus
     except Exception,e:

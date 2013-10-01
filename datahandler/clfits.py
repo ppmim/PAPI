@@ -195,7 +195,7 @@ class ClFits (object):
                 or self.type=="TW_FLAT" or self.type=="SKY_FLAT")
     
     def isFocusSerie(self):
-        return False # not yet implemented
+        return (self.type=="FOCUS") 
     
     def isScience(self):
         return (self.type.count("SCIENCE") or self.type.count("STD"))
@@ -463,6 +463,8 @@ class ClFits (object):
                         self.type = "SKY_FLAT"
                     elif ltype.count('sky'):
                         self.type = "SKY"
+                    elif ltype.count('focus'):
+                        self.type = "FOCUS"
                     elif ltype.count('object'):
                         self.type = "SCIENCE"
                     else:
@@ -519,9 +521,7 @@ class ClFits (object):
                 elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
                     self.type = "SKY"
                 elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
-                    self.type = "SCIENCE"  
-                    #por una razon que desconozco, CAHA le asigna el id 'focus' en algunas images, 
-                    #pero tiene pinta que fue  un despiste del operador !!!
+                    self.type = "FOCUS"  
                 elif myfits[0].header[keyword_with_frame_type].lower().count('science'):
                     self.type = "SCIENCE"
                 # CCD Roper (OSN)

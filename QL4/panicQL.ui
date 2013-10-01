@@ -1513,7 +1513,7 @@
            <string>#####; </string>
           </property>
           <property name="text">
-           <string>1</string>
+           <string>600</string>
           </property>
          </widget>
         </item>
@@ -1560,7 +1560,7 @@
            <string>#####; </string>
           </property>
           <property name="text">
-           <string>9</string>
+           <string>900</string>
           </property>
          </widget>
         </item>
@@ -1607,7 +1607,7 @@
            <string>####; </string>
           </property>
           <property name="text">
-           <string>5</string>
+           <string>50</string>
           </property>
          </widget>
         </item>
@@ -2345,24 +2345,6 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab_2">
-     <attribute name="title">
-      <string>Page</string>
-     </attribute>
-     <widget class="QListView" name="listView_preferences">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>20</y>
-        <width>691</width>
-        <height>121</height>
-       </rect>
-      </property>
-      <property name="viewMode">
-       <enum>QListView::IconMode</enum>
-      </property>
-     </widget>
-    </widget>
    </widget>
    <widget class="QTextEdit" name="textEdit_log">
     <property name="geometry">
@@ -2839,54 +2821,6 @@
  <resources/>
  <connections>
   <connection>
-   <sender>checkBox_autocheck</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>autocheck_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>454</x>
-     <y>107</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_outDir_autocheck</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>checkOutDir_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>455</x>
-     <y>140</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>comboBox_classFilter</sender>
-   <signal>activated(QString)</signal>
-   <receiver>panicQL</receiver>
-   <slot>slot_classFilter()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>392</x>
-     <y>236</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>editCopyAction</sender>
    <signal>activated()</signal>
    <receiver>panicQL</receiver>
@@ -3111,230 +3045,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_add</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>add_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>677</x>
-     <y>466</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_clear</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>clear_mainlist_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>862</x>
-     <y>466</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_createMDark</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>createMasterDark_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>30</x>
-     <y>342</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_Darks_add</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>setDarks_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>33</x>
-     <y>116</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_dataSourceD</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>setDataSourceDir_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>33</x>
-     <y>103</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_DomeF_add</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>setDFlats_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>194</x>
-     <y>116</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_file_filter</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>filename_filter_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>580</x>
-     <y>106</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_master_dark</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>pushB_sel_masteDark_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>26</x>
-     <y>385</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_master_flat</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>pushB_sel_masterFlat_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>25</x>
-     <y>414</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_master_mask</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>pushB_sel_masterMask_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>26</x>
-     <y>444</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_outputD</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>setOutputDir_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>33</x>
-     <y>137</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_remove</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>del_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>769</x>
-     <y>466</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_SkyF_add</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>setSFlat_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>374</x>
-     <y>116</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_start_proc</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>pushB_start_stop_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>791</x>
-     <y>236</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>quitAction</sender>
    <signal>activated()</signal>
    <receiver>panicQL</receiver>
@@ -3399,6 +3109,326 @@
    </hints>
   </connection>
   <connection>
+   <sender>helpIndexAction</sender>
+   <signal>activated()</signal>
+   <receiver>panicQL</receiver>
+   <slot>helpIndex()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAbout</sender>
+   <signal>activated()</signal>
+   <receiver>panicQL</receiver>
+   <slot>helpAbout()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAladin</sender>
+   <signal>activated()</signal>
+   <receiver>panicQL</receiver>
+   <slot>start_aladin_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_autocheck</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>autocheck_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>454</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_outDir_autocheck</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>checkOutDir_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>455</x>
+     <y>140</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_classFilter</sender>
+   <signal>activated(QString)</signal>
+   <receiver>panicQL</receiver>
+   <slot>slot_classFilter()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>392</x>
+     <y>236</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_add</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>add_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>677</x>
+     <y>466</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_clear</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>clear_mainlist_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>862</x>
+     <y>466</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_createMDark</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>createMasterDark_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>30</x>
+     <y>342</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_master_dark</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>pushB_sel_masteDark_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>26</x>
+     <y>385</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_master_mask</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>pushB_sel_masterMask_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>26</x>
+     <y>444</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_file_filter</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>filename_filter_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>580</x>
+     <y>106</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_DomeF_add</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>setDFlats_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>194</x>
+     <y>116</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_Darks_add</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>setDarks_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>33</x>
+     <y>116</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_dataSourceD</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>setDataSourceDir_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>33</x>
+     <y>103</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_remove</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>del_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>769</x>
+     <y>466</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_outputD</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>setOutputDir_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>33</x>
+     <y>137</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_master_flat</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>pushB_sel_masterFlat_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>25</x>
+     <y>414</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_start_proc</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>pushB_start_stop_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>791</x>
+     <y>236</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_SkyF_add</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>setSFlat_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>374</x>
+     <y>116</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>pushButton_createCalibs</sender>
    <signal>clicked()</signal>
    <receiver>panicQL</receiver>
@@ -3433,22 +3463,6 @@
   <connection>
    <sender>checkBox_pre_appSF</sender>
    <signal>clicked()</signal>
-   <receiver>checkBox_pre_appMF</receiver>
-   <slot>toggle()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>437</x>
-     <y>322</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>437</x>
-     <y>297</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_pre_appSF</sender>
-   <signal>clicked()</signal>
    <receiver>checkBox_pre_subD</receiver>
    <slot>toggle()</slot>
    <hints>
@@ -3459,6 +3473,22 @@
     <hint type="destinationlabel">
      <x>417</x>
      <y>271</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_pre_appSF</sender>
+   <signal>clicked()</signal>
+   <receiver>checkBox_pre_appMF</receiver>
+   <slot>toggle()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>437</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>437</x>
+     <y>297</y>
     </hint>
    </hints>
   </connection>
@@ -3479,38 +3509,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>helpIndexAction</sender>
-   <signal>activated()</signal>
-   <receiver>panicQL</receiver>
-   <slot>helpIndex()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>480</x>
-     <y>364</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionAbout</sender>
-   <signal>activated()</signal>
-   <receiver>panicQL</receiver>
-   <slot>helpAbout()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>480</x>
-     <y>364</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>pushButton_test1</sender>
    <signal>clicked()</signal>
    <receiver>panicQL</receiver>
@@ -3522,22 +3520,6 @@
     </hint>
     <hint type="destinationlabel">
      <x>822</x>
-     <y>-8</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_data_grouping_OT</sender>
-   <signal>clicked()</signal>
-   <receiver>panicQL</receiver>
-   <slot>data_grouping_slot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>494</x>
-     <y>172</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>634</x>
      <y>-8</y>
     </hint>
    </hints>
@@ -3559,18 +3541,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionAladin</sender>
-   <signal>activated()</signal>
+   <sender>checkBox_data_grouping_OT</sender>
+   <signal>clicked()</signal>
    <receiver>panicQL</receiver>
-   <slot>start_aladin_slot()</slot>
+   <slot>data_grouping_slot()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
+     <x>494</x>
+     <y>172</y>
     </hint>
     <hint type="destinationlabel">
-     <x>480</x>
-     <y>364</y>
+     <x>634</x>
+     <y>-8</y>
     </hint>
    </hints>
   </connection>

@@ -2111,7 +2111,8 @@ class ReductionSet(object):
 
         log.debug("[reorder_sequences] start ...")
         
-        req_types_order = ['DARK', 'DOME_FLAT', 'TW_FLAT', 'SKY_FLAT', 'SCIENCE']
+        req_types_order = ['DARK', 'DOME_FLAT', 'TW_FLAT', 'SKY_FLAT', 
+                           'FOCUS', 'SCIENCE']
         new_sequences = []
         new_seq_types = []
         
@@ -2347,8 +2348,10 @@ class ReductionSet(object):
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
         elif fits.isFocusSerie():
-            log.debug("[reduceSeq] Focus Serie reduction is not yet implemented")
+            log.warning("[reduceSeq] Focus Serie reduction is not yet implemented. Try interactively.")
+            raise Exception("[reduceSeq] Focus Serie reduction is not yet implemented. Try interactively or in Pop-up QL menu")
             # TODO
+            # In principle, it has no sense to reduce a focus serie sequence
             pass
         elif fits.isScience():
             l_out_dir = ''
