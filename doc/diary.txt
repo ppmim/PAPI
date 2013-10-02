@@ -3067,6 +3067,55 @@ supuesto desde la linea de comandos > eval_focus_serie.py
 del QL.
 
 
+02-10-2013
+----------
+- Retomo las pruebas con GEIRS+OT para ver como tratar los datos en formato 
+MEF y/o con subwindows.
+Me doy cuenta que con la actual implementación, si definimos una subwindow para
+simular los MEF (solución que sugirio RM), tq:
+
+subwin clear
+subwin SW 1 1 1 2048 2048
+subwin SW 2 2049 1 2048 2048
+subwin SW 3 1 2049 300 300
+subwin SW 4 2049 2049 2048 2048
+subwin SW on
+read
+save
+
+Al hacer el 'save -i' (como hace el OT), se graban como ficheros independientes 
+e integrados los coadds, es decir, no un MEF, sino 4 ficheros terminados en _winX.fits; 
+pero si hacemos 'save' a secas, entonces se graba un único MEF con un cubo sin
+integrar con tantos planos como NCOADDS.
+(para más detalles ver mail de 12-Agosto-2013)
+
+Lo ideal sería poder obtener un MEF 'integrado', sin cubo, pero parece que RM
+no está por la labor....
+
+Una opción sería usar geirs2Panic para convertir las _winX.fits en un sólo fichero,
+y además permite hacer alguna otra cosa, como eliminar los ReferencePixel, etc.
+
+- Resumiendo:
+
+  1) si tenemos MEF, hay que sumar el cubo de cada extensión
+  2) si no tenemos cubo, pero si subwin, hay que conseguir que PAPI reconozca
+  dichos ficheros (algo complicado), o bien usar geirs2Panic ?? voy a ver
+
+
+IMPORTANTE: 
+
+- Aclarar muy bien que tipo de datos (FITS) aceptará PAPI & QL !!!
+
+- Implemento collapse_mef_cube en collapse.py
+
+
+
+
+
+
+
+
+
 
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
@@ -3105,7 +3154,9 @@ only added by external program geirs2Panic:
 - Finally, will GEIRS add basic WCS keywords (see above) ?
 It might need to implement MEF, because we need 4 separate WCS headers due
 to gaps!
-
+- Focus eval added to QL
+- PANIC hardware equipment is ready ? (see mail 23-Sep-2013 from JM)
+- New astrometric module with astrometry.net (under optimization/debuggin) - much more robust, blind computing.
 
 
 Questions:
@@ -3426,14 +3477,17 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- añadir sonidos con from PyQt4.phonon import Phonon (ver sound.py en tests)
+- doc. y script de instalación de PAPI --> (Distribute vs distutils)
+- (terminar) implementar astrometry.net (solve_field) como alternativa a SCAMP !!!
 - how to manage MEF calibration files ? (currently darks, flats are not splited !)
-- definir e implemetar detección de secuencias de foco con PAPI
+- implementar procesamiento (detección y suma) de 'individual images' en 
+varios ficheros, en CUBOS en un solo fichero creo que si lo hace PAPI.
+- Añadir "todos" los principales parametros del fich. de configuración al QL !
 - como tratar en PAPI las imágenes de subwindows ??? -> _win.fits !!! mejor MEF !!
+- mejorar interfaz de ETC en Web( Ejemplo--> http://www.cefca.es/jplusetc/etcjplus.cgi)
 - eliminar del todo RS::self.out_file
 - crear "bateria" de tests para lanzar de forma automatica con un conjunto de
 datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
-
 - ver las diferencias entre calBPM.py y calBPM_2.py (este último es el que se 
 esta usando)
 - usar fit.polyfitr() en photometry 
@@ -3443,7 +3497,7 @@ en el portatil lo hace, pero el resultado no es muy bueno,
 incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-- implementar astrometry.net como alternativa a SCAMP !!!
+- añadir sonidos con from PyQt4.phonon import Phonon (ver sound.py en tests)
 
 BUGS
 ====

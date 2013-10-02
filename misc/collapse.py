@@ -51,8 +51,13 @@ def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
         f = pyfits.open(frame_i)
         # First, we need to check if we have MEF files
         if len(f)>1 and len(f[1].data.shape)==3:
-            log.error("MEF-cubes files cannot be collapsed. First need to be split !")
-            raise Exception("MEF-cubes files cannot be collapsed. First need to be split !")
+            try:
+                log.info("Collapsing a MEF cube %s"%frame_i)
+                out = collapse_mef_cube(frame_i)
+                new_frame_list.append(out)
+            except Exception,e:
+                log.error("Some error collapsing MEF cube: %s"%str(e))
+                raise e
         elif len(f)>1 and len(f[1].data.shape)==2:
             log.debug("MEF file has no cubes, no collapse required.")
             new_frame_list.append(frame_i)
@@ -60,7 +65,7 @@ def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
             log.debug("It is not a FITS-cube image, no collapse required.")
             new_frame_list.append(frame_i)
         else:            
-            #Suppose we have single CUBE file ...
+            # Suppose we have single CUBE file ...
             out_hdulist = pyfits.HDUList()               
             prihdu = pyfits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
             prihdu.scale('float32') 
@@ -86,11 +91,41 @@ def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
      
     return new_frame_list
 
+def collapse_mef_cube(inputfile, out_filename=None):
+    """
+    Collapse each of the extensions of a MEF file
+    """
+
+    f = pyfits.open(inputfile)
+
+    out_hdulist = pyfits.HDUList()
+    prihdu = pyfits.PrimaryHDU (data = None, header = f[0].header)
+    prihdu.header.update('NCOADDS', f[1].data.shape[0])
+    prihdu.header.update('EXPTIME', f[0].header['EXPTIME']*f[1].data.shape[0])
+    out_hdulist.append(prihdu)    
+ 
+    # Sum each extension
+    for ext in range(1,len(f)):
+        hdu = pyfits.ImageHDU (data = f[ext].data.sum(0), header = f[ext].header)
+        hdu.scale('float32') 
+        out_hdulist.append(hdu)    
+    
+    # Now, write the new collapsed file
+    outfile = inputfile.replace(".fits", "_coadd_%s.fits"%str(f[1].data.shape[0]).zfill(3))
+    out_hdulist.writeto (outfile, output_verify = 'ignore', 
+                             clobber=True)
+        
+    out_hdulist.close(output_verify = 'ignore')
+    del out_hdulist
+    log.info("FITS file %s created" % (outfile))
+
+    return outfile
+
 def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     """
     Collapse (sum) a set of distinguish files (not cubes) into a single 2D image.
 
-    Return a list with the new collapsed frames.
+    Return the name of the output file created.
     """
 
     log.debug("Starting collapse_distinguish() method ....")
@@ -134,7 +169,7 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     del out_hdulist
     log.info("FITS file %s created" % (out_filename))
      
-    return new_frame_list
+    return out_filename
     
 ################################################################################
 # main
@@ -165,7 +200,10 @@ if __name__ == "__main__":
                                 
     (options, args) = parser.parse_args()
     
-    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
     if (not options.input_image and not options.input_image_list) or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()
