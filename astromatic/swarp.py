@@ -325,7 +325,8 @@ class SWARP(object):
             dict([(k, copy.deepcopy(SWARP._SW_config[k]["value"]))\
                   for k in SWARP._SW_config.keys()]))
 
-        # Extra config parameters that will be added/updated to the current values of the config file
+        # Extra config parameters that will be added/updated to the current 
+        # values of the config file
         self.ext_config = {}       
 
         self.program = None
