@@ -172,7 +172,7 @@ class MEF (object):
     def doSplit( self , out_filename_suffix = ".Q%02d.fits", out_dir = None, 
                  copy_keyword = None):
         """ 
-        @summary: Method used to split a MEF into single FITS frames, 
+        Method used to split a MEF into single FITS frames, 
         copying all the header information required.                           
         """
         log.info("Starting SplitMEF")
@@ -181,7 +181,8 @@ class MEF (object):
             copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX', 
                     'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
                     'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'NCOADDS',
-                    'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT']
+                    'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT',
+                    'CASSPOS','PIXSCALE']
                 
         out_filenames = []
         n = 0 
@@ -198,7 +199,8 @@ class MEF (object):
                 log.debug("MEF file with %d extensions", n_ext)
             else:
                 n_ext = 1
-                log.error("Warning, Found a simple FITS file")
+                log.error("Error, found a simple FITS file, not a MEF file")
+                raise MEF_Exception("File %s is not a MEF" % file)
             
             for i in range (1, n_ext+1):
                 suffix = out_filename_suffix % i # number from 1 to 4
@@ -234,7 +236,7 @@ class MEF (object):
                 out_hdulist.writeto (out_filenames[n], output_verify = 'ignore', clobber = True)
                 out_hdulist.close (output_verify = 'ignore')
                 del out_hdulist
-                print "File %s created " % (out_filenames[n])
+                log.debug("File %s created"%(out_filenames[n]))
                 n += 1
                 
             
@@ -511,14 +513,18 @@ class MEF (object):
                 log.error('Error, can not open file %s', file)
                 raise MEF_Exception("Error, can not open file %s" % file)
             
-            #Check if is a MEF file 
+            # Check if is a MEF file 
             if len(in_hdulist) > 1:
                 log.error("Found a MEF file with %d extensions. Cannot convert", 
                           len(in_hdulist)-1)
                 raise MEF_Exception("Error, found a MEF file, expected a single FITS ")
             else:
                 log.info("OK, found a single FITS file")
- 
+     
+            if in_hdulist[0].header['NAXIS1']!=4096 or in_hdulist[0].header['NAXIS2']!=4096:
+                log.error('Error, file %s is not a full frame image', file)
+                raise MEF_Exception("Error, file %s is not a full frame image" % file)
+
             # copy primary header from input file
             primaryHeader = in_hdulist[0].header.copy()
             

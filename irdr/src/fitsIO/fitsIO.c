@@ -378,7 +378,7 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 	  } 
     /* --------------------  2MASS  --------------------- */
 
-      else if (strncmp(instrument,"2MAS",4)==0)  { 
+      else if (strncmp(instrument,"2MASS",4)==0)  { 
 
 		printf ("2MASS\n");
 
@@ -443,15 +443,15 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
                 return -1; 
             }
             fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g \n", *ra, *dec, *scale, *posang);
-            return 0;
         }
+        else
+        {
+            double xcen = 0.5 + (wcs->nxpix * 0.5);
+            double ycen = 0.5 + (wcs->nypix * 0.5);
+            pix2wcs(wcs, xcen, ycen, ra, dec);
         
-        double xcen = 0.5 + (wcs->nxpix * 0.5);
-        double ycen = 0.5 + (wcs->nypix * 0.5);
-        pix2wcs(wcs, xcen, ycen, ra, dec);
-        
-        fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g xcen=%f  ycen=%f \n", *ra, *dec, *scale, *posang, xcen, ycen);        
-        
+            fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g xcen=%f  ycen=%f \n", *ra, *dec, *scale, *posang, xcen, ycen);        
+        }
       }
       /* ---------------- OMEGA2000 ----------------- */
       else if (strcasecmp(instrument,"Omega2000",9)==0){
@@ -484,7 +484,55 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 	    fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang); 
 
 	}
-    else if (strcasecmp(instrument,"PANIC",9)==0){
+    else if (strcasecmp(instrument,"PANIC",5)==0 )  { 
+
+        fprintf (stderr, "\nPANIC instrument: Reading RA,Dec coordinates.  \n");
+        *scale = 0.0;
+        *posang = 0.0; 
+        
+        if (hgetr8(hdr, "PIXSCALE", scale)==0) {
+            fprintf(stderr, "get_wcs: unable to read SCALE in: %s\n", fn);
+            free(hdr);
+            return -1; 
+        }
+
+        if (hgetr8(hdr, "CASSPOS", posang)==0) {
+            fprintf(stderr, "get_wcs: unable to read CASSPOS in: %s\n", fn);
+            free(hdr);
+            return -1; 
+        }        
+
+        /* Use WCSTool subroutines to get RA,Dec coordinates of the center of the image */
+        wcs = GetWCSFITS (fn, 0/*verbose*/);
+
+        if (nowcs (wcs)) {
+            fprintf ("%s: No WCS for file, cannot read image WCS\n", fn);
+            wcsfree (wcs);
+            
+            /* In no WCS, try to find out RA, DEC keys*/
+            if (! hgetra(hdr, "RA", ra)) {
+                fprintf(stderr, "get_wcs: unable to read RA in: %s\n", fn);
+                return -1; 
+            }
+    
+            if (! hgetdec(hdr, "DEC", dec)) {
+                fprintf(stderr, "get_wcs: unable to read DEC in: %s\n", fn);
+                return -1; 
+            }
+
+            fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g \n", *ra, *dec, *scale, *posang);
+        }
+        else
+        {
+            double xcen = 0.5 + (wcs->nxpix * 0.5);
+            double ycen = 0.5 + (wcs->nypix * 0.5);
+            pix2wcs(wcs, xcen, ycen, ra, dec);
+        
+            fprintf (stderr, "RA=%g  DEC=%g  SC=%g  ANG=%g xcen=%f  ycen=%f \n", *ra, *dec, *scale, *posang, xcen, ycen);        
+        }
+    }
+    /*
+    else if (strcasecmp(instrument,"PANIC",5)==0){
     
         fprintf(stderr, "\nPANIC\n");
           
@@ -504,8 +552,8 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
             return -1; 
         }
 
-
-        if (hgetr8(hdr, "ROT-RTA" /*"POSANG"*/, posang)==0) {
+        // "POSANG"
+        if (hgetr8(hdr, "ROT-RTA" , posang)==0) {
             fprintf(stderr, "get_wcs: unable to read POSANG in: %s\n", fn);
             free(hdr);
             return -1; 
@@ -514,6 +562,7 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
         fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang); 
 
     }
+    */
     /* ---------------- OTHER INSTRUMENT ----------------- */
     else {
 	 fprintf(stderr, "UNKNOWN INSTRUMENT in %s\n", fn);

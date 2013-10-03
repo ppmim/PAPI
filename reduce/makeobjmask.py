@@ -80,11 +80,9 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
                     single point object mask,i.e., a single pixel set to 1
                     for each detected object.
             
-   OUTPUTS
-     outputfile   Filepath containig the list of objects mask files 
-                  created by SExtractor ending with '.objs' suffix
-              
-      """
+    OUTPUTS
+      n             Number of object mask created        
+    """
          
     """
     # Some pathname settings and check
@@ -140,8 +138,13 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
             sex.run(fn, updateconfig=True, clean=False)
         except Exception,e: 
             log.debug("Some error while running SExtractor : %s", str(e))
-            raise Exception("Some error while running SExtractor : %s"%str(e))
+            raise Exception("Some error while running SExtractor : %s"%str(e))          
         
+        # Check an output file was generated, otherwise an error happened !
+        if not os.path.exists(fn+".objs"):
+            log.error("Some error while running SExtractor, no object mask file found and expected %s"%(fn+".objs"))
+            raise Exception("Some error while running SExtractor, no object mask file found")
+
         # Reduce the object mask to a single point mask, in which each object
         # is represented by a single, one-valued pixel, located at the
         # coordinates specified by its X_IMAGE and Y_IMAGE parameters in the
@@ -151,6 +154,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         # NOTE:This feature is used to compute the dither offsets, but not for 
         # while object masking in skysubtraction
         if single_point==True:
+            log.debug("Single point mask reduction")
             # NOTE we update/overwrite the image and don't create a new one
             myfits = pyfits.open(fn+".objs", mode="update")
             if len(myfits)>1: # is a MEF file
@@ -167,7 +171,9 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
                 try:
                     cat = astromatic.ldac.openObjectFile(fn+".ldac", 
                                                          table='LDAC_OBJECTS')
-                    if len(cat)<=0: continue
+                    if len(cat)<=0:
+                      log.warning("No object found in catalog %s"%(fn+".ldac")) 
+                      continue
                     for star in cat:
                         if round(star['X_IMAGE'])<x_size and round(star['Y_IMAGE'])<y_size:
                             data[round(star['Y_IMAGE']),round(star['X_IMAGE'])] = 1 # Note: be careful with X,Y coordinates position
@@ -178,17 +184,19 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
                     raise Exception("Error while creating single point object mask :%s"%str(e))
                 
             myfits.close(output_verify='ignore')
-            log.debug("Object mask (single_point) file created for file : %s",fn)
+            log.debug("Object mask (single_point) file created for file : %s"%fn)
         else:
             log.debug("Object mask file created for file : %s",fn)    
 
         n+=1
+        log.debug("Adding file: %s"%fn)
         f_out.write(fn+".objs"+"\n")
             
     sex.clean(config=False, catalog=True, check=False)
+
     f_out.close()
     log.debug("Successful ending of makeObjMask => %d object mask files created", n)
-    return outputfile
+    return n
     
     
 ################################################################################

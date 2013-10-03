@@ -3106,9 +3106,34 @@ IMPORTANTE:
 
 - Aclarar muy bien que tipo de datos (FITS) aceptará PAPI & QL !!!
 
-- Implemento collapse_mef_cube en collapse.py
+- Implemento collapse_mef_cube en collapse.py y lo pruebo desde la CL y con una
+secuencias de DARK MEF cubes y PAPI lo hace correctamente !!!!
+Parace por tanto que PAPI trata correctamente los MEF incluso cuando son calibraciones !!
 
 
+03-10-2013
+----------
+- Encuentro BUG grande en PAPI: las imagenes de ciencia de PANIC en formato 'single' 
+extension, es decir, no MEFs (aka. CStorz type) no se 'parten' con el metodo 
+split() pues no son MEFs. Como consecuencia no se hace procesamiento paralelo de
+cada cuadrante !!!! sólo se hacia con las images de HAWK-I !!
+
+- Modifico metodo RS:slipt() y mef.doSplit() para que se haga correctamente !
+
+- Encuentro un problema en IR::offsets.get_wcs() pues intenta leer de las
+cabeceras de PANIC la keyword ROT-RTA, que no existe, sólo existe en las imagenes
+de O2k. 
+Le pregunto a RM, pues encuentro el siguiente comentario en la documentación:
+
+"""
+A second set of telescope and optics related variables which is not useful in the LBT context consists
+of WPOS, FILTER, FILTERS, T FOCUS, CASSPOS, POLPOS, TEMP A, TEMP B, PRESS1, PRESS2, ROTSTAT,
+and various ROT *, all of which stem from CAHA methods and all of which should also be deleted
+unless the instrument is PANIC. 
+"""
+
+Esto se descubre ahora pues es la primera vez que el PAPI pasa por ahí con imagenes
+de PANIC !!
 
 
 
@@ -3128,6 +3153,7 @@ Keywords CANDIDATAS a incluir en el header de PANIC
 
 FOR NEXT VIDEOCONF
 ==================
+IMPORTANTE: Aclarar muy bien que tipo de datos (FITS) aceptará PAPI & QL !!!
 - SATUR_LEVEL parametrized with NDIT
 - New 'lab' reduction mode: dark, flat and FWHM. 
 - Check of INSTRUME keyword added and now checked on QL and PAPI: only

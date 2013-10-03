@@ -234,6 +234,12 @@ class ClFits (object):
         else:
             return False
     
+    def isFromPANIC(self):
+        return self.instrument=='panic'
+
+    def isPANICFullFrame(self):
+        return (self.instrument=='panic' and self.naxis1>='4096' and self.naxis2>='4096')
+                
     def expTime(self):
         return (self.exptime)
     

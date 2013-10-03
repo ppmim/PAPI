@@ -670,19 +670,30 @@ class ReductionSet(object):
         
         log.debug("Starting split() method ....")
         
-        new_frame_list=[] # a list of N list, where N=number of extension of the MEF 
-        nExt=0
+        new_frame_list = [] # a list of N list, where N=number of extension of the MEF 
+        nExt = 0
         if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
             return [],0
-            
+        
+        first_img = datahandler.ClFits(frame_list[0])    
         # First, we need to check if we have MEF files
-        if not datahandler.ClFits( frame_list[0] ).isMEF():
-            nExt = 1
-            new_frame_list.append(frame_list)
+        # 1) Not a MEF 
+        if not first_img.isMEF():
+            if first_img.isPANICFullFrame():
+                try:
+                    mef = misc.mef.MEF(frame_list)
+                    (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
+                                                                   out_dir=self.temp_dir)
+                except Exception,e:
+                    log.debug("Some error while splitting PANIC data set. %s",str(e))
+                    raise e   
+            else:
+                # No split is required
+                nExt = 1
+                new_frame_list.append(frame_list)
+        # 2) Suppose we have MEF files ...
         else:            
-            #Suppose we have MEF files ...
-            if datahandler.ClFits(frame_list[0]).getInstrument()=="HAWKI":
-                
+            if first_img.getInstrument()=="HAWKI":
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
 		  'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
 		  'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", "HIERARCH ESO TPL NEXP",
@@ -692,18 +703,10 @@ class ReductionSet(object):
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
                    'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
                    'FILTER', 'FILTER1', 'FILTER2', "OBS_TOOL", "OB_ID", "OB_PAT",
-                   "PAT_EXPN", "PAT_NEXP", "END_SEQ",'NCOADDS','HIERARCH ESO DET NDIT','NDIT'
+                   "PAT_EXPN", "PAT_NEXP", "END_SEQ",'NCOADDS','HIERARCH ESO DET NDIT','NDIT',
+                   'CASSPOS','PIXSCALE'
                 ]
             
-            if datahandler.ClFits(frame_list[0]).isFromGEIRS():
-                try:
-                    mef = misc.mef.MEF(frame_list)
-                    (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
-                                                                   out_dir=self.temp_dir)
-                except Exception,e:
-                    log.debug("Some error while splitting GEIRS data set. %s",str(e))
-                    raise
-            else:
                 log.debug("Splitting data files")
                 try:
                     mef = misc.mef.MEF(frame_list)
@@ -712,7 +715,7 @@ class ReductionSet(object):
                                                         copy_keyword=kws_to_cp)
                 except Exception,e:
                     log.debug("Some error while splitting data set. %s",str(e))
-                    raise
+                    raise e
             
             # now, generate the new output filenames        
             for n in range(1,nExt+1):
@@ -722,8 +725,6 @@ class ReductionSet(object):
                     #if re.search(".*(\.Q01)(.fits)$", f):
                         sources.append(f)
                 """
-        
-        #print "NEW_FRAME_LIST=",new_frame_list
         
         return new_frame_list, nExt
     
@@ -1409,18 +1410,23 @@ class ReductionSet(object):
             satur_level = satur_level
             log.critical("SAT_LEVEL(def)=%s"%satur_level)
 
-            
         if images_in==None:
-            # then we use the images ending with suffing in the output directory
-            makeObjMask( self.out_dir+'*'+suffix , mask_minarea, mask_thresh, 
-                         satur_level, output_list_file, single_point=single_p)
+            # we use the images ending with suffing in the output directory
+            my_input =  self.out_dir+'*'+suffix
         elif os.path.isfile(images_in): 
             # we use the given list of images
-            makeObjMask( images_in , mask_minarea, mask_thresh, satur_level, 
-                        output_list_file, single_point=single_p)
+            my_input = images_in
         else:
             log.error("Option not recognized !!!")
             raise Exception("Wrong input frames given")
+
+        # Make mask    
+        try:
+            makeObjMask( my_input, mask_minarea, mask_thresh, 
+                         satur_level, output_list_file, single_point=single_p)
+        except Exception,e:
+            log.error("Error making object mask")
+            raise e
         
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
@@ -2196,7 +2202,7 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
                 
-                #check and collapse if required (cube images)
+                # Check and collapse if required (cube images)
                 sequence = misc.collapse.collapse(sequence)
                 
                 # Check for EXPT in order to know how to create the master dark 
@@ -2269,7 +2275,7 @@ class ReductionSet(object):
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
 
-                #check and collapse if required (cube images)
+                # Check and collapse if required (cube images)
                 sequence = misc.collapse.collapse(sequence)
 
                 m_smooth = self.config_dict['dflats']['median_smooth']
@@ -2315,7 +2321,7 @@ class ReductionSet(object):
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
 
-                    #check and collapse if required (cube images)
+                    # Check and collapse if required (cube images)
                     sequence = misc.collapse.collapse(sequence)
 
                     m_smooth = self.config_dict['twflats']['median_smooth']
@@ -2366,7 +2372,7 @@ class ReductionSet(object):
                 Only %d frames found. Required >%d frames" %(len(sequence),
                                                             self.config_dict['general']['min_frames']))
             else:
-                #check and collapse if required (cube images)
+                # Check and collapse if required (cube images)
                 sequence = misc.collapse.collapse(sequence)
 
                 # Get calibration files
