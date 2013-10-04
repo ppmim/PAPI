@@ -3135,7 +3135,26 @@ unless the instrument is PANIC.
 Esto se descubre ahora pues es la primera vez que el PAPI pasa por ahí con imagenes
 de PANIC !!
 
+- Despues de todas las modificaciones, hago pruebas en panic2 con DS de HAWK-I y
+de PANIC, y O2k
 
+
+04-10-2013
+----------
+
+(P) Ver por qué ocurre este error al final de la reducción de HAWK-I o de O2k.
+Parace una tonteria, pero mejor verlo con detalle !
+
+    [PAPI]: 2013-10-03 18:32:10,858 WARNING  clfits:574: ITIME keyword not found
+    [PAPI]: 2013-10-03 18:32:10,859 WARNING  clfits:595: READMODE keyword not found
+    [PAPI]: 2013-10-03 18:32:10,859 WARNING  clfits:607: DATE-OBS keyword not found
+    [PAPI]: 2013-10-03 18:32:10,860 ERROR    clfits:632: Error reading RA keyword :'cd1_2'
+    [PAPI]: 2013-10-03 18:32:10,860 DEBUG    clfits:635: RA = -1
+    [PAPI]: 2013-10-03 18:32:10,861 ERROR    clfits:658: Error reading DEC keyword : 'cd1_2'
+
+- Soluciono ese "error"/bug modificando en wcsutil.py el método WCS::ExtractFromWCS
+donde se hace la lectura de la matriz CDi_j. Debido a que el standard FITS no
+obliga a que aparezcan todos los terminos y suponer =0 aquellos que no aparezcan.
 
 
 

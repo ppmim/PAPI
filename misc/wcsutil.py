@@ -1003,12 +1003,14 @@ class WCS(object):
         self.system = numpy.array([system1, system2], dtype='S4')
 
         # Add a 2x2 array for the cd matrix
-        if 'cd1_1' in wcs:
+        # Because, some CDi_j can be ommited and then supposed equal to 0,
+        # we check it.
+        if 'cd1_1' in wcs or 'cd1_2' in wcs or 'cd2_1' in wcs or 'cd2_2' in wcs:
             cd = numpy.zeros( (2,2), dtype='f8')
-            cd[0,0] = wcs['cd1_1']
-            cd[0,1] = wcs['cd1_2']
-            cd[1,0] = wcs['cd2_1']
-            cd[1,1] = wcs['cd2_2']
+            if 'cd1_1' in wcs: cd[0,0] = wcs['cd1_1']
+            if 'cd1_2' in wcs: cd[0,1] = wcs['cd1_2']
+            if 'cd2_1' in wcs: cd[1,0] = wcs['cd2_1']
+            if 'cd2_2' in wcs: cd[1,1] = wcs['cd2_2']
             self.cd = cd
 
             try:
