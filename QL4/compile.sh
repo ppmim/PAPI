@@ -11,5 +11,5 @@ if [[ `hostname -s` = udit22* ]]; then
 	python runQL.py  -c ../config_files/papi.cfg
 else
 	#python runQL.py  -c ../config_files/papi_irws2.cfg
-	python runQL.py  -c ../config_files/papi_panic2.cfg
+	python runQL.py  -c ../config_files/papi_panic2_PANIC.cfg
 fi
