@@ -3,10 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-PAPI documentation
-==================
+PANIC Data Pipeline Documentation
+=================================
 
-Welcome! This is the Documentation for PAPI (PANIC Pipeline, version |version|, date |today|). 
+Welcome! This is the Documentation for PAPI, the Data Reduction Pipeline of PANIC
+instrument (PANIC Pipeline, version |version|, date |today|). 
+
+
+You may wish to see :ref:`what’s new` in the latest version or jump to the :ref:`quick start tutorial`.
 
 .. warning::
 
@@ -20,7 +24,7 @@ Contents:
    :maxdepth: 1
 
    
-   intro
+   install
    running
    quick_look
    ref
@@ -43,3 +47,4 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+Documentation last updated on |today|

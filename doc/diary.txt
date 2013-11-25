@@ -3157,21 +3157,240 @@ donde se hace la lectura de la matriz CDi_j. Debido a que el standard FITS no
 obliga a que aparezcan todos los terminos y suponer =0 aquellos que no aparezcan.
 
 
+- Encuentro explicación interesante sobre el background modeling en la 
+documentación de THELI:
+http://www.astro.uni-bonn.de/theli/gui/aboutbackground.html#about-background-label
+
+
+07-10-2013
+----------
+- Pruebas con subwin no-full-frame: se graban como MEF no integrados. El modo integrado no esta soportado.
+
+  1) serie de DARK igual tiempo - parece OK, no error
+  2) serie de SCIENCE - en princopio OK, no error, pero no pude llegar al final por que no son imagenes reales (se quedó en los offsets !)
+
+- Le escribo a RM para preguntarle por algunas cuestiones que parece
+que no funcionan correctamente en GEIRS:
+
+   > save without parameters, always produce cubes 
+   > crep < 5 rrr-mpia mode or <2 lir mode
+
+
+11-11-2013
+----------
+- Instalo la nueva version de GEIRS (r709M) en papi2, que finalmente resuelve
+los problemas con el 'camera.texi'.
+La nueva version, entre otras, incluye:
+ - nuevo comando lamp
+ - soporte para MEF con 'save -M'
+ - limpieza en los headers
+ - mecanismo mejorado para añadir keywords a los headers --> new FITS-header update scanner ( ~/tmp/geirsPhduAdd.panic_[1-5]) 
+
+
+14-11-2013
+-----------
+- Actualizo las web con las correcciones de Richard Mathar.
+- Escribo email a Enrique de Juan (CAHA) sobre el tema del archivo. Finalmente
+hablo con el por email para aclarar algunas cosas:
+
+   - no me pueden pasar un "cliente-FTP" para pruebas del archivo; lo haré yo
+   - en cuanto a la frecuencia en la que se ejecuta dicho cliente, Enrique no
+   me supo concretar, dijo eque depende del instrumento (cada 5', 30',...)
+   Incluso, si diese problemas con la adquisición de datos, se podría lanzar
+   el procedimiento de copia al final de la noche (esto es lo que hacen
+   en O2k, pues la GEIRS no va bien si está a la ves el FTP activo)
+
+   - le paso los ejemples de los ficheros de PANIC (headers, MEF, etc); los probará 
+   y ya nos contará
+   - en cuanto a la cabina de discos para el archivo, lo consultará a ver que pasa.
+
+- encuentro una utilidad que me puede servir para simular la copia de datos
+del archivo de datos, aunque necesitará mejoras y modificaciones:
+
+   https://github.com/jererc/sftpsync-py (SFTP)
+
+   pero como lo que usa CAHA es FTP, usaré :
+
+http://svn.python.org/projects/python/trunk/Tools/scripts/ftpmirror.py
+   
+
+
+18-11-2013
+-----------
+- Me m
+- Encuentro un programilla en Python para simular el comportamiento del Archivo
+de datos de CAHA, que accede al repositorio de datos de la máquina de PANIC
+vía FTP de forma periódica para copiar los últimos ficheros que haya.
+Dicho programilla es: ftpmirror.py
+
+http://svn.python.org/projects/python/trunk/Tools/scripts/ftpmirror.py
+
+y para la simulación habrá que ponerlo en el crontab para que se ejecute por 
+ejemplo cada 5minutos (?, CAHA no me supo dar un valor para dicha frecuencia; 
+incluso me dijo que podría activarse al final de la noche si hubiese problemas):
+
+>> python ftpmirror.py -v -l panic -p panic1 udit22.iaa.es /home/panic/DATA/pruebaRS /data2/pruebaRS
+
+19-11-2013
+-----------
+- Mirar este método de estimación de offsets en imágenes:
+
+   https://github.com/t-brandt/acorns-adi
+
+
+20-11-2013
+-----------
+- RM me dice (muy correctamente) que la velocidad de lectura depende de varios
+factores:
+
+      The image rate is a function of
+      - the pixel read time (basically), usually called pread
+      - the cycle type (which defines frame versus image rates)
+      - the size and location of the subwindows (if defined as HW windows)
+      - multisampling parameters (EMS)
+      and possibly other factors.
+
+
+- Encuentro la forma de cambiar al "modo de lectura rapida" (fast readout mode)
+o "pixel readout rate". Esto se hace mediante el comando sigueinte:
+
+> roe pread 10000 (ns, 100kHz)
+> roe pread 1000  (ns, 1Mhz)
+
+FALSO !!! eso no es fast-readout-mode del que habla el documento PANIC-ELE-TN-04,
+pues no está implementado aún en GEIRS.
+Con el pread cambiamos el 'pixel clock' que afecta al FTE y por tanto al nivel
+de ruido. Para cualquier de los modos de lectura actuales (lir, rrr, ...), un
+valor mayo de 150 kHz no tiene sentido, pues la imagen es muy ruidosa.
+Para más detalles ver email de U.Mall del 20-Nov-2013.
+
+
+- Enrique de Juan (CAHA) responde de nuevo con un mail sobre los FITS; entre 
+otras cosas, lo más destacado es que a petición de RM, sugiere el siguiente
+formato de nombre de ficheros:
+
+pan-YYYYMMDD-HH:MM:SS-sci-juaE[-x].fits
+
+Instrument:    "pan"  from PANIC
+Date:              YYYYMMDD-HH:MM:SS
+Image Type     "sci", "cal" or "tst"
+IP (not observer)    "juaE" from Enrique Juan, for example
+[-x]  Opcional, use it if is needed, for example in order to solve the problem of two images with the same date.
+
+Además, dice quen no se permiten subdirectorios en el directorio de la noche.
+
+- Enrique de Juan dice que siguen trabajando con la imágenes que le pase de PANIC
+para ver como las procesa el archivo de datos de CA.
+
+- U.Mall escribe un email en el que aclara el tema del slow/fast readout mode 
+del detector de PANIC. Como conlusión:
+
+   "Todos los modos de lectura que actualemente están implementados en GEIRS están
+    en modo slow. El modo fast no está actualmente implementado.
+   "
+
+U.Mall deja indicado el documento PANIC-ELE-TN-04 para los detalles de 
+implementación de Fast-Readout-Mode.
+Con el roe->pread cambiamos el 'pixel clock' que afecta al FTE y por tanto al nivel
+de ruido. Para cualquier de los modos de lectura actuales (lir, rrr, ...), un
+valor mayo de 150 kHz no tiene sentido, pues la imagen es muy ruidosa.
+Para más detalles ver email de U.Mall del 20-Nov-2013.
+
+
+- E. de Juan (CAHA) me dice que ha probado el network-bounding y que es fácil y
+que lo podremos usar en PANIC para la conexión con el Archivo de CAHA.
+http://es.opensuse.org/Bonding
+
+
+21-11-2013
+-----------
+- Actualización de TN sobre los FITS headers
+- Compendio de todas las notas del las revisiones del SW de PANIC (OT y QL),
+para tenerlas como guia para la integración de software con AGS
+
+
+22-11-2013
+-----------
+
+- Encuentro en el NOT cosas muy interesantes sobre:
+
+  a) Linearity correction --> http://www.not.iac.es/instruments/notcam/calibration.html#nonlin
+  b) Image distortion --> http://www.not.iac.es/instruments/notcam/calibration.html#dist 
+     Usa IRAF:geomap
+
+- También encuentro esto interesante sobre la distorsion del campo de ISAAC:
+
+http://www.eso.org/sci/facilities/paranal/instruments/isaac/inst/field_distortion.html 
+
+
+- Además, encuentro el paquete alipy, para alinear imagenes :
+
+http://obswww.unige.ch/~tewes/alipy/index.html
 
 
 
+PANIC computers installation
+============================
+0) Introduction
+
+The aim of this document is 
+1) System configuration
+
+The PANIC computer system is composed by on server computer with the next features:
+
+
+
+ - System boards (OPT-PLX PCIe)
+
+
+2) RAIDs definition
+ 
+The system is designed to have the next RAID disk configuration:
+
+  * OS system disk - no 
+
+3) OS installation
+
+4) PANIC software installation and configuration
+
+4.1 GEIRS installation
+
+See document R. J. Mathar, PANIC - Generic Infrared Software - Graphical User Interface, PANIC-SW-DCS-01.pdf
+URL http://www.mpia.de/~mathar/public/PANIC-SW-DCS-01.pdf
+
+4.2 OT installation
+
+4.3 PAPI & QL installation
+
+
+
+   
 
 Keywords CANDIDATAS a incluir en el header de PANIC
 ---------------------------------------------------
 - SATURATE
 - GAIN
 - PIXSCALE
-
+- CASSANG
   
 
 
 FOR NEXT VIDEOCONF
 ==================
+- New version of TN about FITS headers
+- Fast vs slow readout mode --> Fast-readout not implemented in GEIRS
+- Disc array for PANIC at the CAHA Archive
+- Network bounding for CAHA Archive link
+- Data Quality Control/Assesment (when data processing must not be done ?)
+- DUDAS LEMON:
+   - quieren que las imagenes tengan la astrometría ?
+   - quieren que elimine la distorsion del campo ? (si no, todas tendrán la misma distorsion, y yo creo que no importa ???)
+   - esto enlaza con la eterna pregunta de cuando hacer la correción de distorion, 
+   antes o despues del coadd (hubo un tipo que decia que era mejor después, pues 
+   tienes menos errores, pues al fin y al cabo, todas la imagenes tienen la misma distorsion
+   y para sumar no importa siempre que el dither-offset sea pequeño )
+
+
 IMPORTANTE: Aclarar muy bien que tipo de datos (FITS) aceptará PAPI & QL !!!
 - SATUR_LEVEL parametrized with NDIT
 - New 'lab' reduction mode: dark, flat and FWHM. 
@@ -3208,8 +3427,18 @@ Questions:
 - Linearity values --> 15K ADUs for saturation
 - Readout modes for PANIC
 - How many serial ports are required ? or MOXA NPort (serial-ethernet converter) ? should also be tested !
-- any other interface
+- is there any other interface/s ?
 - Ask CA about Archive interfece (run tests !)
+- what should be the kind of FITS files/modes supported by PAPI ?
+  Currently are supported next types:
+     - integrated full-frame in single FITS (1 header + 1 data chunck) --> save -i
+     - no-integrated full-frame cube in single FITS (1 header + 1xN planes data chuck planes ) --> save -1
+     - no-integrated full-frame cube in MEF file (with or without windows definition) (1 primary header + 4x(1h+1 dataxN planes)) --> save -M -1
+    
+     Currently, GEIRS is not supporting 'save -M -i' to produce integrated MEF 
+     files, but PAPI can handle the non-integrated MEF doing the integration (collapse).
+
+
 
 
 
@@ -3597,5 +3826,26 @@ over-estimation of skybackground when no object masking is done (see skyfilter).
   pass of the sky-subtraction where an object mask is used, the sky-subtraction
   is much better.
   In addition and for crowded fields, we could set in the config file the    
+
+desplazamiento=(abs((int)Azimuth-Position)%(360-(Ventana/2)))
+
+
+
+
+Paper
+=====
+AUTOMATIC DATA REDUCTION ALGORITHMS FOR THE PANORAMIC NEAR INFRA-RED CAMERA (PANIC) INSTRUMENT
+
+Abstract:
+In this paper we describe the main algorithms of the software package for the
+data reduction for the Panoramic near infra-red camera (PANIC) on 2.2m and 3.5m 
+telescopes at the Calar Alto observatory, intended as a image processing pipeline.
+PAPI takes as input raw images and does a detrending of them (dark,flat fielding,
+sky subtraction). Then the software does a astrometric and photometric calibration
+of the detrended images. The astrometric calibration of the output images is 
+accurate to within 0.15" relative to external reference frames and 0.04" internally.
+The photometric calibration is good to within 0.03 mag. The staked images and
+catalogs derived from these images are available through the Calar Alto archive.
+
 
 

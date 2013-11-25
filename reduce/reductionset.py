@@ -2960,7 +2960,7 @@ class ReductionSet(object):
         
         ########################################################################
         # 6 - Compute dither offsets from the first sky subtracted/filtered 
-        # images using cross-correlation
+        # images using cross-correlation (SExtractor + offsets)
         ########################################################################
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
         try:
@@ -3063,6 +3063,7 @@ class ReductionSet(object):
         fs = open(out_dir+"/skylist2.pap","w+")
         i = 0
         j = 0
+        
         for file in self.m_rawFiles:
             if self.apply_dark_flat==1 and master_flat!=None and master_dark!=None:
                 line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
@@ -3076,13 +3077,16 @@ class ReductionSet(object):
             else:
                 line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
                 " " + str(offset_mat[j][1])
+            
             fs.write(line+"\n")
+            
             if (self.obs_mode=='dither_on_off' or 
                 self.obs_mode=='dither_off_on') and i%2:
-                j=j+1
+                j = j+1
             elif self.obs_mode=='dither':
-                j=j+1
-            i=i+1
+                j = j+1
+            i = i+1
+        
         fs.close()
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)      
