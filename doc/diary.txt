@@ -3328,6 +3328,17 @@ http://www.eso.org/sci/facilities/paranal/instruments/isaac/inst/field_distortio
 http://obswww.unige.ch/~tewes/alipy/index.html
 
 
+25-11-2013
+-----------
+- Encuentro un bug en GEIRS que hace que los FITS no se graben correctamente,
+pues cada vez que se hace un 'save -i', el fichero tiene un tamaño distinto.
+Le escribo RM y reconoce el problema.
+
+Así no hay manera de hacer pruebas, pues PyFITS salta por todos lados, incluso
+en clfits.py la rutina fits_simple_verify.
+
+
+
 
 PANIC computers installation
 ============================
