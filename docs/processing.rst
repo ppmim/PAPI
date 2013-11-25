@@ -42,6 +42,22 @@ Image selection
 Data-set classification
 ***********************
 
+One of the main features of PAPI is that the software is able to do an Automatic
+Data Reduction. While most of the pipelines are run interactively, PAPI is able
+to run without human interaction. It is done because of the classificaton algorithm
+that is implemented in PAPI and that allow an automatic identification of the 
+data sets grouping the files according to the observation definition with the OT.
+
+1-The data grouping algorithm
+2-Sky finding algorithm for extended objects
+
+
+In case of not using the OT during the observation, also a data grouping is possible,
+althouth with some limitations. Let's see how it works:
+
+[...]
+
+
 Calibrations
 ************
 

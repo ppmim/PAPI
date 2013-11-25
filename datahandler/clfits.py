@@ -950,7 +950,10 @@ def fits_simple_verify(fitsfile):
 
     f = open(fitsfile,"readonly")
         
-    FITS_BLOCK_SIZE = 2880
+    #FITS_BLOCK_SIZE = 2880
+    # Temporal workarround due to a bug in GEIRS  - jmiguel 25-Nov-2013  
+    FITS_BLOCK_SIZE = 1
+
     try:
         # check first card name
         card = f.read(len("SIMPLE"))

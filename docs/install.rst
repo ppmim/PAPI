@@ -1,6 +1,8 @@
 
-Introduction
-============
+.. _installation:
+
+Installation & Configuration  
+============================
 
 PAPI is an automatic image processing pipeline for data taken with the 
 `PAnoramic Near Infrared Camera (PANIC) <http://www.iaa.es/PANIC>`_ for the 2.2m 
@@ -109,12 +111,14 @@ Development version
 
 The development version can be checked out with:::
 
-    $ svn co https://www.iaa.es/~jmiguel/software/papi
+    $ git clone https://github.com/ppmim/PAPI.git
 
-And then installed following the standard procedure:::
+And then installed following the next procedure:::
 
     $ cd papi
-    $ python setup.py install
+    $ cd irdr 
+    $ make all
+    
 
 Building the documentation
 **************************

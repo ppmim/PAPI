@@ -88,6 +88,35 @@ Then, the listing of the PAPI command line options::
       -v, --verbose         Verbose mode [default]
 
   
+Input FITS data files
+*********************
+GEIRS is capable of saving the frames in different modes (integrated, FITS-cubes,
+MEF, etc ). It can be configured in the OT when the OP (observing program) is defined.
+
+However, PAPI does not accept any kind of FITS data files available in GEIRS, only
+the configured in the OT. As result, PAPI could accept the next type of FITS files:
+
+ - Single integrated FITS file: the four detectors are saved in single file and in a single stitched image. This is the default and more common saving mode used. 
+
+ - Single non-integrated FITS-cube: the four detectors are saved in a single file in a single stitched image, and each individual exposition in a plane of a cube. It means N planes, where N is the number of coadds or expositions.
+
+ - Non-integrated Multi-Extension-FITS (MEF): a unique FITS file with four extensions (MEF), one per each detector (or window), having each extension N planes, where N is the number of expositions (coadds), ie. a cube of N planes.  
+ This mode will be also used when the software or hardware subwindowing is set up and the no-integrated option is selected.
+ Currently integrated MEF are not available in GEIRS (and therefore nor in OT), but integrated subwindows/detectors can be generated only as separated files, one for each defined subwindow/detector.
+
+ .. Note:: Currently PAPI is not working with non-integrated separated files of an exposition. In case you are interested in no-integrated files and wish to reduce the data with PAPI, you should use single non-integrated FITS-cube mode.
+
+   
+
+How NOT to use PAPI
+*******************
+
+PAPI uses a strictly linear approach for data reduction, which makes for easy and
+transparent processing. And you have to stick to that. It is usually not possible 
+to take data that has been processed half-way by other software and do the rest 
+in PAPI. FITS headers will not be understood, naming conventions not met, and 
+data structures totally incompatible.
+
 	
 Configuration files
 *******************
@@ -127,40 +156,58 @@ File papi.cfg::
 
 
     # Default configuration file for PAPI 1.0
-    # Updated 27 Feb 2012  
-    
-    ############################################################################
+    # Updated 26 Sep 2013  
+
+    ##############################################################################
     [general]
-    ############################################################################
-    
+    ##############################################################################
+
+    # 
+    # Instrument (pani,o2k,hawki): if INSTRUME keyword does not match, an error
+    # will be throw. Letter not case-sensitive. 
+    # 
+    instrument = Omega2000
+
+
+
     #
-    # some important directories
-    #
-    #source = /home/jmiguel/DATA/SIMU_PANIC_3/q1.txt   # it can be a directory or a text file with a list of filenames to be processed
-    source = /mnt/GEIRS_DATA
-    #source = /data/SIMU # default directory for source raw data files
+    # Some important directories
+    # Note: Output dir must be different from Quick-Look 
+    source = /mnt/GEIRS_DATA  # it can be a directory or a text file with a list of filenames to be processed
     output_dir = /data/out   # the directory to which the resulting images will be saved.
     temp_dir = /data/tmp     # the directory to which temporal results will be saved
-    output_file = /tmp/reduced.fits  # final reduced produced image
+
+    #
+    # If no outfile name is given (None), the result of each sequence reduced.
+    # will be saved with a filename as: 'PANIC.[DATE-OBS].fits',
+    # where DATE-OBS is the keyword value of the first file in the sequence.
+    output_file = /tmp/reduced.fits
+
+    # 
+    # Decide if parallel processing capabilities will be activated (True),i.e., split the processing
+    # of each PANIC detector separatelly.
+    # Otherwise (False), all be processed sequencially.
     parallel = True
-    ncpus = 2
-    verbose = True
+    ncpus = 2  # Number of CPU's cores to used for parallel processing
+
+    verbose = True # currently not used
+
     logfile = /tmp/papi.log # to be implemented !!!
-    
+
     #
-    #reduction_mode : reduction modo to do with the raw science files
+    #reduction_mode : reduction mode to do with the raw science files
     #
-    reduction_mode = quick   # default reduction mode (quick|science|lemon)
-    
+    reduction_mode = quick   # default reduction mode (quick|science|lemon|quick-lemon|lab)
+
     #
     obs_mode = dither  #default observing mode of input data files to reduce (dither|ext_dither|other)
     #
-    
+
     # if any, default master calibration files to use
     #master_dark = None
     #master_flat = None
     #master_bpm = None
-    
+
     #
     # External calibration DataBase: directory used as an external calibration database.
     # Then, if during the reduction of a ReductionSet(RS) no calibration (dark, flat) 
@@ -170,38 +217,42 @@ File papi.cfg::
     # Note that the calibrations into the current RS have always higher priority than
     # the ones in the external calibration DB.
     #
-    ext_calibration_db = /data2/out/cali_O2K
-    
-    
+    ext_calibration_db = /data/out
+
     #
     # check data integrity. It consists in checking if TEXP,NCOADD,FILTER and READMODE match properly
     #
     check_data = True
-    
+
     #
     # Remove crosstalk. If True, a procedure to remove the crosstalk will be executed
     # just after the 2nd. sky subtraction. (both O2K or PANIC)
     #
     remove_crosstalk = False
-    
+
     #
     # Cosmic-Ray Removal. If True, a procedure to remove the CR will be executed
     # just after the 2nd. sky subtraction. (both O2K or PANIC)
     #
     remove_cosmic_ray = False
-    
+
     #
     # Purge output. If True, a procedure to remove the temporal or intermediate files
     # (.list, .objs., .ldac, .xml, ...) will be removed from the output directory
     # just after the end of the RS reduction.
     #
     purge_output = False
-    
-    
+
+
+    #
+    # Estimate FWHM after reduction of each sequence
+    #
+    estimate_fwhm = True
+
     # min_frames : minimun number of frames required to reduce a sequence
     #
     min_frames = 5
-    
+
     #
     # group_by: the pipeline will try to group the data files in two main ways: 
     #           (OT) following the specific keywords provided by the OT as OB_ID, OB_PAT, IMAGETYP, FILTER
@@ -209,12 +260,12 @@ File papi.cfg::
     #           (FILTER) only group by filter band, and then only one observing sequence should be provided
     #           (NONE) No grouping criteria will be taken; force only one group with all the files 
     #
-    group_by = filter # (OT or FILTER or NONE)
-    
+    group_by = ot # (OT or FILTER or NONE)
+
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # The ABOVE option values can be modified at the invokation time of the pipeline in the command line
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+
     #
     # apply_dark_flat : 0  Neither dark nor flat field will be applied
     #                   1  the pipeline will look for a master dark and master flat 
@@ -226,51 +277,54 @@ File papi.cfg::
     #                      supposed to be done by the skysubtraction) 
     #                   (some people think they are not required !)
     apply_dark_flat = 1 
-    
+
     #
     # some other values (really required ?)
     #
-    max_mjd_diff = 6.95e-3 # Maximun seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames (1/86400.0)*10*60
-    
-    
-    scale = 0.0001333   # scale of the image, in degrees per pixel
-                        # (0.0001333 deg/pix = 0.48 arcsec/pixel)
+
+    # Maximum seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames. To convert to days -> (1/86400.0)*10*60
+    max_mjd_diff = 900
+    max_ra_dec_offset = 602 # Maximum distance (arcsecs) allowed for two consecutives frames into a sequence (only for 'filter' grouping)
+    max_num_files = 50 # Maximum number of files allowed in a sequence (only for 'filter' grouping)
+
+
+    pix_scale = 0.45   # default pixel scale of the images 
+                        
     equinox = 2000      # equinox in years
+
     radecsys = ICRS     # reference system
+
     pattern = *.fits    # if specified, only those images that match the pattern (according to the rules used by the Unix shell) will be
                         # considered when autodetecting FITS images in _directories_ no tilde expansion is done, but *, ?, and character
                         # ranges expressed with [] will be correctly matched. NOTE: it is because this feature that images like flatV...
                         # or discarded_.... specify its type at the beginning of they filename (vamos, porque no hay forma de negar un 'match')
-    
+
     filter_name_Z = Z   # the key stored in the FITS header when the filter is Z
     filter_name_Y = Y
     filter_name_J = J
     filter_name_H = H, Filter_H    # admits list of strings if multiple values are possible
     filter_name_K = K
     filter_name_Ks = KS
-    
-    
-    ############################################################################    
+
+
+
+    ##############################################################################
     [config_files]
-    ############################################################################
-    
-    terapix_bin = /usr/local/Terapix/bin
-    irdr_bin = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/irdr/bin
-    #irdr_bin = /home/jmiguel/DEVELOP/PIPELINE/PANIC/trunk/irdr/bin
-    sextractor_conf = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sextractor.sex     # SExtractor configuration file
-    
-    sextractor_conf = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sextractor.sex     # SExtractor configuration file
-    sextractor_param = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sextractor.param  # File containing the list of parameters that will be computed and put in the catalog for each object
-    sextractor_nnw = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sextractor.nnw      # File containing the neutal-network weights for star/galaxy separation
-    sextractor_conv = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sextractor.conv    # File containing the filter definition
-    scamp_conf = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf              # SCAMP configuration file
-    swarp_conf = /home/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf              # SWarp configuration file
-    
-    
-    ############################################################################        
+    ##############################################################################
+    # Next paths are relative to PAPI_HOME environment variable
+
+    irdr_bin = irdr/bin
+    sextractor_conf = config_files/sextractor.sex     # SExtractor configuration file
+    sextractor_param = config_files/sextractor.param  # File containing the list of parameters that will be computed and put in the catalog for each object
+    sextractor_nnw = config_files/sextractor.nnw      # File containing the neutal-network weights for star/galaxy separation
+    sextractor_conv = config_files/sextractor.conv    # File containing the filter definition
+    scamp_conf = config_files/scamp.conf              # SCAMP configuration file
+    swarp_conf = config_files/swarp.conf              # SWarp configuration file
+
+    ##############################################################################
     [dark]  
-    ############################################################################
-    
+    ##############################################################################
+
     # object_names: in order to make it possible to work in batch mode, is it
     # possible to run the PANIC dark module in all the images, specifying in
     # this parameter which ones will be considered. That is, only those images 
@@ -282,31 +336,32 @@ File papi.cfg::
     # equivalent to saying "do not filter images by their object names".
     # 
     object_names = dark
-    
+
     # check_prop : if true, the dark frames used to build the master dark will be 
     # checkd to have the same acquisition properties (EXPT,NCOADD,ITIME, READMODE)
     #
     check_prop = yes
-    
-    
+
+
     # suffix: the string, if any, to be added to the filename of each resulting
     # image. For example, for suffix = "D" and the imput file /home/images/ferM_0720_o.fits,
     # the resulting image would be saved to /home/images/ferM_0720_o_D.fits.
     # This parameter is optional, as if nothing is specified, nothing will be appended
     #
     suffix = D
-    
-    
+
+
     # min_frames : minimun number of frames required to build a master dark
     #
     min_frames = 5
-    
-    
-    
-    ############################################################################
+
+
+
+
+    ##############################################################################
     [dflats] 
-    ############################################################################
-    
+    ##############################################################################
+
     # object_names: in order to make it possible to work in batch mode, is it
     # possible to run the PANIC flat module in all the images, specifying in
     # this parameter which ones will be considered. That is, only those images 
@@ -318,36 +373,35 @@ File papi.cfg::
     # equivalent to saying "do not filter images by their object names".
     # 
     object_names = DOME_FLAT_LAMP_OFF, DOME_FLAT_LAMP_ON
-    
+
     # check_prop : if true, the frames used to build the master  will be 
     # checkd to have the same acquisition properties (EXPT,NCOADD,ITIME, READMODE, FILTER)
     #
     check_prop = yes
-    
+
     # suffix: the string, if any, to be added to the filename of each resulting
     # image. For example, for suffix = "D" and the imput file /home/images/ferM_0720_o.fits,
     # the resulting image would be saved to /home/images/ferM_0720_o_D.fits.
     # This parameter is optional, as if nothing is specified, nothing will be appended
     #
     suffix = F
-    
-    
+
+
     # min_frames : minimun number of frames required to build a master dome flat
     #
     min_frames = 5
-    
+
     area_width = 1000       # length in pixels of the central area used for normalization
-    
+
     # median_smooth: median filter smooth of combined FF to reduce noise and improve
     # the S/N and preserve the small-scale (high-frequency) features of the flat
     # 
     median_smooth = False
-    
-    ############################################################################
-    [twflats]
-    ############################################################################
-    
-    
+
+    ##############################################################################
+    [twflats] 
+    ##############################################################################
+
     # object_names: in order to make it possible to work in batch mode, is it
     # possible to run the PANIC flat module in all the images, specifying in
     # this parameter which ones will be considered. That is, only those images 
@@ -359,35 +413,35 @@ File papi.cfg::
     # equivalent to saying "do not filter images by their object names".
     # 
     object_names = TW_FLAT_DUSK, TW_FLAT_DUSK, SKY_FLAT
-    
+
     # check_prop : if true, the  frames used to build the master will be 
     # checkd to have the same acquisition properties (EXPT,NCOADD,ITIME, READMODE, FILTER)
     #
     check_prop = yes
-    
+
     # suffix: the string, if any, to be added to the filename of each resulting
     # image. For example, for suffix = "D" and the imput file /home/images/ferM_0720_o.fits,
     # the resulting image would be saved to /home/images/ferM_0720_o_D.fits.
     # This parameter is optional, as if nothing is specified, nothing will be appended
     #
     suffix = F
-    
-    
+
+
     # min_frames : minimun number of frames required to build a master twlight flat
     #
     min_frames = 5
-    
+
     area_width = 1000       # length in pixels of the central area used for normalization
-    
+
     # median_smooth: median filter smooth of combined FF to reduce noise and improve
     # the S/N and preserve the large-scale features of the flat
     # 
     median_smooth = False
-    
-    ############################################################################
+
+    ##############################################################################
     [gainmap] 
-    ############################################################################
-    
+    ##############################################################################
+
     # object_names: in order to make it possible to work in batch mode, is it
     # possible to run the PANIC gainmap module in all the master flat images, specifying in
     # this parameter which ones will be considered. That is, only those images 
@@ -399,20 +453,20 @@ File papi.cfg::
     # equivalent to saying "do not filter images by their object names.
     # 
     object_names = MASTER_SKY_FLAT, MASTER_DOME_FLAT, MASTER_TW_FLAT
-    
-    mingain = 0.6 # pixels with sensitivity < MINGAIN are assumed bad (0.7) 
-    maxgain = 2.0 # pixels with sensitivity > MAXGAIN are assumed bad (1.3)
+
+    mingain = 0.7 # pixels with sensitivity < MINGAIN are assumed bad (0.7) 
+    maxgain = 1.3 # pixels with sensitivity > MAXGAIN are assumed bad (1.3)
     nsigma = 5    # badpix if sensitivity > NSIG sigma from local bkg (5.0)
     nxblock = 16  # image size should be multiple of block size (16)
     nyblock = 16  # (16)
     normalize = yes # if 'yes' apply a previous normalization to master flat images 
       
     area_width = 1000   # area to use for normalization (1000) 
-    
-    ############################################################################
+
+    ##############################################################################
     [skysub] 
-    ############################################################################
-    
+    ##############################################################################
+
     # object_names: in order to make it possible to work in batch mode, is it
     # possible to run the PANIC skysubtration module in all the images, specifying in
     # this parameter which ones will be considered. That is, only those images 
@@ -424,47 +478,46 @@ File papi.cfg::
     # equivalent to saying "do not filter images by their object names".
     #
     object_names = SKY, SKY_FOR
-    
+
     # check_prop : if true, the dark frames used to build the master  will be 
     # checkd to have the same acquisition properties (EXPT,NCOADD,ITIME, READMODE, FILTER)
     #
     check_prop = yes
-    
+
     # suffix: the string, if any, to be added to the filename of each resulting
     # image. For example, for suffix = "D" and the imput file /home/images/ferM_0720_o.fits,
     # the resulting image would be saved to /home/images/ferM_0720_o_D.fits.
     # This parameter is optional, as if nothing is specified, nothing will be appended
     #
     suffix = S
-    
+
     #
     # min_frames : minimun number of frames required to build a master super flat
     #
     min_frames = 5
-    
+
     # half width of sky filter window in frames
     #
     hwidth = 2 
-    
+
     area_width = 1000       # length in pixels of the central area used for normalization
-    
-    # Object mask
-    mask_minarea = 5   # sex:DETECT_MINAREA used for object masking
-    mask_thresh = 1.5   # sex:DETECT_THRESH used for object masking
+
+    # Object mask --> The smaller DT and DMIN, the fainter the objects masked.
+    mask_minarea = 5   # sex:DETECT_MINAREA used for object masking, minimun number of connected pixels above the detection threshold making up an object.
+    mask_thresh = 1.5   # sex:DETECT_THRESH used for object masking, given in units of sigma of the sky background noise.
     #expand_mask = 0.5   # amount to expand the object mask regions
     satur_level = 3000000 # sex:SATUR_LEVEL; level (in ADUs) at which arises saturation
-    
+
     # skymodel : sky model used used during the sky subtraction. It will be a 
     #             parameter for the IRDR::skyfilter() executable
     #             (median) the normal way for coarse fields [default]
     #             (min) suitable for crowded fields 
     #
     skymodel = median
-    
-    ############################################################################
+
+    ##############################################################################
     [offsets] 
-    ############################################################################
-    
+    ##############################################################################
     # single_point: If true, means that the SEextractor objmask will be reduced to a
     # single point (centroid) to run the cross-reference offset algorithm,i.e.,
     # each object is represented by a single, one-valued pixel, located at the
@@ -475,41 +528,59 @@ File papi.cfg::
     # and even might with wrong results.  
     # 
     single_point = True
-    
+
     # Object mask
     mask_minarea = 5 #15   # sex:DDETECT_MINAREA used for object masking
     mask_thresh = 1.5 #5.0   # sex:DDETECT_THRESH used for object masking
-    
-    satur_level = 3000000 # sex:SATUR_LEVEL; level (in ADUs) at which arises saturation
-    
+
     #
-    # Minimun overlap correlation fraction between offset translated images (from irdr::offset.c)
+    # sex:SATUR_LEVEL: level (in ADUs) for a single exposure image at which the pixel
+    # arises saturation. Note than that value should be updated with NCOADDS or NDIT
+    # keywords when present in the header. So, the value specified here is for a
+    # single image with NCOADD = 1.
+    # Of course, this values will be specific for each detector, and in case of 
+    # a multi-detector instrument, should be the lowest value of all detectors.
+    #  
+    satur_level = 5000
+
     #
-    min_corr_frac = 0.001
-    
-    ############################################################################
+    # Minimun overlap correlation fraction between offset translated images 
+    # (from irdr::offset.c)
+    #
+    min_corr_frac = 0.1
+
+    ##############################################################################
     [astrometry]
-    ############################################################################
-    
+    ##############################################################################
     # Object mask
     mask_minarea = 5   # sex:DETECT_MINAREA used for object masking
     mask_maxarea = 10000 # Not yet implemented in PAPI !!! and not supported by SExtractor
     mask_thresh = 1.5   # sex:DETECT_THRESH used for object masking
     #expand_mask = 0.5   # amount to expand the object mask regions
-    satur_level = 3000000 # sex:SATUR_LEVEL; level (in ADUs) at which arises saturation
+
+    #
+    # sex:SATUR_LEVEL: level (in ADUs) for a single exposure image at which the pixel
+    # arises saturation. Note than that value should be updated with NCOADDS or NDIT
+    # keywords when present in the header. So, the value specified here is for a
+    # single image with NCOADD = 1.
+    # Of course, this values will be specific for each detector, and in case of 
+    # a multi-detector instrument, should be the lowest value of all detectors.
+    #  
+    satur_level = 5000
+
+
     catalog = GSC-2.3    # Catalog used in SCAMP configuration (2MASS, USNO-A1, USNO-A2,
                          # USNO-B1,SC-1.3, GSC-2.2, GSC-2.3, UCAC-1, UCAC-2, UCAC-3, 
                          # NOMAD-1, PPMX, DENIS-3, SDSS-R3, SDSS-R5, SDSS-R6 or SDSS-R7)
-    
-    
-    ############################################################################
+
+    ##############################################################################
     [keywords] 
-    ############################################################################
-    
+    ##############################################################################
+
     # The pipeline is designed for the PANIC data files. You should change
     # this options in case you were going to work with images whose keywords are
     # not the same.
-    
+
     object_name = IMAGETYP    # Target description
     julian_date = MJD-OBS     # Modified Julian date
     x_size = NAXIS1           # Length of x-axis                       
@@ -517,28 +588,29 @@ File papi.cfg::
     ra = RA, CRVAL1           # Right ascension, in decimal degrees | The list defines the priority in which the values are read
     dec = DEC, CRVAL2         # Declination, in decimal degrees     | That is, if "DEC" is not found, CRVAL2 will be read, and so on.
     filter = FILTER           # Filter name
-    
-    
-    ############################################################################
+
+
+    ##############################################################################
     [quicklook] 
-    ############################################################################
-    
+    ##############################################################################
+
     # Next are some configurable options for the PANIC Quick Look tool
     #
-    # some important directories
-    #
+    # Some important directories
+    #   Note: Output directory must be different from defined for PAPI (see above)
     #source = /data/O2K/Feb.2012/120213      # it can be a directory or a file (GEIRS datalog file)
     #source = /mnt/GEIRS_DATA
     #source = /home/panic/GEIRS/log/save_CA2.2m.log
     #source = /mnt/tmp/fitsfiles.corrected
     #source = /home/panic/tmp/fitsfiles.corrected
-    source = /home/panic/data/i_test/002/
+
+    source = /mnt/SDB2/panic/data/O2K/Matilde/120105
     output_dir = /data/out   # the directory to which the resulting images will be saved.
     temp_dir = /data/tmp     # the directory to which temporal results will be saved
     verbose = True
-    
+
     # Run parameters
-    run_mode = None # default (initial) run mode of the QL; it can be (None, Lazy, Prereduce)
+    run_mode = Lazy # default (initial) run mode of the QL; it can be (None, Lazy, Prereduce)
 
 
 
