@@ -2725,7 +2725,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else:
                 QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
     
-    def createCalibs_slot(self):
+    def createCalibs_slot_PARA_BORRAR(self):
         
         """
         Given the current dataset files, compute the whole master calibration 
@@ -2762,6 +2762,42 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:
             QMessageBox.information(self,"Info", QString("No files found"))
     
+    def createCalibs_slot(self):
+        
+        """
+        Given the current dataset files, compute the whole master calibration 
+        files found in the DB dataset.
+        """
+        
+        fileList = self.inputsDB.GetFilesT("ANY")
+        
+        if len(fileList)>1:
+            
+            # Create the RS            
+            try:
+                calib_db_files = None
+                params = [(fileList, self.m_outputdir, 
+                        None,
+                        "dither", None, 
+                        None, None, "quick",
+                        self.group_by, True,
+                        self.config_opts,
+                        calib_db_files, None)]
+            
+                log.debug("Let's create Calibrations ...")
+                func_to_run = RS.ReductionSet(*(params[0])).buildCalibrations
+                log.debug("ReductionSet created !")
+                self._task_queue.put([(func_to_run,())])
+                log.debug("New task queued")
+
+            except Exception,e:
+                QMessageBox.critical(self, "Error", "Error while building master calibrations files")
+                print e
+                raise Exception("Error creating calibrations")
+        else:
+            QMessageBox.information(self,"Info", QString("No files found"))
+
+
     def helpIndex(self):
         """Show help on the default browser"""
         
