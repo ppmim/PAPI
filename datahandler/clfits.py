@@ -320,39 +320,29 @@ class ClFits (object):
             log.error('Cannot find frame : "%s"' % self.pathname)
             raise Exception("File %s not found"%self.pathname)
         
-        # check FITS-file integrity
+        # Read FITS and check FITS-file integrity
         nTry = 0
         found_size = 0
         while True:
             try:
+                # First level of checking
                 found_size = fits_simple_verify(self.pathname)
-            except Exception,e:
+                # Now, try to read the whole FITS file
+                myfits = pyfits.open(self.pathname, 
+                                 ignore_missing_end=True) # since some problems with O2k files 
+            except Exception, e:
                 if nTry<retries:
                     nTry +=1
                     time.sleep(nTry*0.5)
-                    log.warning("Trying to re-read integrity of FITS-file : %s\n %s"%(self.pathname, str(e)))
+                    log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
                 else:
-                    log.error("Could not read with integrity FITS-file:  %s\n %s"%(self.pathname, str(e)))
+                    log.error("Finally, FITS-file could not be read with integrity:  %s\n %s"%(self.pathname, str(e)))
                     log.error("File discarded : %s"%self.pathname)
                     raise e
             else:
                 break
               
-        # Open the file for header recognition            
-        try:
-            myfits = pyfits.open(self.pathname, 
-                                 ignore_missing_end=True) # since some problems with O2k files                               
-            
-            #if len(myfits)==0 or 'SIMPLE' not in myfits[0].header or myfits[0].header['SIMPLE']!=True:
-            #    raise ValueError('Found a not compliant FITS file.')
-
-            #myfits = pyfits.open(self.pathname, 'update')
-            #myfits[0].verify()
-        except Exception,e:
-            log.error("Could not open frame %s. Error in file : %s"%(self.pathname, str(e)))
-            raise e
-        
-        #Check if is a MEF file 
+        # Check if is a MEF file 
         if len(myfits)>1:
             self.mef = True
             self.next = len(myfits)-1
