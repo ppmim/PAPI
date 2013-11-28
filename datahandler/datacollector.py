@@ -297,14 +297,14 @@ class DataCollector (object):
         contents = []
         
         try:
+            # To Read the directory contents
             if self.mode=="dir":
-                # Read the directory contents
                 #contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
                 contents = self.__listFiles(self.source)
+            # To Read a simple text file
             elif self.mode=="file":
-                # Read the file contents
                 contents = [line for line in fileinput.input(self.source)]
-                # To read ~/GEIRS/log/save_CA2.2m.log
+            # To read ~/GEIRS/log/save_CA2.2m.log
             elif self.mode=="geirs-file":
                 contents = self.read_GEIRS_fitsLog(type=1)
                 """
@@ -390,7 +390,10 @@ class DataCollector (object):
                     # To avoid problems, and because integrity check cannot
                     # be done completelly well (CHECKSUM & DATASUME should be used), 
                     # we wait for 1 sec before reading the file.
-                    time.sleep(1)
+                    if self.mode=="dir" and len(contents)==1:
+                        time.sleep(1)
+
+                    # Now, try to read the file
                     fits = datahandler.ClFits(file)
                     del fits
                 except Exception,e:
