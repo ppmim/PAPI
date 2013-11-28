@@ -385,8 +385,12 @@ class DataCollector (object):
                     and (file not in self.bad_files_found)
 			        ):
               
-                #Try-to-read the file
+                # Try-to-read the file (only for integrity check)
                 try:
+                    # To avoid problems, and because integrity check cannot
+                    # be done completelly well (CHECKSUM & DATASUME should be used), 
+                    # we wait for 1 sec before reading the file.
+                    time.sleep(1)
                     fits = datahandler.ClFits(file)
                     del fits
                 except Exception,e:

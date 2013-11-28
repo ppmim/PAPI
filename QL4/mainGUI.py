@@ -409,7 +409,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #print "FILEINFO= ", fileinfo
         
         #########################
-        # an alternative method to update the ListView; it allows keep the view filter
+        # An alternative method to update the ListView; it allows keep the view 
+        # filter.
         self.slot_classFilter() 
         #########################
         ## Update the ListView table
@@ -431,7 +432,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #nothing else to do ...
             return 
 
-        ## Check if end of observing sequence (science or calibration), then start processing
+        # Check if end of observing sequence (science or calibration), then 
+        # start processing.
         end_seq = False
         seq = []
         seqType = ''
@@ -1057,7 +1059,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1 \
             and (fits.getType()==self.last_img_type or self.last_img_type==None):
-                #End of sequence
+                # End of sequence
                 retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects !
                 self.curr_sequence = []
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
@@ -1066,15 +1068,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 if self.last_img_type!=None and \
                 fits.getType()!=self.last_img_type \
                 and not fits.isDomeFlat():
-                    #skip/remove the current/last file, type mismatch !
+                    # skip/remove the current/last file, type mismatch !
                     self.curr_sequence = self.curr_sequence[:-1]
                     log.error("Detected file type mismatch. File %s skipped in sequence !"%(filename))
-                #Mid of sequence, continue adding file
+                # Mid of sequence, continue adding file
                 endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         # ############################################
         # We suppose data is obtained using GEIRS+MIDAS_scripts observations
         # POINT_NO(=OB_ID), DITH_NO, EXPO_NO keyword will be checked for sequece detection
-        # TODO: TBC !!! I don't know if it will work with calibration sequences
+        # TODO: TBC !!! I don't know if it will work with calibration sequences.
         else:
             log.debug("Checking GEIRS keywords...")
             if self.last_ob_id==-1: # first time
@@ -1085,31 +1087,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elif fits.getOBId()!=self.last_ob_id \
                 or fits.getFilter()!= self.last_filter \
                 or fits.getType()!=self.last_img_type:
-                retSeq = self.curr_sequence[:]  # very important !! Lists are mutable objects ! or clist = copy.copy(list)
-                #End of sequence, and then reset the sequence list
+                retSeq = self.curr_sequence[:] 
+                # End of sequence, and then reset the sequence list
                 self.curr_sequence = [filename]
                 endSeq, retSeq, typeSeq = True, retSeq, fits.getType()
                 self.last_ob_id = -1 # re-init
                 log.debug("EOS-1 %s detected : %s"%(typeSeq, str(retSeq)))
             else:
-                #Check RA,Dec coordinates for distance
+                # Check RA,Dec coordinates for distance
                 ra_point_distance = self.last_ra-fits.ra
                 dec_point_distance = self.last_dec-fits.dec
                 dist = math.sqrt((ra_point_distance*ra_point_distance)+(dec_point_distance*dec_point_distance))
                 if dist>self.MAX_POINT_DIST:
                     retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects ! 
-                    #End of sequence, then reset the sequence list
+                    # End of sequence, then reset the sequence list
                     self.curr_sequence = [filename]
                     endSeq,retSeq,typeSeq = True,retSeq,fits.getType()
                     self.last_ob_id = -1 # re-init
                     log.debug("EOS-2 %s detected : %s"%(typeSeq, str(self.retSeq)))
                 else:
-                    #Mid of sequence, continue adding file
+                    # Mid of sequence, continue adding file
                     self.curr_sequence.append(filename)
                     log.debug("Adding file to sequence: %s",str(self.curr_sequence))
                     endSeq, retSeq, typeSeq = False, self.curr_sequence, fits.getType()
         
-        #and finally, before return, update 'last'_values
+        # And finally, before return, update 'last'_values
         self.last_ra = fits.ra
         self.last_dec = fits.dec
         self.last_filter = fits.getFilter()
@@ -1333,7 +1335,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                     max_ra_dec_diff=ra_dec_near_offset, 
                                                     max_nfiles=max_number_files) 
             
-            #look for un-groupped files
+            #
+            # Look for un-groupped files and build a group/sequence with them
+            #
             temp = set([])
             for lista in sequences:
                 temp = temp.union(set(lista))

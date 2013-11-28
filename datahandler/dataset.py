@@ -492,8 +492,8 @@ class DataSet(object):
          
         Returns
         -------
-        A List of types [DARK, DOME_FLAT, TW_FLAT, SCIENCE] and list of list, having each list 
-        the list of files beloging to.
+        A List of types [DARK, DOME_FLAT, TW_FLAT, SCIENCE] and list of list, 
+        having each list the list of files beloging to.
 
         Notes
         -----
@@ -510,7 +510,7 @@ class DataSet(object):
         if max_nfiles==None:
             max_nfiles = DataSet.MAX_NFILES
     
-        par_list = [] # parameter tuple list (filter,texp)
+        par_list = [] # parameter tuple list (filter, type)
         filter_file_list = [] # list of file list (one per each filter)
               
         # First, look for Filters on SCIENCE files
@@ -534,11 +534,11 @@ class DataSet(object):
         rows = cur.fetchall()
         par_list2 = []
         if len(rows)>0:
-            par_list2 = [ [str(f[0]), "DOME_FLAT"] for f in rows] # important to apply str() ??
+            par_list2 = [[str(f[0]), "DOME_FLAT"] for f in rows] # important to apply str() ??
         print "(2nd) Total rows selected:  %d" %(len(par_list2))
         print "(2nd) Filters found :\n ", par_list2
 
-        #concatenate the two list (dome_flat, the rest)
+        # Concatenate the two list (dome_flat, the rest)
         par_list = par_list + par_list2
         
         print "PAR_LIST=",par_list
@@ -616,13 +616,14 @@ class DataSet(object):
                     ra_0 = ra
                     dec_0 = dec
                     group = [file]
+            
             new_seq_list.append(group[:]) # very important, lists are mutable !
-            new_seq_par.append(par_list[k][1])
+            new_seq_par.append(par_list[k][1]) # add the type of the group
             k+=1    
 
         return  new_seq_list, new_seq_par
                  
-    def GetFilterFiles_BUENO(self, max_mjd_diff=None ):
+    def GetFilterFiles_TEST(self, max_mjd_diff=None ):
         """ 
         @summary: Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
         ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
@@ -943,11 +944,14 @@ class DataSet(object):
             print "%s  %s  %s  %s  %s %s  %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
                                        fits[3], fits[4], fits[5], fits[6], fits[7], # expn, nexp, filter, texp, type
                                        fits[3]==fits[4]) # true/false
-            if fits[7].count('MASTER'): 
+            if fits[7].count('MASTER'):
                 print "--------> Found a MASTER calibration file; it will not be grouped !!!<----------"
                 continue
+            # Note: if the beginning (fits[3]==1) or the end of a sequence is 
+            # not found (fits[3]==fits[4]), then their files (incomplete sequence) 
+            # are added to a unknown_group/sequence.
             if fits[3]==1: #expn == 1 ?
-                group = [str(fits[0])] #filename
+                group = [str(fits[0])] # filename
                 found_first = True # update flag
                 # special case of only-one-file sequences
                 if fits[3]==fits[4]:
@@ -963,7 +967,7 @@ class DataSet(object):
             elif found_first: 
                 group.append(str(fits[0]))
                 if fits[3]==fits[4]:
-                    #detected end of the sequence
+                    # Detected end of the sequence
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
                     if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
@@ -975,6 +979,17 @@ class DataSet(object):
             else:
                 pass
         
+        #
+        # Look for un-groupped files and build a group/sequence with them
+        #
+        temp = set([])
+        for lista in seq_list:
+            temp = temp.union(set(lista))
+        un_groupped = set(self.GetFiles()) - temp
+        if len(un_groupped)>0:
+            seq_list.append(list(un_groupped))
+            seq_types.append('UNKNOWN')
+
         print "[dataset.GetSeqFilesB] OS's found :\n ", seq_list
         
         return seq_list, seq_types

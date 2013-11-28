@@ -3337,7 +3337,81 @@ Le escribo RM y reconoce el problema.
 Así no hay manera de hacer pruebas, pues PyFITS salta por todos lados, incluso
 en clfits.py la rutina fits_simple_verify.
 
+- RM me manda a ultima hora de la tarde la version 710 de GEIRS que se supone
+solucina el bug.
+Parece que si está solucionado, pero el QL falla en la imagen 2 de una secuencia
+de 5 darks,  dice que la 2da. imagen está corrupta !!! quizá sea problema de 
+sincronización ...que intenta leer la imagen antes de tiempo !!
 
+
+
+26-11-2013
+-----------
+- NTP Config:
+  - Añado los servidores (incluido IAA) a /etc/npt.conf
+  -Añado el servicio NTP al initd para que arranque con la máquina:
+     >chkconfig --add ntp
+     >service ntp status|start
+
+- Pruebas nueva version GEIRS + OT + PQL:
+  
+  * Detecto aún problemas de sync con PQL y FITS generados; lo suyo sería
+  usar (CHECKSUM & DATASUM)
+  * Detecto que hay veces que el FITS no contiene los keys del OT, incluso
+  aunque use /home/panic/tmp/fitsfiles.corrected. Por tanto no es problema
+  del OT el que no incluyan, aunque el OT debería detectar el problema
+  y avisar en lugar de tragarse la imagen y clasificarla como SCIENCE !!
+
+  Despues de hablar con AGS, me dice que no hace un 'sync save' pues
+  en su día Clemens le dijo que el read y save se pueden hacer a la vez
+  para ahorrar tiempo. 
+  Entonces, lo que va a hacer es postponer el 'vaciado' del fichero ~/tmp/geirsPhduAdd.panic
+  para más tarde:
+
+   a) se va a grabar una nueva imagen, antes del save
+   b) se termina un OB o se aborta
+   c) se sale del OT
+  
+
+
+27-11-2013
+-----------
+- Comienzo pruebas con nueva version de OT que tiene el 'vaciado' del fichero
+sólo cuando:
+
+   a) se va a grabar una nueva imagen, antes del save
+   b) se termina un OB o se aborta
+   c) se sale del OT
+
+Aún así, si el OT hace un crash se podría quedar 'no-vaciado' el fichero ~/tmp/geirsPhduAdd.panic
+y si se toman imagenes con GEIRS se le añadiría a la cabecera el contenido de 
+dicho fichero. Esto pueda causar problemas !!! Lo suyo sería 'vaciarlo' justo
+despues de un 'sync save'.
+
+
+1) Activacion servidor FTP en panic2
+
+  > /etc/init.d/vsftpd
+  > /etc/init.d/SuSEfirewall2_setup stop
+
+- Hago varias pruebas con OT+PQL+SimuArchivoCAHA: aun encuentro un error 
+en los header del OT, en concreo, alguna vez deja sin copiar el header del ultimo
+fichero de la secuencia. AGS está informado, y lo solucionará tq:
+"Me aseguraré de hacer un sync antes de 'vaciar' el fichero."
+
+
+- Que hacer con las secuencias incompletas, por ejemplo, le falta el primero, 
+el último, o algunos del medio, etc .... 
+Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
+Alguna otra solución ???
+Se me ocurre dejarlo como esta, y además de la opción de group_by_filter,
+añadir una opción al PQL para re-enumerar/construir secuencias dado una 
+lista de ficheros.
+==> Además se podría añadir al Troubleshoting 
+
+
+28-11-2013
+-----------
 
 
 PANIC computers installation
@@ -3345,6 +3419,7 @@ PANIC computers installation
 0) Introduction
 
 The aim of this document is 
+
 1) System configuration
 
 The PANIC computer system is composed by on server computer with the next features:
@@ -3352,6 +3427,12 @@ The PANIC computer system is composed by on server computer with the next featur
 
 
  - System boards (OPT-PLX PCIe)
+ - Network configuration:
+     1) Configuring Network Bonding with YaST
+     2) Configuring NTP service
+        > chkconfig --add ntp
+        > service ntp start | status
+        > ntpdc --> peers
 
 
 2) RAIDs definition
@@ -3762,6 +3843,14 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Que hacer con las secuencias incompletas, por ejemplo, le falta el primero, 
+el último, o algunos del medio, etc .... 
+Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
+Alguna otra solución ???
+
+
+- PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
+sin embargo, parece que calDark.py no se queja !
 - doc. y script de instalación de PAPI --> (Distribute vs distutils)
 - (terminar) implementar astrometry.net (solve_field) como alternativa a SCAMP !!!
 - how to manage MEF calibration files ? (currently darks, flats are not splited !)

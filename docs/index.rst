@@ -21,7 +21,8 @@ You may wish to see :ref:`what’s new` in the latest version or jump to the :re
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
+   :numbered:
 
    
    install
