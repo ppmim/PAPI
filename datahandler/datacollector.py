@@ -387,12 +387,6 @@ class DataCollector (object):
               
                 # Try-to-read the file (only for integrity check)
                 try:
-                    # To avoid problems, and because integrity check cannot
-                    # be done completelly well (CHECKSUM & DATASUME should be used), 
-                    # we wait for 1 sec before reading the file.
-                    if self.mode=="dir" and len(contents)==1:
-                        time.sleep(1)
-
                     # Now, try to read the file
                     fits = datahandler.ClFits(file)
                     del fits
