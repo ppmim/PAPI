@@ -488,7 +488,7 @@ class DataSet(object):
             frames.
         
         max_nfiles: int
-            Maximum number of files allowed into a sequence.
+            Maximum number of files allowed into a sequence (only for 'filter' grouping).
          
         Returns
         -------
@@ -801,7 +801,7 @@ class DataSet(object):
         """   
         
         if group_by.lower()=='ot': 
-            return self.GetSeqFilesB()
+            return self.GetSeqFiles()
         elif group_by.lower()=='filter':
             return self.GetFilterFiles(max_mjd_diff, max_ra_dec_diff, max_nfiles)
         elif group_by.lower()=='none':
@@ -814,7 +814,7 @@ class DataSet(object):
         else:
             return [],[]
         
-    def GetSeqFiles(self, filter=None, type=None):
+    def GetSeqFiles_TEST(self, filter=None, type=None):
         """
         TO BE DEPRECATED ?
          
@@ -836,9 +836,10 @@ class DataSet(object):
              - a of list, having each list the list of files beloging 
                to the sequence.
     
-        @see: GetSeqFilesB()
+        @see: GetSeqFiles()
         
-        @deprecated: currently GetSeqFilesB() is used, following PAT_EXPN=PAT_NEXP datagrouping rule 
+        @deprecated: currently GetSeqFiles() is used, following PAT_EXPN=PAT_NEXP 
+        datagrouping rule 
             
         """
         
@@ -887,7 +888,7 @@ class DataSet(object):
         return seq_pat_list, seq_list
     
     
-    def GetSeqFilesB(self, filter=None, type=None):
+    def GetSeqFiles(self, filter=None, type=None):
         """ 
         Get all the files for each Observing Sequence (OS) found. 
         By OS we mean a set of files with the next common features:
@@ -990,7 +991,7 @@ class DataSet(object):
             seq_list.append(list(un_groupped))
             seq_types.append('UNKNOWN')
 
-        print "[dataset.GetSeqFilesB] OS's found :\n ", seq_list
+        #print "[dataset.GetSeqFiles] OS's found :\n ", seq_list
         
         return seq_list, seq_types
 
@@ -998,7 +999,7 @@ class DataSet(object):
 
     def GetSeqFilesC(self, filter=None, type=None):
         """
-        !!! NOT USED !!!
+        !!! NOT USED, TBC !!!
         
         NEW VERSION WITH FRAMENUM for distinguish-FITS
         ==============================================
@@ -1098,7 +1099,7 @@ class DataSet(object):
             else:
                 pass
         
-        print "[dataset.GetSeqFilesB] OS's found :\n ", seq_list
+        print "[dataset.GetSeqFilesC] OS's found :\n ", seq_list
         
         return seq_list, seq_types
                        

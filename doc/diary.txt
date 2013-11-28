@@ -3412,6 +3412,27 @@ lista de ficheros.
 
 28-11-2013
 -----------
+- Modifico en dataset.py la funcion GetSeqFiles() para que los ficheros
+no agrupados correctamente los agrupe en una secuencia de tipo 'UNKNOWN'
+
+- Probado el QL con OT+GEIRS veo que da muchos errores/warnings al intentar
+leer el fichero antes de que GEIRS haya terminado. Para solucionar eso, probé
+multiples cosas, como ir comprobando si cambia el tamaño del fichero (no funcionó
+y creo que es muy lento pues hay meter delay), meter directamente un delay antes
+de leer el fichero (lo ralentiza tambien mucho sobre todo cuando se leer todo
+un directorio con ficheros ya existentes). Finalmente, compruebo que el tamaño>2880*4
+y algo muy interesnate que convierto los warnings de PyFITS en Excepciones para
+poder detectarlas y así no ralentizar/lentificar la lectura de los FITS.
+
+==> http://pymotw.com/2/warnings/
+
+
+- Encuentro BUG al crear un Dark de 100 ficheros, pues la keyword COMMENT tiene
+un tamaño demasiado largo (contiene todos los nombres de los ficheros).
+Era debido a que los warnings de PyFITS eran todos convertidos a Exceptions.
+Lo que hago es restablecer el filtro de los warnings en clfits.py despues
+de leer el FITS para evitar problemas durante la creación de FITS.
+
 
 
 PANIC computers installation
@@ -3799,7 +3820,7 @@ Resultado
    <base>-indx.png  : sources (red), plus stars from the index (green), plus the skymark ("quad") used to solve the image.
    <base>-indx.xyls : a FITS BINTABLE with the pixel locations of stars from the index.
    <base>.rdls : a FITS BINTABLE with the RA, Dec of sources we extracted from the image.
-   <base>.axy : a FITS BINTABLE of the sources we extracted, plus headers that describe the job (how the image is going to be                               solved).
+   <base>.axy : a FITS BINTABLE of the sources we extracted, plus headers that describe the job (how the image is going to be solved).
    <base>.solved : exists and contains (binary) 1 if the field solved.
    <base>.match : a FITS BINTABLE describing the quad match that solved the image.
    <base>.kmz : (optional) KMZ file for Google Sky-in-Earth. 
@@ -3843,6 +3864,9 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Encuentro BUG al crear un Dark de 100 ficheros, pues la keyword HISTORY tiene
+un tamaño demasiado largo (contiene todos los nombres de los ficheros).
+
 - Que hacer con las secuencias incompletas, por ejemplo, le falta el primero, 
 el último, o algunos del medio, etc .... 
 Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
