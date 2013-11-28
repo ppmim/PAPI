@@ -322,9 +322,10 @@ class ClFits (object):
         
         # check FITS-file integrity
         nTry = 0
+        found_size = 0
         while True:
             try:
-                fits_simple_verify(self.pathname)
+                found_size = fits_simple_verify(self.pathname)
             except Exception,e:
                 if nTry<retries:
                     nTry +=1
@@ -474,7 +475,7 @@ class ClFits (object):
                     elif ltype.count('object'):
                         self.type = "SCIENCE"
                     else:
-                        #By default, the image is classified as SCIENCE object
+                        # By default, the image is classified as SCIENCE object
                         self.type = "SCIENCE"
             except KeyError:
                 log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
@@ -854,9 +855,10 @@ class ClFits (object):
         print "RA        : ", self.ra
         print "Dec       : ", self.dec
         print "MJD       : ", self.mjd
+        print "OB_ID     : ", self.getOBId()
+        print "NoExp     : ", self.getNoExp()
+        print "ExpNo     : ",self.getExpNo()
         print "---------------------------------"
-
-        
       
 ################################################################################            
 #  Useful function to check data integrity
@@ -961,14 +963,16 @@ def fits_simple_verify(fitsfile):
         # check file size
         stat_result = os.stat(fitsfile)
         file_size = stat_result.st_size
-        # check that file_size>fits_block_size*10 to be sure all the header/s content can be read     
-        if file_size % FITS_BLOCK_SIZE != 0 or file_size<FITS_BLOCK_SIZE*10:
+
+        # check that file_size>fits_block_size*5 to be sure all the header/s content can be read     
+        if file_size % FITS_BLOCK_SIZE != 0 or file_size<FITS_BLOCK_SIZE*5:
             log.warning("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
             raise ValueError("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
+    # Exceptions are re-raised after the finally clause has been executed
     finally:
         f.close()
             
-
+    return file_size
 		
 ################################################################################            
 #  Main for Testing

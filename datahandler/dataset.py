@@ -943,11 +943,14 @@ class DataSet(object):
             print "%s  %s  %s  %s  %s %s  %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
                                        fits[3], fits[4], fits[5], fits[6], fits[7], # expn, nexp, filter, texp, type
                                        fits[3]==fits[4]) # true/false
-            if fits[7].count('MASTER'): 
+            if fits[7].count('MASTER'):
                 print "--------> Found a MASTER calibration file; it will not be grouped !!!<----------"
                 continue
+            # Note: if the beginning (fits[3]==1) or the end of a sequence is 
+            # not found (fits[3]==fits[4]), then their files (incomplete sequence) 
+            # are added to a unknown_group/sequence.
             if fits[3]==1: #expn == 1 ?
-                group = [str(fits[0])] #filename
+                group = [str(fits[0])] # filename
                 found_first = True # update flag
                 # special case of only-one-file sequences
                 if fits[3]==fits[4]:
@@ -963,7 +966,7 @@ class DataSet(object):
             elif found_first: 
                 group.append(str(fits[0]))
                 if fits[3]==fits[4]:
-                    #detected end of the sequence
+                    # Detected end of the sequence
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
                     if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
@@ -975,6 +978,17 @@ class DataSet(object):
             else:
                 pass
         
+        #
+        # Look for un-groupped files and build a group/sequence with them
+        #
+        temp = set([])
+        for lista in seq_list:
+            temp = temp.union(set(lista))
+        un_groupped = set(self.GetFiles()) - temp
+        if len(un_groupped)>0:
+            seq_list.append(list(un_groupped))
+            seq_types.append('UNKNOWN')
+
         print "[dataset.GetSeqFilesB] OS's found :\n ", seq_list
         
         return seq_list, seq_types
