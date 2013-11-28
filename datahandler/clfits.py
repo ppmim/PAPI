@@ -691,9 +691,11 @@ class ClFits (object):
         #DetectorID
         try:
             if self.instrument=='hawki': 
-                self.detectorID=myfits[0].header['HIERARCH ESO DET CHIP NAME']
-            else: 
-                self.detectorID='O2k'
+                self.detectorID = myfits[0].header['HIERARCH ESO DET CHIP NAME']
+            elif self.instrument=='panic':
+                self.detectorID = 'HAWAII-2RG'
+            else:
+                self.detectorID = 'UNKNOWN'
         except:
             log.warning("Cannot find HIERARCH ESO DET CHIP NAME")
             self.detectorID='unknown'

@@ -492,8 +492,8 @@ class DataSet(object):
          
         Returns
         -------
-        A List of types [DARK, DOME_FLAT, TW_FLAT, SCIENCE] and list of list, having each list 
-        the list of files beloging to.
+        A List of types [DARK, DOME_FLAT, TW_FLAT, SCIENCE] and list of list, 
+        having each list the list of files beloging to.
 
         Notes
         -----
@@ -510,7 +510,7 @@ class DataSet(object):
         if max_nfiles==None:
             max_nfiles = DataSet.MAX_NFILES
     
-        par_list = [] # parameter tuple list (filter,texp)
+        par_list = [] # parameter tuple list (filter, type)
         filter_file_list = [] # list of file list (one per each filter)
               
         # First, look for Filters on SCIENCE files
@@ -534,11 +534,11 @@ class DataSet(object):
         rows = cur.fetchall()
         par_list2 = []
         if len(rows)>0:
-            par_list2 = [ [str(f[0]), "DOME_FLAT"] for f in rows] # important to apply str() ??
+            par_list2 = [[str(f[0]), "DOME_FLAT"] for f in rows] # important to apply str() ??
         print "(2nd) Total rows selected:  %d" %(len(par_list2))
         print "(2nd) Filters found :\n ", par_list2
 
-        #concatenate the two list (dome_flat, the rest)
+        # Concatenate the two list (dome_flat, the rest)
         par_list = par_list + par_list2
         
         print "PAR_LIST=",par_list
@@ -616,13 +616,14 @@ class DataSet(object):
                     ra_0 = ra
                     dec_0 = dec
                     group = [file]
+            
             new_seq_list.append(group[:]) # very important, lists are mutable !
-            new_seq_par.append(par_list[k][1])
+            new_seq_par.append(par_list[k][1]) # add the type of the group
             k+=1    
 
         return  new_seq_list, new_seq_par
                  
-    def GetFilterFiles_BUENO(self, max_mjd_diff=None ):
+    def GetFilterFiles_TEST(self, max_mjd_diff=None ):
         """ 
         @summary: Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
         ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
