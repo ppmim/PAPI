@@ -2187,7 +2187,9 @@ class ReductionSet(object):
         files_created = []
         
         # Take the first file of the sequence in order to find out the type of 
-        # the sequence
+        # the sequence.
+        # TODO: I should use 'type' parameter of this method instead to read the
+        # type of the first file. I did not found any reason to not use 'type' !
         fits = datahandler.ClFits(sequence[0])
         
         
@@ -2517,7 +2519,9 @@ class ReductionSet(object):
                             log.error("[reduceSeq] Error while serial data reduction of extension %d of object sequence", n+1)
                             raise e
         
-            # If red_mode is 'lemon',then no warping of frames is required
+            # LEMON mode
+            # If red_mode is 'lemon', then no warping of frames is required.
+            #
             if self.red_mode=='lemon' or self.red_mode=='quick-lemon':
                 files_created = out_ext
                 log.info("*** Obs. Sequence LEMON-reduced. ***") 
