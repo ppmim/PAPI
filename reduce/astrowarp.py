@@ -241,7 +241,14 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     located in the config file specified or with default values, and they are what 
     should be modified in case you need to adjust their operation so that they 
     better suit your needs.
-
+    
+    STEP 0) Run initwcs to initialize rough WCS header
+    STEP 1) Create SExtractor catalog (.ldac)  (SExtractor)
+    STEP 2) Make astrometric calibration       (SCAMP)
+    STEP 3) Merge and Warp the astrometric parameters (.head keywords) with 
+            SWARP, and using .head files created by SCAMP.
+    STEP 4) (optionaly) Create SExtractor catalog (ascii.votable)
+    
     Parameters
     ----------
   

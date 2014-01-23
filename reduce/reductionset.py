@@ -67,6 +67,7 @@ from reduce.makeobjmask import *
 import misc.imtrim
 import reduce.remove_cosmics
 import reduce.astrowarp
+import reduce.solveAstrometry
 import misc.mef 
 import astromatic
 from astromatic.swarp import *
@@ -3001,11 +3002,28 @@ class ReductionSet(object):
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
            
-            reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
+            astrometry_net = False
+            if not astrometry_net:
+                try:
+                    reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
                                            self.config_dict['astrometry']['catalog'], 
                                            config_dict=self.config_dict, 
                                            do_votable=False)
-             
+                except Exception,e:
+                    raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
+            else:
+                try:
+                    solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
+                                                    self.temp_dir,
+                                                    self.config_dict['general']['pix_scale'])
+
+                except Exception,e:
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
+                else:
+                    # Rename the file
+                    os.rename(solved, output_file)
+
+
             log.info("Generated output file ==>%s", output_file)
 
             if self.config_dict['general']['estimate_fwhm']:
