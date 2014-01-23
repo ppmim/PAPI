@@ -306,6 +306,8 @@ def main(arguments = None):
                 
     except RS.ReductionSetException, e:
         print e
+    except (KeyboardInterrupt, SystemExit):
+        raise
     except Exception, e:
         print "Cannot reduce the Data Set, check error log...."
         print str(e)
