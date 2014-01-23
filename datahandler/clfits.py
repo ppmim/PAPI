@@ -38,6 +38,10 @@ try:
 except ImportError:
     import logging as log
 
+
+import warnings
+
+
 ###############################################################################
 class FitsTypeError(ValueError):
     """Raised when trying to classify a FITS file which is
@@ -323,6 +327,18 @@ class ClFits (object):
         # Read FITS and check FITS-file integrity
         nTry = 0
         found_size = 0
+
+        # We change that behavior of (pyfits) warnings with a filter.
+        # See http://bit.ly/1etvfJC
+        # It is very useful because some pyfits warnings are quite usual
+        # when reading non completely written files. Non captured warnings slow down 
+        # the reading process.
+        # Ex. 
+        #    "Header block contains null bytes instead of spaces for padding, and is not 
+        #     FITS-compliant. Nulls may be replaced with spaces upon writing."
+        # 
+        warnings.simplefilter('error', UserWarning)
+
         while True:
             try:
                 # First level of checking
@@ -341,7 +357,11 @@ class ClFits (object):
                     raise e
             else:
                 break
-              
+
+        # Undo the warning filter to avoid Exceptions forever even when 
+        # non-hard warnings!
+        warnings.resetwarnings()
+
         # Check if is a MEF file 
         if len(myfits)>1:
             self.mef = True
@@ -623,7 +643,8 @@ class ClFits (object):
             log.error('Error reading RA keyword :%s',str(e))
             self._ra  = -1
         finally:
-            log.debug("RA = %s"%str(self._ra))
+            #log.debug("RA = %s"%str(self._ra))
+            pass
 
         #Dec-coordinate (in degrees)
         try:
@@ -649,8 +670,9 @@ class ClFits (object):
             log.error('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
         finally:
-            log.debug("DEC = %s"%str(self._dec))
-    
+            #log.debug("DEC = %s"%str(self._dec))
+            pass
+
         try:
             self.equinox = myfits[0].header['EQUINOX']
         except KeyError:
@@ -953,11 +975,14 @@ def fits_simple_verify(fitsfile):
             raise ValueError("input file is not a FITS file")
 
         # check file size
-        stat_result = os.stat(fitsfile)
-        file_size = stat_result.st_size
+        file_size = os.stat(fitsfile).st_size
+        #time.sleep(0.1)
+        #while file_size != os.stat(fitsfile).st_size:
+        #    time.sleep(0.1)
+        #    file_size = os.stat(fitsfile).st_size
 
         # check that file_size>fits_block_size*5 to be sure all the header/s content can be read     
-        if file_size % FITS_BLOCK_SIZE != 0 or file_size<FITS_BLOCK_SIZE*5:
+        if file_size<FITS_BLOCK_SIZE*4 or file_size % FITS_BLOCK_SIZE != 0:
             log.warning("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
             raise ValueError("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
     # Exceptions are re-raised after the finally clause has been executed
