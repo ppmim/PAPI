@@ -3434,12 +3434,35 @@ Lo que hago es restablecer el filtro de los warnings en clfits.py despues
 de leer el FITS para evitar problemas durante la creación de FITS.
 
 
+29-11-2013
+-----------
+- Encuentro una web interesante con el seguimiento de las observaciones 
+reducidas de WFCAM --> http://casu.ast.cam.ac.uk/surveys-projects/wfcam/data-processin
+
+- Básicamente revisamos AGS y yo las notas sobre el OT de la cosas que había
+pendientes, aclarando dudas y viendo que está implementado. AGS tomó bastantes
+notas y yo algunas pocas.
+
+- Finalmente no tuvimos la integración 'interna' del Software; AGS no tenía
+preparado el OT.
+
+
+20-01-2014
+----------
+- Retoma de contacto con PAPI, para ver seguimos depurando y mejorando ....
+- Pruebo con DS ALHAMBRA_1, y da muchos errores ....
+
+21-01-2014
+----------
+
+
 
 PANIC computers installation
 ============================
 0) Introduction
 
 The aim of this document is 
+
 
 1) System configuration
 
@@ -3715,7 +3738,6 @@ se calculan con un master_dark_model.
 
 TODO's for Clemens/RM
 =====================
-- MEF for subwins ?
 
 - Observo algo que parece una condición de carrera, y es que alguna vez puede 
   ocurrir que aunque el chequeo del FITS sea correcto, GEIRS no haya aún 
@@ -3723,19 +3745,6 @@ TODO's for Clemens/RM
   fichero pues no puede leer dichas keywords esenciales.
   Esto creo que no ocurre cuando usamos los modos 'file' el datacollector.
 - Comando para añadir cualquier keyword al header --> ~/tmp/geirsPhduAdd.panic
-
-
-- WCS correcto en los headers, actualmente tiene
-TYPE1  = 'PIXEL'
-CTYPE2  = 'PIXEL'
-CRPIX1  =                  1.0
-CRPIX2  =                  1.0
-CRVAL1  =                  1.0
-CRVAL2  =                  1.0
-CDELT1  =                  1.0
-CDELT2  =                  1.0
-
-Ya ha sido eliminados en la nueva version de GEIRS; ver email 18-Jul-2013.
 
 
 - bug en la salida del comando median cuando se envia desde el OT con 
@@ -3864,8 +3873,15 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Encuentro BUG al crear un Dark de 100 ficheros, pues la keyword HISTORY tiene
-un tamaño demasiado largo (contiene todos los nombres de los ficheros).
+- terminar de integrar Astrometry.net en PAPI !! (y OSN)
+- cuando RM nos pase la r711M, probar los MEF integrador, los subwindows con MEF, etc , etc ...
+- Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
+- Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
+- ¿ Qué hace PAPI con los FLAT_SER ??? (ver Calibration Series del OT)
+- FOCUS_SER --> valor de IMAGETYP  para Series de FOCO (añadir en documentación y comprobar en PAPI)
+- Documento (TN) Data Grouping algorithms
+- Documento instalación de PANIC-SW
+- PANIC Tesis ala O2000 !!!
 
 - Que hacer con las secuencias incompletas, por ejemplo, le falta el primero, 
 el último, o algunos del medio, etc .... 
@@ -3930,15 +3946,6 @@ develop & integration.
 - Software subwindows: it works in GEIRS producing _win.fits files !!! how to
 solve in PAPI ?
 
-- Encuentro un problema en el OT (o eso parece) al lanzar una secuecia de OBs:
-OB1 - dark_serie1
-OB2 - dark_serie2
-OB3 - domeflat_serie1
-
-(V)En la segunda imagen del OB3, el header no contenia las keys propias del OT,
-aunque el resto de las imagenes si. Parece algun tipo de condición de carrera
-que se produce si no se actualiza a tiempo el fichero ~/tmp/fitsheader_panic.txt.
-Repito el test 2 veces y no ocurre el problema.
 
 
 Troubleshooting
@@ -3952,6 +3959,7 @@ over-estimation of skybackground when no object masking is done (see skyfilter).
   In addition and for crowded fields, we could set in the config file the    
 
 desplazamiento=(abs((int)Azimuth-Position)%(360-(Ventana/2)))
+
 
 
 
