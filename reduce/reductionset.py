@@ -2939,11 +2939,12 @@ class ReductionSet(object):
         ########################################################################
         # -- una prueba con astrowarp : no va bien; a simple vista da resultados 
         # parecidos, y en CPU tambien =, por tanto, opcion a considerar, pero
-        # no funciona en todos los casos, pues en cuento falla SCAMP no se
+        # no funciona en todos los casos, pues en cuanto falla SCAMP no se
         # puede hacer el stack !
+        # No obstante, con Astrometry.net igual si se puede conseguir algo estable ...
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        prueba = False
+        prueba = True
         if prueba:
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
@@ -2951,7 +2952,8 @@ class ReductionSet(object):
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
                 coadded_file=output_file, config_dict=self.config_dict)
                 try:
-                    aw.run()
+                    aw.run(engine='Astrometry.net')
+                    #aw.run(engine='SCAMP')
                 except Exception,e:
                     log.error("Some error while running Astrowarp....")
                     raise e
@@ -3002,8 +3004,7 @@ class ReductionSet(object):
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
            
-            astrometry_net = False
-            if not astrometry_net:
+            if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
                     reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
                                            self.config_dict['astrometry']['catalog'], 
@@ -3159,7 +3160,7 @@ class ReductionSet(object):
             self.m_LAST_FILES = res.apply()
             
         #######################################################################
-        # 10a - Compute field distortion and final stack:
+        # 10a - Compute field distortion and make final stack:
         #       1-Remove field distortion from individual images (SCAMP+SWARP)
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
@@ -3176,6 +3177,7 @@ class ReductionSet(object):
                                             do_votable=False)
             try:
                 aw.run()
+                # aw.run(engine='Astrometry.net')
             except Exception,e:
                 log.error("Some error while running Astrowarp....")
                 raise e
@@ -3199,14 +3201,32 @@ class ReductionSet(object):
         #misc.imtrim.imgTrim(out_dir+'/coadd2.fits')
         
         #######################################################################
-        # 10b.2 - Make Astrometry
+        # 10b.2 - Make final Astrometry
         #######################################################################
         log.info("**** Computing Astrometric calibration of coadded (2nd) result frame ****")
-        reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
+        
+        if self.config_dict['astrometry']['engine']=='SCAMP':
+            try:
+                reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
                                       self.config_dict['astrometry']['catalog'], 
                                       config_dict=self.config_dict,
-                                      do_votable=False)
-        
+                                      do_votable=False,
+                                      resample=True, # means remove field distorion
+                                      subtract_back=True)
+            except Exception,e:
+                raise Exception("[reductionset] Cannot solve Astrometry %s"%str(e))
+        else:
+            try:
+                solved = reduce.solveAstrometry.solveField(out_dir+'/coadd2.fits', 
+                                                    self.temp_dir,
+                                                    self.config_dict['general']['pix_scale'])
+            except Exception,e:
+                raise Exception("[reductionset] Cannot solve Astrometry %s"%str(e))
+            else:
+                # Rename the file
+                os.rename(solved, output_file)
+
+
         log.info("Generated output file ==>%s", output_file)
         
         os.chdir(old_cwd)

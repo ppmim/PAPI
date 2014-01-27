@@ -3452,8 +3452,56 @@ preparado el OT.
 - Retoma de contacto con PAPI, para ver seguimos depurando y mejorando ....
 - Pruebo con DS ALHAMBRA_1, y da muchos errores ....
 
-21-01-2014
+
+22-01-2014
 ----------
+- Añado solveAstrometry.py (Astrometry.net) a PAPI, con los 4200-series 
+index files (2MASS).
+
+
+23-01-2014
+----------
+- Hago pruebas Astrometry.net VS Astrowarp en PAPI, y parece que Astrometry.net
+es más rápido, y más fialble (falla menos) !!!
+La unica razón para mantener SCAMP es para el calculo de la distorsion !
+
+
+- (P) Comprender bien el valor (unidades) de ASTRRMS1 que da SCAMP, pues parece que 
+son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
+
+
+23-01-2014
+----------
+- Implemento una version de Astrowarp que usa Astrometry.net como motor (engine)
+de calibración astrométrica. Básicamente basta con llamar al run(engine=...) 
+con el parámetro adecuado.
+Hago pruebas para ver que tal va: (DS de 6 imagenes Ks de O2k modo quick)
+
+En cuanto a tiempo:
+
+  a) ĺógicamente Astrowarp tarda más que un simple coaddStackImages:
+       50sec vs 100sec con Astrowarp+Astrometry.net
+
+  b1) Astrowarp con SCAMP: 69sec 
+  b2) Astrowarp con Astrometry.net: 100 sec
+
+En cuanto a exactitud del resultado:
+
+  a) ??
+
+
+- Añado un nuevo parámetro de configuración en la sección de Astrometria: engine
+para indicar si queremos que se use SCAMP o Astrometry.net.
+Esto va al marge de usar Astrowarp.run() con SCAMP o Astrometry.net
+
+- (P) Quizás habría que añadir otro parametro para indicar si queremos que la
+distorsión del campo se elimine antes del coadd (a nivel individual en cada imagen
+del dithering) o bien despues del coadd final. Yo creo que se con hacerla al final
+debería bastar, pues la diferencia de distorsión en cada uno de las imagenes
+de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho.
+
+
+
 
 
 
@@ -3873,7 +3921,15 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- terminar de integrar Astrometry.net en PAPI !! (y OSN)
+-  Quizás habría que añadir otro parametro para indicar si queremos que la
+distorsión del campo se elimine antes del coadd (a nivel individual en cada imagen
+del dithering) o bien despues del coadd final. Yo creo que se con hacerla al final
+debería bastar, pues la diferencia de distorsión en cada uno de las imagenes
+de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho.
+- Probar bien solveAstrometry() con HAWK-I
+ 
+- Comprender bien el valor (unidades) de ASTRRMS1 que da SCAMP, pues parece que 
+son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 - cuando RM nos pase la r711M, probar los MEF integrador, los subwindows con MEF, etc , etc ...
 - Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
 - Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!

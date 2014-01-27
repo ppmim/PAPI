@@ -4,7 +4,7 @@
 # Copyright (c) 2013 Jose M. Ibanez All rights reserved.
 # Institute of Astrophysics of Andalusia, IAA-CSIC
 #
-# This file is part of OSN CCD astrometry procedure
+# This file is part of PAPI and OSN-CCDs astrometry procedures
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,7 +83,10 @@ def readHeader(filename):
 def solveField(filename, tmp_dir, pix_scale=None):
     """
     Do astrometric calibration to the given filename using Astrometry.net 
-    function 'solve-field'
+    function 'solve-field'.
+    Currently (Feb-2014), "4200-series" (2MASS) index files are being used,
+    locally installed on the computer.
+
     
     Parameters
     ----------
@@ -195,13 +198,22 @@ def solveField(filename, tmp_dir, pix_scale=None):
 def calc(args):
         """
         Method used only to use with Pool.map_asycn() function
+
+        Returns
+        -------
+        On succes, the filename with the solved field.
+
         """
         return solveField(*args)
         
 def runMultiSolver(files, tmp_dir, pix_scale=None):
     """
     Run a parallel proceesing to solve astrometry for the input files taking
-    advantege of multi-core CPUs
+    advantege of multi-core CPUs.
+
+    Returns
+    -------
+    On succes, a list with the filenames of the fields solved.
     """
 
     # use all CPUs available in the computer

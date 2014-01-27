@@ -578,6 +578,7 @@ def read_config_file(config_file = default_config_file()):
     astrometry["mask_thresh"] = read_parameter(config, "astrometry", "mask_thresh", float, False, config_file)
     astrometry["satur_level"] = read_parameter(config, "astrometry", "satur_level", long, False, config_file)
     astrometry["catalog"] = read_parameter(config, "astrometry", "catalog", str, True, config_file)
+    astrometry["engine"] = read_parameter(config, "astrometry", "engine", str, True, config_file)
     
     options["astrometry"] = astrometry  
     
