@@ -77,7 +77,7 @@ class ClFits (object):
     """
 
     # Class initialization
-    def __init__(self, full_pathname, *a,**k):
+    def __init__(self, full_pathname, check_integrity=True, *a,**k):
       
         """
         Init the object
@@ -85,11 +85,15 @@ class ClFits (object):
         Parameters
         ----------
         full_pathname: str
-            pathname The full filename of the fits file to classify
+            pathname The full filename of the fits file to classify.
+        check_integrity: bool
+            When True, the FITS integrity is done to check the file is complete.
+            Mainly used on QL the know whether file writting finished. 
         """
         
         super (ClFits, self).__init__ (*a,**k)
       
+        self.check_integrity = check_integrity
         self.pathname = full_pathname # path_name + root_name
         self.filename = os.path.basename(self.pathname)  # root_name
         self.type = "UNKNOWN"
@@ -328,39 +332,44 @@ class ClFits (object):
         nTry = 0
         found_size = 0
 
-        # We change that behavior of (pyfits) warnings with a filter.
-        # See http://bit.ly/1etvfJC
-        # It is very useful because some pyfits warnings are quite usual
-        # when reading non completely written files. Non captured warnings slow down 
-        # the reading process.
-        # Ex. 
-        #    "Header block contains null bytes instead of spaces for padding, and is not 
-        #     FITS-compliant. Nulls may be replaced with spaces upon writing."
-        # 
-        warnings.simplefilter('error', UserWarning)
+        if self.check_integrity: 
 
-        while True:
-            try:
-                # First level of checking
-                found_size = fits_simple_verify(self.pathname)
-                # Now, try to read the whole FITS file
-                myfits = pyfits.open(self.pathname, 
-                                 ignore_missing_end=True) # since some problems with O2k files 
-            except Exception, e:
-                if nTry<retries:
-                    nTry +=1
-                    time.sleep(nTry*0.5)
-                    log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
+            # We change that behavior of (pyfits) warnings with a filter.
+            # See http://bit.ly/1etvfJC
+            # It is very useful because some pyfits warnings are quite usual
+            # when reading non completely written files. Non captured warnings 
+            # slow down the reading process.
+            # Ex. 
+            #    "Header block contains null bytes instead of spaces for padding, and is not 
+            #     FITS-compliant. Nulls may be replaced with spaces upon writing."
+            # 
+            log.debug("Cheking FITS integrity")
+            warnings.simplefilter('error', UserWarning)
+            while True:
+                try:
+                    # First level of checking
+                    found_size = fits_simple_verify(self.pathname)
+                    # Now, try to read the whole FITS file
+                    myfits = pyfits.open(self.pathname, 
+                                     ignore_missing_end=True) # since some problems with O2k files 
+                except Exception, e:
+                    if nTry<retries:
+                        nTry +=1
+                        time.sleep(nTry*0.5)
+                        log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
+                    else:
+                        log.error("Finally, FITS-file could not be read with data integrity:  %s\n %s"%(self.pathname, str(e)))
+                        log.error("File discarded : %s"%self.pathname)
+                        raise e
                 else:
-                    log.error("Finally, FITS-file could not be read with integrity:  %s\n %s"%(self.pathname, str(e)))
-                    log.error("File discarded : %s"%self.pathname)
-                    raise e
-            else:
-                break
+                    break
 
-        # Undo the warning filter to avoid Exceptions forever even when 
-        # non-hard warnings!
-        warnings.resetwarnings()
+            # Undo the warning filter to avoid Exceptions forever even when 
+            # non-hard warnings!
+            warnings.resetwarnings()
+        else:
+            myfits = pyfits.open(self.pathname, 
+                                     ignore_missing_end=True) # since some problems with O2k files     
 
         # Check if is a MEF file 
         if len(myfits)>1:
@@ -958,13 +967,17 @@ def fits_simple_verify(fitsfile):
     Raises:
       ValueError:  if either of the 2 checks fails
       IOError:     if fitsfile doesn't exist
+
+    Returns
+    -------
+    file_size: the current size of the fitsfile just read.  
     """
     
     if not os.path.exists(fitsfile):
         raise IOError("file '%s' doesn't exist" % fitsfile)
 
 
-    f = open(fitsfile,"readonly")
+    f = open(fitsfile, "readonly")
         
     FITS_BLOCK_SIZE = 2880
 
