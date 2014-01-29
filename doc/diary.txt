@@ -3470,7 +3470,7 @@ La unica razón para mantener SCAMP es para el calculo de la distorsion !
 son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 
 
-23-01-2014
+27-01-2014
 ----------
 - Implemento una version de Astrowarp que usa Astrometry.net como motor (engine)
 de calibración astrométrica. Básicamente basta con llamar al run(engine=...) 
@@ -3500,8 +3500,52 @@ del dithering) o bien despues del coadd final. Yo creo que se con hacerla al fin
 debería bastar, pues la diferencia de distorsión en cada uno de las imagenes
 de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho.
 
+28-01-2014
+----------
+- Pruebas con PAPI+Astrometry.net con DS de HAWK-I:
+1) HAWK-I-DS3-01:
+
+1.1) Astrowarp(engine='Astrometry.net') -- falla en SCAMP
+1.2) sin Astrowarp(engine='Astrometry.net') + AstroEngine=SCAMP -- OK (116s)
+1.3) sin Astrowarp(engine='Astrometry.net') + AstroEngine=AstrometryNet -- Astrometry.net se atranca en Q04 !!!
+Pero el problema es que ese cuadrante (4), por la razón que sea no es capaz de
+calibrarlo Astrometry.net, ni en la imagen en bruto tampoco (en bruto no resuelve ninguna).
+Los otros tres sin problema (el coadd1); no se cual puede ser la causa.
 
 
+
+- Gracias a un email de VTerron, me doy cuenta de que los paquetes mscred y nmisc
+daban un warning. Era debido a que desde IRAF v2.15 no es necesario declarar
+en el fichero hlib$extern.pkg los paquetes externos. Añado la modificación al
+documento de instalación.
+
+
+"""
+Dynamic package loading is a new feature in v2.15 that allows for
+package directories created in the iraf$extern directory to be automatically
+defined when the CL is started.  The means that external package installation
+no longer *requires* that the hlib$extern.pkg file be edited to define the
+package, although that remains an option for packages which somehow cannot
+conform to this new scheme.
+""" 
+
+
+
+29-01-2014
+----------
+- Para evitar los problemas al convertir los warning en excepciones, 
+modifico clfits.py para que tenga un parametro check_integrity que indique
+si quiremos comprobar la integridad de los datos a nivel básico, es decir, si 
+el tamaño es multiplo de 2880 y si es mayor que un cierto tamaño y si las keyword
+son válidas conforme al standard. Para el QL check_integrity=True.
+
+- Añado soporte a MEF en Astrowarp, aunque solveAstrometry no tiene soporte para
+MEF. Añado las comprobaciones correspondientes. Actualmente Astrometry.net (solve-field)
+no soporta MEF, aunque tiene la opción --extension para indicar que extensión queremos
+calibrar.
+
+- Ahora Astrowarp también puede hacer la astrometría de un fichero individual 
+con Astrometry.Net.
 
 
 

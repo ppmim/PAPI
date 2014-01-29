@@ -3015,19 +3015,20 @@ class ReductionSet(object):
             else:
                 try:
                     solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
-                                                    self.temp_dir,
+                                                    out_dir, # self.temp_dir produces collision
                                                     self.config_dict['general']['pix_scale'])
 
                 except Exception,e:
                     raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
                 else:
                     # Rename the file
-                    os.rename(solved, output_file)
+                    shutil.move(solved, output_file)
 
 
             log.info("Generated output file ==>%s", output_file)
 
             if self.config_dict['general']['estimate_fwhm']:
+                log.info("**** FWHM estimation of coadded_1 result frame ****")
                 satur_level = self.config_dict['astrometry']['satur_level']
                 pix_scale = self.config_dict['general']['pix_scale']
                 
@@ -3224,7 +3225,7 @@ class ReductionSet(object):
                 raise Exception("[reductionset] Cannot solve Astrometry %s"%str(e))
             else:
                 # Rename the file
-                os.rename(solved, output_file)
+                shutil.move(solved, output_file)
 
 
         log.info("Generated output file ==>%s", output_file)

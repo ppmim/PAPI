@@ -45,6 +45,9 @@ except ImportError:
 
 # TODO
 #
+# - Add support for MEF files:
+#   Currently Astrometry.net only support --extension option to give the FITS 
+#    extension to read image from.
 # - Comprobacion tipo de imagen no es bias, dark, flat, test  ---DONE
 # - Contabilidad de ficheros resueltos y no  ---DONE
 # - Tiempo límite de resolución de un fichero --cpulimit (default to 300s)
@@ -70,6 +73,10 @@ def readHeader(filename):
         log.error(str(e))
         raise e
     else:
+        if fits.isMEF():
+            log.error("Currently MEF files are not supported.")
+            raise Exception("Currently MEF files are not supported.")
+
         # Return values
         scale = fits.pix_scale
         ra = fits.ra

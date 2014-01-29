@@ -483,7 +483,20 @@ STECF, remove them.
 > wget ftp://iraf.noao.edu/iraf/extern/mscred-bin.linux64.tar.gz
 
 - Follow the installation instructions from README file (basically, as usual
-extenal IRAF packages)
+extenal IRAF packages) -> OJO, ha cambiado, ver README del directorio extern/
+
+OJO, desde IRAF v2.15 ya no es necesario incluirlos en hlib$extern.pkg, pues los
+lee automáticamente del directorio $iraf/iraf/extern:
+
+"""
+Dynamic package loading is a new feature in v2.15 that allows for
+package directories created in the iraf$extern directory to be automatically
+defined when the CL is started.  The means that external package installation
+no longer *requires* that the hlib$extern.pkg file be edited to define the
+package, although that remains an option for packages which somehow cannot
+conform to this new scheme.
+""" 
+
 
 - Set appropiate links:
 

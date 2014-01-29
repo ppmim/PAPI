@@ -51,21 +51,27 @@ def initWCS( input_image, pixel_scale):
     Warning: The original file header (input_image) will be modified
     """
     
-    log.critical("Entering in initWCS!")
+    log.debug("Entering in initWCS!")
     
     try:
-        f = datahandler.ClFits ( input_image )
+        f = datahandler.ClFits(input_image, check_integrity=False)
     except Exception,e:
+        log.error("Error reading FITS %s : %s"%(f,str(e)))
         raise e
     
-    fits_file = pyfits.open(input_image, 'update', ignore_missing_end=True)
+    try:
+        fits_file = pyfits.open(input_image, 'update', ignore_missing_end=True)
+    except Exception,e:
+        log.error("Error reading FITS %s : %s"%(f,str(e)))
+        raise e
 
     if f.isMEF(): # is a MEF
         #raise Exception("Sorry, currently this function only works with simple FITS files with no extensions")
         log.warning("MEF file detected !")
     
-    for ext in range(0,len(fits_file)):
-        if len(fits_file)>1: ext+=1
+    for ext in range(0, len(fits_file)):
+        if len(fits_file)>1 and ext==0:
+            continue
     #else:  # is a simple FITS
         header = fits_file[ext].header
         try:
@@ -147,20 +153,30 @@ def initWCS( input_image, pixel_scale):
         
         # Check whether CRPIXn need to be updated because of some kind of border
         # was added around the image during a previus coadd.
-        if 'CRPIX1' in header and header['NAXIS1']>2048:
-            log.info("Updating CRPIX1 taking into account border pixels due to coadd")
-            log.debug("NAXIS1=%s  CRPIX1=%s"%(header['NAXIS1'],header['CRPIX1']))
-            value = header['CRPIX1'] + (header['NAXIS1']-2048)/2
-            header.update('CRPIX1', value )
-            log.debug("VALUE1=%s"%value)
-        if 'CRPIX2' in header and header['NAXIS2']>2048:
-            log.info("Updating CRPIX2 taking into account border pixels due to coadd")
-            value = header['CRPIX2'] + (header['NAXIS2']-2048)/2            
-            header.update('CRPIX2', value )
-            log.debug("VALUE2=%s"%value)
+        try:
+            if 'CRPIX1' in header and header['NAXIS1']>2048:
+                log.info("Updating CRPIX1 taking into account border pixels due to coadd")
+                log.debug("NAXIS1=%s  CRPIX1=%s"%(header['NAXIS1'],header['CRPIX1']))
+                value = header['CRPIX1'] + (header['NAXIS1']-2048)/2
+                header.update('CRPIX1', value )
+                log.debug("VALUE1=%s"%value)
+            if 'CRPIX2' in header and header['NAXIS2']>2048:
+                log.info("Updating CRPIX2 taking into account border pixels due to coadd")
+                value = header['CRPIX2'] + (header['NAXIS2']-2048)/2            
+                header.update('CRPIX2', value )
+                log.debug("VALUE2=%s"%value)
+        except Exception,e:
+            log.critial("[initWCS] Error updating header: %s"%str(e))
+            raise e
 
-    fits_file.close(output_verify='ignore')
+    try:        
+        fits_file.close(output_verify='ignore')
+    except Exception,e:
+        log.critical("ERROR !")
+        raise e
+
     log.debug("Right WCS info")
+
             
 def checkWCS( header ):
     """
@@ -251,6 +267,13 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
             This step imply the distortion correction of the final coadd.
     STEP 4) (optionaly) Create SExtractor catalog (ascii.votable)
     
+
+    Note
+    ----
+    In priciple, this function supports MEF files because Astromatic software
+    suite also supports it, but is has not been deeply tested.
+
+
     Parameters
     ----------
   
@@ -312,10 +335,10 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     
     # SATUR_LEVEL and NCOADD
     try:
-        dh = datahandler.ClFits(input_image)
+        dh = datahandler.ClFits(input_image, check_integrity=False)
         nc = dh.getNcoadds()
-    except:
-        log.warning("Cannot read NCOADDS. Taken default value (=1)")
+    except Exception,e:
+        log.warning("Cannot read NCOADDS. Default value (=1) taken")
         nc = 1
 
     sex.config['SATUR_LEVEL'] = int(nc) * int(config_dict['astrometry']['satur_level'])
@@ -427,7 +450,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
         sex.config['DETECT_MINAREA'] = config_dict['skysub']['mask_minarea']
         # SATUR_LEVEL and NCOADD
         try:
-            dh = datahandler.ClFits(input_image)
+            dh = datahandler.ClFits(input_image, check_integrity=False)
             nc = dh.getNcoadds()
         except:
             log.warning("Cannot read NCOADDS. Taken default (=1)")
@@ -559,7 +582,7 @@ class AstroWarp(object):
         self.resample = resample
         self.subtract_back = subtract_back
         self.pix_scale = config_dict['general']['pix_scale']
-        self.temp_dir = os.path.splitext(self.input_files[0])[0]
+        self.temp_dir = config_dict['general']['temp_dir']
 
 
     def run(self, engine='SCAMP'):
@@ -631,7 +654,7 @@ class AstroWarp(object):
             sex.config['DETECT_MINAREA'] = self.config_dict['astrometry']['mask_minarea']
             # SATUR_LEVEL and NCOADD
             try:
-                dh = datahandler.ClFits(file)
+                dh = datahandler.ClFits(file, check_integrity=False)
                 nc = dh.getNcoadds()
             except:
                 log.warning("Cannot read NCOADDS. Taken default (=1)")
@@ -712,7 +735,7 @@ class AstroWarp(object):
             except Exception,e:
                     raise Exception("[runWithAstrometryNet] Error doing Astrometric calibration: %s"%str(e))
             else:
-                os.rename(solved, self.coadded_file)
+                shutil.move(solved, self.coadded_file)
         else:
             shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
                         self.coadded_file)
@@ -762,7 +785,7 @@ class AstroWarp(object):
             sex.config['DETECT_MINAREA'] = self.config_dict['astrometry']['mask_minarea']
             # SATUR_LEVEL and NCOADD
             try:
-                dh = datahandler.ClFits(file)
+                dh = datahandler.ClFits(file, check_integrity=False)
                 nc = dh.getNcoadds()
             except:
                 log.warning("Cannot read NCOADDS. Taken default (=1)")
@@ -871,7 +894,6 @@ in principle previously reduced, but not mandatory.
                   action="store", dest="output_filename", 
                   help="final coadded output image")
     
-    
     parser.add_option("-r", "--resample",
                   action="store_true", dest="resample", default=False,
                   help="Resample input image [default=%default]")
@@ -879,6 +901,10 @@ in principle previously reduced, but not mandatory.
     parser.add_option("-b", "--subtract_back",
                   action="store_true", dest="subtract_back", default=False,
                   help="Subtract sky background [default=%default]")
+    
+    parser.add_option("-e", "--engine",
+                  action="store", dest="engine", default="SCAMP",
+                  help="Astrometric engine to use (SCAMP, AstrometryNet) [default=%default]")
     
     
                                 
@@ -910,20 +936,34 @@ in principle previously reduced, but not mandatory.
     if os.path.exists(options.source_file):
         try:
             datahandler.fits_simple_verify(options.source_file)
-            filelist=[options.source_file]
+            filelist = [options.source_file]
         except:
-            filelist=[line.replace( "\n", "") 
+            filelist = [line.replace( "\n", "") 
                       for line in fileinput.input(options.source_file)]
             
         if len(filelist)==1:
-            try:
-                doAstrometry(filelist[0], output_image=options.output_filename,
-                          catalog='USNO-B1', config_dict=cfg_options, 
-                          do_votable=False, resample=options.resample,
-                          subtract_back=options.subtract_back)
-            except Exception,e:
-                log.error("Some error while doing astrometric calibration")
-                
+            # Astromatic
+            if options.engine=="SCAMP":
+                try:
+                    log.debug("[Astrowarp] Solving with SCAMP engine")
+                    doAstrometry(filelist[0], output_image=options.output_filename,
+                              catalog='USNO-B1', config_dict=cfg_options, 
+                              do_votable=False, resample=options.resample,
+                              subtract_back=options.subtract_back)
+                except Exception,e:
+                    log.error("Some error while doing astrometric calibration")
+            # AstrometryNet
+            else: 
+                try:
+                    log.debug("[Astrowarp] Solving with Astrometry.Net engine")
+                    solved = reduce.solveAstrometry.solveField( 
+                                        filelist[0],
+                                        cfg_options['general']['temp_dir'],
+                                        cfg_options['general']['pix_scale'])
+                except Exception,e:
+                    raise Exception("Cannot solve Astrometry for file: %s"%(file,str(e)))
+                else:
+                    shutil.move(solved, options.output_filename)     
         else: 
             astrowarp = AstroWarp(filelist, catalog="2MASS", 
                                   coadded_file=options.output_filename, 
@@ -932,7 +972,7 @@ in principle previously reduced, but not mandatory.
                                   subtract_back=options.subtract_back)
         
             try:
-                astrowarp.run()
+                astrowarp.run(options.engine)
             except Exception,e:
                 log.error("Some error while running Astrowarp : %s",str(e))
     else:
