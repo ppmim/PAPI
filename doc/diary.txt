@@ -3506,8 +3506,9 @@ de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho
 1) HAWK-I-DS3-01:
 
 1.1) Astrowarp(engine='Astrometry.net') -- falla en SCAMP
-1.2) sin Astrowarp(engine='Astrometry.net') + AstroEngine=SCAMP -- OK (116s)
-1.3) sin Astrowarp(engine='Astrometry.net') + AstroEngine=AstrometryNet -- Astrometry.net se atranca en Q04 !!!
+1.2) Astrowarp(engine='SCAMP') -- falla en SCAMP
+1.3) sin Astrowarp() + AstroEngine=SCAMP -- OK (116s)
+1.4) sin Astrowarp() + AstroEngine=AstrometryNet -- Astrometry.net se atranca en Q04 !!!
 Pero el problema es que ese cuadrante (4), por la razón que sea no es capaz de
 calibrarlo Astrometry.net, ni en la imagen en bruto tampoco (en bruto no resuelve ninguna).
 Los otros tres sin problema (el coadd1); no se cual puede ser la causa.
@@ -3546,6 +3547,95 @@ calibrar.
 
 - Ahora Astrowarp también puede hacer la astrometría de un fichero individual 
 con Astrometry.Net.
+
+
+03-02-2014
+----------
+- RM descubre por fin el problema con crep>3. El problema estaba en el valor de
+CAMSHMSZ=512 en GEIRS/scripts/GENERIC. 
+Ahora el valor es calculado en funcion de la memoria total del sistema, como 
+indica el manual de GEIRS:
+
+   setenv CAMSHMSZ `cat /proc/meminfo | fgrep MemTotal | awk '{printf "%d",$2/3072}'`
+
+Además, tambien con la sugerencia de RM, reviso los valores del sistema para los
+bloque de memoria compartida, que inicialmente tenian los valores (creo que
+según CS):
+
+kernel.shmall = 128000000000
+kernel.shmmax = 4000000000
+kernel.shmseg = 40960
+
+Unos valores mas razonables creo que serían:
+
+kernel.shmall = 15728640   # 60 GB
+kernel.shmmax = 4294967296  # 4 GB
+kernel.shmseg = 40960
+
+> sysctl -p  (para re-leer dinamicamente los nuevos valores)
+
+GEIRS ahora parace funciona correctamente con crep, aunque el valor que crítico
+que lo ha solucionado ha sido CAMSHMSZ.
+
+
+
+04-02-2014
+----------
+- Mando email a JF con la info que me pidió sobre el Pipeline para la Web.
+
+"""
+* Pre-procesing
+
+Once the the data grouping and preparation of a data set is done, the data reduction can start. Data reduction of the scientific frames includes the usual standard steps: dark subtraction, flat-fielding and sky subtraction. The sky subtraction is done in a double pass algorithm. In first pass for each image (dark and flat corrected), N nearby neighbouring images (>3) from the same observation sequence are selected to obtain a initial sky estimate. Then for each sky subtracted image an object mask is defined and used to exclude those regions from a second pass of sky estimation and subtraction. Finally, the second sky subtracted images of the same observation sequence are combined in a stacked image (registering).
+
+* Astrometric calibration
+
+Astrometric calibration can be done by using two different tools: SCAMP or Astrometry.net. Currently, the most commonly used tool in PANIC is SCAMP (Bertin 2006), which uses the initial WCS header and the stored information about detectors' relative orientation. SCAMP matches the object catalogues obtained with SExtrator (Bertin & Arnouts 1996) to the astrometric reference catalogue selected, eg. 2MASS for most of the times. The astrometric solution is stored in separate FITS headers, which are read by SWarp (Bertin et al 2002) during the image co-addition and distortion correction. The internal accuracy of the resulting  astrometric solution with SCAMP is on the order of 0.1-0.3 pixels.
+Once the astrometric solution is obtained, SCAMP also can determine relative photometric zero-points for the exposures.
+
+A complementary tool to SCAMP is a local implementation of the Astrometry.net algorithm (Lang et al. 2010). Matching is done based on quadrilaterals in the reference (local 2MASS index) and the object catalogues created by the own Astrometry.net tool (image2xy), although SExtractor catalogues as created for SCAMP could also be used.
+The different matching techniques used by SCAMP and Astrometry.net complement each other for problematic fields. Currently Astrometry.net (v0.46) is not able to calculate photometric zero-points and also has little control over field distortion.
+Hence Astrometry.net is currently used mainly for catalogue matching, while SCAMP is run afterwards (with matching deactivated) to calculate the distortion maps and relative photometric zero-points.
+
+
+* Photometric calibration
+
+One the data are flat-fielded, gain corrected to place all four detectors on a common system, and sky subtracted, the photometric calibration can be done. The per detector magnitude ZP is then derived for each frame from measurements of matching stars in the 2MASS catalog that fall within the same observed frame. Thus, calibration stars are not needed with this calibration procedure.
+We assume that there is a simple linear relation between the stellar 2MASS and PANIC colours. For each star in 2MASS observed with PANIC, the pipeline derive a ZP (at airmass unity) from:
+
+ZP = m_2mass + C(J_2mass-H_2mass or J_2mass - K_2mass) - m_inst + k(X-1)
+
+where ZP is the zero-point in that passband, m_inst is the aperture-corrected instrumental magnitude (-2..5 x log10[counts/sec], where counts are obtained by SExtractor with fixed or auto apertures), C is the colour coefficients for each passband (to solve during commissioning), k is the default value for the extinction (0 for the moment) and X is the airmass.
+The 2MASS sources used for the calibration for PANIC are selected to have an extinction-corrected colour 0.0 < =J_2mass-K_2mass<=1.0 with a 2MASS signal-to-noise ratio > 10 in each filter. If fewer than 25 sources are found within the field of view of the detector, then the colour cut is not applied.
+For a single pointing, for each detector, the zero-pointing is then derived as the median of all per-star zero-point values. A single photometric zero-point for the pointing is calculated as the median of the detector zero-points over all four detectors. The associated error (a robust estimate of the Gaussian sigma) is computed as 1.48 times the median absolute deviation (MAD) of the detector zero-points around the median.
+
+"""
+
+- Al hilo de lo de antes, veo un resumen interesate de los pasos a seguir para la fotometría de VISTA (http://goo.gl/FrhCpT):
+
+The VISTA Photometric System
+VISTA Photometry is on the VISTA system, tied to (but different from) 2MASS, calibrated via colour equations between the two systems (below). Briefly the following steps are followed to calibrate a single VISTA pawprint.
+
+1. All detectors are normalised to the same approximate gain using the flatfield exposures.
+
+2. The catalogue of sources detected (via imcore) on each VISTA detector is crossmatched against the 2MASS catalogue (this is also used to refine the astrometric solution).
+
+3. The 2MASS magnitudes for all matching stars are converted to expected VISTA magnitudes using the colour equations (below), including terms to account for interstellar reddening.
+
+4. The offset between the median 2MASS and VISTA magnitudes is the Zeropoint of the detector(corrected to airmass unity under the assumption of a default extinction value for the filter)
+
+5. A single preliminary median (of all 16 detectors) Zeropoint is written to the FITS header (keyword: MAGZPT), while the scatter in the measurements (the median absolute deviation MAD*1.48, a robust estimate of the Gaussian sigma) forms a measure in the error in the Zeropoint (keyword: MAGZRR).
+
+6. A final stage to the photometric calibration takes account of systematic differences between the 16 detectors, measured on a monthly basis. The residuals from all 2MASS stars used in the frame zero-point determination (i.e. J, H, Ks signal:noise >10:1) are also computed on a per pointing basis together with their standard coordinate location with respect to the tangent point of the telescope optical axis. The residuals are stacked and used to generate delta-Zeropoints per detector (the value of MAGZPT is actually updated for each detector).
+
+7. At the time of writing, no significant spatial residuals (above the detector-to-detector offsets) are seen (e.g. that could arise from scattered light). More details below.
+
+VISTA-2MASS colour equations
+2nd pass (improved) colour equations and zeropoints, derived from to 2MASS from a compilation of data measured on good (photometric) nights, with good seeing, and for fields with E(B-V)<0.1. The nominal ZPs are unchanged, but the colour equations have been adjusted slightly to give robust fits to the data.  Earlier colour equations are reproduced at the bottom of this page for completeness.
+
+
+- Actualizo Astrometry.net v0.46 en panic2. Parece que todo OK.
+
 
 
 
@@ -3965,6 +4055,8 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Opcion en solveAstrometry para usar SExtractor en lugar de imagexy
+- Fotometría con SCAMP !!! (ver THELI) ??? todavia no tengo claro si se puede hacer !!
 -  Quizás habría que añadir otro parametro para indicar si queremos que la
 distorsión del campo se elimine antes del coadd (a nivel individual en cada imagen
 del dithering) o bien despues del coadd final. Yo creo que se con hacerla al final
@@ -3992,7 +4084,6 @@ Alguna otra solución ???
 - PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
 sin embargo, parece que calDark.py no se queja !
 - doc. y script de instalación de PAPI --> (Distribute vs distutils)
-- (terminar) implementar astrometry.net (solve_field) como alternativa a SCAMP !!!
 - how to manage MEF calibration files ? (currently darks, flats are not splited !)
 - implementar procesamiento (detección y suma) de 'individual images' en 
 varios ficheros, en CUBOS en un solo fichero creo que si lo hace PAPI.
@@ -4080,4 +4171,14 @@ The photometric calibration is good to within 0.03 mag. The staked images and
 catalogs derived from these images are available through the Calar Alto archive.
 
 
-
+Things To Be Done on PAPI 
+=========================
+- Second pass of Sky-subtraction for Extended Objects
+- Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
+- Support for sub-windows (not tested, but probably does not work properly) 
+- Non-linearity computation ( fac = a0 + a1*I + a2*I^2 )
+- Method to compute empiricaly the field distortion based on astrometrical fields or mask (ala )     
+- Method to empiricaly determine the Geometric distortion based an auto-calibration 
+approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
+- Support for incomplete sequences (ie. aborted, corrupted, ...): a kind of 
+fix method to update the headers in order to build a valid sequence for PAPI. 

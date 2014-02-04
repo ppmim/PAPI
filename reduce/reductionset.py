@@ -2944,7 +2944,7 @@ class ReductionSet(object):
         # No obstante, con Astrometry.net igual si se puede conseguir algo estable ...
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        prueba = True
+        prueba = False
         if prueba:
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
@@ -2952,8 +2952,7 @@ class ReductionSet(object):
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
                 coadded_file=output_file, config_dict=self.config_dict)
                 try:
-                    aw.run(engine='Astrometry.net')
-                    #aw.run(engine='SCAMP')
+                    aw.run(engine=self.config_dict['astrometry']['engine'])
                 except Exception,e:
                     log.error("Some error while running Astrowarp....")
                     raise e

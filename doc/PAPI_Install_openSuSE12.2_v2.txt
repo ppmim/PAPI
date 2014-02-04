@@ -35,6 +35,19 @@ kernel.shmseg = 40960
 - install /usr/src/PlxLinux[_v6.50]
 """
 
+Tras email con RM el 3-Feb-2014, los valores mas adecuados serían:
+
+kernel.shmall = 15728640   # 60 GB
+kernel.shmmax = 4294967296  # 4 GB
+kernel.shmseg = 40960
+
+y lo más importante, CAMSHMSZ en GEIRS/scripts/GENERIC:
+
+setenv CAMSHMSZ `cat /proc/meminfo | fgrep MemTotal | awk '{printf "%d",$2/3072}'` 
+
+
+
+
 * after launch GEIRS (start_panic_new), create next empty file:
 
     ~/tmp/fitsheader_panic.txt
