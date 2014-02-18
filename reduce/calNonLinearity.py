@@ -29,7 +29,8 @@
 # Created    : 16/12/2009    jmiguel@iaa.es -
 # Last update: 15/02/2012    jmiguel@iaa.es
 #
-# TODO : computation of non-linearity based on a serie or darks ???
+# TODO : computation of non-linearity based of a set of dard subtracted flats,
+#        so, dark subtrction must be done previously.
 #       
 ################################################################################
 # Import necessary modules
@@ -116,6 +117,7 @@ from optparse import OptionParser
 import misc.fileUtils
 import misc.utils as utils
 import datahandler
+import misc.robust as robust
 
 # Interact with FITS files
 import pyfits
@@ -127,10 +129,10 @@ from misc.paLog import log
 class NonLinearityModel(object):
     """
     Class used to compute the Non-linearity model for the detectors
-    Based on the algorithm described by T.H.Jarrett et all (1994) we compute the non-linearity coefficientes
-    of the model
+    Based on the algorithm described by T.H.Jarrett et all (1994) we compute 
+    the non-linearity coefficientes of the model.
     """
-    def __init__(self, input_files=None, output_dir="/tmp", output_filename="/tmp/NLC.fits"):
+    def __init__(self, input_files=None, output_filename="/tmp/NLC.fits"):
         """
         Init the object
         
@@ -154,7 +156,6 @@ class NonLinearityModel(object):
             a2 = the non-linearity or saturation
         """
         self.__input_files = input_files
-        self.__output_file_dir = output_dir
         self.__output_filename = output_filename  # full filename (path+filename)
     
     def createModel(self):
@@ -162,45 +163,197 @@ class NonLinearityModel(object):
         """
         Compute the Non-linearity correction model based on a serie of FITS files
         taken in order to get check the detector linearity.
-         
+        
+        1) Determine the coefficients:
+
+          1.1 Take a series of "flat" exposures with the same illumination but
+              increasing exp.time
+          1.2 Calculate a polynomial fit (deg=3) to these data pixel by pixel (dark subtracted!)
+          1.3 Store the coefficients of these polynomials in frames, so you have
+              a frame/plane for each coeff:
+
+                plane_0 = coeff_0 (intercept, bias level)
+                plane_1 = coeff_1 (quantum efficiency or sensitivity)
+                plane_2 = coeff_2 (the non-linearity or saturation)
+                plane_3 = coeff_3 (???)
+
+
+        2) Apply the corrections:
+
+          2.1 For each pixel in the frame to be corrected compute the polynomial, 
+              add the difference between poly. and linear relation to measured flux.
+
         Parameters
         ----------
         
-        Return
-        ------
-        
+        Returns
+        -------
+        The filename of the file created having a cube N=4 planes, one for each
+        coeff of the polynomial fitted. 
+
         
         """   
-        log.debug("Start createModel")
-        log.warn("Non-Linearity model computation is NOT yet implemented !!")
         
-        return
-    
-    
+        log.debug("Start createModel")
+        
         start_time = time.time()
-        t=utils.clock()
+        t = utils.clock()
         t.tic()
         
-        # Get the user-defined list of dark frames
+        # Get the user-defined list of flat frames
         framelist = self.__input_files
         
-        # STEP 0: Determine the number of frames 
+        # STEP 0: Determine the number of flat frames to combine
         try:    
             nframes = len(framelist)
         except IndexError:
-            log.error("No DARK frames defined")
+            log.error("No FLAT frames defined")
             raise
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
             raise NameError, 'Wrong output path'
         if not self.__output_filename:
-            log.error("Combined DARK frame not defined")
-            raise "Wrong output filename"
+            log.error("Output FLAT frame not defined")
+            raise Exception("Wrong output filename")
     
-        log.debug('Saved NLC Model to %s' , self.__output_filename)
-        log.debug("createModel' finished %s", t.tac() )
+        # Change to the source directory
+        base, infile = os.path.split(self.__output_filename) 
         
-        return True
+        flats = numpy.zeros(nframes, dtype=numpy.int)
+         
+        # STEP 1: Check TYPE(flat), READMODE and read the EXPTIME of each frame
+        # print "FRAMELIST= %s" %framelist
+        i = 0
+        f_readmode = -1
+        f_n_extensions = -1
+        for iframe in framelist:
+            fits = datahandler.ClFits(iframe)
+            log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
+            # Check TYPE (flat)
+            if not fits.isDomeFlat():
+                log.warning("Warning: Task 'createDarkModel' found a non DomeFlat frame. Skipping %s", iframe)
+                flats[i] = 0
+            else:
+                # Check READMODE
+                if ( f_readmode!=-1 and (f_readmode!= fits.getReadMode() )):
+                    log.error("Error: Task 'createNLModel' finished. Found a FLAT frame with different  READMODE")
+                    flats[i] = 0  
+                    #continue
+                    raise Exception("Found a FLAT frame with different READMODE") 
+                else: 
+                    f_readmode = fits.getReadMode()
+                    f_n_extensions = fits.getNExt()
+                    log.debug("NEXT= %s"%(f_n_extensions))
+                    flats[i] = 1
+                
+            i = i+1
+        log.debug('All frames checked')   
+        
+        naxis1 = fits.naxis1
+        naxis2 = fits.naxis2            
+        nflats = (flats==1).sum()
+        
+        if nflats<10:
+            log.error('Input dataset doesnt have enough frames. At least 10 Flat frames are needed')
+            raise Exception("Flat sequence is too short. Al least 10 Flat frames are needed !")
+        
+        # Initialize some storage arrays
+        times = numpy.zeros(nflats, dtype=numpy.float32)
+        temp = numpy.zeros([nflats, f_n_extensions, naxis1, naxis2], dtype=numpy.float32)
+        out = numpy.zeros([2, f_n_extensions, naxis1, naxis2], dtype=numpy.float32)
+        
+
+        # loop the images
+        counter = 0
+        for i in range(0, nframes):
+            file = pyfits.open(framelist[i])
+            f = datahandler.ClFits ( framelist[i] )
+            if flats[i]==1:
+                for i_ext in range(0, f_n_extensions):
+                    if f_n_extensions==1:
+                        temp[counter, 0, :,:] = file[0].data
+                    else:
+                        log.debug("Found MEF file")
+                        temp[counter, i_ext, :,:] = file[i_ext+1].data
+                _mean = numpy.mean(temp[counter])
+                _robust_mean = robust.mean(temp[counter].reshape(naxis1*naxis2*f_n_extensions))
+                _median = numpy.median(temp[counter])
+                _mode = 3*_median - 2*_mean
+                log.info("Flat frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s ROBUST_MEAN=%s"%(f.expTime(), f.getItime(), _mean, _median, _robust_mean))
+                times[counter] = float(f.expTime())
+                counter = counter+1
+                file.close()
+
+        log.debug("Now fitting the linearity model...")
+        # now collapse and fit the data
+        # polyfit returns polynomial coefficients ordered from low to high.
+        fit = numpy.polynomial.polynomial.polyfit(times, 
+                            temp.reshape(len(times), naxis1*naxis2*f_n_extensions), deg=3)
+
+        # Get the median value of the coeffs                
+        coeff_0 = numpy.median(fit[0])
+        coeff_1 = numpy.median(fit[1])
+        coeff_2 = numpy.median(fit[2])
+        coeff_3 = numpy.median(fit[3])
+
+        log.info("Coeff_0 = %s"%coeff_0)
+        log.info("Coeff_1 = %s"%coeff_1)
+        log.info("Coeff_2 = %s"%coeff_2)
+        log.info("Coeff_3 = %s"%coeff_3)
+        
+        misc.fileUtils.removefiles(self.__output_filename)               
+
+        # Write result in a FITS
+        hdulist = pyfits.HDUList()
+        hdr0 = pyfits.getheader(framelist[numpy.where(flats==1)[0][0]])
+        prihdu = pyfits.PrimaryHDU (data = None, header = None)
+        try:
+            prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
+            prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
+            prihdu.header.set('CAMERA', hdr0['CAMERA'])
+            prihdu.header.set('MJD-OBS', hdr0['MJD-OBS'])
+            prihdu.header.set('DATE-OBS', hdr0['DATE-OBS'])
+            prihdu.header.set('DATE', hdr0['DATE'])
+            prihdu.header.set('UT', hdr0['UT'])
+            prihdu.header.set('LST', hdr0['LST'])
+            prihdu.header.set('ORIGIN', hdr0['ORIGIN'])
+            prihdu.header.set('OBSERVER', hdr0['OBSERVER'])
+        except Exception,e:
+            log.warning("%s"%str(e))
+
+        prihdu.header.set('PAPITYPE','MASTER_LIN_MODEL')
+        prihdu.header.add_history('Linearity model based on %s' % framelist)
+        
+        if f_n_extensions>1:
+            prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.set('NEXTEND', f_n_extensions)
+            prihdu.header.set('FILENAME', self.__output_filename)
+            hdulist.append(prihdu)
+            for i_ext in range(0, f_n_extensions):
+                hdu = pyfits.PrimaryHDU()
+                hdu.scale('float32') # important to set first data type
+                hdu.data = fit.reshape(2, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
+                hdulist.append(hdu)
+                del hdu
+        else:
+            prihdu.scale('float32') # important to set first data type
+            prihdu.data = fit.reshape(4, 1, naxis1, naxis2)[:, 0, :, :]
+            hdulist.append(prihdu)
+         
+        
+        # write FITS
+        try:
+            hdulist.writeto(self.__output_filename)
+            hdulist.close(output_verify='ignore')
+        except Exception,e:
+            log.error("Error writing linearity model %s"%self.__output_filename)
+            raise e
+        
+        log.debug('Saved Linearity Model to %s' , self.__output_filename)
+        log.debug("createModel' finished %s", t.tac() )
+
+        
+        return self.__output_filename
     
     def applyModel(self, source, model):
           
@@ -215,7 +368,7 @@ class NonLinearityModel(object):
         
         model : str 
             FITS filename of the Non-Linearity model, ie., containing polynomial 
-            coeffs for correction that must has been previously computed
+            coeffs for correction that must has been previously computed.
         
         
         Returns
@@ -279,8 +432,8 @@ class NonLinearityModel(object):
         # bad =z pyfits.getdata(badfile)
         ###
         
-        # correct fits file
-        #Note the factor 10^4 and the backward order of the polynomial coefficients.
+        # Correct fits file
+        # Note the factor 10^4 and the backward order of the polynomial coefficients.
         # you may want to constrain this only to "positive" corrections
         fac = 1 / (1 + poly[1,:,:] * myfits_data/1e4 + poly[0,:,:] * (myfits_data/1e4)**2)
         
@@ -329,7 +482,7 @@ NOTE: Not yet implemented !!
     
     parser.add_option("-c", "--coeff_file", type="str",
                   action="store", dest="out_coeff_file", 
-                  help="filename of outputs coeffs, contains (a0, a1, a2)")
+                  help="FITS cube file of outputs coeffs, contains (a0, a1, a2, a3) planes")
     
     parser.add_option("-a", "--apply_model",
                   action="store_true", dest="apply_model", default=False,
@@ -358,7 +511,7 @@ fit to requirements for model computation")
        parser.print_help()
        sys.exit(0)
 
-    #Check required parameters
+    # Check required parameters
     if (not options.source_file_list or not options.out_data 
         or not options.out_coeff_file  or len(args)!=0): # args is the leftover positional arguments after all options have been processed
         parser.print_help()
@@ -368,11 +521,11 @@ fit to requirements for model computation")
     
     # Two purposes, apply the model to correct non-linearity     
     if options.apply_model:
-        NLM = NonLinearityModel()
-        NLM.applyModel(options.source_file_list, options.out_coeff_file)
+        NLM = NonLinearityModel(filelist)
+        NLM.applyModel(options.source_file_list, options.out_data)
     # or, compute the non-linearity model
     else:
         filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-        NLM = NonLinearityModel(filelist, "/tmp", options.out_coeff_file)
+        NLM = NonLinearityModel(filelist, options.out_coeff_file)
         NLM.createModel()    
         

@@ -232,6 +232,9 @@ class ClFits (object):
     
     def isMEF(self):
         return (self.mef)
+
+    def getNExt(self):
+        return (self.next)
     
     def isFromOT(self):
         return (self.obs_tool)
@@ -383,7 +386,7 @@ class ClFits (object):
         
         # If file is a MEF, some values will be read from the header extensions      
         if self.mef:
-            # we suppose all extension have the same dimensions
+            # we suppose all extension have the same dimensions (subwindows ???)
             self.naxis1 = myfits[1].header['NAXIS1']
             self.naxis2 = myfits[1].header['NAXIS2']
             #self._shape = myfits[1].data.shape # (naxis3, naxis2, naxis1)
@@ -485,8 +488,10 @@ class ClFits (object):
                         self.type = "TW_FLAT_DUSK"
                     elif ltype.count('dawn'):
                         self.type = "TW_FLAT_DAWN"
-                    elif ltype.count('sky_flat') or ltype.count('flat'): 
+                    elif ltype.count('sky_flat'): 
                         self.type = "SKY_FLAT"
+                    elif ltype.count('flat'):
+                        self.type = "DOME_FLAT"
                     elif ltype.count('sky'):
                         self.type = "SKY"
                     elif ltype.count('focus'):
