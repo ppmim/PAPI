@@ -285,7 +285,7 @@ class MEF (object):
                 n_ext = 1
                 log.debug("Simple FITS file")
                                         
-            hdu = pyfits.ImageHDU (data = f[0].data, header = f[0].header)
+            hdu = pyfits.ImageHDU(data = f[0].data, header = f[0].header)
             #hdu.header.update('EXTVER',1)
             fo.append(hdu)
             del hdu

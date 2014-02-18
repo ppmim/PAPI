@@ -26,10 +26,11 @@
 #
 # Created    : 17/06/2009    jmiguel@iaa.es
 # Last update: 22/06/2009    jmiguel@iaa.es
-#              03/03/2010    jmiguel@iaa.es Added READMODE checking 
+#              03/03/2010    jmiguel@iaa.es Added READMODE checking
+#              18/02/2014    jmiguel@iaa.es Speeded up with numpy.polynomial.polynomial.polyfit 
+#                            and added support for MEFs.
+#                            Changed structure of planes, p0=bias, p1=dark_curr
 #
-################################################################################
-# TODO: increase running speed !!!
 ################################################################################
 
 # Import necessary modules
@@ -79,8 +80,8 @@ class MasterDarkModel(object):
     Returns
     -------
         If no error, a fits file (nx*ny) with 2 planes (extensions)
-        plane 0 = dark current in DN/sec
-        plane 1 = bias
+        plane 0 = bias 
+        plane 1 = dark current in DN/sec
         
         DARKCURRENT The median dark current in data numbers per second found 
         from the median value of the output dark current map.
@@ -129,17 +130,18 @@ class MasterDarkModel(object):
         # Change to the source directory
         base, infile = os.path.split(self.__output_filename) 
         
-        darks = numpy.zeros(nframes,dtype=numpy.int)
+        darks = numpy.zeros(nframes, dtype=numpy.int)
          
-        # STEP 1: Check TYPE(dark),READMODE and read the EXPTIME of each frame
-        #print "FRAMELIST= %s" %framelist
+        # STEP 1: Check TYPE(dark), READMODE and read the EXPTIME of each frame
+        # print "FRAMELIST= %s" %framelist
         i = 0
         f_readmode = -1
+        f_n_extensions = -1
         for iframe in framelist:
             fits = datahandler.ClFits(iframe)
             log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
             # Check TYPE (dark)
-            if  not fits.isDark():
+            if not fits.isDark():
                 log.warning("Warning: Task 'createDarkModel' found a non dark frame. Skipping %s", iframe)
                 darks[i] = 0
             else:
@@ -151,6 +153,8 @@ class MasterDarkModel(object):
                     raise Exception("Found a DARK frame with different READMODE") 
                 else: 
                     f_readmode = fits.getReadMode()
+                    f_n_extensions = fits.getNExt()
+                    log.debug("NEXT= %s"%(f_n_extensions))
                     darks[i] = 1
                 
             i = i+1
@@ -164,76 +168,88 @@ class MasterDarkModel(object):
             log.error('Dark frameset doesnt have enough frames. At least 2 dark frames are needed')
             raise Exception("Dark sequence is too short. Al least 2 dark frames are needed !")
         
-        #Initialize some storage arrays
-        temp = numpy.zeros([ndarks, naxis1, naxis2], dtype=numpy.float)
-        out = numpy.zeros([2, naxis1, naxis2], dtype=numpy.float)
-        times = numpy.zeros(ndarks, dtype=numpy.float)
+        # Initialize some storage arrays
+        times = numpy.zeros(ndarks, dtype=numpy.float32)
+        temp = numpy.zeros([ndarks, f_n_extensions, naxis1, naxis2], dtype=numpy.float32)
+        out = numpy.zeros([2, f_n_extensions, naxis1, naxis2], dtype=numpy.float32)
         
+
         #loop the images
         counter = 0
         for i in range(0, nframes):
+            file = pyfits.open(framelist[i])
+            f = datahandler.ClFits ( framelist[i] )
             if darks[i]==1:
-                file = pyfits.open(framelist[i])
-                f = datahandler.ClFits ( framelist[i] )
-                temp[counter, :,:] = file[0].data
-                times[counter] = float(f.expTime())
-                _mean = numpy.mean(file[0].data)
-                _robust_mean = robust.mean(file[0].data)
-                _median = numpy.median(file[0].data)
+                for i_ext in range(0, f_n_extensions):
+                    if f_n_extensions==1:
+                        temp[counter, 0, :,:] = file[0].data
+                    else:
+                        log.debug("Found MEF file")
+                        temp[counter, i_ext, :,:] = file[i_ext+1].data
+                _mean = numpy.mean(temp[counter])
+                _robust_mean = robust.mean(temp[counter].reshape(naxis1*naxis2*f_n_extensions))
+                _median = numpy.median(temp[counter])
                 _mode = 3*_median - 2*_mean
-                #m_mode = my_mode(file[0].data)[0][0]
-                #scipy_mode = scipy.stats.stats.mode ( file[0].data ) # extremely low !!
                 if self.show_stats:
                     log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s ROBUST_MEAN=%s"%(f.expTime(), f.getItime(), _mean, _median, _robust_mean))
+                times[counter] = float(f.expTime())
                 counter = counter+1
                 file.close()
-                
+
         log.debug("Now fitting the dark model...")
-        #now collapse and fit the data
-        slopes = numpy.zeros(naxis1*naxis2, dtype=numpy.float)
-        bias = numpy.zeros(naxis1*naxis2, dtype=numpy.float)
-        for i in range(0, naxis1):
-            for j in range(0, naxis2):
-                #result=numpy.polyfit(times, temp[:, i,j], deg=1) # result==> Polynomial coefficients, highest power first.
-                b = (temp[counter-1,i,j]-temp[0,i,j])/(times[counter-1]-times[0]) # slope
-                a = temp[0,i,j]-b*times[0] # intercept (bias)
-                result = numpy.array([b,a])
-                out[:, i,j] = result
-                slopes[j+i*naxis2] = result[0]
-                bias[j+i*naxis2] = result[1]
-                #print "ROUND=%s %s result=%s" %(i,j, result)
-        #out=numpy.where(out==0, numpy.polyfit(times, temp, deg=1), 0)   
-        
-        #Get the median value of the dark current                 
-        median_dark_current = numpy.median(slopes)    #numpy.median(out[0,:,:])
-        median_bias = numpy.median(bias) 
-        
+        # now collapse and fit the data
+        # polyfit returns polynomial coefficients ordered from low to high.
+        # It means, 0-coeff => bias, 1-coeff => dark_current 
+        fit = numpy.polynomial.polynomial.polyfit(times, 
+                            temp.reshape(len(times), naxis1*naxis2*f_n_extensions), deg=1)
+
+        # Get the median value of the dark current                 
+        median_dark_current = numpy.median(fit[1])
+        median_bias = numpy.median(fit[0])
+
         log.info("MEDIAN_DARK_CURRENT = %s"%median_dark_current)
         log.info("MEDIAN BIAS = %s"% median_bias)    
         
         misc.fileUtils.removefiles( self.__output_filename )               
 
         # Write result in a FITS
-        hdu = pyfits.PrimaryHDU()
-        hdu.scale('float32') # important to set first data type
-        hdu.data = out
+        hdulist = pyfits.HDUList()
+        hdr0 = pyfits.getheader(framelist[numpy.where(darks==1)[0][0]])
+        prihdu = pyfits.PrimaryHDU (data = None, header = None)
+        try:
+            prihdu.header.update('INSTRUME', hdr0['INSTRUME'])
+            prihdu.header.update('TELESCOP', hdr0['TELESCOP'])
+            prihdu.header.update('CAMERA', hdr0['CAMERA'])
+            prihdu.header.update('MJD-OBS', hdr0['MJD-OBS'])
+            prihdu.header.update('DATE-OBS', hdr0['DATE-OBS'])
+            prihdu.header.update('DATE', hdr0['DATE'])
+            prihdu.header.update('UT', hdr0['UT'])
+            prihdu.header.update('LST', hdr0['LST'])
+            prihdu.header.update('ORIGIN', hdr0['ORIGIN'])
+            prihdu.header.update('OBSERVER', hdr0['OBSERVER'])
+        except Exception,e:
+            log.warning("%s"%str(e))
 
-        # copy some keywords 
-        hdr0 = pyfits.getheader( framelist[numpy.where(darks==1)[0][0]]  )
-        hdu.header.update('INSTRUME', hdr0['INSTRUME'])
-        hdu.header.update('TELESCOP', hdr0['TELESCOP'])
-        hdu.header.update('CAMERA', hdr0['CAMERA'])
-        hdu.header.update('MJD-OBS', hdr0['MJD-OBS'])
-        hdu.header.update('DATE-OBS', hdr0['DATE-OBS'])
-        hdu.header.update('DATE', hdr0['DATE'])
-        hdu.header.update('UT', hdr0['UT'])
-        hdu.header.update('LST', hdr0['LST'])
-        hdu.header.update('ORIGIN', hdr0['ORIGIN'])
-        hdu.header.update('OBSERVER', hdr0['OBSERVER'])
-        #
-        hdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
-        hdu.header.add_history('Dark model based on %s' % framelist)
-        hdulist = pyfits.HDUList([hdu])
+        prihdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
+        prihdu.header.add_history('Dark model based on %s' % framelist)
+        
+        if f_n_extensions>1:
+            prihdu.header.update('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.update('NEXTEND', f_n_extensions)
+            prihdu.header.update('FILENAME', self.__output_filename)
+            hdulist.append(prihdu)
+            for i_ext in range(0, f_n_extensions):
+                hdu = pyfits.PrimaryHDU()
+                hdu.scale('float32') # important to set first data type
+                hdu.data = fit.reshape(2, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
+                hdulist.append(hdu)
+                del hdu
+        else:
+            prihdu.scale('float32') # important to set first data type
+            prihdu.data = fit.reshape(2, 1, naxis1, naxis2)[:, 0, :, :]
+            hdulist.append(prihdu)
+         
+        
         # write FITS
         try:
             hdulist.writeto(self.__output_filename)

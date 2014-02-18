@@ -2414,7 +2414,7 @@ de entorno.
 
 17-Julio-2013
 =============
-TODO> Vamos a ver si PAPI puede contamplar el caso que necesitaría Conchi para las
+- Vamos a ver si PAPI puede contamplar el caso que necesitaría Conchi para las
 pruebas de laboratorio:
 
    --> I1 = (Raw - Dark) / FF
@@ -3638,6 +3638,102 @@ VISTA-2MASS colour equations
 
 
 
+10-Feb-2014
+-----------
+- Le mando a Josef (fuera de tiempo) lo siguiente para la videoconf:
+
+"""
+I am sorry Mr. Fried, but I am quite busy last days.
+
+Please, take the next info from the Pipeline:
+
+- TN about 'FITS headers' updated and reviewed
+- Integration of Astrometry.net with SCAMP for astrometric calibration and distortion correction
+- Simulated simultaneous running of GEIRS acquisition + data reduction + data archiving. No problems detected.
+- Fixed problem with 'crep' command (memory configuration!)
+- Testing new MEF file-saving feature of GEIRS (r712M)
+
+(at least) Things not done by PAPI:
+
+- Second pass of sky-subtraction for extended objects
+- Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd
+- Support for sub-windows (not tested, but probably does not work properly)
+- Non-linearity computation ( fac = a0 + a1*I + a2*I^2 ) and correction. In progress.
+- Method to empirically determine the geometric distortion based an auto-calibration
+approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
+- Photometry: currently only 2MASS filters (J, H, Ks) supported. No colour
+coefficients neither extinction taken into account.
+- Data Quality Control (frames to reject, ...) 
+"""
+
+11-Feb-2014
+-----------
+
+- Josef Fried me envía como hacer el cálculo de la Non-Linearity:
+
+"""
+thanks for your mail. WRTO the non-linearity corrections the procedure is:
+
+determine the coefficients:
+
+  1. take a series of exposures with the same illumination but
+     increasing exp.time
+  2. calculate a polynomial fit to these data pixel by pixel
+  3. store the coefficients of these polynomials in frames, so you have
+     a frame for each coeff.
+
+apply the corrections:
+
+   for each pixel in the frame to be corrected compute the polynomial, add the 
+   difference between poly. and linear relation to measured flux.
+
+We can talk about this during software integration. 
+"""
+
+Además, en la web del NOT encuentro la siguiente información:
+
+NOT
+---
+
+The non-linearity of the array can be corrected pixel by pixel using the two 
+coefficient images "ba" and "ca". 
+The coefficients were determined from sets of dark-corrected lamp flats obtained 
+using the ramp-sampling readout mode with 10 integration times 
+notcam.frames 4.2 10, i.e. spanning 10 intensity levels from roughly 
+5000 to 50000 adu. For each pixel a 3rd order polynomial (y = ax + bx2 + cx3) 
+was fitted to the 10 values, obtaining the three coefficients a, b, and c, 
+which are reduced to ba = b/a and ca = c/a.
+The correction must be applied to the raw images as a first step in the data 
+reduction procedure. 
+The raw image (x) is to be corrected as follows using the correction 
+coefficient images ba and ca:
+
+y = x * (1 + ba * x + ca * x**2)
+
+
+
+17-Feb-2014
+-----------
+
+- Teleconf sobre la integracion del SW de PANIC (ver documento de minutas)
+
+- Pruebas MEF de PANIC con PAPI:
+
+1) calDarkModel no funciona con MEF; comienzo modificaciones para que funcione
+con MEF.
+
+
+18-Feb-2014
+-----------
+- Termino implementar calDarkModel.py con soporte para MEFs.
+- Modifico en PAPI la estructura de los DarkModel, ahora plano_0=bias, plano_1=dark_current
+  Se ven afectados applyDarkFlat y calTwFlat.
+
+- Continuo con pruebas de secuencias de MEF para DM; parece que va bien.
+  
+
+
+
 
 PANIC computers installation
 ============================
@@ -3879,8 +3975,8 @@ Los pixeles malos(BP) se comportan de la siguiente manera:
 - MF me pregunta si he cambiado algo en PAPI desde la reducción de sus datos en Febrero. Le digo
 que tengo que mirarlo en los logs, pero que lo que puede que haya cambiado es el fichero de configuración !!!
 
-- TODO: implementar en PAPI algo para hacer una copia del fichero de configuración usado en cada reducción,
-quizás incluirlo en el logfile !!! - DONE !
+- TODO: implementar en PAPI algo para hacer una copia del fichero de configuración 
+usado en cada reducción, quizás incluirlo en el logfile !!! - DONE !
 
 
 
@@ -3939,7 +4035,7 @@ FAQ:
    - skyfilter
    - dithercubemean
 
-2) Como funciona el workaround the Clemens para keys del OT:
+2) Como funciona el workaround the Clemens para keys del OT: (esto ya no es así)
 
 Escribir en ~/tmp/fitsheader_panic.txt la keys y en el fichero 
 GEIRS/scripts/QueueFiles tenemos una linea tq:
@@ -4055,6 +4151,11 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Apply Gaussian Kernel to yield the final sky model to subtract !!! (see THELI paper, point 7.1 )
+- Ver por que en calDarkModel no uso polyfit !!!! hago el ajuste a mano !! y probar
+el ajuste con numpy.polynomial.polynomial.polyfit !!!! tiene que ser más eficiente !!!
+
+- Implementación del calculo de linearity coeffs basado en notas de JFried
 - Opcion en solveAstrometry para usar SExtractor en lugar de imagexy
 - Fotometría con SCAMP !!! (ver THELI) ??? todavia no tengo claro si se puede hacer !!
 -  Quizás habría que añadir otro parametro para indicar si queremos que la
@@ -4173,12 +4274,20 @@ catalogs derived from these images are available through the Calar Alto archive.
 
 Things To Be Done on PAPI 
 =========================
-- Second pass of Sky-subtraction for Extended Objects
+- Second pass of sky-subtraction for extended objects
 - Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
 - Support for sub-windows (not tested, but probably does not work properly) 
 - Non-linearity computation ( fac = a0 + a1*I + a2*I^2 )
-- Method to compute empiricaly the field distortion based on astrometrical fields or mask (ala )     
-- Method to empiricaly determine the Geometric distortion based an auto-calibration 
+- Method to empiricaly determine the geometric distortion based an auto-calibration 
 approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
+- Photometry: currently only 2MASS filters (J, H, Ks) supported. No color 
+coefficients neither extinction taken into account.
+- Data Quality Control (frames to reject, ...)
 - Support for incomplete sequences (ie. aborted, corrupted, ...): a kind of 
-fix method to update the headers in order to build a valid sequence for PAPI. 
+fix method to update the headers in order to build a valid sequence for PAPI.
+
+
+ (Known) Things To Be Done on GEIRS
+ ==================================
+ - fast readout mode 
+ - ??

@@ -314,14 +314,14 @@ class MasterTwilightFlat (object):
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
             if next>0:
                 for i in range(1,next+1):
-                    scaled_dark = mdark[i].data[0]*t_flat + mdark[i].data[1]
+                    scaled_dark = mdark[i].data[1]*t_flat + mdark[i].data[0]
                     log.info("AVG(scaled_dark)=%s"%numpy.mean(scaled_dark))
                     f[i].data = f[i].data - scaled_dark
                     #f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
                     f[i].header.add_history('Dark subtracted %s (scaled)'
                                              %os.path.basename(self.__master_dark))
             else:
-                scaled_dark = mdark[0].data[0]*t_flat + mdark[0].data[1]
+                scaled_dark = mdark[0].data[1]*t_flat + mdark[0].data[0]
                 log.info("AVG(scaled_dark)=%s"%numpy.mean(scaled_dark))
                 f[0].data = f[0].data - scaled_dark
                 #f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)

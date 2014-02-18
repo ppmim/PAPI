@@ -274,7 +274,7 @@ class ApplyDarkFlat(object):
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
                                     log.debug("Scaling dark with dark model...")
-                                    dark_data = dark[chip+1].data[0]*exp_time + dark[chip+1].data[1]
+                                    dark_data = dark[chip+1].data[1]*exp_time + dark[chip+1].data[0]
                             else:
                                 dark_data = dark[chip+1].data
                         else: dark_data = 0
@@ -296,7 +296,7 @@ class ApplyDarkFlat(object):
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
                                     log.debug("Scaling dark with dark model...")
-                                    dark_data = dark[0].data[0]*exp_time + dark[0].data[1]
+                                    dark_data = dark[0].data[1]*exp_time + dark[0].data[0]
                                     log.info("AVG(scaled_dark)=%s"%numpy.mean(dark_data))
                             else:
                                 dark_data = dark[0].data
