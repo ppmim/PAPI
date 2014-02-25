@@ -2206,7 +2206,7 @@ class ReductionSet(object):
                 os.unlink(outfile) # we only need the name
                 
                 # Check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
                 
                 # Check for EXPT in order to know how to create the master dark 
                 # (dark model or fixed EXPT)     
@@ -2279,7 +2279,7 @@ class ReductionSet(object):
                 os.unlink(outfile) # we only need the name
 
                 # Check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
 
                 m_smooth = self.config_dict['dflats']['median_smooth']
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, 
@@ -2325,7 +2325,7 @@ class ReductionSet(object):
                     os.unlink(outfile) # we only need the name
 
                     # Check and collapse if required (cube images)
-                    sequence = misc.collapse.collapse(sequence)
+                    sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
 
                     m_smooth = self.config_dict['twflats']['median_smooth']
                     
@@ -2376,7 +2376,7 @@ class ReductionSet(object):
                                                             self.config_dict['general']['min_frames']))
             else:
                 # Check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
 
                 # Get calibration files
                 dark, flat, bpm = None, None, None
