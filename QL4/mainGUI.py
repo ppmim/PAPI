@@ -487,6 +487,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # ONLY SCIENCE frames will be processed 
         if type!="SCIENCE":
+            log.debug("Showing file %s"filename)
+            if self.checkBox_show_imgs.isChecked():
+                display.showFrame(filename)
             return
 
         self.logConsole.info("[processLazy] Processing file %s "%filename)
@@ -1977,8 +1980,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 log.warning("Last two frames have different FILTER. Cannot subtract each other")
                 return
         else:
-            self.logConsole.info("Not enough files for subtraction")
-            log.debug("Not enough files for subtraction")
+            self.logConsole.info("Not enough SCIENCE files for subtraction")
+            log.debug("Not enough SCIENCE files for subtraction")
             return
         
         

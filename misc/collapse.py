@@ -32,7 +32,7 @@ import numpy
 # Logging
 from misc.paLog import log
 
-def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
+def collapse(frame_list, out_dir="/tmp"):
     """
     Collapse (sum) a (list) of data cubes into a single 2D image.
 
@@ -53,7 +53,8 @@ def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
         if len(f)>1 and len(f[1].data.shape)==3:
             try:
                 log.info("Collapsing a MEF cube %s"%frame_i)
-                out = collapse_mef_cube(frame_i)
+                outfile = out_dir + "/" + os.path.basename(frame_i).replace(".fits", "_coadd.fits")
+                out = collapse_mef_cube(frame_i, outfile)
                 new_frame_list.append(out)
             except Exception,e:
                 log.error("Some error collapsing MEF cube: %s"%str(e))
@@ -76,10 +77,7 @@ def collapse(frame_list, out_filename="/tmp/collapsed.fits"):
             out_hdulist.append(prihdu)    
             #out_hdulist.verify ('ignore')
             # Now, write the new collapsed file
-            if len(frame_list)>1:
-                t_filename = out_filename.replace(".fits", "_%s.fits"%str(n+1).zfill(3))
-            else:
-                t_filename = out_filename
+            t_filename = out_dir + "/" + os.path.basename(frame_i).replace(".fits", "_coadd.fits")
             out_hdulist.writeto (t_filename, output_verify = 'ignore', 
                                  clobber=True)
             
@@ -111,7 +109,10 @@ def collapse_mef_cube(inputfile, out_filename=None):
         out_hdulist.append(hdu)    
     
     # Now, write the new collapsed file
-    outfile = inputfile.replace(".fits", "_coadd_%s.fits"%str(f[1].data.shape[0]).zfill(3))
+    if out_filename==None:
+        outfile = inputfile.replace(".fits", "_coadd_%s.fits"%str(f[1].data.shape[0]).zfill(3))
+    else:
+        outfile = out_filename 
     out_hdulist.writeto (outfile, output_verify = 'ignore', 
                              clobber=True)
         
@@ -126,6 +127,8 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     Collapse (sum) a set of distinguish files (not cubes) into a single 2D image.
 
     Return the name of the output file created.
+    
+    Curretly not used from PAPI, **only** from command-line
     """
 
     log.debug("Starting collapse_distinguish() method ....")
@@ -163,7 +166,7 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     out_hdulist.append(prihdu)    
     #out_hdulist.verify ('ignore')
     # Now, write the new single FITS file
-    out_hdulist.writeto (out_filename, output_verify = 'ignore', clobber=True)
+    out_hdulist.writeto(out_filename, output_verify = 'ignore', clobber=True)
     
     out_hdulist.close(output_verify = 'ignore')
     del out_hdulist
@@ -197,6 +200,11 @@ if __name__ == "__main__":
                   action="store", dest="output_file", 
                   help="output filename (default = %default)",
                   default="/tmp/out.fits")
+
+    parser.add_option("-d", "--output_dir",
+                  action="store", dest="output_dir", 
+                  help="output directory (default = %default)",
+                  default="/tmp")
                                 
     (options, args) = parser.parse_args()
     
@@ -218,10 +226,13 @@ if __name__ == "__main__":
         if not os.path.exists(options.input_image):
             log.error("Input image %s does not exist", options.input_image)
             sys.exit(0)
-            
+        if not options.output_dir or not os.path.exists(options.output_dir):
+            parser.print_help()
+            parser.error("Wrong number of arguments " )
+
         try:
             frames = [options.input_image]
-            print collapse(frames, options.output_file)
+            print collapse(frames, options.output_dir)
         except Exception, e:
             log.info("Some error while collapsing image to 2D: %s"%str(e))
             sys.exit(0)

@@ -3730,7 +3730,74 @@ con MEF.
   Se ven afectados applyDarkFlat y calTwFlat.
 
 - Continuo con pruebas de secuencias de MEF para DM; parece que va bien.
-  
+
+
+19-Feb-2014
+-----------
+- Sigo con la implementación y pruebas de calNonLineriaty.py con soporte para MEF
+Parece que funciona, aunque no tengo datos reales para probar !!! y la corrección
+no tengo aún claro cual es la correcta, la que hay implementeda ahora no es la 
+correcta
+
+- Prueba de DOME_FLAT_ON/OFF con MEF en PAPI --> OK
+- Prueba de DARK serie (lineal) con MEF en PAPI --> OK
+- Prueba de Dark serie (fix) con MEF en PAPI --> OK
+- Prueba de SuperFlat con MEF --> OK
+- Prueba de TwFlat con MEF --> 
+- Prueba de combineFF con MEF -->
+- Prueba de applyDarkFlat con MEF --> 
+- Prueba de FocusSerie con MEF --> 
+- Prueba de CheckQuality con MEF -->
+- Prueba de BPM_2 con MEF --> FALLO !!!! --------------------------- Solved
+- Prueba de BPM con darks de Bernhard !! (OK, MEF and single) 
+- Prueba de astrowarp con MEF
+- Prueba de solveAstrometry con MEF 
+
+20-Feb-2014
+-----------
+- Modicando BPM_2 para MEF
+
+21-Feb-2014
+-----------
+- Modicando BPM para MEF
+- Prueba de BPM con flats de PANIC de Bernhard ---> OK (MEF and single)
+  pero --> >>STD= nan ???
+  pero --> umbrales no correctos, pues no detecta bien el chip malo !!!
+
+- Prueba de BPM_2 con PAPI-MEF --> OK 
+- Prueba de BPM_2 con PAPI-single --> OK 
+
+
+24-Feb-2014
+-----------
+(BUG QL)-> No se muestran bien en el QL+ds9 las imágenes MEF--> 
+Informo a RM, quien consulta en el foro (http://listmgr.cv.nrao.edu/pipermail/fitsbits/); parece un bug en DS9;  
+
+(BUG QL)-> No permite mostrar (ds9) cubos de los MasterDarkModel !!!
+
+
+Muy interesante: --http://www.astrobetter.com/manipulating-and-viewing-fits-files-in-python-with-pyds9/
+
+(P) Añadir al manual del QL como hacer para QL-photometry tal que: 
+
+http://casa.colorado.edu/~ginsbura/ds9tips.htm#body8
+
+"""
+Quick-look Aperture Photometry
+
+In ds9 7.1 (released in late 2012), there is a new "Region Statistics" feature. In most regions, you can now double-click on the region, then go to the region's analysis menu and click "Statistics". It will pop up a window showing basic stats (sum, mean, stddev, etc.). 
+
+If you're looking for something a little more complex and flexible, try ds9_phot from agpy. WARNING: pyds9 currently (10/27/2012) does not work with astropy! You'll need pyfits, pywcs, pyregion, and pyds9.
+"""
+
+
+25-Feb-2014
+-----------
+- Pruebas SW-AIV_001 con save_mode=single_integrated (not MEF) --> OK
+- Pruebas SW-AIV_001 con save_mode=single_integrated (MEF) --> OK
+
+
+
 
 
 
@@ -4151,6 +4218,8 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
+- Revisar copia de WCS al convertir de GEIRS-single to GEIRS-MEF (mef.py)
 - Apply Gaussian Kernel to yield the final sky model to subtract !!! (see THELI paper, point 7.1 )
 - Ver por que en calDarkModel no uso polyfit !!!! hago el ajuste a mano !! y probar
 el ajuste con numpy.polynomial.polynomial.polyfit !!!! tiene que ser más eficiente !!!
@@ -4212,33 +4281,6 @@ no lo hace pero no dice el porqué !
 PAPI> NaN values in Numpy computations ! need to be checked previosuly as in
 applyDarkFlat.py
 
-TO DO by AGS (comentado 8-8-2013 a AGS)
-============
-- si borras un OB y luego intentas crear otro, ya se hace un lio el OT y no
-actualiza bien la lista de OB al Validar !! hay que empezar de nuevo el OP ...
-
-- el OT debe permitir crear secuencias de serie de foco:
-        set filter/mode/etc        
-        point Teles
-        move focus
-        read&save image
-        move focus
-        read&save image
-        move focus
-        read&save image
-        move focus
-        read&save image
-        ...
-La secuencia de O2000 que me paso Ulli es así (ver arriba).
-
-- Implement new method to add keywords to headers using ~/tmp/geirsPhduAdd.panic
-It should exists an config file to setup which method to use, at least during
-develop & integration.
-
-- Software subwindows: it works in GEIRS producing _win.fits files !!! how to
-solve in PAPI ?
-
-
 
 Troubleshooting
 ===============
@@ -4291,3 +4333,21 @@ fix method to update the headers in order to build a valid sequence for PAPI.
  ==================================
  - fast readout mode 
  - ??
+
+Problemas/bugs detectados en OT 
+===============================
+25-02-2014) S abre dialogo de grabar
+25-02-2014) Telescope iterator con cycles=5 por defecto !!! debería ser =1
+25-02-2014) Timeline nada preciso, o solucionar o quitar !
+25-02-2014) PROG_ID en headers no se rellena; debería rellenarse con campo "Proposal ID" y/o quizás cambiarle el nombre a "Program ID"
+25-02-2014) En los OB, Nro. repetitions es "comun" para todos los OBs !
+
+
+Problemas/bugs detectados en QL 
+===============================
+
+
+Problemas/bugs detectados en PAPI 
+=================================
+
+
