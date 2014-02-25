@@ -223,7 +223,7 @@ class SuperSkyFlat(object):
                 log.debug("MEDIAN = %f"%median)
                 log.debug("MEAN = %f"%mean)
                 log.debug("ROB_MEAN = %f"%rob_mean)
-                log.debug("MODE(estimated) = ", mode)
+                log.debug("MODE(estimated) = %f"%mode)
                 msg = "Normalization of MEF master flat frame wrt chip 1. (value=%f)"%rob_mean
                 # Do the normalization wrt chip 1
                 for i_ext in xrange(1, len(f)):
@@ -249,10 +249,10 @@ class SuperSkyFlat(object):
                 rob_mean = robust.mean(f[0].data[offset1:naxis1-offset1, 
                                                   offset2:naxis2-offset2])
                 mode = 3*median -2*mean
-                log.debug("MEDIAN = %f"%median)
-                log.debug("MEAN = %f"%mean)
-                log.debug("ROB_MEAN %f=%rob_mean")
-                log.debug("MODE(estimated) = ", mode)
+                log.debug("MEDIAN = %s"%median)
+                log.debug("MEAN = %s"%mean)
+                log.debug("ROB_MEAN %s=%rob_mean")
+                log.debug("MODE(estimated) = %s"%mode)
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (value = %d)"%rob_mean
                 #f[0].data = f[0].data / rob_mean
                 f[0].data = robust.r_division(f[0].data, rob_mean)
@@ -273,7 +273,7 @@ class SuperSkyFlat(object):
                 rob_mean = robust.mean(f[0].data[offset1:naxis1-offset1,
                                                   offset2:naxis2-offset2])
                 mode = 3*median - 2*mean
-                log.debug("MEDIAN = %f"%median)
+                log.debug("MEDIAN = %s"%median)
                 log.debug("MEAN = %f"%mean)
                 log.debug("MEAN_ROB = %f"%rob_mean)
                 log.debug("MODE(estimated) = %f"%mode)
@@ -297,13 +297,13 @@ class SuperSkyFlat(object):
             f = pyfits.open(tmp1,'update', ignore_missing_end=True)
             f[0].header.add_history("[calSuperFlat] Non-Normalized Super-Flat created from : %s"%str(m_filelist))
 
-        f[0].header.update('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
+        f[0].header.set('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         
         #
         if 'PAT_NEXP' in f[0].header:
-            f[0].header.update('PAT_NEXP', 1, 'Number of Positions into the dither pattern')
+            f[0].header.set('PAT_NEXP', 1, 'Number of Positions into the dither pattern')
 
-        f[0].header.update('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
+        f[0].header.set('IMAGETYP','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
         f.close(output_verify='ignore')
         shutil.move(tmp1, self.output_filename) 
         log.debug("Image created : %s", self.output_filename)
@@ -354,8 +354,6 @@ SuperFlat. If image is multi-chip, normalization wrt chip 1 is done (default=%de
         # processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
-    if options.verbose:
-        print "reading %s ..." % options.source_file_list
     
     filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     try:

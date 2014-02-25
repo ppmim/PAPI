@@ -701,11 +701,11 @@ class ReductionSet(object):
                   'NCOADDS','HIERARCH ESO DET NDIT','NDIT'
                 ]   
             else: # PANIC
-                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
-                   'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
-                   'FILTER', 'FILTER1', 'FILTER2', "OBS_TOOL", "OB_ID", "OB_PAT",
-                   "PAT_EXPN", "PAT_NEXP", "END_SEQ",'NCOADDS','HIERARCH ESO DET NDIT','NDIT',
-                   'CASSPOS','PIXSCALE'
+                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
+                   'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+                   'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
+                   'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
+                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP'
                 ]
             
                 log.debug("Splitting data files")
@@ -1018,7 +1018,7 @@ class ReductionSet(object):
         The sequences must follow the PANIC Observing Tool schema, and basically 
         are detected by the pair {PAT_EXPN, PAT_NEXP} :
         
-        OBS_TOOL, OB_ID, OB_PAT, PAT_EXPN, PAT_NEXP, END_SEQ
+        OBS_TOOL, OB_ID, OB_PAT, PAT_EXPN, PAT_NEXP
          
         
         The algorith followed is the next:
@@ -1026,7 +1026,7 @@ class ReductionSet(object):
             1. Sort out the data files by MJD
             2. Do
                 2.1 Look for the first file with OBS_TOOL=True and PAT_EXPN=1
-                    2.1.1 Group all next files up to PAT_EXPN=PAT_NEXP and/or END_SEQ=True
+                    2.1.1 Group all next files up to PAT_EXPN=PAT_NEXP
             3. while (files in DataSet)
             4. Print files of each Group found 
             
@@ -2206,7 +2206,7 @@ class ReductionSet(object):
                 os.unlink(outfile) # we only need the name
                 
                 # Check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
                 
                 # Check for EXPT in order to know how to create the master dark 
                 # (dark model or fixed EXPT)     
@@ -2279,7 +2279,7 @@ class ReductionSet(object):
                 os.unlink(outfile) # we only need the name
 
                 # Check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
 
                 m_smooth = self.config_dict['dflats']['median_smooth']
                 task = reduce.calDomeFlat.MasterDomeFlat(sequence, 
@@ -2325,7 +2325,7 @@ class ReductionSet(object):
                     os.unlink(outfile) # we only need the name
 
                     # Check and collapse if required (cube images)
-                    sequence = misc.collapse.collapse(sequence)
+                    sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
 
                     m_smooth = self.config_dict['twflats']['median_smooth']
                     
@@ -2376,7 +2376,7 @@ class ReductionSet(object):
                                                             self.config_dict['general']['min_frames']))
             else:
                 # Check and collapse if required (cube images)
-                sequence = misc.collapse.collapse(sequence)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
 
                 # Get calibration files
                 dark, flat, bpm = None, None, None

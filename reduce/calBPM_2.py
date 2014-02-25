@@ -49,6 +49,7 @@ from pyraf import iraf
 from iraf import noao
 from iraf import imred
 from iraf import ccdred
+from iraf import mscred
 
 import pyfits
 import numpy
@@ -121,7 +122,7 @@ class BadPixelMask(object):
             3-dark subtract the Domeflat images
             4-Flatcombine the domeflats with high counts - FLATHIGH
             5-Flatcombine the domeflats with low counts - FLATLOW
-            6-imarith FLATLOW.fits / FLATHIGH.fits FLATLHRATIO.fits
+            6-iraf.imarith/iraf.mscred.mscarith FLATLOW.fits / FLATHIGH.fits FLATLHRATIO.fits
             7-ccdmask FLATLHRATIO.fits BADPIX_MASK_FILE with the following parameters set:
         
          
@@ -144,6 +145,13 @@ class BadPixelMask(object):
         (eqinter=                    2) Mask value for equal interpolation
         (mode   =                   ql)
 
+        
+        Returns
+        -------
+
+        The list of IRAF mask files (.pl) generated. 
+        Values is 0 for good pixels, non-zero for bad (masked) pixels.
+
         """
         
         log.debug('createBadPixelMask started (iraf.ccdmask)')
@@ -154,7 +162,7 @@ class BadPixelMask(object):
         flats_on_frames = []
     
         
-        #Check Master_Dark
+        # Check Master_Dark
         if os.path.exists(self.master_dark):
             f = datahandler.ClFits(self.master_dark)
             if not f.getType()=='MASTER_DARK':
@@ -168,6 +176,7 @@ class BadPixelMask(object):
         filelist = [line.replace( "\n", "").replace("//","/") 
                     for line in fileinput.input(self.i_file_list)]
         
+        
         #STEP 1: classify/split the frames in 3 sets (DOME_FLAT_LAMP_ON, DOME_FLAT_LAMP_OFF)
         #and create string list for IRAF tasks
         for file in filelist:
@@ -180,33 +189,32 @@ class BadPixelMask(object):
                 # reject the frame
                 log.error("DISCARTING: Frame %s is not dome_flat. Type = %s"%(f.pathname, f.getType()))
                 
-        #Check whether there are enough calib frames
+        # Check whether there are enough calib frames
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10):
             log.error("There are not enough calib frames to create BPM !!")
             raise ExError("Not enough calib frames")
         
-        
+
         #STEP 2: Subtrac the master dark to each dome flat
         for file in flats_off_frames:
             misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
-            iraf.imarith(operand1=file,
+            iraf.mscred.mscarith(operand1=file,
                         operand2=self.master_dark,
                         op='-',
                         result=file.replace(".fits","_D.fits"),
                         )
             flats_off_frames[flats_off_frames.index(file)] = file.replace(".fits","_D.fits")
         
+        
         for file in flats_on_frames:
             misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
-            iraf.imarith(operand1=file,
+            iraf.mscred.mscarith(operand1=file,
                         operand2=self.master_dark,
                         op='-',
                         result=file.replace(".fits","_D.fits"),
                         )
             flats_on_frames[flats_on_frames.index(file)] = file.replace(".fits","_D.fits")                                                
 
-        
-        
         #STEP 4: Combine dome dark subtracted flats (OFF)
         flat_off_comb = self.temp_dir + "flats_comb_off.fits"
         misc.fileUtils.removefiles(flat_off_comb)
@@ -216,46 +224,47 @@ class BadPixelMask(object):
         flats = self.temp_dir + "/flats_off.txt"
         misc.utils.listToFile(flats_off_frames, flats)
 
-        iraf.flatcombine(input="@"+flats.replace('//','/'),
+        iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_off_comb,
                         combine='median',
-                        ccdtype='none',
+                        ccdtype='',
                         process='no',
                         reject='sigclip',
-                        subset='yes',
-                        scale='mode'
+                        subset='no',
+                        scale='mode',
                         #verbose='yes'
                         #scale='exposure',
                         #expname='EXPTIME'
                         #ParList = _getparlistname ('flatcombine')
-                        )            
-        
+                        )
+
         flat_on_comb = self.temp_dir + "flats_comb_on.fits"
         misc.fileUtils.removefiles(flat_on_comb)
         flats = self.temp_dir + "flats_on.txt"
         misc.utils.listToFile(flats_on_frames, flats)
         
         #Combine dome dark subtracted flats (on)
-        iraf.flatcombine(input="@"+flats,
+        iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_on_comb,
                         combine='median',
-                        ccdtype='none',
+                        ccdtype='',
                         process='no',
                         reject='sigclip',
-                        subset='yes',
-                        scale='mode'
+                        subset='no',
+                        scale='mode',
                         #verbose='yes'
                         #scale='exposure',
                         #expname='EXPTIME'
                         #ParList = _getparlistname ('flatcombine')
                         )
+
         misc.fileUtils.removefiles(flats)
                                     
         #STEP 5: Compute flat_low/flat_high
         flat_ratio = self.temp_dir + 'flat_ratio.fits'
         misc.fileUtils.removefiles(flat_ratio)
         log.debug( 'Computing FlatRatio')
-        iraf.imarith(operand1=flat_off_comb,
+        iraf.mscred.mscarith(operand1=flat_off_comb,
                  operand2=flat_on_comb,
                  op='/',
                  result=flat_ratio,
@@ -266,43 +275,77 @@ class BadPixelMask(object):
         log.debug( 'Now, computing bad pixel mask')
         misc.fileUtils.removefiles(self.output_file + ".pl")
 
-        iraf.ccdmask(image=flat_ratio,
-                 mask=self.output_file,
-                 ncmed = 7, # Column box size for median level calculation
-                 nlmed = 7, # Line box size for median level calculation
-                 ncsig = 15, # Column box size for sigma calculation
-                 nlsig = 15, # Line box size for sigma calculation
-                 lsigma = self.lsigma, # Low clipping sigma
-                 hsigma = self.hsigma, # High clipping sigma
-                 ngood = 5, # Minimum column length of good pixel seqments
-                 linterp = 2, # Mask value for line interpolation
-                 cinterp = 3, # Mask value for column interpolation
-                 eqinter = 2 # Mask value for equal interpolation
-                 )
-        # Save the BPM
-        #misc.fileUtils.removefiles( self.output )               
-        #hdu = pyfits.PrimaryHDU()
-        #hdu.scale('int16') # important to set first data type
-        #hdu.data=bpm     
-        #hdulist = pyfits.HDUList([hdu])
-        #hdu.header.update('OBJECT','MASTER_PIXEL_MASK')
-        #hdu.header.add_history('BPM created from %s' % good_flats)
-        #hdulist.writeto(self.output)
-        #hdulist.close(output_verify='ignore')
+        try:
+            my_hdu = pyfits.open(flat_ratio)
+            nExt = 1 if len(my_hdu)==1 else len(my_hdu)-1
+        except Exception,e:
+            log.error("Cannot read file: %"%flat_ratio)
+            raise Exception("Cannot read file: %"%flat_ratio)
+
+        # iraf.ccdmask does not support MEF files, so we have to split them and
+        # run ccdmask for each extension. Values is 0 for good pixels, non-zero 
+        # for bad (masked) pixels.
+        list_outfitsnames = []
+        if nExt==1:
+            iraf.ccdmask(image=flat_ratio,
+                     mask=self.output_file.partition(".fits")[0]+".pl",
+                     ncmed = 7, # Column box size for median level calculation
+                     nlmed = 7, # Line box size for median level calculation
+                     ncsig = 15, # Column box size for sigma calculation
+                     nlsig = 15, # Line box size for sigma calculation
+                     lsigma = self.lsigma, # Low clipping sigma
+                     hsigma = self.hsigma, # High clipping sigma
+                     ngood = 5, # Minimum column length of good pixel seqments
+                     linterp = 2, # Mask value for line interpolation
+                     cinterp = 3, # Mask value for column interpolation
+                     eqinter = 2 # Mask value for equal interpolation
+                     )
+            list_outfitsnames.append(self.output_file.partition(".fits")[0]+".pl")
+        else:
+            i = 0
+            for i_nExt in range(0,nExt):
+                mfnp = self.output_file.partition('.fits')
+                outfitsname = mfnp[0] + ".Q%02d"%i + mfnp[1] + mfnp[2] 
+                iraf.ccdmask(image=flat_ratio+"[%d]"%(i+1),
+                         mask=outfitsname.partition(".fits")[0]+".pl",
+                         ncmed = 7, # Column box size for median level calculation
+                         nlmed = 7, # Line box size for median level calculation
+                         ncsig = 15, # Column box size for sigma calculation
+                         nlsig = 15, # Line box size for sigma calculation
+                         lsigma = self.lsigma, # Low clipping sigma
+                         hsigma = self.hsigma, # High clipping sigma
+                         ngood = 5, # Minimum column length of good pixel seqments
+                         linterp = 2, # Mask value for line interpolation
+                         cinterp = 3, # Mask value for column interpolation
+                         eqinter = 2 # Mask value for equal interpolation
+                         )
+                i = i +1 
+                list_outfitsnames.append(outfitsname.partition(".fits")[0]+".pl")
+            
+        # Convert to IRAF (.pl) bpm to .fits and update header
+        for mask_file in list_outfitsnames:
+            new_file = mask_file.partition(".pl")[0]+".fits"
+            iraf.imcopy(mask_file, new_file)
+            pyfits.setval(new_file, keyword="PAPITYPE", 
+                                             value="MASTER_BPM")            
+            pyfits.setval(new_file, keyword="HISTORY",
+                                        value="BPM created from %s"%filelist)
+            log.info("Bad Pixel Mask file created : %s"%new_file)
         
         # Clean up tmp files
         #misc.fileUtils.removefiles(flat_off_comb, flat_on_comb, flat_ratio)
         # Change back to the original working directory
         iraf.chdir()
         
-        log.info('Bad pixel mask created : %s', self.output_file+".pl")
         log.debug("Time elapsed : [%s]" , t.tac() )
 
-        return self.output_file + ".pl"
+        return list_outfitsnames
         
     def create_simple(self):
         """
         Build a BPM following the algorithm described above.
+
+        TO BE COMPLETED !!!
         """
         
         log.debug('createBadPixelMask started (simple mode)')
@@ -350,7 +393,7 @@ class BadPixelMask(object):
         #NOTE: all dome flats (on and off) should have the same EXPTIME 
         for file in flats_off_frames:
             misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
-            iraf.imarith(operand1=file,
+            iraf.mscred.mscarith(operand1=file,
                         operand2=self.master_dark,
                         op='-',
                         result=file.replace(".fits","_D.fits"),
@@ -359,7 +402,7 @@ class BadPixelMask(object):
         
         for file in flats_on_frames:
             misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
-            iraf.imarith(operand1=file,
+            iraf.mscred.mscarith(operand1=file,
                         operand2=self.master_dark,
                         op='-',
                         result=file.replace(".fits","_D.fits"),
@@ -377,7 +420,7 @@ class BadPixelMask(object):
         flats = self.temp_dir + "/flats_off.txt"
         misc.utils.listToFile(flats_off_frames, flats)
         #Combine dome dark subtracted OFF-flats
-        iraf.flatcombine(input="@"+flats.replace('//','/'),
+        iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_off_comb.replace('//','/'),
                         combine='median',
                         ccdtype='none',
@@ -398,7 +441,7 @@ class BadPixelMask(object):
         misc.utils.listToFile(flats_on_frames, flats)
 
         #Combine dome dark subtracted ON-flats
-        iraf.flatcombine(input="@"+flats.replace('//','/'),
+        iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_on_comb.replace('//','/'),
                         combine='median',
                         ccdtype='none',
@@ -417,7 +460,7 @@ class BadPixelMask(object):
         flat_ratio = self.temp_dir + 'flat_ratio.fits'
         misc.fileUtils.removefiles(flat_ratio)
         log.debug( 'Computing FlatRatio')
-        iraf.imarith(operand1=flat_off_comb.replace('//','/'),
+        iraf.mscred.mscarith(operand1=flat_off_comb.replace('//','/'),
                  operand2=flat_on_comb.replace('//','/'),
                  op='/',
                  result=flat_ratio,
@@ -431,7 +474,7 @@ class BadPixelMask(object):
         fr = pyfits.open(flat_ratio)
         
         # TBC: I do not remember the reason of next selection ??
-        bpm = numpy.where (fr[0].data<0.95, 0, 
+        bpm = numpy.where(fr[0].data<0.95, 0, 
                            numpy.where(fr[0].data>1.09, 0, 1))
         #bpm=numpy.where (bpm.isfinite(), 1, 0)
 
@@ -516,13 +559,7 @@ parser.add_option("-D", "--master_dark",
               action="store", dest="master_dark", type='str',
               help="[Optional] Master dark frame to subtract")    
 
-parser.add_option("-S", "--show_stats",
-              action="store_true", dest="show_stats", default=False,
-              help="Show statistics [default False]")    
 
-parser.add_option("-v", "--verbose",
-              action="store_true", dest="verbose", default=True,
-              help="verbose mode [default]")
 
 
 ################################################################################

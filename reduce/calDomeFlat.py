@@ -322,8 +322,8 @@ class MasterDomeFlat(object):
                 #    mean+=float(values[i])
                 #mean=mean/i
                 median = values[1] # wrt chip 0
-                log.debug("Normalizing MEF master flat frame wrt chip 0...(MEDIAN=%f)"%median)
-                msg = "Normalization of MEF master flat frame wrt chip 0. (MEDIAN=%f)"%median 
+                log.debug("Normalizing MEF master flat frame wrt chip 0...(MEDIAN=%s)"%median)
+                msg = "Normalization of MEF master flat frame wrt chip 0. (MEDIAN=%s)"%median 
                 
                 # Compute normalized flat wrt chip 0
                 self.__output_filename = self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
@@ -416,12 +416,12 @@ class MasterDomeFlat(object):
         flatframe[0].header.add_history('lamp_on  files: %s' %domelist_lampon )
         flatframe[0].header.add_history('lamp_off files: %s' %domelist_lampoff )
         #Add a new keyword-->PAPITYPE
-        flatframe[0].header.update('PAPITYPE', 'MASTER_DOME_FLAT', 
+        flatframe[0].header.set('PAPITYPE', 'MASTER_DOME_FLAT', 
                                    'TYPE of PANIC Pipeline generated file')
-        flatframe[0].header.update('IMAGETYP', 'MASTER_DOME_FLAT', 
+        flatframe[0].header.set('IMAGETYP', 'MASTER_DOME_FLAT', 
                                    'TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in flatframe[0].header:
-            flatframe[0].header.update('PAT_NEXP', 1,
+            flatframe[0].header.set('PAT_NEXP', 1,
                                              '# of positions into dither pattern')
 
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file

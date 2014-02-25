@@ -118,13 +118,13 @@ def showFrame(frame, del_all=False):
         fileList = frame  # list of sources files to be used in sky-flat computation
         #print "DISPLAY found a list of frames to show ! :" %(frame)
         os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
-        delete_all=False
+        delete_all = False
   elif os.path.isfile(frame):
-        delete_all=del_all
-        fileList=[frame]
+        delete_all = del_all
+        fileList = [frame]
   
   for file in fileList:
-        f=datahandler.ClFits(file)
+        f = datahandler.ClFits(file)
         if (f.mef==True):
                 #print "PASO 0"
                 # Multi-Extension FITS files
@@ -146,7 +146,7 @@ def showFrame(frame, del_all=False):
                         os.system(("%s/xpaset -p ds9 frame frameno %d" % (ds9_path, frame_no+1)))
                         frame_no+=1
                     else:
-                        frame_no=1
+                        frame_no = 1
                         os.system(("%s/xpaset -p ds9 frame frameno %d" % (ds9_path, frame_no)))
                     os.system(("%s/xpaset -p ds9 single" % ds9_path)) 
                     os.system(("%s/xpaset -p ds9 file mosaicimage %s" % (ds9_path, file)))

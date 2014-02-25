@@ -260,7 +260,6 @@ class NonLinearityModel(object):
         # Initialize some storage arrays
         times = numpy.zeros(nflats, dtype=numpy.float32)
         temp = numpy.zeros([nflats, f_n_extensions, naxis1, naxis2], dtype=numpy.float32)
-        out = numpy.zeros([2, f_n_extensions, naxis1, naxis2], dtype=numpy.float32)
         
 
         # loop the images
@@ -287,8 +286,9 @@ class NonLinearityModel(object):
         log.debug("Now fitting the linearity model...")
         # now collapse and fit the data
         # polyfit returns polynomial coefficients ordered from low to high.
+        pol_degree = 3 # third-order polynomial, ie., 4 coeffs
         fit = numpy.polynomial.polynomial.polyfit(times, 
-                            temp.reshape(len(times), naxis1*naxis2*f_n_extensions), deg=3)
+                            temp.reshape(len(times), naxis1*naxis2*f_n_extensions), deg=pol_degree)
 
         # Get the median value of the coeffs                
         coeff_0 = numpy.median(fit[0])
@@ -332,12 +332,12 @@ class NonLinearityModel(object):
             for i_ext in range(0, f_n_extensions):
                 hdu = pyfits.PrimaryHDU()
                 hdu.scale('float32') # important to set first data type
-                hdu.data = fit.reshape(2, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
+                hdu.data = fit.reshape(pol_degree+1, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
                 hdulist.append(hdu)
                 del hdu
         else:
             prihdu.scale('float32') # important to set first data type
-            prihdu.data = fit.reshape(4, 1, naxis1, naxis2)[:, 0, :, :]
+            prihdu.data = fit.reshape(pol_degree+1, 1, naxis1, naxis2)[:, 0, :, :]
             hdulist.append(prihdu)
          
         
@@ -355,7 +355,107 @@ class NonLinearityModel(object):
         
         return self.__output_filename
     
+
     def applyModel(self, source, model):
+        """
+        Do the Non-linearity correction using the supplied model. In principle,
+        it should be applied to raw images (darks, flats, science, ...).
+        
+        Parameters
+        ----------
+        source : str
+            List of FITS file names to be corrected.
+        
+        model : str 
+            FITS filename of the Non-Linearity model, ie., containing polynomial 
+            coeffs for correction that must has been previously computed.
+            It will have a plane for each coeff.
+        
+        
+        Returns
+        -------
+        
+        
+        TODO
+        ----
+        - adjust the read modes availables on PANIC (lir, mer, o2dcr, ...)
+        - read the proper BadPixelMask ??
+        - compute the correctly the correction to do !!! 
+        
+        
+        """   
+        log.debug("Start applyModel")
+
+        if len(source)<1:
+            log.error("Found empty list of files")
+            raise Exception("Found empty list of files")
+        
+        if not os.path.exists(model):
+            log.error("Cannot read non-linearity model file %s"%model)
+            raise Exception("Cannot read non-linearity model file")
+
+
+        # Get number of planes, ie. number of coeffs of the polynomial
+        # We suppose a 3rd degree (4 coeffs) polynomial fit of the linearity model 
+        fits_model = pyfits.open(model)
+        model_n_extensions = 1 if len(fits_model)==1 else len(fits_model)-1
+        if model_n_extensions==1:
+            data_model = fits_model[0].data
+        else:
+            data_model = fits_model[1].data
+
+        if data_model.shape[0]!=4:
+            log.error("Linearity model does not match a 4-plane cube image")
+            raise Exception("Linearity model does not match a 4-plane cube image")
+
+        # loop the images
+        for i in range(0, len(source)):
+            i_file = pyfits.open(source[i])
+            f_n_extensions = 1 if len(i_file)==1 else len(i_file)-1
+            log.debug("Raw Number of extensions = %s"%f_n_extensions)
+            log.debug("Model Number of extensions = %s"%model_n_extensions)
+            if f_n_extensions!=model_n_extensions:
+                log.error("Model and Raw source do not match number of extensions")
+                raise Exception("Model and Raw source do not match number of extensions")
+            for i_ext in range(0, f_n_extensions):
+                offset = 0 if f_n_extensions==1 else 1
+                data_model = fits_model[i_ext+offset].data
+                raw = i_file[i_ext+offset].data
+                if not raw.shape==data_model[0].shape:
+                    log.error("Shape/size of lin_model and source_data does not match")
+                    raise Exception("Shape/size of lin_model and source_data does not match")
+                log.info("Median value before correction = %s"%(numpy.median(raw)))
+                corr = data_model[0] + data_model[1]*raw + data_model[2]*raw**2 + data_model[3]*raw**3
+                diff = corr - raw
+                log.info("Median value of difference = %s"%(numpy.median(diff)))
+                i_file[i_ext+offset].data = corr
+                log.info("Median value after correction = %s"%(numpy.median(i_file[i_ext+offset].data)))
+            
+            # Write output to outframe (data object actually still points 
+            # to input data)
+            # save new fits file
+            mfnp = source[i].partition('.fits')
+            # add _lincor before .fits extension, or at the end if no such extension present
+            outfitsname = mfnp[0] + '_lincor' + mfnp[1] + mfnp[2]
+            # keep same data type
+            if os.path.exists(outfitsname):
+                os.unlink(outfitsname)
+                print 'Overwriting ' + outfitsname
+            else:
+                print 'Writing ' + outfitsname
+            # scale back data to original values
+            #BITPIX = i_file[0].header['BITPIX']
+            #bitpix_designation = pyfits.ImageHDU.NumCode[BITPIX]
+            #myfits_hdu[0].scale(bitpix_designation,'old')
+            try:
+                i_file[0].scale('float32')
+                i_file.writeto(outfitsname, output_verify='ignore')
+            except IOError:
+                raise ExError('Cannot write output to %s' % outfitsname)
+            i_file.close()
+           
+
+    def applyModel_LBT(self, source, model):
           
         """
         Do the Non-linearity correction using the supplied model
@@ -520,12 +620,12 @@ fit to requirements for model computation")
         print "reading %s ..." % options.source_file_list
     
     # Two purposes, apply the model to correct non-linearity     
+    filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     if options.apply_model:
         NLM = NonLinearityModel(filelist)
-        NLM.applyModel(options.source_file_list, options.out_data)
+        NLM.applyModel(filelist, options.out_coeff_file)
     # or, compute the non-linearity model
     else:
-        filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
         NLM = NonLinearityModel(filelist, options.out_coeff_file)
         NLM.createModel()    
         

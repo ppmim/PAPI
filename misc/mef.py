@@ -199,7 +199,7 @@ class MEF (object):
                 log.debug("MEF file with %d extensions", n_ext)
             else:
                 n_ext = 1
-                log.error("Error, found a simple FITS file, not a MEF file")
+                log.error("Found a simple FITS file, not a MEF file")
                 raise MEF_Exception("File %s is not a MEF" % file)
             
             for i in range (1, n_ext+1):
@@ -222,9 +222,9 @@ class MEF (object):
                         value = hdulist[0].header.ascardlist ()[key].value
                         comment = hdulist[0].header.ascardlist ()[key].comment
                         if key=='HIERARCH ESO DET NDIT':
-                            out_hdulist[0].header.update ('NDIT', value, comment)
+                            out_hdulist[0].header.set('NDIT', value, comment)
                         else:
-                            out_hdulist[0].header.update (key, value,comment)
+                            out_hdulist[0].header.set(key, value,comment)
                         # We DON'T need to update RA, DEC (pointing coordinates), because each 
                         # extension should have CRVAL/CRPIX values!!
                     except KeyError:
@@ -233,8 +233,8 @@ class MEF (object):
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
                 del out_hdulist[0].header['EXTNAME']                
-                out_hdulist.writeto (out_filenames[n], output_verify = 'ignore', clobber = True)
-                out_hdulist.close (output_verify = 'ignore')
+                out_hdulist.writeto(out_filenames[n], output_verify = 'ignore', clobber = True)
+                out_hdulist.close(output_verify = 'ignore')
                 del out_hdulist
                 log.debug("File %s created"%(out_filenames[n]))
                 n += 1
@@ -257,9 +257,9 @@ class MEF (object):
         fo = pyfits.HDUList()
         prihdu = pyfits.PrimaryHDU (data = None, header = primaryHeader)
         # Start by updating PRIMARY header keywords...
-        prihdu.header.update('EXTEND', pyfits.TRUE, after = 'NAXIS')
-        prihdu.header.update('NEXTEND', 0)
-        prihdu.header.update('FILENAME', output_file)
+        prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+        prihdu.header.set('NEXTEND', 0)
+        prihdu.header.set('FILENAME', output_file)
         
         fo.append(prihdu)
         n_ext = 0
@@ -291,7 +291,7 @@ class MEF (object):
             del hdu
             n_ext += 1
        
-        prihdu.header.update ('NEXTEND', n_ext)
+        prihdu.header.set('NEXTEND', n_ext)
         prihdu.header.add_history("[MEF.createMEF] MEF created with files %s"%str(self.input_files))
         misc.fileUtils.removefiles (output_file)
         fo.writeto (output_file, output_verify ='ignore')
@@ -369,9 +369,9 @@ class MEF (object):
             # Create primary HDU (without data, only the common header)
             prihdu = pyfits.PrimaryHDU(data=None, header = primaryHeader)
             # Start by updating PRIMARY header keywords...
-            prihdu.header.update ('EXTEND', pyfits.TRUE, after = 'NAXIS')
-            prihdu.header.update ('NEXTEND', n_ext, after = 'EXTEND')
-            prihdu.header.update ('NEXTEND', n_ext, after = 'EXTEND')
+            prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
+            prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
             prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
             
             #In the Primary Header we do not need the WCS keywords, only RA,DEC
@@ -428,23 +428,23 @@ class MEF (object):
                         
                         
                         # Now update the new-wcs for the new subframe header
-                        hdu_i.header.update('CRPIX1', 1024)
-                        hdu_i.header.update('CRPIX2', 1024)
-                        hdu_i.header.update('CRVAL1', new_pix_center[0][0])
-                        hdu_i.header.update('CRVAL2', new_pix_center[0][1])
-                        hdu_i.header.update('CD1_1', -pix_scale/3600.0, 
+                        hdu_i.header.set('CRPIX1', 1024)
+                        hdu_i.header.set('CRPIX2', 1024)
+                        hdu_i.header.set('CRVAL1', new_pix_center[0][0])
+                        hdu_i.header.set('CRVAL2', new_pix_center[0][1])
+                        hdu_i.header.set('CD1_1', -pix_scale/3600.0, 
                                             "Axis rotation & scaling matrix")
-                        hdu_i.header.update('CD1_2', 0, 
+                        hdu_i.header.set('CD1_2', 0, 
                                             "Axis rotation & scaling matrix")
-                        hdu_i.header.update('CD2_1', 0, 
+                        hdu_i.header.set('CD2_1', 0, 
                                             "Axis rotation & scaling matrix")
-                        hdu_i.header.update('CD2_2', pix_scale/3600.0, 
+                        hdu_i.header.set('CD2_2', pix_scale/3600.0, 
                                             "Axis rotation & scaling matrix")
-                        hdu_i.header.update('CTYPE1' , 'RA---TAN') 
-                        hdu_i.header.update('CTYPE2' , 'DEC--TAN')
-                        hdu_i.header.update('CUNIT1', 'deg')
-                        hdu_i.header.update('CUNIT2', 'deg')
-                        hdu_i.header.update('CHIP_NO', 2*i+j, 
+                        hdu_i.header.set('CTYPE1' , 'RA---TAN') 
+                        hdu_i.header.set('CTYPE2' , 'DEC--TAN')
+                        hdu_i.header.set('CUNIT1', 'deg')
+                        hdu_i.header.set('CUNIT2', 'deg')
+                        hdu_i.header.set('CHIP_NO', 2*i+j, 
                                             "PANIC Chip number [0,1,2,3]")
                         
                     # now, copy extra keywords required
@@ -453,9 +453,9 @@ class MEF (object):
                             value = in_hdulist[0].header.ascardlist()[key].value
                             comment = in_hdulist[0].header.ascardlist()[key].comment
                             if key=='HIERARCH ESO DET NDIT':
-                                hdu_i.header.update ('NDIT', value, comment)
+                                hdu_i.header.set ('NDIT', value, comment)
                             else:
-                                hdu_i.header.update (key, value, comment)
+                                hdu_i.header.set (key, value, comment)
                             # We DON'T need to update RA,DEC (pointing coordinates), because each 
                             # extension should have CRVAL/CRPIX values!!
                         except KeyError:
@@ -548,7 +548,7 @@ class MEF (object):
                     prihdu = pyfits.PrimaryHDU (data = hdu_data_i, 
                                                 header = primaryHeader)
                     # Start by updating PRIMARY header keywords...
-                    prihdu.header.update ('EXTEND', 
+                    prihdu.header.set('EXTEND', 
                                           pyfits.FALSE, after = 'NAXIS')
                     # AR,DEC (WCS !!) need to be re-calculated !!!
                     
@@ -579,30 +579,30 @@ class MEF (object):
                         print "New Pix Centers = ", new_pix_center, \
                             new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
                         
-                        prihdu.header.update ('RA', new_pix_center[0][0])
-                        prihdu.header.update ('DEC', new_pix_center[0][1])
+                        prihdu.header.set('RA', new_pix_center[0][0])
+                        prihdu.header.set('DEC', new_pix_center[0][1])
                         
                         # Now update the new-wcs for the new subframe
-                        prihdu.header.update('CRPIX1', 1024)
-                        prihdu.header.update('CRPIX2', 1024)
-                        prihdu.header.update('CRVAL1', new_pix_center[0][0])
-                        prihdu.header.update('CRVAL2', new_pix_center[0][1])
-                        prihdu.header.update('CTYPE1' , 'RA---TAN') 
-                        prihdu.header.update('CTYPE2' , 'DEC--TAN')
-                        prihdu.header.update('CUNIT1', 'deg')
-                        prihdu.header.update('CUNIT2', 'deg')
-                        prihdu.header.update('CD1_1', -pix_scale/3600.0, 
+                        prihdu.header.set('CRPIX1', 1024)
+                        prihdu.header.set('CRPIX2', 1024)
+                        prihdu.header.set('CRVAL1', new_pix_center[0][0])
+                        prihdu.header.set('CRVAL2', new_pix_center[0][1])
+                        prihdu.header.set('CTYPE1' , 'RA---TAN') 
+                        prihdu.header.set('CTYPE2' , 'DEC--TAN')
+                        prihdu.header.set('CUNIT1', 'deg')
+                        prihdu.header.set('CUNIT2', 'deg')
+                        prihdu.header.set('CD1_1', -pix_scale/3600.0, 
                                              "Axis rotation & scaling matrix")
-                        prihdu.header.update('CD1_2', 0, 
+                        prihdu.header.set('CD1_2', 0, 
                                              "Axis rotation & scaling matrix")
-                        prihdu.header.update('CD2_1', 0,  
+                        prihdu.header.set('CD2_1', 0,  
                                              "Axis rotation & scaling matrix")
-                        prihdu.header.update('CD2_2', pix_scale/3600.0, 
+                        prihdu.header.set('CD2_2', pix_scale/3600.0, 
                                              "Axis rotation & scaling matrix")
                         prihdu.header.add_history("[MEF.splitGEIRSToSimple] File created from %s"%file)
                         
                     
-                    prihdu.header.update ('CHIP_NO', (i*2)+j, 
+                    prihdu.header.set('CHIP_NO', (i*2)+j, 
                                           "PANIC Chip number [0,1,2,3]")
                     
                     out_hdulist.append (prihdu)    
