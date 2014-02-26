@@ -346,7 +346,7 @@ class ClFits (object):
             #    "Header block contains null bytes instead of spaces for padding, and is not 
             #     FITS-compliant. Nulls may be replaced with spaces upon writing."
             # 
-            log.debug("Cheking FITS integrity")
+            #log.debug("Cheking FITS integrity")
             warnings.simplefilter('error', UserWarning)
             while True:
                 try:
