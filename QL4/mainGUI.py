@@ -487,7 +487,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # ONLY SCIENCE frames will be processed 
         if type!="SCIENCE":
-            log.debug("Showing file %s"filename)
             if self.checkBox_show_imgs.isChecked():
                 display.showFrame(filename)
             return
@@ -1061,7 +1060,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.logConsole.warning("Start of observing sequence [%s]"%(typeSeq))
                 
             if fits.getExpNo()==fits.getNoExp() and fits.getExpNo()!=-1 \
-            and (fits.getType()==self.last_img_type or self.last_img_type==None):
+            and (fits.getType()==self.last_img_type or self.last_img_type==None \
+                or fits.isSky() or self.last_img_type=='SKY'):
                 # End of sequence
                 retSeq = self.curr_sequence[:] # very important !! Lists are mutable objects !
                 self.curr_sequence = []
@@ -1070,7 +1070,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else:
                 if self.last_img_type!=None and \
                 fits.getType()!=self.last_img_type \
-                and not fits.isDomeFlat():
+                and not fits.isDomeFlat() and not (fits.isSky() or self.last_img_type=='SKY'):
+                    log.debug("last_type=%s  new_type=%s"%(self.last_img_type, fits.getType()))
                     # skip/remove the current/last file, type mismatch !
                     self.curr_sequence = self.curr_sequence[:-1]
                     log.error("Detected file type mismatch. File %s skipped in sequence !"%(filename))

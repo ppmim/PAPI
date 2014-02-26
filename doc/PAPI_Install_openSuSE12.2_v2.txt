@@ -50,7 +50,30 @@ setenv CAMSHMSZ `cat /proc/meminfo | fgrep MemTotal | awk '{printf "%d",$2/3072}
 
 * after launch GEIRS (start_panic_new), create next empty file:
 
-    ~/tmp/fitsheader_panic.txt
+    ~/tmp/fitsheader_panic.txt  (ESTO YA NO ES NECESARIO, ahora usamos geirsPhduAdd.panic !!!)
+
+
+* Actualizar el fichero ~/GEIRS/QueueFiles para que escriba el fichero de log para el QL:
+
+
+
+#!/bin/bash
+#
+# removing and or adding luci instrument lab-fits to fits-data-file
+#
+#
+echo `date +%FT%H:%M:%S` $1 $2 >> ~/tmp/fitsGeirsWritten
+#modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
+export ret=$?
+if [ $ret -eq 0 ]; then
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` $1   >>~/tmp/fitsfiles.corrected
+else
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` "ERROR $ret in modifying fits-header of $1"  >>~/tmp/fitsfiles.corrected
+fi
+exit $ret
+
+
+
 
 
 * Remove  ~/tmp/irmotor_lfpos.panic for simulation mode ???

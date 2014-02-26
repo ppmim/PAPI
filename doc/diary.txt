@@ -3794,8 +3794,27 @@ If you're looking for something a little more complex and flexible, try ds9_phot
 25-Feb-2014
 -----------
 - Pruebas SW-AIV_001 con save_mode=single_integrated (not MEF) --> OK
-- Pruebas SW-AIV_001 con save_mode=single_integrated (MEF) --> OK
+- Pruebas SW-AIV_001 con save_mode=MEF_integrated (MEF) --> OK
+- Pruebas SW-AIV_001 con save_mode=MEF_cube (MEF) --> OK, pero problema con directorio de salida de collapse.py
 
+- Intersante sugerencia de RM sobre el fichero de log de los ficheros generados
+por GEIRS:
+
+
+#!/bin/bash
+#
+# removing and or adding luci instrument lab-fits to fits-data-file
+#
+#
+echo `date +%FT%H:%M:%S` $1 $2 >> ~/tmp/fitsGeirsWritten
+#modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
+export ret=$?
+if [ $ret -eq 0 ]; then
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` $1   >>~/tmp/fitsfiles.corrected
+else
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` "ERROR $ret in modifying fits-header of $1"  >>~/tmp/fitsfiles.corrected
+fi
+exit $ret
 
 
 
@@ -4218,16 +4237,18 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
+- Configurar sonidos (pulseaudio)
+- Second pass of sky-subtraction for extended objects
+- Support for incomplete sequences
+- Add some kind of Quality check 
+- Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
+- No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!! 
+--> problema reportado con DS9. RM modificará DATASEC al formato IRAF (DETSEC, ...) ver email
 - Revisar copia de WCS al convertir de GEIRS-single to GEIRS-MEF (mef.py)
 - Apply Gaussian Kernel to yield the final sky model to subtract !!! (see THELI paper, point 7.1 )
-- Ver por que en calDarkModel no uso polyfit !!!! hago el ajuste a mano !! y probar
-el ajuste con numpy.polynomial.polynomial.polyfit !!!! tiene que ser más eficiente !!!
-
-- Implementación del calculo de linearity coeffs basado en notas de JFried
 - Opcion en solveAstrometry para usar SExtractor en lugar de imagexy
 - Fotometría con SCAMP !!! (ver THELI) ??? todavia no tengo claro si se puede hacer !!
--  Quizás habría que añadir otro parametro para indicar si queremos que la
+- Quizás habría que añadir otro parametro para indicar si queremos que la
 distorsión del campo se elimine antes del coadd (a nivel individual en cada imagen
 del dithering) o bien despues del coadd final. Yo creo que se con hacerla al final
 debería bastar, pues la diferencia de distorsión en cada uno de las imagenes
@@ -4249,7 +4270,6 @@ son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 el último, o algunos del medio, etc .... 
 Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
 Alguna otra solución ???
-
 
 - PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
 sin embargo, parece que calDark.py no se queja !
@@ -4292,11 +4312,6 @@ over-estimation of skybackground when no object masking is done (see skyfilter).
   is much better.
   In addition and for crowded fields, we could set in the config file the    
 
-desplazamiento=(abs((int)Azimuth-Position)%(360-(Ventana/2)))
-
-
-
-
 
 Paper
 =====
@@ -4336,15 +4351,23 @@ fix method to update the headers in order to build a valid sequence for PAPI.
 
 Problemas/bugs detectados en OT 
 ===============================
+25-02-2014) La copia de OB no se hace bien, pues luego repite el número del OB 
+y el orden de ejecución de los OBs se altera notablemente ....
 25-02-2014) S abre dialogo de grabar
 25-02-2014) Telescope iterator con cycles=5 por defecto !!! debería ser =1
 25-02-2014) Timeline nada preciso, o solucionar o quitar !
 25-02-2014) PROG_ID en headers no se rellena; debería rellenarse con campo "Proposal ID" y/o quizás cambiarle el nombre a "Program ID"
 25-02-2014) En los OB, Nro. repetitions es "comun" para todos los OBs !
+26-02-2014) Los subwindows con Detecto1-4 no están bien definidos en el OT. Lemando a AGS la definición correcta.
+
 
 
 Problemas/bugs detectados en QL 
 ===============================
+- En una imagen de un detector solo, si le decimos que calcule el background 
+de esa imagen (ella sola), la imagen FITS de background que genera Sextractor
+no cumple el standard FITS y es rechazada por PAPI. Lo compruebo con fitsverify 
+y da error. Es un bug en Sextractor que habría que informar a E.Bertin.
 
 
 Problemas/bugs detectados en PAPI 
