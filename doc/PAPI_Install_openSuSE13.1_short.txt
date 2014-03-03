@@ -1,0 +1,697 @@
+Last Update: 03-Mar-2014
+
+========================================
+PANIC SOFTWARE INSTALLATION INSTRUCTIONS (under openSUSE13.1)
+========================================
+
+Summary
+*******
+
+1-GEIRS
+
+2-OT
+  2.1 Netbeans 7.0
+  2.2 Java 1.7u1 ??
+
+3-PAPI
+  3.1 PAPI sources
+  3.2 Python v2.7.5 and modules (numpy, scipy, matplotlib, PyQt4, ...)
+  3.3 Astromatic suite (SExtractor, SCAMP, SWARP)
+      - GDLIB and PLPLOT para SCAMP
+      - CDSClient
+      - blas and fft
+  3.4 IRAF v2.16.1
+      - x11iraf
+      - STSDAS & TABLES (v.3.16)
+      - mscred
+      - nmisc
+  3.5 stsci_python 2.14 (include PyRAF v2.1.6)
+  3.6 MIDAS
+  3.7 PAPI Setup (.bashrc)
+
+4-LEMON
+
+
+The next are the installation instructions for the PANIC software on the
+openSuSE 13.1-64 bit
+
+ 
+***********
+** GEIRS **
+***********
+Requirements
+------------
+
+*) sudo zypper install readline5
+
+
+*) system setup
+
+root> echo 134217728  > /proc/sys/kernel/shmmax
+
+From Clemens:
+"""
+I needed to use as root:
+- install gnuplot ==>sudo zypper install gnuplot
+- set /proc/sys/kernel/shm* to larger sizes
+- set kernel.shm* in /etc/sysctl.conf to get correct shm-setting after a reboot:
+
+kernel.shmall = 128000000000
+kernel.shmmax = 4000000000
+kernel.shmseg = 40960
+
+
+Tras email con RM el 3-Feb-2014, los valores mas adecuados serían:
+
+kernel.shmall = 15728640   # 60 GB
+kernel.shmmax = 4294967296  # 4 GB
+kernel.shmseg = 40960
+
+y lo más importante, CAMSHMSZ en GEIRS/scripts/GENERIC:
+
+setenv CAMSHMSZ `cat /proc/meminfo | fgrep MemTotal | awk '{printf "%d",$2/3072}'` 
+
+
+
+
+*)GEIRS and fonts
+
+rjm> that seem to be prepared in your /usr/share/fonts .
+rjm> First one would check that /etc/fonts/fonts.conf is basically including
+rjm> /usr/share/fonts, then that fonts-config has been creating these.
+rjm> This here is rather an incomplete X11-installation than anything related
+rjm> to GEIRS.
+rjm> 
+rjm> man xset
+rjm> ~/.fonts.conf
+rjm> man fc-list
+rjm> SuSEconfig --module fonts
+rjm> 
+
+Clemens whishes to add that the installation of an
+(incomplete) font set can be completed by calling "SuSEconfig --module fonts"
+if one adds the option "--force" to the last line of
+/sbin/conf.d/SuSEconfig.fonts .
+
+
+*)install /usr/src/PlxLinux[_v6.50]
+
+
+*)after launch GEIRS (start_panic_new), create next empty file:
+
+    ~/tmp/fitsheader_panic.txt (ESTO YA NO ES NECESARIO, ahora usamos geirsPhduAdd.panic !!!)
+
+
+* Actualizar el fichero ~/GEIRS/QueueFiles para que escriba el fichero de log para el QL:
+
+
+
+#!/bin/bash
+#
+# removing and or adding luci instrument lab-fits to fits-data-file
+#
+#
+echo `date +%FT%H:%M:%S` $1 $2 >> ~/tmp/fitsGeirsWritten
+#modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
+export ret=$?
+if [ $ret -eq 0 ]; then
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` $1   >>~/tmp/fitsfiles.corrected
+else
+    echo `date '+%Y-%m-%d_%Hh%Mm%S'` "ERROR $ret in modifying fits-header of $1"  >>~/tmp/fitsfiles.corrected
+fi
+exit $ret
+
+
+
+* Remove  ~/tmp/irmotor_lfpos.panic for simulation mode ???
+
+*) geirs2Panic 
+
+--
+Install external packages first:
+  - cfitsio from http://heasarc.gsfc.nasa.gov/fitsio/
+  - CCfits from http://heasarc.gsfc.nasa.gov/fitsio/CCfits/
+
+cd src
+
+Edit Makefile to have the compiler and linker find the associate
+headers and libraries.
+
+Type
+    make
+
+Move the executable geirs2Panic according to your PATH
+or link it to a directory so your shell will find it.
+
+R. J. Mathar, www.mpia.de/~mathar, 2012-10-23
+--
+
+wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio3310.tar.gz
+wget http://heasarc.gsfc.nasa.gov/fitsio/CCfits/CCfits-2.4.tar.gz
+wget http://www.mpia-hd.mpg.de/~mathar/progs/geirs2Panic.tar.gz
+
+Note: 
+----
+On openSuSE12.2 I had to add the lines
+
+#include <unistd.h>
+
+to heade files in order to compile the sources.
+
+
+
+ 
+********
+** OT **
+********
+
+1-Java Development Kit 7
+========================
+- As root, you must download and install the next package:
+
+> wget http://download.oracle.com/otn-pub/java/jdk/7u1-b08/jdk-7u1-linux-x64.rpm
+> rpm -ivl 
+
+or manually with 
+
+> wget jdk-7u51-linux-x64.tar.gz
+> tar -xvzf jdk-7u51-linux-x64.tar.gz /usr/local/
+> update-alternatives --install /usr/bin/java java /usr/local/jdk1.7.0_51/bin/java 300
+> update-alternatives --install /usr/bin/javac javac /usr/local/jdk1.7.0_51/bin/javac 300
+> update-alternatives --config java
+> update-alternatives --config javac
+
+
+2-NetBeans IDE 7.0.1
+====================
+- It is not required for the execution of the OT, but for the debuging and development is advised.
+- As root or panic user, you must download and install the next package:
+http://download.netbeans.org/netbeans/7.0.1/final/bundles/netbeans-7.0.1-ml-javase-linux.sh
+
+
+3-OT Sources
+============
+
+> svn co svn://arch.osn.iaa.es/PANIC/PANICObservationTool OT
+
+
+**************
+** PIPELINE **
+**************
+
+0-Sumary of system packages:
+============================
+
+zypper install libreadline5
+zypper install tcl tk  tcl-devel tk-devl python-tk
+zypper install python-sphinx
+zypper install python-qt4-devel
+zypper install python-devel
+zypper install ipython
+zypper install python-numpy python-numpy-devel
+zypper install python-scipy
+zypper install python-matplotlib python-matplotlib-tk
+zypper install python-qt4 
+zypper install libXmu6-32bit
+zypper install cfitsio libcfitsio-devel
+zypper install python-pip
+
+
+1-Python v2.7.5 : (default in openSuSE13.1)
+===============
+
+1.1 python-devel
+----------------
+
+> zypper install python-devel
+
+1.2 IPython 0.12.1 (optional)
+
+> zypper install ipython
+
+
+
+1.2 Python Modules
+-------------------
+- Then, after install the new version of Python interpreter, we must install
+again all the python modules, ie:
+
+ * IPython 0.12.1 (optional)
+ * numpy > 1.6
+ * scipy
+ * matplotlib
+ * stsci_python
+ * PyQt4
+
+
+2a-Astrometry.net
+=================
+
+> mkdir astrometry.install
+> cd astrometry.install
+> wget http://astrometry.net/downloads/astrometry.net-0.46.tar.gz
+> tar xvzf astrometry.net-0.46.tar.gz
+> ./configure
+> make install
+
+- Grab index files from http://broiler.astrometry.net/~dstn/4200/
+> wget http://broiler.astrometry.net/~dstn/4200/wget.sh
+(uncomment 4201 and 4200 lines)
+> ./wget.sh
+
+- Config index DB in /usr/local/astrometry/etc/astrometry.cfg
+
+
+
+2b-Astromatic
+=============
+Two options:
+A) Binary packages
++++++++++++++++++++
+
+2.1 SExtractor v2.8.6: from astromatic get rpm for 64 bit
+---------------------------------------------------------
+- Download from astromatic.net -->
+http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
+
+> rpm -ivl sextractor-2.8.6-1.x86_64.rpm
+
+
+2.2 SCAMP v1.7.0 
+----------------
+
+1- CDSclient package 
+
+> wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz
+> tar xvfz cdsclient.tar.gz
+> cd cdsclient-3.72
+> ./configure
+> make
+> make install
+
+
+2- PLPLOT para SCAMP (para generar ficheros png's):
+
+1) Descargar el fuente de gd-libgd (con zypper no consigo encontrar dicha libreria) de https://bitbucket.org/pierrejoye/gd-libgd/overview
+   (la última version a fecha 03-Marzo-2014 no compilaba bien!!! tuve que usar la que tenía yo de May-2013)
+
+      >git clone https://bitbucket.org/libgd/gd-libgd.git      
+
+2) Compilar dicha libraria (libgd):
+       
+       > cd gd-libgd
+       > mkdir build
+       > cd build 
+       > cmake -DBUILD_TEST=1  -DENABLE_PNG=1 -DCMAKE_LIBRARY_PATH=/usr/loca/gdlib/lib -DCMAKE_INCLUDE_PATH=/usr/local/gdlib/include ../../gd-libgd/
+       > make
+       > make install
+
+       Si falla la compilación con el error:
+       
+       """
+       Linking C executable copyrotated /usr/bin/ld: CMakeFiles/copyrotated.dir/copyrotated.o: 
+       undefined reference to symbol 'sin@@GLIBC_2.2.5' /usr/bin/ld: 
+       note: 'sin@@GLIBC_2.2.5' is defined in DSO /lib64/libm.so.6 so try adding it to the linker command line /lib64/libm.so.6: 
+       could not read symbols: Invalid operation collect2: ld returned 1 exit status 
+       make[2]: * [examples/copyrotated] Error 1 
+       make[1]: * [examples/CMakeFiles/copyrotated.dir/all] Error 2 
+       make: * [all] Error 2
+       """
+       
+       parchear el fichero  ../examples/CMakeLists.txt tal que:
+       
+       FOREACH(test_name ${TESTS_FILES}) 
+	  add_executable(${test_name} "${test_name}.c") 
+	  -	target_link_libraries (${test_name} ${GD_LIB}) 
+	  +	target_link_libraries (${test_name} ${GD_LIB} -lm) 
+       ENDFOREACH(test_name)
+       
+       (esta solución la tomé del propio foro del repositorio de la libreria)
+       
+       Nota: tambien ocurre con ../tests/gdimageline/CMakeLists.txt       
+       y tambien tuve que modificar y eliminar alguna linea en cmake_install.cmake al hacer el make install.
+ 
+    3) Descargar la plplot-5.9.4 (pues parece que es la que recomiendan en el foro de SCAMP  http://www.astromatic.net/forum/showthread.php?tid=761)
+       aunque la 5.9.9 también funciona.
+       
+       http://sourceforge.net/projects/plplot/files/plplot/
+       
+    
+    4) Compilar plplot-5.9.9 (la version 5.10.0 se compila, pero al correr SCAMP da un error tipo "scamp: symbol lookup error: scamp: undefined symbol: c_plwid)
+    
+       > cd plplot-5.9.9
+       > mkdir build
+       > cd build 
+       > cmake -DCMAKE_INSTALL_PREFIX=/usr/local/plplot599 -DBUILD_TEST=ON ../../plplot-5.9.9 >&cmake.out
+       > ccmake ..
+         y editar a mano 
+ 
+          GDI32_LIBRARY /usr/local/lib/libgd.so (en la 599 no es necesario, lo detecta bien)
+          ENABLE_python OFF (pues da un problema al no encontrar un .h de numpy ??)
+          PLD_png ON
+    
+        básicamente eso.
+        
+     > make 
+     > make install
+     
+     IMPORTANTE: copiar /usr/local/lib/libgd.so en /usr/local/plplot599/lib/ pues si no se quejará el PLPLOT de que no la encuentra.
+     
+     > export PLPLOT_LIB=/usr/local/plplot594
+     (esto realmente creo casi seguro que NO es necesario !!!!!)
+     
+     Lo realmente importante es copiar o enlazar la nueva libreria plplotd que usa SCAMP. En el sistema (openSUSE13.1) 
+     hay instalada una por defecto (so.9) pero que no trae el soporte para PNG y que da el error 
+      
+	  "scamp: symbol lookup error: scamp: undefined symbol: c_plimage"
+     
+     Por tanto, MUY IMPORTANTE hacer en enlace o copia (como se prefiera) 
+     
+      >>>> ln -s /usr/local/plplot599/lib/libplplotd.so.11.0.0 /usr/lib64/libplplotd.so.9
+     
+     y listo !!! SCAMP debe generar los graficos PNG sin problema (glup!).
+     
+     
+     FAQ:
+       My program exits with the error message Unable to either (1) open/find or (2) allocate memory for the font file
+
+       The PLplot library can't find the font files plstnd5.fnt and plxtnd5.fnt. Set the environment variable PLPLOT_LIB to the directory where these files are, e.g. export PLPLOT_LIB=/usr/local/plplot/data. 
+     
+     
+    HA costado lo suyo !!! lo ideal sería que SCAMP (E.Bertin) migrara a la libraría cairo para generar los PNGs !!!
+    
+    Sin embargo, si le digo a SCAMP que genere ficheros JPEG no lo hace (Requested device jpeg not available), pregunta cada vez por el tipo de fichero....por qué ?
+    PDF's si lo genera bien, incluso con mejor calidad que los PNG !!
+    PS: en B/N y no completos
+    Recompilo PLPLOT library con PLD_jpeg ON y ya si genera SCAMP los JPEG's, pero de una calidad pésima, inservibles !!!
+
+3- Download SCAMP v.1.7.0 from Astromatic.net --->scamp-1.7.0-1.x86_64.rpm
+
+> rpm -ivl --nodeps scamp-1.7.0-1.x86_64.rpm 
+
+(--nodeps es necesario para evitar la dependencia del paquete que contiene la 
+libreria libplplotd.so.9()(64bit), pues se queja al instalar SCAMP.
+Realmente si tendremos dicha libreria porque la habremos instalado a mano al
+compilar e instalar plplot-5.9.9.tgz).
+
+
+
+2.3 SWARP v2.19.1 : 
+------------------
+- Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.19.1-1.x86_64.rpm
+
+> rpm -ivl swarp-2.19.1-1.x86_64.rpm
+
+
+3. Numpy v1.7.1 (default in openSUSE-13.1)
+===============
+* With zypper:
+
+> zypper install python-numpy python-numpy-devel
+
+4.Scipy v0.12.0 (default in openSUSE-13.1) 
+===============
+> zypper install python-scipy
+
+- Currently only used in applyDistort.py and third party software 'cosmics', 
+but  not required for PAPI.
+- pre-requisites : blas3 lapack3+
+
+
+5. Matplotlib v.1.3.0
+=====================
+* With zypper:
+
+>zypper install python-matplotlib python-matplotlib-tk
+
+
+7. PyQt4 (default in openSUSE13.1)
+========
+
+zypper install python-qt4 
+zypper install python-qt4-devel (optional, pero necesario para pyuic4)
+(The following NEW packages are going to be installed:
+  python-qt4-devel python-qt4-utils python-sip-bin python-sip-devel)
+  
+
+8. DS9 + XPA (v7.2)
+===================
+ds9
+---
+wget http://ds9.si.edu/download/linux64/ds9.linux64.7.2.tar.gz
+
+tar xfz ds9.linux64.7.2.tar.gz
+sudo cp ds9 /usr/local/bin
+
+xpa library
+-----------
+wget http://ds9.si.edu/download/linux64/xpa.linux64.2.1.14.tar.gz
+> tar -xvzf
+> ./configure
+> make install
+
+
+9. Astropy (v0.3)
+=================
+
+(It already includes atpy and vo.table)
+
+http://www.astropy.org/
+
+To install Astropy from source, you can either use
+
+> pip install astropy
+
+Alternatively, you can download a tarball for the latest release of astropy from PyPI, then expand the tarfile and run:
+
+> python setup.py install  (option used with openSUSE13.1)
+
+to build and install the package. For more on installing from source code, see the relevant part of the documentation.
+
+
+12. STSCI_PYTHON (v2.14) - (PyRAF is part of the stsci_python package )
+========================
+- This package is required by PyRAF, but now PyRAF is part of the stsci_python package.
+
+- Before intall STSCI_PYTHON, IRAF must be installed:
+
+
+(P) 1) Install Pmw v.2.0.0  (?)
+-----------------------
+From: http://sourceforge.net/projects/pmw/files/Pmw/Pmw.2.0.0/
+
+> unpack 
+> python setup.py install
+
+2) IRAF v2.16.1 x86_64
+----------------------
+
+wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
+
+To install this release, you should download the binary distribution
+file appropriate for your machine (either linux or osx) and then identify
+yourself as one of the following users and follow the steps described:
+
+    - I am installing for the First Time:
+
+    1)  Create an 'iraf' directory (preferrably /iraf/iraf) and unpack
+        the distribution file for your platform there.
+    2)  Define $iraf in your environment (with a trailing '/')
+    3)  Run the $iraf/unix/hlib/install script to install the system
+    
+
+> sudo mkdir -p /iraf/iraf
+> wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
+> sudo ./install --system
+
+
+2.1) Externs (MSCRED, STSDAS & TABLES)
+---------------------------------
+Since IRAF v2.15, the system is shipped with no defined external packages,
+instead we assume packages will be installed using this new feature.  To
+begin, simply execute the 'configure' script in this directory to create
+the files needed.
+(see $iraf/extern/README)
+
+
+> cd /iraf/iraf/externs
+> ./configure
+> make check
+> make mscred (v5.05) --> need patch, see below
+> make stsdas (tables also installed)
+
+(P) 2.2) x11iraf (xgterm) -- NO SE SI REALMENTE SE NECESITA !!!
+----------------
+mkdir x11iraf (temporal directory used only for packege installation)
+cd x11iraf
+wget http://iraf.net/ftp/iraf/x11iraf/x11iraf-v1.5DEV-bin.redhat.tar.gz 
+tar xfz x11iraf-v1.5DEV-bin.redhat.tar.gz
+ln -s bin.redhat bin.suse
+ln -s lib.redhat lib.suse
+mkdir /usr/lib64/X11/app-defaults
+sudo ./install
+
+* Dependences
+
+ > sudo zypper install libXmu6-32bit
+ 
+2.3) mscred 5.05 (patch)
+------------------------
+Fix the bug in mscimarith:
+
+"""
+IRAF: --> mscred.mscarith
+
+"""
+Hello,
+
+There's a typo in mscred.mscarith.cl which prevents msarith from
+running in pyraf.
+
+line# 25 in mscarith.cl should be changed from
+
+int nop1, nop2, nresults, next1, next2, nexts, n
+
+to
+
+int nop1, nop2, nresult, next1, next2, nexts, n
+
+The error in pyraf is:
+
+apply(self._clFunction, parList, kw)
+File "<CL script mscred.mscarith>", line 90, in mcsarith
+taskObj.nresult = iraf.sections.nimages
+File "/usr/stsci/pyssgdev/2.4.2/pyraf/iraftask.py", line 1135, in __setattr__
+raise AttributeError(str(e))
+AttributeError: Unknown parameter requested: nresult
+
+
+Nadia Dencheva
+"""
+
+
+2.3) nmisc v05-06-2003
+----------------------
+Since IRAFv2.15, nmisc is any more required. Included in obsutil package:
+
+ obsutil.psfmeasure - Measure PSF sizes from stellar images
+ obsutil.starfocus - Determine direct focus variations from stellar images
+
+
+3) stsci_python 2.14 (include PyRAF v2.1)
+-----------------------------------------
+pip install d2to1
+pip install stscipython
+
+-- output of seconf execution of pip install stscipython --
+Requirement already satisfied (use --upgrade to upgrade): stscipython in /usr/local/lib/python2.7/site-packages
+Requirement already satisfied (use --upgrade to upgrade): d2to1>=0.2.9,<=0.2.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.distutils>=0.3.2,<=0.3.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): pyfits>=3.1.1,<=3.1.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.tools>=3.2,<=3.2.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.ndimage>=0.10.0,<=0.10.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.convolve>=2.1,<=2.1.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): pywcs>=1.10.2,<=1.10.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stwcs>=1.1.0,<=1.1.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.stimage>=0.2,<=0.2.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.imagestats>=1.4,<=1.4.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.imagemanip>=1.1,<=1.1.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.image>=2.1,<=2.1.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): pysynphot>=0.9.5,<=0.9.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): pydrizzle>=6.4.0,<=6.4.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): nictools>=1.1.0,<=1.1.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): calcos>=2.19.7,<=2.19.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): astrolib.coords>=0.39.4,<=0.39.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): wfpc2tools>=1.0.1,<=1.0.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): wfc3tools>=1.1,<=1.1.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.sphinxext>=1.2.1,<=1.2.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stsci.numdisplay>=1.6,<=1.6.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): stistools>=1.0.1,<=1.0.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): reftools>=1.6.4,<=1.6.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): pyraf>=2.1,<=2.1.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): opuscoords>=1.0.1,<=1.0.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): multidrizzle>=3.4.0,<=3.4.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): fitsblender>=0.2,<=0.2.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): drizzlepac>=1.1.8,<=1.1.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): costools>=1.1,<=1.1.99 in /usr/local/lib/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): acstools>=1.7.2,<=1.7.99 in /usr/local/lib64/python2.7/site-packages (from stscipython)
+Requirement already satisfied (use --upgrade to upgrade): distribute in /usr/lib/python2.7/site-packages (from d2to1>=0.2.9,<=0.2.99->stscipython)
+Requirement already satisfied (use --upgrade to upgrade): numpy in /usr/lib64/python2.7/site-packages (from pyfits>=3.1.1,<=3.1.99->stscipython)
+
+--
+
+
+13. Aladin software tool (v7.5)
+===============================
+Not mandatory, but it might be useful for the observer during the observation 
+or data inspection/analysis.
+Aladin is an interactive software sky atlas allowing the user to visualize 
+digitized astronomical images, superimpose entries from astronomical catalogues
+ or databases, and interactively access related data and information from the 
+Simbad database, the VizieR service and other archives for all known sources 
+in the field.
+
+http://aladin.u-strasbg.fr/aladin.gml
+
+>download Aladin.tar
+>tar -xvf Aladin.tar
+>sudo p -av Aladin /usr/local/
+
+(P) 14. MIDAS 10SEPpl1.1 (for CL environment)
+=========================================
+See: http://www.eso.org/sci/software/esomidas/
+
+Note: Some patches must be done to the MIDAS 10SEPpl1.1 concerning a
+BUG in the catalog routines (see gmail from Klaus Banse at ESO for more details)
+Files to patch:
+      - midfct.c
+      - midcat.c
+      - scc.c
+
+
+15. PAPI SOURCES
+================
+
+git clone https://github.com/ppmim/PAPI#
+git clone jmiguel@feynman.iaa.es:/home/jmiguel/DEVELOP/papi.git
+
+> cd papi/irdr
+> cd make all
+
+- edit .bashrc and set environment variables (see environment configuration)
+
+
+PAPI ENVIRONMENT CONFIGURATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- .bashrc
+
+############# PAPI environment ################
+#. $PAPI_HOME/papi_setup.sh
+PAPI_HOME=/home/panic/DEVELOP/PIPELINE/PANIC/trunk
+PAPI_CONFIG=$PAPI_HOME/config_files/papi.cfg
+PAPI_PROD=/data/out
+PYTHONPATH=$PYTHONPATH:$PAPI_HOME
+export PYTHONPATH PAPI_HOME QTDIR PAPI_CONFIG
+
+alias xg='/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 80x29 -bg grey -fg black -e cl'
+alias panic='cd /home/panic/DEVELOP/PIPELINE/PANIC/trunk'
+alias data='cd /data/'
+# PANIC-MIDAS PROCEDURES
+
+
+GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
+CA_FFLTEST=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha/ffltest
+AUPLAY=/usr/bin/play
+GEIRS_DIR=/home/panic/GEIRS
+FLAT_COMMAND=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha/flats
+TECS_SCRIPT=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha
+PANIC_UTIL=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
+PANIC_SCI=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
+PATH=$PATH:$HOME/GEIRS/scripts
+export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
+
+
+
+
+
+
