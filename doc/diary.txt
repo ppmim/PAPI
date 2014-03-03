@@ -3817,6 +3817,29 @@ fi
 exit $ret
 
 
+27-Feb-2014
+-----------
+- Instalacion de openSUSE13.1 en panic1. Sin problemas, excepto que inicialmente
+intenté instalar con el CD-.NET y no pude, creo que debido al DHCP, aunque intenté
+también fijar la IP a mano, tampoco me dejó.
+
+
+
+03-Mar-2014
+-----------
+- Continuo con la instalación del SW de PANIC en openSUSE13.1
+- Finalmente instalo todo lo de PAPI, y la primeras pruebas (muy preliminares)
+parece que todo va OK.
+- Instalo también GEIRS: Plxsdk + GEIRS_713. Falta instalar la OPT PCIe board !!!
+- Instalo tambien el OT, junto con el JDK7u51
+
+
+(P) - La compilacion de IRDR en openSUSE13.1 da muchos warnings !!!!, y no compila del tirón !!
+(P) - Probar bien photometry.py , pues ahora uso astropy en lugar de atpy !!! - primeras pruebas OK!
+(P) - Actualizar check_papi_modules.py con nuevas versiones
+(P) - Configurar los sonidos !!!
+(P) - Falta instalar la OPT PCIe board !!!
+
 
 
 
@@ -4347,7 +4370,17 @@ fix method to update the headers in order to build a valid sequence for PAPI.
  (Known) Things To Be Done on GEIRS
  ==================================
  - fast readout mode 
- - ??
+ - 
+ 
+
+Problemas/bugs detectados GEIRS
+===============================
+- Definicion de detectore (D1-D4) en display de GEIRS; no corresponde con
+MEF headers ni con OT definitions. (26-Feb-2014)
+
+- Error en modo ctype=dgen:
+TS-priocntl failed for pri -20, might need privileges: Permission denied
+
 
 Problemas/bugs detectados en OT 
 ===============================
