@@ -35,6 +35,31 @@ Summary
 The next are the installation instructions for the PANIC software on the
 openSuSE 13.1-64 bit
 
+
+************
+** SYSTEM **
+************
+-) NTP Config
+> zypper install ntp
+> sudo chkconfig --add ntp
+> sudo service ntp status|start
+
+Add to /etc/ntp.conf next lines for NTP server:
+
+## IAA
+server ntp.iaa.csic.es burst iburst
+## Spain - es.pool.ntp.org
+server 1.es.pool.ntp.org iburst
+server 1.europe.pool.ntp.org iburst
+server 2.europe.pool.ntp.org iburst
+## openSuSE
+
+server 0.opensuse.pool.ntp.org iburst
+server 1.opensuse.pool.ntp.org iburst
+server 2.opensuse.pool.ntp.org iburst
+server 3.opensuse.pool.ntp.org iburst
+
+ 
  
 ***********
 ** GEIRS **
@@ -157,7 +182,6 @@ On openSuSE12.2 I had to add the lines
 #include <unistd.h>
 
 to heade files in order to compile the sources.
-
 
 
  

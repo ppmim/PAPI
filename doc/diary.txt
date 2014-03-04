@@ -3839,8 +3839,9 @@ parece que todo va OK.
 (P) - Actualizar check_papi_modules.py con nuevas versiones
 (P) - Configurar los sonidos !!!
 (P) - Falta instalar la OPT PCIe board !!!
-
-
+(P) - Probar FWHM routines with MEF !!!
+(P) - Probar eval_focus with MEF !!! 
+(P) - Probar IRAF:starfocus !!! y actualizar TN !!
 
 
 

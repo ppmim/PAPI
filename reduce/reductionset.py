@@ -2357,11 +2357,42 @@ class ReductionSet(object):
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
         elif fits.isFocusSerie():
-            log.warning("[reduceSeq] Focus Serie reduction is not yet implemented. Try interactively.")
-            raise Exception("[reduceSeq] Focus Serie reduction is not yet implemented. Try interactively or in Pop-up QL menu")
-            # TODO
-            # In principle, it has no sense to reduce a focus serie sequence
-            pass
+            log.warning("[reduceSeq] Focus Serie is going to be reduced:\n%s"%str(sequence))
+            try:
+                # 
+                # Generate a random filename for the master, to ensure we do not
+                # overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.pdf', 
+                                                          prefix='focusSer_', 
+                                                          dir=self.out_dir)
+                os.close(output_fd)
+                os.unlink(outfile) # we only need the name
+
+                # Check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
+                #
+                misc.utils.listToFile(sequence, self.temp_dir+"/focus.list")
+                pix_scale = self.config_dict['general']['pix_scale']
+                satur_level =  self.config_dict['skysub']['satur_level']
+                task = reduce.eval_focus_serie.FocusSerie(self.temp_dir+"/focus.list", 
+                                                                   str(outfile),
+                                                                   pix_scale, 
+                                                                   satur_level,
+                                                                   show=False)
+                red_parameters = ()
+                result = pool.apply_async(task.eval_serie, red_parameters)
+                result.wait()
+                best_focus, out = result.get()
+                
+                pool.close()
+                pool.join()
+
+                if out!=None: 
+                    files_created.append(out) # out must be equal to outfile
+            except Exception,e:
+                log.error("[reduceSeq] Some error while creating processing Focus Serie: %s",str(e))
+                raise e
+
         elif fits.isScience():
             l_out_dir = ''
             results = None
@@ -2606,11 +2637,12 @@ class ReductionSet(object):
         # the DB
         for file in files_created:
             # if source image was a science one, then products should be also 
-            # science images
+            # science images.
             if fits.isScience():
                 # input image is overwritten
                 misc.imtrim.imgTrim(file)
-            if file!=None: self.db.insert(file)
+            if file!=None and os.path.splitext(file)[1]=='.fits':
+                self.db.insert(file)
         
         # not sure if is better to do here ??? 
         #self.purgeOutput()
