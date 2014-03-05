@@ -123,6 +123,8 @@ class FocusSerie(object):
             print "Not enough data for fitting"
             best_focus = np.NaN
 
+        log.info("Plot generated: %s"%self.output)
+        
         return best_focus, self.output
            
     def get_t_focus(self, file):

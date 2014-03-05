@@ -3836,12 +3836,41 @@ parece que todo va OK.
 
 (P) - La compilacion de IRDR en openSUSE13.1 da muchos warnings !!!!, y no compila del tirón !!
 (P) - Probar bien photometry.py , pues ahora uso astropy en lugar de atpy !!! - primeras pruebas OK!
-(P) - Actualizar check_papi_modules.py con nuevas versiones
 (P) - Configurar los sonidos !!!
 (P) - Falta instalar la OPT PCIe board !!!
 (P) - Probar FWHM routines with MEF !!!
 (P) - Probar eval_focus with MEF !!! 
 (P) - Probar IRAF:starfocus !!! y actualizar TN !!
+
+
+04-Mar-2014
+-----------
+- Continuo con las pruebas de PAPI: secuencias de foco:
+   -> Ahora PAPI reconoce las secuencias y las procesa, generando un PDF.
+   -> El QL la reconoce y las procesa también, pero mostrando el PDF.
+      Además, en el QL, desde el Pop-up menu, se puede selecionar una lista 
+      de fichero y hacer el análisis de foco. Lo ficheros selecionados no tienen
+      por que ser una secuencia completa, eso no lo comprueba de esta forma.
+
+- Lanzo la reducción con PAPI de toda la campaña Jun.2012 de Matilde con O2k.
+
+05-Mar-2014
+-----------
+- Encuentro un bug en la reducción de un directorio completo (un conjunto de 
+secuencias de una noche), pues se borraban (RS.cleanUpFiles) los datos de la secuencia
+anterior. Modifico RS:cleanUpFiles() para que no borre .fits ni .skysub.fits.
+- Además modifico RS para que en el modo LEMON se creen ficheros con nombres 
+aleatorios terminados en '.panic_output'
+
+- Encuentro problema en el calculo de los offsets en Matilde-120103_s40; cambio
+en la configuración single_point = False y se soluciona el problema !!!
+Por tanto, el single_point en algunos casos no es muy bueno usarlo..., pero no
+termino entender por que ???
+
+- Lanzo de nuevo la reducción de Jan.2012 de Matilde a ver que pasa ahora ....
+
+(B-P) IRAF:starfocus no funciona ni con el ejemplo de O2k !!! Por qué ????
+
 
 
 

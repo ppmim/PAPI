@@ -1572,11 +1572,11 @@ class ReductionSet(object):
         """
         
         for out_dir in list_dirs:
-            misc.fileUtils.removefiles(out_dir+"/*.fits")
+            #misc.fileUtils.removefiles(out_dir+"/*.fits", out_dir+"/*.skysub*")
             misc.fileUtils.removefiles(out_dir+"/c_*", out_dir+"/dc_*",
                                        out_dir+"/*.nip", out_dir+"/*.pap" )
             misc.fileUtils.removefiles(out_dir+"/coadd*", out_dir+"/*.objs",
-                                       out_dir+"/uparm*", out_dir+"/*.skysub*")
+                                       out_dir+"/uparm*")
             misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.list",
                                        out_dir+"/*.xml", out_dir+"/*.ldac",
                                        out_dir+"/*.png" )
@@ -2957,9 +2957,14 @@ class ReductionSet(object):
         # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
         ########################################################################
         if self.red_mode=='quick-lemon':
-            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+            output_fd, papi_output = \
+                tempfile.mkstemp(prefix = out_dir,
+                                 suffix = '.papi_output', text = True)
+            os.close(output_fd)
+            os.unlink(papi_output)
+            misc.utils.listToFile(self.m_LAST_FILES, papi_output)
             log.info("1st Skysubtraction done !")
-            return out_dir+"/files_skysub.list"
+            return papi_output
                            
         ########################################################################
         # 5 - Quality assessment (FWHM, background, sky transparency, 
@@ -3174,10 +3179,15 @@ class ReductionSet(object):
         ########################################################################
         
         if self.red_mode=='lemon':
-            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub2.list")
+            output_fd, papi_output = \
+                tempfile.mkstemp(prefix = out_dir,
+                                 suffix = '.papi_output', text = True)
+            os.close(output_fd)
+            os.unlink(papi_output)
+            misc.utils.listToFile(self.m_LAST_FILES, papi_output)
             log.info("End of sequence LEMON-reduction. # %s # files created. ",
                      len(self.m_LAST_FILES))
-            return out_dir+"/files_skysub2.list"
+            return papi_output
     
         #######################################################################
         # 9.4 - Divide by the master flat after sky subtraction ! (see notes above)
@@ -3268,19 +3278,6 @@ class ReductionSet(object):
         log.info("##################################")
         
         return output_file 
-        
-    def test(self):
-        log.debug("Una prueba")
-        self.__initDB()
-        self.db.GetOBFiles()
-        (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
-        k=0
-        for par in seq_par:
-            print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
-            print "-----------------------------------------------------------------------------------\n"
-            for file in seq_list[k]:
-                print file
-            k+=1
 
 
 ## {{{ http://code.activestate.com/recipes/327142/ (r1)
