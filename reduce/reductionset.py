@@ -674,9 +674,10 @@ class ReductionSet(object):
         new_frame_list = [] # a list of N list, where N=number of extension of the MEF 
         nExt = 0
         if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
+            log.debug("Nothing to split ! %s"%frame_list)
             return [],0
         
-        first_img = datahandler.ClFits(frame_list[0])    
+        first_img = datahandler.ClFits(frame_list[0])
         # First, we need to check if we have MEF files
         # 1) Not a MEF 
         if not first_img.isMEF():
@@ -693,12 +694,12 @@ class ReductionSet(object):
                 nExt = 1
                 new_frame_list.append(frame_list)
         # 2) Suppose we have MEF files ...
-        else:            
-            if first_img.getInstrument()=="HAWKI":
+        else:
+            if first_img.getInstrument()=="hawki":
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
-		  'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
-		  'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", "HIERARCH ESO TPL NEXP",
-                  'NCOADDS','HIERARCH ESO DET NDIT','NDIT'
+		          'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+		          'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", 
+                  'HIERARCH ESO TPL NEXP','NCOADDS','HIERARCH ESO DET NDIT','NDIT'
                 ]   
             else: # PANIC
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
@@ -708,15 +709,14 @@ class ReductionSet(object):
                    'NCOADDS','CASSPOS','PIXSCALE', 'LAMP'
                 ]
             
-                log.debug("Splitting data files")
-                try:
-                    mef = misc.mef.MEF(frame_list)
-                    (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
-                                                        out_dir=self.temp_dir, 
-                                                        copy_keyword=kws_to_cp)
-                except Exception,e:
-                    log.debug("Some error while splitting data set. %s",str(e))
-                    raise e
+            try:
+                mef = misc.mef.MEF(frame_list)
+                (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
+                                                    out_dir=self.temp_dir, 
+                                                    copy_keyword=kws_to_cp)
+            except Exception,e:
+                log.debug("Some error while splitting data set. %s",str(e))
+                raise e
             
             # now, generate the new output filenames        
             for n in range(1,nExt+1):

@@ -3835,7 +3835,6 @@ parece que todo va OK.
 
 
 (P) - La compilacion de IRDR en openSUSE13.1 da muchos warnings !!!!, y no compila del tirón !!
-(P) - Probar bien photometry.py , pues ahora uso astropy en lugar de atpy !!! - primeras pruebas OK!
 (P) - Configurar los sonidos !!!
 (P) - Falta instalar la OPT PCIe board !!!
 (P) - Probar FWHM routines with MEF !!!
@@ -3869,7 +3868,40 @@ termino entender por que ???
 
 - Lanzo de nuevo la reducción de Jan.2012 de Matilde a ver que pasa ahora ....
 
+
 (B-P) IRAF:starfocus no funciona ni con el ejemplo de O2k !!! Por qué ????
+(Solucionado)l problema era que no estaba seleccionando estrellas buenas, eran más bien
+rayos cósmicos o ruido.
+
+
+06-Mar-2014
+-----------
+- Soluciono bug en photometry.py, pues en el caso de que por ejemplo la imagen
+no estuviese calibrada astrometricamente, entonces no puede hacer el XMatch; bueno,
+puede hacerlo, pero sale [][] y no trataba ese caso concreto.
+
+(BUG) - Encuentro un problema en QL/PAPI: si se "atranca" for ever en algun procesamiento en el QL,
+debería tener un timeout para que no deje al QL colgado. 
+(P) -Probar a reducir imagenes con mascara de PANIC !! ver si quita "cielo"
+(Bug) - Los dark no los muestra bien el display.py !! ==> SI TIENEN INFORMACION WCS los dark de PANIC 
+
+
+07-Mar-2014
+-----------
+* No se copia la key FILTER/1 en los datos de HAWKI: la debí quitar sin darme cuenta
+--> solucionado en redunctionset.py
+
+(PPPP) - (Bug?) No se por que en udit22 no se reduce el HAWKI-DS3-0 !! da un error
+de keyword no compatible !! sin embargo en panic1 no da ningún problema !!!
+--> es cuestion de versiones de pyfits ('3.1.0' en udit22 y 3.1.3dev en panic1, y
+en la 1.3.1 tampoco ocurre, está solucionado). Es un warning, pero como en
+clfits los convierto a errores, por eso se queja.
+La solución es poner por defecto el clfits.check_integrity=False y sólo activarlo
+en el QL !!!
+
+
+
+
 
 
 
@@ -4290,6 +4322,8 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Implementar algun cleanup para QL/PAPI que mate todos los procesos
+- Probar a reducir imagenes con mascara de PANIC !! ver si quita "cielo"
 - Configurar sonidos (pulseaudio)
 - Second pass of sky-subtraction for extended objects
 - Support for incomplete sequences
@@ -4422,6 +4456,8 @@ y el orden de ejecución de los OBs se altera notablemente ....
 25-02-2014) PROG_ID en headers no se rellena; debería rellenarse con campo "Proposal ID" y/o quizás cambiarle el nombre a "Program ID"
 25-02-2014) En los OB, Nro. repetitions es "comun" para todos los OBs !
 26-02-2014) Los subwindows con Detecto1-4 no están bien definidos en el OT. Lemando a AGS la definición correcta.
+07-03-2014) Error por 'timeout' (creo, según log de GEIRS) que provoca la 
+terminación prematura de un OB en el OT.
 
 
 

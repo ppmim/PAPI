@@ -449,10 +449,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.proc_started:
             if self.comboBox_QL_Mode.currentText()=="None":
                 return
-            elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
-                #self.processSeq(seq)
-                self.processFiles(seq)
-                return
+            elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
+                display.showFrame(filename)
+                if end_seq: self.processFiles(seq)
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 self.processLazy(filename)
                 return
