@@ -176,6 +176,8 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
         log.error("Canno't read the input catalog %s"%cat2)
         return None
     
+    log.info("XMatch of %s Source points and %s 2MASS reference points"%(len(table1),len(table2)))
+
     try:
         ind1, ind2 = coords.indmatch(table1['X_WORLD'], table1['Y_WORLD'], 
                                      table2['ra'], table2['dec'],
@@ -192,6 +194,8 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
     table2_xm = table2[ind2]
     
     
+    log.info("Matched objects: %s"%len(ind1))
+
     # Because Atpy does not support table merging, a new xmatch is done with
     # selected rows.
     # Firstly, selection
@@ -225,6 +229,8 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
         raise e
 
     #table_res = table1_tmp.where(ind1)
+    log.info("Matched objects after filtering : %s"%len(ind1_p))
+    
 
     if len(ind1_p)==0:
         log.info("No matched starts found. Review filter.")
@@ -888,7 +894,7 @@ def doPhotometry(input_image, catalog, output_filename,
     ###### and generate the plot file with the photometric comparison
     ###### using Numpy & Matplotlib
     ###### 2MASS_Mag = Inst_Mag*b + ZP  
-    log.debug("Compute & Plot regression !!!")    
+    log.info("Computing & Plotting regression with %s points "%len(xm))    
     est_zp_err = zero_point
     try:
         #est_zp_err = compute_regresion(match_cat, 'MAG_AUTO', 

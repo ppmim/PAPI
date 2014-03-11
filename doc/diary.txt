@@ -3896,9 +3896,14 @@ de keyword no compatible !! sin embargo en panic1 no da ningún problema !!!
 --> es cuestion de versiones de pyfits ('3.1.0' en udit22 y 3.1.3dev en panic1, y
 en la 1.3.1 tampoco ocurre, está solucionado). Es un warning, pero como en
 clfits los convierto a errores, por eso se queja.
+Además, fitsverify los da por la keyword.
 La solución es poner por defecto el clfits.check_integrity=False y sólo activarlo
 en el QL !!!
 
+
+10-Mar-2014
+-----------
+- (P) Sigo con problemas al mostar los Dark/DModel en DS9.
 
 
 
@@ -4322,8 +4327,10 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- revisar por qué el xmatch en photometry da tan pocos objetos !!! (en general)
+- opción en PAPI para reducir sólo un detector/es
 - Implementar algun cleanup para QL/PAPI que mate todos los procesos
-- Probar a reducir imagenes con mascara de PANIC !! ver si quita "cielo"
+- Probar a reducir imagenes con mascara de PANIC !! ver si quita "cielo" -->fedithead
 - Configurar sonidos (pulseaudio)
 - Second pass of sky-subtraction for extended objects
 - Support for incomplete sequences

@@ -2446,8 +2446,10 @@ class ReductionSet(object):
                         for n in range(next):
                             ## only a test to reduce Q01
                             #log.critical("only a test to reduce Q01")
+                            #if n!=0: continue
                             #if n!=0 and n!=1: continue
                             ## end-of-test
+
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
                             
                             #

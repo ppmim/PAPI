@@ -395,11 +395,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ######################
         #datahandler.dataset.initDB()
         inserted = False
-        if fromOutput: inserted = self.outputsDB.insert(filename)
-        else: inserted = self.inputsDB.insert(filename)
+        try:
+            if fromOutput: inserted = self.outputsDB.insert(filename)
+            else: inserted = self.inputsDB.insert(filename)
+        except Exception,e:
+            log.error("Error while inserting file %s"%filename)
+            self.logConsole.warning("Error inserting file [%s]"%(str(e)))
+            raise e
 
         # If file insertion into DB failed, at least nothing else to do...        
-        if not inserted: 
+        if not inserted:
+            self.logConsole.warning("Error inserting file [%s]"%filename) 
             return
             
         ## Query DB
