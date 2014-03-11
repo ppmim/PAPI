@@ -50,7 +50,7 @@ class FocusSerie(object):
         
     """
     
-    def __init__(self, input_files, output, pix_size, sat_level, *a, **k):
+    def __init__(self, input_files, output, pix_size, sat_level, show=False, *a, **k):
         """
         Init method
         """
@@ -70,6 +70,7 @@ class FocusSerie(object):
         self.output = output
         self.pix_size = pix_size
         self.sat_level = sat_level
+        self.show = show # whether to show or not the pdf plot file
 
     def eval_serie(self):
         """
@@ -115,13 +116,16 @@ class FocusSerie(object):
             plt.xlim(np.min(focus_values),np.max(focus_values))
             plt.ylim(pol(xp).min(), np.max(fwhm_values))
             plt.savefig(self.output)
-            plt.show(block=True)
+            if self.show:
+                plt.show(block=True)
 
         else:
             print "Not enough data for fitting"
             best_focus = np.NaN
 
-        return best_focus
+        sys.stdout.write("\nPlot generated: %s\n"%self.output)
+
+        return best_focus, self.output
            
     def get_t_focus(self, file):
         """

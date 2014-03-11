@@ -135,7 +135,7 @@ def solveField(filename, tmp_dir, pix_scale=None):
     # Hardcoded the path !
     path_astrometry = "/usr/local/astrometry/bin"  
     if not os.path.exists(path_astrometry+"/solve-field"):
-        raise Exception("[solveAstrometry] Cannot find Astrometry.net binaries")
+        raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s"%path_astrometry)
 
 
     #
@@ -192,11 +192,12 @@ def solveField(filename, tmp_dir, pix_scale=None):
     #
     # Look for filename.solved to know if field was solved
     #
-    solved_file = tmp_dir + "/" + os.path.splitext(os.path.basename(filename))[0] + ".solved"
+    solved_file = os.path.join(tmp_dir, 
+        os.path.splitext(os.path.basename(filename))[0] + ".solved")
     #print "FILE=",solved_file
     if os.path.exists(solved_file):
         logging.info("Field solved !")
-        return tmp_dir + "/" + os.path.splitext(os.path.basename(filename))[0] + ".new"
+        return os.path.join(tmp_dir, os.path.splitext(os.path.basename(filename))[0] + ".new")
     else:
         log.error("Field was not solved.")
         raise Exception("Field was not solved")
@@ -245,6 +246,7 @@ def runMultiSolver(files, tmp_dir, pix_scale=None):
             result.wait()
             # the 0 index is *ONLY* required if map_async is used !!!
             solved.append(result.get()[0])
+            log.info("New file created => %s"%solved[-1])
         except Exception,e:
             log.error("Cannot process file \n" + str(e))
             
@@ -346,8 +348,9 @@ in principle previously reduced, but not mandatory.
         parser.print_help()
         parser.error("incorrect number of arguments " )
     
-    # Check if source_file is a FITS file or a text file listing a set of files
     tic = time.time()
+
+    # Check if source_file is a FITS file or a text file listing a set of files
     if os.path.exists(options.source_file):
         if os.path.isfile(options.source_file):
             try:
@@ -360,7 +363,8 @@ in principle previously reduced, but not mandatory.
             filelist = glob.glob(options.source_file+"/*.fit*")
             # Look for subdirectories
             if options.recursive:
-                subdirectories = [ name for name in os.listdir(options.source_file) if os.path.isdir(os.path.join(options.source_file, name)) ]
+                subdirectories = [ name for name in os.listdir(options.source_file) \
+                    if os.path.isdir(os.path.join(options.source_file, name)) ]
                 for subdir in subdirectories:
                     filelist += glob.glob(os.path.join(options.source_file, subdir)+"/*.fit*")
                 
@@ -368,7 +372,9 @@ in principle previously reduced, but not mandatory.
         files_solved = runMultiSolver(filelist, options.output_dir, 
                                       options.pixel_scale)
         for file in filelist:
-            if file not in files_solved and file+".not_science" not in files_solved:
+            ren_file = os.path.join(options.output_dir,
+                    os.path.basename(os.path.splitext(file)[0]+".new"))
+            if ren_file not in files_solved and file+".not_science" not in files_solved:
                 files_not_solved.append(file)
         
         # Serial approach
@@ -386,24 +392,17 @@ in principle previously reduced, but not mandatory.
 
     toc = time.time()
 
-    # print "\n"
-    # print "No. files solved = ", len(files_solved)
-    # print "------------------------"    
-    # print files_solved
-    # print "\n"
-    # print "No. files not solved = ", len(files_not_solved)
-    # print "------------------------"    
-    # print files_not_solved
-    
     log.info("No. files = %s"%len(filelist))
     # calibracion files (bias, dark, flats, ...) are considered as solved files
     log.info("No. files solved = %s"%(len(filelist)-len(files_not_solved)))
     log.info("----------------")
     log.info(files_solved)
+    print "\n"
     log.info("No. files NOT solved = %s", len(files_not_solved))
     log.info("--------------------")
     log.info(files_not_solved)
     log.info("Time : %s"%(toc-tic))
+
     sys.exit()
         
     

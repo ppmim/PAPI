@@ -42,7 +42,8 @@ from optparse import OptionParser
 import sys
 import os
 
-import atpy 
+#import atpy
+from astropy.table import Table
 import numpy
 
 #import matplotlib
@@ -69,11 +70,15 @@ class CmdException(Exception):
 
 def catalog_xmatch( cat1, cat2, out_filename, out_format='votable', error=2.0 ):
     """
+    *** Currently NOT used ***
+
     Takes two input catalogues (VOTables) and performs a cross match to 
     find objects within 'error' arcseconds of each other. 
     The result is a new VOTable (default) containing only rows where a match 
     was found. 
     
+
+
     Notes
     -----
     It runs without explicit specification of the sky position columns 
@@ -151,25 +156,28 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
     
     Returns
     -------
-        Filename where results where saved (VOTABLE, ASCII_TABLE, ...)
+        Two list: a list with MAG_AUTO from Sextractor and a second list 
+        with Magnitudes from 2MASS.  
     """
     
     
     # Read vo-catalogs
     #Sextractor catalog
     try:
-        table1 = atpy.Table(cat1, type='vo', tid=0)
+        table1 = Table.read(cat1, format="votable", table_id=0)
     except Exception:
         log.error("Canno't read the input catalog %s"%cat1)
         return None
     
     # References (2MASS) catalog
     try:
-        table2 = atpy.Table(cat2, type='vo', tid=0)
+        table2 = Table.read(cat2, format="votable", table_id=0)
     except Exception:
         log.error("Canno't read the input catalog %s"%cat2)
         return None
     
+    log.info("XMatch of %s Source points and %s 2MASS reference points"%(len(table1),len(table2)))
+
     try:
         ind1, ind2 = coords.indmatch(table1['X_WORLD'], table1['Y_WORLD'], 
                                      table2['ra'], table2['dec'],
@@ -178,31 +186,40 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
         log.error("Erron in xmatch-ing tables :%s"%str(e))
         raise e
 
-    table1_xm = table1.where(ind1)
-    table2_xm = table2.where(ind2)
+    if len(table1)>0 and len(table2)>0 and (len(ind1)==0 or len(ind2)==0):
+        log.debug("No matched starts found. Check astrometry of source catalog.")
+        raise Exception("No matched starts found.")
+
+    table1_xm = table1[ind1]
+    table2_xm = table2[ind2]
     
     
+    log.info("Matched objects: %s"%len(ind1))
+
     # Because Atpy does not support table merging, a new xmatch is done with
     # selected rows.
     # Firstly, selection
-    table2_tmp = table2_xm.where( (table2_xm.j_snr > min_snr) & 
-                                  (table2_xm.h_snr > min_snr) &
-                                  (table2_xm.k_snr > min_snr) & 
-                                  (table2_xm.j_k < 1.0) )
-    
-    # if there is no enough stars, then don't use color cut (J-K)<1 
-    if len(table2_tmp)<25:
-        table2_tmp = table2_xm.where( (table2_xm.j_snr > min_snr) & 
-                                      (table2_xm.h_snr > min_snr) &
-                                      (table2_xm.k_snr > min_snr))
+    try:
+        table2_tmp = table2_xm[ (table2_xm['j_snr'] > min_snr) & 
+                                      (table2_xm['h_snr'] > min_snr) &
+                                      (table2_xm['k_snr'] > min_snr) & 
+                                      (table2_xm['j_k'] < 1.0) ]
         
-    table1_tmp = table1_xm.where( (table1_xm.FLAGS==0) & 
-                                  (table1_xm.FLUX_BEST > 0) &
-                                  (table1_xm.FLUX_AUTO/table1_xm.FLUXERR_AUTO > min_snr))
-    
-    
+        # if there is no enough stars, then don't use color cut (J-K)<1 
+        if len(table2_tmp)<25:
+            table2_tmp = table2_xm[ (table2_xm['j_snr'] > min_snr) & 
+                                          (table2_xm['h_snr'] > min_snr) &
+                                          (table2_xm['k_snr'] > min_snr)]
+            
+        table1_tmp = table1_xm[(table1_xm['FLAGS']==0) & 
+                                      (table1_xm['FLUX_BEST'] > 0) &
+                                      (table1_xm['FLUX_AUTO']/table1_xm['FLUXERR_AUTO'] > min_snr)]
+    except Exception,e:
+        log.error("Error creating table %s"%(str(e)))
+        raise e
 
-    #Sencondly, new xmatch
+
+    # Sencondly, new xmatch instead of stilts
     try:
         ind1_p, ind2_p = coords.indmatch(table1_tmp['X_WORLD'], table1_tmp['Y_WORLD'], 
                                      table2_tmp['ra'], table2_tmp['dec'], 
@@ -212,16 +229,24 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
         raise e
 
     #table_res = table1_tmp.where(ind1)
+    log.info("Matched objects after filtering : %s"%len(ind1_p))
+    
 
-    log.info("Number of matched stars :%s"%(len(ind1_p)))
-        
-    return table1_tmp.where(ind1_p)['MAG_AUTO'], table2_tmp.where(ind2_p)[filter_column]
+    if len(ind1_p)==0:
+        log.info("No matched starts found. Review filter.")
+        raise Exception("No matched starts found.")
+    else:    
+        log.info("Number of matched stars :%s"%(len(ind1_p)))
+        #return table1_tmp.where(ind1_p)['MAG_AUTO'], table2_tmp.where(ind2_p)[filter_column]
+        return table1_tmp[ind1_p]['MAG_AUTO'], table2_tmp[ind2_p][filter_column]
 
 
     
 def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 , 
                               out_filename=None, out_format='pdf'):
     """
+    *** Currently NOT used ***
+
     Generate a photometry comparison plot, comparing instrumental magnitude
     versus 2MASS photometry.
     
@@ -432,8 +457,8 @@ def compute_regresion2( column_x, column_y , filter_name,
     # Second ZP
     log.debug("Second iteration")
     temp = n_Y - n_X 
-    print "LEN1=",len(temp)
-    print "LEN2=",len(temp[numpy.where(numpy.abs(m_err)<std*2)])
+    #print "LEN1=",len(temp)
+    #print "LEN2=",len(temp[numpy.where(numpy.abs(m_err)<std*2)])
     zp2 = numpy.median( temp[numpy.where(numpy.abs(m_err)<std*2)])
     m_err2 = n_Y - (n_X + zp2) 
     rms2 = numpy.sqrt( numpy.mean( (m_err2)**2 ) )
@@ -501,7 +526,7 @@ def compute_regresion( vo_catalog, column_x, column_y ,
     """
     
     try:
-        table = atpy.Table(vo_catalog)
+        table = Table.read(vo_catalog, format="votable", table_id=0)
     except Exception,e:
         log.error("Canno't read the input table")
         return None
@@ -510,26 +535,26 @@ def compute_regresion( vo_catalog, column_x, column_y ,
     ## Filter data by FLAGS=0, FLUX_AUTO>0, ...
     ## SNR = FLUX_AUTO / FLUXERR_AUTO
     
-    table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
-                             (table.j_snr>min_snr) & (table.h_snr>min_snr) &
-                             (table.k_snr>min_snr) & (table.j_k<1.0) &
-                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
+    table_new = table[(table['FLAGS']==0) & (table['FLUX_BEST'] > 0) &
+                             (table['j_snr']>min_snr) & (table['h_snr']>min_snr) &
+                             (table['k_snr']>min_snr) & (table['j_k']<1.0) &
+                             (table['FLUX_AUTO']/table['FLUXERR_AUTO']>min_snr)]
     
-    """table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
+    """table_new = table[(table.FLAGS==0) & (table.FLUX_BEST > 0) &
                              (table.k_snr>min_snr) &
-                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
+                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr)]
     
     """
     print ">> Number of matched points = ", len(table_new)
     
     # If there aren't enough 2MASS objects, don't use color cut (J-K)<1
     if len(table_new)<25:
-        #table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
-        #                         (table.j_snr>min_snr))
-        table_new = table.where( (table.FLAGS==0) & (table.FLUX_BEST > 0) &
-                             (table.j_snr>min_snr) & (table.h_snr>min_snr) &
-                             (table.k_snr>min_snr) & 
-                             (table.FLUX_AUTO/table.FLUXERR_AUTO>min_snr))
+        #table_new = table[(table.FLAGS==0) & (table.FLUX_BEST > 0) &
+        #                         (table.j_snr>min_snr)]
+        table_new = table[(table['FLAGS']==0) & (table['FLUX_BEST'] > 0) &
+                             (table['j_snr']>min_snr) & (table['h_snr']>min_snr) &
+                             (table['k_snr']>min_snr) & 
+                             (table['FLUX_AUTO']/table['FLUXERR_AUTO']>min_snr)]
         
         print ">> Number of matched points (no color cut)= ",len(table_new)
 
@@ -562,7 +587,7 @@ def compute_regresion( vo_catalog, column_x, column_y ,
     #b = res[1]
     #r = 0
     
-    print "Coeffs =", res
+    #print "Coeffs =", res
     
     # Plot the results
     pol = numpy.poly1d(res[0])
@@ -682,7 +707,8 @@ def compute_regresion( vo_catalog, column_x, column_y ,
 
     
 class STILTSwrapper (object):
-    """ Make a wrapper to some functionalities of STILTS 
+    """ 
+    Make a wrapper to some functionalities of STILTS 
     """
     
     cat_names = {'2MASS':'fp_psc', 
@@ -793,18 +819,19 @@ def doPhotometry(input_image, catalog, output_filename,
             log.debug("Found wrong RA,DEC,EXPTIME or FILTER value")
             raise Exception("Found wrong RA,Dec,EXPTIME or FILTER value.")
         
-        # Checking Filter    
-        if filter == 'J':
+        # Checking Filter
+        l_filter = filter.lower()    
+        if l_filter == 'j':
             two_mass_col_name = 'j_m'
-        elif filter == 'H':
+        elif l_filter == 'h':
             two_mass_col_name = 'h_m'
-        elif filter == 'K' or filter == 'K-PRIME' or filter == 'KS':
+        elif l_filter=='k' or l_filter=='k-prime' or l_filter=='ks':
             two_mass_col_name = 'k_m'   
         #elif filter=='OPEN':
         #    two_mass_col_name = 'j_m'
         else:
-            log.error("Filter %s not supported" %filter)
-            raise Exception("Filter %s not supported"%filter)
+            log.error("Filter %s not supported" %l_filter)
+            raise Exception("Filter %s not supported"%l_filter)
             
     except Exception, e:
         log.error("Cannot read properly FITS file : %s:", str(e))
@@ -860,14 +887,14 @@ def doPhotometry(input_image, catalog, output_filename,
                                    error=1.0 , min_snr=snr)
         log.debug("XMatch done !")
     except Exception, e:
-        log.error("XMatch failed %s", str(e))
+        log.error("XMatch failed %s. Check astrometric calibration of source.", str(e))
         raise e
     
     ## 3a- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
     ###### and generate the plot file with the photometric comparison
     ###### using Numpy & Matplotlib
     ###### 2MASS_Mag = Inst_Mag*b + ZP  
-    log.debug("Compute & Plot regression !!!")    
+    log.info("Computing & Plotting regression with %s points "%len(xm))    
     est_zp_err = zero_point
     try:
         #est_zp_err = compute_regresion(match_cat, 'MAG_AUTO', 

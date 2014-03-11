@@ -66,7 +66,6 @@ import datahandler
 import misc.display as display
 import astromatic
 import photo.photometry
-#import runQtProcess as QtProc # not need it anymore !!
 
 #Log
 import misc.paLog
@@ -396,11 +395,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ######################
         #datahandler.dataset.initDB()
         inserted = False
-        if fromOutput: inserted = self.outputsDB.insert(filename)
-        else: inserted = self.inputsDB.insert(filename)
+        try:
+            if fromOutput: inserted = self.outputsDB.insert(filename)
+            else: inserted = self.inputsDB.insert(filename)
+        except Exception,e:
+            log.error("Error while inserting file %s"%filename)
+            self.logConsole.warning("Error inserting file [%s]"%(str(e)))
+            raise e
 
         # If file insertion into DB failed, at least nothing else to do...        
-        if not inserted: 
+        if not inserted:
+            self.logConsole.warning("Error inserting file [%s]"%filename) 
             return
             
         ## Query DB
@@ -450,10 +455,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.proc_started:
             if self.comboBox_QL_Mode.currentText()=="None":
                 return
-            elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction") and end_seq:
-                #self.processSeq(seq)
-                self.processFiles(seq)
-                return
+            elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
+                display.showFrame(filename)
+                if end_seq: self.processFiles(seq)
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 self.processLazy(filename)
                 return
@@ -788,7 +792,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 r = self._done_queue.get()
                 self.logConsole.debug("[checkDoneQueue] Task finished")
-                log.info("Get from Queue: %s"%str(r))
+                log.info("Got from Queue: %s"%str(r))
                 
                 if r!=None:
                     if type(r)==type(Exception()):
@@ -801,10 +805,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         else:
                             str_list = ""
                             #print "FILES CREATED=",self._task_info._return
-                            display.showFrame(r) #_return is a file list
-                            for file in r:
+                            #display.showFrame(r) #_return is a file list
+                            for i_file in r:
+                                if i_file.endswith(".fits"):
+                                    display.showFrame(i_file)
+                                    str_list+=str(i_file)+"\n"
+                                elif i_file.endswith(".pdf"):
+                                    # Todo
+                                    log.debug("PDF display not yet implemented.")
+                                    str_list+=str(i_file)+"\n"
+                                    continue
                                 #display.showFrame(file)
-                                str_list+=str(file)+"\n"
+                                str_list+=str(i_file)+"\n"
                                 #!!! keep up-date the out DB for future calibrations !!!
                                 # Because some science sequences could neen the
                                 # master calibration created by a former reduction,
@@ -817,7 +829,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                 # done there (I hope), and not here !
                                 if not self.checkBox_outDir_autocheck.isChecked():   
                                     log.debug("Updating DB...")
-                                    self.outputsDB.insert(file)
+                                    self.outputsDB.insert(i_file)
                                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                             self.logConsole.debug(str(QString("%1 file/s created : \n %2")
                                                       .arg(len(r))
@@ -848,12 +860,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             except Exception,e:
                 raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:
-                #Anyway, restore cursor
+                # Anyway, restore cursor
                 QApplication.restoreOverrideCursor()
                 self.m_processing = False
                 # Return to the previus working directory
                 os.chdir(self._ini_cwd)
-                #Good moment to update the master calibration files in widgets   
+                # Good moment to update the master calibration files in widgets   
                 self._update_master_calibrations()
                 
                     
@@ -2471,7 +2483,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     self._task = reduce.eval_focus_serie.FocusSerie("/tmp/focus.list", 
                                                                str(outfileName),
                                                                pix_scale, 
-                                                               satur_level) 
+                                                               satur_level,
+                                                               show=True) 
                     thread = reduce.ExecTaskThread(self._task.eval_serie, 
                                                    self._task_info_list)
                     thread.start()

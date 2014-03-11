@@ -674,9 +674,10 @@ class ReductionSet(object):
         new_frame_list = [] # a list of N list, where N=number of extension of the MEF 
         nExt = 0
         if frame_list==None or len(frame_list)==0 or frame_list[0]==None:
+            log.debug("Nothing to split ! %s"%frame_list)
             return [],0
         
-        first_img = datahandler.ClFits(frame_list[0])    
+        first_img = datahandler.ClFits(frame_list[0])
         # First, we need to check if we have MEF files
         # 1) Not a MEF 
         if not first_img.isMEF():
@@ -693,12 +694,12 @@ class ReductionSet(object):
                 nExt = 1
                 new_frame_list.append(frame_list)
         # 2) Suppose we have MEF files ...
-        else:            
-            if first_img.getInstrument()=="HAWKI":
+        else:
+            if first_img.getInstrument()=="hawki":
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
-		  'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
-		  'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", "HIERARCH ESO TPL NEXP",
-                  'NCOADDS','HIERARCH ESO DET NDIT','NDIT'
+		          'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+		          'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", 
+                  'HIERARCH ESO TPL NEXP','NCOADDS','HIERARCH ESO DET NDIT','NDIT'
                 ]   
             else: # PANIC
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
@@ -708,15 +709,14 @@ class ReductionSet(object):
                    'NCOADDS','CASSPOS','PIXSCALE', 'LAMP'
                 ]
             
-                log.debug("Splitting data files")
-                try:
-                    mef = misc.mef.MEF(frame_list)
-                    (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
-                                                        out_dir=self.temp_dir, 
-                                                        copy_keyword=kws_to_cp)
-                except Exception,e:
-                    log.debug("Some error while splitting data set. %s",str(e))
-                    raise e
+            try:
+                mef = misc.mef.MEF(frame_list)
+                (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
+                                                    out_dir=self.temp_dir, 
+                                                    copy_keyword=kws_to_cp)
+            except Exception,e:
+                log.debug("Some error while splitting data set. %s",str(e))
+                raise e
             
             # now, generate the new output filenames        
             for n in range(1,nExt+1):
@@ -1572,11 +1572,11 @@ class ReductionSet(object):
         """
         
         for out_dir in list_dirs:
-            misc.fileUtils.removefiles(out_dir+"/*.fits")
+            #misc.fileUtils.removefiles(out_dir+"/*.fits", out_dir+"/*.skysub*")
             misc.fileUtils.removefiles(out_dir+"/c_*", out_dir+"/dc_*",
                                        out_dir+"/*.nip", out_dir+"/*.pap" )
             misc.fileUtils.removefiles(out_dir+"/coadd*", out_dir+"/*.objs",
-                                       out_dir+"/uparm*", out_dir+"/*.skysub*")
+                                       out_dir+"/uparm*")
             misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.list",
                                        out_dir+"/*.xml", out_dir+"/*.ldac",
                                        out_dir+"/*.png" )
@@ -2357,11 +2357,42 @@ class ReductionSet(object):
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
         elif fits.isFocusSerie():
-            log.warning("[reduceSeq] Focus Serie reduction is not yet implemented. Try interactively.")
-            raise Exception("[reduceSeq] Focus Serie reduction is not yet implemented. Try interactively or in Pop-up QL menu")
-            # TODO
-            # In principle, it has no sense to reduce a focus serie sequence
-            pass
+            log.warning("[reduceSeq] Focus Serie is going to be reduced:\n%s"%str(sequence))
+            try:
+                # 
+                # Generate a random filename for the master, to ensure we do not
+                # overwrite any file
+                output_fd, outfile = tempfile.mkstemp(suffix='.pdf', 
+                                                          prefix='focusSer_', 
+                                                          dir=self.out_dir)
+                os.close(output_fd)
+                os.unlink(outfile) # we only need the name
+
+                # Check and collapse if required (cube images)
+                sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
+                #
+                misc.utils.listToFile(sequence, self.temp_dir+"/focus.list")
+                pix_scale = self.config_dict['general']['pix_scale']
+                satur_level =  self.config_dict['skysub']['satur_level']
+                task = reduce.eval_focus_serie.FocusSerie(self.temp_dir+"/focus.list", 
+                                                                   str(outfile),
+                                                                   pix_scale, 
+                                                                   satur_level,
+                                                                   show=False)
+                red_parameters = ()
+                result = pool.apply_async(task.eval_serie, red_parameters)
+                result.wait()
+                best_focus, out = result.get()
+                
+                pool.close()
+                pool.join()
+
+                if out!=None: 
+                    files_created.append(out) # out must be equal to outfile
+            except Exception,e:
+                log.error("[reduceSeq] Some error while creating processing Focus Serie: %s",str(e))
+                raise e
+
         elif fits.isScience():
             l_out_dir = ''
             results = None
@@ -2415,8 +2446,10 @@ class ReductionSet(object):
                         for n in range(next):
                             ## only a test to reduce Q01
                             #log.critical("only a test to reduce Q01")
+                            #if n!=0: continue
                             #if n!=0 and n!=1: continue
                             ## end-of-test
+
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
                             
                             #
@@ -2606,11 +2639,12 @@ class ReductionSet(object):
         # the DB
         for file in files_created:
             # if source image was a science one, then products should be also 
-            # science images
+            # science images.
             if fits.isScience():
                 # input image is overwritten
                 misc.imtrim.imgTrim(file)
-            if file!=None: self.db.insert(file)
+            if file!=None and os.path.splitext(file)[1]=='.fits':
+                self.db.insert(file)
         
         # not sure if is better to do here ??? 
         #self.purgeOutput()
@@ -2925,9 +2959,14 @@ class ReductionSet(object):
         # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
         ########################################################################
         if self.red_mode=='quick-lemon':
-            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+            output_fd, papi_output = \
+                tempfile.mkstemp(prefix = out_dir,
+                                 suffix = '.papi_output', text = True)
+            os.close(output_fd)
+            os.unlink(papi_output)
+            misc.utils.listToFile(self.m_LAST_FILES, papi_output)
             log.info("1st Skysubtraction done !")
-            return out_dir+"/files_skysub.list"
+            return papi_output
                            
         ########################################################################
         # 5 - Quality assessment (FWHM, background, sky transparency, 
@@ -3142,10 +3181,15 @@ class ReductionSet(object):
         ########################################################################
         
         if self.red_mode=='lemon':
-            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub2.list")
+            output_fd, papi_output = \
+                tempfile.mkstemp(prefix = out_dir,
+                                 suffix = '.papi_output', text = True)
+            os.close(output_fd)
+            os.unlink(papi_output)
+            misc.utils.listToFile(self.m_LAST_FILES, papi_output)
             log.info("End of sequence LEMON-reduction. # %s # files created. ",
                      len(self.m_LAST_FILES))
-            return out_dir+"/files_skysub2.list"
+            return papi_output
     
         #######################################################################
         # 9.4 - Divide by the master flat after sky subtraction ! (see notes above)
@@ -3236,19 +3280,6 @@ class ReductionSet(object):
         log.info("##################################")
         
         return output_file 
-        
-    def test(self):
-        log.debug("Una prueba")
-        self.__initDB()
-        self.db.GetOBFiles()
-        (seq_par, seq_list)=self.db.GetSeqFiles(filter=None,type='SCIENCE')
-        k=0
-        for par in seq_par:
-            print "\nSEQUENCE PARAMETERS - OB_ID=%s,  OB_PAT=%s, FILTER=%s"%(par[0],par[1],par[2])
-            print "-----------------------------------------------------------------------------------\n"
-            for file in seq_list[k]:
-                print file
-            k+=1
 
 
 ## {{{ http://code.activestate.com/recipes/327142/ (r1)

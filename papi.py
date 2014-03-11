@@ -134,7 +134,7 @@ def main(arguments = None):
 
     parser.add_option("-M", "--red_mode", type = "str",
                   action = "store", dest = "reduction_mode", 
-                  help = "Mode of data reduction to do (lemon|quick|science)")
+                  help = "Mode of data reduction to do (quick|science|lab|lemon|quick-lemon)")
                   
     parser.add_option("-m", "--obs_mode", type = "str",
                   action = "store", dest = "obs_mode", 
