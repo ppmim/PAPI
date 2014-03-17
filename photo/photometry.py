@@ -176,7 +176,11 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
         log.error("Canno't read the input catalog %s"%cat2)
         return None
     
-    log.info("XMatch of %s Source points and %s 2MASS reference points"%(len(table1),len(table2)))
+
+    # Clean SExtractor catalog
+    table1 = table1[(table1['FLAGS']==0) & (table1['FLUX_BEST'] > 0) & (table1['FLUX_AUTO']/table1['FLUXERR_AUTO'] > min_snr)]
+
+    log.info("XMatch of <%s> Source points, <%s> 2MASS reference points"%(len(table1),len(table2)))
 
     try:
         ind1, ind2 = coords.indmatch(table1['X_WORLD'], table1['Y_WORLD'], 
@@ -196,6 +200,7 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
     
     log.info("Matched objects: %s"%len(ind1))
 
+
     # Because Atpy does not support table merging, a new xmatch is done with
     # selected rows.
     # Firstly, selection
@@ -211,13 +216,12 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
                                           (table2_xm['h_snr'] > min_snr) &
                                           (table2_xm['k_snr'] > min_snr)]
             
-        table1_tmp = table1_xm[(table1_xm['FLAGS']==0) & 
-                                      (table1_xm['FLUX_BEST'] > 0) &
-                                      (table1_xm['FLUX_AUTO']/table1_xm['FLUXERR_AUTO'] > min_snr)]
+        table1_tmp = table1_xm[(table1_xm['FLUX_AUTO']/table1_xm['FLUXERR_AUTO'] > min_snr)]
     except Exception,e:
         log.error("Error creating table %s"%(str(e)))
         raise e
 
+    log.info("Filterd objects after 1st Xmatch: <%s> Source points, <%s> 2MASS reference points"%(len(table1_tmp),len(table2_tmp)))
 
     # Sencondly, new xmatch instead of stilts
     try:
@@ -422,12 +426,12 @@ def compute_regresion2( column_x, column_y , filter_name,
     #std2 = numpy.std(m_err[numpy.where(numpy.abs(m_err)<std*2)])
     
 
-    log.debug("ZP = %f"%zp)
+    log.info("ZP = %f"%zp)
     log.debug("MAD(m_err) = %f"%MAD)
     log.debug("MEAN(m_err) = %f"%numpy.mean(m_err))
     log.debug("MEDIAN(m_err) = %f"%numpy.median(m_err))
-    log.debug("STD(m_err) = %f"%std)
-    log.debug("RMS(m_err) = %f"%rms)
+    log.info("STD(m_err) = %f"%std)
+    log.info("RMS(m_err) = %f"%rms)
     #log.debug("STD2 = %f"%std2)
     
     #my_mag = n_X*b + zp
@@ -773,7 +777,7 @@ class STILTSwrapper (object):
         ./stilts plot2d in=match_S_b.vot subsetNS='j_k<=1.0 & k_snr>10' lineNS=LinearRegression xdata=k_m ydata=MyMag_k xlabel="2MASS k_m / mag" ylabel="PAPI k_m / mag"
         """
 
-def doPhotometry(input_image, catalog, output_filename, 
+def doPhotometry(input_image, pixel_scale, catalog, output_filename, 
                  snr=10.0, zero_point=0.0):
     """
     Run the rough photometric calibraiton
@@ -783,6 +787,9 @@ def doPhotometry(input_image, catalog, output_filename,
     input_image: str 
         filename reduced science image
     
+    pixel_scale: float
+        pixel scale of input image
+
     catalog: str
         photometric catalog to compare to (2MASS, USNO-B, ...)
     
@@ -810,10 +817,13 @@ def doPhotometry(input_image, catalog, output_filename,
         dec = my_fits.dec
         filter = my_fits.getFilter()
         
-        log.debug("EXPTIME = %f"%exptime)
-        log.debug("RA = %f"%ra)
-        log.debug("DEC = %f"%dec)
-        log.debug("Filter = %s"%filter)
+        # In principle, EXPTIME is not required
+        log.info("EXPTIME = %f"%exptime)
+        log.info("RA = %f"%ra)
+        log.info("DEC = %f"%dec)
+        log.info("Filter = %s"%filter)
+        log.info("Pixel scale = %s"%pixel_scale)
+        log.info("SNR filter = %s"%snr)
         
         if ra<0 or exptime<0:
             log.debug("Found wrong RA,DEC,EXPTIME or FILTER value")
@@ -863,10 +873,10 @@ def doPhotometry(input_image, catalog, output_filename,
     ## 1 - Generate region of base catalog (2MASS)
     icat = catalog_query.ICatalog ()
     out_base_catalog = os.getcwd() + "/catalog_region.xml"
-    pixel_scale = 0.45 # Panic at 2.2m
-    sc_area = 0.9 # percentage of area used (default 90%) 
+    sc_area = 0.8 # percentage of area used (default 120%) 
     search_radius = numpy.minimum(my_fits.getNaxis1(), 
                                   my_fits.getNaxis2())*pixel_scale*sc_area/2
+
     try:
         i_catalog = icat.queryCatalog(ra, dec, search_radius, 
                                      catalog_query.ICatalog.cat_names['2MASS'], 
@@ -884,7 +894,7 @@ def doPhotometry(input_image, catalog, output_filename,
         #                           error=1.0 ) 
         
         xm, ym = catalog_xmatch2( image_catalog, i_catalog, two_mass_col_name, 
-                                   error=1.0 , min_snr=snr)
+                                   error=2.0 , min_snr=snr)
         log.debug("XMatch done !")
     except Exception, e:
         log.error("XMatch failed %s. Check astrometric calibration of source.", str(e))
@@ -908,9 +918,9 @@ def doPhotometry(input_image, catalog, output_filename,
         ploting the results: %s", str(e))
         raise e
     
-    ## 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
-    ###### and generate the plot file with the photometric comparison 
-    ###### using STILTS
+    # 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
+    # and generate the plot file with the photometric comparison 
+    # using STILTS
     try:
         exptime = 1.0 # SWARP normalize flux to 1 sec
         #file_ext = os.path.splitext(output_filename)[1]
@@ -962,14 +972,14 @@ Zero Point."""
     parser.add_option("-i", "--input_image",
                   action="store", dest="input_image", 
                   help="Input image to calibrate to do photometric comparison with")
-                  
-    parser.add_option("-c", "--base_catalog (2MASS, USNO-B)",
-                  action="store", dest="base_catalog",
-                  help="Name of base catalog to compare with (2MASS, USNO-B) -- not used !!! (default = %default)",
-                  default="2MASS")
     
+    parser.add_option("-p", "--pix_scale",
+                  action="store", dest="pix_scale", type=float,
+                  help="Pixel scale of image (default = %default)",
+                  default=0.45)
+
     parser.add_option("-S", "--snr",
-                  action="store", dest="snr", type=int,
+                  action="store", dest="snr", type=float,
                   help="Min SNR of stars used for linear fit (default = %default)",
                   default=10.0)
     
@@ -1004,8 +1014,8 @@ Zero Point."""
         
     try:
         catalog = "2MASS"
-        doPhotometry(options.input_image, catalog, options.output_filename, 
-                     options.snr, options.zero_point)
+        doPhotometry(options.input_image, options.pix_scale, catalog, 
+            options.output_filename, options.snr, options.zero_point)
     except Exception, e:
         log.info("Some error while running photometric calibration: %s"%str(e))
         sys.exit(0)

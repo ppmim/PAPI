@@ -33,7 +33,7 @@ import misc.utils as utils
 # Interact with FITS files
 import pyfits
 import numpy as np
-import pywcs
+from astropy import wcs
 import numpy
 
 # Logging
@@ -550,27 +550,37 @@ class MEF (object):
                     # Start by updating PRIMARY header keywords...
                     prihdu.header.set('EXTEND', 
                                           pyfits.FALSE, after = 'NAXIS')
+                    
+                    # #############################################
                     # AR,DEC (WCS !!) need to be re-calculated !!!
+                    # #############################################
                     
                     # Create the new WCS
                     try:
                         orig_ar = float(primaryHeader['RA'])
                         orig_dec = float(primaryHeader['DEC'])
                     except ValueError:
-                        # no ar,dec values in the header, then can't re-compute ra,dec coordinates 
-                        # or update the wcs header
+                        # No RA,DEC values in the header, then can't re-compute 
+                        # ra,dec coordinates nor update the wcs header.
+                        # Then, we DO NOT create a new WCS header !!!
                         pass
                     else:
-                        #due to PANICv0 header hasn't a proper WCS header, we built a basic one 
-                        #in order to computer the new ra, dec coordinates
-                        new_wcs = pywcs.WCS(primaryHeader)
+                        # Due to PANICv0 header hasn't a proper WCS header, we 
+                        # built a basic one in order to computer the new RA and 
+                        # DEC coordinates.
+                        new_wcs = wcs.WCS(primaryHeader)
                         new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2, 
                                              primaryHeader['NAXIS2']/2]  
                         new_wcs.wcs.crval =  [ primaryHeader['RA'], 
                                               primaryHeader['DEC'] ]
                         new_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
                         new_wcs.wcs.cunit = ['deg', 'deg']
-                        pix_scale = 0.45 # arcsec per pixel
+                        try:
+                            pix_scale = primaryHeader['PIXSCALE']
+                        except Exception,e:
+                            raise Exception("Cannot find PIXSCALE keyword")
+                            #pix_scale = 0.45 # arcsec per pixel
+
                         new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
                                           [0, pix_scale/3600.0]]
 

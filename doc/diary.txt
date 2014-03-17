@@ -3907,6 +3907,50 @@ en el QL !!!
 
 
 
+12-Mar-2014
+-----------
+- JM Inputs for videoconf:
+""
+- software migrated to openSUSE13.1 and being tested with it: no major problems found up to now
+- OPTPCIe board not installed yet
+- tested and debugged  PAPI with new MEF files
+- non-linearity correction: pending definition of algorithm 
+""
+
+Results from videoconf:
+- Due to BD and JF illness, SW integration postponed until new date for 
+first-window (cold-down) what was planned for end of March. Even it could be 
+delayed until second-window.
+- Computer shipment will be planned when we get new date for sw-integration
+- JM will deliver an update of technical note.
+
+
+14-Mar-2014
+-----------
+- (B) Encuentro un BUG en photometry.py; parece que las coordenadas de búsqueda
+del conesearch en 2MASS no están bien, pues si "pinto" los dos catalogos (Sextrator) y
+el resultado de conesearch en 2MASS, hay claramenete un offsets !!!!
+Por eso el XMatch da muy pocos objetos !!!
+
+
+17-Mar-2014
+-----------
+
+- Encuentro el problema del offset del XMatch de photometry: viendo los .xml
+que se generaban, he comprobado que había un offsets de 10' en AR y que por eso
+no se estaba haciendo el xmatch con las mismas regiones.
+El problema estaba en clfits.py, pues buscaba 'RA---TAN--SIP' en CTYPE1, y el
+fichero que crea Astrometry.net contiene RA---TAN-SIP !!!
+Soluciono el bug en clfits.py buscando sólo por 'TAN'. 
+Habría que probar que también funciona con la astrometría de SCAMP --> Si, también funciona bien !!!
+
+No obstante, lo ideal sería usar en el futuro astropy.wcs tal que:
+
+
+http://docs.astropy.org/en/stable/wcs/index.html
+
+si embargo me daba problemas con los ficheros raw de O2k, generaba un error!!
+
 
 
 
@@ -4327,7 +4371,9 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- revisar por qué el xmatch en photometry da tan pocos objetos !!! (en general)
+- en mef.py, migrar pywcs a astropy.wcs
+- Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m): mef.py
+- Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
 - opción en PAPI para reducir sólo un detector/es
 - Implementar algun cleanup para QL/PAPI que mate todos los procesos
 - Probar a reducir imagenes con mascara de PANIC !! ver si quita "cielo" -->fedithead
@@ -4336,7 +4382,10 @@ NEXT TODOs
 - Support for incomplete sequences
 - Add some kind of Quality check 
 - Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
-- No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!! 
+- No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
+El problema surge cuando se mezcan distintos tipos de formatos FITS (MEF, single, ...),
+pues display.py tiene en cuenta eso, y además los Darks se muestran de forma distintan
+según el instrumento (HAWK-I no tiene WCS en los Darks!)
 --> problema reportado con DS9. RM modificará DATASEC al formato IRAF (DETSEC, ...) ver email
 - Revisar copia de WCS al convertir de GEIRS-single to GEIRS-MEF (mef.py)
 - Apply Gaussian Kernel to yield the final sky model to subtract !!! (see THELI paper, point 7.1 )
@@ -4355,7 +4404,7 @@ son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 - Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
 - Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
 - ¿ Qué hace PAPI con los FLAT_SER ??? (ver Calibration Series del OT)
-- FOCUS_SER --> valor de IMAGETYP  para Series de FOCO (añadir en documentación y comprobar en PAPI)
+- FOCUS --> valor de IMAGETYP  para Series de FOCO (añadir en documentación y comprobar en PAPI)
 - Documento (TN) Data Grouping algorithms
 - Documento instalación de PANIC-SW
 - PANIC Tesis ala O2000 !!!

@@ -24,8 +24,6 @@ import pyfits
 import sys
 import time
 
-import pywcs 
-import numpy
 
 from time import strftime
 
@@ -249,7 +247,7 @@ class ClFits (object):
         return self.instrument=='panic'
 
     def isPANICFullFrame(self):
-        return (self.instrument=='panic' and self.naxis1>='4096' and self.naxis2>='4096')
+        return (self.instrument=='panic' and self.naxis1>=4096 and self.naxis2>=4096)
                 
     def expTime(self):
         return (self.exptime)
@@ -634,12 +632,13 @@ class ClFits (object):
             self.time_obs  = ''
             self.datetime_obs = ''
         
-        #RA-coordinate (in degrees)
+        # ############################
+        # RA-coordinate (in degrees)
+        # ############################
         try:
             # WCS-coordinates are preferred than RA,DEC (both in degrees)
             if ('CTYPE1' in myfits[0].header and
-                     (myfits[0].header['CTYPE1']=='RA---TAN' or
-                      myfits[0].header['CTYPE1']=='RA---TAN--SIP')):
+                     'TAN' in myfits[0].header['CTYPE1'] ): #'RA---TAN' or 'RA---TAN--SIP'
                 wcs = wcsutil.WCS(myfits[0].header)
                 self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 log.debug("Read RA-WCS coordinate =%s", self._ra)
@@ -657,15 +656,16 @@ class ClFits (object):
             log.error('Error reading RA keyword :%s',str(e))
             self._ra  = -1
         finally:
-            #log.debug("RA = %s"%str(self._ra))
+            log.debug("RA = %s"%str(self._ra))
             pass
 
-        #Dec-coordinate (in degrees)
+        # ############################
+        # Dec-coordinate (in degrees)
+        # ############################
         try:
             # WCS-coordinates are preferred than RA,DEC
             if ('CTYPE2' in myfits[0].header and
-                     (myfits[0].header['CTYPE2']=='DEC--TAN' or
-                      myfits[0].header['CTYPE2']=='DEC--TAN--SIP') ):
+                     'TAN' in myfits[0].header['CTYPE2']): #=='DEC--TAN' or 'DEC--TAN--SIP'
                 wcs = wcsutil.WCS(myfits[0].header)
                 self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 log.debug("Read Dec-WCS coordinate =%s", self._dec)
@@ -684,7 +684,7 @@ class ClFits (object):
             log.error('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
         finally:
-            #log.debug("DEC = %s"%str(self._dec))
+            log.debug("DEC = %s"%str(self._dec))
             pass
 
         try:

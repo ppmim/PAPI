@@ -31,9 +31,9 @@
 # Multi Extension FITS file basic operations
 #
 # Created    : 23/05/2011    jmiguel@iaa.es -
-# Last update: 
+# Last update: 17/03/2014    jmiguel@iaa.es -
 # TODO
-#       
+#      - Migration to use Astroquery (http://www.astropy.org/astroquery/)
 ################################################################################
 
 ################################################################################
@@ -100,6 +100,8 @@ class ICatalog (object):
         params['radius'] = sr
         params['catalog'] = cat_name
         
+        log.debug("Searching into catalog: %s  RA: %s  Dec: %s  Radius(arcsec): %s"%(cat_name, ar, dec, sr))
+
         query = urllib.urlencode(params)
         get_url = ICatalog.url + "?" + query
 

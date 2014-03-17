@@ -691,6 +691,7 @@ class ReductionSet(object):
                     raise e   
             else:
                 # No split is required
+                log.debug("No split is required")
                 nExt = 1
                 new_frame_list.append(frame_list)
         # 2) Suppose we have MEF files ...
@@ -718,15 +719,18 @@ class ReductionSet(object):
                 log.debug("Some error while splitting data set. %s",str(e))
                 raise e
             
-            # now, generate the new output filenames        
-            for n in range(1,nExt+1):
-                new_frame_list.append([self.temp_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
-                """
-                for f in new_file_names:
-                    #if re.search(".*(\.Q01)(.fits)$", f):
-                        sources.append(f)
-                """
-        
+        # now, generate the new output filenames        
+        # In principle, it is not needed; we could use [sp_frame_list]
+        for n in range(1,nExt+1):
+            new_frame_list.append([self.temp_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
+            """
+            for f in new_file_names:
+                #if re.search(".*(\.Q01)(.fits)$", f):
+                    sources.append(f)
+            """
+        #print "SP_FRAME_LIST=",sp_frame_list
+        #print "NEW_FRAME_LIST=",new_frame_list
+
         return new_frame_list, nExt
     
     def getObsMode(self):
