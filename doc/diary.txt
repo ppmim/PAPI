@@ -3951,6 +3951,14 @@ http://docs.astropy.org/en/stable/wcs/index.html
 
 si embargo me daba problemas con los ficheros raw de O2k, generaba un error!!
 
+18-Mar-2014
+-----------
+- Modificacion en mef.py para migrar el PyWCS a astropy.wcs; además le añado
+la parametrización con PIXSCALE y que tenga en cuenta el CHIPGAP, que no lo tenía
+en cuenta en la conversion de splitGEIRSToSimple().
+
+
+
 
 
 
@@ -4371,11 +4379,11 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- en mef.py, migrar pywcs a astropy.wcs
+- en mef.py, migrar pywcs a astropy.wcs --> done !
 - Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m): mef.py
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
 - opción en PAPI para reducir sólo un detector/es
-- Implementar algun cleanup para QL/PAPI que mate todos los procesos
+- Implementar algun cleanup para QL/PAPI que mate todos los procesos ---> almost done
 - Probar a reducir imagenes con mascara de PANIC !! ver si quita "cielo" -->fedithead
 - Configurar sonidos (pulseaudio)
 - Second pass of sky-subtraction for extended objects
