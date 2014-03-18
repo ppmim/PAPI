@@ -4506,14 +4506,25 @@ Problemas/bugs detectados en OT
 ===============================
 25-02-2014) La copia de OB no se hace bien, pues luego repite el número del OB 
 y el orden de ejecución de los OBs se altera notablemente ....
+Fixed!
 25-02-2014) S abre dialogo de grabar
 25-02-2014) Telescope iterator con cycles=5 por defecto !!! debería ser =1
+Fixed!
+
 25-02-2014) Timeline nada preciso, o solucionar o quitar !
 25-02-2014) PROG_ID en headers no se rellena; debería rellenarse con campo "Proposal ID" y/o quizás cambiarle el nombre a "Program ID"
+Fixed!
+
 25-02-2014) En los OB, Nro. repetitions es "comun" para todos los OBs !
 26-02-2014) Los subwindows con Detecto1-4 no están bien definidos en el OT. Lemando a AGS la definición correcta.
 07-03-2014) Error por 'timeout' (creo, según log de GEIRS) que provoca la 
 terminación prematura de un OB en el OT.
+14-03-2014) Confirmado que el OT a veces se para tras un OB de forma inesperada,
+sin continuar con los otros OBs. AGS ha visto que a él también le pasa.
+18-03-2014) No se puede seleccionar el telescopio en el OT. AGS mirará a ver si
+hay comando/modo de hacerlo ....
+Por lo que he visto, sólo se puede cambiar en el script GENERIC, en la variable
+TELESCOPE.
 
 
 
