@@ -33,7 +33,7 @@ import misc.utils as utils
 # Interact with FITS files
 import pyfits
 import numpy as np
-import pywcs
+from astropy import wcs
 import numpy
 
 # Logging
@@ -413,14 +413,27 @@ class MEF (object):
                         #Due to PANICv0 header hasn't a proper WCS header, 
                         #we built a basic one in order to computer the new 
                         #ra, dec coordinates.
-                        new_wcs = pywcs.WCS(primaryHeader)
-                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2, 
-                                             primaryHeader['NAXIS2']/2]  
+                        chip_gap = 167
+                        new_wcs = wcs.WCS(primaryHeader)
+                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2 + chip_gap/2.0, 
+                                             primaryHeader['NAXIS2']/2 + chip_gap/2.0]  
                         new_wcs.wcs.crval =  [ primaryHeader['RA'], 
                                               primaryHeader['DEC'] ]
                         new_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
                         new_wcs.wcs.cunit = ['deg', 'deg']
-                        pix_scale = 0.45 # arcsec per pixel
+                        try:
+                            pix_scale = primaryHeader['PIXSCALE']
+                        except Exception,e:
+                            raise Exception("Cannot find PIXSCALE keyword")
+
+                        # We suppose no rotation, and North is up and East at left.
+                        # CD matrix (the CDi_j elements) encode the sky position angle,
+                        # the pixel scale, and a possible flipping.
+                        # CD1_1 is <0 because East is supposed at Left = flipX
+                        # CD2_2 is >0 because North is supposed at Up
+                        # In addition, it must be noted that:
+                        # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
+                        # r = clockwise rotation_angle 
                         new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
                                           [0, pix_scale/3600.0]]
 
@@ -478,19 +491,26 @@ class MEF (object):
     def splitGEIRSToSimple( self, out_filename_suffix = ".Q%02d.fits", 
                             out_dir = None):
         """ 
-        @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) 
-        having a 4-detector-frame to 4 single FITS files with a frame per file. 
+        Method used to convert a single FITS file (PANIC-GEIRS v0) 
+        having a full (4kx4k) 4-detector-frame to 4 single FITS files with a 
+        frame per file. 
         Header is fully copied from original file, and added new WCS keywords.
-         
-        @param out_filename_suffix: suffix added to the original input filename
-        @param out_dir: directory where the new output file will be created
-        @return: the list of output files (MEFs) created
         
-        @attention: it is NOT valid for cubes of data, by the moment                           
+        Parameters
+        ----------- 
+        out_filename_suffix: suffix added to the original input filename.
+
+        out_dir: directory where the new output file will be created.
         
-        @author: jmiguel@iaa.es
+        Returns
+        -------
+
+        n_ext,out_filenames: The number of files and the list of output files created
         
-        @note: The enumeration order of the quadrants read is:
+        Notes
+        -----
+        - It is NOT valid for cubes of data, by the moment                           
+        - The enumeration order of the quadrants read is:
         
         |------------|
         |  1  |   3  |
@@ -531,10 +551,8 @@ class MEF (object):
             # Read all image sections (4 frames) and create the associated 
             # 4-single FITS files.
             n_ext = 4
-            #pix_centers = numpy.array ([[1024, 1025], [3072, 1024], 
-            #                            [3072, 3072], [1024, 3072]], numpy.float_)
-            pix_centers = numpy.array ([[1024, 1025], [1024, 3072], 
-                                        [3072, 1024], [3072, 3072] ], 
+            pix_centers = numpy.array ([[1024, 1024], [1024, 3072], 
+                                        [3072, 1024], [3072, 3072]], 
                                        numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
@@ -545,39 +563,58 @@ class MEF (object):
                                                                  hdu_data_i.shape))    
                     # Create primary HDU (data + header)
                     out_hdulist = pyfits.HDUList()               
-                    prihdu = pyfits.PrimaryHDU (data = hdu_data_i, 
-                                                header = primaryHeader)
+                    prihdu = pyfits.PrimaryHDU(data = hdu_data_i, 
+                                               header = primaryHeader)
                     # Start by updating PRIMARY header keywords...
                     prihdu.header.set('EXTEND', 
                                           pyfits.FALSE, after = 'NAXIS')
+                    
+                    # #############################################
                     # AR,DEC (WCS !!) need to be re-calculated !!!
+                    # #############################################
                     
                     # Create the new WCS
                     try:
                         orig_ar = float(primaryHeader['RA'])
                         orig_dec = float(primaryHeader['DEC'])
                     except ValueError:
-                        # no ar,dec values in the header, then can't re-compute ra,dec coordinates 
-                        # or update the wcs header
+                        # No RA,DEC values in the header, then can't re-compute 
+                        # ra,dec coordinates nor update the wcs header.
+                        # Then, we DO NOT create a new WCS header !!!
                         pass
                     else:
-                        #due to PANICv0 header hasn't a proper WCS header, we built a basic one 
-                        #in order to computer the new ra, dec coordinates
-                        new_wcs = pywcs.WCS(primaryHeader)
-                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2, 
-                                             primaryHeader['NAXIS2']/2]  
-                        new_wcs.wcs.crval =  [ primaryHeader['RA'], 
+                        # Due to PANICv0 header hasn't a proper WCS header, we 
+                        # built a basic one in order to computer the new RA and 
+                        # DEC coordinates.
+                        chip_gap = 167 
+                        new_wcs = wcs.WCS(primaryHeader)
+                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2 + chip_gap/2.0, 
+                                             primaryHeader['NAXIS2']/2 + chip_gap/2.0]  
+                        new_wcs.wcs.crval =  [primaryHeader['RA'], 
                                               primaryHeader['DEC'] ]
                         new_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
                         new_wcs.wcs.cunit = ['deg', 'deg']
-                        pix_scale = 0.45 # arcsec per pixel
+                        
+                        try:
+                            pix_scale = primaryHeader['PIXSCALE']
+                        except Exception,e:
+                            raise Exception("Cannot find PIXSCALE keyword")
+                            #pix_scale = 0.45 # arcsec per pixel
+
+                        # We suppose no rotation, and North is up and East at left.
+                        # CD matrix (the CDi_j elements) encode the sky position angle,
+                        # the pixel scale, and a possible flipping.
+                        # CD1_1 is <0 because East is supposed at Left = flipX
+                        # CD2_2 is >0 because North is supposed at Up
+                        # In addition, it must be noted that:
+                        # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
+                        # r = clockwise rotation_angle 
                         new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
                                           [0, pix_scale/3600.0]]
-
                         new_pix_center = new_wcs.wcs_pix2sky([pix_centers[i*2+j]], 1)
-                        print "Pix Center = ",pix_centers[i*2+j]
-                        print "New Pix Centers = ", new_pix_center, \
-                            new_wcs.wcs_pix2sky ([pix_centers[i*2+j]], 1)
+                        
+                        print "Pix Centers = ",pix_centers[i*2+j]
+                        print "New Pix Centers = ", new_pix_center
                         
                         prihdu.header.set('RA', new_pix_center[0][0])
                         prihdu.header.set('DEC', new_pix_center[0][1])
@@ -605,8 +642,8 @@ class MEF (object):
                     prihdu.header.set('CHIP_NO', (i*2)+j, 
                                           "PANIC Chip number [0,1,2,3]")
                     
-                    out_hdulist.append (prihdu)    
-                    out_hdulist.verify ('ignore')
+                    out_hdulist.append(prihdu)    
+                    out_hdulist.verify('ignore')
                 
                     new_filename = file.replace(".fits", 
                                                 out_filename_suffix % (i*2+j+1)) # number from 1 to 4

@@ -478,7 +478,7 @@ wget http://ds9.si.edu/download/linux64/xpa.linux64.2.1.14.tar.gz
 9. Astropy (v0.3)
 =================
 
-(It already includes atpy and vo.table)
+(It already includes atpy and vo.table, and PyFITS !!!)
 
 http://www.astropy.org/
 
