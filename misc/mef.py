@@ -305,20 +305,28 @@ class MEF (object):
     def convertGEIRSToMEF( self, out_filename_suffix = ".mef.fits",
                            out_dir = None, copy_keyword = []):
         """ 
-        @summary: Method used to convert a single FITS file (PANIC-GEIRS v0) 
-        having a 4-detector-frame to 1-MEF with a 4-extension FITS, 
+        Method used to convert a single FITS file (PANIC-GEIRS v0) 
+        having a full 4-detector-frame to 1-MEF with a 4-extension FITS, 
         one per each frame.
 
-        @attention: it is NOT valid for cubes of data, by the moment
+        It is NOT valid for cubes of data, by the moment
         
-        @param out_filename_suffix: suffix added to the original input filename
-        @param out_dir: directory where the new output file will be created
-        @param copy_keyword: list of keyword from the PrimaryHDU of the original file to be copied
-        to the other header extensions  
-        @return: the number of extensions per MEF and the list of output files (MEFs) created                               
+        Parameters
+        ----------
 
-        @author: jmiguel@iaa.es
-        @note: For an image of the sky, the coordinate system representation 
+        out_filename_suffix: suffix added to the original input filename
+        out_dir: directory where the new output file will be created
+        copy_keyword: list of keyword from the PrimaryHDU of the original file 
+                    to be copied to the other header extensions.  
+        
+        Returns
+        -------
+        n_ext, out_filenames: The number of extensions per MEF and the list of 
+                              output files (MEFs) created.                              
+
+        Notes
+        -----
+        - For an image of the sky, the coordinate system representation 
         might be something like: 
 
             CTYPE1 = `RA---TAN'   ! r.a. in tangent plane projection
@@ -336,7 +344,9 @@ class MEF (object):
             CD2_2 = 2.777778E-4   ! change in dec per pixel along second
                                   ! axis evaluated at reference pixel
         
-        @todo : header is not well formed
+        Todo
+        ----
+        - Header is not well formed
         
         """
         
@@ -371,7 +381,6 @@ class MEF (object):
             # Start by updating PRIMARY header keywords...
             prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
             prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
-            prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
             prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
             
             #In the Primary Header we do not need the WCS keywords, only RA,DEC
@@ -389,9 +398,7 @@ class MEF (object):
             out_filenames.append (new_filename)
             
             # Read all image sections (n_ext frames) and create the associated HDU
-            #pix_centers = numpy.array ([[1024, 1024], [3072, 1024], 
-            #                            [3072, 3072], [1024, 3072]], numpy.float_)
-            pix_centers = numpy.array ([[1024, 1025], [1024, 3072], [3072, 1024], 
+            pix_centers = numpy.array ([[1024, 1024], [1024, 3072], [3072, 1024], 
                                         [3072, 3072] ], numpy.float_)
             
             for i in range (0, n_ext/2):
@@ -474,6 +481,8 @@ class MEF (object):
                         except KeyError:
                             log.warning("Key %s cannot be copied, is not in the header"%(key))
                     # Append new HDU to MEF
+                    # Force BITPIX=-32
+                    hdu_i.scale('float32')
                     out_hdulist.append(hdu_i)
                     out_hdulist.verify('ignore')
             
@@ -639,6 +648,8 @@ class MEF (object):
                         prihdu.header.add_history("[MEF.splitGEIRSToSimple] File created from %s"%file)
                         
                     
+                    # Force BITPIX=-32
+                    prihdu.scale('float32')
                     prihdu.header.set('CHIP_NO', (i*2)+j, 
                                           "PANIC Chip number [0,1,2,3]")
                     

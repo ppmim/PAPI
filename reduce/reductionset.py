@@ -182,6 +182,22 @@ class ReductionSet(object):
         flat : str
             if given, the filename of the master flat to be used for the reduction
         
+        bpm : str
+            the Bad Pixel Mask to be used to the data reduction (to fix, to 
+            to consider in gainmaps or nothing to do).
+
+        red_mode: str
+            reduction mode to run the pipeline
+
+        group_by: str
+            grouping mode of files (OT metadata based or Filter based)
+
+        check_data: str
+            whether to check the data matches Readout mode, ExpTime, NCOADDS, ...
+
+        config_dict: dictionary
+            dictionary containing the configuration parameters
+
         external_db_files : str or list
             File list or Directory used as an external calibration database.
             Then, if during the reduction of a ReductionSet(RS) no calibration 
@@ -192,7 +208,8 @@ class ReductionSet(object):
             Note that the calibrations into the current RS have always higher 
             priority than the ones in the external calibration DB.   
         
-        ....
+        temp_dir: str
+            Pathname of the temporal directory
         
         """
         
@@ -277,11 +294,28 @@ class ReductionSet(object):
         self.obs_mode = obs_mode  # observing mode (dither, dither_on_off, dither_off_on....)
         self.master_dark = dark # master dark to use (input)
         self.master_flat = flat # master flat to use (input)
-        self.master_bpm = bpm # master Bad Pixel Mask to use (input)
         self.apply_dark_flat = self.config_dict['general']['apply_dark_flat'] # 0=no, 1=before, 2=after
+
+        #
+        # Bad Pixel Maks
+        # 
+        self.bpm_mode = self.config_dict['bpm']['mode']
+        if bpm==None:
+            self.master_bpm  = self.config_dict['bpm']['bpm_file']
+        else:
+            self.master_bpm  = bpm  
         
+        # 
+        # Non-Linearity correction
+        # 
+        self.non_linearity_model = self.config_dict['nonlinearity']['model']
+        self.non_linearity_apply = self.config_dict['nonlinearity']['apply']
+
+
+        #
         # Reduction mode (lemon=for LEMON pipeline, quick=for QL, science=for 
         # science, lab=laboratory) 
+        #
         self.red_mode = red_mode
         
         # Flag to decide how classification will be done, by OT (OB_ID, OB_PAT,
@@ -856,7 +890,7 @@ class ReductionSet(object):
             master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime)
         
              
-        #FLATS - Do NOT require equal EXPTIME, but FILTER
+        # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
             master_flat = self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
@@ -865,7 +899,7 @@ class ReductionSet(object):
             if len(master_flat)==0:
                 master_flat=self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
 
-        #BPM                
+        # BPM                
         master_bpm = self.db.GetFilesT('MASTER_BPM')
         if len(master_bpm)==0 and self.ext_db!=None:
             master_bpm = self.ext_db.GetFilesT('MASTER_BPM')
@@ -2661,7 +2695,7 @@ class ReductionSet(object):
                   red_mode, out_dir, output_file):
         
         """ 
-        Main reduction procedure. 
+        Main reduction procedure for a dither sequence. 
         Given a set of object(science) frames and (optionally) master calibration 
         files, run the data reduction of the observing object sequence, producing 
         an reduced ouput frame if no error; otherwise return None or raise exception.
@@ -2681,7 +2715,19 @@ class ReductionSet(object):
         master_flat : str
             Master flat filename to be used in the processing
             
-        
+        master_bpm: str
+            Master BPM filename to be used in the processing (fixing or adding 
+            to gainmap).
+
+        red_mode: str
+            Reduction mode 
+
+        out_dir: str
+            Output directory
+
+        output_file: str
+            Output filename to be create
+
         
         Returns
         -------
@@ -2771,15 +2817,50 @@ class ReductionSet(object):
         
         # keep a copy of the original file names
         self.m_rawFiles = self.m_LAST_FILES        
-        
+
+        ########################################################################
+        # 0 - Apply Non-Linearity correction to ALL files 
+        ########################################################################
+        if self.config_dict['nonlinearity']['apply'].lower()=='none':
+            master_nl = None
+        else:
+            master_nl = self.config_dict['nonlinearity']['model']
+            try:
+                log.info("**** Applying Non-Linearity correction ****")
+                nl_task = calNonLinearity.NonLinearityModel()
+                self.m_LAST_FILES = nl_task.applyModel(self.m_LAST_FILES, master_nl)
+            except Exception,e:
+                log.error("Error while applying NL model: %s"%str(e))
+                raise e
+
+        ########################################################################
+        # 0.1 - Bad Pixels; two options:
+        # To Fix: replace with a bi-linear interpolation from nearby pixels.
+        # To add to gainmap:  to set bad pixels to bkg lvl 
+        # Both options are incompatible.
+        ########################################################################
+        if self.config_dict['bpm']['mode'].lower()=='none':
+            master_bpm_4gain = None
+            master_bpm_4fix = None
+        elif self.config_dict['bpm']['mode'].lower()=='fix':
+            master_bpm_4gain = None
+            master_bpm_4fix = master_bpm
+        elif self.config_dict['bpm']['mode'].lower()=='gain':
+            master_bpm_4gain = master_bpm
+            master_bpm_4fix = None
+        else:
+            master_bpm_4gain = None
+            master_bpm_4fix = None
+
         ########################################################################
         # 1 - Apply dark, flat to ALL files 
         ########################################################################
         if self.apply_dark_flat==1 and (master_dark!=None or master_flat!=None):
-            log.info("**** Applying dark and Flat ****")
+            log.info("**** Applying Dark, Flat and BPM ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        master_dark, 
-                                       master_flat, 
+                                       master_flat,
+                                       master_bpm_4fix, 
                                        out_dir)
             self.m_LAST_FILES = res.apply()
         
@@ -2846,28 +2927,37 @@ class ReductionSet(object):
         # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
         # pixels deviating >30%(?),...
         # do_normalization=False because it is suppossed that FF is already normalized
-        g = reduce.calGainMap.GainMap(local_master_flat, gainmap, bpm=master_bpm, 
+        g = reduce.calGainMap.GainMap(local_master_flat, gainmap, bpm=master_bpm_4gain, 
                                     do_normalization=False, # because it is suppossed that FF is already normalized 
-                                    mingain=mingain, 
-                                    maxgain=maxgain, nxblock=nxblock,
-                                    nyblock=nyblock, nsigma=nsigma)
+                                    mingain=mingain, maxgain=maxgain,
+                                    nxblock=nxblock, nyblock=nyblock,
+                                    nsigma=nsigma)
         g.create() 
            
         ########################################################################
-        # Add external Bad Pixel Map to gainmap (maybe from master DARKS,FLATS ?)
+        # Add/combine external Bad Pixel Map to gainmap (maybe from master DARKS,FLATS ?)
+        # BPMask ==> Bad pixeles >0, Good pixels = 0
+        # GainMap ===> Bad pixels <=0, Good pixels = 1
+        # Later, in skyfilter procedure bad pixels are set to bkg level.
         ########################################################################
-        if master_bpm !=None:
-            if not os.path.exists( master_bpm ):
-                print('No external Bad Pixel Mask found. Cannot find file : "%s"' %master_bpm)
+        if master_bpm_4gain !=None:
+            if not os.path.exists( master_bpm_4gain ):
+                log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
             else:
-                iraf.imarith(operand1=gainmap,
-                  operand2=master_bpm,
-                  op='*',
-                  result=gainmap.replace(".fits","_bpm.fits"),
-                  verbose='yes'
-                  )
-                #replace old gain file
-                shutil.move(gainmap.replace(".fits","_bpm.fits"), gainmap)
+                # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
+                bpm_data = pyfits.getdata(master_bpm_4gain, header=False)
+                badpix_p = numpy.where(bpm_data>1)
+                gain_data, gh = pyfits.getdata(gainmap, header=True)
+                gain_data[badpix_p] = 0
+                pyfits.writeto(gainmap, gain_data, header=gh, clobber=True)
+                #iraf.imarith(operand1=gainmap,
+                #  operand2=master_bpm_4gain,
+                #  op='*',
+                #  result=gainmap.replace(".fits","_bpm.fits"),
+                #  verbose='yes'
+                #  )
+                # replace old gain file
+                #shutil.move(gainmap + "_conv.fits", gainmap)
         
         ########################################################################
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
@@ -2917,11 +3007,13 @@ class ReductionSet(object):
                         
         ########################################################################
         # 4 - First Sky subtraction (IRDR) - sliding window technique
+        #     (and set bad pixels to bkg lvl)
         ########################################################################
         log.info("**** 1st Sky subtraction (without object mask) ****")
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
         # Return only filtered images; in exteded-sources, sky frames  are not 
-        # included 
+        # included.
+        #  
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
                                            gainmap, 'nomask', self.obs_mode)
         
@@ -2952,10 +3044,11 @@ class ReductionSet(object):
         # So, it is implemented here only for academic purposes !
         ########################################################################
         if self.apply_dark_flat==2 and master_flat!=None:
-            log.info("**** Applying Flat AFTER sky subtraction ****")
+            log.info("**** Applying FLEMONlat AFTER sky subtraction ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        None,  
-                                       master_flat, 
+                                       master_flat,
+                                       None, 
                                        out_dir)
             self.m_LAST_FILES = res.apply()
 
@@ -3203,7 +3296,8 @@ class ReductionSet(object):
             log.info("**** Applying Flat AFTER sky subtraction ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        None,  
-                                       master_flat, 
+                                       master_flat,
+                                       None, 
                                        out_dir)
             self.m_LAST_FILES = res.apply()
             

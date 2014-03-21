@@ -149,8 +149,20 @@ class BadPixelMask(object):
         Returns
         -------
 
-        The list of IRAF mask files (.pl) generated. 
-        Values is 0 for good pixels, non-zero for bad (masked) pixels.
+        The list of IRAF mask files given with a pixel list image (.pl).
+        Pixel list images have the extension ".pl" signifying a special compact 
+        file of integer values ideal for identifying sets of pixels. For a bad 
+        pixel mask the good pixels have a value of zero and bad pixels have 
+        positive integer values. 
+        
+        ==> Values are 0 for good pixels, non-zero for bad (masked) pixels.
+
+
+        Notes
+        -----
+        See also:
+
+        iraf.fixpix -- fix pixels identified by a bad pixel mask, image, or file
 
         """
         
@@ -345,7 +357,12 @@ class BadPixelMask(object):
         """
         Build a BPM following the algorithm described above.
 
-        TO BE COMPLETED !!!
+        Returns
+        -------
+
+        - Image file (FITS) with 0 for good pixels, non-zero for bad (masked) 
+        pixels.
+        
         """
         
         log.debug('createBadPixelMask started (simple mode)')
@@ -355,7 +372,7 @@ class BadPixelMask(object):
         flats_off_frames = []
         flats_on_frames = []
 
-        #Check Master_Dark
+        # Check Master_Dark
         if os.path.exists(self.master_dark):
             f = datahandler.ClFits(self.master_dark)
             if not f.getType()=='MASTER_DARK':
@@ -382,15 +399,15 @@ class BadPixelMask(object):
                 # reject the frame
                 log.error("DISCARTING: Frame %s is neither dome_flat nor a dark frame", f.pathname)
                 
-        #Check whether there are enough calib frames
+        # Check whether there are enough calib frames
         if (len(flats_off_frames)<1 or len(flats_on_frames)<1 or abs(len(flats_off_frames)-len(flats_off_frames))>10 
             or self.master_dark==None):
             log.error("There are not enough calib frames for create BPM !!")
             raise ExError("Not enough calib frames")
         
         
-        #STEP 2: Subtrac the master dark to each dome flat
-        #NOTE: all dome flats (on and off) should have the same EXPTIME 
+        # STEP 2: Subtrac the master dark to each dome flat
+        # NOTE: all dome flats (on and off) should have the same EXPTIME 
         for file in flats_off_frames:
             misc.fileUtils.removefiles(file.replace(".fits","_D.fits"))
             iraf.mscred.mscarith(operand1=file,
@@ -412,7 +429,7 @@ class BadPixelMask(object):
         print "OFF=", flats_off_frames
         print "ON=", flats_on_frames
         
-        #STEP 3: Combine dome dark subtracted flats (off & on)
+        # STEP 3: Combine dome dark subtracted flats (off & on)
         flat_off_comb = self.temp_dir + "flats_comb_off.fits"
         misc.fileUtils.removefiles(flat_off_comb)
         # Due to a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument
@@ -440,7 +457,7 @@ class BadPixelMask(object):
         flats = self.temp_dir + "/flats_on.txt"
         misc.utils.listToFile(flats_on_frames, flats)
 
-        #Combine dome dark subtracted ON-flats
+        # Combine dome dark subtracted ON-flats
         iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_on_comb.replace('//','/'),
                         combine='median',
@@ -456,7 +473,7 @@ class BadPixelMask(object):
                         )
         misc.fileUtils.removefiles(flats)
                                     
-        #STEP 4: Compute flat_comb_off/flat_comb_on
+        # STEP 4: Compute flat_comb_off/flat_comb_on
         flat_ratio = self.temp_dir + 'flat_ratio.fits'
         misc.fileUtils.removefiles(flat_ratio)
         log.debug( 'Computing FlatRatio')
@@ -467,16 +484,17 @@ class BadPixelMask(object):
                  )
         log.debug("Flat Ratio built")
                      
-        #STEP 5: Create BPM
+        # STEP 5: Create BPM
         log.debug( 'Now, computing bad pixel mask')
         misc.fileUtils.removefiles(self.output_file)
         
         fr = pyfits.open(flat_ratio)
         
-        # TBC: I do not remember the reason of next selection ??
-        bpm = numpy.where(fr[0].data<0.95, 0, 
-                           numpy.where(fr[0].data>1.09, 0, 1))
-        #bpm=numpy.where (bpm.isfinite(), 1, 0)
+        # TBC: Bad pixel selection criterion 
+        # Bad pixels >0, good_pixels=0
+        bpm = numpy.where(fr[0].data<0.9, 1, 
+                           numpy.where(fr[0].data>1.1, 1, 0))
+        #bpm=numpy.where(bpm.isfinite(), 1, 0)
 
         # -- a test with a gauss kernel, it takes a long time ...(endless?) 
         #g = gauss_kern(5, sizey=2048)
@@ -506,6 +524,74 @@ class BadPixelMask(object):
 
         return self.output_file
 
+
+def fixPix(image, mask):
+    """
+    Return an image with masked values replaced with a bi-linear
+    interpolation from nearby pixels.  Probably only good for isolated
+    badpixels.
+
+    Usage:
+      fixed = fixpix(im, mask, [iraf=])
+
+    Inputs:
+      image = the image 2D array
+      mask = an array that is True where im contains bad pixels
+
+    Outputs:
+      fixed = the corrected image
+
+    v1.0.0 Michael S. Kelley, UCF, Jan 2008
+
+    v1.1.0 Added the option to use IRAF's fixpix.  MSK, UMD, 25 Apr
+           2011
+    """
+    if iraf:
+        # importing globally is causing trouble
+        from pyraf import iraf as IRAF
+
+        badfits = os.tmpnam() + '.fits'
+        outfits = os.tmpnam() + '.fits'
+        pyfits.writeto(badfits, mask.astype(np.int16))
+        pyfits.writeto(outfits, im)
+        IRAF.fixpix(outfits, badfits)
+        cleaned = pyfits.getdata(outfits)
+        os.remove(badfits)
+        os.remove(outfits)
+        return cleaned
+
+    interp2d = interpolate.interp2d
+    #     x = xarray(im.shape)
+    #     y = yarray(im.shape)
+    #     z = im.copy()
+    #     good = (mask == False)
+    #     interp = interpolate.bisplrep(x[good], y[good],
+    #                                         z[good], kx=1, ky=1)
+    #     z[mask] = interp(x[mask], y[mask])
+
+    # create domains around masked pixels
+    dilated = ndimage.binary_dilation(mask)
+    domains, n = ndimage.label(dilated)
+
+    # loop through each domain, replace bad pixels with the average
+    # from nearest neigboors
+    x = xarray(image.shape)
+    y = yarray(image.shape)
+    cleaned = image.copy()
+    for d in (np.arange(n) + 1):
+        # find the current domain
+        i = (domains == d)
+
+        # extract the sub-image
+        x0, x1 = x[i].min(), x[i].max() + 1
+        y0, y1 = y[i].min(), y[i].max() + 1
+        subim = image[y0:y1, x0:x1]
+        submask = mask[y0:y1, x0:x1]
+        subgood = (submask == False)
+
+        cleaned[i * mask] = subim[subgood].mean()
+
+    return cleaned
 
 #-----------------------------------------------------------------------
 

@@ -32,6 +32,7 @@
 #                            subtraction, only flatfielding or both 
 #              15/11/2010    jmiguel@iaa.es - Added normalization to flat-field
 #              16/11/2010    jmiguel@iaa.es - Added support for MEF files
+#              21/03/2014    jmiguel@iaa.es - Added support for BPM
 ################################################################################
 
 ################################################################################
@@ -48,21 +49,12 @@ import misc.fileUtils
 import misc.utils as utils
 import datahandler
 
-# Pyraf modules
-#from pyraf import iraf
-#from iraf import noao
-#from iraf import imred
-#from iraf import ccdred
-
-import numpy as np
+# Logging
+from misc.paLog import log
 
 # Interact with FITS files
 import pyfits
 import numpy
-
-
-# Logging
-from misc.paLog import log
 
 
 class ExError (Exception): 
@@ -80,14 +72,17 @@ class ApplyDarkFlat(object):
     
     Parameters
     ----------
-    data
-        A list of science files
-    bpm
-        Input bad pixel mask or NULL
-    dark
+    sci_raw_files: list
+        A list of science raw files to calibrate 
+    dark: str
         Master dark to subtract
-    mflat
+    mflat: str
         Master flat to divide by (not normalized !)
+    bpm: str
+        Input bad pixel mask or None
+
+    out_dir: str
+        Output directory where calibrated files will be created
     
     Returns
     -------
@@ -96,19 +91,19 @@ class ApplyDarkFlat(object):
         processing
   
     """
-    def __init__(self, sci_files, mdark = None, mflat = None, \
-                 out_dir_ ="/tmp", bpm = None):
-        self.__sci_files = sci_files  # list of files which apply dark and flat
-        self.__mdark = mdark          # master dark (model) to apply
-        self.__mflat = mflat          # master flat to apply (dome, twlight) - not normalized !!
-        self.__bpm = bpm              # not used at the moment
-        self.__out_dir = out_dir_
+    def __init__(self, sci_raw_files, mdark = None, mflat = None,  bpm = None,
+                 out_dir_ ="/tmp"):
+        self.__sci_files = sci_raw_files  # list of files which apply dark and flat
+        self.__mdark = mdark  # master dark (model) to apply
+        self.__mflat = mflat  # master flat to apply (dome, twlight) - not normalized !!
+        self.__bpm = bpm      # bad pixel mask file to apply
+        self.__out_dir = out_dir_ # output directory of calibrated files
         
     
     def apply(self):
       
         """
-        Apply masters DARK and/or FLAT to science file list. 
+        Apply masters DARK and/or FLAT and/or BPM to science file list. 
         Both master DARK and FLAT are optional,i.e., each one can be applied 
         even the other is not present.
         
@@ -199,11 +194,11 @@ class ApplyDarkFlat(object):
                     
                 # Replace NaN values with 0.0
                 dat = flat[ext].data[200:naxis1-200, 200:naxis2-200]
-                dat[np.isnan(dat)]= 0.0
+                dat[numpy.isnan(dat)]= 0.0
 
                 # Normalization is done with a robust estimator --> np.median()
-                median = np.median(dat)
-                mean = np.mean(dat)
+                median = numpy.median(dat)
+                mean = numpy.mean(dat)
                 mode = 3*median-2*mean
                 log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
                            median, mean, mode)
@@ -263,7 +258,7 @@ class ApplyDarkFlat(object):
                 
                 for chip in range (0, n_ext):
                     dark_data = None
-                    #MEF
+                    # MEF
                     if n_ext > 1: # it means, MEF
                         # Get dark
                         if self.__mdark != None: 
@@ -284,7 +279,13 @@ class ApplyDarkFlat(object):
                             flat_data = flat[chip+1].data/median # normalization wrt chip 0
                         else: 
                             flat_data = 1
-                        sci_data = f[chip+1].data 
+                        sci_data = f[chip+1].data
+
+                        # Get BPM
+                        if self.__bpm!=None: 
+                            bpm_data = pyfits.getdata(self.__bpm, ext= chip+1, 
+                                                      header=False)
+
                     # Single
                     else:
                         # Get Dark
@@ -301,12 +302,16 @@ class ApplyDarkFlat(object):
                             else:
                                 dark_data = dark[0].data
                         else: dark_data = 0
+                        
                         # Get normalized Flat
                         if self.__mflat!=None: flat_data = flat[0].data/mode  # normalization
                         else: flat_data = 1     
                         sci_data = f[0].data
+
+                        # Get BPM
+                        if self.__bpm!=None: 
+                            bpm_data = pyfits.getdata(self.__bpm, header=False)
                                                                
-                    #sci_data = (sci_data - dark_data) / flat_data
                     # To avoid NaN values due to zero division
                     __epsilon = 1.0e-20
                     flat_data = numpy.where(numpy.fabs(flat_data)<__epsilon, 
@@ -316,6 +321,15 @@ class ApplyDarkFlat(object):
                     #                       (sci_data - dark_data), 
                     #                       (sci_data - dark_data) / flat_data )
                     # Store back the new values
+
+                    ###################################
+                    # Finally, apply dark, Flat and BPM
+                    # #################################
+                    sci_data = (sci_data - dark_data) / flat_data
+                    if self.__bpm!=None: 
+                        sci_data = fixpix(sci_data, bpm_data, iraf=False)    
+                    
+
                     if n_ext > 1: # it means, MEF
                         f[chip+1].data = sci_data
                     else:
@@ -346,7 +360,72 @@ class ApplyDarkFlat(object):
         return result_file_list
         
         
-        
+def fixpix(im, mask, iraf=False):
+    """ Return an image with masked values replaced with a bi-linear
+    interpolation from nearby pixels.  Probably only good for isolated
+    badpixels.
+
+    Usage:
+      fixed = fixpix(im, mask, [iraf=])
+
+    Inputs:
+      im = the image array
+      mask = an array that is True where im contains bad pixels
+
+    Outputs:
+      fixed = the corrected image
+
+    v1.0.0 Michael S. Kelley, UCF, Jan 2008
+
+    v1.1.0 Added the option to use IRAF's fixpix.  MSK, UMD, 25 Apr
+           2011
+    """
+    if iraf:
+        # importing globally is causing trouble
+        from pyraf import iraf as IRAF
+
+        badfits = os.tmpnam() + '.fits'
+        outfits = os.tmpnam() + '.fits'
+        pyfits.writeto(badfits, mask.astype(numpy.int16))
+        pyfits.writeto(outfits, im)
+        IRAF.fixpix(outfits, badfits)
+        cleaned = pyfits.getdata(outfits)
+        os.remove(badfits)
+        os.remove(outfits)
+        return cleaned
+
+    interp2d = interpolate.interp2d
+    #     x = xarray(im.shape)
+    #     y = yarray(im.shape)
+    #     z = im.copy()
+    #     good = (mask == False)
+    #     interp = interpolate.bisplrep(x[good], y[good],
+    #                                         z[good], kx=1, ky=1)
+    #     z[mask] = interp(x[mask], y[mask])
+
+    # create domains around masked pixels
+    dilated = ndimage.binary_dilation(mask)
+    domains, n = ndimage.label(dilated)
+
+    # loop through each domain, replace bad pixels with the average
+    # from nearest neigboors
+    x = xarray(im.shape)
+    y = yarray(im.shape)
+    cleaned = im.copy()
+    for d in (numpy.arange(n) + 1):
+        # find the current domain
+        i = (domains == d)
+
+        # extract the sub-image
+        x0, x1 = x[i].min(), x[i].max() + 1
+        y0, y1 = y[i].min(), y[i].max() + 1
+        subim = im[y0:y1, x0:x1]
+        submask = mask[y0:y1, x0:x1]
+        subgood = (submask == False)
+
+        cleaned[i * mask] = subim[subgood].mean()
+
+    return cleaned        
         
 ################################################################################
 # Functions       
