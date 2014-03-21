@@ -253,8 +253,9 @@ class GainMap(object):
         
         Return
         ------
-        If success, return the output filename of the Gain Map generated.
-        
+        If success, return the output filename image of the Gain Map generated, 
+        where Bad Pixels = 0.0
+
         """
         
         log.debug("Start creating Gain Map for file: %s", self.flat) 
@@ -377,7 +378,7 @@ class GainMap(object):
                                 
             # Find more badpix by local dev
             p = np.where( (dev<lo) | (dev>hi))
-            gain[chip][p] = 0.0
+            gain[chip][p] = 0.0 # badpix
             log.debug("Final number of Bad Pixel = %d", (gain[chip]==0.0).sum())
             
                  

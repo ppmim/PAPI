@@ -134,7 +134,7 @@ class NonLinearityModel(object):
     """
     def __init__(self, input_files=None, output_filename="/tmp/NLC.fits"):
         """
-        Init the object
+        Init the object.
         
         Parameters
         ----------
@@ -146,8 +146,6 @@ class NonLinearityModel(object):
         output_filename: str
             File where coefficientes will be saved
         
-        Returns
-        -------
         
         coeff: array
             Array of values a0,a1,a2 where 
@@ -374,7 +372,8 @@ class NonLinearityModel(object):
         
         Returns
         -------
-        
+        outfitsname: list
+            The list of new corrected files created.
         
         TODO
         ----
@@ -385,6 +384,7 @@ class NonLinearityModel(object):
         
         """   
         log.debug("Start applyModel")
+
 
         if len(source)<1:
             log.error("Found empty list of files")
@@ -409,21 +409,27 @@ class NonLinearityModel(object):
             raise Exception("Linearity model does not match a 4-plane cube image")
 
         # loop the images
+        new_filenames = []
         for i in range(0, len(source)):
             i_file = pyfits.open(source[i])
             f_n_extensions = 1 if len(i_file)==1 else len(i_file)-1
+            
             log.debug("Raw Number of extensions = %s"%f_n_extensions)
             log.debug("Model Number of extensions = %s"%model_n_extensions)
+            
             if f_n_extensions!=model_n_extensions:
                 log.error("Model and Raw source do not match number of extensions")
                 raise Exception("Model and Raw source do not match number of extensions")
+            
             for i_ext in range(0, f_n_extensions):
                 offset = 0 if f_n_extensions==1 else 1
                 data_model = fits_model[i_ext+offset].data
                 raw = i_file[i_ext+offset].data
+                
                 if not raw.shape==data_model[0].shape:
                     log.error("Shape/size of lin_model and source_data does not match")
                     raise Exception("Shape/size of lin_model and source_data does not match")
+                
                 log.info("Median value before correction = %s"%(numpy.median(raw)))
                 corr = data_model[0] + data_model[1]*raw + data_model[2]*raw**2 + data_model[3]*raw**3
                 diff = corr - raw
@@ -437,23 +443,29 @@ class NonLinearityModel(object):
             mfnp = source[i].partition('.fits')
             # add _lincor before .fits extension, or at the end if no such extension present
             outfitsname = mfnp[0] + '_lincor' + mfnp[1] + mfnp[2]
+            
             # keep same data type
             if os.path.exists(outfitsname):
                 os.unlink(outfitsname)
                 print 'Overwriting ' + outfitsname
             else:
                 print 'Writing ' + outfitsname
+            
             # scale back data to original values
             #BITPIX = i_file[0].header['BITPIX']
             #bitpix_designation = pyfits.ImageHDU.NumCode[BITPIX]
             #myfits_hdu[0].scale(bitpix_designation,'old')
+            
             try:
                 i_file[0].scale('float32')
                 i_file.writeto(outfitsname, output_verify='ignore')
             except IOError:
                 raise ExError('Cannot write output to %s' % outfitsname)
             i_file.close()
+
+            new_filenames.append(outfitsname)
            
+        return new_filenames 
 
     def applyModel_LBT(self, source, model):
           

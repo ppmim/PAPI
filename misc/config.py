@@ -461,6 +461,35 @@ def read_config_file(config_file = default_config_file()):
     options["config_files"] = config_files
 
 
+    ######################### "NonLinearity" section ##################################
+
+    nonlinearity = {}
+    
+    nonlinearity["suffix"] = read_parameter(config, "nonlinearity", "suffix", str, False, config_file)
+    nonlinearity["apply"] = read_parameter(config, "nonlinearity", "apply", bool, False, config_file)
+
+    if nonlinearity["apply"]==True:
+        nonlinearity["model"] = read_file_parameter(config, "nonlinearity", "model", config_file, True)
+    else:
+        nonlinearity["model"] = read_parameter(config, "nonlinearity", "model", str, False, config_file)
+
+    options["nonlinearity"] = nonlinearity
+
+    ######################### "BPM" section ##################################
+
+    bpm = {}
+    
+    bpm["suffix"] = read_parameter(config, "bpm", "suffix", str, False, config_file)
+    bpm["mode"] = read_parameter(config, "bpm", "apply", bool, False, config_file)
+
+    if bpm["mode"].lower()!='none':
+        bpm["bpm_file"] = read_file_parameter(config, "bpm", "bpm_file", config_file, True)
+    else:    
+        bpm["bpm_file"] = read_parameter(config, "bpm", "bpm_file", str, False, config_file)
+
+    options["bpm"] = bpm
+
+
     ######################### "dark" section ##################################
 
     dark = {}
