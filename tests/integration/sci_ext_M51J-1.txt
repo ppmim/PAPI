@@ -1,0 +1,12 @@
+/data/datos_Herve/070506/06may0007.fits
+/data/datos_Herve/070506/06may0008.fits
+/data/datos_Herve/070506/06may0009.fits
+/data/datos_Herve/070506/06may0010.fits
+/data/datos_Herve/070506/06may0011.fits
+/data/datos_Herve/070506/06may0012.fits
+/data/datos_Herve/070506/06may0013.fits
+/data/datos_Herve/070506/06may0014.fits
+/data/datos_Herve/070506/06may0015.fits
+/data/datos_Herve/070506/06may0016.fits
+/data/datos_Herve/070506/06may0017.fits
+/data/datos_Herve/070506/06may0018.fits

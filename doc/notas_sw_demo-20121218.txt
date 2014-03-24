@@ -1,0 +1,21 @@
+NOTAS REUNION REVISION SOFTWARE PANIC 
+=====================================
+
+Participantes: MF, CC, JR, VT, AGS, JM
+Lugar: Laboratorio/Sala control sala limpia
+
+A las 10.15 aprox. comenzamos, asistiendo : MF, JR, CC, VT, AG, JM
+
+- Revisar los valores RA,Dec,Time offset del setup usados para el agrupamiento
+de datasets no observados con el OT.
+- Cambiar el color botón "Start Processing" y modificar la funcionalidad t.q.:
+ "Process all, only new files, Cancel"
+
+- Revisar agrupamiento de serie de darks; en 'Build Calibrations' parece que lo hace
+de forma distinta.
+- Añadir otro parametro 'max. número ficheros/grupo' para el agrupamiento de 
+datos no observados con el OT;
+- Intentar obtener la matriz de distorsión, bien a partir de SCAMP preguntando
+a E.Bertín o bien implementando el procedimiento para calcularla.
+
+- Revisar el procedimiento del cálculo del FWHM, psf, ...

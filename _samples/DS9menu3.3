@@ -1,0 +1,244 @@
+#!/usr/bin/python
+import string
+import os
+import sys
+import time
+import dircache
+import string
+
+local = "/usr/local/bin/"
+path = os.getcwd()
+list = dircache.listdir(path)
+done = 1
+choices = ["show USNO fits", "show DSS", "show USNO match", "show USNO region on DSS", "delete current frame","clear all", "pan all frames to current location",  "blink images", "stop blinking", "zoom in", "zoom out", "examine another field","help", "exit"]
+end = 1
+blink = "no\n" 
+
+print "PATH=" ,path
+print "LIST=" ,list
+
+
+while(done >0):
+
+  
+  
+   x = 0
+   dictionary = {}
+
+   if (end == 0):
+      break
+   
+
+   for element in list:
+      print "element=", element
+      if element[0]== 'R'and element[1] == 'A': 
+        sys.stdout.write("%d: %s     "%( x, element))
+        dictionary[x] = element
+        x = x+1
+        if (x%3) ==0 and x>0 :
+          sys.stdout.write("\n")
+
+   dictionary[x] = "exit"
+   print x, dictionary[x]
+   print "Choose the field to examine: (Type the number of the desired field)"
+   num = input()
+   print dictionary[num]
+
+   if (dictionary[num] == "exit"):
+      break
+   
+   if (done == 1):
+      pid = os.fork()
+
+      if pid ==0:
+         os.execl(("%sds9" % local), "ds9") 
+  
+   
+   
+
+   doAgain = 0
+   counter = -1
+   done = done +1
+
+   while(doAgain == 0):
+
+      if (counter>1):
+         
+         zoom = os.popen(("%sxpaget ds9 zoom" % local), "r").readline() 
+         frameid = os.popen(("%sxpaget ds9 frame" % local), "r")
+         id = frameid.readline()
+         os.system(("%sxpaset -p ds9 frame 1" % local))
+        
+         xpa = os.popen(("%sxpaget ds9 pan wcs fk4 degrees" % local), "r")
+         pos = xpa.readline()
+         xpa.close
+         pos= pos[1:len(pos)];
+         RA = float(pos[0:string.find(pos, " ")])
+         Dec = float(pos[(string.find(pos, " ") + 1): len(pos)])
+         os.system(("%sxpaset -p ds9 frame %s" %(local, id)))
+         
+         os.system(("%sxpaset -p ds9 pan to %f %f wcs fk4" %(local, RA, Dec)))
+         
+
+
+      if (blink == "yes\n"):
+         os.system(("%sxpaset -p ds9 blink " %local))
+
+     
+      x = 0
+      print "Choose task"
+
+      for task in choices:
+         print x, task
+         x = x+1 
+
+      selection = input() 
+     
+      blink = os.popen(("%sxpaget ds9 blink" %local)).readline()
+      
+      if (blink == "yes\n"):
+          os.system(("%sxpaset -p ds9 single " %local))
+
+      if (counter == -1):
+         os.system(("%sxpaset -p ds9 frame delete all " %local))
+         counter = 0
+        
+      if (choices[selection] == choices[0]):
+         if (os.path.isfile("%s/%s.fits" % (dictionary[num], dictionary[num]))):
+             os.system(("%sxpaset -p ds9 frame new" % local))
+             os.system(("%sxpaset -p ds9 frame reset" %local))
+             os.system(("%sxpaset -p ds9 file %s/%s.fits" %(local, dictionary[num], dictionary[num])))
+             os.system(("%sxpaset -p ds9 zoom 1" % local))
+           
+             os.system(("%sxpaset -p ds9 frame center" % local))
+             os.system(("%sxpaset -p ds9 zoom 1.758" % local))
+             counter = counter+ 1
+         else:
+            print "The file does not exist"
+         continue
+
+      if (choices[selection] == choices[1]):
+         if (os.path.isfile("%s/DSS%s.fits" % (dictionary[num], dictionary[num]))):
+            os.system(("%sxpaset -p ds9 frame new" % local))
+            os.system(("%sxpaset -p ds9 frame reset" % local))
+            os.system(("%sxpaset -p ds9 file %s/DSS%s.fits" %(local, dictionary[num], dictionary[num])))
+            os.system(("%sxpaset -p ds9 frame center" % local))
+            os.system(("%sxpaset -p ds9 zoom 1" % local))
+            counter = counter+ 1
+         else:
+            print "The file does not exist"
+         
+         continue      
+
+      if (choices[selection] == choices[2]):
+         if (os.path.isfile("%s/match%s.fits" % (dictionary[num], dictionary[num]))):
+            os.system(("%sxpaset -p ds9 frame new" % local))
+            os.system(("%sxpaset -p ds9 frame reset" % local))
+            os.system(("%sxpaset -p ds9 file %s/match%s.fits" %(local, dictionary[num], dictionary[num])))
+            os.system(("%sxpaset -p ds9 zoom 1" % local))
+            os.system(("%sxpaset -p ds9 frame center" % local))
+            os.system(("%sxpaset -p ds9 zoom 1.758" % local))
+            counter = counter+ 1
+         else:
+            print "The file does not exist"
+
+         continue
+      
+      if (choices[selection] == choices[3]):
+         if (os.path.isfile("%s/reg%s.ua2" % (dictionary[num], dictionary[num]))):
+             os.system(("%sxpaset -p ds9 frame reset" %local))
+             os.system(("%sxpaset -p ds9 frame new" % local))
+             os.system(("%sxpaset -p ds9 frame reset" % local))
+             os.system(("%sxpaset -p ds9 file %s/DSS%s.fits" %(local, dictionary[num], dictionary[num])))
+             os.system(("%sxpaset -p ds9 frame center" % local))
+             os.system(("%sxpaset -p ds9 regions load %s/reg%s.ua2" %(local, dictionary[num], dictionary[num])))
+             counter += counter +1
+         else:
+           print "The file does not exist"
+         continue
+
+      if (choices[selection] == choices[4]):
+         os.system(("%sxpaset -p ds9 frame delete " %local))
+         counter = counter - 1
+         continue
+      
+      if (choices[selection] == choices[5]):
+         os.system(("%sxpaset -p ds9 frame delete all" %local))
+         counter = 0
+         continue
+
+      if (counter >0 and choices[selection] == choices[6]):
+
+         xpa = os.popen(("%sxpaget ds9 pan wcs fk4 degrees" % local), "r")
+         pos = xpa.readline()
+         xpa.close
+         pos= pos[1:len(pos)];
+         RA = float(pos[0:string.find(pos, " ")])
+         Dec = float(pos[(string.find(pos, " ") + 1): len(pos)])
+         
+
+         print "Move all frames to:", RA, Dec
+      
+         frameid = os.popen(("%sxpaget ds9 frame" % local), "r")
+         id = frameid.readline()
+         frame = 0
+
+         while (frame < counter):
+            os.system(("%sxpaset -p ds9 frame next" %local))
+            os.system(("%sxpaset -p ds9 pan to %f %f wcs fk4" %(local, RA, Dec)))
+            frame = frame + 1
+
+         os.system(("%sxpaset -p ds9 frame %s" %(local, id))) 
+         continue
+      
+      if (choices[selection] == choices[7]):
+         os.system(("%sxpaset -p ds9 blink" %local))
+         continue
+      
+      if (choices[selection] == choices[8]):
+         blink = "no\n"         
+         continue
+      
+      if (choices[selection] == choices[9]):
+         frame = 0
+   
+         while (frame < counter):
+            print frame, counter
+            os.system(("%sxpaset -p ds9 zoom 2" %local))
+            os.system(("%sxpaset -p ds9 frame next" %local))
+            frame = frame + 1
+         continue 
+         
+      if (choices[selection] == choices[10]):
+         frame = 0
+            
+         while (frame < counter):
+            print frame, counter
+            os.system(("%sxpaset -p ds9 zoom .5" %local))
+            os.system(("%sxpaset -p ds9 frame next" %local))
+            frame = frame + 1
+         continue
+      
+      if (choices[selection] == choices[11]):
+         doAgain =1
+         continue
+      
+      if (choices[selection] == choices[12]):
+         print "show USNO fits = display the image created using the USNO A2.0 Catalog\n"
+         print "show DSS = display the Digital Sky Survey image of the field\n"
+         print "show USNO match = display the image containing the stars found in the USNO A2.0 Catalog contained in the DSS image\n"
+        
+         print "pan all frames to current location = moves the center of all frames to the center of the current frame\n"
+         print "blink = blinks all frames"
+         print "stop blink = returns to single frame mode"
+         print "zoom in = zooms all frames in by a factor of 1/2 \n"
+         print "zoom out = zooms all frames out by a factor of 2 \n"
+         continue
+      
+      if(choices[selection] == choices[13]):
+         end = 0
+         os.system(("%sxpaset -p ds9 exit" %local))
+         break
+
+     
+   

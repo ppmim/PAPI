@@ -1,0 +1,109 @@
+#!/bin/bash
+# command line arguments must be directory containing the field files RA (hrs:m:s), Dec (d:m:s)
+
+
+FIELDS='RA*'
+PS3='Choose the field to examine:'
+select RADec in $FIELDS "exit"
+do
+echo $RADec
+
+if [ $RADec == "exit" ]; then
+ break;
+fi
+cd $RADec
+PS3='Choose procedure:'
+echo
+
+ds9  &
+counter=0
+
+export PATH=$PATH:/usr/local/bin
+select selection in "show USNO fits" "show DSS" "show USNO match" "show USNO region on DSS"  "delete current frame" "clear all" "examine another field" "help" 
+do 
+ echo $selection
+   xpaset -p ds9 single
+     
+  if [ $counter -eq 0 ]; then
+     xpaset -p ds9 frame delete all
+  fi  
+  
+  case $selection in
+
+  
+    "clear all")     
+     xpaset -p ds9 frame delete all;;
+  
+   "show USNO fits")
+      if [ -e $RADec.fits ]; then 
+	xpaset -p ds9 frame new
+        xpaset -p ds9 file $RADec.fits
+         xpaset -p ds9 frame center
+	 xpaset -p ds9 zoom 1.758
+	 else
+	 echo " A USNO fits file is not in this directory"
+	 fi;;
+    
+    "show USNO match")
+       if [ -e match$RADec.fits ]; then
+	xpaset -p ds9 frame new
+	xpaset -p ds9 frame reset
+        xpaset -p ds9 file match$RADec.fits
+         xpaset -p ds9 frame center
+	 xpaset -p ds9 zoom 1.758
+	 else
+	 echo "A USNO match image does not exist for this field"
+	fi;;
+        
+   "help")
+      echo show USNO fits = display the image created using the USNO A2.0 Catalog
+      echo show DSS = display the Digital Sky Survey image of the field
+      echo show USNO match = display the image containing the stars found in the USNO A2.0 Catalog contained in the DSS image
+      echo show USNO region on DSS = displaying the Digital Sky Survey image overlaid with the brighter stars that matched the USNO A2.0 Catalog ;;
+             
+  "delete current frame")
+        xpaset -p ds9 frame delete;;
+      
+     
+   "examine another field")
+         break ;;
+ 
+  
+   
+  "show DSS")
+   if [ -e DSS$RADec.fits ]; then 
+         xpaset -p ds9 frame new
+	 xpaset -p ds9 frame reset
+	  xpaset -p ds9 zoom 1
+          xpaset -p ds9 file DSS$RADec.fits
+          xpaset -p ds9 frame center
+	   xpaset -p ds9 wcs align yes 
+     else 
+      echo "A DSS image for this field is not found" 
+    fi;;
+
+  	
+  
+  "show USNO region on DSS")
+     if [ -e DSS$RADec.fits ]; then
+          xpaset -p ds9 frame new
+	   xpaset -p ds9 frame reset
+          xpaset -p ds9 file DSS$RADec.fits
+          xpaset -p ds9 frame center 
+          xpaset -p ds9 regions load reg$RADec.ua2
+    else
+       echo "There is no DSS image or region file in this directory"
+     fi;;
+esac
+               
+   
+     let counter+=1 
+done
+
+
+done
+
+
+
+
+
