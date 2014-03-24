@@ -354,7 +354,7 @@ class NonLinearityModel(object):
         return self.__output_filename
     
 
-    def applyModel(self, source, model):
+    def applyModel(self, source, model, suffix='_LC'):
         """
         Do the Non-linearity correction using the supplied model. In principle,
         it should be applied to raw images (darks, flats, science, ...).
@@ -366,10 +366,18 @@ class NonLinearityModel(object):
         
         model : str 
             FITS filename of the Non-Linearity model, ie., containing polynomial 
-            coeffs for correction that must has been previously computed.
-            It will have a plane for each coeff.
+            coeffs (3rd order) for correction that must has been previously 
+            computed. It will have a plane for each coeff, i.e.:
+
+                plane_0 = coeff_0 (intercept, bias level)
+                plane_1 = coeff_1 (quantum efficiency or sensitivity)
+                plane_2 = coeff_2 (the non-linearity or saturation)
+                plane_3 = coeff_3 
         
-        
+        suffix: str
+            Suffix to add to the input filename to generate the output filename.
+
+
         Returns
         -------
         outfitsname: list
@@ -441,8 +449,8 @@ class NonLinearityModel(object):
             # to input data)
             # save new fits file
             mfnp = source[i].partition('.fits')
-            # add _lincor before .fits extension, or at the end if no such extension present
-            outfitsname = mfnp[0] + '_lincor' + mfnp[1] + mfnp[2]
+            # add suffix before .fits extension, or at the end if no such extension present
+            outfitsname = mfnp[0] + suffix + mfnp[1] + mfnp[2]
             
             # keep same data type
             if os.path.exists(outfitsname):
@@ -551,8 +559,8 @@ class NonLinearityModel(object):
         
         # save new fits file
         mfnp = source.partition('.fits')
-        # add _lincor before .fits extension, or at the end if no such extension present
-        outfitsname = mfnp[0] + '_lincor' + mfnp[1] + mfnp[2]
+        # add suffix before .fits extension, or at the end if no such extension present
+        outfitsname = mfnp[0] + suffix + mfnp[1] + mfnp[2]
         # keep same data type
         myfits_hdu[0].data = (myfits_data * fac).astype(myfits_data.dtype)
         if os.path.exists(outfitsname):

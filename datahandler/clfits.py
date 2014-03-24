@@ -656,7 +656,7 @@ class ClFits (object):
             log.error('Error reading RA keyword :%s',str(e))
             self._ra  = -1
         finally:
-            log.debug("RA = %s"%str(self._ra))
+            #log.debug("RA = %s"%str(self._ra))
             pass
 
         # ############################
@@ -684,7 +684,7 @@ class ClFits (object):
             log.error('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
         finally:
-            log.debug("DEC = %s"%str(self._dec))
+            #log.debug("DEC = %s"%str(self._dec))
             pass
 
         try:
