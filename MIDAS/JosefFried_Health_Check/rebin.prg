@@ -1,0 +1,18 @@
+DEFI/PAR P1 z C "input file=?"
+DEFI/PAR P2 z1 C "output file=?"
+DEFI/PAR P3 green500coef C "line id table=?"
+DEFI/PAR P4 3400.,1. N " alam0, del lam=?"
+DEFI/PAR P5 510,18 N " NPIX_X,NPIX_Y outframe=?"
+DEFI/PAR P6 160 N " nrow1"
+DEFI/PAR P7 0,1 N " MODUS,MODE=?"
+
+
+WRITE/KEYW IN_A/C/1/20 'P1'
+WRITE/KEYW OUT_A/C/1/20 'P2'
+WRITE/KEYW IN_B/C/1/20 'P3'
+WRITE/KEYW INPUTR/R/1/2 'P4'
+WRITE/KEYW INPUTI/I/1/2 'P5'
+WRITE/KEYW INPUTI/I/3/2 'P6'
+WRITE/KEYW INPUTI/I/7/2 'P7'
+RUN FMP:rebin
+WRITE/DESC 'P2' REBIN/C/1/80 "rebin 'P1' 'P2' 'P3' 'P4' 'P5' 'P6' 'P7' "

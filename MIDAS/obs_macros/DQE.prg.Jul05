@@ -1,0 +1,226 @@
+!    Measure relative DQE of OMEGA2000		(September 2003   HJR)
+!
+!
+!     --------------------------------
+!     |   <---- -RA              (S) |      star (arrows) and 
+!     |             +RA        ^     |      telescope  (RA/DEC signs)
+!     |             -DEC     /    |  |      movements 
+!     |                    /      |  |
+!     |                  /        v  |
+!     |                /        +DEC |
+!     |             (R)              |
+!     |                              |
+!     |                              |
+!     |                              |
+!     |                              |
+!     |                              |
+!     |                              |
+!     --------------------------------
+!
+!  Measure relative DQE by positioning the telescope from the 
+!  reference position (R) first into the start position (S) by 
+!  offsetting with ref_off(1,2). Then the object is shifted first 
+!  in -X direction (telescope in -RA). 
+!  After each row the telescope is moved back to the start position 
+!  for flux check with reference to the first image. Then the 
+!  next row is started by moving the star in -Y (telescope in +DEC)
+!  direction. 
+!  In the end a final image is taken again at the start position (S).
+!
+! ====================================================================
+!
+define/par P1 ? C/A "RA (J2000) of reference position [Format hh:mm:ss.s]: "
+define/par P2 ? C/A "DEC (J2000) of reference position [Format +dd:mm:ss]: "
+define/par P3 3,2 N/A "Number of pointings in X,Y : "
+define/par P4 ? ? "Filter used : "
+define/par P5 1,2.0 N/A "Integration parameters crep,itime : "
+define/par P6 SAVE C/A "Save images [if not give NO_SAVE] : "
+define/par P7 1,1 N/A "Start position in X,Y [1,1] : "
+
+! define local variables
+define/local ans/c/1/32 " "
+define/local save/c/1/32 "{P6}"
+save = m$upper(save)
+define/local X_step/i/1/1 0
+define/local Y_step/i/1/1 0
+define/local x_offset/r/1/1 0
+define/local y_offset/i/1/1 0
+define/local ix/i/1/1 0
+define/local iy/i/1/1 0
+define/local crep/i/1/1 0
+define/local itime/r/1/1 0.
+define/local first_x/i/1/1 1
+define/local first_y/i/1/1 1
+define/local jump_x/i/1/1 0
+define/local jump_y/i/1/1 0
+define/local test_jump/i/1/1 0
+
+write/key outputr/r/1/2 {P5}
+crep = m$nint(outputr(1))
+itime = outputr(2)
+
+write/key outputi/i/1/2 {P7}
+first_x = outputi(1)
+first_y = outputi(2)
+
+! Raster festlegen
+define/local abs_RA/C/1/16 "{P1}"
+define/local abs_DEC/C/1/16 "{P2}"
+write/key outputi/i/1/2 {P3}
+define/local n_X/I/1/1 {outputi(1)}
+define/local n_Y/I/1/1 {outputi(2)}
+define/local ref_off/i/1/2 4500,4500     ! in 1/10arcsec = 7.5arcmin
+
+define/local tel_wait/i/1/1 0.	! wait [sec] after telescope movement
+
+X_step = 15*600/(n_X-1) ! telescope offsets [in arsec if given with decimal point!]
+Y_step = 15*600/(n_Y-1)
+
+Set/format I1 F6.1
+! set image parameters
+$cmd_o2000 crep {crep}
+$cmd_o2000 itime {itime}
+$cmd_o2000 sync
+
+$cmd_o2000 filter {P4}
+$cmd_o2000 sync
+
+	
+$rm /disk-a/o2k/tmp/geirsLstAbort	! remove existing abort files
+define/local abort_check/i/1/1 0	! for return value of abort-file-check
+
+!-------------------------------------------------------------
+
+inquire/key ans "Are you ready to preset telescope to -
+RA(J2000) {abs_RA}, DEC(J2000) {abs_DEC} [no] : "
+
+ans = m$upper(ans)
+
+if ans(1:1) .eq. "Y"  then
+	! telescope to start position (S) via reference (R)
+	$ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
+      $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+	inquire/key ans "All set with telescope centered on reference position [no] ?"
+	ans = m$upper(ans)
+	if ans(1:1) .ne. "Y"  then
+		write/out
+		write/out "Program stopped ..."
+		Write/out
+		goto ende
+	endif
+	$ $TECS_SCRIPT/t_offset +{ref_off(1)} -{ref_off(2)}     ! position of first image
+	wait/secs {tel_wait}
+else
+	write/out
+	write/out "Program stopped ..."
+	write/out
+	goto ende
+endif
+
+! Set telescope to start position if not [1,1]
+
+$ $TECS_SCRIPT/t_coord_system xy
+
+test_jump = first_x + first_y
+if test_jump .gt. 2 then
+	jump_x = (first_x - 1) * x_step
+	jump_y = (first_y - 1) * y_step
+	$ $TECS_SCRIPT/t_offset -{jump_x} {jump_y}
+endif
+
+do iy = {first_y} {n_Y}
+	do ix = {first_x} {n_X}
+		write/out "Taking DQE image {P4} [{ix},{iy}]"
+
+		! write object
+		$cmd_o2000 object DQE measurement {P4} {ix},{iy}
+
+		$cmd_o2000 read
+		$cmd_o2000 sync
+		if save(1:7) .ne. "NO_SAVE" then
+			$cmd_o2000 save -i
+		endif
+
+		if ix .lt. n_X  then
+			! offset telescope in RA  (move star in +alpha direction)
+			$ $TECS_SCRIPT/t_offset -{X_step} 0
+			wait/secs {tel_wait}	! wait for telescope  before read
+		endif
+
+		! abort check: 0=does not exist ; 1=abort file exists
+		abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+		if abort_check .eq. 1 then
+  		  write/out "Program was aborted from GUI ..."	
+		  $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
+              $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+  		  goto ende
+		endif
+	enddo
+	first_x = 1
+
+	if iy .lt. n_Y  then
+	   	! telescope to start, again via reference position (R)
+		$ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
+            $auplay /disk-a/staff/GEIRS/SOUNDS/doorbell.au
+		inquire/key ans "Telescope at reference position [no] ? "
+		ans = m$upper(ans)
+		if ans(1:1) .ne. "Y" then
+		   write/out
+		   write/out " Program stopped"
+		   write/out
+		   goto ende
+		endif
+		$ $TECS_SCRIPT/t_offset +{ref_off(1)} -{ref_off(2)}
+		wait/secs {tel_wait}
+		write/out "Taking image at reference position {iy} ..."
+		$cmd_o2000 object DQE reference {P4} {iy}
+		$cmd_o2000 read
+		$cmd_o2000 sync
+		if save(1:7) .ne. "NO_SAVE" then 
+			$cmd_o2000 save -i
+		endif
+
+		! offset telescope in Y (move star in -delta direction)
+		y_offset = iy*Y_step
+		$ $TECS_SCRIPT/t_offset 0 {y_offset}
+		wait/secs {tel_wait}
+	endif
+
+	! abort check: 0=does not exist ; 1=abort file exists
+	abort_check = m$exist("/disk-a/o2k/tmp/geirsLstAbort")
+	if abort_check .eq. 1 then
+  	  write/out "Program was aborted from GUI ..."	
+	  $rm /disk-a/o2k/tmp/geirsLstAbort 	! remove file again
+        $auplay /disk-a/staff/GEIRS/SOUNDS/crash.au
+  	  goto ende
+	endif
+enddo
+
+write/out "Taking last image at starting position..."
+
+! telescope to start for final reference
+$ $TECS_SCRIPT/t_posit {abs_RA} {abs_DEC} 2000.0
+	ans = m$upper(ans)
+	if ans(1:1) .ne. "Y" then
+	   write/out
+	   write/out " Program stopped"
+	   write/out
+	   goto ende
+	endif
+$ $TECS_SCRIPT/t_offset +{ref_off(1)} -{ref_off(2)}
+wait/secs {tel_wait}
+$cmd_o2000 object DQE reference {P4} final
+$cmd_o2000 read
+$cmd_o2000 sync
+if save(1:7) .ne. "NO_SAVE" then 
+	$cmd_o2000 save -i
+endif
+
+write/out
+write/out "         all done ..."
+write/out
+$auplay /disk-a/staff/GEIRS/SOUNDS/gong.au
+
+ende:
+return
+

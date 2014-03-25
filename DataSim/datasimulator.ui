@@ -1,0 +1,368 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>DataSimulator</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>DataSimulator</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>546</width>
+            <height>349</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>PANIC Data Simulator</string>
+    </property>
+    <widget class="QLabel">
+        <property name="name">
+            <cstring>textLabel2</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>100</x>
+                <y>112</y>
+                <width>40</width>
+                <height>20</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>Type</string>
+        </property>
+    </widget>
+    <widget class="QLabel">
+        <property name="name">
+            <cstring>textLabel3</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>80</x>
+                <y>150</y>
+                <width>64</width>
+                <height>20</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>Delay (sec)</string>
+        </property>
+    </widget>
+    <widget class="QPushButton">
+        <property name="name">
+            <cstring>pushButton_Stop</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>260</x>
+                <y>280</y>
+                <width>108</width>
+                <height>23</height>
+            </rect>
+        </property>
+        <property name="paletteBackgroundColor">
+            <color>
+                <red>244</red>
+                <green>65</green>
+                <blue>25</blue>
+            </color>
+        </property>
+        <property name="text">
+            <string>Stop</string>
+        </property>
+    </widget>
+    <widget class="QPushButton">
+        <property name="name">
+            <cstring>pushButton_outputD</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>20</x>
+                <y>70</y>
+                <width>108</width>
+                <height>23</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>Output directory ...</string>
+        </property>
+    </widget>
+    <widget class="QPushButton">
+        <property name="name">
+            <cstring>pushButton_sourceD</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>20</x>
+                <y>30</y>
+                <width>108</width>
+                <height>23</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>Source directory ...</string>
+        </property>
+    </widget>
+    <widget class="QPushButton">
+        <property name="name">
+            <cstring>pushButton_Run</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>110</x>
+                <y>280</y>
+                <width>108</width>
+                <height>23</height>
+            </rect>
+        </property>
+        <property name="paletteBackgroundColor">
+            <color>
+                <red>69</red>
+                <green>244</green>
+                <blue>34</blue>
+            </color>
+        </property>
+        <property name="text">
+            <string>Run</string>
+        </property>
+    </widget>
+    <widget class="QPushButton">
+        <property name="name">
+            <cstring>pushButton_Exit</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>410</x>
+                <y>280</y>
+                <width>108</width>
+                <height>23</height>
+            </rect>
+        </property>
+        <property name="paletteBackgroundColor">
+            <color>
+                <red>244</red>
+                <green>236</green>
+                <blue>92</blue>
+            </color>
+        </property>
+        <property name="text">
+            <string>Exit</string>
+        </property>
+    </widget>
+    <widget class="QLineEdit">
+        <property name="name">
+            <cstring>lineEdit_delay</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>150</x>
+                <y>150</y>
+                <width>50</width>
+                <height>21</height>
+            </rect>
+        </property>
+        <property name="paletteBackgroundColor">
+            <color>
+                <red>255</red>
+                <green>255</green>
+                <blue>155</blue>
+            </color>
+        </property>
+        <property name="text">
+            <string>2</string>
+        </property>
+    </widget>
+    <widget class="QCheckBox">
+        <property name="name">
+            <cstring>checkBox_test</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>340</x>
+                <y>150</y>
+                <width>84</width>
+                <height>20</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>Test</string>
+        </property>
+    </widget>
+    <widget class="QLineEdit">
+        <property name="name">
+            <cstring>lineEdit_sourceD</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>150</x>
+                <y>30</y>
+                <width>320</width>
+                <height>21</height>
+            </rect>
+        </property>
+        <property name="paletteBackgroundColor">
+            <color>
+                <red>255</red>
+                <green>255</green>
+                <blue>155</blue>
+            </color>
+        </property>
+    </widget>
+    <widget class="QCheckBox">
+        <property name="name">
+            <cstring>checkBox_MEF</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>250</x>
+                <y>150</y>
+                <width>84</width>
+                <height>20</height>
+            </rect>
+        </property>
+        <property name="text">
+            <string>MEF</string>
+        </property>
+    </widget>
+    <widget class="QComboBox">
+        <item>
+            <property name="text">
+                <string>All</string>
+            </property>
+        </item>
+        <item>
+            <property name="text">
+                <string>Dark</string>
+            </property>
+        </item>
+        <item>
+            <property name="text">
+                <string>Flats</string>
+            </property>
+        </item>
+        <item>
+            <property name="text">
+                <string>Sky Flats</string>
+            </property>
+        </item>
+        <item>
+            <property name="text">
+                <string>Dome Flats</string>
+            </property>
+        </item>
+        <item>
+            <property name="text">
+                <string>Science</string>
+            </property>
+        </item>
+        <item>
+            <property name="text">
+                <string>Custom</string>
+            </property>
+        </item>
+        <property name="name">
+            <cstring>comboBox_type</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>152</x>
+                <y>110</y>
+                <width>78</width>
+                <height>21</height>
+            </rect>
+        </property>
+    </widget>
+    <widget class="QLineEdit">
+        <property name="name">
+            <cstring>lineEdit_outputD</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>150</x>
+                <y>70</y>
+                <width>320</width>
+                <height>21</height>
+            </rect>
+        </property>
+        <property name="paletteBackgroundColor">
+            <color>
+                <red>255</red>
+                <green>255</green>
+                <blue>155</blue>
+            </color>
+        </property>
+    </widget>
+    <widget class="QLineEdit">
+        <property name="name">
+            <cstring>lineEdit_type</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>250</x>
+                <y>110</y>
+                <width>89</width>
+                <height>21</height>
+            </rect>
+        </property>
+        <property name="paletteBackgroundColor">
+            <color>
+                <red>255</red>
+                <green>255</green>
+                <blue>155</blue>
+            </color>
+        </property>
+    </widget>
+</widget>
+<connections>
+    <connection>
+        <sender>pushButton_sourceD</sender>
+        <signal>clicked()</signal>
+        <receiver>DataSimulator</receiver>
+        <slot>source_directory()</slot>
+    </connection>
+    <connection>
+        <sender>pushButton_outputD</sender>
+        <signal>clicked()</signal>
+        <receiver>DataSimulator</receiver>
+        <slot>output_directory()</slot>
+    </connection>
+    <connection>
+        <sender>pushButton_Run</sender>
+        <signal>clicked()</signal>
+        <receiver>DataSimulator</receiver>
+        <slot>run()</slot>
+    </connection>
+    <connection>
+        <sender>pushButton_Exit</sender>
+        <signal>clicked()</signal>
+        <receiver>DataSimulator</receiver>
+        <slot>exit()</slot>
+    </connection>
+    <connection>
+        <sender>comboBox_type</sender>
+        <signal>activated(int)</signal>
+        <receiver>DataSimulator</receiver>
+        <slot>type_changed()</slot>
+    </connection>
+    <connection>
+        <sender>pushButton_Stop</sender>
+        <signal>clicked()</signal>
+        <receiver>DataSimulator</receiver>
+        <slot>stop()</slot>
+    </connection>
+</connections>
+<includes>
+    <include location="local" impldecl="in implementation">datasimulator.ui.h</include>
+</includes>
+<slots>
+    <slot>source_directory()</slot>
+    <slot>output_directory()</slot>
+    <slot>run()</slot>
+    <slot>stop()</slot>
+    <slot>exit()</slot>
+    <slot>type_changed()</slot>
+</slots>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

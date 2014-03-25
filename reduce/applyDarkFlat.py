@@ -44,6 +44,7 @@ import os
 import fileinput
 import time
 from optparse import OptionParser
+from scipy import interpolate, ndimage
 
 import misc.fileUtils
 import misc.utils as utils
@@ -66,7 +67,7 @@ class ApplyDarkFlat(object):
     Class used to subtract a master dark (or dark model) and then divide 
     by a master flat field
     
-    Apply a master dark and master flat to a list of non-calibrated science files
+    Applies a master dark and master flat to a list of non-calibrated science files
     For each file processed a new file it is generated with the same filename but 
     with the suffix '_DF.fits'
     
@@ -103,7 +104,7 @@ class ApplyDarkFlat(object):
     def apply(self):
       
         """
-        Apply masters DARK and/or FLAT and/or BPM to science file list. 
+        Applies masters DARK and/or FLAT and/or BPM to science file list. 
         Both master DARK and FLAT are optional,i.e., each one can be applied 
         even the other is not present.
         
@@ -211,6 +212,11 @@ class ApplyDarkFlat(object):
             flat_filter = None
             modian = 1 
         
+        # Add suffix whether BPM is to be applied
+        if self.__bpm!=None:
+            out_suffix = out_suffix.replace(".fits","_BPM.fits") 
+
+
         # Get the user-defined list of flat frames
         framelist = self.__sci_files
         
@@ -309,7 +315,9 @@ class ApplyDarkFlat(object):
                         sci_data = f[0].data
 
                         # Get BPM
-                        if self.__bpm!=None: 
+                        if self.__bpm!=None:
+                            # bpm_data: must be an array that is True or >0 
+                            # where bad pixels
                             bpm_data = pyfits.getdata(self.__bpm, header=False)
                                                                
                     # To avoid NaN values due to zero division
@@ -326,8 +334,8 @@ class ApplyDarkFlat(object):
                     # Finally, apply dark, Flat and BPM
                     # #################################
                     sci_data = (sci_data - dark_data) / flat_data
-                    if self.__bpm!=None: 
-                        sci_data = fixpix(sci_data, bpm_data, iraf=False)    
+                    if self.__bpm!=None:
+                        sci_data = fixpix(sci_data, bpm_data, iraf=True)    
                     
 
                     if n_ext > 1: # it means, MEF
@@ -361,16 +369,19 @@ class ApplyDarkFlat(object):
         
         
 def fixpix(im, mask, iraf=False):
-    """ Return an image with masked values replaced with a bi-linear
-    interpolation from nearby pixels.  Probably only good for isolated
-    badpixels.
+    """ 
+    Applies a bad-pixel mask to the input image (im), creating an image with 
+    masked values replaced with a bi-linear interpolation from nearby pixels.  
+    Probably only good for isolated badpixels.
 
     Usage:
       fixed = fixpix(im, mask, [iraf=])
 
     Inputs:
       im = the image array
-      mask = an array that is True where im contains bad pixels
+      mask = an array that is True (or >0) where im contains bad pixels
+      iraf = True use IRAF.fixpix; False use numpy and a loop over 
+             all pixels (extremelly low)
 
     Outputs:
       fixed = the corrected image
@@ -379,13 +390,21 @@ def fixpix(im, mask, iraf=False):
 
     v1.1.0 Added the option to use IRAF's fixpix.  MSK, UMD, 25 Apr
            2011
+
+    Notes
+    -----
+    - Non-IRAF algorithm is extremelly slow.
+
     """
+
+    log.info("Fixpix - Bad pixel mask interpolation (iraf=%s)"%iraf)
     if iraf:
         # importing globally is causing trouble
         from pyraf import iraf as IRAF
+        import tempfile
 
-        badfits = os.tmpnam() + '.fits'
-        outfits = os.tmpnam() + '.fits'
+        badfits = tempfile.NamedTemporaryFile(suffix=".fits").name
+        outfits = tempfile.NamedTemporaryFile(suffix=".fits").name
         pyfits.writeto(badfits, mask.astype(numpy.int16))
         pyfits.writeto(outfits, im)
         IRAF.fixpix(outfits, badfits)
@@ -393,6 +412,11 @@ def fixpix(im, mask, iraf=False):
         os.remove(badfits)
         os.remove(outfits)
         return cleaned
+
+    
+    #
+    # Next approach is too slow !!!
+    #
 
     interp2d = interpolate.interp2d
     #     x = xarray(im.shape)
@@ -409,8 +433,9 @@ def fixpix(im, mask, iraf=False):
 
     # loop through each domain, replace bad pixels with the average
     # from nearest neigboors
-    x = xarray(im.shape)
-    y = yarray(im.shape)
+    y, x = numpy.indices(im.shape, dtype=numpy.int)[-2:]
+    #x = xarray(im.shape)
+    #y = yarray(im.shape)
     cleaned = im.copy()
     for d in (numpy.arange(n) + 1):
         # find the current domain
@@ -428,38 +453,15 @@ def fixpix(im, mask, iraf=False):
     return cleaned        
         
 ################################################################################
-# Functions       
-def usage ():
-    """ Usage function to be shown as help for the user """
-    print ''
-    print 'NAME'
-    print '       applyDarkFlat.py - Apply Dark, Flat or both\n'
-    print 'SYNOPSIS'
-    print '       applyDarkFlat.py [options]\n'
-    print 'DESCRIPTION'
-    print '       Subtract a master dark file or divide by and a'
-    print '       master flat field (or both) a list of science files.' 
-    print '       Input Flat will be normalized before dividing by, so it must NOT be normalized'
-    print ' '
-    print 'OPTIONS'
-    print "-s / --source=      Source file list of data frames"
-    print "-d / --dark=        Master dark frame to subtract (optional)"
-    print "-f / --flat=        Master (NOT normalized!) flat field to divide by (optional)"
-    print "-v                  Verbose debugging output\n"
-    print 'VERSION'
-    print '       21 Feb 2012 '
-    print ''
-    raise SystemExit
-
-################################################################################
 # main
 if __name__ == "__main__":
     
     # Get and check command-line options
     usage = "usage: %prog [options]"
     desc = """
-This module receives a series of FITS images and subtract and divide by the given
-calibration files (master dark and master flat-field). 
+This module receives a series of FITS images and applies a master Dark, Flat and
+BPM (subtract dark, divide Flat, and fix bad pixel) using the given
+calibration files (master dark, master flat-field, bad pixel mask). 
 """
     parser = OptionParser(usage, description=desc)
     
@@ -475,6 +477,10 @@ calibration files (master dark and master flat-field).
     parser.add_option("-f", "--flat-field",
                   action="store", dest="flat_file",
                   help="Master flat-field to be divided by")
+    
+    parser.add_option("-b", "--bpm",
+                  action="store", dest="bpm_file",
+                  help="Master Bad Pixel Mask to use for fixpix")
     
     parser.add_option("-o", "--out_dir",
                   action="store", dest="out_dir", default="/tmp/",
@@ -496,7 +502,8 @@ calibration files (master dark and master flat-field).
         parser.print_help()
         parser.error("Source must be a file, not a directory")
     
-    if options.dark_file is None and options.flat_file is None:
+    if options.dark_file is None and options.flat_file is None \
+       and options.bpm_file is None:
         parser.print_help()
         parser.error("Incorrect number of arguments " )
         
@@ -505,7 +512,7 @@ calibration files (master dark and master flat-field).
     
     try:
         res = ApplyDarkFlat(filelist, options.dark_file, options.flat_file, 
-                            options.out_dir)
+                            options.bpm_file, options.out_dir)
         res.apply() 
     except Exception,e:
         log.erro("Error running task %s"%str(e))

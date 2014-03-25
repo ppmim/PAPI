@@ -1,0 +1,57 @@
+! omega2000.ctx defines commands for the O2000-utilities
+! Rene Fassbender 05.06.2003
+! Hermann-Josef Röser   09-Jul-04   extended
+! Rene Fassbender	02. Nov 2006 	added V5 pipe commands
+! Ulrich Thiele         21.02.2008     added o2k/grid
+! Ulrich Thiele         05.12.2008     added o2k/smalldither and widedither
+! Ulrich Thiele         20.01.2010     added o2k/singledither
+! Ulrich Thiele         22.01.2010     added o2k/flatser
+
+! all paths are defined relative to the entry point directory O2K_UTIL:
+
+
+! Observing Macro commands
+
+create/command o2k/domeflats @@ O2K_UTIL:/obs_macros/domeflats
+create/command o2k/flatser   @@ O2K_UTIL:/obs_macros/domeflat_series.prg
+create/command o2k/skyflats  @@ O2K_UTIL:/obs_macros/skyflats
+create/command o2k/calser    @@ O2K_UTIL:/obs_macros/calibration_series
+
+create/command o2k/focus @@ O2K_UTIL:/obs_macros/Focus/omega_focus
+create/command o2k/tilt  @@ O2K_UTIL:/obs_macros/Tilt/omega_tilt
+
+create/command o2k/acqui     @@ O2K_UTIL:/obs_macros/acquisition
+create/command o2k/dither    @@ O2K_UTIL:/obs_macros/dither_pointing
+create/command o2k/smalldither    @@ O2K_UTIL:/obs_macros/dither_point_small
+create/command o2k/widedither    @@ O2K_UTIL:/obs_macros/dither_point_wide
+create/command o2k/singledither   @@ O2K_UTIL:/obs_macros/dither_point_single
+create/command o2k/sky_point @@ O2K_UTIL:/obs_macros/sky_pointing
+create/command o2k/grid      @@ O2K_UTIL:/obs_macros/grid_pointing
+create/command o2k/relcal    @@ O2K_UTIL:/obs_macros/rel_cal
+
+create/command o2k/offset   @@ O2K_UTIL:/obs_macros/offset
+create/command o2k/seeing   @@ O2K_UTIL:/obs_macros/seeing
+create/command o2k/transmon @@ O2K_UTIL:/obs_macros/transmon
+
+create/command o2k/DQE  @@ O2K_UTIL:/obs_macros/DQE
+
+
+! V1 Pipeline Commands
+create/command o2k/v1pipeline @@ O2K_UTIL:/pipeline/PRGs/OMEGA_pipeline
+create/command o2k/v1online   @@ O2K_UTIL:/pipeline/PRGs/pipe_online
+
+
+! V5 Pipeline Commands (02 Nov 06)
+! Pipeline Commands
+create/command o2k/pipeline @@ O2K_SCI:/pipeline/PRGs/OMEGA_pipeline
+create/command o2k/online   @@ O2K_SCI:/pipeline/PRGs/pipe_online
+create/command o2k/science  @@ O2K_SCI:/pipeline/PRGs/OMEGA_science
+
+! Auxiliary Commands
+create/command o2k/makemask @@ O2K_SCI:/pipeline/PRGs/OMEGA_makemask
+create/command o2k/full @@ O2K_SCI:/pipeline/PRGs/OMEGA_alldefaults
+create/command o2k/first @@ O2K_SCI:/pipeline/PRGs/OMEGA_first
+create/command o2k/second @@ O2K_SCI:/pipeline/PRGs/OMEGA_second
+
+
+

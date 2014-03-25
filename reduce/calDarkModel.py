@@ -154,7 +154,7 @@ class MasterDarkModel(object):
                 else: 
                     f_readmode = fits.getReadMode()
                     f_n_extensions = fits.getNExt()
-                    log.debug("NEXT= %s"%(f_n_extensions))
+                    #log.debug("NEXT= %s"%(f_n_extensions))
                     darks[i] = 1
                 
             i = i+1

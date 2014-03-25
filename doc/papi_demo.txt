@@ -1,0 +1,204 @@
+PAPI DEMO
+=========
+
+
+Dark calibration
+~~~~~~~~~~~~~~~~
+1) Dark serie with fixed EXPT
+
+OT> ok
+PL> calDark.py -s ./darks_O2k.txt -o /tmp/masterDark.fits -n
+QL> TBT
+ 
+2) Dark serie with increasing EXPT 
+
+OT> ok
+PL1> calDarkModel.py -s ./darkserie_O2k.txt -o /tmp/
+PL2> Macro to evaluate this (linearity test, derive CCD equation, gain map) -
+TBD ???
+QL> TBD
+
+
+Dome Flat
+~~~~~~~~~
+
+1) Take domeflats with fixed EXPT, turn flat lamps on/off
+
+OT> TBT
+PL> calDomeFlat.py -s ./domeFlatsKS_O2k.txt -o /tmp/masterDFlat.fits
+    Examples:
+	- O2K/SIMU_PANIC_1/14-Ene-09
+	- O2k/SIMU_PANIC_1/15-Ene-09
+QL> TBT
+ 
+
+Sky Flat
+~~~~~~~~
+
+1) Skyflats with **Fixed EXPT** (automatically begins and stops when certain
+lower/upper level are reached)
+
+OT> TBT
+PL> calTwFlat.py -s ./skyflatsKs_O2k.txt -o /tmp/masterSkyFlat.fits -d /tmp/masterDark_46_23.fits
+    calGainMap.py -s /tmp/masterSkyFlat.fits -o /tmp/gain_O2k.fits
+QL> TBT
+
+2) Skyflat with **fixed exposition_level** (automatically begins and stops
+when certain lower/upper levels are reached)
+
+OT > TBT
+PL > calTwFlat.py -s ./skyflatsKs_O2k.txt -o /tmp/masterSkyFlat.fits -d /tmp/masterDark_46_23.fits
+     calGainMap.py -s /tmp/masterSkyFlat.fits -o /tmp/gain_O2k.fits
+
+QL > TBT
+
+Gain Map
+~~~~~~~~
+OT> Not Applicable
+PL> calGainMap.py -s /tmp/masterFlat.fits -o /tmp/gain_map.fits
+QL> TBT
+
+
+Focus series
+~~~~~~~~~~~~
+1) Simplest : click on 1 star 
+
+OT> TBC
+PL> IRAF_task : starfocus
+QL> IRAF_task : starfocus
+
+See Technical Note: PANIC focusing
+
+2) Comfort : automatic, display whole field
+OT> TBC
+PL> eval_focus_serie.py -i ./focus_serie_O2k.txt -o /tmp/out.jpg
+    Examples: O2k/datos_Herve/070506
+    	      O2k/Foco
+	      O2k/SIMU_PANIC_1/15-Ene-09	
+
+QL> TBC
+
+
+Science exposures
+~~~~~~~~~~~~~~~~~
+1) simple, without moving telescope (=dither off)
+
+OT> TBT
+PL> Not applicable, no way
+QL> Not applicable, but self sky-subtraction supported ---> TBT
+
+2) with dither pattern a la O2k/dither. Dither amplitud modifiable by a scale
+factor
+
+OT> TBT
+PL> papi.py -c config_files/papi_portatil.cfg -s /data/raw_sources -r [quick|science] 
+    Examples: O2k/
+QL> select files or group in group_view and run reduction
+
+
+3) Nodding pattern a la O2k/sky_point. Dither amplitude modifiable by a scale
+factor
+
+OT> TBT
+PL> papi.py -c config_files/papi_portatil.cfg -s ./sci_ext_M51J-1.txt -r quick -g filter
+    Examples: /data/O2K/EXT_S_TT_S_ 
+    	      /data/HAWK-I-2/ S7 [nebulosa tarantula] --> no va bien !!!
+	      /data/HAWK-I-3/ S0
+
+QL> select files or group in group_view and run reduction; ext sources is
+automatically detected
+	     
+
+Remarks:
+	- Only implemented "quick" mode
+	- Need to be tested with PANIC data
+
+
+
+Photometry
+~~~~~~~~~~
+
+PL> photometry.py -i ./reduced_SEQ.fits
+
+
+
+
+Simulation of mage distortion & correction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+(see TN)
+
+1) We take a 'pre-reduced' image from HAWK-I of 4439x4439 pixels (0.106arcsec/px,
+7.5x7.5arcmin)
+2) Run applyDistort.py -s ./hawki.fits -o ./dist.fits -m dist_mat_K.txt -f 1.0
+3) Run astrowarp.py -c ../config_files/papi_suse11.cfg -s ./dist.fits -o ./out.fits 
+
+PL> applyDistort.py 
+
+
+
+Miscelaneus
+~~~~~~~~~~~
+> genLogSheet.py
+>
+
+
+
+QUESTIONS
+=========
+
+[0] reset in Dark/Flat series ? en principio no seria necesario, pero podemos 
+dejar para ver que pasa en commissioning
+
+[1] readout modes available and meaning and concerns to the data reduction --> 
+CS nos dio los principales, aunque no se sabrá cual es el que mejor funciona 
+hasta el commissioning
+
+[2] would be interesting to have a "real-time" sky-subtraction taking into
+account the last N-frames received ?  and show information about seeing, sky
+background ?
+
+[3] how does the EXPtimes work ?
+
+[4] what are the Flat series (in calibration series) for ? are they sky or 
+dome flats ? 
+
+[5] JF req : create gainmap with "skyflat_high_level - skyflat_low_level" (and 
+dithered); what kind of skyflat are they ? skyflats with fixed EXP_TIME or 
+fixed EXP_LEVEL ?
+
+[6] How to process dark series (lineal, log) in the QL ? DarkModel is too heavy ??
+
+[7] would it be interesting to implement in the saving mode the option of save 
+from frame N1 to N2 (save -r N1 N2) ?
+
+
+[8] flat on/off command --> CS: not implemented yet, but could be 'tele flat on/off' 
+[9] windows command
+[10] cold-stop mask --> se puede mover desde GEIRS, pero parece que GEIRS no 
+la mueve automaticamente al seleccionar el telescopio al iniciar GEIRS. CS 
+dice que habrá una máquina para cada telescopio. Pero en cualquier caso se 
+puede mover con el comando filter.
+
+ 
+
+Q to JF
+=======
+- should PAPI process cubes or individual saved data files ? currently not 
+supported -> si, imnplementar, puede ser necesario
+- how to proceed with dark serial (lineal, log ,etc ) ? it takes long time 
+to compute --> OK, QL no necesario, sólo lo básico
+Me comentó que lo normal es tomar DARKs con el mismo EXPT y NCOADDS que las 
+imágenes de ciencia
+
+- diff between flats in calibrations series and fixed exp. time
+- dither pattern for extended objects (
+
+
+TO BE DONE
+==========
+[1] better grouping when OT is not used (group_by=filter)
+[2] second pass sky-subtraction when extended_objects
+[3] compute the distortion matrix (external to SCAMP)
+ 
+
+
