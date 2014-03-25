@@ -4061,7 +4061,6 @@ antes de nada. Además en reduceSingleObj() debería llegar ya 'partido'.
 Por tanto, la NLC lo hago al principio en RS:reduceSeq().
 
 
-
 26-Mar-2014
 -----------
 (P) Pendiente probar NLC con MEF !! 

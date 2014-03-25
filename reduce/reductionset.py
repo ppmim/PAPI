@@ -2200,6 +2200,8 @@ class ReductionSet(object):
 
         Notes
         -----
+        First step is Non-linearity correction because it must be done to all
+        frames.
         Calibration files will not be splited for the building of the master 
         calibration file, but science files will. 
         In principle, not too much time could be saved if we split the calibration
