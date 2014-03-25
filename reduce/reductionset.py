@@ -73,6 +73,8 @@ import astromatic
 from astromatic.swarp import *
 import datahandler.dataset
 import misc.collapse
+import calNonLinearity
+
 
 #If your parallel tasks are going to use the same instance of PyRAF (and thus 
 #the same process cache), as in the case of running the entire parallel program 
@@ -300,7 +302,7 @@ class ReductionSet(object):
         # Bad Pixel Maks
         # 
         self.bpm_mode = self.config_dict['bpm']['mode']
-        if bpm==None:
+        if self.bpm_mode!='none':
             self.master_bpm  = self.config_dict['bpm']['bpm_file']
         else:
             self.master_bpm  = bpm  
@@ -1001,9 +1003,9 @@ class ReductionSet(object):
         elif self.group_by=='filter':
             if self.db==None: self.__initDB()
             seqs, seq_types = self.db.GetSequences(group_by='filter',
-               max_mjd_diff=self.config_dict['general']['max_mjd_diff']/86400.0,
-               max_ra_dec_diff=self.config_dict['general']['max_ra_dec_offset'],
-               max_nfiles=self.config_dict['general']['max_num_files'])
+               max_mjd_diff = self.config_dict['general']['max_mjd_diff']/86400.0,
+               max_ra_dec_diff = self.config_dict['general']['max_ra_dec_offset'],
+               max_nfiles = self.config_dict['general']['max_num_files'])
         else:
             log.error("[getSequences] Wrong data grouping criteria")
             raise Exception("[getSequences] Found a not valid data grouping criteria %s"%(self.group_by))
@@ -2210,6 +2212,23 @@ class ReductionSet(object):
         
         log.debug("[reduceSeq] Starting ...")
         
+        #
+        # First of all, let see whether Non-linearity correction must be done
+        #
+        if self.config_dict['nonlinearity']['apply']==True:
+            master_nl = self.config_dict['nonlinearity']['model']
+            try:
+                log.info("**** Applying Non-Linearity correction ****")
+                nl_task = calNonLinearity.NonLinearityModel()
+                corr_sequence = nl_task.applyModel(sequence, master_nl,
+                                                    suffix='_NLC',
+                                                    out_dir=self.temp_dir)
+            except Exception,e:
+                log.error("Error while applying NL model: %s"%str(e))
+                raise e
+            sequence = corr_sequence
+
+        
         # start creating the pool of process
         n_cpus = self.config_dict['general']['ncpus']
         #n_cpus = multiprocessing.cpu_count()
@@ -2819,22 +2838,7 @@ class ReductionSet(object):
         self.m_rawFiles = self.m_LAST_FILES        
 
         ########################################################################
-        # 0 - Apply Non-Linearity correction to ALL files 
-        ########################################################################
-        if self.config_dict['nonlinearity']['apply'].lower()=='none':
-            master_nl = None
-        else:
-            master_nl = self.config_dict['nonlinearity']['model']
-            try:
-                log.info("**** Applying Non-Linearity correction ****")
-                nl_task = calNonLinearity.NonLinearityModel()
-                self.m_LAST_FILES = nl_task.applyModel(self.m_LAST_FILES, master_nl)
-            except Exception,e:
-                log.error("Error while applying NL model: %s"%str(e))
-                raise e
-
-        ########################################################################
-        # 0.1 - Bad Pixels; two options:
+        # 0 - Bad Pixels; two options:
         # To Fix: replace with a bi-linear interpolation from nearby pixels.
         # To add to gainmap:  to set bad pixels to bkg lvl 
         # Both options are incompatible.
@@ -2855,7 +2859,8 @@ class ReductionSet(object):
         ########################################################################
         # 1 - Apply dark, flat to ALL files 
         ########################################################################
-        if self.apply_dark_flat==1 and (master_dark!=None or master_flat!=None):
+        if self.apply_dark_flat==1 and \
+            (master_dark!=None or master_flat!=None or master_bpm_4fix!=None):
             log.info("**** Applying Dark, Flat and BPM ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        master_dark, 
@@ -2941,14 +2946,16 @@ class ReductionSet(object):
         # Later, in skyfilter procedure bad pixels are set to bkg level.
         ########################################################################
         if master_bpm_4gain !=None:
+            log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm_4gain, gainmap))
             if not os.path.exists( master_bpm_4gain ):
                 log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
             else:
                 # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
                 bpm_data = pyfits.getdata(master_bpm_4gain, header=False)
-                badpix_p = numpy.where(bpm_data>1)
+                badpix_p = numpy.where(bpm_data>0)
                 gain_data, gh = pyfits.getdata(gainmap, header=True)
                 gain_data[badpix_p] = 0
+                gh.set('HISTORY','Combined with BPM:%s'%master_bpm_4gain)
                 pyfits.writeto(gainmap, gain_data, header=gh, clobber=True)
                 #iraf.imarith(operand1=gainmap,
                 #  operand2=master_bpm_4gain,

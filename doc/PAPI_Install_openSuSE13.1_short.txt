@@ -717,5 +717,9 @@ export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_
 
 
 
+LEMON requirements
+==================
+
+- zypper install openmpi-devel para Montage
 
 

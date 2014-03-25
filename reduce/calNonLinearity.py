@@ -354,7 +354,7 @@ class NonLinearityModel(object):
         return self.__output_filename
     
 
-    def applyModel(self, source, model, suffix='_LC'):
+    def applyModel(self, source, model, suffix='_LC', out_dir='/tmp'):
         """
         Do the Non-linearity correction using the supplied model. In principle,
         it should be applied to raw images (darks, flats, science, ...).
@@ -367,7 +367,8 @@ class NonLinearityModel(object):
         model : str 
             FITS filename of the Non-Linearity model, ie., containing polynomial 
             coeffs (3rd order) for correction that must has been previously 
-            computed. It will have a plane for each coeff, i.e.:
+            computed. It must be a cube with 4 planes (a plane for each coeff), 
+            and N extensions (one per detector). Planes definitions:
 
                 plane_0 = coeff_0 (intercept, bias level)
                 plane_1 = coeff_1 (quantum efficiency or sensitivity)
@@ -377,6 +378,9 @@ class NonLinearityModel(object):
         suffix: str
             Suffix to add to the input filename to generate the output filename.
 
+
+        out_dir: str
+            Directory where new corredted files will be saved
 
         Returns
         -------
@@ -412,7 +416,8 @@ class NonLinearityModel(object):
         else:
             data_model = fits_model[1].data
 
-        if data_model.shape[0]!=4:
+        #if data_model.shape[0]!=4:
+        if data_model.shape[0]!=3:
             log.error("Linearity model does not match a 4-plane cube image")
             raise Exception("Linearity model does not match a 4-plane cube image")
 
@@ -431,15 +436,20 @@ class NonLinearityModel(object):
             
             for i_ext in range(0, f_n_extensions):
                 offset = 0 if f_n_extensions==1 else 1
-                data_model = fits_model[i_ext+offset].data
-                raw = i_file[i_ext+offset].data
+                data_model = fits_model[i_ext+offset].data.astype(float)
+                raw = i_file[i_ext+offset].data.astype(float)
                 
                 if not raw.shape==data_model[0].shape:
                     log.error("Shape/size of lin_model and source_data does not match")
                     raise Exception("Shape/size of lin_model and source_data does not match")
                 
                 log.info("Median value before correction = %s"%(numpy.median(raw)))
-                corr = data_model[0] + data_model[1]*raw + data_model[2]*raw**2 + data_model[3]*raw**3
+                corr = data_model[0] + data_model[1]*raw + data_model[2]*raw**2
+                #corr = data_model[0] + data_model[1]*raw + data_model[2]*raw**2 + data_model[3]*raw**3
+                # For simulation/test
+                # Note: skyfilter could fail if corrected image has wrong values 
+                # (e.g.: negative mean, very big/small float values)
+                #corr = data_model[0] + 0.000004*raw + 0.0000001*raw**2 + 0.000000000001*raw**3
                 diff = corr - raw
                 log.info("Median value of difference = %s"%(numpy.median(diff)))
                 i_file[i_ext+offset].data = corr
@@ -448,10 +458,11 @@ class NonLinearityModel(object):
             # Write output to outframe (data object actually still points 
             # to input data)
             # save new fits file
-            mfnp = source[i].partition('.fits')
+            mfnp = os.path.basename(source[i]).partition('.fits')
             # add suffix before .fits extension, or at the end if no such extension present
-            outfitsname = mfnp[0] + suffix + mfnp[1] + mfnp[2]
-            
+            outfitsname = out_dir + '/' + mfnp[0] + suffix + mfnp[1] + mfnp[2]
+            outfitsname = os.path.normpath(outfitsname)
+
             # keep same data type
             if os.path.exists(outfitsname):
                 os.unlink(outfitsname)
@@ -459,13 +470,9 @@ class NonLinearityModel(object):
             else:
                 print 'Writing ' + outfitsname
             
-            # scale back data to original values
-            #BITPIX = i_file[0].header['BITPIX']
-            #bitpix_designation = pyfits.ImageHDU.NumCode[BITPIX]
-            #myfits_hdu[0].scale(bitpix_designation,'old')
-            
             try:
                 i_file[0].scale('float32')
+                i_file[0].header.add_history('Applied Non-linearity correction with %s'%model)
                 i_file.writeto(outfitsname, output_verify='ignore')
             except IOError:
                 raise ExError('Cannot write output to %s' % outfitsname)

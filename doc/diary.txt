@@ -4028,6 +4028,45 @@ gravísimo, pues no se hacía nada!!!!!, pues estaba comentada la linea siguient
 
 
 
+24-Mar-2014
+-----------
+- ETC de CIRSI: interesante para hacer la ETC de PANIC-->
+
+http://www.ast.cam.ac.uk/~rgm/cirsi/signal_cirsi_help.html
+
+- Pruebas de la NLC embedida en PAPI (enabled/disabled en papi.cfg).
+Fueron bien, salvo que encontré un error colateran en irdr::skyfilter.c,
+pues para valores negativos de bckg o valores muy grandes en las imágenes
+el irdr::readdata() no funciona bien. Habría que revisarla.
+
+- Comienzo pruebas de BPM en PAPI: parece que OK en modo fix, pero hay que probar
+con mask=0, y el modo 'gain'...
+
+
+25-Mar-2014
+-----------
+- Continuo con pruebas de BPM-Fixpix en PAPI:
+
+  Modo fix:
+  - con o2k--> OK (con una artificial y con otra con todo a 1's y otra con 0's)
+  - con PANIC (MEF) -->  OK !!
+
+  Modo gain:
+  - con o2k--> OK (con una artificial y con otra con todo a 1's)
+  - con PANIC (MEF) --> OK !! 
+
+- Probado NLC con MEF; me doy cuenta que no puede estar en reduceSingleObj(),
+pues la NLC debe hacerse a **todos** (incluidas calibraciones) los ficheros y 
+antes de nada. Además en reduceSingleObj() debería llegar ya 'partido'.
+Por tanto, la NLC lo hago al principio en RS:reduceSeq().
+
+
+
+26-Mar-2014
+-----------
+(P) Pendiente probar NLC con MEF !! 
+
+
 
 
 
@@ -4405,7 +4444,8 @@ Resultado
    <base>-indx.xyls : a FITS BINTABLE with the pixel locations of stars from the index.
    <base>.rdls : a FITS BINTABLE with the RA, Dec of sources we extracted from the image.
    <base>.axy : a FITS BINTABLE of the sources we extracted, plus headers that describe the job (how the image is going to be solved).
-   <base>.solved : exists and contains (binary) 1 if the field solved.
+   <base>.solved : exists# Note: skyfilter could fail if corrected image has wrong values 
+                # (e.g.: negative mean, very big/small float values) and contains (binary) 1 if the field solved.
    <base>.match : a FITS BINTABLE describing the quad match that solved the image.
    <base>.kmz : (optional) KMZ file for Google Sky-in-Earth. 
    
@@ -4448,14 +4488,19 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Probar NonLinearityModel.applyModel() en reduceSingleObj(); 
-- Probar que applyDarkFlat tambien aplica correctamente (MEF y single) los BPM
-- Probar combine de BPM y GainMap en reduceSingleObj
+- Ver si merece la pena implementar el metodo crclean() de image.py
+de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
+para la eliminacion de CR. Esta basado en el algorimo LACOSMIC. Yo ahora estoy
+usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
+
+- Solucionar problemas en skyfilter para valores raros en las imágenes:
+ Note: skyfilter could fail if corrected image has wrong values 
+ (e.g.: negative mean, very big/small float values)
+  De esto me di cuenta cuando estaba probando la NL correction.
+
+- Probar NonLinearityModel.applyModel() en reduceSingleObj() con MEF
 - Hay que ver como afecta el BPM de los parámetros de entrada de papi.py
 - En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
-- Implementar la NonLinearity corection opcional y añadir al fichero de configuración.
-- Implementar IRAF.fixpix() para solucionar pixeles malos. Sería una opcion más
-del pipeline (see config_file).
 - Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m): mef.py
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
 - opción en PAPI para reducir sólo un detector/es

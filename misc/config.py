@@ -480,9 +480,10 @@ def read_config_file(config_file = default_config_file()):
     bpm = {}
     
     bpm["suffix"] = read_parameter(config, "bpm", "suffix", str, False, config_file)
-    bpm["mode"] = read_parameter(config, "bpm", "apply", bool, False, config_file)
+    bpm["mode"] = read_parameter(config, "bpm", "mode", str, False, config_file).lower()
 
-    if bpm["mode"].lower()!='none':
+    
+    if bpm["mode"]!='none':
         bpm["bpm_file"] = read_file_parameter(config, "bpm", "bpm_file", config_file, True)
     else:    
         bpm["bpm_file"] = read_parameter(config, "bpm", "bpm_file", str, False, config_file)
