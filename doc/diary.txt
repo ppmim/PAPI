@@ -4061,9 +4061,13 @@ antes de nada. Además en reduceSingleObj() debería llegar ya 'partido'.
 Por tanto, la NLC lo hago al principio en RS:reduceSeq().
 
 
-26-Mar-2014
+27-Mar-2014
 -----------
-(P) Pendiente probar NLC con MEF !! 
+
+27-Mar-2014
+-----------
+- Paralelizo calNonLinearity.py--> applyMultiNLC() vs applyNLC();
+Se reduce el tiempo a menos de la mitad !
 
 
 
@@ -4487,6 +4491,7 @@ PIPELINE
  
 NEXT TODOs
 ==========
+
 - Ver si merece la pena implementar el metodo crclean() de image.py
 de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
 para la eliminacion de CR. Esta basado en el algorimo LACOSMIC. Yo ahora estoy
@@ -4497,7 +4502,6 @@ usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
  (e.g.: negative mean, very big/small float values)
   De esto me di cuenta cuando estaba probando la NL correction.
 
-- Probar NonLinearityModel.applyModel() en reduceSingleObj() con MEF
 - Hay que ver como afecta el BPM de los parámetros de entrada de papi.py
 - En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
 - Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m): mef.py

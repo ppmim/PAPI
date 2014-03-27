@@ -112,6 +112,7 @@ import os
 import logging
 import fileinput
 import time
+import multiprocessing
 from optparse import OptionParser
 
 import misc.fileUtils
@@ -125,6 +126,50 @@ import numpy
 
 # Logging
 from misc.paLog import log
+
+
+#
+# Next functions are needed to allow the use of  multiprocessing.Pool() with 
+# class methods, that need to be picklable (at least 
+# Solution obtained from :
+# http://www.frozentux.net/2010/05/python-multiprocessing/  
+# http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
+# In addition, there is other version of the above functions:
+# http://stackoverflow.com/questions/5429584/handling-the-classmethod-pickling-issue-with-copy-reg
+# but it does not work (at least for me!) 
+#
+
+def _pickle_method(method):
+    """
+    Pickle methods properly, including class methods.
+    """
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    return _unpickle_method, (func_name, obj, cls)
+
+def _unpickle_method(func_name, obj, cls):
+    """
+    Unpickle methods properly, including class methods.
+    """
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)        
+
+import copy_reg 
+import types 
+
+copy_reg.pickle(types.MethodType,  
+    _pickle_method,  
+    _unpickle_method)  
+
+
+
 
 class NonLinearityModel(object):
     """
@@ -353,8 +398,7 @@ class NonLinearityModel(object):
         
         return self.__output_filename
     
-
-    def applyModel(self, source, model, suffix='_LC', out_dir='/tmp'):
+    def applyNLC(self, source, model, suffix='_LC', out_dir='/tmp'):
         """
         Do the Non-linearity correction using the supplied model. In principle,
         it should be applied to raw images (darks, flats, science, ...).
@@ -384,7 +428,7 @@ class NonLinearityModel(object):
 
         Returns
         -------
-        outfitsname: list
+        outfitsname: List
             The list of new corrected files created.
         
         TODO
@@ -395,7 +439,7 @@ class NonLinearityModel(object):
         
         
         """   
-        log.debug("Start applyModel")
+        log.debug("Start applyNLC")
 
 
         if len(source)<1:
@@ -482,10 +526,83 @@ class NonLinearityModel(object):
            
         return new_filenames 
 
+
+
+    def calc(self, args):
+        """
+        Method used only to use in applyMultiNLC() with Pool.map_asycn() function
+
+        Returns
+        -------
+        On succes, the filename with the corrected frame.
+
+        """
+        return self.applyNLC(*args)
+
+
+    def applyMultiNLC(self, source, model, suffix='_LC', out_dir='/tmp'):
+        """
+        Run a **parallel** proceesing to apply the Non-Linearity correction for the 
+        input files taking advantege of multi-core CPUs.
+
+        files: List
+            List of files to be corrected
+
+        tmp_dir:
+
+        Returns
+        -------
+        On succes, a list with the filenames of the frames corrected.
+        """
+
+        log.debug("Start applyMultiNLC")
+
+        # use all CPUs available in the computer
+        n_cpus = multiprocessing.cpu_count()
+        #log.debug("N_CPUS :" + str(n_cpus))
+        pool = multiprocessing.Pool(processes=n_cpus)
+        
+        results = []
+        corrected = []
+        for i_file in source:
+            red_parameters = ([i_file], model, suffix, out_dir)
+            try:
+                # Instead of pool.map() that blocks until
+                # the result is ready, we use pool.map_async()
+                results += [pool.map_async(self.calc, [red_parameters])]
+            except Exception,e:
+                log.error("Error processing file: " + i_file)
+                log.error(str(e))
+                
+        for result in results:
+            try:
+                result.wait()
+                # the 0 index is *ONLY* required if map_async is used !!!
+                corrected.append(result.get()[0][0])
+                log.info("New file created => %s"%corrected[-1])
+            except Exception,e:
+                log.error("Cannot process file \n" + str(e))
+                
+        
+        # Prevents any more tasks from being submitted to the pool. 
+        # Once all the tasks have been completed the worker 
+        # processes will exit.
+        pool.close()
+
+        # Wait for the worker processes to exit. One must call 
+        #close() or terminate() before using join().
+        pool.join()
+        
+        log.info("Finished parallel calibration")
+        
+        return corrected
+
+
     def applyModel_LBT(self, source, model):
           
         """
-        Do the Non-linearity correction using the supplied model
+        Do the Non-linearity correction using the supplied model.
+        (only a test)
         
         Parameters
         ----------
@@ -650,7 +767,8 @@ fit to requirements for model computation")
     filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
     if options.apply_model:
         NLM = NonLinearityModel(filelist)
-        NLM.applyModel(filelist, options.out_coeff_file)
+        #NLM.applyNLC(filelist, options.out_coeff_file)
+        NLM.applyMultiNLC(filelist, options.out_coeff_file)
     # or, compute the non-linearity model
     else:
         NLM = NonLinearityModel(filelist, options.out_coeff_file)

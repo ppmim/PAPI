@@ -48,11 +48,8 @@ except ImportError:
 # - Add support for MEF files:
 #   Currently Astrometry.net only support --extension option to give the FITS 
 #    extension to read image from.
-# - Comprobacion tipo de imagen no es bias, dark, flat, test  ---DONE
-# - Contabilidad de ficheros resueltos y no  ---DONE
 # - Tiempo límite de resolución de un fichero --cpulimit (default to 300s)
 # - Opcion de añadir header wcs a la cabecera (image.new) 
-# - Multiprocessing     --- DONE
 # - Estadísicas de errores de calibracion
 # - distorsion promedio (encontre un mail de Dustin donde hablaba de eso)
 # - limpiar de ficheros temporales/salida creados excepto el .wcs

@@ -76,20 +76,20 @@ import misc.collapse
 import calNonLinearity
 
 
-#If your parallel tasks are going to use the same instance of PyRAF (and thus 
-#the same process cache), as in the case of running the entire parallel program 
-#inside a single Python script via, say, the multiprocessing module, you will 
-#want to turn off process caching. This turns off the ability for PyRAF to 
-#use/re-use the same continually running, connected, IRAF task subprocess to do 
-#the work of each call to the task. With no process caching allowed, each new 
-#call you make to the IRAF task will start a new, separate IRAF executable, 
-#which will live only as long as it is doing your work, which is what you want. 
-#To turn off process caching, include this line in your Python script:
+# If your parallel tasks are going to use the same instance of PyRAF (and thus 
+# the same process cache), as in the case of running the entire parallel program 
+# inside a single Python script via, say, the multiprocessing module, you will 
+# want to turn off process caching. This turns off the ability for PyRAF to 
+# use/re-use the same continually running, connected, IRAF task subprocess to do 
+# the work of each call to the task. With no process caching allowed, each new 
+# call you make to the IRAF task will start a new, separate IRAF executable, 
+# which will live only as long as it is doing your work, which is what you want. 
+# To turn off process caching, include this line in your Python script:
 #
 #           iraf.prcacheOff()
 #   
 #
-#if you imported iraf from pyraf as above.
+# if you imported iraf from pyraf as above.
 pyraf.iraf.prcacheOff()
 
 #
@@ -2182,6 +2182,7 @@ class ReductionSet(object):
         """
         return self.reduceSingleObj(*args)
       
+    
     def reduceSeq(self, sequence, type):
         """
         Reduce/process a produced OT-sequence of files (calibration, science).
@@ -2222,7 +2223,7 @@ class ReductionSet(object):
             try:
                 log.info("**** Applying Non-Linearity correction ****")
                 nl_task = calNonLinearity.NonLinearityModel()
-                corr_sequence = nl_task.applyModel(sequence, master_nl,
+                corr_sequence = nl_task.applyMultiNLC(sequence, master_nl,
                                                     suffix='_NLC',
                                                     out_dir=self.temp_dir)
             except Exception,e:
