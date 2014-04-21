@@ -4063,14 +4063,22 @@ Por tanto, la NLC lo hago al principio en RS:reduceSeq().
 
 27-Mar-2014
 -----------
-
-27-Mar-2014
------------
 - Paralelizo calNonLinearity.py--> applyMultiNLC() vs applyNLC();
 Se reduce el tiempo a menos de la mitad !
+Lo pruebo y va bien.
 
 
+30-Mar-2014
+-----------
+- Pruebas pendientes o que hay que revisar:
 
+1) Astrowarp con engine=Astrometry.net con O2k y HAWK-I !!!
+2) MEF con todas las calibraciones
+3) QL !!
+
+
+- Hago pruebas con _astrowarp=True y O2k (testCAHA_Arch) y va bien !!!
+- Pruebas de _astrowarp=True + engine=Astrometry.net
 
 
 
@@ -4491,6 +4499,8 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Rutina para copiar datos de varios directorios a un único directorio y renombrando
+los ficheros de forma única (DATE+TIMESTAMP)!!
 
 - Ver si merece la pena implementar el metodo crclean() de image.py
 de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
