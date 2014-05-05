@@ -31,6 +31,9 @@
     </property>
    </widget>
    <widget class="QTabWidget" name="tabWidget3">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -40,7 +43,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -75,7 +78,7 @@
        </rect>
       </property>
       <property name="toolTip">
-       <string>Autocheck for new incoming images</string>
+       <string>Autocheck for new incoming images to output dir</string>
       </property>
       <property name="text">
        <string/>
@@ -308,7 +311,7 @@
        </palette>
       </property>
       <property name="toolTip">
-       <string>Generated files location</string>
+       <string>Processed files location</string>
       </property>
       <property name="readOnly">
        <bool>true</bool>
@@ -1043,7 +1046,7 @@
        </palette>
       </property>
       <property name="toolTip">
-       <string>Received files location</string>
+       <string>Input raw files location</string>
       </property>
       <property name="readOnly">
        <bool>true</bool>
@@ -1094,6 +1097,9 @@
          </colorrole>
         </disabled>
        </palette>
+      </property>
+      <property name="toolTip">
+       <string>Input data file extension</string>
       </property>
       <property name="text">
        <string>*.fits</string>
@@ -1209,6 +1215,9 @@
          </colorrole>
         </disabled>
        </palette>
+      </property>
+      <property name="toolTip">
+       <string>Number of task currently queued</string>
       </property>
       <property name="text">
        <string>0</string>
@@ -1956,6 +1965,9 @@
      </widget>
     </widget>
     <widget class="QWidget" name="tab">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <attribute name="title">
       <string>Calibrations</string>
      </attribute>

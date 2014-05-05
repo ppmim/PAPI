@@ -198,15 +198,15 @@ to heade files in order to compile the sources.
 
 or manually with 
 
-> wget jdk-7u51-linux-x64.tar.gz
+> wget jdk-7u55-linux-x64.tar.gz
 > tar -xvzf jdk-7u51-linux-x64.tar.gz /usr/local/
-> update-alternatives --install /usr/bin/java java /usr/local/jdk1.7.0_51/bin/java 300
-> update-alternatives --install /usr/bin/javac javac /usr/local/jdk1.7.0_51/bin/javac 300
+> update-alternatives --install /usr/bin/java java /usr/local/jdk1.7.0_55/bin/java 300
+> update-alternatives --install /usr/bin/javac javac /usr/local/jdk1.7.0_55/bin/javac 300
 > update-alternatives --config java
 > update-alternatives --config javac
 
 
-2-NetBeans IDE 7.0.1
+2-NetBeans IDE 7.0.1 (only for development)
 ====================
 - It is not required for the execution of the OT, but for the debuging and development is advised.
 - As root or panic user, you must download and install the next package:
@@ -226,7 +226,7 @@ http://download.netbeans.org/netbeans/7.0.1/final/bundles/netbeans-7.0.1-ml-java
 0-Sumary of system packages:
 ============================
 
-zypper install libreadline5
+zypper install libreadline5 (PENDIENTE)
 zypper install tcl tk  tcl-devel tk-devl python-tk
 zypper install python-sphinx
 zypper install python-qt4-devel
@@ -240,6 +240,12 @@ zypper install libXmu6-32bit
 zypper install cfitsio libcfitsio-devel
 zypper install python-pip
 
++ LEMON Requirements:
+sudo zypper install openmpi-devel python-gtk
+
+In one single line:
+
+zypper install tcl tk  tcl-devel tk-devl python-tk python-sphinx python-qt4-devel python-devel ipython python-numpy python-numpy-devel python-scipy python-matplotlib python-matplotlib-tk python-qt4 libXmu6-32bit cfitsio libcfitsio-devel python-pip openmpi-devel python-gtk
 
 1-Python v2.7.5 : (default in openSuSE13.1)
 ===============
@@ -285,6 +291,7 @@ again all the python modules, ie:
 
 - Config index DB in /usr/local/astrometry/etc/astrometry.cfg
 
+    add_path /data2/Astrometry.net/data/
 
 
 2b-Astromatic
@@ -313,47 +320,31 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 > make
 > make install
 
+If CDSclient is to be run behind a firewall, it need to be configurared to run
+with a proxy using 'http_proxy' environment:
 
-2- PLPLOT para SCAMP (para generar ficheros png's):
+  >http_proxy=http//your_proxy:your_port; 
+  >export http_proxy
 
-1) Descargar el fuente de gd-libgd (con zypper no consigo encontrar dicha libreria) de https://bitbucket.org/pierrejoye/gd-libgd/overview
-   (la última version a fecha 03-Marzo-2014 no compilaba bien!!! tuve que usar la que tenía yo de May-2013)
+  MPIA --> ftp-proxy.mpia.de:3128  (21-Nov-2011)
 
-      >git clone https://bitbucket.org/libgd/gd-libgd.git      
+For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
 
-2) Compilar dicha libraria (libgd):
+
+2- PLPLOT para SCAMP (para generar ficheros png's): (PENDIENTE)
+
+     1) Descargar el fuente de gd-libgd (con zypper no consigo encontrar dicha libreria) de https://bitbucket.org/pierrejoye/gd-libgd/overview
+        (la última version a fecha 03-Marzo-2014 no compilaba bien!!! tuve que usar la que tenía yo de May-2013)
+
+        >git clone https://bitbucket.org/libgd/gd-libgd.git      
+
+     2) Compilar dicha libraria (libgd):  --> zypper install gd  (/usr/lib64/libgd.so.2 -> libgd.so.2.0.0)
        
-       > cd gd-libgd
-       > mkdir build
-       > cd build 
-       > cmake -DBUILD_TEST=1  -DENABLE_PNG=1 -DCMAKE_LIBRARY_PATH=/usr/loca/gdlib/lib -DCMAKE_INCLUDE_PATH=/usr/local/gdlib/include ../../gd-libgd/
-       > make
+       > wget https://bitbucket.org/libgd/gd-libgd/downloads/libgd-2.1.0.tar.gz
+       > tar xvzf
+       > ./configure --prefix=/usr/local
        > make install
-
-       Si falla la compilación con el error:
        
-       """
-       Linking C executable copyrotated /usr/bin/ld: CMakeFiles/copyrotated.dir/copyrotated.o: 
-       undefined reference to symbol 'sin@@GLIBC_2.2.5' /usr/bin/ld: 
-       note: 'sin@@GLIBC_2.2.5' is defined in DSO /lib64/libm.so.6 so try adding it to the linker command line /lib64/libm.so.6: 
-       could not read symbols: Invalid operation collect2: ld returned 1 exit status 
-       make[2]: * [examples/copyrotated] Error 1 
-       make[1]: * [examples/CMakeFiles/copyrotated.dir/all] Error 2 
-       make: * [all] Error 2
-       """
-       
-       parchear el fichero  ../examples/CMakeLists.txt tal que:
-       
-       FOREACH(test_name ${TESTS_FILES}) 
-	  add_executable(${test_name} "${test_name}.c") 
-	  -	target_link_libraries (${test_name} ${GD_LIB}) 
-	  +	target_link_libraries (${test_name} ${GD_LIB} -lm) 
-       ENDFOREACH(test_name)
-       
-       (esta solución la tomé del propio foro del repositorio de la libreria)
-       
-       Nota: tambien ocurre con ../tests/gdimageline/CMakeLists.txt       
-       y tambien tuve que modificar y eliminar alguna linea en cmake_install.cmake al hacer el make install.
  
     3) Descargar la plplot-5.9.4 (pues parece que es la que recomiendan en el foro de SCAMP  http://www.astromatic.net/forum/showthread.php?tid=761)
        aunque la 5.9.9 también funciona.
@@ -373,16 +364,20 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
           GDI32_LIBRARY /usr/local/lib/libgd.so (en la 599 no es necesario, lo detecta bien)
           ENABLE_python OFF (pues da un problema al no encontrar un .h de numpy ??)
           PLD_png ON
-    
+          PLD_tcl OFF (dan error de compilacion)
+          PLD_tk  OFF (dan error de compilacion)
+
         básicamente eso.
         
      > make 
      > make install
-     
+     > ln -s /usr/local/plplot599/lib/libplplotd.so.11.0.0 /usr/lib64/libplplotd.so.9
+
      IMPORTANTE: copiar /usr/local/lib/libgd.so en /usr/local/plplot599/lib/ pues si no se quejará el PLPLOT de que no la encuentra.
-     
-     > export PLPLOT_LIB=/usr/local/plplot594
-     (esto realmente creo casi seguro que NO es necesario !!!!!)
+     (no es necesario !!)
+
+     > export PLPLOT_LIB=/usr/local/plplot599
+     (esto tampoco es necesario !!!!!)
      
      Lo realmente importante es copiar o enlazar la nueva libreria plplotd que usa SCAMP. En el sistema (openSUSE13.1) 
      hay instalada una por defecto (so.9) pero que no trae el soporte para PNG y que da el error 
@@ -475,8 +470,8 @@ wget http://ds9.si.edu/download/linux64/xpa.linux64.2.1.14.tar.gz
 > make install
 
 
-9. Astropy (v0.3)
-=================
+9. Astropy (v0.3.1)
+===================
 
 (It already includes atpy and vo.table, and PyFITS !!!)
 
@@ -500,7 +495,7 @@ to build and install the package. For more on installing from source code, see t
 - Before intall STSCI_PYTHON, IRAF must be installed:
 
 
-(P) 1) Install Pmw v.2.0.0  (?)
+1) Install Pmw v.2.0.0  (PENDIENTE, required ??)
 -----------------------
 From: http://sourceforge.net/projects/pmw/files/Pmw/Pmw.2.0.0/
 
@@ -509,6 +504,7 @@ From: http://sourceforge.net/projects/pmw/files/Pmw/Pmw.2.0.0/
 
 2) IRAF v2.16.1 x86_64
 ----------------------
+Doc --> http://iraf.noao.edu/iraf//ftp/ftp/v216/PCIX/RELEASE.txt
 
 wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
 
@@ -521,10 +517,14 @@ yourself as one of the following users and follow the steps described:
     1)  Create an 'iraf' directory (preferrably /iraf/iraf) and unpack
         the distribution file for your platform there.
     2)  Define $iraf in your environment (with a trailing '/')
-    3)  Run the $iraf/unix/hlib/install script to install the system
-    
+        > setenv iraf /iraf/iraf/
+    3)  Run the $iraf/install script to install the system for personal
+      use (or with root permission and the '--system' flag for a
+      system installation).
 
 > sudo mkdir -p /iraf/iraf
+> cd /iraf/iraf
+> export iraf=/iraf/iraf/
 > wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
 > sudo ./install --system
 
@@ -538,22 +538,25 @@ the files needed.
 (see $iraf/extern/README)
 
 
-> cd /iraf/iraf/externs
+> cd /iraf/iraf/extern
 > ./configure
 > make check
 > make mscred (v5.05) --> need patch, see below
 > make stsdas (tables also installed)
 
-(P) 2.2) x11iraf (xgterm) -- NO SE SI REALMENTE SE NECESITA !!!
-----------------
-mkdir x11iraf (temporal directory used only for packege installation)
-cd x11iraf
-wget http://iraf.net/ftp/iraf/x11iraf/x11iraf-v1.5DEV-bin.redhat.tar.gz 
-tar xfz x11iraf-v1.5DEV-bin.redhat.tar.gz
-ln -s bin.redhat bin.suse
-ln -s lib.redhat lib.suse
-mkdir /usr/lib64/X11/app-defaults
-sudo ./install
+2.2) x11iraf (xgterm) 
+---------------------
+> sudo mkdir /iraf/x11iraf
+>cd /iraf/x11iraf (temporal directory used only for packege installation)
+> sudo wget http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v2.0BETA-bin.linux.tar.gz
+( or wget http://iraf.net/ftp/iraf/x11iraf/x11iraf-v1.5DEV-bin.redhat.tar.gz) 
+> sudo tar -zxf x11iraf-v2.0BETA-bin.linux.tar.gz
+> sudo rm x11iraf-v2.0BETA-bin.linux.tar.gz
+> ln -s bin.linux bin.suse
+> ln -s lib.linux lib.suse
+> mkdir /usr/lib64/X11/app-defaults (??? no es necesario)
+> sudo ./install
+
 
 * Dependences
 
@@ -604,7 +607,9 @@ Since IRAFv2.15, nmisc is any more required. Included in obsutil package:
 
 3) stsci_python 2.14 (include PyRAF v2.1)
 -----------------------------------------
+zypper install python-pip
 pip install d2to1
+pip install distribute !!!
 pip install stscipython
 
 -- output of seconf execution of pip install stscipython --
@@ -658,8 +663,12 @@ in the field.
 http://aladin.u-strasbg.fr/aladin.gml
 
 >download Aladin.tar
->tar -xvf Aladin.tar
->sudo p -av Aladin /usr/local/
+> cd /usr/local
+>sudo tar -xvf Aladin.tar
+
+So, Aladin launcher must be installad at next path:
+
+  >  /usr/local/Aladin/Aladin
 
 (P) 14. MIDAS 10SEPpl1.1 (for CL environment)
 =========================================
@@ -680,7 +689,7 @@ git clone https://github.com/ppmim/PAPI#
 git clone jmiguel@feynman.iaa.es:/home/jmiguel/DEVELOP/papi.git
 
 > cd papi/irdr
-> cd make all
+> make clean; make all
 
 - edit .bashrc and set environment variables (see environment configuration)
 
@@ -689,37 +698,51 @@ PAPI ENVIRONMENT CONFIGURATION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - .bashrc
 
-############# PAPI environment ################
-#. $PAPI_HOME/papi_setup.sh
-PAPI_HOME=/home/panic/DEVELOP/PIPELINE/PANIC/trunk
-PAPI_CONFIG=$PAPI_HOME/config_files/papi.cfg
-PAPI_PROD=/data/out
-PYTHONPATH=$PYTHONPATH:$PAPI_HOME
-export PYTHONPATH PAPI_HOME QTDIR PAPI_CONFIG
-
-alias xg='/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 80x29 -bg grey -fg black -e cl'
-alias panic='cd /home/panic/DEVELOP/PIPELINE/PANIC/trunk'
+alias xg='/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 80x29 -bg grey -fg black -fn 10x20 -e cl'
+alias panic='cd ${PAPI_HOME}'
 alias data='cd /data/'
+
+
+### PAPI environment ###
+##
+export CAMHOME=${HOME}/GEIRS
+PAPI_HOME=${HOME}/DEVELOP/papi
+PYTHONPATH=$PYTHONPATH:$PAPI_HOME
+PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_o2k.cfg
+ASTROMETRY=/usr/local/astrometry/bin
+
+# Proxy required for cdsclient at MPIA
+http_proxy=ftp-proxy.mpia.de:3128
+export http_proxy
+export PYTHONPATH PAPI_HOME PAPI_CONFIG ASTROMETRY
+
+PATH=$PATH:$HOME/GEIRS/scripts:$HOME/GEIRS/binrjm:$ASTROMETRY
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
+
+export LD_LIBRARY_PATH PATH
+export QT_GRAPHICSSYSTEM=native
+
 # PANIC-MIDAS PROCEDURES
+#GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
+#CA_FFLTEST=$PAPI_HOME/trunk/simu/caha/ffltest
+#AUPLAY=/usr/bin/play
+#FLAT_COMMAND=$PAPI_HOME/trunk/simu/caha/flats
+#TECS_SCRIPT=$PAPI_HOME/trunk/simu/caha
+#PANIC_UTIL=$PAPI_HOME/trunk/MIDAS
+#PANIC_SCI=$PAPI_HOME/trunk/MIDAS
 
 
-GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
-CA_FFLTEST=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha/ffltest
-AUPLAY=/usr/bin/play
-GEIRS_DIR=/home/panic/GEIRS
-FLAT_COMMAND=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha/flats
-TECS_SCRIPT=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/simu/caha
-PANIC_UTIL=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
-PANIC_SCI=/home/panic/DEVELOP/PIPELINE/PANIC/trunk/MIDAS
-PATH=$PATH:$HOME/GEIRS/scripts
-export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
+IRAF ENVIRONMENT CONFIGURATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Next is required for PAPI when using PyRAF:
 
+> mkdir iraf
+> cd iraf; mkiraf
 
 
 
 LEMON requirements
 ==================
 
-- zypper install openmpi-devel para Montage
-
-
+- zypper install openmpi-devel (para Montage)
+- zypper install python-gtk (para GUI)

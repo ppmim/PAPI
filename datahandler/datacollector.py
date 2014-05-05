@@ -122,7 +122,7 @@ class DataCollector (object):
                 
     def __listFiles(self, dirpath):
         """
-        Get directory listing sorted by creation date
+        Get directory list sorted by creation date.
         """
         #a = [os.path.join(dirpath, s) for s in os.listdir(dirpath)
         #    if os.path.isfile(os.path.join(dirpath, s))]
@@ -402,6 +402,14 @@ class DataCollector (object):
                     #print '[DC] Found new file ....%s' %file
             else:
                 print "[DC] Warning, %s not a compliant file or does not exist !!" %file
+
+        # if it is the last file of a full-directory list, then notify QL to
+        # update the ListView.
+        # It is done to avoid overloading the QL update of the ListView each time
+        # when a long directory is loaded in one go.
+        if len(contents)>0:
+            self.callback_func(contents[-1]+"__last__")
+
 
     
 if __name__ == "__main__":
