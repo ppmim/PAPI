@@ -94,7 +94,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
 
-__version__ = "1.0.3 - July 2013"
+__version__ = "1.1.0 - May 2014"
 
 #-------------------------------------------------------------------------------
 def _pickle_method(method):
@@ -379,6 +379,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         log.debug("New file (in source or out_dir) notified: %s",filename)
         ####################################################
+        ### Check if __last__ file is from source directory
+        ### Actually, the file was already detected, but this call is only used 
+        ### to update the ListView.
+        if filename.endswith("__last__"):
+            log.debug("Updating the ListView")
+            self.slot_classFilter()
+            return 
+
+
+        ####################################################
         ### Check if deleted file is from source directory
         if filename.endswith("__deleted__"):
             log.debug("File %s disappeared from source directory. Deleted from DB"%filename.replace("__deleted__",""))
@@ -415,20 +425,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         #########################
         # An alternative method to update the ListView; it allows keep the view 
-        # filter.
-        self.slot_classFilter() 
+        # filtered.
+        #self.slot_classFilter() 
         #########################
-        ## Update the ListView table
-        """elem = QListViewItem( self.listView_dataS )
-        elem.setText (0, str(filename))
-        elem.setText (1, str(type))
-        elem.setText (2, str(filter))
-        elem.setText (3, str(texp))
-        elem.setText (4, str(date)+"::"+str(ut_time))
-        elem.setText (5, str(object))
-        elem.setText (6, str(ra))
-        elem.setText (7, str(dec))
-        """
+        
         ## Update Last frame widget
         self.lineEdit_last_file.setText(str(os.path.basename(filename)))
         self.last_filename = filename
@@ -2121,26 +2121,36 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   "Choose a filename to save under",
                                                   self.m_outputdir + "/master_dark.fits", 
                                                   "*.fits")
-        if not outfileName.isEmpty():
-            try:
-                texp_scale = False
-                QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, 
-                                                       self.m_tempdir, 
-                                                       str(outfileName), 
-                                                       texp_scale)
-                thread = reduce.ExecTaskThread(self._task.createMaster, 
-                                               self._task_info_list)
-                thread.start()
-            except Exception, e:
-                QApplication.restoreOverrideCursor() 
-                QMessageBox.critical(self, "Error", 
-                                     "Error while creating master Dark. \n"+str(e))
-                raise e
-        else:
-            pass
+        # if not outfileName.isEmpty():
+        #     try:
+        #         texp_scale = False
+        #         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        #         self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, 
+        #                                                self.m_tempdir, 
+        #                                                str(outfileName), 
+        #                                                texp_scale)
+        #         thread = reduce.ExecTaskThread(self._task.createMaster, 
+        #                                        self._task_info_list)
+        #         thread.start()
+        #     except Exception, e:
+        #         QApplication.restoreOverrideCursor() 
+        #         QMessageBox.critical(self, "Error", 
+        #                              "Error while creating master Dark. \n"+str(e))
+        #         raise e
+        # else:
+        #     pass
 
     
+        if not outfileName.isEmpty():
+            try:
+                self.processFiles(self.m_popup_l_sel, group_by=self.group_by, 
+                                  outfilename=str(outfileName))
+            except Exception,e:
+                QMessageBox.critical(self, "Error", 
+                                 "Error while creating master Dark: \n%s"%str(e))
+                raise e
+        else:
+            pass     
 
     def createMasterDFlat_slot(self):
         
