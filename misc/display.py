@@ -49,10 +49,10 @@ def startDisplay():
         #print "DS9 not running "
         # DS9 is not running, so we start it  
         os.system(("%s/ds9 &" % ds9_path))
-        time.sleep(3)
+        time.sleep(2)
         stdout_handle = os.popen("%s/xpaaccess ds9"%ds9_path, "r")
-        if stdout_handle.read() =='no':
-            time.sleep(2)
+        if stdout_handle.read() =='no\n':
+            time.sleep(3)
         time.sleep(1)
         for i in range(0, MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
             os.system(("%s/xpaset -p ds9 frame new" % ds9_path))

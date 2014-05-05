@@ -33,7 +33,7 @@ __date__ = "$Date$"
 __author__ = "$Author$"
 __revision__ = "$Rev$"
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 '''User command line interface of PAPI.'''
 
