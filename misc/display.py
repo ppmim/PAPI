@@ -30,8 +30,8 @@ import time
 from misc.paLog import log
 import datahandler
 
-ds9_path="/usr/local/bin/"
-frame_no=0
+ds9_path = "/usr/local/bin/"
+frame_no = 0
 MAX_FRAMES_NO = 4
 
 ################################################################################
@@ -42,18 +42,19 @@ def startDisplay():
     started
     """
 
-    #First all, check if already is running
-    stdout_handle = os.popen("/sbin/pidofproc ds9","r")
-    if stdout_handle.read() =='':
+    # First all, check if already is running
+    #stdout_handle = os.popen("/sbin/pidofproc ds9","r")
+    stdout_handle = os.popen("%s/xpaaccess ds9"%ds9_path, "r")
+    if stdout_handle.read() =='no\n':
         #print "DS9 not running "
         # DS9 is not running, so we start it  
         os.system(("%s/ds9 &" % ds9_path))
-        time.sleep(4)
-        stdout_handle = os.popen("/sbin/pidofproc ds9","r")
-        if stdout_handle.read() =='':
-            time.sleep(2)
+        time.sleep(2)
+        stdout_handle = os.popen("%s/xpaaccess ds9"%ds9_path, "r")
+        if stdout_handle.read() =='no\n':
+            time.sleep(3)
         time.sleep(1)
-        for i in range(0,MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
+        for i in range(0, MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
             os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
             
     else:

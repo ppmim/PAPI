@@ -4081,6 +4081,110 @@ Lo pruebo y va bien.
 - Pruebas de _astrowarp=True + engine=Astrometry.net
 
 
+21-Abril-2014
+-------------
+- Empaquetado de PANIC1 para enviar a HD. La máquina va instalada con openSuSE13.1,
+y con el /home/panic tal cual estaba. En los directorio /data1 y /data2 hice
+alguna limpieza, pero también los dejamos.
+
+
+
+22-Abril-2014
+-------------
+- Finalmente sale el paquete con panic1 para HD, a través de la compañia DHL.
+- Instalación de openSuSE 13.1 en panic2, manteniendo los /data1 y /data2. Los
+más destacable de la instalación fue:
+
+ IP panic2.iaa.es --> 161.111.164.102
+ Netmask              255.255.255.128
+ DNS                  161.111.164.2
+ GW                   161.111.164.3
+
+ Particiones (con tres VirtualDisks):
+
+ /dev/sda1      swap   2 GB
+ /dev/sda2      /      120 GB   ext4   RAID 1  VD1
+ /dev/sda3      /home  343 GB   ext4   RAID 1  VD1
+ /dev/sdb1      /data1 1.8 TB   ext4   RAID 1  VD2
+ /dev/sdc1      /data2 3.64 TB  ext4   RAID 10 VD3 
+
+ Automatic login = off
+ GRUB2, boot from MBR = no
+        boot from /   = yes
+ Default run-level = 5
+ Enable sshd en Firewall
+
+ Language: English (US)
+ Keyboard: Spanish
+ KDE Desktop
+ 
+ Software: básicamente todos los paquetes de desarrollo, linux-src, file-server
+
+ Además, para probar la iDRAC7 configuro la tarjeta con la IP de panic1:
+ 
+ F2->Enable->Configu --> 161.111.164.101 
+ http://panic1.iaa.es (root/el_de_siempre_empezando_mayusculas)
+
+ Quedaría pendiente reconfigurar el VD3 con RAID5 para tener más espacio, al
+ igual que se hizo con panic1.
+
+ La configuración de las particiones de panic1 para HD fue:
+
+ /dev/sda1      swap   2 GB
+ /dev/sda2      /      450 GB   ext4   RAID 1  VD1 (incluye home)
+ /dev/sdb1      /data1 1.8 TB   ext4   RAID 1  VD2
+ /dev/sdc1      /data2 5.4 TB   ext4   RAID 5  VD3 
+
+
+
+23-Abril-2014
+-------------
+- Termino instalación SW (GEIRS_714), sin poder compilar la version 715M por un
+problema de compilación del que informamos a RM y KM y MF.
+
+24-Abril-2014
+-------------
+- Finalmente, debido aun problema con el acuerdo entre IAA-ViajesTema, me veo
+obligado a suspender el viaje. AGS irá sólo. 
+
+25-Abril-2014
+-------------
+
+
+02-Mayo-2014
+------------
+- Soluciono bug en display.py, pues no se detectaba bien si estaba ejecutandose
+el ds9 en startDispla(). Ahora, el lugar de usar pidofproc, uso xpaaccess.
+- Encuentro problema en QL al intentar "leer" un directorio con 6000 ficheros
+de PANIC !!!
+- Le cuento a AGS lo básico del QL para que él lo pueda usar/demostrar en HD.
+En dicha presentación encuentro los siguientes problemas:
+
+  - las rutinas de IRAF no funciona correctamente, se queja de que no encuentr
+  el login.cl ni uparam. (ejem. imarith, imstat, etc ...)
+
+  - Desde el Menu-pop-up no funciona la reducción por dark-series, aunque 
+  en modo automático si funcionan.
+
+  - Una vez pulsado el boton "Build Calibrations" (help), no hay forma de pararlas ???
+  - Depurar la actualización de ListView cuando hay >6000 ficheros, pues va muy lento...
+  - Avisar cuando hay > 1000 ficheros al leer un directorio.
+  - Aladin no está instalado ...; INSTALADO !! en panic1 (ya instalado) y panic2.
+
+
+
+
+05-Mayo-2014
+------------
+- Configuro en .bashrc la variable http_proxy en panic1 (MPIA) para que 
+funcione cdsclient (no probado !!).
+- Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
+de llamar directamente a calDark.py.
+Esto habría que hacerlo para otras funciones _slot_ del QL !!!
+
+
+
+
 
 PANIC computers installation
 ============================
@@ -4499,6 +4603,12 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
+de llamar directamente a calDark.py.
+Esto habría que hacerlo para otras funciones _slot_ del QL !!!
+- Parametrizar los paths del ds9 en display.py y añadir al fichero de configuracion
+- Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
+- Preguntar por los indices de 2MASS para Astrometry.net
 - Rutina para copiar datos de varios directorios a un único directorio y renombrando
 los ficheros de forma única (DATE+TIMESTAMP)!!
 
