@@ -66,8 +66,6 @@ from misc.paLog import log
 # Pyraf modules
 from pyraf import iraf
 from iraf import noao
-#from iraf import imred
-#from iraf import ccdred
 from iraf import mscred
 
 class SuperSkyFlat(object):
@@ -350,32 +348,34 @@ creates the master super flat-field and computes several statistics."""
     
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
-                  help="Source file list of data frames. It has to be a fullpath file name")
+                  help="Source file list of data frames. It has to be a "
+                  "fullpath file name")
                   
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 
-                  help="output file to write SuperFlat")
+                  help="Output file to write SuperFlat")
     
     parser.add_option("-b", "--bpm",
                   action="store", dest="bpm", 
-                  help="bad pixel map file (default=%default)", 
+                  help="Bad pixel map file [default=%default]", 
                   default=None)
-
     
     parser.add_option("-N", "--norm",
-                  action="store_true", dest="norm", help="""normalize output
-SuperFlat. If image is multi-chip, normalization wrt chip 1 is done (default=%default)""", 
+                  action="store_true", dest="norm", 
+                  help="Normalize the output SuperFlat. If image is multi-chip"
+                  ", normalization wrt chip 1 is done [default=%default]", 
                     default=True)
 
     parser.add_option("-n", "--norm_estimator",
                   action="store", dest="norm_estimator", 
-                  help="Robust estimator for normalization (default=%default)", 
+                  help="Robust estimator for normalization [default=%default]", 
                   default="median")
 
     
     parser.add_option("-m", "--median_smooth",
                   action="store_true", dest="median_smooth", default=False,
-                  help="Median smooth the combined flat-field (median|robust_mean, default=%default)")    
+                  help="Median smooth the combined flat-field"
+                  " (median|robust_mean, default=%default)")    
 
     (options, args) = parser.parse_args()
     

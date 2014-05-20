@@ -42,9 +42,7 @@ import itertools
 # IRAF packages
 import pyraf
 from pyraf import iraf
-#from iraf import noao
-#from iraf import imred
-#from iraf import ccdred
+from iraf import noao
 
 # Math module for efficient array processing
 import numpy

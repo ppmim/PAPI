@@ -238,18 +238,21 @@ if __name__ == "__main__":
     """)
     
     parser.add_option("-i", "--input", dest="input",
-                      help="name of input directory or list file (default: %default)",
+                      help="Name of input directory or list file "
+                      "[default: %default].",
                       default="")
     parser.add_option("-o", "--output", dest="output",
-                      help="name of output [pdf] file with results (default: %default)",
+                      help="Name of output [pdf] file with results " 
+                      "[default: %default]",
                       default="output.pdf")
     
     parser.add_option("-p", "--pix_scale", dest="pix_scale",
-                      help="Pixel scale (default: %default)",
+                      help="Pixel scale [default: %default].",
                       default=0.45)
     
     parser.add_option("-s", "--satur_level", dest="satur_level",
-                      help="Saturation level in ADUs. NCOADD is not taken into account.(default: %default)",
+                      help="Saturation level in ADUs. NCOADD is not taken "
+                      "into account [default: %default].",
                       default=50000)
     
     (options, args) = parser.parse_args()

@@ -65,8 +65,6 @@ import datahandler
 # Pyraf modules
 from pyraf import iraf
 from iraf import noao
-#from iraf import imred
-#from iraf import ccdred
 from iraf import mscred
 
 import numpy
@@ -504,50 +502,51 @@ def makemasterframe(list_or_array):
 if __name__ == "__main__":
     # Get and check command-line options
     usage = "usage: %prog [options]"  
-    desc = """This module receives a series of FITS images (twilight flats) and
-creates the master twilight flat-field and computes several statistics.
+    desc = """This module receives a series of Twilight Flats and
+and a Master Dark Model and then creates a Master Twilight Flat-Field.
 """
     parser = OptionParser(usage, description = desc)
     
                   
     parser.add_option("-s", "--source",
-                  action="store", dest="source_file_list",
-                  help="Source file list of data frames. It can be a file or directory name.")
+                  action="store", dest="source_file_list", type='str',
+                  help="Source file list of data frames."
+                  " It can be a file or directory name.")
     
-    parser.add_option("-d", "--master_dark_model",
+    parser.add_option("-d", "--master_dark_model", type='str',
                   action="store", dest="master_dark",
-                  help="Master dark model to subtract each raw flat (it will be scaled by TEXP)")
+                  help="Master dark model to subtract each raw flat"
+                  " (it will be scaled by TEXP)")
     
-    parser.add_option("-o", "--output",
+    parser.add_option("-o", "--output", type='str',
                   action="store", dest="output_filename", 
                   help="Final coadded output image")
     
     ## -optional
     
-    parser.add_option("-b", "--master_bpm",
+    parser.add_option("-b", "--master_bpm", type='str',
                   action="store", dest="master_bpm",
                   help="Bad pixel mask to be used (optional)", default=None)
     
     parser.add_option("-N", "--normalize",
                   action="store_true", dest="normalize", default=False,
-                  help="Normalize master flat by median. If image is multi-detector,\
-then normalization wrt chip 1 is done)[default False]")
+                  help="Normalize master flat by median. If image is "
+                  "multi-detector, then normalization wrt chip 1 is done)"
+                  " [default=%default]")
     
     parser.add_option("-m", "--median_smooth",
                   action="store_true", dest="median_smooth", default=False,
-                  help="Median smooth the combined flat-field [default False]")
+                  help="Median smooth the combined flat-field [default=%default]")
     
-    parser.add_option("-L", "--low", type="float", default=1000,
+    parser.add_option("-L", "--low", type='float', default=1000,
                   action="store", dest="minlevel", 
-                  help="Flats with median level bellow (default=1000) are rejected")
+                  help="Flats with median level bellow are rejected "
+                  "[default=%default].")
     
-    parser.add_option("-H", "--high", type="float", default=100000,
+    parser.add_option("-H", "--high", type='float', default=100000,
                   action="store", dest="maxlevel", 
-                  help="Flats with median level above (default=100000) are rejected")
-    
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="Verbose mode [default]")
+                  help="Flats with median level above are rejected "
+                  "[default=%default].")
     
     (options, args) = parser.parse_args()
     
@@ -558,7 +557,7 @@ then normalization wrt chip 1 is done)[default False]")
        
     if not options.source_file_list or not options.output_filename or not options.master_dark:
         parser.print_help()
-        parser.error("incorrect number of arguments " )
+        parser.error("incorrect number of arguments.")
     
     
     # Start proceduce

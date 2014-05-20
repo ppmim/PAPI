@@ -73,8 +73,6 @@ import datahandler
 # Pyraf modules
 from pyraf import iraf
 from iraf import noao
-from iraf import imred
-from iraf import ccdred
 from iraf import mscred
 
 # Interact with FITS files
@@ -442,7 +440,6 @@ class MasterDomeFlat(object):
 ################################################################################
 # main
 if __name__ == "__main__":
-    print 'Starting MasterDomeFlat....'
     
     usage = "usage: %prog [options]"
     desc = """This module receives a series of Dome Flats (On and Off) and
@@ -470,15 +467,12 @@ then creates a Master Dome Flat-Field. It does **not** require any Master Dark.
                   action="store_true", dest="normalize", default=False,
                   help="Normalize master flat by median. "
                   "If image is multi-detector, then normalization"
-                  " wrt chip 1 is done) [default False]")
+                  " wrt chip 1 is done) [default=%default].")
 
     parser.add_option("-m", "--median_smooth",
                   action="store_true", dest="median_smooth", default=False,
-                  help="Median smooth the combined flat-field [default False]")
+                  help="Median smooth the combined flat-field [default=%default]")
 
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="Verbose mode [default]")
     
     (options, args) = parser.parse_args()
     
