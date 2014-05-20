@@ -90,7 +90,7 @@ class MasterDomeFlat(object):
     
     Dome flats are not pretty good for low-spatial frequency QE variation 
     across the chip (large scale variation), but quite reasonable for 
-    high-spatial frequency (small scale  variations).
+    high-spatial frequency (small scale variations).
     
     
     Description:
@@ -445,16 +445,20 @@ if __name__ == "__main__":
     print 'Starting MasterDomeFlat....'
     
     usage = "usage: %prog [options]"
-    parser = OptionParser(usage)
-    
+    desc = """This module receives a series of Dome Flats (On and Off) and
+then creates a Master Dome Flat-Field. It does **not** require any Master Dark.
+"""
+    parser = OptionParser(usage, description = desc)
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
-                  help="Source file list of data frames. It can be a file or directory name.")
+                  help="Source file list of data frames."
+                  " It can be a file or directory name.")
     
     
     parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", help="final coadded output image")
+                  action="store", dest="output_filename", 
+                  help="Final coadded output image")
     
     ## -optional
     
@@ -462,10 +466,11 @@ if __name__ == "__main__":
                   action="store", dest="master_bpm",
                   help="Bad pixel mask to be used (optional)", default=None)
     """
-    parser.add_option("-n", "--normalize",
+    parser.add_option("-N", "--normalize",
                   action="store_true", dest="normalize", default=False,
-                  help="normalize master flat by median. If image is multi-detector,\
-                  then normalization wrt chip 1 is done) [default False]")
+                  help="Normalize master flat by median. "
+                  "If image is multi-detector, then normalization"
+                  " wrt chip 1 is done) [default False]")
 
     parser.add_option("-m", "--median_smooth",
                   action="store_true", dest="median_smooth", default=False,
@@ -473,7 +478,7 @@ if __name__ == "__main__":
 
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
+                  help="Verbose mode [default]")
     
     (options, args) = parser.parse_args()
     
@@ -487,9 +492,7 @@ if __name__ == "__main__":
     
     
         
-    filelist=[line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    #output_filename="/tmp/out/out.fits"
-    #filelist=['/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060036.fits', '/disk-a/caha/panic/DATA/ALHAMBRA_1/A0408060037.fits']
+    filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
 
     print "Files:",filelist
     tmp_dir = os.path.dirname(options.output_filename)

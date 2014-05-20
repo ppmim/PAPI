@@ -52,6 +52,15 @@ import tempfile
 from optparse import OptionParser
 import datetime
 
+# Tell PyRAF to skip all graphics initialization and run in terminal-only mode.
+# Otherwise we will get annoying warning messages (such as "could not open
+# XWindow display" or "No graphics display available for this session") when
+# working at a remote terminal or at a terminal without any X Windows support.
+# Any tasks which attempt to display graphics will fail, of course, but we are
+# not going to make use of any of them, anyway.
+
+os.environ['PYRAF_NO_DISPLAY'] = '1'
+
 # PANIC modules
 import reduce
 import reduce.calTwFlat
@@ -76,8 +85,6 @@ from misc.paLog import log
 # IRAF packages
 from pyraf import iraf
 from iraf import noao
-from iraf import imred
-from iraf import ccdred
 from iraf import mscred
 
 

@@ -42,10 +42,9 @@ import checkQuality
 
 class FocusSerie(object):
     """
-    @summary:  
-        Class used to estimate the best focus value of a focus exposures 
+    Class used to estimate the best focus value of a focus exposures 
     
-    @author: 
+    Author: 
         JMIbannez, IAA-CSIC - 2011
         
     """
@@ -74,7 +73,7 @@ class FocusSerie(object):
 
     def eval_serie(self):
         """
-        Do the focus evaluation
+        Do the focus evaluation.
         """
         
         fwhm_values = []
@@ -119,19 +118,48 @@ class FocusSerie(object):
             if self.show:
                 plt.show(block=True)
 
+            #
+            # Write focus value into text file for OT
+            #
+            from os.path import expanduser
+            home = expanduser("~")
+            ql_focus_text_file = home + "/tmp/ql_focus"
+
+            if not os.path.isdir(home + "/tmp"):
+                msg = "tmp directory %s not found. Using %s directory"
+                sys.stderr.write(msg % (home + "/tmp", home ))
+                ql_focus_text_file = home + "/ql_focus"
+
+            with open(ql_focus_text_file, "w") as text_file:
+                # best_focus [mm] are converted to [microns] and writtent to
+                # text file ready to be read and used by OT.
+                text_file.write("%d"%int(round(best_focus*1000)))
+            
+            # End-of-focus-file-writing
+
+
         else:
             print "Not enough data for fitting"
             best_focus = np.NaN
 
         sys.stdout.write("\nPlot generated: %s\n"%self.output)
 
+
         return best_focus, self.output
            
     def get_t_focus(self, file):
         """
-        @summary: Look for the focus value into the FITS header keyword "T-FOCUS"
+        Look for the focus value into the FITS header keyword "T-FOCUS"
         
-        @return: the "T-FOCUS" keyword value
+        Parameters
+        ----------
+        file: str
+            Name of FITS file to look for 'T-FOCUS' keyword
+
+        Returns
+        ------- 
+        The "T-FOCUS" keyword value
+        
         """ 
                 
         focus = -1           
@@ -152,8 +180,8 @@ class FocusSerie(object):
         
 def check_python_env():
     """    
-    check for Python 2.X with X >= 5; the 'optparse' module needs
-    Python 2.5 for the used 'epilog' feature (see below):
+    Check for Python 2.X with X >= 5; the 'optparse' module needs
+    Python 2.5 for the used 'epilog' feature (see below).
     """
     version = string.split(string.split(sys.version) [0], ".")
     # well, Python version 3 just gives us a syntax error at the
@@ -172,6 +200,7 @@ def check_python_env():
         sys.stderr.write("see http://www.stsci.edu/resources/software_hardware/pyfits\n")
         sys.stderr.write("and/or http://numpy.scipy.org/\n")
         sys.exit(1)
+
 
 
 

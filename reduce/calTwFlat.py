@@ -251,8 +251,10 @@ class MasterTwilightFlat (object):
                 if f.isTwFlat():
                     f_type = f.getType()
                 else:
-                    log.error("Error, frame %s does not look a TwiLight Flat field" %(iframe))
-                    raise Exception("Error, frame %s does not look a TwiLight Flat field" %(iframe))
+                    log.warning("Frame %s does not look like a TwiLight Flat field" %(iframe))
+                    f_type = f.getType()
+                    #log.error("Error, frame %s does not look a TwiLight Flat field" %(iframe))
+                    #raise Exception("Error, frame %s does not look a TwiLight Flat field" %(iframe))
             
             # STEP 1.1: Check either over or under exposed frames
             print "File %s filter[ %s ]  EXTP=%f TYPE=%s mean_window=%f" %(iframe, f_filter, f_expt, f_type, mean)
@@ -517,7 +519,8 @@ creates the master twilight flat-field and computes several statistics.
                   help="Master dark model to subtract each raw flat (it will be scaled by TEXP)")
     
     parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", help="final coadded output image")
+                  action="store", dest="output_filename", 
+                  help="Final coadded output image")
     
     ## -optional
     
@@ -525,9 +528,9 @@ creates the master twilight flat-field and computes several statistics.
                   action="store", dest="master_bpm",
                   help="Bad pixel mask to be used (optional)", default=None)
     
-    parser.add_option("-n", "--normalize",
+    parser.add_option("-N", "--normalize",
                   action="store_true", dest="normalize", default=False,
-                  help="normalize master flat by median. If image is multi-detector,\
+                  help="Normalize master flat by median. If image is multi-detector,\
 then normalization wrt chip 1 is done)[default False]")
     
     parser.add_option("-m", "--median_smooth",
@@ -536,15 +539,15 @@ then normalization wrt chip 1 is done)[default False]")
     
     parser.add_option("-L", "--low", type="float", default=1000,
                   action="store", dest="minlevel", 
-                  help="flats with median level bellow (default=1000) are rejected")
+                  help="Flats with median level bellow (default=1000) are rejected")
     
     parser.add_option("-H", "--high", type="float", default=100000,
                   action="store", dest="maxlevel", 
-                  help="flats with median level above (default=100000) are rejected")
+                  help="Flats with median level above (default=100000) are rejected")
     
     parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default]")
+                  help="Verbose mode [default]")
     
     (options, args) = parser.parse_args()
     
