@@ -30,16 +30,12 @@
 ################################################################################
     
 #From system
-#import sys
 import os
 import os.path
 import fileinput
-#import glob
 import shutil
 import tempfile
 import dircache
-#import math
-#import pprocess # to be removed  !!
 import multiprocessing
 import itertools
 
@@ -47,8 +43,6 @@ import itertools
 import pyraf
 from pyraf import iraf
 from iraf import noao
-from iraf import imred
-from iraf import ccdred
 
 # Math module for efficient array processing
 import numpy
@@ -76,20 +70,20 @@ import misc.collapse
 import calNonLinearity
 
 
-#If your parallel tasks are going to use the same instance of PyRAF (and thus 
-#the same process cache), as in the case of running the entire parallel program 
-#inside a single Python script via, say, the multiprocessing module, you will 
-#want to turn off process caching. This turns off the ability for PyRAF to 
-#use/re-use the same continually running, connected, IRAF task subprocess to do 
-#the work of each call to the task. With no process caching allowed, each new 
-#call you make to the IRAF task will start a new, separate IRAF executable, 
-#which will live only as long as it is doing your work, which is what you want. 
-#To turn off process caching, include this line in your Python script:
+# If your parallel tasks are going to use the same instance of PyRAF (and thus 
+# the same process cache), as in the case of running the entire parallel program 
+# inside a single Python script via, say, the multiprocessing module, you will 
+# want to turn off process caching. This turns off the ability for PyRAF to 
+# use/re-use the same continually running, connected, IRAF task subprocess to do 
+# the work of each call to the task. With no process caching allowed, each new 
+# call you make to the IRAF task will start a new, separate IRAF executable, 
+# which will live only as long as it is doing your work, which is what you want. 
+# To turn off process caching, include this line in your Python script:
 #
 #           iraf.prcacheOff()
 #   
 #
-#if you imported iraf from pyraf as above.
+# if you imported iraf from pyraf as above.
 pyraf.iraf.prcacheOff()
 
 #
