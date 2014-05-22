@@ -61,6 +61,8 @@ from misc.paLog import log
 import datahandler
 import misc.fileUtils
 import misc.utils as utils
+import misc.robust as robust
+
 
 class BadPixelMask(object):
     """
@@ -75,7 +77,9 @@ class BadPixelMask(object):
         input images is defined as bad in the output mask. 
         
     """
-    def __init__(self, input_file, outputfile=None, lthr=3.0, hthr=5.0, 
+    
+
+    def __init__(self, input_file, outputfile=None, lthr=4.0, hthr=4.0, 
                  temp_dir="/tmp", raw_flag=False):
         
         self.input_file = input_file # file with the list of files to read and process 
@@ -99,11 +103,11 @@ class BadPixelMask(object):
          1. Combine all of the dome flats into a master
          2. Divide the resulting image by its median -->normalized MASTER_FLAT
          3. Create and zero the rejection mask
-         4. Loop for all input images and divide each by the master flat
-            
-            4.1 Divide the resulting image by its median
-            4.2 Get the standard deviation of the image
-            4.3 Define the bad pixels
+         4. Loop for all input images
+            4.1 Divide each by the nomalized master flat
+            4.2 Divide the resulting image by its median
+            4.3 Get the standard deviation of the image
+            4.4 Define the bad pixels
             
          5. Go through the rejection mask and if a pixel has been marked bad 
             more than a set number of times, then it is defined as bad
@@ -111,7 +115,8 @@ class BadPixelMask(object):
         
         t = utils.clock()
         t.tic()
-        
+
+        __epsilon = 1.0e-20
         
         # Read the file list
         filelist = [line.replace( "\n", "") for line in fileinput.input(self.input_file)]
@@ -204,9 +209,9 @@ class BadPixelMask(object):
         #pdb.set_trace()
         
 
-        # STEP 4: Loop for all input images and divide each by the master
+        # STEP 4: Loop for all input images and divide each by the master norm Flat
         tmpf = numpy.zeros([nx1, nx2], dtype=numpy.float32)
-        for flat in []:#good_flats:
+        for flat in good_flats:
             log.debug("Processing file %s"%flat)
             f_i = pyfits.open(flat)
             #ceros=(mflat[0].data==0).sum()
@@ -214,28 +219,36 @@ class BadPixelMask(object):
             for i_nExt in range(0, nExt):
                 if nExt==1:
                     # to avoid zero division error
-                    mydata = numpy.where(flat_comb_hdu[0].data==0, 0.0001, 
-                                         flat_comb_hdu[0].data) 
+                    mydata = numpy.where(flat_comb_hdu[0].data<__epsilon, 
+                                        numpy.NaN, 
+                                        flat_comb_hdu[0].data) 
                     tmpf = f_i[0].data/mydata
                 else:
                     # to avoid zero division error
-                    mydata = numpy.where(flat_comb_hdu[i_nExt+1].data==0, 0.0001, 
-                                         flat_comb_hdu[i_nExt+1].data) 
+                    mydata = numpy.where(flat_comb_hdu[i_nExt+1].data<__epsilon, 
+                                        numpy.NaN, 
+                                        flat_comb_hdu[i_nExt+1].data) 
                     tmpf = f_i[i_nExt+1].data/mydata
 
-                mdat = numpy.ma.masked_array(tmpf, numpy.isnan(tmpf))
+                #mdat = numpy.ma.masked_array(tmpf, numpy.isnan(tmpf))
+                mdat = tmpf
                 std = numpy.std(mdat)
-                median = numpy.median(tmpf)
-                mad = numpy.median(numpy.abs(tmpf - median))
+                r_std = robust.std(mdat)
+                median = numpy.median(mdat)
+                mad = numpy.median(numpy.abs(mdat - median))
                 mad*=1.4826
             
                 print ">>MEDIAN=",median
                 print ">>STD=",std
+                print ">>R_STD=",r_std
                 print ">>MAD=",mad
             
-                #log.debug("Divide each flatted flat by its median")
+                # Normalize the flattened image
+                log.debug("Divide each flatted flat by its median")
                 tmpf = tmpf/median
-                
+                r_std2 = robust.std(tmpf)
+                print ">>R_STD2=",r_std2
+
                 # Debug - save the normalized flat
                 #misc.fileUtils.removefiles(flat.replace(".fits","_N.fits"))
                 #hdulist = pyfits.HDUList()
@@ -247,18 +260,24 @@ class BadPixelMask(object):
                 #hdulist.close(output_verify='ignore')
                 # End debug
 
+                # Define the H and L thresholds
                 low = 1.0 - self.lthr*mad/median
                 high = 1.0 + self.hthr*mad/median
                 
-                #low = self.lthr
-                #high = self.hthr
+                #low = 1.0 - self.lthr*r_std2
+                #high = 1.0 + self.hthr*r_std2
                     
                 print ">>LOW=", low
                 print ">>HIGH=", high
             
+                # Count the number of NaN values
+                n_nan = numpy.count_nonzero(numpy.isnan(tmpf))
+                print ">>#_NaN=",n_nan
+
                 # STEP 4.3 Define the bad pixels
                 tmpf.shape = nx1,nx2
-                bpm[ i_nExt, (tmpf < low) | (tmpf > high)]+=1
+                #bpm[ i_nExt, numpy.isnan(tmpf)]+=1
+                bpm[ i_nExt, (tmpf < low) | (tmpf > high) | numpy.isnan(tmpf)]+=1
             log.debug("BPM updated with current flat %s", flat)
             f_i.close()
             
@@ -558,8 +577,6 @@ then divided by the master. Bad pixels are marked on the new image as
 those that are above or below the threshold (in sigma) in the new image. 
 Any pixel which has been marked as bad for more than a quarter of the 
 input images is defined as bad in the output mask.
-This module receives a series of FITS images (darks) with increasing exposure 
-time and creates the master dark model and computes several statistics.
 """
 parser = OptionParser(usage, description=desc)
  
@@ -573,16 +590,16 @@ parser.add_option("-o", "--output",
               help="The output bad pixel mask.")
 
 parser.add_option("-L", "--lthr",
-              action="store", dest="lthr", type='float', default=3.0,
-              help="The low rejection threshold in units of sigma [default 3]")
+              action="store", dest="lthr", type='float', default=4.0,
+              help="The low rejection threshold in units of sigma [default=%default]")
 
 parser.add_option("-H", "--hthr",
-              action="store", dest="hthr", type='float', default=5.0,
-              help="The high rejection threshold in units of sigma [default 5]")
+              action="store", dest="hthr", type='float', default=4.0,
+              help="The high rejection threshold in units of sigma [default=%default]")
 
 parser.add_option("-r", "--raw",
               action="store_true", dest="raw_flag", default=False,
-              help="Neither check FLAT type nor Readout-mode [default False]")    
+              help="Neither check FLAT type nor Readout-mode [default=%default]")    
 
 #parser.add_option("-D", "--master_dark",
 #              action="store", dest="master_dark", type='str',

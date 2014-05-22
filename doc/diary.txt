@@ -4275,6 +4275,29 @@ respues en iraf.net (ver arriba); lo añado al documento de instalación.
 que no son necesarios.
 
 
+21-Mayo-2014
+------------
+- Comienzo revisión (por n-ésima vez !!) del calBPM.py;
+(P) !!! OJO, no está bien, tiene muchas modificaciones para pruebas !!!!
+
+
+22-Mayo-2014
+------------
+- Sigo probado e investigando sobre BPM:
+    
+   -- calBPM.py no hay manera que lo haga bien, se suele quedar muy corta para Q1
+   -- ccdmask de IRAF se pasa !! da una mascara muy rara, con muchas bandas verticales !!!
+
+- Sin embargo,  encuentro un documento muy interesante sobre BPM para NIR en:
+
+http://www.gemini.edu/sciops/instruments/gsaoi/calibrations?q=node/11900
+
+- Además, respecto al cálculo del ZP, también encuentro algo
+interesante:
+
+http://www.gemini.edu/sciops/instruments/gsaoi/calibrations?q=node/11538
+
+
 
 
 PANIC computers installation
@@ -4699,6 +4722,11 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Implementar nueva rutina de BPM basada en Darks y Flats como en:
+
+http://www.gemini.edu/sciops/instruments/gsaoi/documents/GSAOI_BPM_forweb.pdf
+
+- Configurar el syslog para gestionar los logs de PAPI en el /tmp ???
 
 - Probar BPM y comparar con BD --> usar iraf.badpiximage task para convertir .pl to imagen
 - Rutina para master_flat ala skyflats !
