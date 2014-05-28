@@ -2836,7 +2836,7 @@ class ReductionSet(object):
         ########################################################################
         # 0 - Bad Pixels; two options:
         # To Fix: replace with a bi-linear interpolation from nearby pixels.
-        # To add to gainmap:  to set bad pixels to bkg lvl 
+        # To add to gainmap:  to set bad pixels to bkg level 
         # Both options are incompatible.
         ########################################################################
         if self.config_dict['bpm']['mode'].lower()=='none':

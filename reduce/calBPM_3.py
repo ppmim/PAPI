@@ -61,14 +61,18 @@ import misc.robust as robust
 
 class BadPixelMask(object):
     """
-    Generate a bad pixel mask from a set of darks with fixed exp. time, and
-    and set of dome flat images.
+    Generates a Bad Pixel Mask (BPM) from a set of darks with fixed exp. time,
+    and set of dome flat images. The output is a FITS file with the bad pixels 
+    coded with 1 and good pixels as 0.
+
+    - At least one set (>2) of darks or flats are required as input. 
+    - Inputs files can be MEF files.
 
     """
     
 
-    def __init__(self, dark_list, flat_list, outputfile=None, lthr=4.0, hthr=4.0, 
-                 temp_dir="/tmp"):
+    def __init__(self, dark_list, flat_list, outputfile=None, dthr=75.0, 
+                fthr=50.0, temp_dir="/tmp"):
         
         """
         Init method
@@ -88,10 +92,9 @@ class BadPixelMask(object):
         self.flat_list = flat_list
 
         # Default parameters values
-        self.lthr = float(lthr)
-        self.hthr = float(hthr)
+        self.dthr = float(dthr)
+        self.fthr = float(fthr)
         self.temp_dir = temp_dir
-        self.raw_flag = raw_flag
 
         if outputfile==None:
             dt = datetime.datetime.now()
@@ -106,10 +109,10 @@ class BadPixelMask(object):
          --------------------------      
          1. Combine all of the darks into a master --> HOT pixels
             1.1 Define the threshold as :  75% of (mean-3*sigma)
-            1.2 Mask (==1) pixels **above** the the threshold.
+            1.2 Mask (==1) pixels **above** the threshold.
          2. Combine all of the dome flats into a master --> COLD pixels
             2.1 Define the threshold as :  50% of (mean)
-            2.2 Mask (==1) pixels **below** the the threshold.
+            2.2 Mask (==1) pixels **below** the threshold.
          3. Combine the HOT and COLD masks
         """
         
@@ -119,103 +122,170 @@ class BadPixelMask(object):
         __epsilon = 1.0e-20
         
 
-        if len(self.dark_list)<2:
-            log.error('Not enough darks provided. At least 2 darks frames are required')
-            raise Exception("Not enough darks provided. At least 2 darks frames are required")
-        if len(self.dome_list)<2:
-            log.error('Not enough dome flats provided. At least 2 flat frames are required')
-            raise Exception("Not enough dome flats provided. At least 2 flat frames are required")
+        if self.dark_list==None and self.flat_list==None:
+            msg = "Neither Darks nor Flats images provided !"
+            log.error(msg)
+            raise Exception(msg)
+
+        if self.dark_list!=None and len(self.dark_list)<3:
+            log.error('Not enough darks provided. At least 3 darks frames are required')
+            raise Exception("Not enough darks provided. At least 3 darks frames are required")
+        
+        if self.flat_list!=None and len(self.flat_list)<3:
+            log.error('Not enough dome flats provided. At least 3 flat frames are required')
+            raise Exception("Not enough dome flats provided. At least 3 flat frames are required")
         
 
-        # STEP 1: Make the combine of dark frames
-        log.debug("Combining DARKS frames...")
-        dark_comb = self.temp_dir + '/darkcomb.fits'
-        misc.fileUtils.removefiles(dark_comb)
-        # Call IRAF task (it works with MEF or simple images)
-        iraf.mscred.darkcombine(input=("'"+"@"+self.dark_list+"'").replace('//','/'), 
-                        output=dark_comb, 
-                        combine='median', 
-                        ccdtype='', 
-                        process='no', 
-                        reject='sigclip', 
-                        subsets='no', 
-                        scale='exposure'
-                        )
-        log.debug("Created combined dark %s"%dark_comb)
+        if self.dark_list!=None:    
+            # STEP 1: Make the combine of dark frames
+            log.debug("Combining DARKS frames...")
+            dark_comb = self.temp_dir + '/darkcomb.fits'
+            misc.fileUtils.removefiles(dark_comb)
+            # Call IRAF task (it works with MEF or simple images)
+            # With next combine, cosmic rays are rejected.
+            iraf.mscred.darkcombine(input=("'"+"@"+self.dark_list+"'").replace('//','/'), 
+                            output=dark_comb, 
+                            combine='median', 
+                            ccdtype='', 
+                            process='no', 
+                            reject='sigclip', 
+                            scale='exposure'
+                            )
+            log.debug("Created combined Dark %s"%dark_comb)
 
-        # STEP 1.1: Define the threshold as :  75% of (mean-3*sigma)
-        dark = pyfits.open(dark_comb)
-        mean = robust.mean(dark[0].data)
-        std = robust.std(dark[0].data)
-        dark_threshold = (mean + 3*std)*0.75
-        log.debug("Dark MEAN (robust) of detector = %s"%mean)
-        log.debug("Dark STD (robust) of detector = %s"%std)
-        log.debug("Dark Threshold = %s"%dark_threshold)
+            # STEP 1.1: Define the threshold as: 75% of (mean-3*sigma)
+            dark = pyfits.open(dark_comb)
+            nExt = 1 if len(dark)==1 else len(dark)-1
+            if nExt==1: nx1,nx2 = dark[0].data.shape
+            else: nx1,nx2 = dark[1].data.shape
+            bpm = numpy.zeros([nExt, nx1, nx2], dtype=numpy.uint8)
+            nbad_hot = numpy.zeros(nExt)
 
-        # STEP 1.2: Mask (==1) pixels **above** the the threshold.
-        bpm = numpy.zeros([dark[0].data.shape[0], dark[0].data.shape[1]], 
-                    dtype=numpy.uint8)
-        bpm[(dark > dark_threshold) | numpy.isnan(dark)]=1
-
+            # Loop over extensions
+            for i_nExt in range(0, nExt):
+                log.info("*** Detector %d"%(i_nExt+1))
+                ext = i_nExt + int(nExt>1)
+                median = numpy.median(dark[ext].data)
+                std = robust.std(dark[ext].data)
+                dark_threshold = (median + self.dthr*std)
+                #dark_threshold = (mean + 3*std)*(self.dthr/100.0)
+                log.debug("   Dark Median = %s"%median)
+                log.debug("   Dark STD = %s"%std)
+                log.debug("   Dark Threshold (median + D*sigma) = %s"%dark_threshold)
+ 
+                # STEP 1.2: Mask (==1) pixels **above** the threshold.
+                bpm[i_nExt, (dark[ext].data > dark_threshold) | numpy.isnan(dark[ext].data)] = 1
+                nbad_hot[i_nExt] = (bpm[i_nExt]==1).sum()
+                log.info("    # Hot-Bad pixels from Dark of detector %d : %d"
+                    %(i_nExt+1, nbad_hot[i_nExt]))
+        else:
+            nbad_hot = 0
+            log.info("# Hot-Bad pixels from Dark : No Darks provided !")
 
 
         # STEP 2: Make the combine of dome Flat frames
         # - Build the frame list for IRAF
-        log.debug("Combining Flat frames...")
-        flat_comb = self.temp_dir + '/flatcomb.fits'
-        misc.fileUtils.removefiles(flat_comb)
-        # Call IRAF task (it works with MEF or simple images)
-        iraf.mscred.flatcombine(input=("'"+"@"+self.flat_list+"'").replace('//','/'), 
-                        output=flat_comb, 
-                        combine='median', 
-                        ccdtype='', 
-                        process='no', 
-                        reject='sigclip', 
-                        subsets='no', 
-                        scale='mode'
-                        )
-        log.debug("Created combined flat %s"%flat_comb)
+        if self.flat_list!=None:    
+            log.debug("Combining Flat frames...")
+            flat_comb = self.temp_dir + '/flatcomb.fits'
+            misc.fileUtils.removefiles(flat_comb)
+            # Call IRAF task (it works with MEF or simple images)
+            try:
+                # With next combine, cosmic rays are rejected.
+                iraf.mscred.flatcombine(input=("'"+"@"+self.flat_list+"'").replace('//','/'), 
+                                output=flat_comb, 
+                                combine='median', 
+                                ccdtype='', 
+                                process='no', 
+                                reject='sigclip', 
+                                scale='mode',
+                                subsets='no'
+                                )
+                log.debug("Created combined Flat %s"%flat_comb)
+            except Exception,e:
+                raise e
 
-        # STEP 2.1: Define the threshold as :  75% of (mean-3*sigma)
-        flat = pyfits.open(flat_comb)
-        mean = robust.mean(flat[0].data)
-        std = robust.std(flat[0].data)
-        flat_threshold = (mean + 3*std)*0.75
-        log.debug("Flat MEAN (robust) of detector = %s"%mean)
-        log.debug("Flat STD (robust) of detector = %s"%std)
-        log.debug("Flat Threshold = %s"%flat_threshold)
+            flat = pyfits.open(flat_comb)
+            
+            nExt = 1 if len(flat)==1 else len(flat)-1
+            if nExt==1: nx1,nx2 = flat[0].data.shape
+            else: nx1,nx2 = flat[1].data.shape
+            nbad_cold = numpy.zeros(nExt)
 
-        # STEP 2.2: Mask (==1) pixels **below** the the threshold.
-        bpm[(flat < flat_threshold) | numpy.isnan(flat)]=1
+            if self.dark_list==None:
+                bpm = numpy.zeros([nExt, nx1, nx2], dtype=numpy.uint8)
+                nbad_hot = numpy.zeros(nExt)
 
+            # Loop over extensions
+            for i_nExt in range(0, nExt):
+                log.info("*** Detector %d"%(i_nExt+1))
+                ext = i_nExt + int(nExt>1)
+                ## Note: robust mean is very similar to median
+                median = numpy.median(flat[ext].data)
+                std = robust.std(flat[ext].data)
+                # STEP 2.1: Define the thresholds as :  +- 50% of median
+                low_flat_threshold = median*(self.fthr/100.0)  # COLD pixels
+                high_flat_threshold =  median*(1+self.fthr/100.0) # HOT pixels
+                log.info("    Flat Median = %s"%median)
+                log.info("    Flat STD = %s"%std)
+                log.info("    Flat Low  Threshold = %s"%low_flat_threshold)
+                log.info("    Flat High Threshold = %s"%high_flat_threshold)
+
+
+                # STEP 2.2: Mask (==1) pixels below (cold) and above (hot) the 
+                # threshold. The resulted BPM is combined with bad pixel 
+                # from dark frames.
+                bpm[i_nExt, (flat[ext].data < low_flat_threshold) | 
+                            (flat[ext].data > high_flat_threshold) |
+                            numpy.isnan(flat[ext].data)] = 1
+
+                nbad_cold[i_nExt] = (bpm[i_nExt]==1).sum() - nbad_hot[i_nExt]
+                
+                log.info("    # Cold-Bad pixels from Flats of detector %d: %d"
+                        %(i_nExt+1, nbad_cold[i_nExt]))
+        else:
+            nbad_cold = 0
+            log.info("# Cold-Bad pixels from Flats : No Flats provided !")
 
         # Show stats
-        nbad = (bpm==1).sum()
-        badfrac = float(nbad/float(dark[0].data.size)
-        log.info("# Bad pixels : %f"%(nbad))
-        log.info("Fraction Bad pixel : %f"%(badfrac))
+        for i_nExt in range(0, nExt):
+            nbad = (bpm[i_nExt]==1).sum()
+            badfrac = float(nbad/float(bpm[i_nExt].size))
+            log.info("# Bad pixels of detector %d: %d"%(i_nExt+1, nbad))
+            log.info("Fraction Bad pixel of detector %d: %f"%(i_nExt+1, badfrac))
 
         # STEP 6: Save the BPM ---
         misc.fileUtils.removefiles(self.output)
         hdulist = pyfits.HDUList()     
-        hdr0 = pyfits.getheader(flat_list[0])
+        if self.flat_list!=None: hdr0 = flat[0].header
+        else: hdr0 = dark[0].header
+
         prihdu = pyfits.PrimaryHDU (data = None, header = None)
         try:
-            prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
-            prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
-            prihdu.header.set('CAMERA', hdr0['CAMERA'])
-            prihdu.header.set('MJD-OBS', hdr0['MJD-OBS'])
-            prihdu.header.set('DATE-OBS', hdr0['DATE-OBS'])
-            prihdu.header.set('DATE', hdr0['DATE'])
-            prihdu.header.set('UT', hdr0['UT'])
-            prihdu.header.set('LST', hdr0['LST'])
-            prihdu.header.set('ORIGIN', hdr0['ORIGIN'])
-            prihdu.header.set('OBSERVER', hdr0['OBSERVER'])
+            if 'INSTRUME' in hdr0: prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
+            if 'TELESCOP' in hdr0: prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
+            if 'CAMERA' in hdr0: prihdu.header.set('CAMERA', hdr0['CAMERA'])
+            if 'MJD-OBS' in hdr0: prihdu.header.set('MJD-OBS', hdr0['MJD-OBS'])
+            if 'DATE-OBS' in hdr0: prihdu.header.set('DATE-OBS', hdr0['DATE-OBS'])
+            if 'DATE' in hdr0: prihdu.header.set('DATE', hdr0['DATE'])
+            if 'UT' in hdr0: prihdu.header.set('UT', hdr0['UT'])
+            if 'LST' in hdr0: prihdu.header.set('LST', hdr0['LST'])
+            if 'ORIGIN' in hdr0: prihdu.header.set('ORIGIN', hdr0['ORIGIN'])
+            if 'OBSERVER' in hdr0: prihdu.header.set('OBSERVER', hdr0['OBSERVER'])
         except Exception,e:
             log.warning("%s"%str(e))
 
         prihdu.header.set('PAPITYPE','MASTER_BPM','TYPE of PANIC Pipeline generated file')
-        prihdu.header.add_history('BPM created from %s' % good_flats)
+        
+        src_files = []
+        if self.dark_list:
+            src_files = [line.replace( "\n", "") for line in 
+                                        fileinput.input(self.dark_list)]
+        if self.flat_list:
+            src_files+= [line.replace( "\n", "") for line in 
+                                        fileinput.input(self.flat_list)]
+        
+        prihdu.header.add_history('BPM created from %s' % src_files)
 
         if nExt>1:
             prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
@@ -230,11 +300,11 @@ class BadPixelMask(object):
                 del hdu
         else:
             prihdu.scale('int16') # important to set first data type
-            prihdu.data = bpm[0]
+            prihdu.data = bpm
             hdulist.append(prihdu)
          
         
-        # write FITS
+        # write bpm as FITS file (0==good pixels, 1==bad pixels)
         try:
             hdulist.writeto(self.output)
             hdulist.close(output_verify='ignore')
@@ -253,8 +323,11 @@ class BadPixelMask(object):
 ###############################################################################
 usage = "usage: %prog [options] "
 desc = """
-Generate a bad pixel mask from a set of darks with fixed exp. time, and
-and set of dome flat images.
+Creates a bad pixel mask (BPM) from a set of darks with fixed exp. time, and
+and set of dome flat images. The output is a FITS file with the bad pixels coded 
+with 1 and good pixels as 0.
+At least one set (>2) of darks or flats are required as input. Inputs files can
+be MEF files.
 """
 
 parser = OptionParser(usage, description=desc)
@@ -262,22 +335,24 @@ parser = OptionParser(usage, description=desc)
                
 parser.add_option("-d", "--darks_source",
               action="store", dest="darks_file_list",
-              help="list of input (optionally dark corrected) darks images..")
+              help="list of input Darks images (at least 3)")
+
 parser.add_option("-f", "--flats_source",
               action="store", dest="flats_file_list",
-              help="list of input (optionally flats corrected) dome flat images..")
+              help="list of input (optionally flats corrected) Dome Flat"
+              " images (at least 3)")
 
 parser.add_option("-o", "--output",
-              action="store", dest="output_filename", 
-              help="The output bad pixel mask.")
+              action="store", dest="output_filename", type='str',   
+              help="The output bad pixel mask (optional)")
 
-parser.add_option("-L", "--lthr",
-              action="store", dest="lthr", type='float', default=4.0,
-              help="The low rejection threshold in units of sigma [default=%default]")
+parser.add_option("-D", "--dark_threshold",
+              action="store", dest="dthr", type='float', default=75.0,
+              help="The Dark rejection threshold (below %-ile cut) [default=%default]")
 
-parser.add_option("-H", "--hthr",
-              action="store", dest="hthr", type='float', default=4.0,
-              help="The high rejection threshold in units of sigma [default=%default]")
+parser.add_option("-F", "--flat_threshold",
+              action="store", dest="fthr", type='float', default=50.0,
+              help="The Flat rejection threshold (above %-ile cut) [default=%default]")
 
 
 ################################################################################
@@ -297,7 +372,7 @@ def main(arguments=None):
         return 2 # used for command line syntax errors
     
     # Check mandatory arguments
-    if not options.output_filename or not options.source_file_list:
+    if (not options.darks_file_list and not options.flats_file_list):
         parser.print_help()
         parser.error("incorrect number of arguments " )
         return 2
@@ -307,14 +382,11 @@ def main(arguments=None):
         print "Error. The output file '%s' already exists."  % \
               (options.output_filename)
         return 1
-    #if options.master_dark:
-    #    print "Sorry, dark subtraction not yet implemented."
-    #    return 1
-    
+
     try:
-        bpm = BadPixelMask(options.dark_list, options.flat_list,
+        bpm = BadPixelMask(options.darks_file_list, options.flats_file_list,
                         options.output_filename, 
-                        options.lthr, options.hthr)
+                        options.dthr, options.fthr)
         bpm.create()
     except Exception, e:
         log.error("Error running BPM: %s"%str(e))
