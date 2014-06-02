@@ -4340,6 +4340,9 @@ pues parece que la suya es más conservadora.
 - Otra pregunta importante es, y como usar el BPM en PAPI ???? 
 (P) --> ahora está claro en paso 0 de reduceSingleObj() ---> añadir a la documentación !!!!
 
+29-Mayo-2014
+------------
+- Probar y mejorar rutina health.py ; migrar IRDR:cubemean a IRAF:imcombine !!!
 
 
 PANIC computers installation

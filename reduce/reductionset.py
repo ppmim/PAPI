@@ -2927,9 +2927,11 @@ class ReductionSet(object):
         # wrt mode of chip 1 to get gain differences, set bad pixels, 
         # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
         # pixels deviating >30%(?),...
-        # do_normalization=False because it is suppossed that FF is already normalized
-        g = reduce.calGainMap.GainMap(local_master_flat, gainmap, bpm=master_bpm_4gain, 
-                                    do_normalization=False, # because it is suppossed that FF is already normalized 
+        # do_normalization=False because it is suppossed that FF is already 
+        # normalized.
+        g = reduce.calGainMap.GainMap(local_master_flat, gainmap, 
+                                    bpm=master_bpm_4gain, 
+                                    do_normalization=False,  
                                     mingain=mingain, maxgain=maxgain,
                                     nxblock=nxblock, nyblock=nyblock,
                                     nsigma=nsigma)
@@ -2953,14 +2955,6 @@ class ReductionSet(object):
                 gain_data[badpix_p] = 0
                 gh.set('HISTORY','Combined with BPM:%s'%master_bpm_4gain)
                 pyfits.writeto(gainmap, gain_data, header=gh, clobber=True)
-                #iraf.imarith(operand1=gainmap,
-                #  operand2=master_bpm_4gain,
-                #  op='*',
-                #  result=gainmap.replace(".fits","_bpm.fits"),
-                #  verbose='yes'
-                #  )
-                # replace old gain file
-                #shutil.move(gainmap + "_conv.fits", gainmap)
         
         ########################################################################
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 

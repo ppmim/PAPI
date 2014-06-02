@@ -28,7 +28,7 @@
 #
 # Tools used:
 #
-#    IRAF
+#    PyRAF
 #
 # Created    : 29/10/2012    jmiguel@iaa.es -
 # Last update: 
@@ -149,7 +149,7 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     if not os.path.exists(file_of_frames):
         raise Exception("File does not exists")
 
-    irdr_path = "/home/panic/DEVELOP/PIPELINE/PANIC/trunk/irdr/bin"
+    irdr_path = "/home/panic/DEVELOP/papi/irdr/bin"
     outweight = "/tmp/weight.fits"
     
     # Compute the outframe
@@ -173,6 +173,8 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     else:
         new_file_of_frames = file_of_frames
     
+
+
     # (use IRDR::cubemean)
     prog = irdr_path+"/cubemean "
     cmd  = prog + " " + new_file_of_frames + " " + outframe + " " + outweight + \
@@ -289,6 +291,11 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
       
     # check window-shape
     pf = pyfits.open(filelist[0])
+    if len(pf)>1:
+        msg = "MEF files are not supported. Expected a 4kx4k single image."
+        log.error(msg)
+        raise Exception(msg)
+
     if not (x1 < pf[0].data.shape[0] and x2 < pf[0].data.shape[0] and 
         y1 < pf[0].data.shape[1] and y2 < pf[0].data.shape[1]):
         raise Exception("Wrong window definition; check image and window size")
@@ -409,18 +416,18 @@ if __name__ == "__main__":
     # Get and check command-line options
         
     usage = "usage: %prog [options] arg1 arg2 ..."
-    desc = "Compute the Gain and Noise from a set of flat images grouped in \
-    packets and with increased level of Integration Time"
+    desc = """Compute the Gain and Noise from a set of Flat images grouped in
+packets and with increased level of Integration Time."""
     
     parser = OptionParser(usage, description=desc)
     
     parser.add_option("-i", "--input_images",
                   action="store", dest="input_images", 
-                  help="input image list (darks and flats")
+                  help="Input image list (single non-integrated flats).")
     
     parser.add_option("-w", "--window",
                   action="store", dest="window", type=str,
-                  help="Window to use for computations (default = %default)",
+                  help="Window to use for computations (default = %default).",
                   default='full-detector')
     
     parser.add_option("-s", "--start_packet",
@@ -437,12 +444,8 @@ if __name__ == "__main__":
                   
     parser.add_option("-o", "--output",
                   action="store", dest="output_file", 
-                  help="output plot filename (default = %default)",
+                  help="Output plot filename (default = %default)",
                   default="health_check.pdf")
-    
-    parser.add_option("-v", "--verbose",
-                  action="store_true", dest="verbose", default=True,
-                  help="verbose mode [default=%default]")
     
                                 
     (options, args) = parser.parse_args()
