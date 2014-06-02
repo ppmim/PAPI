@@ -239,7 +239,7 @@ class SuperSkyFlat(object):
                 # Do the normalization wrt chip 1
                 for i_ext in xrange(1, len(f)):
                     #f[i_ext].data = f[i_ext].data / norm_value
-                    f[i_ext].data = robust.r_division(f[i_ext].data, norm_value)
+                    f[i_ext].data = robust.r_divisionN(f[i_ext].data, norm_value)
                     norm_mean = robust.mean(f[i_ext].data)
                     if norm_mean<0.8 or norm_mean>1.2:
                         log.warning("Wrong [ext]normalized super flat obtained. Mean value =%f"%norm_mean)
@@ -271,12 +271,13 @@ class SuperSkyFlat(object):
                 else: norm_value = rob_mean
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (value = %d)"%norm_value
                 
-
+                print "PASO1"
                 #f[0].data = f[0].data / rob_mean
                 f[0].data = robust.r_division(f[0].data, norm_value)
                 norm_mean = robust.mean(f[0].data)
                 if norm_mean<0.8 or norm_mean>1.2:
                     log.warning("Wrong normalized super flat obtained. Mean value =%f"%norm_mean)
+                print "PASO2"
                     
             # O2k or split PANIC frame   
             else:

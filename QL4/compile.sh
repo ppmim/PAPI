@@ -8,7 +8,7 @@ export QT_GRAPHICSSYSTEM=native
 pyuic4 panicQL.ui > panicQL.py
 
 if [[ `hostname -s` = udit22* ]]; then
-	python runQL.py  -c ../config_files/papi.cfg
+	python runQL.py  -c ../config_files/papi_panic2_PANIC.cfg
 else
 	#python runQL.py  -c ../config_files/papi_irws2.cfg
 	python runQL.py  -c ../config_files/papi_panic2_PANIC.cfg

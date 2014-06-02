@@ -539,3 +539,145 @@ def polyfit(inputX, inputY, order, iterMax=25):
         else:
             diff = diff2
     return cc
+
+
+##
+## Other robust stats estimators
+##
+
+def robust_mean(x):
+    y = x.flatten()
+    n = len(y)
+    y.sort()
+    ind_qt1 = round((n+1)/4.)
+    ind_qt3 = round((n+1)*3/4.)
+    IQR = y[ind_qt3]- y[ind_qt1]
+    lowFense = y[ind_qt1] - 1.5*IQR
+    highFense = y[ind_qt3] + 1.5*IQR
+    ok = (y>lowFense)*(y<highFense)
+    yy=y[ok]
+    return yy.mean(dtype='double')
+
+#-------Robust Standard Deviation---
+
+def robust_std(x):
+    y = x.flatten()
+    n = len(y)
+    y.sort()
+    ind_qt1 = round((n+1)/4.)
+    ind_qt3 = round((n+1)*3/4.)
+    IQR = y[ind_qt3]- y[ind_qt1]
+    lowFense = y[ind_qt1] - 1.5*IQR
+    highFense = y[ind_qt3] + 1.5*IQR
+    ok = (y>lowFense)*(y<highFense)
+    yy=y[ok]
+    return yy.std(dtype='double')
+
+#-------Robust variance---
+
+def robust_var(x):
+    y = x.flatten()
+    n = len(y)
+    y.sort()
+    ind_qt1 = round((n+1)/4.)
+    ind_qt3 = round((n+1)*3/4.)
+    IQR = y[ind_qt3]- y[ind_qt1]
+    lowFense = y[ind_qt1] - 1.5*IQR
+    highFense = y[ind_qt3] + 1.5*IQR
+    ok = (y>lowFense)*(y<highFense)
+    yy=y[ok]
+    return yy.var(dtype='double')
+
+#----line fit------------------------
+"""
+y = a+bx.
+input:  y, x
+return: a,b, sd_a, sd_b, R^2
+This is used where there is no measurement errors on x, y
+http://mathworld.wolfram.com/LeastSquaresFitting.html
+http://en.wikipedia.org/wiki/R-squared
+"""
+
+def linefit(x,y):
+    """
+    a,b,SEa,SEb,chi2 = linefit(x)
+    """
+    n=len(x)
+    SSxx = n*np.var(x,dtype='double')
+    SSyy = n*np.var(y,dtype='double')
+    ybar = np.mean(y,dtype='double')
+    xbar = np.mean(x,dtype='double')
+    SSxy = np.sum(x*y,dtype='double') - n*xbar*ybar
+    b = SSxy/SSxx
+    a = ybar - b*xbar
+    s = np.sqrt((SSyy-SSxy**2/SSxx)/(n-2))
+    SEa = s*np.sqrt(1/n+xbar**2/SSxx)
+    SEb = s/np.sqrt(SSxx)
+    SStot = np.sum((y-ybar)**2,dtype='double')
+    f = a + b*x
+    SSerr = np.sum((y-f)**2,dtype='double')
+    Rsq = 1-SSerr/SStot
+    return a,b,SEa,SEb,Rsq
+
+
+#---weighted LSQ fit to straightline based on NR---
+""" 
+y = a +b x, 
+input:  x, y, yerr
+return: a, b, sd_a, sd_b, chi2
+See NR chapter 15
+"""
+
+def linfit(xx,yy,yyerr):
+    if len(yy[np.abs(yy)>0]) < 10:
+        b=0
+        a=0
+        SEa=0
+        SEb=0
+        chi2=999
+        return a,b,SEa,SEb,chi2
+    else:
+        ok=yyerr > 0
+        x = xx[ok]
+        y = yy[ok]
+        yerr = yyerr[ok]
+        n=len(x)
+        S=np.sum(1/yerr**2,dtype='double')
+        Sx = np.sum(x/yerr**2,dtype='double')
+        Sy = np.sum(y/yerr**2,dtype='double')
+        Sxx = np.sum(x**2/yerr**2,dtype='double')
+        Sxy = np.sum((x*y)/(yerr**2),dtype='double')
+        delta = S*Sxx - Sx**2
+        a = (Sxx*Sy-Sx*Sxy)/delta
+        b = (S*Sxy-Sx*Sy)/delta
+        SEa = np.sqrt(Sxx/delta)
+        SEb = np.sqrt(S/delta)
+        chi2 = np.sum((y-(a + b*x))**2/yerr**2,dtype='double')/(n-2.)
+        return a,b,SEa,SEb,chi2
+
+def MAD(a, c=0.6745, axis=None):
+    """
+    Median Absolute Deviation along given axis of an array:
+
+    median(abs(a - median(a))) / c
+
+    c = 0.6745 is the constant to convert from MAD to std; it is used by
+    default
+
+    """
+    import numpy.ma as ma
+    
+    a = ma.masked_where(a!=a, a)
+    if a.ndim == 1:
+        d = ma.median(a)
+        m = ma.median(ma.fabs(a - d) / c)
+    else:
+        d = ma.median(a, axis=axis)
+        # I don't want the array to change so I have to copy it?
+        if axis > 0:
+            aswp = ma.swapaxes(a,0,axis)
+        else:
+            aswp = a
+        m = ma.median(ma.fabs(aswp - d) / c, axis=0)
+
+    return m

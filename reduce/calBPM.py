@@ -27,13 +27,12 @@
 # Created    : 25/06/2009    jmiguel@iaa.es
 # Last update: 25/06/2009    jmiguel@iaa.es
 #              03/03/2010    jmiguel@iaa.es Added READMODE checking
-#              21/02/2014    jmiguel@iaa.es Added support for MEF files 
+#              21/02/2014    jmiguel@iaa.es Added support for MEF files
+#              28/05/2014    jmiguel@iaa.es Improvements for thresholds. 
 # 
 # TODO:
-#  NOT USED !!!! 
-# - include master dark subtraction !!!
-# - NO FUNCIONA BIEN, muy conservador ??! no da mascaras buenas !! 
-#   da pocos pixeles malos ????
+#  - include master dark subtraction !!!
+# 
 ################################################################################
 
 
@@ -61,21 +60,26 @@ from misc.paLog import log
 import datahandler
 import misc.fileUtils
 import misc.utils as utils
+import misc.robust as robust
+
 
 class BadPixelMask(object):
     """
-        Generate a bad pixel mask from a list of dark corrected dome flat images
+        Generate a bad pixel mask from a list of dark corrected 
+        dome flat images.
         (extracted from VIRCAM pipeline, vircam_genbpm)
     
         A list of dark corrected dome flat images is given. A master flat 
         is created from all the input flats in the list. Each input flat is 
-        then divided by the master. Bad pixels are marked on the new image as 
+        then divided by the master. Bad  pixels are marked on the new image as 
         those that are above or below the threshold (in sigma) in the new image. 
         Any pixel which has been marked as bad for more than a quarter of the 
         input images is defined as bad in the output mask. 
         
     """
-    def __init__(self, input_file, outputfile=None, lthr=3.0, hthr=5.0, 
+    
+
+    def __init__(self, input_file, outputfile=None, lthr=4.0, hthr=4.0, 
                  temp_dir="/tmp", raw_flag=False):
         
         self.input_file = input_file # file with the list of files to read and process 
@@ -99,11 +103,11 @@ class BadPixelMask(object):
          1. Combine all of the dome flats into a master
          2. Divide the resulting image by its median -->normalized MASTER_FLAT
          3. Create and zero the rejection mask
-         4. Loop for all input images and divide each by the master flat
-            
-            4.1 Divide the resulting image by its median
-            4.2 Get the standard deviation of the image
-            4.3 Define the bad pixels
+         4. Loop for all input images
+            4.1 Divide each by the nomalized master flat
+            4.2 Divide the resulting image by its median
+            4.3 Get the standard deviation of the image
+            4.4 Define the bad pixels
             
          5. Go through the rejection mask and if a pixel has been marked bad 
             more than a set number of times, then it is defined as bad
@@ -111,7 +115,8 @@ class BadPixelMask(object):
         
         t = utils.clock()
         t.tic()
-        
+
+        __epsilon = 1.0e-20
         
         # Read the file list
         filelist = [line.replace( "\n", "") for line in fileinput.input(self.input_file)]
@@ -138,12 +143,15 @@ class BadPixelMask(object):
             good_flats = filelist                    
              
         if len(good_flats)<2:
-            log.error('Not enough dome flats provided. At least 2 good flat frames are required')
-            raise Exception("Not enough dome flats provided. At least 2 good flat frames are required")
+            msg = "Not enough dome flats provided. At least 2 good flat frames"\
+                  "are required"
+            log.error(msg)
+            raise Exception(msg)
         
 
-        # Due a bug in PyRAF that does not allow a long list of files separated with commas as 'input' argument
-        # we need to build again a text file with the good_files
+        # Due a bug in PyRAF that does not allow a long list of files separated 
+        # with commas as 'input' argument we need to build again a text file 
+        # with the good_files.
         if len(good_flats)!=len(filelist):
             flats = self.temp_dir + "/flats.txt"
             ftemp = open(flats,"w")
@@ -158,6 +166,7 @@ class BadPixelMask(object):
         flat_comb = self.temp_dir + '/flatcomb.fits'
         misc.fileUtils.removefiles(flat_comb)
         # Call IRAF task (it works with MEF or simple images)
+        # With next combine, cosmic rays are rejected.
         iraf.mscred.flatcombine(input=("'"+"@"+flats+"'").replace('//','/'), 
                         output=flat_comb, 
                         combine='median', 
@@ -182,60 +191,51 @@ class BadPixelMask(object):
                 median = numpy.median(flat_comb_hdu[i_nExt+1].data)
                 flat_comb_hdu[i_nExt+1].data = flat_comb_hdu[i_nExt+1].data / median
 
-        if nExt==1:            
-            nx1 = flat_comb_hdu[0].header['NAXIS1']
-            nx2 = flat_comb_hdu[0].header['NAXIS2']
-        else:
-            # we suppose all extension have the same shape
-            nx1 = flat_comb_hdu[1].header['NAXIS1']
-            nx2 = flat_comb_hdu[1].header['NAXIS2']
-
-
+                
         # STEP 3: Create and zero the rejection mask
+        if nExt==1: nx1,nx2 = flat_comb_hdu[0].data.shape
+        else: nx1,nx2 = flat_comb_hdu[1].data.shape
         bpm = numpy.zeros([nExt, nx1, nx2], dtype=numpy.uint8)
 
-
-        # A TEST !!!!
-        #low = self.lthr
-        #high = self.hthr
-        #bpm[ 0, (flat_comb_hdu[0].data < low) | (flat_comb_hdu[0].data > high)]+=1
-
-        #import pdb
-        #pdb.set_trace()
-        
-
-        # STEP 4: Loop for all input images and divide each by the master
+        # STEP 4: Loop for all input images and divide each by the master norm Flat
         tmpf = numpy.zeros([nx1, nx2], dtype=numpy.float32)
-        for flat in []:#good_flats:
-            log.debug("Processing file %s"%flat)
+        for flat in good_flats:
+            log.debug("*** Processing file %s"%flat)
             f_i = pyfits.open(flat)
-            #ceros=(mflat[0].data==0).sum()
-            #print "CEROS=", ceros
             for i_nExt in range(0, nExt):
+                log.info("*** Detector %d"%(i_nExt+1))
                 if nExt==1:
                     # to avoid zero division error
-                    mydata = numpy.where(flat_comb_hdu[0].data==0, 0.0001, 
-                                         flat_comb_hdu[0].data) 
+                    mydata = numpy.where(flat_comb_hdu[0].data<__epsilon, 
+                                        numpy.NaN, 
+                                        flat_comb_hdu[0].data) 
                     tmpf = f_i[0].data/mydata
                 else:
                     # to avoid zero division error
-                    mydata = numpy.where(flat_comb_hdu[i_nExt+1].data==0, 0.0001, 
-                                         flat_comb_hdu[i_nExt+1].data) 
+                    mydata = numpy.where(flat_comb_hdu[i_nExt+1].data<__epsilon, 
+                                        numpy.NaN, 
+                                        flat_comb_hdu[i_nExt+1].data) 
                     tmpf = f_i[i_nExt+1].data/mydata
 
-                mdat = numpy.ma.masked_array(tmpf, numpy.isnan(tmpf))
+                #mdat = numpy.ma.masked_array(tmpf, numpy.isnan(tmpf))
+                mdat = tmpf
                 std = numpy.std(mdat)
-                median = numpy.median(tmpf)
-                mad = numpy.median(numpy.abs(tmpf - median))
+                r_std = robust.std(mdat)
+                median = numpy.median(mdat)
+                mad = numpy.median(numpy.abs(mdat - median))
+                # 1/0.6745 is the constant to convert from MAD to std
                 mad*=1.4826
             
-                print ">>MEDIAN=",median
-                print ">>STD=",std
-                print ">>MAD=",mad
+                log.info("    Median: %s "%median)
+                log.info("    STD: %s"%std)
+                log.info("    STD(robust): %s"%r_std)
+                log.info("    MAD: %s"%mad)
             
-                #log.debug("Divide each flatted flat by its median")
+                # Normalize the flattened image
                 tmpf = tmpf/median
-                
+                r_std2 = robust.std(tmpf)
+                #print ">>R_STD2=",r_std2
+
                 # Debug - save the normalized flat
                 #misc.fileUtils.removefiles(flat.replace(".fits","_N.fits"))
                 #hdulist = pyfits.HDUList()
@@ -247,18 +247,24 @@ class BadPixelMask(object):
                 #hdulist.close(output_verify='ignore')
                 # End debug
 
+                # Define the H and L thresholds
                 low = 1.0 - self.lthr*mad/median
                 high = 1.0 + self.hthr*mad/median
                 
-                #low = self.lthr
-                #high = self.hthr
-                    
-                print ">>LOW=", low
-                print ">>HIGH=", high
+                #low = 1.0 - self.lthr*r_std2
+                #high = 1.0 + self.hthr*r_std2
+                
+                log.info("    Low Threshold: %f"%low)
+                log.info("    High Threshold: %f"%high)
             
+                # Count the number of NaN values (due to < __epsilon)
+                n_nan = numpy.count_nonzero(numpy.isnan(tmpf))
+                #print ">>#_NaN=",n_nan
+
                 # STEP 4.3 Define the bad pixels
                 tmpf.shape = nx1,nx2
-                bpm[ i_nExt, (tmpf < low) | (tmpf > high)]+=1
+                #bpm[ i_nExt, numpy.isnan(tmpf)]+=1
+                bpm[ i_nExt, (tmpf < low) | (tmpf > high) | numpy.isnan(tmpf)]+=1
             log.debug("BPM updated with current flat %s", flat)
             f_i.close()
             
@@ -268,16 +274,15 @@ class BadPixelMask(object):
         # more than a set number of times (a quarter of number of images), 
         # then it is defined as bad.
         nbmax = numpy.maximum(2, len(good_flats)/4)
-        #nbmax = 0 ### TEST !!!
-        bpm = numpy.where(bpm>nbmax, 1, 0) # bad pixel set to 1
+        bpm = numpy.where(bpm>nbmax, 1, 0) # bad pixels set to 1
 
         # Show stats
         nbad = numpy.zeros(nExt)
         for i_nExt in range(0, nExt):
             nbad[i_nExt] = (bpm[i_nExt]==1).sum()
             badfrac = float(nbad[i_nExt])/float(nx1*nx2)
-            log.info("# Bad pixels (extension %s): %f"%(i_nExt, nbad[i_nExt]))
-            log.info("Fraction Bad pixel (extesion %s): %f"%(i_nExt,badfrac))
+            log.info("# Bad pixels (detector %s): %f"%(i_nExt+1, nbad[i_nExt]))
+            log.info("Fraction Bad pixel (detector %s): %f"%(i_nExt+1, badfrac))
         
         # STEP 6: Save the BPM --- TODO MEF !!!!
         misc.fileUtils.removefiles(self.output)
@@ -285,16 +290,16 @@ class BadPixelMask(object):
         hdr0 = pyfits.getheader(good_flats[0])
         prihdu = pyfits.PrimaryHDU (data = None, header = None)
         try:
-            prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
-            prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
-            prihdu.header.set('CAMERA', hdr0['CAMERA'])
-            prihdu.header.set('MJD-OBS', hdr0['MJD-OBS'])
-            prihdu.header.set('DATE-OBS', hdr0['DATE-OBS'])
-            prihdu.header.set('DATE', hdr0['DATE'])
-            prihdu.header.set('UT', hdr0['UT'])
-            prihdu.header.set('LST', hdr0['LST'])
-            prihdu.header.set('ORIGIN', hdr0['ORIGIN'])
-            prihdu.header.set('OBSERVER', hdr0['OBSERVER'])
+            if 'INSTRUME' in hdr0: prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
+            if 'TELESCOP' in hdr0: prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
+            if 'CAMERA' in hdr0: prihdu.header.set('CAMERA', hdr0['CAMERA'])
+            if 'MJD-OBS' in hdr0: prihdu.header.set('MJD-OBS', hdr0['MJD-OBS'])
+            if 'DATE-OBS' in hdr0: prihdu.header.set('DATE-OBS', hdr0['DATE-OBS'])
+            if 'DATE' in hdr0: prihdu.header.set('DATE', hdr0['DATE'])
+            if 'UT' in hdr0: prihdu.header.set('UT', hdr0['UT'])
+            if 'LST' in hdr0: prihdu.header.set('LST', hdr0['LST'])
+            if 'ORIGIN' in hdr0: prihdu.header.set('ORIGIN', hdr0['ORIGIN'])
+            if 'OBSERVER' in hdr0: prihdu.header.set('OBSERVER', hdr0['OBSERVER'])
         except Exception,e:
             log.warning("%s"%str(e))
 
@@ -558,8 +563,12 @@ then divided by the master. Bad pixels are marked on the new image as
 those that are above or below the threshold (in sigma) in the new image. 
 Any pixel which has been marked as bad for more than a quarter of the 
 input images is defined as bad in the output mask.
-This module receives a series of FITS images (darks) with increasing exposure 
-time and creates the master dark model and computes several statistics.
+
+The output mask (BPM) created is a FITS file with same size than input images
+and with 0's for Good pixels and 1's for Bad pixels.
+
+Note: MEF files are supported as input files.
+
 """
 parser = OptionParser(usage, description=desc)
  
@@ -570,27 +579,19 @@ parser.add_option("-s", "--source",
 
 parser.add_option("-o", "--output",
               action="store", dest="output_filename", 
-              help="The output bad pixel mask.")
+              help="The output bad pixel mask (0's for good, 1's for bad pixels)")
 
 parser.add_option("-L", "--lthr",
-              action="store", dest="lthr", type='float', default=3.0,
-              help="The low rejection threshold in units of sigma [default 3]")
+              action="store", dest="lthr", type='float', default=10.0,
+              help="The low rejection threshold in units of sigma [default=%default]")
 
 parser.add_option("-H", "--hthr",
-              action="store", dest="hthr", type='float', default=5.0,
-              help="The high rejection threshold in units of sigma [default 5]")
+              action="store", dest="hthr", type='float', default=10.0,
+              help="The high rejection threshold in units of sigma [default=%default]")
 
 parser.add_option("-r", "--raw",
               action="store_true", dest="raw_flag", default=False,
-              help="Neither check FLAT type nor Readout-mode [default False]")    
-
-#parser.add_option("-D", "--master_dark",
-#              action="store", dest="master_dark", type='str',
-#              help="[Optional] Master dark frame to subtract")    
-
-#parser.add_option("-S", "--show_stats",
-#              action="store_true", dest="show_stats", default=False,
-#              help="Show statistics [default False]")    
+              help="Neither check FLAT type nor Readout-mode [default=%default]")    
 
 
 
@@ -635,6 +636,6 @@ def main(arguments=None):
         
 ###############################################################################
 if __name__ == "__main__":
-    print 'Start BadPixelMap....'
+    print 'Starting BadPixelMap....'
     sys.exit(main())
         
