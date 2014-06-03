@@ -31,7 +31,7 @@
 #    PyRAF
 #
 # Created    : 29/10/2012    jmiguel@iaa.es -
-# Last update: 
+# Last update: 03/06/2014    jmiguel@iaa.es - Some improvements
 # TODO
 #       
 ################################################################################
@@ -55,59 +55,11 @@ import pylab
 # PAPI modules
 from misc.paLog import log
 from misc.utils import *
+import misc.robust as robust
 import datahandler
 from misc.print_table import print_table
 
-def stack_frames_np(frames, f_from, f_to, outframe, sigmaframe, 
-                  data_range_low, data_range_high, kappa):
-    """
-    Computes average, median or mode for stack of frames
-    
-    Parameters
-    ----------
-    frames: list
-        list of frames to be stacked
-    f_from: int
-        frame from start the stacking
-    f_to: int 
-        frame to end the stacking
-    outframe: str
-         filename where stack frame is saved to
-    sigmaframe: str 
-        filename where sigma frame is saved to
-    data_range_low: long 
-        min. value in range of accepted values in frame
-    data_range_high: long 
-        max. value in range of accepted values in frame
-    kappa: float 
-        number of sigmas to use in clipping during the stack
-    
-    Returns
-    -------
-    outframe, sigmaframe 
-    """
-    
-    # First, some checks
-    if len(frames)<2:
-        raise Exception("Not enough number of frames")
-    
-    #cube = numpy.zeros([n_stripes, height_st, width_st], dtype=numpy.float)
-    #data_out = numpy.zeros([n_stripes*height_st*2, width_st*2], dtype=numpy.float32)
-    #median = numpy.zeros([4], dtype=numpy.float32)
-    
-    for i_frame in frames:
-        try:
-            pf = pyfits.open(i_frame)
-        except Exception, e:
-            raise e
-        
-        if len(pf)>1:
-            raise Exception("MEF files not yet supported.")
-        
-        #cube[i] = f[0].data
-        
-            
-    return outframe, sigmaframe
+
 
 def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe, 
                   data_range_low, data_range_high, kappa):
@@ -149,7 +101,13 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     if not os.path.exists(file_of_frames):
         raise Exception("File does not exists")
 
-    irdr_path = "/home/panic/DEVELOP/papi/irdr/bin"
+    papi_home = os.getenv("PAPI_HOME")
+    if papi_home==None:
+        raise Exception("Cannot find PAPI_HOME environment")
+    else:
+        irdr_path = papi_home + "/irdr/bin"
+    
+    # next file really is not used nor created
     outweight = "/tmp/weight.fits"
     
     # Compute the outframe
@@ -199,7 +157,7 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
             
     
 def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-frame',
-                        out_filename="/tmp/hc_out.pdf"):
+                        out_filename="/tmp/hc_out.pdf", temp_dir="/tmp"):
     """ 
     Takes a input catalog (ascii file) listing all the files (flat_fields) to 
     be used in the gain and noise computation. 
@@ -233,7 +191,7 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
       - print pretty stats in output, not only plots
       - Do dark subtraction to input files (flat-fields)
       - Do computations per channel and/or detector
-      - Allow a custom window size (coordinates)
+      - Allow a custom coordinates for window definition
       
     """
     
@@ -276,12 +234,12 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
         area = [512, 512, 3584, 3584]
     else: # or 'full-frame'
         x1 = 10
-        x2 = 10
-        y1 = 4080
+        y1 = 10
+        x2 = 4080
         y2 = 4080
         area = [10, 10, 4080, 4080] 
     
-    print "Selected area = ", area
+    print "Selected area = [%d:%d, %d:%d]"%(x1,x2,y1,y2)
     print "Packet size = ", packet_size
     
     # check packet-range
@@ -301,20 +259,22 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
         raise Exception("Wrong window definition; check image and window size")
      
     #tmp_file, _ = tempfile.mkstemp()
-    tmp_file = "/tmp/packet.txt"
+    tmp_file = temp_dir + "/packet.txt"
     n = 0
     for packet in grouper(packet_size, filelist):
         if len(packet)==packet_size and not (None in packet):
             listToFile(packet, tmp_file)
             try:
-                stack_frames(tmp_file, 'median', f_from, f_to, "/tmp/stack%02d.fits"%n,
-                             "/tmp/stack_sigma%02d.fits"%n, 10, 100000, 3)    
+                stack_frames(tmp_file, 'median', f_from, f_to, 
+                    temp_dir+"/stack%02d.fits"%n,
+                    temp_dir+"/stack_sigma%02d.fits"%n, 
+                    10, 100000, 3)    
             except Exception, e:
                 raise e
             n = n + 1
 
             
-    #Get stats from images
+    # Get stats from images
     stat_values = {}
     itime = numpy.zeros([n], dtype=numpy.float32)
     signal = numpy.zeros([n], dtype=numpy.float32)
@@ -322,19 +282,19 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
     kw_time = 'ITIME'
     for i in range(n):
         try:
-            #print "Reading file %s"%("/tmp/stack%02d.fits"%i) 
-            pf = pyfits.open("/tmp/stack%02d.fits"%i)
-            pf2 = pyfits.open("/tmp/stack_sigma%02d.fits"%i)
+            log.debug("Reading file %s"%(temp_dir+"/stack%02d.fits"%i)) 
+            pf = pyfits.open(temp_dir + "/stack%02d.fits"%i)
+            pf2 = pyfits.open(temp_dir + "/stack_sigma%02d.fits"%i)
         except Exception, e:
-            log.error("Cannot open file %s"%("/tmp/stack%02d.fits"%i))
+            log.error("Cannot open file %s"%(temp_dir+"/stack%02d.fits"%i))
             continue
-        signal[i] = numpy.mean(pf[0].data[x1:x2, y1:y2])
-        std[i] = numpy.std(pf2[0].data[x1:x2, y1:y2])
+        signal[i] = robust.mean(pf[0].data[x1:x2, y1:y2])
+        std[i] = robust.mean(pf2[0].data[x1:x2, y1:y2])
         if kw_time in pf[0].header: 
             itime[i] = pf[0].header[kw_time]
-            
         else:
             itime[i] = NaN
+
         stat_values[i] = [itime[i], signal[i], std[i]]
         pf.close()
         pf2.close()
@@ -369,9 +329,9 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
     #Note: intercept = (RON/gain)**2 => RON = gain*sqrt(intercept)
     gain = 1.0 / b
     ron = gain/math.sqrt(math.fabs(a))
-    print "Gain = %s [e-/ADU]"%gain
-    print "RON = %s e-"%ron
-    print 
+    log.info("Gain = %f [e-/ADU]"%gain)
+    log.info("RON = %f e-"%ron)
+
     plt.title("Poly fit: %f X + %f  r=%f Gain=%s RON=%s" %(b, a, r, 
                                                            gain, ron))
     plt.xlabel("Signal / ADU")
@@ -390,7 +350,10 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
     pol = numpy.poly1d(res[0])
     plt.clf()
     plt.plot(itime, signal, '.', itime, pol(itime), '-')
+    
     full_well = numpy.max(signal[numpy.where( ((signal - pol(itime))/signal) < 0.05)]) 
+    log.info("Full-well = %f"%full_well)
+    
     plt.title("Poly fit: %f X + %f  r=%f Full-well=%s" %(b, a, r, full_well))
     plt.xlabel("ITime / s")
     plt.ylabel("Signal  / ADU")
@@ -425,11 +388,15 @@ packets and with increased level of Integration Time."""
                   action="store", dest="input_images", 
                   help="Input image list (single non-integrated flats).")
     
-    parser.add_option("-w", "--window",
-                  action="store", dest="window", type=str,
-                  help="Window to use for computations (default = %default).",
-                  default='full-detector')
-    
+    parser.add_option('-w', '--window',
+                      type='choice',
+                      action='store',
+                      dest='window',
+                      choices=['Q1', 'Q2', 'Q3', 'Q4', 'central', 'full'],
+                      default='full',
+                      help="Window/dectector to process: "
+                      "Q1, Q2, Q3, Q4, central, full [default: %default]")
+
     parser.add_option("-s", "--start_packet",
                   action="store", dest="start_packet", type=int, default=1,
                   help="File where start the packet (default=%default)")
@@ -446,6 +413,10 @@ packets and with increased level of Integration Time."""
                   action="store", dest="output_file", 
                   help="Output plot filename (default = %default)",
                   default="health_check.pdf")
+
+    parser.add_option("-t", "--temp_dir",
+                  action="store", dest="temp_dir", default="/tmp",
+                  help="Temporal directory (default = %default)")
     
                                 
     (options, args) = parser.parse_args()
@@ -463,7 +434,8 @@ packets and with increased level of Integration Time."""
     try:
         run_health_check(options.input_images, options.packet_size,
                          options.start_packet, options.end_packet, 
-                         options.window, options.output_file)
+                         options.window, options.output_file,
+                         options.temp_dir)
     except Exception, e:
         log.error("Some error while running Health-Check routine: %s"%str(e))
         sys.exit(0)

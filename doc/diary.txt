@@ -4345,6 +4345,81 @@ pues parece que la suya es más conservadora.
 - Probar y mejorar rutina health.py ; migrar IRDR:cubemean a IRAF:imcombine !!!
 
 
+02-Mayo-2014
+------------
+- Comienzo reducción de datos de 3er. ciclo de FOCUS de PANIC, después de que el
+segundo ciclo resultare no válido por una mala instalacion del detector y/o 
+anillo de "enfocado". Los datos están en:
+
+  /data1/PANIC/3rd_OPT_FOCUS
+
+- Mejora de la rutina applyDarkFlat.py, pues además de tener algún bug, no 
+contemplaba todos lo casos para la BPM.
+
+03-Mayo-2014
+------------
+- Continuo con la reducción e los datos de 3er. ciclo de FOCUS de PANIC, y 
+observo que en algunas imágenes de SCI (3,4,7, ...) y en los darks de 1.5s hay 
+un canal que ha dado una señal mala.
+
+Le envío a Conchi e Irene los datos reducidos para todos los angulos:
+
+/data1/PANIC/3rd_OPT_FOCUS/Conchi
+
+junto con los siguientes comentarios:
+
+"""
+- hay un canal (64x2048) en el detector 3 (arriba a la derecha) que a veces ha 
+dado valores malos en todo el canal; eso ha provocado que en algunas imágenes 
+(3,4, 7, ...) una fila de puntos de la máscara se vean afectados, llegando a o 
+"verse" bien. No se como llegará a afectar a las medidas, no obstante en la 
+imagen 1 (Tilt 0) eso no ocurre, por lo que podréis lanzar iraf:psfmeasure 
+sin problemas.
+
+- he creado el fichero all_files.txt por si queréis analizar todas las imágenes
+ del tirón con psfmeasure.
+
+- he mantenido la misma mascara de BadPixels que en el 1er. y 2do. ciclado 
+(la que obtuvo BD), aunque creo que dicha máscara es bastante conservadora, 
+pues creo que hay más píxeles malos. Intentaré hablar con él para ver como la 
+calcula.
+
+- sin ánimo de sugestionaros, mi impresión es que el foco de esta serie es peor.
+
+- las "imágenes" se mueven conforme se rota el instrumento, y al volver a su 
+posición original (Tilt 0), la "imagen" no vuelve a su posición original.
+
+- en general, sigo pensado que las imágenes están bastante "sucias", con mucha 
+cosmética y efectos (crosstalks, ghosts, ...) y no se muy bien si los detectores
+ no están bien "configurados", están dañados o bien el dañado soy yo...
+"""
+
+
+- Incio de mejora en health.py, para :
+
+1) usar IRAF:imcombine en lugar de IRDR:cubemean  --> no se si merece la pena....
+la idea es no depender mucho de IRAF ...
+
+
+Ejecuto health.py con los FLATS del 2do. ciclo de OPT_FOCUS, tal que:
+
+./health.py -i /data1/PANIC/2nd_OPT_FOCUS/2014-05-12_flat_2_0/lir_all_flats.txt -s 0 -e 6 -p 6 -o /tmp/health.pdf
+
+donde lir_all_flat.txt es un fichero con toda la serie de flats en modo LIR 
+con ITIME incremental, NCOADD=1, y 6 exposiciones por ITIME.
+
+* Observo que en la secuencia comienza a incrementar la STD, pero llega un momento
+en el que empieza a bajar y ya no sube más !!! eso hace que no se pueda ajustar
+una recta, sino una parábola !!! con lo cual el calculo de GAIN y RON no es correcto !!!
+
+
+
+04-Junio-2014
+-------------
+
+
+
+
 PANIC computers installation
 ============================
 0) Introduction
@@ -4767,6 +4842,7 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Configurar path absoluto de IRDR en health.py
 - Implementar nueva rutina de BPM basada en Darks y Flats como en:
 
 http://www.gemini.edu/sciops/instruments/gsaoi/documents/GSAOI_BPM_forweb.pdf
@@ -4777,7 +4853,7 @@ http://www.gemini.edu/sciops/instruments/gsaoi/documents/GSAOI_BPM_forweb.pdf
 - Rutina para master_flat ala skyflats !
 - Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
 de llamar directamente a calDark.py.
-Esto habría que hacerlo para otras funciones _slot_ del QL !!!
+  ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
 - Parametrizar los paths del ds9 en display.py y añadir al fichero de configuracion
 - Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
 - Rutina para copiar datos de varios directorios a un único directorio y renombrando
