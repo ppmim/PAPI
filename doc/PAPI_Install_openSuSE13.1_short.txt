@@ -770,3 +770,4 @@ LEMON requirements
 
 - zypper install openmpi-devel (para Montage)
 - zypper install python-gtk (para GUI)
+- zypper install p7zip (p7zip-9.20.1-10.1.4.x86_64)

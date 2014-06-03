@@ -271,7 +271,6 @@ class SuperSkyFlat(object):
                 else: norm_value = rob_mean
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (value = %d)"%norm_value
                 
-                print "PASO1"
                 #f[0].data = f[0].data / rob_mean
                 f[0].data = robust.r_division(f[0].data, norm_value)
                 norm_mean = robust.mean(f[0].data)

@@ -416,8 +416,8 @@ if __name__ == "__main__":
     # Get and check command-line options
         
     usage = "usage: %prog [options] arg1 arg2 ..."
-    desc = """Compute the Gain and Noise from a set of flat images grouped in
-packets and with increased level of Integration Time"""
+    desc = """Compute the Gain and Noise from a set of Flat images grouped in
+packets and with increased level of Integration Time."""
     
     parser = OptionParser(usage, description=desc)
     
