@@ -63,8 +63,6 @@ import datahandler
 # Pyraf modules
 from pyraf import iraf
 from iraf import noao
-from iraf import imred
-from iraf import ccdred
 from iraf import mscred
 
 # Interact with FITS files

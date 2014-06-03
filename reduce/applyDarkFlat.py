@@ -239,16 +239,17 @@ class ApplyDarkFlat(object):
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter()))
             
             # Check FILTER
-            if (flat_filter != None and cf.getFilter() != flat_filter):
-                log.error("Error: Task 'applyDarkFlat' found a frame with \
-                different FILTER. Skipping frame...")
+            checkFilter = False
+            if (checkFilter and flat_filter != None and cf.getFilter() != flat_filter):
+                log.error("Error: Task 'applyDarkFlat' found a frame with" 
+                "different FILTER. Skipping frame...")
                 f.close()
                 n_removed = n_removed+1
             else:
                 # check Number of Extension 
                 if (len(f)>1 and (len(f)-1) != n_ext) or len(f) != n_ext:
-                    raise Exception("File %s does not match the number of \
-                    extensions (%d)"%( iframe, n_ext))
+                    raise Exception("File %s does not match the number of"
+                    "extensions (%d)"%( iframe, n_ext))
                 
                 # Delete old files
                 (path, name) = os.path.split(iframe)
@@ -515,7 +516,7 @@ calibration files (master dark, master flat-field, bad pixel mask).
                             options.bpm_file, options.out_dir)
         res.apply() 
     except Exception,e:
-        log.erro("Error running task %s"%str(e))
+        log.error("Error running task %s"%str(e))
         sys.exit(0)
     
     

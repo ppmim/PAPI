@@ -291,7 +291,7 @@ again all the python modules, ie:
 
 - Config index DB in /usr/local/astrometry/etc/astrometry.cfg
 
-    add_path /data2/Astrometry.net/data/
+    add_path /data2/Astrometry.net/data/4200-indexes
 
 
 2b-Astromatic
@@ -604,6 +604,30 @@ Since IRAFv2.15, nmisc is any more required. Included in obsutil package:
  obsutil.psfmeasure - Measure PSF sizes from stellar images
  obsutil.starfocus - Determine direct focus variations from stellar images
 
+2.4) login.cl
+-------------
+- Next setup must be on the IRAF login.cl file:
+
+  1) Create a .iraf directory and run 'mkiraf' from it.
+  2) comment out "chkupdate" command on login.cl
+  3) Add next lines:
+      set     stdimage        = imt4096
+      set     imtype          = "fits"
+
+In principle, by default 
+  PyRAF uses $HOME/iraf/login.cl 
+  IRAF  uses $HOME/.iraf/login.cl
+
+So,  $HOME/iraf/login.cl  is mandatory for PAPI, and $HOME/.iraf/login.cl is 
+recommended if we want run IRAF CL console. 
+The best is to create a symbolic link as follow:
+
+> cd $HOME
+> ln -s .iraf iraf
+
+This should be done by papi_setup.sh.
+
+
 
 3) stsci_python 2.14 (include PyRAF v2.1)
 -----------------------------------------
@@ -746,3 +770,4 @@ LEMON requirements
 
 - zypper install openmpi-devel (para Montage)
 - zypper install python-gtk (para GUI)
+- zypper install p7zip (p7zip-9.20.1-10.1.4.x86_64)
