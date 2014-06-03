@@ -276,6 +276,7 @@ class SuperSkyFlat(object):
                 norm_mean = robust.mean(f[0].data)
                 if norm_mean<0.8 or norm_mean>1.2:
                     log.warning("Wrong normalized super flat obtained. Mean value =%f"%norm_mean)
+                print "PASO2"
                     
             # O2k or split PANIC frame   
             else:
