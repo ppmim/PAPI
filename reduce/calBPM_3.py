@@ -348,11 +348,13 @@ parser.add_option("-o", "--output",
 
 parser.add_option("-D", "--dark_threshold",
               action="store", dest="dthr", type='float', default=75.0,
-              help="The Dark rejection threshold (below %-ile cut) [default=%default]")
+              help="The Dark rejection threshold (above %-ile cut "
+                "detector + 3*sigma counts) [default=%default]")
 
 parser.add_option("-F", "--flat_threshold",
               action="store", dest="fthr", type='float', default=50.0,
-              help="The Flat rejection threshold (above %-ile cut) [default=%default]")
+              help="The Flat rejection threshold (below %-ile cut of mean "
+                "counts) [default=%default]")
 
 
 ################################################################################

@@ -203,42 +203,22 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
         raise Exception("Input file %s does not exist"%input_file)
     
     if window == 'Q1':
-        x1 = 10
-        y1 = 10
-        x2 = 2030
-        y2 = 2030
-        area = [10, 10, 2030, 2030]
+        x1, y1, x2, y2 = 10, 10, 2030, 2030
     elif window == 'Q2':
-        x1 = 2100
-        y1 = 10
-        x2 = 4080
-        y2 = 2100
-        area = [2100, 10, 4080, 2100]    
+        x1, y1, x2, y2 = 2100, 10, 4080, 2100
     elif window == 'Q3':
-        x1 = 2100
-        y1 = 2100
-        x2 = 4080
-        y2 = 4080
-        area = [2100, 2100, 4080, 4080]    
+        x1, y1, x2, y2 = 2100, 2100, 4080, 4080    
     elif window == 'Q4':
-        x1 = 10
-        y1 = 2100
-        y2 = 2100
-        x2 = 4080
-        area = [10, 2100, 2100, 4080]
+        x1, y1, x2, y2 = 10, 2100, 2100, 4080
     elif window == 'central':
-        x1 = 512
-        y1 = 512
-        x2 = 3584
-        y2 = 3584
-        area = [512, 512, 3584, 3584]
-    else: # or 'full-frame'
-        x1 = 10
-        y1 = 10
-        x2 = 4080
-        y2 = 4080
-        area = [10, 10, 4080, 4080] 
-    
+        x1, y1, x2, y2 = 512, 512, 3584, 3584
+    elif window == 'full': 
+        x1, y1, x2, y2 = 10, 10, 4080, 4080 
+    else:
+        msg = "Wrong window definition."
+        log.error(msg)
+        raise Exception(msg)
+
     print "Selected area = [%d:%d, %d:%d]"%(x1,x2,y1,y2)
     print "Packet size = ", packet_size
     
@@ -251,6 +231,11 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
     pf = pyfits.open(filelist[0])
     if len(pf)>1:
         msg = "MEF files are not supported. Expected a 4kx4k single image."
+        log.error(msg)
+        raise Exception(msg)
+    
+    if pf[0].shape!=(4096,4096):
+        msg = "Expected a 4kx4k single FITS image."
         log.error(msg)
         raise Exception(msg)
 
@@ -380,7 +365,8 @@ if __name__ == "__main__":
         
     usage = "usage: %prog [options] arg1 arg2 ..."
     desc = """Compute the Gain and Noise from a set of Flat images grouped in
-packets and with increased level of Integration Time."""
+packets and with increased level of Integration Time (ITIME). Flat files should
+be dark corrected and non MEF 4kx4k files."""
     
     parser = OptionParser(usage, description=desc)
     

@@ -4416,8 +4416,56 @@ una recta, sino una parábola !!! con lo cual el calculo de GAIN y RON no es cor
 
 04-Junio-2014
 -------------
+- Modificación en papi.py para que se tenga en cuenta el master_BPM de la linea
+de comandos y se "mezcle" con el posible valor del fichero de configuración.
+Siempre tendrá preferencia el valor de la linea de comandos.
+
+(P) -Hay que ver como afecta el BPM de los parámetros de entrada de papi.py
+(P) -Ver definición exacta de Q1, Q2, etc y actualizar mef::convertGEIRSToMEF()
+y BPM_3 de acuerdo a esos valores.
+(P) -Actualizar GEIRS to 717M y ver si GENERIC esta completo o falta algo 
+para las rotaciones ??? 
+
+Bad Pixels (BPM_3 vs Bernhard's mask):
+-------------------------------------
+
+SG1 [2048:4096, 0:2048] => 655647 + 38619 = 694266  vs BD= 109596
+SG2 [2048:4096,2048:4096] => 320465 + 44910 = 365375 vs BD = 62014 
+SG3 [0:2048, 2048:4096] =>   62509 + 35031 = 97540  vs BD= 37625
+SG4 [0:2048, 0:2048]  =>  814735 (hot) + 38935 (cold) = 853670  vs  BD= 432479  (BD: Bernhard Dorner values)
 
 
+05-Junio-2014
+-------------
+- Creo una etiqueta para la version de PAPI usada en la 2nd. SW-Integration en HD:
+
+> git tag -a v2.0 -m 'version 2.0 - Second Sw integration at HD May-2014' 486347ded964585f7756993c88dc126e938d1e46
+> git push origin v2.0
+
+que corresponde al commit :
+
+commit 486347ded964585f7756993c88dc126e938d1e46
+Author: jmiguel <jmiguel@iaa.es>
+Date:   Mon May 5 13:52:43 2014 +0200
+
+    - Updated QL for a large directory of data (> 6000 files); modified datacollector with __last__ suffix.
+        - Modificado mainGUI:createMasterDark_slot() para que use processFiles() en lugar
+        de llamar directamente a calDark.py.
+        - Added the requirement of creating $HOME/iraf directory to run PAPI or QL.
+
+
+- Para ir a una version correspondiente a una etiqueca concreta:
+
+>git checkout v2.0
+
+y para "salir" de dicha version:
+
+>git checkout master
+
+A partir de una version/tag podríamos crear una rama y seguir desarrollando esa version ...
+
+(desde el tag correspondiente)
+> git checkout -b new_branch_name
 
 
 PANIC computers installation
@@ -4842,7 +4890,6 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Configurar path absoluto de IRDR en health.py
 - Implementar nueva rutina de BPM basada en Darks y Flats como en:
 
 http://www.gemini.edu/sciops/instruments/gsaoi/documents/GSAOI_BPM_forweb.pdf
@@ -4869,7 +4916,6 @@ usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
  (e.g.: negative mean, very big/small float values)
   De esto me di cuenta cuando estaba probando la NL correction.
 
-- Hay que ver como afecta el BPM de los parámetros de entrada de papi.py
 - En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
 - Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m): mef.py
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
