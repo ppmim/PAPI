@@ -219,8 +219,8 @@ class MEF (object):
                 # now, copy extra keywords required
                 for key in copy_keyword:
                     try:
-                        value = hdulist[0].header.ascardlist ()[key].value
-                        comment = hdulist[0].header.ascardlist ()[key].comment
+                        value = hdulist[0].header.cards[key].value
+                        comment = hdulist[0].header.cards[key].comment
                         if key=='HIERARCH ESO DET NDIT':
                             out_hdulist[0].header.set('NDIT', value, comment)
                         else:
@@ -470,8 +470,8 @@ class MEF (object):
                     # now, copy extra keywords required
                     for key in copy_keyword:
                         try:
-                            value = in_hdulist[0].header.ascardlist()[key].value
-                            comment = in_hdulist[0].header.ascardlist()[key].comment
+                            value = in_hdulist[0].header.cards[key].value
+                            comment = in_hdulist[0].header.cards[key].comment
                             if key=='HIERARCH ESO DET NDIT':
                                 hdu_i.header.set ('NDIT', value, comment)
                             else:

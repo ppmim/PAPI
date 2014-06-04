@@ -19,7 +19,13 @@ export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}
 #--------------------------------
 # IRAF settings
 #--------------------------------
+mkdir $HOME/.iraf
+ln -s $HOME/.iraf $HOME/iraf
+cd $HOME/.iraf
 mkiraf 
+
+# comment-out chkupdate on login.cl
+## To be done
 
 #-------------------------------
 # IRDR build

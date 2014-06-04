@@ -43,7 +43,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -1432,7 +1432,7 @@
         <rect>
          <x>10</x>
          <y>20</y>
-         <width>91</width>
+         <width>93</width>
          <height>71</height>
         </rect>
        </property>
@@ -1855,7 +1855,7 @@
         <rect>
          <x>27</x>
          <y>150</y>
-         <width>130</width>
+         <width>151</width>
          <height>16</height>
         </rect>
        </property>
@@ -1951,7 +1951,7 @@
         <rect>
          <x>198</x>
          <y>120</y>
-         <width>140</width>
+         <width>171</width>
          <height>19</height>
         </rect>
        </property>
@@ -2404,7 +2404,7 @@
      <x>0</x>
      <y>0</y>
      <width>961</width>
-     <height>20</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="fileMenu">

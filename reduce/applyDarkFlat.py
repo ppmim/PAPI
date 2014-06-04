@@ -85,6 +85,18 @@ class ApplyDarkFlat(object):
     out_dir: str
         Output directory where calibrated files will be created
     
+    bmp_action: str
+        Action to perform with BPM:
+            - fix, to fix Bad pixels
+            - grab, to set to 'NaN' Bad pixels.
+            - none, nothing to do with BPM (default)
+    
+    force_apply: bool
+        If true, no checking with data FITS header will be done (IMAGETYPE).  
+
+    norm: bool
+        If true, perform Flat-Field normalization (wrt median chip_1).
+
     Returns
     -------
     file_list
@@ -93,13 +105,17 @@ class ApplyDarkFlat(object):
   
     """
     def __init__(self, sci_raw_files, mdark = None, mflat = None,  bpm = None,
-                 out_dir_ ="/tmp"):
+                 out_dir_ ="/tmp", bpm_action='none', force_apply=False,
+                 norm = False):
+
         self.__sci_files = sci_raw_files  # list of files which apply dark and flat
         self.__mdark = mdark  # master dark (model) to apply
         self.__mflat = mflat  # master flat to apply (dome, twlight) - not normalized !!
         self.__bpm = bpm      # bad pixel mask file to apply
         self.__out_dir = out_dir_ # output directory of calibrated files
-        
+        self.__bpm_action = bpm_action
+        self.__force_apply = force_apply 
+        self.__norm = norm   
     
     def apply(self):
       
@@ -140,7 +156,7 @@ class ApplyDarkFlat(object):
                 cdark = datahandler.ClFits (self.__mdark)
                 dark_time = cdark.expTime()
                 
-                if (cdark.getType()!='MASTER_DARK' and 
+                if (not self.__force_apply and cdark.getType()!='MASTER_DARK' and 
                     cdark.getType()!='MASTER_DARK_MODEL'):
                     log.error("File %s does not look a neither MASTER_DARK nor MASTER_DARK_MODEL",self.__mdark)
                     raise Exception("File %sdoes not look a neither MASTER_DARK nor MASTER_DARK_MODEL"%self.__mdark)
@@ -169,7 +185,7 @@ class ApplyDarkFlat(object):
                 flat = pyfits.open(self.__mflat)
                 cflat = datahandler.ClFits (self.__mflat)
                 
-                if not cflat.isMasterFlat():
+                if not cflat.isMasterFlat() and not self.__force_apply:
                     log.error("File %s does not look a neither MASTER_FLAT",self.__mflat)
                     raise Exception("File %s does not look MASTER_FLAT"%self.__mflat)
                 
@@ -213,7 +229,7 @@ class ApplyDarkFlat(object):
             modian = 1 
         
         # Add suffix whether BPM is to be applied
-        if self.__bpm!=None:
+        if self.__bpm!=None and self.__bpm_action!='none':
             out_suffix = out_suffix.replace(".fits","_BPM.fits") 
 
 
@@ -239,16 +255,17 @@ class ApplyDarkFlat(object):
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter()))
             
             # Check FILTER
-            if (flat_filter != None and cf.getFilter() != flat_filter):
-                log.error("Error: Task 'applyDarkFlat' found a frame with \
-                different FILTER. Skipping frame...")
+            if (not self.__force_apply and flat_filter != None 
+                and cf.getFilter() != flat_filter):
+                log.error("Error: Task 'applyDarkFlat' found a frame with" 
+                "different FILTER. Skipping frame...")
                 f.close()
                 n_removed = n_removed+1
             else:
                 # check Number of Extension 
                 if (len(f)>1 and (len(f)-1) != n_ext) or len(f) != n_ext:
-                    raise Exception("File %s does not match the number of \
-                    extensions (%d)"%( iframe, n_ext))
+                    raise Exception("File %s does not match the number of"
+                    "extensions (%d)"%( iframe, n_ext))
                 
                 # Delete old files
                 (path, name) = os.path.split(iframe)
@@ -282,7 +299,12 @@ class ApplyDarkFlat(object):
                     
                         # Get normalized flat
                         if self.__mflat!=None: 
-                            flat_data = flat[chip+1].data/median # normalization wrt chip 0
+                            if self.__norm:
+                                # normalization wrt chip 0
+                                flat_data = flat[chip+1].data/median
+                            else:
+                                # suppose it's already normalized
+                                flat_data = flat[chip+1].data 
                         else: 
                             flat_data = 1
                         sci_data = f[chip+1].data
@@ -310,7 +332,14 @@ class ApplyDarkFlat(object):
                         else: dark_data = 0
                         
                         # Get normalized Flat
-                        if self.__mflat!=None: flat_data = flat[0].data/mode  # normalization
+                        if self.__mflat!=None: 
+                            if self.__norm:
+                                log.debug("Normalizing FF...")
+                                flat_data = flat[0].data/median  # normalization
+                            else:
+                                # we suppose it's already normalized
+                                flat_data = flat[0].data
+
                         else: flat_data = 1     
                         sci_data = f[0].data
 
@@ -334,9 +363,17 @@ class ApplyDarkFlat(object):
                     # Finally, apply dark, Flat and BPM
                     # #################################
                     sci_data = (sci_data - dark_data) / flat_data
-                    if self.__bpm!=None:
-                        sci_data = fixpix(sci_data, bpm_data, iraf=True)    
                     
+                    # Now, apply BPM
+                    if self.__bpm!=None:
+                        if self.__bpm_action=='fix':
+                            log.debug("Fixing Bad Pixles...")
+                            sci_data = fixpix(sci_data, bpm_data, iraf=True)    
+                        elif self.__bpm_action=='grab':
+                            log.debug("Grabbing BPM")
+                            sci_data[bpm_data==1] = numpy.NaN
+                        else:
+                            log.debug("Nothing to do with BPM")
 
                     if n_ext > 1: # it means, MEF
                         f[chip+1].data = sci_data
@@ -348,7 +385,9 @@ class ApplyDarkFlat(object):
                     f[0].header.add_history('Dark subtracted %s' %self.__mdark)
                 if self.__mflat != None: 
                     f[0].header.add_history('Flat-Field with %s' %self.__mflat)        
-                            
+                if self.__bpm != None and self.__bpm_action!='none':
+                    f[0].header.add_history('BPM with %s' %self.__bpm)
+
                 # Write output to outframe (data object actually still points 
                 # to input data)
                 try:
@@ -468,24 +507,40 @@ calibration files (master dark, master flat-field, bad pixel mask).
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
-                  help="Source file listing the filenames of raw frames")
+                  help="Source file listing the filenames of raw frames.")
     
     parser.add_option("-d", "--dark",
                   action="store", dest="dark_file", 
-                  help="Master dark to be subtracted")
+                  help="Master dark to be subtracted.")
     
     parser.add_option("-f", "--flat-field",
                   action="store", dest="flat_file",
-                  help="Master flat-field to be divided by")
+                  help="Master flat-field to be divided by.")
     
     parser.add_option("-b", "--bpm",
                   action="store", dest="bpm_file",
-                  help="Master Bad Pixel Mask to use for fixpix")
+                  help="Master Bad Pixel Mask to use (optional)")
     
+    parser.add_option('-a', '--bpm_action',
+                      type='choice',
+                      action='store',
+                      dest='bpm_action',
+                      choices=['fix', 'grab', 'none',],
+                      default='none',
+                      help='Action to perform with BPM [default: %default]')
+
     parser.add_option("-o", "--out_dir",
                   action="store", dest="out_dir", default="/tmp/",
-                  help="Directory where output files will be saved")
+                  help="Directory where output files will be saved [Default: %default]")
+
+    parser.add_option("-F", "--force_apply",
+                  action="store_true", dest="force_apply", default=False,
+                  help="Forces operations withouth checking FITS data type [default: %default]")
    
+    parser.add_option("-N", "--normalize_FF",
+                  action="store_false", dest="normalize", default=False,
+                  help="Performs Flat-Filed normalization [default: %default]")
+
     
     (options, args) = parser.parse_args()
     
@@ -512,10 +567,12 @@ calibration files (master dark, master flat-field, bad pixel mask).
     
     try:
         res = ApplyDarkFlat(filelist, options.dark_file, options.flat_file, 
-                            options.bpm_file, options.out_dir)
+                            options.bpm_file, options.out_dir, 
+                            options.bpm_action, options.force_apply,
+                            options.normalize)
         res.apply() 
     except Exception,e:
-        log.erro("Error running task %s"%str(e))
+        log.error("Error running task %s"%str(e))
         sys.exit(0)
     
     

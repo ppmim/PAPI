@@ -66,8 +66,6 @@ from misc.paLog import log
 # Pyraf modules
 from pyraf import iraf
 from iraf import noao
-#from iraf import imred
-#from iraf import ccdred
 from iraf import mscred
 
 class SuperSkyFlat(object):
@@ -88,7 +86,8 @@ class SuperSkyFlat(object):
         If no error return 0
     """
     def __init__(self,  filelist,  output_filename="/tmp/superFlat.fits",  
-                 bpm=None, norm=True, temp_dir="/tmp/", median_smooth=False):
+                 bpm=None, norm=True, temp_dir="/tmp/", median_smooth=False,
+                 norm_value="median"):
         """
         Initialization method.
         
@@ -111,6 +110,10 @@ class SuperSkyFlat(object):
         median_smooth: bool
             If true, median smooth filter is applied to the combined Flat-Field
 
+        norm_value: str
+            statistics value to use for normalization (median|robust_mean);
+            Default = median
+
         """
                     
             
@@ -125,7 +128,9 @@ class SuperSkyFlat(object):
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
         self.norm = norm # if true, the flat field will be normalized
+        self.norm_value = norm_value
         self.__median_smooth = median_smooth
+
         
         # Some default parameter values
         self.m_MIN_N_GOOD = 2
@@ -201,7 +206,7 @@ class SuperSkyFlat(object):
         
         # (optional) Normalize wrt chip 1
         # Note: the robust estimator used for normalizing the flat-flied is
-        # median, however here we are using robust.mean() that produces a similar
+        # median, however we can use also robust.mean() that produces a similar
         # result. 
         if self.norm:
             f = pyfits.open(tmp1, 'update', ignore_missing_end=True )
@@ -224,16 +229,23 @@ class SuperSkyFlat(object):
                 log.debug("MEAN = %f"%mean)
                 log.debug("ROB_MEAN = %f"%rob_mean)
                 log.debug("MODE(estimated) = %f"%mode)
-                msg = "Normalization of MEF master flat frame wrt chip 1. (value=%f)"%rob_mean
+                
+                # Select the robust estimator for normalization 
+                if self.norm_value=="median":
+                    norm_value = median
+                else: norm_value = rob_mean
+                msg = "Normalization of MEF master flat frame wrt chip 1. (value=%f)"%norm_value
+
                 # Do the normalization wrt chip 1
                 for i_ext in xrange(1, len(f)):
-                    f[i_ext].data = f[i_ext].data / rob_mean
+                    #f[i_ext].data = f[i_ext].data / norm_value
+                    f[i_ext].data = robust.r_divisionN(f[i_ext].data, norm_value)
                     norm_mean = robust.mean(f[i_ext].data)
                     if norm_mean<0.8 or norm_mean>1.2:
                         log.warning("Wrong [ext]normalized super flat obtained. Mean value =%f"%norm_mean)
                 
             # PANIC multi-chip full frame
-            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME']=='panic'
+            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower()=='panic'
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
@@ -251,14 +263,20 @@ class SuperSkyFlat(object):
                 mode = 3*median -2*mean
                 log.debug("MEDIAN = %s"%median)
                 log.debug("MEAN = %s"%mean)
-                log.debug("ROB_MEAN %s=%rob_mean")
+                log.debug("ROB_MEAN = %s"%rob_mean)
                 log.debug("MODE(estimated) = %s"%mode)
-                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (value = %d)"%rob_mean
+                # Select the robust estimator for normalization 
+                if self.norm_value=="median":
+                    norm_value = median
+                else: norm_value = rob_mean
+                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (value = %d)"%norm_value
+                
                 #f[0].data = f[0].data / rob_mean
-                f[0].data = robust.r_division(f[0].data, rob_mean)
+                f[0].data = robust.r_division(f[0].data, norm_value)
                 norm_mean = robust.mean(f[0].data)
                 if norm_mean<0.8 or norm_mean>1.2:
                     log.warning("Wrong normalized super flat obtained. Mean value =%f"%norm_mean)
+                print "PASO2"
                     
             # O2k or split PANIC frame   
             else:
@@ -277,10 +295,15 @@ class SuperSkyFlat(object):
                 log.debug("MEAN = %f"%mean)
                 log.debug("MEAN_ROB = %f"%rob_mean)
                 log.debug("MODE(estimated) = %f"%mode)
+                # Select the robust estimator for normalization 
+                if self.norm_value=="median":
+                    norm_value = median
+                else: norm_value = rob_mean
+                msg = "Normalization of master (O2k? or PANIC-split frame) flat frame by value = %d)"%norm_value
                 
-                msg = "Normalization of master (O2k? or PANIC-split frame) flat frame by value = %d)"%rob_mean
+
                 #f[0].data = f[0].data / rob_mean
-                f[0].data = robust.r_division(f[0].data, rob_mean)
+                f[0].data = robust.r_division(f[0].data, norm_value)
                 norm_mean = robust.mean(f[0].data)
                 log.debug("NORM_MEAN = %f"%norm_mean)
                 if norm_mean<0.8 or norm_mean>1.2:
@@ -325,23 +348,34 @@ creates the master super flat-field and computes several statistics."""
     
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
-                  help="Source file list of data frames. It has to be a fullpath file name")
+                  help="Source file list of data frames. It has to be a "
+                  "fullpath file name")
                   
     parser.add_option("-o", "--output",
-                  action="store", dest="output_filename", help="output file to write SuperFlat")
+                  action="store", dest="output_filename", 
+                  help="Output file to write SuperFlat")
     
     parser.add_option("-b", "--bpm",
-                  action="store", dest="bpm", help="bad pixel map file (default=%default)", default=None)
-
+                  action="store", dest="bpm", 
+                  help="Bad pixel map file [default=%default]", 
+                  default=None)
     
     parser.add_option("-N", "--norm",
-                  action="store_true", dest="norm", help="""normalize output
-SuperFlat. If image is multi-chip, normalization wrt chip 1 is done (default=%default)""", 
+                  action="store_true", dest="norm", 
+                  help="Normalize the output SuperFlat. If image is multi-chip"
+                  ", normalization wrt chip 1 is done [default=%default]", 
                     default=True)
+
+    parser.add_option("-n", "--norm_estimator",
+                  action="store", dest="norm_estimator", 
+                  help="Robust estimator for normalization [default=%default]", 
+                  default="median")
+
     
     parser.add_option("-m", "--median_smooth",
                   action="store_true", dest="median_smooth", default=False,
-                  help="Median smooth the combined flat-field (default=%default)")    
+                  help="Median smooth the combined flat-field"
+                  " (median|robust_mean, default=%default)")    
 
     (options, args) = parser.parse_args()
     
@@ -359,7 +393,7 @@ SuperFlat. If image is multi-chip, normalization wrt chip 1 is done (default=%de
     try:
         superflat = SuperSkyFlat(filelist, options.output_filename, 
                              options.bpm, options.norm, "/tmp/",
-                             options.median_smooth)
+                             options.median_smooth, options.norm_estimator)
         superflat.create()
     except Exception,e:
         log.error("Error: %s"%str(e))

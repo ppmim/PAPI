@@ -4183,7 +4183,166 @@ de llamar directamente a calDark.py.
 Esto habría que hacerlo para otras funciones _slot_ del QL !!!
 
 
+14-Mayo-2014
+------------
+- Videoconf: El QL debe mover el foco, previa confirmación, después de analizar la serie de foco.
 
+
+19-Mayo-2014
+------------
+- Comienzo modificación a QL para que despues de análisis de Serie de Foco pregunte
+si se desea realizar el correspondiente ajuste del Foco del telescopio.
+
+Finalmente, en lugar de crear desde el QL un interface con el telescopio a través
+de GEIRS:
+
+  snd_panic_new -p 8501 COMANDO [PARAMETROS]
+
+lo cual es alto "anti-natural", AGS y yo acordamos que sea el OT sea el que 
+cambie el valor del foco. El procedimiento será:
+
+ 1-OT se pausa al final de la ejecución una serie de foco y muestra un mensaje
+ al usuario diciendo que compruebe en el QL el resultado del procesamiento de la
+ serie de foco.
+
+ 2-QL una vez detecta una serie de foco, la procesa y además de crear un .pdf
+ con la curva 2do. grado ajustada, escribe en el fichero:
+
+          $HOME/tmp/ql_focus
+
+ el valor de mejor fococ calculado, en formato entero y en micras, tal que: 
+  
+
+          DDDDD
+
+ 3-Una vez el usuario ha comprobado que el QL ha procesado correctamente la
+ serie de foco, el usuario pulsará OK en el OT. A continuación el OT leerá del
+ fichero $HOME/tmp/ql_focus el valor del mejor foco y lo mostrará al usuario,
+ pidiendo confirmación para mover el foco de telescopio al valor calculado.
+ Una vel leido el valor del foco, el OT borrará el fichero $HOME/tmp/ql_focus.
+
+ Además el OT permitirá al usuario que modifique el valor de mejor foco a enviar al
+ telescopio.
+
+ 4-Si el QL no estaba funcionando o bien se produjo algún error durante el 
+ procesamiento, el OT mostrará un mensaje diciendo que no se pudo obtener el
+ valor del foco y que se revise la configuración del QL.
+
+
+- Probado funcionamiento correcto en el QL; pendiente de probar con OT.
+
+
+- Intento solucionar el problema que aparece al lanzar PAPI/QL sin conexión
+a internet, debido a IRAF:
+
+      cannot access host 'iraf.noao.edu:80'
+
+Todo parece que podría ser debido al paquete iraf.noao.astcat, 
+y en concreto al fichero:
+
+/iraf/iraf/noao/astcat/lib/catdb.dat
+
+
+-- Como no encuentro soluciones en internet, envío pregunta a help@stsci.edu.
+
+Obtengo las siguientes respuestas:
+
+PyRAF: (help@stsci.edu)
+Pyraf is not doing that itself, but it does run IRAF commands that are found in login.cl, extern.pkg, and so on.  That message is probably coming from IRAF 2.16.1.  I would guess that you might find something in login.cl that causes IRAF to "phone home" when you run it.
+ 
+Your best chance of a solution is to ask in the web forum at www.iraf.net .
+
+iraf.net
+--------
+The web connection is being done with the 'chkupdate' command in the login.cl file, which you can comment-out if you have one in the local directory, and/or comment out the system template version in iraf$unix/hlib/login.cl. Pyraf does use the ".iraf" global login mechanism, however CL users using the person install option should comment out their $HOME/.iraf/login.cl file as well.
+
+Comentando 'chkupdate' se soluciona en problema (comprobado en panic @ MPIA).
+Sin embargo, parece que no es como dicen, pues PyRAF usa "$HOME/iraf/login.cl" y
+IRAF-CL usa ""$HOME/.iraf/login.cl" por defecto.
+
+
+- Activo en Astrometry.net en el fichero /usr/local/astrometry/etc/astrometry.cfg
+el parametro 'inparallel'. Se supone que así irá mejor.
+
+
+
+
+20-Mayo-2014
+------------
+- Resuelvo el problema del  "cannot access host 'iraf.noao.edu:80'" tras la
+respues en iraf.net (ver arriba); lo añado al documento de instalación.
+- Simplifico algunos de los imports que tengo de iraf (imred, ccdred), parece
+que no son necesarios.
+
+
+21-Mayo-2014
+------------
+- Comienzo revisión (por n-ésima vez !!) del calBPM.py;
+(P) !!! OJO, no está bien, tiene muchas modificaciones para pruebas !!!!
+
+
+22-Mayo-2014
+------------
+- Sigo probado e investigando sobre BPM:
+    
+   -- calBPM.py no hay manera que lo haga bien, se suele quedar muy corta para Q1
+   -- ccdmask de IRAF se pasa !! da una mascara muy rara, con muchas bandas verticales !!!
+
+- Sin embargo,  encuentro un documento muy interesante sobre BPM para NIR en:
+
+http://www.gemini.edu/sciops/instruments/gsaoi/calibrations?q=node/11900
+
+- Además, respecto al cálculo del ZP, también encuentro algo
+interesante:
+
+http://www.gemini.edu/sciops/instruments/gsaoi/calibrations?q=node/11538
+
+
+26-Mayo-2014
+------------
+- Depurando nueva rutina de BPM (calBPM_3.py).
+
+
+27-Mayo-2014
+------------
+- Continuo depurando nueva rutina de BPM; 
+(P)- No entiendo como podemos tener los DARKs tan malos de PANIC !!!! --> preguntar BD
+
+- FAQ interesante:
+
+* How can we reach hundredth of magnitude accuracy in photometry?
+The best way to accurately photometrically calibrate HAWK-I images is to use 2MASS stars in the field itself to derive the photometric solution. The accuracy strongly depends on the number of bright 2MASS stars within the filed of view, but ranges from a few 1/100th of a magnitude to 0.1 magnitudes if only faint stars are contained in the field. Additionally, observing supplementary standard star fields can be asked for when preparing the observations. The new pipeline to be released in 2014 will automatically perform 2MASS photometric calibration on all images. 
+
+* How good is HAWK-I astrometry and how are PSF variations corrected?
+At present the pipeline applies a correction for PSF distortions based on a distortion map derived during HAWK-I commissioning back in 2008. Distortion images are regularly taken, but not processed. At present, the solution is to extract photometry on a chip-by-chip, exposure-by-exposure basis, derive astrometry from 2MASS on each single chip and single exposure, and the merge all the frames together.
+Most of the present HAWK-I pipeline limitations will be cured in an upcoming release of the pipeline.
+
+- Compara los resultados de calBPM_3.py con darks de HAWKI y son bastante
+consistentes, aunque obtengo un valor parecido para MEDIAN de hawki_cal_dark,
+no obtengo un valor parecido para la STD !!! Por mas vueltas que le doy no se 
+como lo calcula. Incluso he comparado con el MAD, pero tampoco.
+
+
+28-Mayo-2014
+------------
+- Adaptación de calBPM_3.py para soportar MEF.
+- Mejora de calBPM.py para ser más consistente con algun bugfix.
+- Reviso de nuevo los umbrales de calBPM_3.py; la rutina parace consistente con
+los valores de BPM que da el pipeline de HAWK-I.
+En cuanto a los valores de BPM de Bernhard D., aún no consigo obtener sus mismos
+BPM, pues el problema que encuentro es encontrar un umbral bueno para los darks,
+que están hechos un desastre, y la Median y STD no terminan de convencerme,
+al menos para Q1.
+
+En cualquier caso, debería escribir a BD y preguntarle como calcula él la BPM,
+pues parece que la suya es más conservadora.
+
+- Otra pregunta importante es, y como usar el BPM en PAPI ???? 
+(P) --> ahora está claro en paso 0 de reduceSingleObj() ---> añadir a la documentación !!!!
+
+29-Mayo-2014
+------------
+- Probar y mejorar rutina health.py ; migrar IRDR:cubemean a IRAF:imcombine !!!
 
 
 PANIC computers installation
@@ -4196,8 +4355,6 @@ The aim of this document is
 1) System configuration
 
 The PANIC computer system is composed by on server computer with the next features:
-
-
 
  - System boards (OPT-PLX PCIe)
  - Network configuration:
@@ -4241,6 +4398,13 @@ Keywords CANDIDATAS a incluir en el header de PANIC
 
 
 FOR NEXT VIDEOCONF
+==================
+- Implemented procedure to set telescope focus after QL-processing; confirmation
+required by user on the OT.
+
+
+
+OLD_NEXT_VIDEOCONF
 ==================
 - New version of TN about FITS headers
 - Fast vs slow readout mode --> Fast-readout not implemented in GEIRS
@@ -4603,12 +4767,19 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Implementar nueva rutina de BPM basada en Darks y Flats como en:
+
+http://www.gemini.edu/sciops/instruments/gsaoi/documents/GSAOI_BPM_forweb.pdf
+
+- Configurar el syslog para gestionar los logs de PAPI en el /tmp ???
+
+- Probar BPM y comparar con BD --> usar iraf.badpiximage task para convertir .pl to imagen
+- Rutina para master_flat ala skyflats !
 - Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
 de llamar directamente a calDark.py.
 Esto habría que hacerlo para otras funciones _slot_ del QL !!!
 - Parametrizar los paths del ds9 en display.py y añadir al fichero de configuracion
 - Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
-- Preguntar por los indices de 2MASS para Astrometry.net
 - Rutina para copiar datos de varios directorios a un único directorio y renombrando
 los ficheros de forma única (DATE+TIMESTAMP)!!
 
