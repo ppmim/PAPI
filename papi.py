@@ -176,10 +176,6 @@ def main(arguments = None):
                   help = "if true, check data properties matching (type, expt, "
                   "filter, ncoadd, mjd)")
     
-    parser.add_option("-v", "--verbose",
-                  action = "store_true", dest = "verbose", default = False,
-                  help = "Verbose mode [default=%default]")
-    
         
     (init_options, i_args) = parser.parse_args (args = arguments)
     
@@ -226,15 +222,8 @@ def main(arguments = None):
     if not general_opts['source'] or not general_opts['output_file'] \
         or not general_opts['output_dir'] or not general_opts['temp_dir']   \
         or len(i_args) != 0: # args is the leftover positional arguments after all options have been processed
-        print "kKKKK"
         parser.error("Incorrect number of arguments " )
         parser.print_help()
-    
-    print "Verbose=",general_opts['verbose']
-    print "*********************"
-    if general_opts['verbose']:
-        print "reading %s ..." % general_opts['source']
-    
     
     rs_files = []
     

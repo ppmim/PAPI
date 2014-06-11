@@ -3973,12 +3973,8 @@ en cuenta en la conversion de splitGEIRSToSimple().
  tanto en la skysubtraction se eliminan también los "holes" de la máscara.
 
 
-
 19-Mar-2014
 -----------
-(P) - Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
-(P) - Usando las imágenes de Bernhard, calcular los BPMs y comparar con los resultados
-que se dieron en las videoconf.
 
 - Reviso calBPM, y veo que no tiene mucho sentido el dividir las imágenes por 
 el flat normalizado, pues estamos "arreglando" los pixeles malos !!!
@@ -4278,7 +4274,6 @@ que no son necesarios.
 21-Mayo-2014
 ------------
 - Comienzo revisión (por n-ésima vez !!) del calBPM.py;
-(P) !!! OJO, no está bien, tiene muchas modificaciones para pruebas !!!!
 
 
 22-Mayo-2014
@@ -4300,13 +4295,19 @@ http://www.gemini.edu/sciops/instruments/gsaoi/calibrations?q=node/11538
 
 26-Mayo-2014
 ------------
-- Depurando nueva rutina de BPM (calBPM_3.py).
+- Depurando nueva rutina de BPM (calBPM_3.py), basada en:
+
+http://www.gemini.edu/sciops/instruments/gsaoi/documents/GSAOI_BPM_forweb.pdf,
+
+aunque no totalmente, pues los umbrales no me daban buenos resultados.
+
 
 
 27-Mayo-2014
 ------------
 - Continuo depurando nueva rutina de BPM; 
 (P)- No entiendo como podemos tener los DARKs tan malos de PANIC !!!! --> preguntar BD
+    -- Done
 
 - FAQ interesante:
 
@@ -4345,7 +4346,7 @@ pues parece que la suya es más conservadora.
 - Probar y mejorar rutina health.py ; migrar IRDR:cubemean a IRAF:imcombine !!!
 
 
-02-Mayo-2014
+02-Junio-2014
 ------------
 - Comienzo reducción de datos de 3er. ciclo de FOCUS de PANIC, después de que el
 segundo ciclo resultare no válido por una mala instalacion del detector y/o 
@@ -4356,7 +4357,7 @@ anillo de "enfocado". Los datos están en:
 - Mejora de la rutina applyDarkFlat.py, pues además de tener algún bug, no 
 contemplaba todos lo casos para la BPM.
 
-03-Mayo-2014
+03-Junio-2014
 ------------
 - Continuo con la reducción e los datos de 3er. ciclo de FOCUS de PANIC, y 
 observo que en algunas imágenes de SCI (3,4,7, ...) y en los darks de 1.5s hay 
@@ -4420,11 +4421,6 @@ una recta, sino una parábola !!! con lo cual el calculo de GAIN y RON no es cor
 de comandos y se "mezcle" con el posible valor del fichero de configuración.
 Siempre tendrá preferencia el valor de la linea de comandos.
 
-(P) -Hay que ver como afecta el BPM de los parámetros de entrada de papi.py
-(P) -Ver definición exacta de Q1, Q2, etc y actualizar mef::convertGEIRSToMEF()
-y BPM_3 de acuerdo a esos valores.
-(P) -Actualizar GEIRS to 717M y ver si GENERIC esta completo o falta algo 
-para las rotaciones ??? 
 
 Bad Pixels (BPM_3 vs Bernhard's mask):
 -------------------------------------
@@ -4435,8 +4431,6 @@ SG3 [0:2048, 2048:4096] =>   62509 + 35031 = 97540  vs BD= 37625
 SG4 [0:2048, 0:2048]  =>  814735 (hot) + 38935 (cold) = 853670  vs  BD= 432479  (BD: Bernhard Dorner values)
 
 
-05-Junio-2014
--------------
 - Creo una etiqueta para la version de PAPI usada en la 2nd. SW-Integration en HD:
 
 > git tag -a v2.0 -m 'version 2.0 - Second Sw integration at HD May-2014' 486347ded964585f7756993c88dc126e938d1e46
@@ -4466,6 +4460,147 @@ A partir de una version/tag podríamos crear una rama y seguir desarrollando esa
 
 (desde el tag correspondiente)
 > git checkout -b new_branch_name
+
+
+05-Junio-2014
+-------------
+- Estudio el método de BPM que me ha enviado BD(ver mail 4-Jun-2014); 
+la gran diferencia con BMP_3 estriba en el punto 2)Super-Hot pixels / Hot pixels; 
+BD usa un valor absoluto de 25000e-/s para darks lo mas cortos posibles.
+Yo con BPM_3 consegui valores parecidos si pongo un limite absoluto a los darks
+de 1.3s de 2390 ADU aprox.
+Creo que el umbral mediana+N*sigma es muy variable y no muy robusto debido a los
+darks tan "sucios" que tenemos.
+Por tanto, creo que deberíamos esperar al commisioning para final allí los umbrales
+de la rutina de BPM_3, o ver que procedimiento usar exactamente.
+
+
+- Verificado que el BPM de los parámetros de entrada de papi.py en la CL se "fusiona"
+correctamente con el valor del fichero de configuración.
+
+- Elimino la opcion -verbose de papi.py, pues no se estaba usando para nada ...
+
+
+
+
+**GEIRS_718M**
+- Despues de rsync de panic.mpia.de:/home/panic/DEVELOP/GEIRS, intento compilar
+la version 718; me dió un error con el libtool, pero era por que antes hay
+que hacer un "make distclean" (no basta con make clean).
+Despues de compilar y hacer el enlace de start_panic_new a GENERIC, arranca bien,
+pero al intentar hacer un read da un error. Como vi un error reference al fichero
+INFO/roe_init_ch32.panic ... decidí compiar mi antiguo directorio INFO en la
+version copiade (rsync) de panic.mpia.de. Tras hacer eso, GEIRS arranco bien y
+ya pude hacer read+save sin problmas.
+
+- Ahora el script GENERIC contiene dos nuevas keys de configuración:
+
+CAM_DETROT90 = 0,1,2,3
+CAM_DETXYFLIP = 0,1
+
+
+- Pruebo la nueva definicion de los MEF con SGi, y resulta que :
+
+ con CAM_DETROT90=2 (=180, default segun RM) tenemos:
+
+
+ext1 - [0:2048, 0:2048]      - SG4
+ext2 - [2048:4096, 0:2048]   - SG1
+ext3 - [0:2048, 2048:4096]   - SG3  
+ext4 - [2048:4096,2048:4096] - SG2
+
+con CAM_DETROT90=0, tenemos entonces:
+
+ext1 - [0:2048, 0:2048]      - SG2
+ext2 - [2048:4096, 0:2048]   - SG3
+ext3 - [0:2048, 2048:4096]   - SG1
+ext4 - [2048:4096,2048:4096] - SG4
+
+06-Junio-2014
+-------------
+- Escribo email a RM preguntando como identifica los SGi en los single FITS 4kx4k
+cuando no vienen en formato MEF.
+- Encuentro problema al salvar los subwindows en r716,r717 y r718, pero en r715
+si funciona bien. --> RM lo soluciona ---> r719M
+
+
+(P) - Ver por qué el directorio INFO no es correcto
+(P) - Ver como reflejar los SGi en PAPI !!! y QL !!!
+
+10-Junio-2014 (feliz. PP)
+------------------------
+- Corrijo el siguiente WARNING en mef.py :
+
+"""
+WARNING: AstropyDeprecationWarning: The wcs_pix2sky function is deprecated and may be removed in a future version.
+        Use wcs_pix2world instead. [__main__]
+"""
+- Además cctualizo la rutina mef.py para que los métodos splitGEIRSToSimple y 
+convertGEIRSToMEF tenga en cuenta la definicion de los SGi, y además que el
+WCS sea consistente con el que crea GEIRS con los MEF (los simple no tienen
+WCS pues no "tiene sentido" segun RM).
+
+- Nota: ahora al hacer un split, los ficheros que se generan siguen esta 
+relacción: 
+
+                     DETROT90=2     DETROT90=0
+        .Q01.fits --> SG4             SG2
+        .Q02.fits --> SG3             SG1
+        .Q03.fits --> SG1             SG3
+        .Q04.fits --> SG2             SG4
+
+y en el caso de los MEF (DETROT90=2), 
+
+        ext1 - [0:2048, 0:2048]      - SG4
+        ext2 - [2048:4096, 0:2048]   - SG1
+        ext3 - [0:2048, 2048:4096]   - SG3  
+        ext4 - [2048:4096,2048:4096] - SG2
+
+
+De forma que en principio si en el split que hace PAPI, podremos distinguir los
+detectores para el procesamiento y tener en cuenta diferentes parámetros para
+la calibración...
+
+- Modifico BPM_3 para que tenga en cuenta el DET_ID y lo muestre y lo escriba
+en el MEF del BPM creado. (pendiente probar !!)
+
+- Comprobado que eval_focus_serie.py soporta MEF, pues checkQuality.py también
+los soporta. No obstante, no distingue o separa valores de FWHM de cada 
+extensión/detector, pues lo que da checkQuality es el valor medio del FWHM
+de las N extensiones en caso de un MEF.
+Quizás habría que separar/distinguir entre detectores ...¿ como se haría una
+secuencia de FOCO , con todo el FPA o con sólo un detector ? quizás en comissioning
+lo averiguiemos ....
+O quizás habría que limitar el cálculo del FWHM a una ventana/detector concreto,
+teniendo en cuenta que SExtractor soporta ficheros de entrada tal que:
+
+ /data1/PANIC/testJM/focus_eval0001.fits[i] (i=1,2,3,4)
+
+- Debido a todo lo anterior, añado soporte para procesamiento de un detector
+concreto en checkQuality.py, con la opcion -W (--window)
+
+11-Junio-2014 
+-------------
+- Traslado la misma opcion -W de checkQuality.py a eval_focus_serie.py.
+- Implemento la opción de procesar un determinado detector del FPA de PANIC.
+Para ello añado al fichero de configuración el parámetro 'detector', tal que:
+
+#
+# detector: detector to reduce/process (Q1,Q2,Q3,Q4,all)
+# For O2k, this parameter has no effect.
+# Q1=ext1 - [0:2048, 0:2048]      - SG2 (for CAM_DETROT90=0)
+# Q2=ext2 - [2048:4096, 0:2048]   - SG3
+# Q3=ext3 - [0:2048, 2048:4096]   - SG1
+# Q4=ext4 - [2048:4096,2048:4096] - SG4
+#
+detector = all
+
+- Lo pruebo con HAWK-I y funciona bien.
+
+12-Junio-2014 
+-------------
+
+
 
 
 PANIC computers installation
@@ -4509,21 +4644,15 @@ URL http://www.mpia.de/~mathar/public/PANIC-SW-DCS-01.pdf
 
 
 
-   
-
-Keywords CANDIDATAS a incluir en el header de PANIC
----------------------------------------------------
-- SATURATE
-- GAIN
-- PIXSCALE
-- CASSANG
-  
-
-
 FOR NEXT VIDEOCONF
 ==================
 - Implemented procedure to set telescope focus after QL-processing; confirmation
 required by user on the OT.
+- Reviewed of BPM and compared with BD procedure.
+- Taken into account new flags CAM_DETROT90 y CAM_DETXYFLIP (bueno, este aún no)
+en BPM_3 and split of MEF for processing, so specific values for calibration
+of each detector can be used.
+
 
 
 
@@ -4751,22 +4880,6 @@ se calculan con un master_dark_model.
 > papi.py -s /data/O2K/Matilde/120105/ -S 28 -g filter -R lemon -D /data/calibs/mDark_serie.fits -F /data/calibs/mTwFlat_J.fits 
 
 
-
-TODO's for Clemens/RM
-=====================
-
-- Observo algo que parece una condición de carrera, y es que alguna vez puede 
-  ocurrir que aunque el chequeo del FITS sea correcto, GEIRS no haya aún 
-  añadido las keywords que le da el OT y entonces el QL no detecte bien el 
-  fichero pues no puede leer dichas keywords esenciales.
-  Esto creo que no ocurre cuando usamos los modos 'file' el datacollector.
-- Comando para añadir cualquier keyword al header --> ~/tmp/geirsPhduAdd.panic
-
-
-- bug en la salida del comando median cuando se envia desde el OT con 
-  snd_panic_new, que ahora sólo devuleve OK
-
-
 FAQ:
 ===
 1) ¿ para que se usa en PAPI los gainmap ? 
@@ -4781,20 +4894,11 @@ GEIRS/scripts/QueueFiles tenemos una linea tq:
    modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
 
 
-
 DEPENDENCIAS DE IRDR
 ====================
 - skyfilter
 - dithercubemean
 - offsets
-
-
-DUDAS OT
-========
-- ¿ en un OB solo puede haber un calibration_series ?
-- en la pantalla de Telescope-Iterator, por que el valor de Cycles=5 cuando creas un patron cualquiera ? 
-(parace que es el valor que pone por defecto en Cycles en "Single Exposure")
-Yo pondría por defecto 1 cycle.
 
 
 ASTROMETRIA con Astrometry.net 
@@ -4890,14 +4994,20 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Implementar nueva rutina de BPM basada en Darks y Flats como en:
+- Paralelizar NonLinearityModel:applyModel()
 
-http://www.gemini.edu/sciops/instruments/gsaoi/documents/GSAOI_BPM_forweb.pdf
+- Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
+o SWARP (VTerrón lo está usando y está contento...)
 
-- Configurar el syslog para gestionar los logs de PAPI en el /tmp ???
+(P) - Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
 
-- Probar BPM y comparar con BD --> usar iraf.badpiximage task para convertir .pl to imagen
-- Rutina para master_flat ala skyflats !
+(P) - Actualizar TN de FITS headers:
+
+   DET_ID = 'SGi'
+   ...
+
+- "Collapsar" los cubos de PANIC con un average + sigmaclip !!!
+- Rutina para master_flat ala skyflats ! ==> OT=Fixed or Series; implemetar tb en QL !!!
 - Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
 de llamar directamente a calDark.py.
   ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
@@ -4905,6 +5015,19 @@ de llamar directamente a calDark.py.
 - Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
 - Rutina para copiar datos de varios directorios a un único directorio y renombrando
 los ficheros de forma única (DATE+TIMESTAMP)!!
+
+- Revisar GUI QL !!! y quitar lo que no sirva !!
+- Second pass of sky-subtraction for extended objects
+- Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
+- Support for sub-windows (not tested, but probably does not work properly) 
+- Non-linearity computation ( fac = a0 + a1*I + a2*I^2 )
+- Method to empiricaly determine the geometric distortion based an auto-calibration 
+approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
+- Photometry: currently only 2MASS filters (J, H, Ks) supported. No color 
+coefficients neither extinction taken into account.
+- Data Quality Control (frames to reject, ...)
+- Support for incomplete sequences (ie. aborted, corrupted, ...): a kind of 
+fix method to update the headers in order to build a valid sequence for PAPI.
 
 - Ver si merece la pena implementar el metodo crclean() de image.py
 de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
@@ -4917,11 +5040,10 @@ usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
   De esto me di cuenta cuando estaba probando la NL correction.
 
 - En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
-- Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m): mef.py
+- Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m).
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
 - opción en PAPI para reducir sólo un detector/es
 - Configurar sonidos (pulseaudio)
-- Second pass of sky-subtraction for extended objects
 - Support for incomplete sequences
 - Add some kind of Quality check 
 - Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
@@ -5016,55 +5138,34 @@ catalogs derived from these images are available through the Calar Alto archive.
 
 Things To Be Done on PAPI 
 =========================
-- Revisar calBPM.py, no parece que de los BPM correctos para el detector defectuoso.... y los NAN !!!
-- Revisar GUI QL !!! y quitar lo que no sirva !!
-- Second pass of sky-subtraction for extended objects
-- Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
-- Support for sub-windows (not tested, but probably does not work properly) 
-- Non-linearity computation ( fac = a0 + a1*I + a2*I^2 )
-- Method to empiricaly determine the geometric distortion based an auto-calibration 
-approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
-- Photometry: currently only 2MASS filters (J, H, Ks) supported. No color 
-coefficients neither extinction taken into account.
-- Data Quality Control (frames to reject, ...)
-- Support for incomplete sequences (ie. aborted, corrupted, ...): a kind of 
-fix method to update the headers in order to build a valid sequence for PAPI.
 
 
  (Known) Things To Be Done on GEIRS
  ==================================
  - fast readout mode 
- - 
- 
 
 Problemas/bugs detectados GEIRS
 ===============================
-- Definicion de detectore (D1-D4) en display de GEIRS; no corresponde con
-MEF headers ni con OT definitions. (26-Feb-2014)
-
-- Error en modo ctype=dgen:
-TS-priocntl failed for pri -20, might need privileges: Permission denied
 
 
 Problemas/bugs detectados en OT 
 ===============================
 25-02-2014) La copia de OB no se hace bien, pues luego repite el número del OB 
-y el orden de ejecución de los OBs se altera notablemente ....
-Fixed!
+y el orden de ejecución de los OBs se altera notablemente .... --> Fixed!
 25-02-2014) S abre dialogo de grabar
-25-02-2014) Telescope iterator con cycles=5 por defecto !!! debería ser =1
-Fixed!
+25-02-2014) Telescope iterator con cycles=5 por defecto !!! debería ser =1 -->Fixed!
 
-25-02-2014) Timeline nada preciso, o solucionar o quitar !
-25-02-2014) PROG_ID en headers no se rellena; debería rellenarse con campo "Proposal ID" y/o quizás cambiarle el nombre a "Program ID"
-Fixed!
+25-02-2014) Timeline nada preciso, o solucionar o quitar ! --> In progress
+25-02-2014) PROG_ID en headers no se rellena; debería rellenarse con campo 
+"Proposal ID" y/o quizás cambiarle el nombre a "Program ID" --> Fixed!
 
 25-02-2014) En los OB, Nro. repetitions es "comun" para todos los OBs !
-26-02-2014) Los subwindows con Detecto1-4 no están bien definidos en el OT. Lemando a AGS la definición correcta.
+26-02-2014) Los subwindows con Detecto1-4 no están bien definidos en el OT. 
+Lemando a AGS la definición correcta.
 07-03-2014) Error por 'timeout' (creo, según log de GEIRS) que provoca la 
-terminación prematura de un OB en el OT.
+terminación prematura de un OB en el OT. --> Fixed
 14-03-2014) Confirmado que el OT a veces se para tras un OB de forma inesperada,
-sin continuar con los otros OBs. AGS ha visto que a él también le pasa.
+sin continuar con los otros OBs. AGS ha visto que a él también le pasa. --> Fixed
 18-03-2014) No se puede seleccionar el telescopio en el OT. AGS mirará a ver si
 hay comando/modo de hacerlo ....
 Por lo que he visto, sólo se puede cambiar en el script GENERIC, en la variable
@@ -5078,9 +5179,4 @@ Problemas/bugs detectados en QL
 de esa imagen (ella sola), la imagen FITS de background que genera Sextractor
 no cumple el standard FITS y es rechazada por PAPI. Lo compruebo con fitsverify 
 y da error. Es un bug en Sextractor que habría que informar a E.Bertin.
-
-
-Problemas/bugs detectados en PAPI 
-=================================
-
 

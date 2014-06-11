@@ -392,7 +392,7 @@ class NonLinearityModel(object):
         - adjust the read modes availables on PANIC (lir, mer, o2dcr, ...)
         - read the proper BadPixelMask ??
         - compute the correctly the correction to do !!! 
-        
+        - Proccess in parallel each extension.
         
         """   
         log.debug("Start applyModel")

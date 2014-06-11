@@ -737,7 +737,7 @@ class ReductionSet(object):
                    'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
-                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP'
+                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID'
                 ]
             
             try:
@@ -2210,7 +2210,9 @@ class ReductionSet(object):
         
         #
         # First of all, let see whether Non-linearity correction must be done
-        #
+        # Note: we do not need to 'split the extensions', it is done serially
+        # by  NonLinearityModel:applyModel().
+        # Todo: It should be done in parallel ...
         if self.config_dict['nonlinearity']['apply']==True:
             master_nl = self.config_dict['nonlinearity']['model']
             try:
@@ -2481,6 +2483,25 @@ class ReductionSet(object):
                 bpm_ext, cext = self.split([bpm])
                 parallel = self.config_dict['general']['parallel']
                 
+                # Select the detector to process (Q1,Q2,Q3,Q4,all)
+                detector = self.config_dict['general']['detector']
+                if next==4:
+                    if detector=='Q1': q = 0
+                    elif detector=='Q2': q = 1
+                    elif detector=='Q3': q = 2
+                    elif detector=='Q4': q = 3
+                    else: q = -1 # all detectors
+                    if q!=-1:
+                        obj_ext = [obj_ext[q]]
+                        if cext==next:
+                            dark_ext = [dark_ext[q]]
+                            flat_ext = [flat_ext[q]]
+                            bpm_ext = [bpm_ext[q]]
+                        next = 1
+                    else:
+                        # Nothing to do, all detectors will be processed
+                        pass
+
                 if parallel==True:
                     ######## Parallel #########
                     log.info("[reduceSeq] Entering PARALLEL data reduction ...")

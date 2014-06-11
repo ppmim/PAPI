@@ -16,8 +16,10 @@ __version__ = "$Revision: 64bda015861d $"
 # Created    : 27/10/2010    jmiguel@iaa.es -
 # Last update: 21/Jun/2013   jmiguel@iaa.es - some header improvements in
 #                                             copy_keywords.
+#              06/Jun/2014   jmiguel@iaa.es - 
 # TODO
-#       
+#    - identificar SGi en MEF y 4kx4k
+#      
 ################################################################################
 
 # Import necessary modules
@@ -178,6 +180,7 @@ class MEF (object):
         log.info("Starting SplitMEF")
         
         if copy_keyword == None:
+            # Default set of keywords whether None were given.
             copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX', 
                     'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
                     'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'NCOADDS',
@@ -216,6 +219,12 @@ class MEF (object):
                                              )
                 
                 out_hdulist.verify('silentfix')
+                
+                #
+                # Copy all keywords of header[0] and not included at header[i>0]
+                # TODO 
+                #keywords  = [if key not in hdulist[1].header for key in hdulist[0].header.cards
+
                 # now, copy extra keywords required
                 for key in copy_keyword:
                     try:
@@ -233,7 +242,8 @@ class MEF (object):
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
                 del out_hdulist[0].header['EXTNAME']                
-                out_hdulist.writeto(out_filenames[n], output_verify = 'ignore', clobber = True)
+                out_hdulist.writeto(out_filenames[n], 
+                        output_verify = 'ignore', clobber = True)
                 out_hdulist.close(output_verify = 'ignore')
                 del out_hdulist
                 log.debug("File %s created"%(out_filenames[n]))
@@ -246,7 +256,7 @@ class MEF (object):
     def createMEF (self, output_file = os.getcwd()+"/mef.fits" ,
                    primaryHeader = None):
         """ 
-        @summary: Method used to create a MEF from a set of n>0 FITS frames                           
+        Method used to create a MEF from a set of n>0 FITS frames.                          
         """
         
         log.info("Starting createMEF")
@@ -309,7 +319,7 @@ class MEF (object):
         having a full 4-detector-frame to 1-MEF with a 4-extension FITS, 
         one per each frame.
 
-        It is NOT valid for cubes of data, by the moment
+        It is NOT valid for cubes of data, by the moment.
         
         Parameters
         ----------
@@ -346,7 +356,9 @@ class MEF (object):
         
         Todo
         ----
-        - Header is not well formed
+        - Header is not well formed.
+        - identify of SGi detector properly
+
         
         """
         
@@ -383,7 +395,7 @@ class MEF (object):
             prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
             prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
             
-            #In the Primary Header we do not need the WCS keywords, only RA,DEC
+            # In the Primary Header we do not need the WCS keywords, only RA,DEC
             keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2','CTYPE1','CTYPE2']
             for key in keys_to_del: del prihdu.header[key]
             #
@@ -400,7 +412,12 @@ class MEF (object):
             # Read all image sections (n_ext frames) and create the associated HDU
             pix_centers = numpy.array ([[1024, 1024], [1024, 3072], [3072, 1024], 
                                         [3072, 3072] ], numpy.float_)
-            
+
+            # Taking into account the gap (167pix), we set the new CRPIXi values
+            # for each extension, refered to the center of the focal plane.
+            new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132], 
+                                        [-81, -81] ], numpy.float_)
+
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i + j))
@@ -420,6 +437,10 @@ class MEF (object):
                         #Due to PANICv0 header hasn't a proper WCS header, 
                         #we built a basic one in order to computer the new 
                         #ra, dec coordinates.
+                        
+                        # ----
+                        # WCS object is not USED !!!
+                        # Instead, WCS header is built from primaryHeader. 
                         chip_gap = 167
                         new_wcs = wcs.WCS(primaryHeader)
                         new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2 + chip_gap/2.0, 
@@ -444,14 +465,16 @@ class MEF (object):
                         new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
                                           [0, pix_scale/3600.0]]
 
-                        new_pix_center = new_wcs.wcs_pix2sky([pix_centers[i*2+j]], 1)
-                        
-                        
-                        # Now update the new-wcs for the new subframe header
-                        hdu_i.header.set('CRPIX1', 1024)
-                        hdu_i.header.set('CRPIX2', 1024)
-                        hdu_i.header.set('CRVAL1', new_pix_center[0][0])
-                        hdu_i.header.set('CRVAL2', new_pix_center[0][1])
+                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
+                        # ----
+
+                        # Now update the new-wcs for the new subframe header.
+                        # In principle, this is the same header than is generated
+                        # by GEIRS for MEF files (save -M).
+                        hdu_i.header.set('CRPIX1', new_crpix_center[i*2+j][0])
+                        hdu_i.header.set('CRPIX2', new_crpix_center[i*2+j][1])
+                        hdu_i.header.set('CRVAL1', primaryHeader['RA'])
+                        hdu_i.header.set('CRVAL2', primaryHeader['DEC'])
                         hdu_i.header.set('CD1_1', -pix_scale/3600.0, 
                                             "Axis rotation & scaling matrix")
                         hdu_i.header.set('CD1_2', 0, 
@@ -464,8 +487,47 @@ class MEF (object):
                         hdu_i.header.set('CTYPE2' , 'DEC--TAN')
                         hdu_i.header.set('CUNIT1', 'deg')
                         hdu_i.header.set('CUNIT2', 'deg')
-                        hdu_i.header.set('CHIP_NO', 2*i+j, 
-                                            "PANIC Chip number [0,1,2,3]")
+                        
+                        if 'DETROT90' in primaryHeader:
+                            log.debug("Found DETROT90 in header")
+                            # When DETROT90=0, no rotation;
+                            # When DETROT90=1, 90deg clockwise rotation
+                            # When DETROT90=2, 180deg clockwise rotation (default
+                            # for PANIC)
+                            if primaryHeader['DETROT90']==0:
+                                if (i*2+j)==0: det_id = 2
+                                elif (i*2+j)==1: det_id = 1
+                                elif (i*2+j)==2: det_id = 3
+                                elif (i*2+j)==3: det_id = 4
+                            elif primaryHeader['DETROT90']==1:
+                                if (i*2+j)==0: det_id = 3
+                                elif (i*2+j)==1: det_id = 2
+                                elif (i*2+j)==2: det_id = 4
+                                elif (i*2+j)==3: det_id = 1
+                            elif primaryHeader['DETROT90']==2:
+                                if (i*2+j)==0: det_id = 4
+                                elif (i*2+j)==1: det_id = 3
+                                elif (i*2+j)==2: det_id = 1
+                                elif (i*2+j)==3: det_id = 2
+                            elif primaryHeader['DETROT90']==3:
+                                if (i*2+j)==0: det_id = 1
+                                elif (i*2+j)==1: det_id = 4
+                                elif (i*2+j)==2: det_id = 2
+                                elif (i*2+j)==3: det_id = 3
+                        else:
+                            # Then, we suppose DETROT90=2, default for PANIC !
+                            log.warning("No DETROT90 found, supposed DETROT90=2")
+                            if (i*2+j)==0: det_id = 4
+                            elif (i*2+j)==1: det_id = 3
+                            elif (i*2+j)==2: det_id = 1
+                            elif (i*2+j)==3: det_id = 2
+
+                        if 'CAM_DETXYFLIP' in primaryHeader:
+                            log.warning("Found CAM_DETXYFLIP in header,"
+                                " DET_ID should be properly updated  !")
+
+                        hdu_i.header.set('DET_ID', "SG%s"%det_id, 
+                                            "PANIC Detector id SGi [i=1..4]")
                         
                     # now, copy extra keywords required
                     for key in copy_keyword:
@@ -505,6 +567,29 @@ class MEF (object):
         frame per file. 
         Header is fully copied from original file, and added new WCS keywords.
         
+        With FITS extensions (MEF) is easy to identify each detector, i.e.,  
+        for rotation=2=180deg (DETROT90=2) we have:
+
+        ext1 - [0:2048, 0:2048]      - SG4
+        ext2 - [2048:4096, 0:2048]   - SG1
+        ext3 - [0:2048, 2048:4096]   - SG3
+        ext4 - [2048:4096,2048:4096] - SG2
+
+
+        But, for single FITS files, I don't know how to identify the detectors 
+        on the 4kx4k image; I did not find any keyword (DETROT90) about it. 
+        
+        DETROT90 = N  (where N=0,1,2,3)
+
+        or much more clearly (for DETROT90=2)
+
+        CHIP_SG1 = '[2048:4096, 0:2048]'
+        CHIP_SG2 = '[2048:4096,2048:4096]'
+        CHIP_SG3 = '[0:2048, 2048:4096]'
+        CHIP_SG4 = '[0:2048,0:2048]' 
+
+        Where SG = science grade detector (Hw id of the detector).
+
         Parameters
         ----------- 
         out_filename_suffix: suffix added to the original input filename.
@@ -514,18 +599,28 @@ class MEF (object):
         Returns
         -------
 
-        n_ext,out_filenames: The number of files and the list of output files created
+        n_ext,out_filenames: The number of files and the list of output files 
+        created. The numbering may not match with DET_ID numbering (SGi).
+
+                    DETROT90=2     DETROT90=0
+        .Q01.fits --> SG4             SG2
+        .Q02.fits --> SG3             SG1
+        .Q03.fits --> SG1             SG3
+        .Q04.fits --> SG2             SG4
+
+        (DETROT90=2=180dec clockwise)
         
+            
         Notes
         -----
         - It is NOT valid for cubes of data, by the moment                           
         - The enumeration order of the quadrants read is:
         
         |------------|
-        |  1  |   3  |
-        | ----|------|
-        |  0  |   2  |
-        |-----|------|
+        |  Q2  | Q4  |
+        | ---- |-----|
+        |  Q1  | Q3  |
+        |----- |-----|
         
         """
         
@@ -563,6 +658,11 @@ class MEF (object):
             pix_centers = numpy.array ([[1024, 1024], [1024, 3072], 
                                         [3072, 1024], [3072, 3072]], 
                                        numpy.float_)
+
+            # Taking into account the gap (167pix), we set the new CRPIXi values
+            # for each extension, refered to the center of the focal plane.
+            new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132], 
+                                        [-81, -81] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i*2 + j))
@@ -595,6 +695,11 @@ class MEF (object):
                         # Due to PANICv0 header hasn't a proper WCS header, we 
                         # built a basic one in order to computer the new RA and 
                         # DEC coordinates.
+
+                        # ----
+                        # Actually, WCS object is not USED !!!
+                        # Instead, WCS header is built from primaryHeader. 
+
                         chip_gap = 167 
                         new_wcs = wcs.WCS(primaryHeader)
                         new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2 + chip_gap/2.0, 
@@ -620,19 +725,23 @@ class MEF (object):
                         # r = clockwise rotation_angle 
                         new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
                                           [0, pix_scale/3600.0]]
-                        new_pix_center = new_wcs.wcs_pix2sky([pix_centers[i*2+j]], 1)
+                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
                         
-                        print "Pix Centers = ",pix_centers[i*2+j]
-                        print "New Pix Centers = ", new_pix_center
+                        #print "Pix Centers = ",pix_centers[i*2+j]
+                        #print "New Pix Centers = ", new_pix_center
                         
-                        prihdu.header.set('RA', new_pix_center[0][0])
-                        prihdu.header.set('DEC', new_pix_center[0][1])
+                        #prihdu.header.set('RA', new_pix_center[0][0])
+                        #prihdu.header.set('DEC', new_pix_center[0][1])
+                        prihdu.header.set('RA', primaryHeader['RA'])
+                        prihdu.header.set('DEC', primaryHeader['DEC'])
                         
+                        # ----
+
                         # Now update the new-wcs for the new subframe
-                        prihdu.header.set('CRPIX1', 1024)
-                        prihdu.header.set('CRPIX2', 1024)
-                        prihdu.header.set('CRVAL1', new_pix_center[0][0])
-                        prihdu.header.set('CRVAL2', new_pix_center[0][1])
+                        prihdu.header.set('CRPIX1', new_crpix_center[i*2+j][0])
+                        prihdu.header.set('CRPIX2', new_crpix_center[i*2+j][1])
+                        prihdu.header.set('CRVAL1', primaryHeader['RA'])
+                        prihdu.header.set('CRVAL2', primaryHeader['DEC'])
                         prihdu.header.set('CTYPE1' , 'RA---TAN') 
                         prihdu.header.set('CTYPE2' , 'DEC--TAN')
                         prihdu.header.set('CUNIT1', 'deg')
@@ -650,8 +759,47 @@ class MEF (object):
                     
                     # Force BITPIX=-32
                     prihdu.scale('float32')
-                    prihdu.header.set('CHIP_NO', (i*2)+j, 
-                                          "PANIC Chip number [0,1,2,3]")
+                    if 'DETROT90' in primaryHeader:
+                        log.debug("Found DETROT90 in header")
+                        # When DETROT90=0, no rotation;
+                        # When DETROT90=1, 90deg clockwise rotation
+                        # When DETROT90=2, 180deg clockwise rotation (default
+                        # for PANIC)
+                        if primaryHeader['DETROT90']==0:
+                            if (i*2+j)==0: det_id = 2
+                            elif (i*2+j)==1: det_id = 1
+                            elif (i*2+j)==2: det_id = 3
+                            elif (i*2+j)==3: det_id = 4
+                        elif primaryHeader['DETROT90']==1:
+                            if (i*2+j)==0: det_id = 3
+                            elif (i*2+j)==1: det_id = 2
+                            elif (i*2+j)==2: det_id = 4
+                            elif (i*2+j)==3: det_id = 1
+                        elif primaryHeader['DETROT90']==2:
+                            if (i*2+j)==0: det_id = 4
+                            elif (i*2+j)==1: det_id = 3
+                            elif (i*2+j)==2: det_id = 1
+                            elif (i*2+j)==3: det_id = 2
+                        elif primaryHeader['DETROT90']==3:
+                            if (i*2+j)==0: det_id = 1
+                            elif (i*2+j)==1: det_id = 4
+                            elif (i*2+j)==2: det_id = 2
+                            elif (i*2+j)==3: det_id = 3
+                    else:
+                        # Then, we suppose DETROT90=2, default for PANIC !
+                        log.warning("No DETROT90 found, supposed DETROT90=2")
+                        if (i*2+j)==0: det_id = 4
+                        elif (i*2+j)==1: det_id = 3
+                        elif (i*2+j)==2: det_id = 1
+                        elif (i*2+j)==3: det_id = 2
+
+                    if 'CAM_DETXYFLIP' in primaryHeader:
+                        log.warning("Found CAM_DETXYFLIP in header,"
+                            " DET_ID should be properly updated  !")
+
+                            
+                    prihdu.header.set('DET_ID', 'SG%s'%det_id, 
+                                          "PANIC Detector id SGi [i=1..4]")
                     
                     out_hdulist.append(prihdu)    
                     out_hdulist.verify('ignore')

@@ -72,7 +72,7 @@ class BadPixelMask(object):
     
 
     def __init__(self, dark_list, flat_list, outputfile=None, dthr=75.0, 
-                fthr=50.0, temp_dir="/tmp"):
+                fthr=15.0, temp_dir="/tmp"):
         
         """
         Init method
@@ -108,10 +108,10 @@ class BadPixelMask(object):
          Algorith to create the BPM
          --------------------------      
          1. Combine all of the darks into a master --> HOT pixels
-            1.1 Define the threshold as :  75% of (mean-3*sigma)
+            1.1 Define the threshold as :  75% of (median-3*sigma)
             1.2 Mask (==1) pixels **above** the threshold.
          2. Combine all of the dome flats into a master --> COLD pixels
-            2.1 Define the threshold as :  50% of (mean)
+            2.1 Define the threshold as :  15% of (median)
             2.2 Mask (==1) pixels **below** the threshold.
          3. Combine the HOT and COLD masks
         """
@@ -135,7 +135,7 @@ class BadPixelMask(object):
             log.error('Not enough dome flats provided. At least 3 flat frames are required')
             raise Exception("Not enough dome flats provided. At least 3 flat frames are required")
         
-
+        dark = None
         if self.dark_list!=None:    
             # STEP 1: Make the combine of dark frames
             log.debug("Combining DARKS frames...")
@@ -163,11 +163,16 @@ class BadPixelMask(object):
 
             # Loop over extensions
             for i_nExt in range(0, nExt):
-                log.info("*** Detector %d"%(i_nExt+1))
                 ext = i_nExt + int(nExt>1)
-                median = numpy.median(dark[ext].data)
+                if 'DET_ID' in dark[ext].header: 
+                    det_id = dark[ext].header['DET_ID']
+                else: 
+                    det_id = i_nExt+1
+                log.info("*** Detector %s"%det_id)
+                median = numpy.mean(dark[ext].data)
                 std = robust.std(dark[ext].data)
                 dark_threshold = (median + self.dthr*std)
+                #dark_threshold = self.dthr
                 #dark_threshold = (mean + 3*std)*(self.dthr/100.0)
                 log.debug("   Dark Median = %s"%median)
                 log.debug("   Dark STD = %s"%std)
@@ -176,7 +181,7 @@ class BadPixelMask(object):
                 # STEP 1.2: Mask (==1) pixels **above** the threshold.
                 bpm[i_nExt, (dark[ext].data > dark_threshold) | numpy.isnan(dark[ext].data)] = 1
                 nbad_hot[i_nExt] = (bpm[i_nExt]==1).sum()
-                log.info("    # Hot-Bad pixels from Dark of detector %d : %d"
+                log.info("   # Hot-Bad pixels from Dark of detector %d : %d"
                     %(i_nExt+1, nbad_hot[i_nExt]))
         else:
             nbad_hot = 0
@@ -218,21 +223,27 @@ class BadPixelMask(object):
 
             # Loop over extensions
             for i_nExt in range(0, nExt):
-                log.info("*** Detector %d"%(i_nExt+1))
                 ext = i_nExt + int(nExt>1)
+                if 'DET_ID' in flat[ext].header: 
+                    det_id = flat[ext].header['DET_ID']
+                else: 
+                    det_id = i_nExt+1
+                log.info("*** Detector %s"%det_id)
                 ## Note: robust mean is very similar to median
                 median = numpy.median(flat[ext].data)
                 std = robust.std(flat[ext].data)
-                # STEP 2.1: Define the thresholds as :  +- 50% of median
+                # STEP 2.1: Define the thresholds as : +-%-ile of median, i.e., 
+                # (tails of the distribution).
                 low_flat_threshold = median*(self.fthr/100.0)  # COLD pixels
-                high_flat_threshold =  median*(1+self.fthr/100.0) # HOT pixels
+                # High_flat_threshold is not sure to have a good value...
+                high_flat_threshold = median*(1+(100-self.fthr)/100.0) # HOT_Sat pixels
                 log.info("    Flat Median = %s"%median)
                 log.info("    Flat STD = %s"%std)
                 log.info("    Flat Low  Threshold = %s"%low_flat_threshold)
                 log.info("    Flat High Threshold = %s"%high_flat_threshold)
 
 
-                # STEP 2.2: Mask (==1) pixels below (cold) and above (hot) the 
+                # STEP 2.2: Mask (==1) pixels below (cold) and above (sat) the 
                 # threshold. The resulted BPM is combined with bad pixel 
                 # from dark frames.
                 bpm[i_nExt, (flat[ext].data < low_flat_threshold) | 
@@ -251,8 +262,13 @@ class BadPixelMask(object):
         for i_nExt in range(0, nExt):
             nbad = (bpm[i_nExt]==1).sum()
             badfrac = float(nbad/float(bpm[i_nExt].size))
-            log.info("# Bad pixels of detector %d: %d"%(i_nExt+1, nbad))
-            log.info("Fraction Bad pixel of detector %d: %f"%(i_nExt+1, badfrac))
+            ext = i_nExt + int(nExt>1)
+            if dark!=None and 'DET_ID' in dark[ext].header: 
+                det_id = dark[ext].header['DET_ID']
+            else: 
+                det_id = i_nExt+1
+            log.info("# Bad pixels of detector %s: %d"%(det_id, nbad))
+            log.info("Fraction Bad pixel of detector %s: %f"%(det_id, badfrac))
 
         # STEP 6: Save the BPM ---
         misc.fileUtils.removefiles(self.output)
@@ -296,6 +312,9 @@ class BadPixelMask(object):
                 hdu = pyfits.PrimaryHDU()
                 hdu.scale('int16') # important to set first data type
                 hdu.data = bpm[i_ext]
+                ext = i_nExt + int(nExt>1)
+                if dark!=None and 'DET_ID' in dark[ext].header:
+                    hdu.header.set('DET_ID', dark[ext].header['DET_ID'])
                 hdulist.append(hdu)
                 del hdu
         else:
@@ -327,7 +346,7 @@ Creates a bad pixel mask (BPM) from a set of darks with fixed exp. time, and
 and set of dome flat images. The output is a FITS file with the bad pixels coded 
 with 1 and good pixels as 0.
 At least one set (>2) of darks or flats are required as input. Inputs files can
-be MEF files.
+be MEF files or simple FITS, but prefered MEF files to distinguish the detectors.
 """
 
 parser = OptionParser(usage, description=desc)
@@ -347,13 +366,13 @@ parser.add_option("-o", "--output",
               help="The output bad pixel mask (optional)")
 
 parser.add_option("-D", "--dark_threshold",
-              action="store", dest="dthr", type='float', default=75.0,
-              help="The Dark rejection threshold (above %-ile cut "
+              action="store", dest="dthr", type='float', default=20.0,
+              help="The Dark sigma rejection threshold (above cut "
                 "detector + 3*sigma counts) [default=%default]")
 
 parser.add_option("-F", "--flat_threshold",
-              action="store", dest="fthr", type='float', default=50.0,
-              help="The Flat rejection threshold (below %-ile cut of mean "
+              action="store", dest="fthr", type='float', default=15.0,
+              help="The Flat rejection threshold (below % cut of mean "
                 "counts) [default=%default]")
 
 
