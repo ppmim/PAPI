@@ -65,7 +65,7 @@ class CheckQuality(object):
     """
     def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge_x=200, edge_y=200, 
                  pixsize=0.45, gain = 4.15, sat_level=1500000, write=False,
-                 window='all'):
+                 min_snr=5.0, window='all'):
         
         self.input_file = input_file
         # Default parameters values
@@ -78,6 +78,7 @@ class CheckQuality(object):
         self.satur_level = sat_level
         self.write = False
         self.verbose = False
+        self.min_snr = min_snr
         self.MIN_NUMBER_GOOD_STARS = 5
         self.window = window
 
@@ -157,12 +158,14 @@ class CheckQuality(object):
         #7  ELLIPTICITY
         #8  FWHM_IMAGE
         #9  FLUX_RADIUS
-        #10 FLUX_AUTO
-        #11 FLUXERR_AUTO
+        #10 FLUX_APER
+        #11 FLUXERR_APER
         #12 FLAGS
-        #13 FLUX_APER
-        #14 FLUXERR_APER
-        
+
+
+        #xx FLUX_AUTO
+        #xx FLUXERR_AUTO
+      
         source_file = catalog_file
 
         try:
@@ -214,8 +217,8 @@ class CheckQuality(object):
             if (x>self.edge_x and x<naxis1-self.edge_x and 
                 y>self.edge_y and y<naxis2-self.edge_y and
                 ellipticity<self.ellipmax and fwhm>0.1 and 
-                fwhm<20 and flags==0 and   
-                isoarea>float(self.isomin) and snr>20.0): 
+                fwhm<20 and flags<=3 and   
+                isoarea>float(self.isomin) and snr>self.min_snr): 
                 # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
                 #print "%s SNR_APER= %s " %(i, snr)
@@ -255,7 +258,7 @@ class CheckQuality(object):
         fits_file.close(output_verify='ignore')
         
         # cleanup files
-        os.unlink(catalog_file)
+        # os.unlink(catalog_file)
         
         return efwhm,std
       
@@ -328,7 +331,7 @@ detector (Q1,Q2,Q3,Q4).
     parser.add_option("-S", "--snr",
                   action="store", dest="snr", type=int,
                   help="Min SNR of stars to use (default = %default)",
-                  default=10)
+                  default=5)
     
     parser.add_option("-e", "--ellipmax",
                   action="store", dest="ellipmax", type=float, default=0.2,
@@ -393,7 +396,7 @@ detector (Q1,Q2,Q3,Q4).
         cq = CheckQuality(options.input_image, options.isoarea_min, 
                           options.ellipmax, options.edge_x, options.edge_y, 
                           options.pixsize, options.gain, options.satur_level , 
-                          options.write, options.window)
+                          options.write, options.snr, options.window)
         cq.estimateFWHM()
     except Exception,e:
         log.error("There was some error: %s "%str(e))
