@@ -49,9 +49,31 @@ class FocusSerie(object):
         
     """
     
-    def __init__(self, input_files, output, pix_size, sat_level, show=False, *a, **k):
+    def __init__(self, input_files, output, pix_size, sat_level, show=False, 
+                    window='all', *a, **k):
         """
-        Init method
+        Init method.
+
+        Parameters
+        ----------
+        input_files: str
+            File list of files to be processed.
+        
+        output: str
+            Filename of the output pdf plot.
+        
+        pix_size: float
+            Pixel size of input files.
+
+        sat_level: int
+            Saturation level of pixels (in ADUs).
+        
+        show: bool
+            whether or not to show the pdf plot file generated.
+        
+        window: str
+            Window/detector to be processed.
+
         """
         
         super (FocusSerie, self).__init__ (*a,**k)
@@ -69,11 +91,14 @@ class FocusSerie(object):
         self.output = output
         self.pix_size = pix_size
         self.sat_level = sat_level
-        self.show = show # whether to show or not the pdf plot file
+        self.show = show # whether or not to show the pdf plot file genetated
+        self.window = window
 
     def eval_serie(self):
         """
-        Do the focus evaluation.
+        Performs the focus evaluation and write the results in a pdf plot and 
+        the best focus in the ~/tmp/ql_focus
+
         """
         
         fwhm_values = []
@@ -85,14 +110,16 @@ class FocusSerie(object):
                 print "Evaluating %s\n"%file    
                 cq = checkQuality.CheckQuality(file, 
                                                pixsize=self.pix_size, 
-                                               sat_level=self.sat_level)
+                                               sat_level=self.sat_level,
+                                               window=self.window)
                 fwhm = cq.estimateFWHM()[0]
                 fwhm_values.append(fwhm)
                 focus = self.get_t_focus(file)
                 focus_values.append(focus)
                 print " >> FWHM =%f, T-FOCUS =%f <<\n"%(fwhm,focus)
             except Exception,e:
-                sys.stderr.write("Some error while processing file %s\n >>Error: %s\n"%(file,str(e)))
+                sys.stderr.write("Some error while processing file %s\n"
+                    " >>Error: %s\n"%(file,str(e)))
                 #log.debug("Some error happened") 
     
         # Fit the the values to a 2-degree polynomial
@@ -108,8 +135,8 @@ class FocusSerie(object):
 
             # Plotting
             plt.plot(focus_values, fwhm_values, '.', xp, pol(xp), '-')
-            plt.title("Focus serie - Fit: %f X^2 + %f X + %f\n Best Focus=%f" 
-                      %(pol[0],pol[1],pol[2],best_focus))
+            plt.title("Focus serie - Fit: %f X^2 + %f X + %f\n Best Focus=%f Detector=%s" 
+                      %(pol[0],pol[1],pol[2],best_focus, self.window))
             plt.xlabel("T-FOCUS (mm)")
             plt.ylabel("FWHM (pixels)")
             plt.xlim(np.min(focus_values),np.max(focus_values))
@@ -136,7 +163,6 @@ class FocusSerie(object):
                 text_file.write("%d"%int(round(best_focus*1000)))
             
             # End-of-focus-file-writing
-
 
         else:
             print "Not enough data for fitting"
@@ -230,11 +256,6 @@ if __name__ == "__main__":
     
        - eval_focus_serie.py -s /data-dir/focus.list -o fwhm_values.pdf
     
-    Known Bugs/Shortcomings:
-    
-    Author:
-       J.M. Ibanez       (jmiguel@iaa.es)
-    
     """)
     
     parser.add_option("-i", "--input", dest="input",
@@ -254,7 +275,17 @@ if __name__ == "__main__":
                       help="Saturation level in ADUs. NCOADD is not taken "
                       "into account [default: %default].",
                       default=50000)
-    
+
+    parser.add_option('-W', '--window',
+                      type='choice',
+                      action='store',
+                      dest='window',
+                      choices=['Q1', 'Q2', 'Q3', 'Q4', 'all'],
+                      default='all',
+                      help="When input is a MEF, it means the "
+                      "window/dectector/extension to process: "
+                      "Q1, Q2, Q3, Q4, full [default: %default]")
+
     (options, args) = parser.parse_args()
     
 
@@ -277,8 +308,11 @@ if __name__ == "__main__":
     # Eval the focus exposures
     try:
         focus_serie = FocusSerie( files , options.output, 
-            options.pix_scale, options.satur_level )
+                        options.pix_scale, options.satur_level,
+                        False, options.window )
+
         best_focus = focus_serie.eval_serie()
+        
         print "BEST_FOCUS =",best_focus
     except Exception,e:
         sys.stderr.write("Could not process focus serie. --> '%s'\n" %str(e))
