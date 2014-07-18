@@ -159,6 +159,9 @@ class NonLinearityModel(object):
     def createModel(self):
           
         """
+        NOT COMPLETED AT ALL !!!
+        ************************
+
         Compute the Non-linearity correction model based on a serie of FITS files
         taken in order to get check the detector linearity.
         
@@ -357,7 +360,7 @@ class NonLinearityModel(object):
     def applyModel(self, source, model, suffix='_LC', out_dir='/tmp'):
         """
         Do the Non-linearity correction using the supplied model. In principle,
-        it should be applied to raw images (darks, flats, science, ...).
+        it should be applied to all raw images (darks, flats, science, ...).
         
         Parameters
         ----------
@@ -373,7 +376,7 @@ class NonLinearityModel(object):
                 plane_0 = coeff_0 (intercept, bias level)
                 plane_1 = coeff_1 (quantum efficiency or sensitivity)
                 plane_2 = coeff_2 (the non-linearity or saturation)
-                plane_3 = coeff_3 
+                plane_3 = coeff_3 (?)
         
         suffix: str
             Suffix to add to the input filename to generate the output filename.
@@ -391,7 +394,7 @@ class NonLinearityModel(object):
         ----
         - adjust the read modes availables on PANIC (lir, mer, o2dcr, ...)
         - read the proper BadPixelMask ??
-        - compute the correctly the correction to do !!! 
+        - compute properly the correction to do !!! 
         - Proccess in parallel each extension.
         
         """   

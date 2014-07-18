@@ -1,0 +1,339 @@
+#!/usr/bin/env python
+
+# This file is part of PAPI (PANIC Pipeline)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+################################################################################
+#########################################################################
+# PANIC data processing
+#########################################################################
+# Example of nonlinearity correction for full frame MEF files
+# Includes many sanity checks, the actual calculation is very simple
+# Incorrectable and saturated pixels are set to NaN. Therefore the ouptut
+# data is float.
+#
+# 1.0 14/07/2014 BD Creation (correct_nonlinearity.py)
+#
+# 1.1 18/07/2014 JMIM Adaption to PAPI (correctNonLinearity.py)
+# 
+#
+
+_name = 'correctNonLinearity.py'
+_version = '1.1'
+################################################################################
+# Import necessary modules
+import numpy as np
+import pyfits
+import dateutil.parser
+import sys
+import os
+import fileinput
+from optparse import OptionParser
+
+# PAPI modules
+import misc.fileUtils
+import misc.utils as utils
+import datahandler
+
+# Logging
+from misc.paLog import log
+
+class NonLinearityCorrection(object):
+    """
+    Class used to correct the Non-linearity of the PANIC detectors based on the 
+    algorithm described by Bernhard Dorner at PANIC-DEC-TN-02_0_1.pdf.
+    """
+    def __init__(self, model, input_files, out_dir='/tmp', suffix='_LC'):
+        """
+        Init the object.
+        
+        Parameters
+        ----------
+                
+        model : str 
+            FITS filename of the Non-Linearity model, ie., containing polynomial 
+            coeffs (4th order) for correction that must has been previously 
+            computed. It must be a cube with 4 planes (a plane for each coeff c4
+            to c1, c0 is not used in the correction and not stored in the cube), 
+            and N extensions (one per detector). Planes definitions:
+
+                plane_0 = coeff_4 
+                plane_1 = coeff_3 
+                plane_2 = coeff_2 
+                plane_3 = coeff_1 
+        
+        input_files: list 
+            A list of FITS files to be corrected (MEF or single FITS).
+
+        out_dir: str
+            Directory where new corredted files will be saved
+
+        suffix: str
+            Suffix to add to the input filename to generate the output filename.
+
+
+        Returns
+        -------
+        outfitsname: list
+            The list of new corrected FITS files created.
+        
+        TODO
+        ----
+        """
+        self.input_files = input_files
+        self.model = model
+        self.suffix = suffix
+        self.out_dir = out_dir
+        
+        if not os.access(self.out_dir, os.F_OK):
+            try:
+                os.mkdir(self.out_dir)
+            except Exception,e:
+                raise e
+        
+        if len(self.input_files)<1:
+            msg = "Found empty list of input files"
+            log.error(msg)
+            raise Exception(msg)
+        
+        if not os.path.exists(self.model):
+            msg = "Cannot read non-linearity model file '%s'" % self.model
+            log.error(msg)
+            raise Exception(msg)
+
+    def checkHeader(self, modelHeader, dataHeader):
+        """
+        Performs some data checking (readmode, orientation, date-obs, 
+        savemode,...).
+
+        Parameters
+        ----------
+        modelHeader: 
+            Header of the NLC model.
+        dataHeader:
+            Header of an raw data file.
+
+        Returns
+        -------
+            True if all was OK (compliant header); otherwise some exception is
+            raised.
+
+        """
+
+
+        # First, checks model is a MASTER_LINEARITY
+        if modelHeader['PAPITYPE'] != 'MASTER_LINEARITY':
+            raise ValueError('Wrong type of nonlinearity correction file')
+
+        # Check input files are non-integrated files (NCOADDS)
+        if dataHeader['NCOADDS']>1:
+            raise ValueError('Wrong type of file. Only non-integrated files (NCOADDS=1) allowed.')
+
+        # Check NLC model is used with newer data (USE_AFTER->USE_AFT)
+        datadate = dateutil.parser.parse(dataHeader['DATE-OBS'])
+        nldate = dateutil.parser.parse(modelHeader['USE_AFT'])
+        if datadate < nldate:
+            raise ValueError('Nonlinearity calibration too new for input data')           
+        
+        # Check some other keys related with READOUT configuration 
+        keys = ['INSTRUME', 'PREAD', 'PSKIP', 'LSKIP', 'READMODE', 'IDLEMODE', 'IDLETYPE']
+        for key in keys:
+            if str(dataHeader[key]).lower() != str(modelHeader[key]).lower():
+                raise ValueError('Mismatch in header data for keyword \'%s\'' %key)            
+        
+        # some may not be present in old data
+        keys = ['DETROT90', 'DETXYFLI']
+        for key in keys:
+            if not key in dataHeader:
+                print 'Warning: key \'%s\' not in data header' %key
+            elif dataHeader[key] != modelHeader[key]:
+                raise ValueError('Mismatch in header data for keyword \'%s\'' %key)
+        keys = ['B_EXT', 'B_DSUB', 'B_VREST', 'B_VBIAG']
+        for key in keys:
+            for i in range (1, 5):
+                if dataHeader[key + '%i'%i] != modelHeader[key + '%i'%i]:
+                    raise ValueError('Mismatch in header data for keyword \'%s%i\'' %(key, i))
+
+
+    def applyModel(self, data_file):
+        """
+        Do the Non-linearity correction using the supplied model. In principle,
+        it should be applied to all raw images (darks, flats, science, ...).
+        
+        Parameters
+        ----------
+        data_file: str
+            input data FITS filename to be corrected.
+
+        Returns
+        -------
+        outfitsname: str
+            The list of new corrected files created.
+                
+        """   
+        log.debug("Start applyModel")
+
+
+        # load raw data file
+        hdulist = pyfits.open(data_file)
+        dataheader = hdulist[0].header
+        # Check if input files are in MEF format or saved as a full-frame with 
+        # the 4 detectors 'stitched'.
+        if len(hdulist)==1:
+            # we need to convert to MEF
+            raise ValueError('Mismatch in header data format. Only MEF files allowed.')
+
+        # load model
+        nlhdulist = pyfits.open(self.model)
+        nlheader = nlhdulist[0].header
+
+        # Check headers
+        try:
+            self.checkHeader(nlheader, dataheader)
+        except Exception,e:
+            log.error("Mismatch in header data for input NLC model %s"%str(e))
+            raise e
+
+        # Creates output fits HDU
+        linhdu = pyfits.PrimaryHDU()
+        linhdu.header = dataheader.copy()
+        hdus = []
+
+        # loop over detectors
+        for iSG in range(1, 5):
+            extname = 'SG%i_1' %iSG
+            # check detector sections
+            # another way would be to loop until the correct one is found
+            datadetsec = hdulist[extname].header['DETSEC']
+            nldetsec = nlhdulist['LINMAX%i' %iSG].header['DETSEC']
+            if datadetsec != nldetsec:
+                raise ValueError('Mismatch of detector sections for SG%i' %iSG)
+            # or check SG IDs (as long as they are reliable)
+            datadetid = hdulist[extname].header['DET_ID']
+            nldetid = nlhdulist['LINMAX%i' %iSG].header['DET_ID']
+            if datadetid != nldetid:
+                raise ValueError('Mismatch of detector IDs for extension' %extname)
+
+            # load file data
+            data = hdulist[extname].data
+            nlmaxs = nlhdulist['LINMAX%i' %iSG].data
+            nlpolys = np.rollaxis(nlhdulist['LINPOLY%i' %iSG].data, 0, 3)
+            # calculate linear corrected data
+            lindata = self.polyval_map(nlpolys, data)
+            # mask saturated inputs - to use nan it has to be a float array
+            lindata[data > nlmaxs] = np.nan
+            # mask where max range is nan
+            lindata[np.isnan(nlmaxs)] = np.nan
+            exthdu = pyfits.ImageHDU(lindata.astype('float32'), header=hdulist[extname].header.copy())
+            # this may rearrange the MEF extensions, otherwise loop over extensions
+            hdus.append(exthdu)
+
+        # add some info in the header
+        linhdu.header['HISTORY'] = 'Nonlinearity correction applied'
+        linhdu.header['HISTORY'] = 'Nonlinearity data: %s' %nlheader['ID']
+        linhdu.header['HISTORY'] = '<-- The German team made this on 2014/07/13'
+        linhdulist = pyfits.HDUList([linhdu] + hdus)
+        
+        # Compose output filename
+        mfnp = os.path.basename(data_file).partition('.fits')
+        # add suffix before .fits extension, or at the end if no such extension present
+        outfitsname = self.out_dir + '/' + mfnp[0] + self.suffix + mfnp[1] + mfnp[2]
+        outfitsname = os.path.normpath(outfitsname)
+
+        # overwrite the output file if exists
+        linhdulist.writeto(outfitsname, clobber=True)
+
+
+
+    def polyval_map(self, poly, map):
+        """
+        Evaluate individual polynomials on an array. Looping over each pixel
+        is stupid, therefore we loop over the order and calculate the
+        polynomial directly.
+        Note: The output is a float array!
+        
+        Input
+        -----
+        poly : array_like
+               Polynomial coefficients without constant offset. The order
+               must be along the last axis.
+        map : array_like
+              Data array.
+              
+        Returns
+        -------
+        polymap : array_like
+                  Result of evaluation, same shape as map, dtype float
+        """
+
+        order = poly.shape[-1]
+        polymap = map * 0.
+        for io in range(order):
+            polymap += poly[Ellipsis, -io-1] * map**(io+1)
+        return polymap
+
+################################################################################
+# main
+if __name__ == "__main__":
+    
+    
+    usage = "usage: %prog [options]"
+    desc= """Performs the non-linearity correction of the PANIC raw data files
+using the proper NL-Model (FITS file).
+"""
+    parser = OptionParser(usage, description=desc)
+
+    # Basic inputs
+    parser.add_option("-m", "--model",
+                  action="store", dest="model",
+                  help="FITS MEF-cube file of polinomial coeffs (c4, c3, c2, c1).")
+    
+    parser.add_option("-s", "--source",
+                  action="store", dest="source_file_list",
+                  help="Source file list of FITS files to be corrected.")
+    
+    parser.add_option("-o", "--out_dir", type="str", dest="out_dir",
+                  action="store", default="/tmp",
+                  help="filename of out data file (default=%default)")
+    
+    parser.add_option("-S", "--suffix", type="str",
+                  action="store", dest="suffix", default="_NLC", 
+                  help="Suffix to use for new corrected files.")
+    
+    
+    (options, args) = parser.parse_args()
+    
+    if len(sys.argv[1:])<1:
+       parser.print_help()
+       sys.exit(0)
+
+    # Check required parameters
+    if (not options.source_file_list or not options.out_dir 
+        or not options.model  or len(args)!=0): # args is the leftover positional arguments after all options have been processed
+        parser.print_help()
+        parser.error("incorrect number of arguments " )
+    
+    # Read the source file list     
+    filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    NLC = NonLinearityCorrection(options.model, filelist, 
+                                    options.out_dir, options.suffix)
+    for i_file in filelist:
+        try:
+            NLC.applyModel(i_file)
+        except Exception,e:
+            log.error("Error applying NLC model to file '%s': %s"%(i_file, str(e)))
+        
+    

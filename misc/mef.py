@@ -488,6 +488,19 @@ class MEF (object):
                         hdu_i.header.set('CUNIT1', 'deg')
                         hdu_i.header.set('CUNIT2', 'deg')
                         
+                        # Force BITPIX=-32
+                        prihdu.scale('float32')
+
+                        if 'DETXYFLIP' in primaryHeader:
+                            # When DETXYFLIP=0, no flip; default
+                            # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
+                            # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
+                            detflipxy = primaryHeader['DETXYFLIP']
+                            log.debug("Found DETXYFLIP in header =%s"%detflipxy)
+                        else: 
+                            detflipxy = 0
+
+                    
                         if 'DETROT90' in primaryHeader:
                             log.debug("Found DETROT90 in header")
                             # When DETROT90=0, no rotation;
@@ -495,36 +508,96 @@ class MEF (object):
                             # When DETROT90=2, 180deg clockwise rotation (default
                             # for PANIC)
                             if primaryHeader['DETROT90']==0:
-                                if (i*2+j)==0: det_id = 2
-                                elif (i*2+j)==1: det_id = 1
-                                elif (i*2+j)==2: det_id = 3
-                                elif (i*2+j)==3: det_id = 4
+                                if (i*2+j)==0: 
+                                    if detflipxy==0: det_id = 2
+                                    elif detflipxy==1: det_id = 3
+                                    elif detflipxy==2: det_id = 1
+                                    elif detflipxy==3: det_id = 4
+                                elif (i*2+j)==1: 
+                                    if detflipxy==0: det_id = 1
+                                    elif detflipxy==1: det_id = 4
+                                    elif detflipxy==2: det_id = 2
+                                    elif detflipxy==3: det_id = 3
+                                elif (i*2+j)==2: 
+                                    if detflipxy==0: det_id = 3
+                                    elif detflipxy==1: det_id = 2
+                                    elif detflipxy==2: det_id = 4
+                                    elif detflipxy==3: det_id = 1
+                                elif (i*2+j)==3:
+                                    if detflipxy==0: det_id = 4
+                                    elif detflipxy==1: det_id = 1 
+                                    elif detflipxy==2: det_id = 3
+                                    elif detflipxy==3: det_id = 2
                             elif primaryHeader['DETROT90']==1:
-                                if (i*2+j)==0: det_id = 3
-                                elif (i*2+j)==1: det_id = 2
-                                elif (i*2+j)==2: det_id = 4
-                                elif (i*2+j)==3: det_id = 1
+                                if (i*2+j)==0:
+                                    if detflipxy==0: det_id = 3
+                                    elif detflipxy==1: det_id = 4 
+                                    elif detflipxy==2: det_id = 2
+                                    elif detflipxy==3: det_id = 1
+                                elif (i*2+j)==1:
+                                    if detflipxy==0: det_id = 2
+                                    elif detflipxy==1: det_id = 1
+                                    elif detflipxy==2: det_id = 3
+                                    elif detflipxy==3: det_id = 4                                
+                                elif (i*2+j)==2: 
+                                    if detflipxy==0: det_id = 4
+                                    elif detflipxy==1: det_id = 3
+                                    elif detflipxy==2: det_id = 1
+                                    elif detflipxy==3: det_id = 2                                
+                                elif (i*2+j)==3:
+                                    if detflipxy==0: det_id = 1
+                                    elif detflipxy==1: det_id = 2
+                                    elif detflipxy==2: det_id = 4
+                                    elif detflipxy==3: det_id = 3                               
                             elif primaryHeader['DETROT90']==2:
-                                if (i*2+j)==0: det_id = 4
-                                elif (i*2+j)==1: det_id = 3
-                                elif (i*2+j)==2: det_id = 1
-                                elif (i*2+j)==3: det_id = 2
+                                if (i*2+j)==0:
+                                    if detflipxy==0: det_id = 4
+                                    elif detflipxy==1: det_id = 1 
+                                    elif detflipxy==2: det_id = 3
+                                    elif detflipxy==3: det_id = 2                               
+                                elif (i*2+j)==1:
+                                    if detflipxy==0: det_id = 3
+                                    elif detflipxy==1: det_id = 2 
+                                    elif detflipxy==2: det_id = 4
+                                    elif detflipxy==3: det_id = 1                               
+                                elif (i*2+j)==2:
+                                    if detflipxy==0: det_id = 1
+                                    elif detflipxy==1: det_id = 4 
+                                    elif detflipxy==2: det_id = 2
+                                    elif detflipxy==3: det_id = 3                              
+                                elif (i*2+j)==3: 
+                                    if detflipxy==0: det_id = 2
+                                    elif detflipxy==1: det_id = 3 
+                                    elif detflipxy==2: det_id = 1
+                                    elif detflipxy==3: det_id = 4
                             elif primaryHeader['DETROT90']==3:
-                                if (i*2+j)==0: det_id = 1
-                                elif (i*2+j)==1: det_id = 4
-                                elif (i*2+j)==2: det_id = 2
-                                elif (i*2+j)==3: det_id = 3
+                                if (i*2+j)==0:
+                                    if detflipxy==0: det_id = 1
+                                    elif detflipxy==1: det_id = 2 
+                                    elif detflipxy==2: det_id = 4
+                                    elif detflipxy==3: det_id = 3
+                                elif (i*2+j)==1:
+                                    if detflipxy==0: det_id = 4
+                                    elif detflipxy==1: det_id = 2
+                                    elif detflipxy==2: det_id = 1
+                                    elif detflipxy==3: det_id = 3
+                                elif (i*2+j)==2:
+                                    if detflipxy==0: det_id = 2
+                                    elif detflipxy==1: det_id = 1
+                                    elif detflipxy==2: det_id = 3
+                                    elif detflipxy==3: det_id = 4
+                                elif (i*2+j)==3:
+                                    if detflipxy==0: det_id = 3
+                                    elif detflipxy==1: det_id = 4
+                                    elif detflipxy==2: det_id = 2
+                                    elif detflipxy==3: det_id = 1
                         else:
-                            # Then, we suppose DETROT90=2, default for PANIC !
-                            log.warning("No DETROT90 found, supposed DETROT90=2")
+                            # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
+                            log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
                             if (i*2+j)==0: det_id = 4
                             elif (i*2+j)==1: det_id = 3
                             elif (i*2+j)==2: det_id = 1
-                            elif (i*2+j)==3: det_id = 2
-
-                        if 'CAM_DETXYFLIP' in primaryHeader:
-                            log.warning("Found CAM_DETXYFLIP in header,"
-                                " DET_ID should be properly updated  !")
+                            elif (i*2+j)==3: det_id = 2                       
 
                         hdu_i.header.set('DET_ID', "SG%s"%det_id, 
                                             "PANIC Detector id SGi [i=1..4]")
@@ -757,6 +830,15 @@ class MEF (object):
                         prihdu.header.add_history("[MEF.splitGEIRSToSimple] File created from %s"%file)
                         
                     
+                    if 'DETXYFLIP' in primaryHeader:
+                        # When DETXYFLIP=0, no flip; default
+                        # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
+                        # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
+                        detflipxy = primaryHeader['DETXYFLIP']
+                        log.debug("Found DETXYFLIP in header =%s"%detflipxy)
+                    else: 
+                        detflipxy = 0
+
                     # Force BITPIX=-32
                     prihdu.scale('float32')
                     if 'DETROT90' in primaryHeader:
@@ -766,36 +848,96 @@ class MEF (object):
                         # When DETROT90=2, 180deg clockwise rotation (default
                         # for PANIC)
                         if primaryHeader['DETROT90']==0:
-                            if (i*2+j)==0: det_id = 2
-                            elif (i*2+j)==1: det_id = 1
-                            elif (i*2+j)==2: det_id = 3
-                            elif (i*2+j)==3: det_id = 4
+                            if (i*2+j)==0: 
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 3
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 4
+                            elif (i*2+j)==1: 
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 4
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 3
+                            elif (i*2+j)==2: 
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 2
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 1
+                            elif (i*2+j)==3:
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 1 
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 2
                         elif primaryHeader['DETROT90']==1:
-                            if (i*2+j)==0: det_id = 3
-                            elif (i*2+j)==1: det_id = 2
-                            elif (i*2+j)==2: det_id = 4
-                            elif (i*2+j)==3: det_id = 1
+                            if (i*2+j)==0:
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 4 
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 1
+                            elif (i*2+j)==1:
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 1
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 4                                
+                            elif (i*2+j)==2: 
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 3
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 2                                
+                            elif (i*2+j)==3:
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 2
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 3                               
                         elif primaryHeader['DETROT90']==2:
-                            if (i*2+j)==0: det_id = 4
-                            elif (i*2+j)==1: det_id = 3
-                            elif (i*2+j)==2: det_id = 1
-                            elif (i*2+j)==3: det_id = 2
+                            if (i*2+j)==0:
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 1 
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 2                               
+                            elif (i*2+j)==1:
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 2 
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 1                               
+                            elif (i*2+j)==2:
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 4 
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 3                              
+                            elif (i*2+j)==3: 
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 3 
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 4
                         elif primaryHeader['DETROT90']==3:
-                            if (i*2+j)==0: det_id = 1
-                            elif (i*2+j)==1: det_id = 4
-                            elif (i*2+j)==2: det_id = 2
-                            elif (i*2+j)==3: det_id = 3
+                            if (i*2+j)==0:
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 2 
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 3
+                            elif (i*2+j)==1:
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 2
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 3
+                            elif (i*2+j)==2:
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 1
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 4
+                            elif (i*2+j)==3:
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 4
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 1
                     else:
-                        # Then, we suppose DETROT90=2, default for PANIC !
-                        log.warning("No DETROT90 found, supposed DETROT90=2")
+                        # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
+                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
                         if (i*2+j)==0: det_id = 4
                         elif (i*2+j)==1: det_id = 3
                         elif (i*2+j)==2: det_id = 1
                         elif (i*2+j)==3: det_id = 2
-
-                    if 'CAM_DETXYFLIP' in primaryHeader:
-                        log.warning("Found CAM_DETXYFLIP in header,"
-                            " DET_ID should be properly updated  !")
 
                             
                     prihdu.header.set('DET_ID', 'SG%s'%det_id, 

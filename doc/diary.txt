@@ -4491,7 +4491,11 @@ Despues de compilar y hacer el enlace de start_panic_new a GENERIC, arranca bien
 pero al intentar hacer un read da un error. Como vi un error reference al fichero
 INFO/roe_init_ch32.panic ... decidí compiar mi antiguo directorio INFO en la
 version copiade (rsync) de panic.mpia.de. Tras hacer eso, GEIRS arranco bien y
-ya pude hacer read+save sin problmas.
+ya pude hacer read+save sin problmas --> Fixed !! , faltaban un par de links tq: 
+
+roe_init_ch32.panic -> roe_init.panic
+roe_init_ch4.panic -> roe_init.panic
+
 
 - Ahora el script GENERIC contiene dos nuevas keys de configuración:
 
@@ -4520,11 +4524,40 @@ ext4 - [2048:4096,2048:4096] - SG4
 -------------
 - Escribo email a RM preguntando como identifica los SGi en los single FITS 4kx4k
 cuando no vienen en formato MEF.
+
+Me responde en mail 6/6/2014 lo siguiente:
+
+""
+We could just wait for the next release of the FITS keyword TN
+of PANIC and implement the specificatation that is in there .
+
+Beyond this:
+i) of course everything would start at 1, not 0 (as in FITS)
+ii) For sufficiently small windows, there is a
+    set of 2 keywords, DET_ID and DETSEC for either the primary
+    headers or the extension headers. The "save -M" is a subcase of this.
+iii) For the large windows (including the full frame) that sort
+    of rotation is indeed not yet available. DETROT90 would
+    be insufficient to document the layout, because there is also a keyword
+    DETFLIPXY which swaps detectors and images left-right or up-down.
+    So basically CHIP_SGi looks fine to me. I am not sure when this
+    can be implemented (removal of bugs has preference over implementation
+    of desired but essentially superfluous features.) 
+"""
+
+así que habrá que esperar a que lo implemente...
+
+
 - Encuentro problema al salvar los subwindows en r716,r717 y r718, pero en r715
 si funciona bien. --> RM lo soluciona ---> r719M
 
 
-(P) - Ver por qué el directorio INFO no es correcto
+- Ver por qué el directorio INFO no es correcto --> fixed, faltaban un par
+de links tq: 
+
+roe_init_ch32.panic -> roe_init.panic
+roe_init_ch4.panic -> roe_init.panic
+
 (P) - Ver como reflejar los SGi en PAPI !!! y QL !!!
 
 10-Junio-2014 (feliz. PP)
@@ -4596,9 +4629,57 @@ Para ello añado al fichero de configuración el parámetro 'detector', tal que:
 detector = all
 
 - Lo pruebo con HAWK-I y funciona bien.
+- Compilo la r719M-bis y pongo el mismo INFO que en panic.mpia.de con los 
+correspondientes enlaces y todo OK.
+
 
 12-Junio-2014 
 -------------
+- Le escribo a RM preguntadole por los valores de DETXYFLI, pues aunque parece
+que =1 para Flip horizontal (intercabiar izq. y derecha), =2 Flip Vertical 
+(intercambiar arriba con abajo), hay un tercer valor =3 que no se para que puede
+ser....
+
+- NOTA: **nunca** se deberían mezclar en la reducción imagenes con diferente valor
+para DETROT90 y DETXYFLI.
+
+
+08-Julio-2014 
+-------------
+- Descargo los datos del 4th OPT_FOCUS_CICLE (3rd según BD) y lo reduzco para
+que lo analice Conchi.
+Les indico que a mi me da la impresión de que la "estrellas" están aplanadas, y
+algunas parecen un cacahuete.
+
+09-Julio-2014 
+-------------
+- Videoconf de PANIC: nada relevante; BD está trabajando sobre la rutina de NLC
+y cuando la tenga me la pasará para que la implemente en PAPI.
+
+
+11-Julio-2014 
+-------------
+ - Conchi me pregunta sobre algún procedimiento del QL para ver en "tiempo-real"
+ el FWHM de una estrella mientras se está tocando el foco del StarSimulator.
+
+ Temas a ver:
+  - pre-reducción Dark y FF
+  - funcionar con subwindows
+  - Mostar el FWHM de cada fichero: la rutina actual usa la keyword T-FOCUS y
+  dará una estimación del mejor TFOCUS en función del FWHM de la imagenes.
+
+  Por tanto, parece que lo mejor es modificar eval_focus_serie.py para que 
+  no opcionalmente no USE TFOCUS y simplemente diga el FWHM de cada imagen.
+
+14-Julio-2014 
+-------------
+- Modificaciones en checkQuality.py (edge>20 y MIN_GOOD=0) y en eval_focus_serie.py
+para las pruebas que quiere hacer Conchi con el StarSimulator.
+
+(P) Pendiente ver como puede afectar a otros procedimientos dichas modicicaciones ....
+
+
+
 
 
 
@@ -4994,6 +5075,9 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Comprobar lectura correcta de nuevas keys : CAM_DETROT90 y CAM_DETXYFLIP en r719M.
+
+
 - Paralelizar NonLinearityModel:applyModel()
 
 - Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
@@ -5090,8 +5174,6 @@ varios ficheros, en CUBOS en un solo fichero creo que si lo hace PAPI.
 - eliminar del todo RS::self.out_file
 - crear "bateria" de tests para lanzar de forma automatica con un conjunto de
 datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
-- ver las diferencias entre calBPM.py y calBPM_2.py (este último es el que se 
-esta usando)
 - usar fit.polyfitr() en photometry 
 - ver notas libreta sobre si se reduce o no HAWK-I-4
 - ver notas libreta sobre si se reduce o no HAWK-I-5; 
@@ -5179,4 +5261,6 @@ Problemas/bugs detectados en QL
 de esa imagen (ella sola), la imagen FITS de background que genera Sextractor
 no cumple el standard FITS y es rechazada por PAPI. Lo compruebo con fitsverify 
 y da error. Es un bug en Sextractor que habría que informar a E.Bertin.
+
+
 

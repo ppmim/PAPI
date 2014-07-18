@@ -40,6 +40,9 @@ import matplotlib.pyplot as plt
 
 import checkQuality
 
+class TFOCUSNotFound(StandardError):
+    pass
+
 class FocusSerie(object):
     """
     Class used to estimate the best focus value of a focus exposures 
@@ -114,7 +117,17 @@ class FocusSerie(object):
                                                window=self.window)
                 fwhm = cq.estimateFWHM()[0]
                 fwhm_values.append(fwhm)
-                focus = self.get_t_focus(file)
+
+                # Try to read Telescope Focus (T-FOCUS)
+                try:
+                    focus = self.get_t_focus(file)
+                except TFOCUSNotFound, e:
+                    # Because we could be interested in knowing the best FWHM
+                    # of the files even if the do not have the TFOCUS, we use
+                    # a special value (-1) for this purpose. Obviously, no
+                    # Poly fit will be done, but only show the FWHM values
+                    # obtained for each file.
+                    focus = -1
                 focus_values.append(focus)
                 print " >> FWHM =%f, T-FOCUS =%f <<\n"%(fwhm,focus)
             except Exception,e:
@@ -122,29 +135,39 @@ class FocusSerie(object):
                     " >>Error: %s\n"%(file,str(e)))
                 #log.debug("Some error happened") 
     
-        # Fit the the values to a 2-degree polynomial
-        sys.stdout.write("Focus values : %s \n"%str(focus_values))
-        sys.stdout.write("FWHM values : %s \n"%str(fwhm_values))
-        if len(focus_values)>0 and len(focus_values)==len(fwhm_values):
+        # Fitst, check if we have good values (!=-1) for T-FOCUS
+        good_focus_values = [ v for v in focus_values if v!=-1 ]
+        # Here, we remove duplicated values of T-FOCUS
+        seen = set()
+        seen_add = seen.add
+        good_focus_values = [ x for x in good_focus_values if not (x in seen or seen_add(x))]
+        
+        if len(good_focus_values)>1 and len(good_focus_values)==len(fwhm_values):
+            # Fit the the values to a 2-degree polynomial
+            sys.stdout.write("Focus values : %s \n"%str(good_focus_values))
+            sys.stdout.write("FWHM values : %s \n"%str(fwhm_values))
             print "Lets do the fit...."
-            z = np.polyfit(focus_values, fwhm_values, 2)
+            z = np.polyfit(good_focus_values, fwhm_values, 2)
             print "Fit = %s  \n"%str(z)
             pol = np.poly1d(z)
-            xp = np.linspace(np.min(focus_values), np.max(focus_values), 2000)
+            xp = np.linspace(np.min(good_focus_values), 
+                    np.max(good_focus_values), 2000)
             best_focus = xp[pol(xp).argmin()]
 
             # Plotting
-            plt.plot(focus_values, fwhm_values, '.', xp, pol(xp), '-')
+            plt.plot(good_focus_values, fwhm_values, '.', xp, pol(xp), '-')
             plt.title("Focus serie - Fit: %f X^2 + %f X + %f\n Best Focus=%f Detector=%s" 
                       %(pol[0],pol[1],pol[2],best_focus, self.window))
             plt.xlabel("T-FOCUS (mm)")
             plt.ylabel("FWHM (pixels)")
-            plt.xlim(np.min(focus_values),np.max(focus_values))
+            plt.xlim(np.min(good_focus_values),np.max(good_focus_values))
             plt.ylim(pol(xp).min(), np.max(fwhm_values))
             plt.savefig(self.output)
             if self.show:
                 plt.show(block=True)
 
+            sys.stdout.write("\nPlot generated: %s\n"%self.output)
+            
             #
             # Write focus value into text file for OT
             #
@@ -165,11 +188,12 @@ class FocusSerie(object):
             # End-of-focus-file-writing
 
         else:
-            print "Not enough data for fitting"
+            # Because cannot read TFOCUS values, only FWHM per file are shown. 
+            sys.stdout.write("** Because cannot read TFOCUS values,"
+                             " only FWHM per file is shown **")
+            for idx, i_file in enumerate(self.input_files):
+                sys.stdout.write("\nFile: %s   -->  FWHM: %s"%(i_file, fwhm_values[idx]))
             best_focus = np.NaN
-
-        sys.stdout.write("\nPlot generated: %s\n"%self.output)
-
 
         return best_focus, self.output
            
@@ -184,7 +208,7 @@ class FocusSerie(object):
 
         Returns
         ------- 
-        The "T-FOCUS" keyword value
+        The "T-FOCUS" keyword value read.
         
         """ 
                 
@@ -196,10 +220,10 @@ class FocusSerie(object):
             elif "T_FOCUS" in fits[0].header:
                 focus = fits[0].header["T_FOCUS"]
             else:
-                raise Exception("Canno find the FOCUS value")
-        except Exception,e:
-            sys.stderr.write("Cannot find the T-FOCUS value in file %s\n"%file)
-            raise e
+                sys.stderr.write("Cannot find the T-FOCUS value")
+                raise TFOCUSNotFound("Cannot find the T-FOCUS value")
+        finally:
+            fits.close()
         
         return focus
         
@@ -313,7 +337,7 @@ if __name__ == "__main__":
 
         best_focus = focus_serie.eval_serie()
         
-        print "BEST_FOCUS =",best_focus
+        print "\nBEST_FOCUS =",best_focus
     except Exception,e:
         sys.stderr.write("Could not process focus serie. --> '%s'\n" %str(e))
         sys.exit(1)
