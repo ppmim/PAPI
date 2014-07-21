@@ -67,7 +67,7 @@ import astromatic
 from astromatic.swarp import *
 import datahandler.dataset
 import misc.collapse
-import calNonLinearity
+import correctNonLinearity
 
 
 # If your parallel tasks are going to use the same instance of PyRAF (and thus 
@@ -2210,20 +2210,24 @@ class ReductionSet(object):
         
         #
         # First of all, let see whether Non-linearity correction must be done
-        # Note: we do not need to 'split the extensions', it is done serially
-        # by  NonLinearityModel:applyModel().
-        # Todo: It should be done in parallel ...
+        # Note2: we do not need to 'split the extensions', they are processed 
+        # one by one (serial) by NonLinearityCorrection(). However, due to
+        # NonLinearityCorrection() need MEF files as input, it does the 
+        # conversion to MEF if needed. 
+        # Note2: NonLinearityCorrection() performs the NLC in parallel,
+        # instead of processing the sequence file by file.
         if self.config_dict['nonlinearity']['apply']==True:
             master_nl = self.config_dict['nonlinearity']['model']
             try:
                 log.info("**** Applying Non-Linearity correction ****")
-                nl_task = calNonLinearity.NonLinearityModel()
-                corr_sequence = nl_task.applyModel(sequence, master_nl,
-                                                    suffix='_NLC',
-                                                    out_dir=self.temp_dir)
+                nl_task = correctNonLinearity.NonLinearityCorrection(master_nl, 
+                            sequence, out_dir=self.temp_dir, suffix='_LC')
+                corr_sequence = nl_task.runMultiNLC()
+
             except Exception,e:
                 log.error("Error while applying NL model: %s"%str(e))
                 raise e
+            
             sequence = corr_sequence
 
         

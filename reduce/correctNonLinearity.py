@@ -42,21 +42,26 @@ import sys
 import os
 import fileinput
 from optparse import OptionParser
+import multiprocessing
+
 
 # PAPI modules
-import misc.fileUtils
-import misc.utils as utils
-import datahandler
-
-# Logging
+import misc.mef
 from misc.paLog import log
+
+# If you want to use the new multiprocessing module in Python 2.6 within a class, 
+# you might run into some problems. Here's a trick how to do a work-around. 
+def unwrap_self_applyModel(arg, **kwarg):
+    #print "ARG=",arg
+    return NonLinearityCorrection.applyModel(*arg, **kwarg)
 
 class NonLinearityCorrection(object):
     """
     Class used to correct the Non-linearity of the PANIC detectors based on the 
     algorithm described by Bernhard Dorner at PANIC-DEC-TN-02_0_1.pdf.
     """
-    def __init__(self, model, input_files, out_dir='/tmp', suffix='_LC'):
+    def __init__(self, model, input_files, out_dir='/tmp', 
+                suffix='_LC', force=False):
         """
         Init the object.
         
@@ -84,6 +89,9 @@ class NonLinearityCorrection(object):
         suffix: str
             Suffix to add to the input filename to generate the output filename.
 
+        force: bool
+            If true, no check of input raw header is done (NCOADDS, DETROT90, 
+            INSTRUME,...)
 
         Returns
         -------
@@ -97,6 +105,7 @@ class NonLinearityCorrection(object):
         self.model = model
         self.suffix = suffix
         self.out_dir = out_dir
+        self.force = force
         
         if not os.access(self.out_dir, os.F_OK):
             try:
@@ -128,8 +137,7 @@ class NonLinearityCorrection(object):
 
         Returns
         -------
-            True if all was OK (compliant header); otherwise some exception is
-            raised.
+           If a non-compliant header is found, some exception will be raised.
 
         """
 
@@ -187,14 +195,31 @@ class NonLinearityCorrection(object):
         log.debug("Start applyModel")
 
 
+        
         # load raw data file
         hdulist = pyfits.open(data_file)
         dataheader = hdulist[0].header
+        
         # Check if input files are in MEF format or saved as a full-frame with 
         # the 4 detectors 'stitched'.
+        to_delete = None
         if len(hdulist)==1:
             # we need to convert to MEF
-            raise ValueError('Mismatch in header data format. Only MEF files allowed.')
+            log.warning("Mismatch in header data format. Converting to MEF file.")
+            hdulist.close()
+            
+            # Convert single-FITS to MEF
+            mef = misc.mef.MEF([data_file])
+            mef_suffix = ".mef.fits"
+            n_ext, new_mef_files = mef.convertGEIRSToMEF(mef_suffix, self.out_dir)
+            if n_ext !=4:
+                raise ValueError('Mismatch in header data format. Only MEF files allowed.')
+            
+            # load new MEF raw data file
+            hdulist = pyfits.open(new_mef_files[0])
+            dataheader = hdulist[0].header
+            # copy the filename to be deleted after processing (?)
+            to_delete = new_mef_files[0]
 
         # load model
         nlhdulist = pyfits.open(self.model)
@@ -202,7 +227,8 @@ class NonLinearityCorrection(object):
 
         # Check headers
         try:
-            self.checkHeader(nlheader, dataheader)
+            if self.force==False:
+                self.checkHeader(nlheader, dataheader)
         except Exception,e:
             log.error("Mismatch in header data for input NLC model %s"%str(e))
             raise e
@@ -255,8 +281,65 @@ class NonLinearityCorrection(object):
 
         # overwrite the output file if exists
         linhdulist.writeto(outfitsname, clobber=True)
+        
+        if to_delete:
+            os.unlink(to_delete)
+
+        return outfitsname
 
 
+    def runMultiNLC(self):
+        """
+        Run a parallel proceesing of NL-correction for the input files taking
+        advantege of multi-core CPUs.
+
+        Returns
+        -------
+        On succes, a list with the filenames of the corrected files.
+        """
+
+        # use all CPUs available in the computer
+        n_cpus = multiprocessing.cpu_count()
+        log.debug("N_CPUS :" + str(n_cpus))
+        pool = multiprocessing.Pool(processes=n_cpus)
+        
+        results = []
+        solved = []
+        for i_file in self.input_files:
+            red_parameters = [i_file]
+            print "I_FILE=",i_file
+            try:
+                # Instead of pool.map() that blocks until
+                # the result is ready, we use pool.map_async()
+                results += [pool.map_async(unwrap_self_applyModel, 
+                        zip([self]*len(red_parameters), red_parameters) )]
+            except Exception,e:
+                log.error("Error processing file: " + i_file)
+                log.error(str(e))
+                
+        for result in results:
+            try:
+                result.wait()
+                # the 0 index is *ONLY* required if map_async is used !!!
+                solved.append(result.get()[0])
+                log.info("New file created => %s"%solved[-1])
+            except Exception,e:
+                log.error("Cannot process file \n" + str(e))
+                
+        
+
+        # Prevents any more tasks from being submitted to the pool. 
+        # Once all the tasks have been completed the worker 
+        # processes will exit.
+        pool.close()
+
+        # Wait for the worker processes to exit. One must call 
+        #close() or terminate() before using join().
+        pool.join()
+        
+        log.info("Finished parallel NL-correction")
+        
+        return solved
 
     def polyval_map(self, poly, map):
         """
@@ -312,6 +395,11 @@ using the proper NL-Model (FITS file).
     parser.add_option("-S", "--suffix", type="str",
                   action="store", dest="suffix", default="_NLC", 
                   help="Suffix to use for new corrected files.")
+
+    parser.add_option("-f", "--force",
+                  action="store_true", dest="force", default=False, 
+                  help="Force Non-linearity correction with no check of header"
+                  "values (NCOADD, DATE-OBS, DETROT90, ...")
     
     
     (options, args) = parser.parse_args()
@@ -328,12 +416,23 @@ using the proper NL-Model (FITS file).
     
     # Read the source file list     
     filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
-    NLC = NonLinearityCorrection(options.model, filelist, 
-                                    options.out_dir, options.suffix)
+    NLC = NonLinearityCorrection(options.model, filelist, options.out_dir, 
+                                    options.suffix, options.force)
+    
+    try:
+        corr = NLC.runMultiNLC()
+    except Exception,e:
+        log.error("Error running NLC: %s"%str(e))
+        raise e
+
+    print "\nCorrected files: ",corr
+    
+    """
+    # Non parallel processing
     for i_file in filelist:
         try:
             NLC.applyModel(i_file)
         except Exception,e:
             log.error("Error applying NLC model to file '%s': %s"%(i_file, str(e)))
-        
+    """ 
     

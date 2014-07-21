@@ -324,10 +324,15 @@ class MEF (object):
         Parameters
         ----------
 
-        out_filename_suffix: suffix added to the original input filename
-        out_dir: directory where the new output file will be created
-        copy_keyword: list of keyword from the PrimaryHDU of the original file 
-                    to be copied to the other header extensions.  
+        out_filename_suffix: str 
+            suffix added to the original input filename
+        
+        out_dir: str 
+            directory where the new output file will be created
+        
+        copy_keyword: list 
+            list of keyword from the PrimaryHDU of the original file 
+            to be copied to the other header extensions.  
         
         Returns
         -------
@@ -381,7 +386,7 @@ class MEF (object):
                  Cannot convert to MEF file", len(in_hdulist)-1)
                 raise MEF_Exception("Cannot convert an already MEF to MEF file")
             else:
-                log.info("OK, found a single FITS file")
+                log.info("Found a single FITS file. Let's convert it to MEF...")
                 
                 
             # copy primary header from input file
@@ -599,8 +604,12 @@ class MEF (object):
                             elif (i*2+j)==2: det_id = 1
                             elif (i*2+j)==3: det_id = 2                       
 
-                        hdu_i.header.set('DET_ID', "SG%s"%det_id, 
+                        hdu_i.header.set('DET_ID', "SG%i"%det_id, 
                                             "PANIC Detector id SGi [i=1..4]")
+                        hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
+                        hdu_i.header.set('DETSEC',
+                            "[%i:%i,%i:%i]"%(2048*i+1, 2048*(i+1), 2048*j+1, 2048*(j+1) ))
+
                         
                     # now, copy extra keywords required
                     for key in copy_keyword:

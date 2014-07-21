@@ -4679,8 +4679,25 @@ para las pruebas que quiere hacer Conchi con el StarSimulator.
 (P) Pendiente ver como puede afectar a otros procedimientos dichas modicicaciones ....
 
 
+18-Julio-2014 
+-------------
+- Creo correctNonLinearity.py a partir de la version de BD (correct_nonlinearity.py)
+Lo pruebo un poco y va bien, pero falta:
 
+ - hay un warning de calculo...
 
+21-Julio-2014 
+-------------
+- Continiuo con la adaptación y mejora de la NLC de BD a PAPI; entre otras,
+añado lo siguiente:
+ 
+   - conversion a MEF cuando los ficheros de entrada son single; tuve
+   que modificar/actualizar mef.convertGEIRSToMEF()
+   - paralelizar cuando hay una lista de ficheros a corregir; se hace en la
+   propia clase  NonLinearityCorrection() con runMultiNLC()
+   - incluir (sustituir mi rutina) en PAPI en reductionset.py de forma que 
+   si en el fichero de configuración se dice que se aplicar la NLC, se aplicará
+   en PAPI. 
 
 
 
