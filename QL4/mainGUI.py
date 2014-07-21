@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright (c) 2008-2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2008-2014 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -25,7 +25,7 @@
 #
 # mainGUI.py
 #
-# Last update 20/Nov/2012
+# Last update 21/Jul/2014
 #
 ################################################################################
 
@@ -101,9 +101,20 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
 
-__version__ = "1.1.0 - May 2014"
+__version__ = "1.2.0 - July 2014"
 
 #-------------------------------------------------------------------------------
+#
+# Next functions are needed to allow the use of  multiprocessing.Pool() with 
+# class methods, that need to be picklable (at least 
+# Solution obtained from :
+# http://www.frozentux.net/2010/05/python-multiprocessing/  
+# http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
+# In addition, there is other version of the above functions:
+# http://stackoverflow.com/questions/5429584/handling-the-classmethod-pickling-issue-with-copy-reg
+# but it does not work (at least for me!) 
+#
+
 def _pickle_method(method):
     
     #Pickle methods properly, including class methods.
@@ -792,7 +803,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def checkDoneQueue(self):
         """
         Check Queue of done tasks launched with Process in TaskRunner.
-        Funtion called periodically (every 1 sec).
+        Function called periodically (every 1 sec).
         """
         if not self._done_queue.empty():
             log.debug("Something new in the DoneQueue !")
@@ -946,7 +957,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             # something was wrong...
                             # Anycase, we show it !
                             self.logConsole.info(str(QString("Value returned : %1")
-                                                      .arg(self._task_info._return)))
+                                                      .arg(str(self._task_info._return))))
                             #self.logConsole.error("No processing results obtained !")
                     else:
                         self.logConsole.info("Nothing returned !")
@@ -1815,7 +1826,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     
     def imexam_slot(self):
         """
-        Imexam the currect filename selected - not used because it fails 
+        Imexam the currect filename selected - not used because it fails !!
         """
         
         try:
@@ -1978,15 +1989,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if (self.inputsDB.GetFileInfo(last2_files[0])[3] == 
                 self.inputsDB.GetFileInfo(last2_files[1])[3]):
                 try:
-                    #Change cursor
-                    #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    #thread = reduce.ExecTaskThread(self.mathOp, 
-                    #                               self._task_info_list, 
-                    #                               last2_files,'-', 
-                    #                               "/tmp/sub.fits")
-                    #thread.start()
-                    
                     #Put into the queue the task to be done
                     func_to_run = mathOp
                     params = (last2_files, "-", "/tmp/sub.fits", self.m_tempdir)
@@ -2021,7 +2023,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
     ############################################################################
         
     def subtractFrames_slot(self):
-        """This method is called to subtract two images selected from the File List View"""
+        """
+        This method is called to subtract two images selected from the File 
+        List View.
+        """
 
 
         if (len(self.m_popup_l_sel)!=2):
@@ -2049,7 +2054,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     raise
         
     def sumFrames_slot(self):
-        """This methot is called to sum two images selected from the File List View"""
+        """
+        This methot is called to sum two images selected from the File List View
+        """
 
         if (len(self.m_popup_l_sel)<2):
             QMessageBox.critical(self, "Error", "You need to select  at least 2 files")
@@ -2107,7 +2114,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
     def createMasterDark_slot(self):
         """
-        Called to create a master dark frame
+        Called to create a master dark frame.
         """
 
         if len(self.m_popup_l_sel)<3:
@@ -2123,7 +2130,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #    QMessageBox.information(self,"Info","Not enough frames !")
         #    return
         
-        print "LIST =", self.m_popup_l_sel
+        #print "LIST =", self.m_popup_l_sel
         outfileName = QFileDialog.getSaveFileName(self,
                                                   "Choose a filename to save under",
                                                   self.m_outputdir + "/master_dark.fits", 
@@ -2482,8 +2489,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
     def focus_eval(self):
         """
-        Run the focus evaluation procedure of set of focus serie files.
-        It is run interactively.
+        Run the focus evaluation procedure of a set of files of focus serie.
+        It is run **interactively**.
         """
         if len(self.m_popup_l_sel)>3:
             outfileName = QFileDialog.getSaveFileName(self,
@@ -2501,14 +2508,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                                str(outfileName),
                                                                pix_scale, 
                                                                satur_level,
-                                                               show=True) 
-                    thread = reduce.ExecTaskThread(self._task.eval_serie, 
-                                                   self._task_info_list)
-                    thread.start()
-                except:
-                    #Restore cursor
+                                                               show=True)
+
+                    best_focus, outfile = self._task.eval_serie()
+                    self.logConsole.info(str(QString("Best Focus = %1 --> File = %2")
+                                            .arg(best_focus)
+                                            .arg(os.path.basename(outfile))))
                     QApplication.restoreOverrideCursor()
-                    QMessageBox.critical(self, "Error", "Some erron evaluating focus serie\n")
+                    
+                    #thread = reduce.ExecTaskThread(self._task.eval_serie, 
+                    #                                  self._task_info_list)
+                    #thread.start()
+                except:
+                    # Restore the cursor
+                    QApplication.restoreOverrideCursor()
+                    QMessageBox.critical(self, "Error", "Some error evaluating focus serie\n")
                     raise
         else:
             QMessageBox.critical(self, "Error","Error, not enough number of frames selected")
@@ -2555,10 +2569,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         file_info = self.inputsDB.GetFileInfo(self.m_popup_l_sel[0])
         if file_info!=None and file_info[2]!='SCIENCE':
-            QMessageBox.critical(self, "Error", "Selected file is not SCIENCE type")
+            QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
         elif file_info==None:
             if self.outputsDB.GetFileInfo(self.m_popup_l_sel[0])[2]!='SCIENCE':
-                QMessageBox.critical(self, "Error", "Selected file is not SCIENCE type")
+                QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
         
         pix_scale = self.config_opts['general']['pix_scale']
         cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0], 
@@ -2566,7 +2580,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             fwhm,std = cq.estimateFWHM()
             if fwhm>0:
-                self.logConsole.info(str(QString("FWHM = %1 (pixels) std= %2")
+                self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
+                                         .arg(os.path.basename(self.m_popup_l_sel[0]))
                                          .arg(fwhm)
                                          .arg(std)))
             else:
@@ -3039,7 +3054,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def TaskRunner(self):
         """
         Procedure that continuisly in checking the queue of pending tasks to be 
-        done.
+        done. The results are obtained later at checkDoneQueue().
         """
  
         # Update the number of tasks (not necessarialy equals to number of

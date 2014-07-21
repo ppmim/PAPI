@@ -30,6 +30,7 @@ import math
 import optparse 
 import sys
 import os
+import os.path
 import dircache
 import fileinput
 
@@ -100,8 +101,17 @@ class FocusSerie(object):
     def eval_serie(self):
         """
         Performs the focus evaluation and write the results in a pdf plot and 
-        the best focus in the ~/tmp/ql_focus
+        the best focus in the ~/tmp/ql_focus.
 
+        Returns
+        -------
+        Two options:
+
+        (1)    best_focus, output_file: TFOCUS is present 
+                best focus value (mm) and plot file with the fitted curve.
+
+        (2)    best_fwhm, filename:    TFOCUS is not present or incorrect
+                    best FWHM (min) found and the FITS file for this min FWHM
         """
         
         fwhm_values = []
@@ -129,18 +139,22 @@ class FocusSerie(object):
                     # obtained for each file.
                     focus = -1
                 focus_values.append(focus)
-                print " >> FWHM =%f, T-FOCUS =%f <<\n"%(fwhm,focus)
+                print " >> FWHM =%f, T-FOCUS =%f <<\n"%(fwhm, focus)
             except Exception,e:
                 sys.stderr.write("Some error while processing file %s\n"
                     " >>Error: %s\n"%(file,str(e)))
+                raise Exception("Some error while processing file %s"%file)
                 #log.debug("Some error happened") 
     
-        # Fitst, check if we have good values (!=-1) for T-FOCUS
+        # First, check if we have good values (!=-1) for T-FOCUS
         good_focus_values = [ v for v in focus_values if v!=-1 ]
-        # Here, we remove duplicated values of T-FOCUS
+        
+        # Secondly, we remove duplicated values of T-FOCUS
+        # (not sure if it should be done...)
         seen = set()
         seen_add = seen.add
-        good_focus_values = [ x for x in good_focus_values if not (x in seen or seen_add(x))]
+        good_focus_values = [ x for x in good_focus_values 
+                                    if not (x in seen or seen_add(x))]
         
         if len(good_focus_values)>1 and len(good_focus_values)==len(fwhm_values):
             # Fit the the values to a 2-degree polynomial
@@ -162,6 +176,14 @@ class FocusSerie(object):
             plt.ylabel("FWHM (pixels)")
             plt.xlim(np.min(good_focus_values),np.max(good_focus_values))
             plt.ylim(pol(xp).min(), np.max(fwhm_values))
+            # Annotate filenames on points
+            for indx, i_file in enumerate(self.input_files):
+                plt.annotate(os.path.basename(i_file), 
+                    xy=(good_focus_values[indx], fwhm_values[indx]),  
+                    xycoords='data',
+                    xytext=(-50, 30), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->")
+                    )
             plt.savefig(self.output)
             if self.show:
                 plt.show(block=True)
@@ -184,18 +206,21 @@ class FocusSerie(object):
                 # best_focus [mm] are converted to [microns] and writtent to
                 # text file ready to be read and used by OT.
                 text_file.write("%d"%int(round(best_focus*1000)))
-            
+            #
             # End-of-focus-file-writing
+            #
+            return best_focus, self.output
 
         else:
             # Because cannot read TFOCUS values, only FWHM per file are shown. 
-            sys.stdout.write("** Because cannot read TFOCUS values,"
-                             " only FWHM per file is shown **")
+            sys.stdout.write("** Because cannot read properly the TFOCUS values,"
+                             " only the FWHM per file is shown **")
             for idx, i_file in enumerate(self.input_files):
                 sys.stdout.write("\nFile: %s   -->  FWHM: %s"%(i_file, fwhm_values[idx]))
-            best_focus = np.NaN
 
-        return best_focus, self.output
+            min_fwhm = np.min(fwhm_values)
+            min_filename = self.input_files[np.argmin(fwhm_values)]
+            return min_fwhm, min_filename
            
     def get_t_focus(self, file):
         """

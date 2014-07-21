@@ -4700,6 +4700,14 @@ añado lo siguiente:
    en PAPI. 
 
 
+22-Julio-2014 
+-------------
+TODO:
+  - probar NLC en una reducción completa de PAPI
+  - ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, Sextractor, ...)
+  - aniadir NLC a doc
+  - probar el modo "force" de la NLC
+
 
 PANIC computers installation
 ============================
@@ -5092,10 +5100,12 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
+- Instalar r720M y actualzar el fichero GENERIC
+- Dejar muy claro en la documentación que tipo de ficheros son los mejores para
+PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
 - Comprobar lectura correcta de nuevas keys : CAM_DETROT90 y CAM_DETXYFLIP en r719M.
 
-
-- Paralelizar NonLinearityModel:applyModel()
 
 - Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
 o SWARP (VTerrón lo está usando y está contento...)

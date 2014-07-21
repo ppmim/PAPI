@@ -2420,7 +2420,7 @@ class ReductionSet(object):
             try:
                 # 
                 # Generate a random filename for the master, to ensure we do not
-                # overwrite any file
+                # overwrite any file.
                 output_fd, outfile = tempfile.mkstemp(suffix='.pdf', 
                                                           prefix='focusSer_', 
                                                           dir=self.out_dir)
