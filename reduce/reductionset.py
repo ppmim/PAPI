@@ -2297,6 +2297,7 @@ class ReductionSet(object):
                                                       bpm=None, normalize=False)
                     #out = task.createMaster()
                     
+                    
                     red_parameters = ()
                     result = pool.apply_async(task.createMaster, 
                                                  red_parameters)
@@ -2307,7 +2308,7 @@ class ReductionSet(object):
                     log.critical("OUTPUT file generated %s"%out)
                     pool.close()
                     pool.join()
-
+                    
                     
                 elif (r[0]==False and r[1]=="chk_expt"):
                     log.info("Found a dark series of frames with different EXPTIME: Dark model will be created")

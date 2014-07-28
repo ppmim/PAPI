@@ -40,9 +40,6 @@ import pyfits
 
 # Pyraf modules
 from pyraf import iraf
-from iraf import noao
-from iraf import imred
-from iraf import ccdred
 
 # Interact with FITS files
 import pyfits
