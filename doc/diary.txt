@@ -4714,6 +4714,59 @@ TODO:
 - Modificación a NLC para que admita cubos de imagenes y así poder tener 
 FITS con crep>1 pero COADD=1.
 
+24-Julio-2014 
+-------------
+- Encuentro un BUG al intentar hacer un masterDark desde QL o con papi.py;
+da el siguiente error:"Error in parameter 'imcmb' for task combine\n'
+
+[PAPI]: 2014-07-24 18:41:35,939 ERROR    reductionset:2327: [reduceSeq] Some error while creating master DARK: "Error in parameter 'imcmb' for task combine\n'Key imcmb not found'"
+
+Si embargo la misma secuencia con calDakr.py funciona correctamente !!!!
+Parece que es por usar el multiprocesing !!!! pyraf Cache o yo que se !!!
+
+
+28-Julio-2014 
+-------------
+- Soluciono el bug de "Error in parameter 'imcmb' for task combine\n'.
+Era debido a varios import innecesarios en misc/imtrim.py, pues
+
+   from iraf import noao
+   from iraf import imred
+   from iraf import ccdred
+
+pues aunque no se usaban, estaban incluidos de forma innecesarea, y al se importados indirectamente
+por reducetionset.py, y eso causaba confusion en calDark.py cuando era llamado
+desde reductionset.py, a pesar de que la llamada en calDark.py es bien clara:
+
+    iraf.mscred.darkcombine
+
+Supongo que será algún timpo de bug en PyRAF !!!
+
+NOTA: El login.cl que se carga al importar pyraf, por defecto incluye los paquete
+noao, images, tv, ..., por lo que no es necesario hacer el import de noao, imred, ccdred ????
+
+- Actualizo la nueva version de PAPI/QL en panic@panic.mpia.de para los test
+con el StarSimulator de Conchi en HD.
+
+
+- Resuelvo el siguiente DeprecationWarning (ver debajo) que se producia en mef.py al borrar
+algunas keywords (keys_to_del). Lo soluciono comprobando que existe el keyword
+antes de borrarla.
+
+"""
+/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRPIX1': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
+  key, DeprecationWarning)
+"""
+
+
+
+
+29-Julio-2014 
+-------------
+
+
+
+
 
 PANIC computers installation
 ============================
@@ -5106,34 +5159,7 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Probar imtrim.py despues de quitarle algunos import !!!! que causaban el problema del 
 
-- BUG: al intentar hacer un masterDark desde QL o con papi.py, da el siguiente error:"Error in parameter 'imcmb' for task combine\n'
-
-[PAPI]: 2014-07-24 18:41:35,939 ERROR    reductionset:2327: [reduceSeq] Some error while creating master DARK: "Error in parameter 'imcmb' for task combine\n'Key imcmb not found'"
-
-Si embargo la misma secuencia con calDakr.py funciona correctamente !!!!
-Parece que es por usar el multiprocesing !!!! pyraf Cache o yo que se !!!
-
-
- 
-
-
-- BUG: al hacer un masterDark (por ejemplo) desde la CL con papi.py, da la siguiente 
-lista de warnings:
-"""
-/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRPIX1': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
-  key, DeprecationWarning)
-/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRPIX2': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
-  key, DeprecationWarning)
-/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRVAL1': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
-  key, DeprecationWarning)
-/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRVAL2': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
-  key, DeprecationWarning)
-/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CDELT1': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
-  key, DeprecationWarning)
-/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CDELT2': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
-"""
 
 
 

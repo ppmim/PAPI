@@ -402,7 +402,8 @@ class MEF (object):
             
             # In the Primary Header we do not need the WCS keywords, only RA,DEC
             keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2','CTYPE1','CTYPE2']
-            for key in keys_to_del: del prihdu.header[key]
+            for key in keys_to_del:
+                if key in prihdu.header: del prihdu.header[key]
             #
             #prihdu.header.update ('RA', new_pix_center[0][0])
             #prihdu.header.update ('DEC', new_pix_center[0][1])
