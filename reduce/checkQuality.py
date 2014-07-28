@@ -31,6 +31,7 @@
 #              22/10/2010    jmiguel@iaa.es - Updated the way to find out MEF files
 #              17/01/2013    jmiguel@iaa.es - Modified the call to Sextractor,
 #                                             now using astromatic package.
+#              20/07/2014    jmiguel@iaa.es - 
 ################################################################################
 # Import necessary modules
 
@@ -63,7 +64,7 @@ class CheckQuality(object):
     -------
        If no error, a seeing estimation value
     """
-    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge_x=200, edge_y=200, 
+    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge_x=20, edge_y=20, 
                  pixsize=0.45, gain = 4.15, sat_level=1500000, write=False,
                  min_snr=5.0, window='all'):
         
@@ -79,7 +80,7 @@ class CheckQuality(object):
         self.write = False
         self.verbose = False
         self.min_snr = min_snr
-        self.MIN_NUMBER_GOOD_STARS = 5
+        self.MIN_NUMBER_GOOD_STARS = 0
         self.window = window
 
         if self.window=='Q1':
@@ -193,6 +194,9 @@ class CheckQuality(object):
         #b=numpy.array(matrix)
         
         a = numpy.loadtxt(source_file)
+
+        if len(a)==0:
+            raise Exception("Empy catalog, No stars found.")
         
         good_stars = []
         # Select 'best' stars for the estimation
@@ -225,11 +229,13 @@ class CheckQuality(object):
             else:
                 """
                 print "STAR #%s"%i
+                print "X=%s  Y=%s"%(x,y)
                 print "  SNR=",snr
                 print "  FWHM=",fwhm
                 print "  AREA=",isoarea
                 print "  ELLIP=", ellipticity
                 """
+                pass
         
         m_good_stars = numpy.array(good_stars)
         
@@ -260,7 +266,7 @@ class CheckQuality(object):
         # cleanup files
         # os.unlink(catalog_file)
         
-        return efwhm,std
+        return efwhm, std
       
     def estimateBackground(self, output_file):
         """ 

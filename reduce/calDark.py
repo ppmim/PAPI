@@ -134,7 +134,7 @@ class MasterDark(object):
         
         
         # Get the user-defined list of dark frames
-        framelist=self.__file_list
+        framelist = self.__file_list
         
         # STEP 0: Determine the number of darks frames to combine
         try:    
@@ -241,21 +241,6 @@ class MasterDark(object):
                         #ParList = _getparlistname('darkcombine')
                         )
          
-        """
-        iraf.imcombine(input = "@"+(self.__temp_dir+"/files.list").replace('//','/'),
-                        output = tmp1.replace('//','/'),
-                        combine = 'average',
-                        #ccdtype = '',
-                        #process = 'no',
-                        reject = 'minmax',
-                        nlow = '0',
-                        nhigh = '1',
-                        nkeep = '1',
-                        scale = scale_str,
-                        expname = 'EXPTIME'
-                        #ParList = _getparlistname('darkcombine')
-                        )
-        """
         if self.m_normalize:
             log.debug("Normalizing master dark to 1 sec")
             # divide master dark by the TEXP to get a master dark in ADU/s units
@@ -271,14 +256,14 @@ class MasterDark(object):
     
         darkframe = pyfits.open(self.__output_filename,'update')
         #Add a new keyword-->PAPITYPE
-        darkframe[0].header.update('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
-        darkframe[0].header.update('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
+        darkframe[0].header.set('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
+        darkframe[0].header.set('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in darkframe[0].header:
-            darkframe[0].header.update('PAT_NEXP',1,'Number of position into the current dither pattern')
+            darkframe[0].header.set('PAT_NEXP',1,'Number of position into the current dither pattern')
         if self.m_normalize:
-            darkframe[0].header.update('EXPTIME',1.0)
-            darkframe[0].header.update('ITIME', 1.0)
-            darkframe[0].header.update('NCOADDS',1)
+            darkframe[0].header.set('EXPTIME',1.0)
+            darkframe[0].header.set('ITIME', 1.0)
+            darkframe[0].header.set('NCOADDS',1)
         
         # 'ignore' will ignore any FITS standard violation and allow 
         # write/update the FITS file

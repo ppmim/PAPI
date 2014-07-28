@@ -26,6 +26,7 @@ Contents:
 
    
    install
+   system_install
    running
    quick_look
    ref
