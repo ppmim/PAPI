@@ -5106,7 +5106,9 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- BUG: al intentar hacer un masterDark desde QL o con papi.py, da el siguiente error:
+- Probar imtrim.py despues de quitarle algunos import !!!! que causaban el problema del 
+
+- BUG: al intentar hacer un masterDark desde QL o con papi.py, da el siguiente error:"Error in parameter 'imcmb' for task combine\n'
 
 [PAPI]: 2014-07-24 18:41:35,939 ERROR    reductionset:2327: [reduceSeq] Some error while creating master DARK: "Error in parameter 'imcmb' for task combine\n'Key imcmb not found'"
 

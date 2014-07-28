@@ -72,6 +72,8 @@ import pyfits
 # Logging
 from misc.paLog import log
 
+
+
 class MasterDark(object):
     """
     Create a master Dark from a list for dark files (single or MEF files); all
@@ -226,7 +228,7 @@ class MasterDark(object):
         bias to be subtracted again; you have to be very careful.
         """
 
-        # Call the noao.imred.ccdred task through PyRAF
+        # Call the iraf.mscred.darkcombine task through PyRAF
         iraf.mscred.darkcombine(input = "@"+(self.__temp_dir+"/files.list").replace('//','/'),
                         output = tmp1.replace('//','/'),
                         combine = 'average',
@@ -378,7 +380,7 @@ creates the master dark and computes several statistics.
                            options.show_stats, options.no_type_checking)
         mDark.createMaster()
     except Exception,e:
-        log.error("Task failed. Some error was found")
+        log.error("Task failed. Some error was found: %s"%str(e))
     
     
         
