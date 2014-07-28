@@ -31,6 +31,7 @@
 #              22/10/2010    jmiguel@iaa.es - Updated the way to find out MEF files
 #              17/01/2013    jmiguel@iaa.es - Modified the call to Sextractor,
 #                                             now using astromatic package.
+#              20/07/2014    jmiguel@iaa.es - 
 ################################################################################
 # Import necessary modules
 
@@ -193,6 +194,9 @@ class CheckQuality(object):
         #b=numpy.array(matrix)
         
         a = numpy.loadtxt(source_file)
+
+        if len(a)==0:
+            raise Exception("Empy catalog, No stars found.")
         
         good_stars = []
         # Select 'best' stars for the estimation
@@ -223,7 +227,7 @@ class CheckQuality(object):
                 good_stars.append(a[i,:])
                 #print "%s SNR_APER= %s " %(i, snr)
             else:
-		"""
+                """
                 print "STAR #%s"%i
                 print "X=%s  Y=%s"%(x,y)
                 print "  SNR=",snr
@@ -231,7 +235,7 @@ class CheckQuality(object):
                 print "  AREA=",isoarea
                 print "  ELLIP=", ellipticity
                 """
-		pass
+                pass
         
         m_good_stars = numpy.array(good_stars)
         
@@ -262,7 +266,7 @@ class CheckQuality(object):
         # cleanup files
         # os.unlink(catalog_file)
         
-        return efwhm,std
+        return efwhm, std
       
     def estimateBackground(self, output_file):
         """ 

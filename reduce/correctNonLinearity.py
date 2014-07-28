@@ -192,9 +192,6 @@ class NonLinearityCorrection(object):
             The list of new corrected files created.
                 
         """   
-        log.debug("Start applyModel")
-
-
         
         # load raw data file
         hdulist = pyfits.open(data_file)
@@ -262,7 +259,15 @@ class NonLinearityCorrection(object):
             # mask saturated inputs - to use nan it has to be a float array
             lindata[data > nlmaxs] = np.nan
             # mask where max range is nan
-            lindata[np.isnan(nlmaxs)] = np.nan
+            # (first, take into account the option of cubes as input images) 
+            if len(lindata.shape)==3: 
+                # we have a 3D image (cube)
+                for i in range(lindata.shape[0]):
+                    lindata[i, np.isnan(nlmaxs)] = np.nan
+            else:
+                # we have a single 2D image
+                lindata[np.isnan(nlmaxs)] = np.nan
+
             exthdu = pyfits.ImageHDU(lindata.astype('float32'), header=hdulist[extname].header.copy())
             # this may rearrange the MEF extensions, otherwise loop over extensions
             hdus.append(exthdu)
@@ -307,7 +312,6 @@ class NonLinearityCorrection(object):
         solved = []
         for i_file in self.input_files:
             red_parameters = [i_file]
-            print "I_FILE=",i_file
             try:
                 # Instead of pool.map() that blocks until
                 # the result is ready, we use pool.map_async()
@@ -354,7 +358,7 @@ class NonLinearityCorrection(object):
                Polynomial coefficients without constant offset. The order
                must be along the last axis.
         map : array_like
-              Data array.
+              Data array, that can be a cube of 2D images.
               
         Returns
         -------

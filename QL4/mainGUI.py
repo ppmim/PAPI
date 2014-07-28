@@ -37,9 +37,6 @@
     #                                                                  #
     ####################################################################
 
-
-
-
 # system modules
 import sys
 import os
@@ -327,9 +324,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
                       self.TaskRunner )
         self._queue_timer_todo.start(1000)    # 1 second continuous timer
         
-        ##Start display (DS9)
-        #display.startDisplay()
-        #time.sleep(1) # wait until display is up
         
     def __initializeGUI(self):
         """This method initializes some values in the GUI and in the members variables"""
@@ -482,7 +476,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     
     def processLazy(self, filename):
         """
-        Do some operations to the last file detected. It depend on:
+        Do some operations to the last file detected. It depends on:
         
             - checkBox_show_imgs
             - checkBox_subDark
@@ -2511,7 +2505,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                                show=True)
 
                     best_focus, outfile = self._task.eval_serie()
-                    self.logConsole.info(str(QString("Best Focus = %1 --> File = %2")
+                    self.logConsole.info(str(QString("Best Focus (mm)= %1 --> File = %2")
                                             .arg(best_focus)
                                             .arg(os.path.basename(outfile))))
                     QApplication.restoreOverrideCursor()
@@ -2519,11 +2513,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #thread = reduce.ExecTaskThread(self._task.eval_serie, 
                     #                                  self._task_info_list)
                     #thread.start()
-                except:
+                except Exception,e:
                     # Restore the cursor
                     QApplication.restoreOverrideCursor()
-                    QMessageBox.critical(self, "Error", "Some error evaluating focus serie\n")
-                    raise
+                    msg = "Cannot evaluate focus series: %s"%(str(e))
+                    self.logConsole.error(msg)
+                    QMessageBox.critical(self, "Error", msg)
+                    raise e
         else:
             QMessageBox.critical(self, "Error","Error, not enough number of frames selected")
 
@@ -2538,7 +2534,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             fields="image,mean,mode,stddev,min,max",format='no',Stdout=1))
             for line in values:
                 #line=os.path.basename(values[0])
-                self.logConsole.info(str(QString(str(line))))
+                self.logConsole.info(str(line))
         
     def background_estimation_slot(self):
         """ 
@@ -2585,9 +2581,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                          .arg(fwhm)
                                          .arg(std)))
             else:
-                self.logConsole.error("ERROR: Cannot estimate FWHM with selected image")           
+                self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")           
         except Exception,e:
-            self.logConsole.error("ERROR: something wrong while computing background")
+            self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")
             raise e
     
     def do_quick_reduction_slot(self):

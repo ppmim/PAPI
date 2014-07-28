@@ -316,10 +316,10 @@ class MEF (object):
                            out_dir = None, copy_keyword = []):
         """ 
         Method used to convert a single FITS file (PANIC-GEIRS v0) 
-        having a full 4-detector-frame to 1-MEF with a 4-extension FITS, 
+        having a full 4-detector-frame to a MEF with a 4-extension FITS, 
         one per each frame.
 
-        It is NOT valid for cubes of data, by the moment.
+        It is **NOT valid for cubes** of data, by the moment.
         
         Parameters
         ----------

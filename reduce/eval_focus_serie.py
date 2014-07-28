@@ -116,7 +116,8 @@ class FocusSerie(object):
         
         fwhm_values = []
         focus_values = []
-        
+        good_files = []
+
         # Find out the FWHM of each image
         for file in self.input_files:
             try:
@@ -125,8 +126,14 @@ class FocusSerie(object):
                                                pixsize=self.pix_size, 
                                                sat_level=self.sat_level,
                                                window=self.window)
-                fwhm = cq.estimateFWHM()[0]
-                fwhm_values.append(fwhm)
+                try:
+                    fwhm = cq.estimateFWHM()[0]
+                except Exception,e:
+                    sys.stderr.write("Error while computing FWHM for file %s"%file)
+                    sys.stderr.write(str(e))
+                    continue
+                else:
+                    fwhm_values.append(fwhm)
 
                 # Try to read Telescope Focus (T-FOCUS)
                 try:
@@ -139,6 +146,7 @@ class FocusSerie(object):
                     # obtained for each file.
                     focus = -1
                 focus_values.append(focus)
+                good_files.append(file)
                 print " >> FWHM =%f, T-FOCUS =%f <<\n"%(fwhm, focus)
             except Exception,e:
                 sys.stderr.write("Some error while processing file %s\n"
@@ -165,7 +173,7 @@ class FocusSerie(object):
             print "Fit = %s  \n"%str(z)
             pol = np.poly1d(z)
             xp = np.linspace(np.min(good_focus_values), 
-                    np.max(good_focus_values), 2000)
+                    np.max(good_focus_values), 20000) # nro. puntos a interpolar
             best_focus = xp[pol(xp).argmin()]
 
             # Plotting
@@ -177,7 +185,7 @@ class FocusSerie(object):
             plt.xlim(np.min(good_focus_values),np.max(good_focus_values))
             plt.ylim(pol(xp).min(), np.max(fwhm_values))
             # Annotate filenames on points
-            for indx, i_file in enumerate(self.input_files):
+            for indx, i_file in enumerate(good_files):
                 plt.annotate(os.path.basename(i_file), 
                     xy=(good_focus_values[indx], fwhm_values[indx]),  
                     xycoords='data',
@@ -203,7 +211,7 @@ class FocusSerie(object):
                 ql_focus_text_file = home + "/ql_focus"
 
             with open(ql_focus_text_file, "w") as text_file:
-                # best_focus [mm] are converted to [microns] and writtent to
+                # best_focus [mm] are converted to [microns] and written to
                 # text file ready to be read and used by OT.
                 text_file.write("%d"%int(round(best_focus*1000)))
             #
@@ -212,14 +220,17 @@ class FocusSerie(object):
             return best_focus, self.output
 
         else:
+            if len(fwhm_values)==0:
+                raise Exception("Empty list of FWHM values.")
+
             # Because cannot read TFOCUS values, only FWHM per file are shown. 
             sys.stdout.write("** Because cannot read properly the TFOCUS values,"
                              " only the FWHM per file is shown **")
-            for idx, i_file in enumerate(self.input_files):
+            for idx, i_file in enumerate(good_files):
                 sys.stdout.write("\nFile: %s   -->  FWHM: %s"%(i_file, fwhm_values[idx]))
 
             min_fwhm = np.min(fwhm_values)
-            min_filename = self.input_files[np.argmin(fwhm_values)]
+            min_filename = good_files[np.argmin(fwhm_values)]
             return min_fwhm, min_filename
            
     def get_t_focus(self, file):

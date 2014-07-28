@@ -25,8 +25,6 @@
 #
 # reductionset.py
 #
-# Last update 04/Dic/2012
-#
 ################################################################################
     
 #From system
@@ -2207,6 +2205,10 @@ class ReductionSet(object):
         
         
         log.debug("[reduceSeq] Starting ...")
+
+        # print sequence in log file
+        for i_file in sequence:
+            log.debug(sequence[0])
         
         #
         # First of all, let see whether Non-linearity correction must be done
@@ -2416,10 +2418,14 @@ class ReductionSet(object):
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
         elif fits.isFocusSerie():
+            #
+            # NOTE: Focus series are not pre-reduced, ie., neither Dark nor Flat
+            # Field is applied.
+            #
             log.warning("[reduceSeq] Focus Serie is going to be reduced:\n%s"%str(sequence))
             try:
                 # 
-                # Generate a random filename for the master, to ensure we do not
+                # Generate a random filename for the pdf, to ensure we do not
                 # overwrite any file.
                 output_fd, outfile = tempfile.mkstemp(suffix='.pdf', 
                                                           prefix='focusSer_', 
@@ -2449,7 +2455,7 @@ class ReductionSet(object):
                 if out!=None: 
                     files_created.append(out) # out must be equal to outfile
             except Exception,e:
-                log.error("[reduceSeq] Some error while creating processing Focus Serie: %s",str(e))
+                log.error("[reduceSeq] Error while processing Focus Series: %s",str(e))
                 raise e
 
         elif fits.isScience():

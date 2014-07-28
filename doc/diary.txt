@@ -4703,10 +4703,16 @@ añado lo siguiente:
 22-Julio-2014 
 -------------
 TODO:
-  - probar NLC en una reducción completa de PAPI
+  - probar NLC en una reducción completa de PAPI - probado y OK !!
   - ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, Sextractor, ...)
   - aniadir NLC a doc
-  - probar el modo "force" de la NLC
+  - probar el modo "force" de la NLC  - probado y OK !!
+
+
+23-Julio-2014 
+-------------
+- Modificación a NLC para que admita cubos de imagenes y así poder tener 
+FITS con crep>1 pero COADD=1.
 
 
 PANIC computers installation
@@ -5100,6 +5106,41 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- BUG: al intentar hacer un masterDark desde QL o con papi.py, da el siguiente error:
+
+[PAPI]: 2014-07-24 18:41:35,939 ERROR    reductionset:2327: [reduceSeq] Some error while creating master DARK: "Error in parameter 'imcmb' for task combine\n'Key imcmb not found'"
+
+Si embargo la misma secuencia con calDakr.py funciona correctamente !!!!
+Parece que es por usar el multiprocesing !!!! pyraf Cache o yo que se !!!
+
+
+ 
+
+
+- BUG: al hacer un masterDark (por ejemplo) desde la CL con papi.py, da la siguiente 
+lista de warnings:
+"""
+/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRPIX1': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
+  key, DeprecationWarning)
+/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRPIX2': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
+  key, DeprecationWarning)
+/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRVAL1': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
+  key, DeprecationWarning)
+/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CRVAL2': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
+  key, DeprecationWarning)
+/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CDELT1': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
+  key, DeprecationWarning)
+/usr/lib64/python2.7/site-packages/pyfits/header.py:229: DeprecationWarning: Deletion of non-existent keyword 'CDELT2': In a future PyFITS version Header.__delitem__ may be changed so that this raises a KeyError just like a dict would. Please update your code so that KeyErrors are caught and handled when deleting non-existent keywords.
+"""
+
+
+
+
+- QL: no procesa secuencias de Flat con un tiempo Fijo y que no sean DOMEFLAT ???
+- QL: en modo lazy, debaría procesar construir los Dark y FF maestros, pues si no 
+no puede aplicar Dark y FF en la pre-reducción lazy !!
+
+- En MEF:convertSimple2MEF, considerar la opción de cubos !!!
 - Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
 - Instalar r720M y actualzar el fichero GENERIC
 - Dejar muy claro en la documentación que tipo de ficheros son los mejores para
