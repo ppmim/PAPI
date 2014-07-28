@@ -34,7 +34,7 @@ all: clean wcs irdr
 
 # It has been modified to only have the binaries used by PAPI
 irdr: cleanirdr irdrlib  \
-	./bin/dithercubemean ./bin/offsets \
+	./bin/dithercubemean ./bin/offsets ./bin/cubemean \
 	./bin/skyfilter ./bin/skyfilteronoff ./bin/skyfilteroffon ./bin/skyfilter_general \
 	./bin/skyfilter_single \
 	./bin/my_mode

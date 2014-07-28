@@ -614,6 +614,8 @@ Since IRAFv2.15, nmisc is any more required. Included in obsutil package:
       set     stdimage        = imt4096
       set     imtype          = "fits"
 
+(quizás todo eso se podría hacer en /iraf/iraf/unix/hlib/zzsetenv.def)
+
 In principle, by default 
   PyRAF uses $HOME/iraf/login.cl 
   IRAF  uses $HOME/.iraf/login.cl

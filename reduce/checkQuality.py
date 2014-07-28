@@ -31,6 +31,7 @@
 #              22/10/2010    jmiguel@iaa.es - Updated the way to find out MEF files
 #              17/01/2013    jmiguel@iaa.es - Modified the call to Sextractor,
 #                                             now using astromatic package.
+#              20/07/2014    jmiguel@iaa.es - 
 ################################################################################
 # Import necessary modules
 
@@ -49,7 +50,10 @@ from misc.paLog import log
 
 class CheckQuality(object):
     """
-    Class used to estimate the image quality values using SExtractor 
+    Class used to estimate the image quality values using SExtractor.
+    Although MEF files are supported, the routine does not distinguish the
+    values of each extesion/detector, what would be a good thing.
+
     
     Parameters
     ----------
@@ -60,8 +64,9 @@ class CheckQuality(object):
     -------
        If no error, a seeing estimation value
     """
-    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge_x=200, edge_y=200, 
-                 pixsize=0.45, gain = 4.15, sat_level=1500000, write=False):
+    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge_x=20, edge_y=20, 
+                 pixsize=0.45, gain = 4.15, sat_level=1500000, write=False,
+                 min_snr=5.0, window='all'):
         
         self.input_file = input_file
         # Default parameters values
@@ -74,7 +79,21 @@ class CheckQuality(object):
         self.satur_level = sat_level
         self.write = False
         self.verbose = False
-        self.MIN_NUMBER_GOOD_STARS = 5
+        self.min_snr = min_snr
+        self.MIN_NUMBER_GOOD_STARS = 0
+        self.window = window
+
+        if self.window=='Q1':
+            self.sex_input_file = input_file+'[%d]'%1
+        elif self.window=='Q2':
+            self.sex_input_file = input_file+'[%d]'%2
+        elif self.window=='Q3':
+            self.sex_input_file = input_file+'[%d]'%3
+        elif self.window=='Q4':
+            self.sex_input_file = input_file+'[%d]'%4
+        else:
+            self.sex_input_file = input_file
+             
         
     
     def estimateFWHM(self):
@@ -124,7 +143,7 @@ class CheckQuality(object):
         
         # SExtractor execution
         try:
-            sex.run(self.input_file, updateconfig=False, clean=False)
+            sex.run(self.sex_input_file, updateconfig=False, clean=False)
         except Exception,e:
             log.error("Error running SExtractor: %s"%str(e))  
             raise e
@@ -140,12 +159,14 @@ class CheckQuality(object):
         #7  ELLIPTICITY
         #8  FWHM_IMAGE
         #9  FLUX_RADIUS
-        #10 FLUX_AUTO
-        #11 FLUXERR_AUTO
+        #10 FLUX_APER
+        #11 FLUXERR_APER
         #12 FLAGS
-        #13 FLUX_APER
-        #14 FLUXERR_APER
-        
+
+
+        #xx FLUX_AUTO
+        #xx FLUXERR_AUTO
+      
         source_file = catalog_file
 
         try:
@@ -173,6 +194,9 @@ class CheckQuality(object):
         #b=numpy.array(matrix)
         
         a = numpy.loadtxt(source_file)
+
+        if len(a)==0:
+            raise Exception("Empy catalog, No stars found.")
         
         good_stars = []
         # Select 'best' stars for the estimation
@@ -197,19 +221,21 @@ class CheckQuality(object):
             if (x>self.edge_x and x<naxis1-self.edge_x and 
                 y>self.edge_y and y<naxis2-self.edge_y and
                 ellipticity<self.ellipmax and fwhm>0.1 and 
-                fwhm<20 and flags==0 and   
-                isoarea>float(self.isomin) and snr>20.0): 
+                fwhm<20 and flags<=3 and   
+                isoarea>float(self.isomin) and snr>self.min_snr): 
                 # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
                 #print "%s SNR_APER= %s " %(i, snr)
             else:
                 """
-                print "START #%s"%i
+                print "STAR #%s"%i
+                print "X=%s  Y=%s"%(x,y)
                 print "  SNR=",snr
                 print "  FWHM=",fwhm
                 print "  AREA=",isoarea
                 print "  ELLIP=", ellipticity
                 """
+                pass
         
         m_good_stars = numpy.array(good_stars)
         
@@ -238,9 +264,9 @@ class CheckQuality(object):
         fits_file.close(output_verify='ignore')
         
         # cleanup files
-        os.unlink(catalog_file)
+        # os.unlink(catalog_file)
         
-        return efwhm,std
+        return efwhm, std
       
     def estimateBackground(self, output_file):
         """ 
@@ -291,7 +317,10 @@ if __name__ == "__main__":
         
     usage = "usage: %prog [options]"
     desc = """This module gives an estimation of the FWHM of the input image 
-using best stars of its SExtractor catalog
+using best stars of its SExtractor catalog. If input file is a MEF, the routine
+gives a mean estimation of the FWHM of all extensions/detectors, not distinguishing
+between them. However, the -W --window flag can be used to specify a certain
+detector (Q1,Q2,Q3,Q4). 
 """
  
     parser = OptionParser(usage, description=desc)
@@ -308,7 +337,7 @@ using best stars of its SExtractor catalog
     parser.add_option("-S", "--snr",
                   action="store", dest="snr", type=int,
                   help="Min SNR of stars to use (default = %default)",
-                  default=10)
+                  default=5)
     
     parser.add_option("-e", "--ellipmax",
                   action="store", dest="ellipmax", type=float, default=0.2,
@@ -342,7 +371,17 @@ using best stars of its SExtractor catalog
     parser.add_option("-w", "--write",
                   action="store_true", dest="write", default=True,
                   help="Update header with PA_SEEING keyword [default=%default]")
-                                
+    
+    parser.add_option('-W', '--window',
+                      type='choice',
+                      action='store',
+                      dest='window',
+                      choices=['Q1', 'Q2', 'Q3', 'Q4', 'all'],
+                      default='all',
+                      help="When input is a MEF, it means the "
+                      "window/dectector/extension to process: "
+                      "Q1, Q2, Q3, Q4, full [default: %default]")
+
     (options, args) = parser.parse_args()
     
     if len(sys.argv[1:])<1:
@@ -363,7 +402,7 @@ using best stars of its SExtractor catalog
         cq = CheckQuality(options.input_image, options.isoarea_min, 
                           options.ellipmax, options.edge_x, options.edge_y, 
                           options.pixsize, options.gain, options.satur_level , 
-                          options.write)
+                          options.write, options.snr, options.window)
         cq.estimateFWHM()
     except Exception,e:
         log.error("There was some error: %s "%str(e))

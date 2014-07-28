@@ -25,8 +25,6 @@
 #
 # reductionset.py
 #
-# Last update 04/Dic/2012
-#
 ################################################################################
     
 #From system
@@ -67,7 +65,7 @@ import astromatic
 from astromatic.swarp import *
 import datahandler.dataset
 import misc.collapse
-import calNonLinearity
+import correctNonLinearity
 
 
 # If your parallel tasks are going to use the same instance of PyRAF (and thus 
@@ -737,7 +735,7 @@ class ReductionSet(object):
                    'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
-                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP'
+                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID'
                 ]
             
             try:
@@ -2207,21 +2205,31 @@ class ReductionSet(object):
         
         
         log.debug("[reduceSeq] Starting ...")
+
+        # print sequence in log file
+        for i_file in sequence:
+            log.debug(sequence[0])
         
         #
         # First of all, let see whether Non-linearity correction must be done
-        #
+        # Note2: we do not need to 'split the extensions', they are processed 
+        # one by one (serial) by NonLinearityCorrection(). However, due to
+        # NonLinearityCorrection() need MEF files as input, it does the 
+        # conversion to MEF if needed. 
+        # Note2: NonLinearityCorrection() performs the NLC in parallel,
+        # instead of processing the sequence file by file.
         if self.config_dict['nonlinearity']['apply']==True:
             master_nl = self.config_dict['nonlinearity']['model']
             try:
                 log.info("**** Applying Non-Linearity correction ****")
-                nl_task = calNonLinearity.NonLinearityModel()
-                corr_sequence = nl_task.applyModel(sequence, master_nl,
-                                                    suffix='_NLC',
-                                                    out_dir=self.temp_dir)
+                nl_task = correctNonLinearity.NonLinearityCorrection(master_nl, 
+                            sequence, out_dir=self.temp_dir, suffix='_LC')
+                corr_sequence = nl_task.runMultiNLC()
+
             except Exception,e:
                 log.error("Error while applying NL model: %s"%str(e))
                 raise e
+            
             sequence = corr_sequence
 
         
@@ -2410,11 +2418,15 @@ class ReductionSet(object):
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
         elif fits.isFocusSerie():
+            #
+            # NOTE: Focus series are not pre-reduced, ie., neither Dark nor Flat
+            # Field is applied.
+            #
             log.warning("[reduceSeq] Focus Serie is going to be reduced:\n%s"%str(sequence))
             try:
                 # 
-                # Generate a random filename for the master, to ensure we do not
-                # overwrite any file
+                # Generate a random filename for the pdf, to ensure we do not
+                # overwrite any file.
                 output_fd, outfile = tempfile.mkstemp(suffix='.pdf', 
                                                           prefix='focusSer_', 
                                                           dir=self.out_dir)
@@ -2443,7 +2455,7 @@ class ReductionSet(object):
                 if out!=None: 
                     files_created.append(out) # out must be equal to outfile
             except Exception,e:
-                log.error("[reduceSeq] Some error while creating processing Focus Serie: %s",str(e))
+                log.error("[reduceSeq] Error while processing Focus Series: %s",str(e))
                 raise e
 
         elif fits.isScience():
@@ -2481,6 +2493,25 @@ class ReductionSet(object):
                 bpm_ext, cext = self.split([bpm])
                 parallel = self.config_dict['general']['parallel']
                 
+                # Select the detector to process (Q1,Q2,Q3,Q4,all)
+                detector = self.config_dict['general']['detector']
+                if next==4:
+                    if detector=='Q1': q = 0
+                    elif detector=='Q2': q = 1
+                    elif detector=='Q3': q = 2
+                    elif detector=='Q4': q = 3
+                    else: q = -1 # all detectors
+                    if q!=-1:
+                        obj_ext = [obj_ext[q]]
+                        if cext==next:
+                            dark_ext = [dark_ext[q]]
+                            flat_ext = [flat_ext[q]]
+                            bpm_ext = [bpm_ext[q]]
+                        next = 1
+                    else:
+                        # Nothing to do, all detectors will be processed
+                        pass
+
                 if parallel==True:
                     ######## Parallel #########
                     log.info("[reduceSeq] Entering PARALLEL data reduction ...")

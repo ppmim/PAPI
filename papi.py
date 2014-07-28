@@ -85,26 +85,26 @@ def main(arguments = None):
 
     #wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
     parser = OptionParser(description = description, 
-                                   #formatter = wider_format, 
-                                   usage = "%prog [OPTION]... DIRECTORY...", 
-                                   version = "%prog "+__version__)
+                          #formatter = wider_format, 
+                          usage = "%prog [OPTION]... DIRECTORY...", 
+                          version = "%prog "+__version__)
     # general options
 
     parser.add_option("-c", "--config", type = "str",
                       action = "store", dest = "config_file",
-                      help = """Config file for the PANIC Pipeline application.
-                       If not specified, '%s' is used."""
+                      help = "Config file for the PANIC Pipeline application."
+                       "If not specified, '%s' is used."
                        % misc.config.default_config_file())
     
     parser.add_option("-C", "--Check",
                       action = "store_true", dest = "check_modules",
-                      help = """Check if versions of PAPI modules are right.""",
+                      help = "Check if versions of PAPI modules are right.",
                        default = False)
                   
     parser.add_option("-s", "--source", type = "str",
                   action = "store", dest = "source",
-                  help = """Source file list of data frames. It can be a file 
-                  or directory name.""")
+                  help = "Source file list of data frames. It can be a file" 
+                  "or directory name.")
     
     parser.add_option("-o", "--output_file", type = "str",
                   action = "store", dest = "output_file", 
@@ -120,25 +120,27 @@ def main(arguments = None):
     
     parser.add_option("-r", "--rows", nargs=2,
                   action="store", dest="rows", type=int,
-                  help="""Use *only* files of the source file-list in the range 
-                  of rows specified (0 to N, both included)""")
+                  help="Use _only_ files of the source file-list in the range" 
+                  "of rows specified (0 to N, both included)")
     
     parser.add_option("-R", "--recursive",
-                  action = "store_true", dest = "recursive", default = False,
-                  help = "Does recursive search for files in source directory")
+                  action="store_true", dest = "recursive", default = False,
+                  help="Does recursive search for files in source directory")
     
     parser.add_option("-l", "--list",
                   action="store_true", dest="list", default = False,
-                  help="""Generate a list with all the source files read from 
-                  the source and sorted by MJD""")
+                  help="Generate a list with all the source files read from" 
+                  "the source and sorted by MJD")
 
     parser.add_option("-M", "--red_mode", type = "str",
                   action = "store", dest = "reduction_mode", 
-                  help = "Mode of data reduction to do (quick|science|lab|lemon|quick-lemon)")
+                  help = "Mode of data reduction to do "
+                  "(quick|science|lab|lemon|quick-lemon).")
                   
     parser.add_option("-m", "--obs_mode", type = "str",
                   action = "store", dest = "obs_mode", 
-                  default = "dither", help = "Observing mode (dither|ext_dither|other)")
+                  default = "dither", 
+                  help = "Observing mode (dither|ext_dither|other)")
     
     parser.add_option("-p", "--print",
                   action = "store_true", dest = "print_seq", default = False,
@@ -146,38 +148,33 @@ def main(arguments = None):
 
     parser.add_option("-S", "--seq_to_reduce", type=int, nargs=2,
                   action = "store", dest = "seq_to_reduce",
-                  default = -1, help = """Sequence number to reduce. By default, 
-                  all sequences found will be reduced.""")
-
+                  default = -1, help = "Sequence number to reduce. By default, " 
+                  "all sequences found will be reduced.")
 
                   
     # file calibration options
     
     parser.add_option("-D", "--master_dark",
                   action = "store", dest = "master_dark",
-                  help = "master dark to subtract")
+                  help = "Master dark to subtract")
     
     parser.add_option("-F", "--master_flat", type="str",
                   action = "store", dest = "master_flat",
-                  help = "master flat to divide by")
+                  help = "Master flat to divide by")
 
-    parser.add_option("-b", "--bpm_file", type = "str",
+    parser.add_option("-B", "--bpm_file", type = "str",
                   action = "store", dest = "bpm_file", 
-                  help = "bad pixel mask file")
+                  help = "Bad pixel mask file")
 
     parser.add_option("-g", "--group_by", type = "str",
                   action = "store", dest = "group_by",
-                  help = """kind of data grouping (based on) to do with the 
-                  dataset files (ot |filter)""")
+                  help = "kind of data grouping (based on) to do with the" 
+                  "dataset files (ot |filter)")
 
     parser.add_option("-k", "--check_data", 
                   action = "store_true", dest = "check_data", 
-                  help = """if true, check data properties matching (type, expt, 
-                  filter, ncoadd, mjd)""")
-    
-    parser.add_option("-v", "--verbose",
-                  action = "store_true", dest = "verbose", default = False,
-                  help = "Verbose mode [default]")
+                  help = "if true, check data properties matching (type, expt, "
+                  "filter, ncoadd, mjd)")
     
         
     (init_options, i_args) = parser.parse_args (args = arguments)
@@ -199,12 +196,15 @@ def main(arguments = None):
     else:
         config_file = init_options.config_file
     
-    # now, we "mix" the invokation parameter values with the values in the 
-    #config file, having priority the invokation values over config file values
-    # note: only values of the 'general' section can be invoked
+    # Now, we "mix" the invokation parameter values with the values in the 
+    # config file, having priority the invokation values over config file values
+    # Note: only values of the 'general' section can be invoked
     options = misc.config.read_options(init_options, 'general', config_file)
 
-    
+    # Manually mix bpm_file, having priority the invokation values over config
+    # file value.
+    if init_options.bpm_file!=None:
+      options['bpm']['bpm_file'] = init_options.bpm_file
     
     # Add the configuration filename as an extra value to the dictionary
     options['general']['config_filename'] = config_file
@@ -222,12 +222,8 @@ def main(arguments = None):
     if not general_opts['source'] or not general_opts['output_file'] \
         or not general_opts['output_dir'] or not general_opts['temp_dir']   \
         or len(i_args) != 0: # args is the leftover positional arguments after all options have been processed
+        parser.error("Incorrect number of arguments " )
         parser.print_help()
-        parser.error("incorrect number of arguments " )
-    
-    if general_opts['verbose']:
-        print "reading %s ..." % general_opts['source']
-    
     
     rs_files = []
     
@@ -273,20 +269,24 @@ def main(arguments = None):
     log.debug("   + out_dir : %s",general_opts['output_dir'])
     log.debug("   + Master Dark : %s",general_opts['master_dark'])
     log.debug("   + Master Flat : %s",general_opts['master_flat'])
-    log.debug("   + reduction_mode: %s",general_opts['reduction_mode'])
+    log.debug("   + Master BPM  : %s",options['bpm']['bpm_file'])
+    log.debug("   + Reduction_mode: %s",general_opts['reduction_mode'])
     log.debug("   + Astrometric catalog: %s", options['astrometry']['catalog'])
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     # Create the RS (it works both simple FITS as MEF files)            
     try:
-        rs = RS.ReductionSet( rs_files, general_opts['output_dir'], out_file=general_opts['output_file'], \
-                          obs_mode=general_opts['obs_mode'], \
-                          dark=general_opts['master_dark'], flat=general_opts['master_flat'], \
-                          bpm=general_opts['master_bpm'], red_mode=general_opts['reduction_mode'], \
-                          group_by=general_opts['group_by'], check_data=general_opts['check_data'], \
-                          config_dict = options \
-                        )
-        #if options.print_seq:
+        rs = RS.ReductionSet( rs_files, general_opts['output_dir'], 
+                out_file=general_opts['output_file'],
+                obs_mode=general_opts['obs_mode'],
+                dark=general_opts['master_dark'], 
+                flat=general_opts['master_flat'],
+                bpm=general_opts['master_bpm'], 
+                red_mode=general_opts['reduction_mode'],
+                group_by=general_opts['group_by'], 
+                check_data=general_opts['check_data'],
+                config_dict = options )
+
         if init_options.print_seq:
             rs.getSequences()
         else:
