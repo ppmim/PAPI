@@ -4761,10 +4761,16 @@ antes de borrarla.
 
 
 
-29-Julio-2014 
+30-Julio-2014 
 -------------
+- Revisado y mejoradas las opciones del modo "Lazy" del QL; además encontré
+varios errores.
 
 
+31-Julio-2014 
+-------------
+(P)- Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
+(P)- Las primeras imágenes (Darks MEF) que le llegan al QL no las muestra bien en el DS9 !!! testLazy.xml
 
 
 
@@ -5159,11 +5165,17 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Las primeras imágenes (Darks MEF) que le llegan al QL no las muestra bien en el DS9 !!! testLazy.xml
 
-
-
-
-
+- Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
+- ver donde se está usando cosas como image[200:naxis1-200,200:naxis2-200] para que
+no de problemas con subwindows !!
+- $CAMHOME/scripts/QueueFiles: Considerar su posible uso para el QL, para la detección
+de nuevos ficheros; por lo visto se llama después de que termina el "save". Ver
+documentación GEIRS (3.3 Postprocessing) 
+- Añadir un segundo fichero de NLC (LIR y RRR-MPIA) en fichero de configuración
+y que PAPI lo use según el modo de lectura encontrado en la cabecera.
+- ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, Sextractor, ...)
 - QL: no procesa secuencias de Flat con un tiempo Fijo y que no sean DOMEFLAT ???
 - QL: en modo lazy, debaría procesar construir los Dark y FF maestros, pues si no 
 no puede aplicar Dark y FF en la pre-reducción lazy !!

@@ -202,9 +202,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.m_frameList_dark = ''
         self.m_frameList_dflat = ''
         self.m_frameList_sflat = ''
-        self.m_masterDark = '/tmp/master_dark.fits'
-        self.m_masterFlat = '/tmp/master_flat.fits'
-        self.m_masterMask = '/tmp/master_mask.fits'
+        self.m_masterDark = ''
+        self.m_masterFlat = ''
+        self.m_masterMask = ''
 
 
         # Stuff to detect end of an observation sequence to know if data reduction could start
@@ -393,7 +393,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ####################################################
         ### Check if __last__ file is from source directory
         ### Actually, the file was already detected, but this call is only used 
-        ### to update the ListView.
+        ### to update the ListView and avoid updating the ListView each time
+        ### a file is detected.
         if filename.endswith("__last__"):
             log.debug("Updating the ListView")
             self.slot_classFilter()
@@ -471,7 +472,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 display.showFrame(filename)
                 if end_seq: self.processFiles(seq)
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
-                self.processLazy(filename)
+                if end_seq and seqType!="SCIENCE":
+                    # Build master calibrations
+                    self.processFiles(seq)
+                else:
+                    self.processLazy(filename)
                 return
     
     def processLazy(self, filename):
@@ -479,14 +484,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Do some operations to the last file detected. It depends on:
         
             - checkBox_show_imgs
-            - checkBox_subDark
-            - checkBox_appFlat
+            - checkBox_subDark_FF_BPM
             - checkBox_subLastFrame
             
             ToDo:
-            - checkBox_appBPM
             - checkBox_subSky
-            - checkBox_appSAstrom
             
             Other:
             - checkBox_data_grouping
@@ -501,31 +503,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
         (date, ut_time, type, filter, texp, detector_id, 
          run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(filename)
         
-        # ONLY SCIENCE frames will be processed 
+        # Show frames on DS9
+        if self.checkBox_show_imgs.isChecked():
+            display.showFrame(filename)
+        
+        # ONLY SCIENCE frames will be pre-processed 
         if type!="SCIENCE":
-            if self.checkBox_show_imgs.isChecked():
-                display.showFrame(filename)
             return
 
         self.logConsole.info("[processLazy] Processing file %s "%filename)
         
         # ###########################################################################################
         # According to what options have been selected by the user, we do a processing or other...
-        if self.checkBox_subDark.isChecked() or self.checkBox_appFlat.isChecked():
+        if self.checkBox_subDark_FF_BPM.isChecked():
             try:
-                log.debug("En-queue the task ....")
                 #Look for (last received) calibration files
                 mDark, mFlat, mBPM = self.getCalibFor([filename])
-                if not self.checkBox_appFlat.isChecked():
-                    mFlat = None
-                if not self.checkBox_subDark.isChecked():
-                    mDark = None    
+                
                 # Both master_dark and master_flat are optional
                 if mDark or mFlat:
                     #Put into the queue the task to be done
                     func_to_run = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
-                                                     self.m_outputdir)
+                                                     mBPM, self.m_outputdir,
+                                                     bpm_action='grab') # fix is a heavy process for QL
                     params = ()
+                    log.debug("Inserting in queue the task ....")
                     self._task_queue.put([(func_to_run.apply, params)])
                     
                 else:
@@ -558,8 +560,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #thread.start()
                     
                     #Put into the queue the task to be done
-                    func_to_run = mathOp 
-                    params = ([filename, last_file],'-', None, self.m_tempdir)
+                    func_to_run = mathOp
+                    _suffix = "_" + os.path.basename(last_file)
+                    out_filename = self.m_outputdir + "/" + os.path.basename(filename).replace(".fits", _suffix) 
+                    params = ([filename, last_file], '-', out_filename, self.m_tempdir)
                     self._task_queue.put([(func_to_run, params)])
                     
                 else:
@@ -574,11 +578,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 self.subtract_nearSky_slot(True)
             except Exception,e:
-                self.m_processing = False # ANY MORE REQUIRED ?,
+                self.m_processing = False # ANY MORE REQUIRED ?
                 raise e    
-        # ########################################################################################
-        elif self.checkBox_show_imgs.isChecked():
-            display.showFrame(filename)
+        
             
     def getCalibFor(self, sci_obj_list):
         """
@@ -615,23 +617,27 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #self.inputsDB.ListDataSet()
         #self.outputsDB.ListDataSet()
         
-        #DARK - Do NOT require equal EXPTIME Master Dark ???
+        # DARK - Do NOT require equal EXPTIME Master Dark ???
         master_dark = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark)==0 and self.outputsDB!=None:
             master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime) 
-        #FLATS - Do NOT require equal EXPTIME, but FILTER
+        # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
             master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
         if len(master_flat)==0 and self.outputsDB!=None:
             master_flat = self.outputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
             if len(master_flat)==0:
-                master_flat=self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
+                master_flat = self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
 
-        #BPM                
+        # BPM: it is read from config file                
+        if self.config_opts['bpm']['mode']!='none':
+            master_bpm  = self.config_opts['bpm']['bpm_file']
+        """
         master_bpm = self.inputsDB.GetFilesT('MASTER_BPM')
         if len(master_bpm)==0 and self.outputsDB!=None:
             master_bpm = self.outputsDB.GetFilesT('MASTER_BPM')
+        """
 
         log.debug("Master Darks found %s", master_dark)
         log.debug("Master Flats found %s", master_flat)
@@ -821,14 +827,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             for i_file in r:
                                 if i_file.endswith(".fits"):
                                     display.showFrame(i_file)
-                                    str_list+=str(i_file)+"\n"
                                 elif i_file.endswith(".pdf"):
                                     # Todo
                                     log.debug("PDF display not yet implemented.")
-                                    str_list+=str(i_file)+"\n"
                                     continue
                                 #display.showFrame(file)
-                                str_list+=str(i_file)+"\n"
+                                str_list+=" +File: " + str(i_file)+"\n"
                                 #!!! keep up-date the out DB for future calibrations !!!
                                 # Because some science sequences could neen the
                                 # master calibration created by a former reduction,
@@ -846,12 +850,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             self.logConsole.debug(str(QString("%1 file/s created : \n %2")
                                                       .arg(len(r))
                                                       .arg(str(str_list))))
-                            # To avoid interrup the user with lots of QMessageBoxes,
-                            # we only show the information on the logConsole
-                            #QMessageBox.information(self,"Info", 
-                            #                        QString("%1 file/s created:  \n %2")
-                            #                        .arg(len(r))
-                            #                        .arg(str(str_list)))
                     elif type(r)==type("") and os.path.isfile(r):
                         self.logConsole.debug(str(QString("New file %1 created ")
                                                   .arg(r)))
@@ -977,13 +975,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def _update_master_calibrations(self):
         """
         Query the **outputsDB** to update the master calibrations files with the 
-        last calibration files received, and then update: 
+        last calibration files received, and then update:
             
             self.m_masterDark
             self.m_masterFlat
             self.m_masterMask
             
-        and display them on the "Calibrations" view Panel
+        and display them on the "Calibrations" view Panel.
+
+        However, for the QL reduction (Lazy or Pre-reduction) we query for newer
+        and properly Calibrations that fit the SCI properties (TEXT, FILTER, etc).
+
+        So, this "_update_master_calibrations" only has sense to know the last 
+        calibrations found in the DB. 
         """
         
         log.debug("Updating master calibration files received")
@@ -995,15 +999,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
         filter = 'ANY'
         
         # DARK
-        # Do NOT require equal EXPTIME Master Dark ???
+        # Do NOT require equal EXPTIME Master Dark - only get the last one
         master_dark = self.outputsDB.GetFilesT('MASTER_DARK', -1) 
+        
         # FLATS (for any filter)
         master_flat = self.outputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
             master_flat = self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
-        # BPM                
-        master_bpm = self.outputsDB.GetFilesT('MASTER_BPM')
         
+        # BPM                
+        # master_bpm = self.outputsDB.GetFilesT('MASTER_BPM')
+        if self.config_opts['bpm']['mode']!='none':
+            master_bpm  = self.config_opts['bpm']['bpm_file']
+
         """
         log.debug("Master Darks found %s", master_dark)
         log.debug("Master Flats found %s", master_flat)
@@ -2407,7 +2415,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if len(ltemp)>4:
                 #get the last 5 files (included the current one)
                 near_list = ltemp[-5:] # actually, the last in the list is the current one (filename=ltemp[-1])
-                file_n = len(near_list)
+                file_n = len(near_list) # range used by subtractNearSky is [1-N]
             else:
                 self.logConsole.info("Not enough files for sky subtraction (>4)")
                 log.debug("Not enough files for sky subtraction (>5)")
@@ -2435,7 +2443,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             thread = reduce.ExecTaskThread(self._task.subtractNearSky, 
                                            self._task_info_list, 
-                                           self._task.rs_filelist, file_n)
+                                           self._task.rs_filelist, 
+                                           file_n # range used by subtractNearSky is [1-N]
+                                           )
             thread.start()
         except:
             #Anyway, restore cursor
@@ -2448,7 +2458,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def createBPM_slot(self):
         """ 
         Create a Bad Pixel Mask from a set of selected files (flats)
-        It is run in interactively.
+        It is run interactively.
+
+        NOTE: not sure if it works ??
         """
                     
         if len(self.m_popup_l_sel)>3:
@@ -3140,7 +3152,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         log.debug("Start mathOp")
         
         if tempDir==None:
-            print "TEMP DIR is None !!"
             t_dir = "/tmp"
         else:
             t_dir = tempDir
