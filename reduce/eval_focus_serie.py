@@ -159,10 +159,10 @@ class FocusSerie(object):
         
         # Secondly, we remove duplicated values of T-FOCUS
         # (not sure if it should be done...)
-        seen = set()
-        seen_add = seen.add
-        good_focus_values = [ x for x in good_focus_values 
-                                    if not (x in seen or seen_add(x))]
+        #seen = set()
+        #seen_add = seen.add
+        #good_focus_values = [ x for x in good_focus_values 
+        #                            if not (x in seen or seen_add(x))]
         
         if len(good_focus_values)>1 and len(good_focus_values)==len(fwhm_values):
             # Fit the the values to a 2-degree polynomial
@@ -198,6 +198,10 @@ class FocusSerie(object):
 
             sys.stdout.write("\nPlot generated: %s\n"%self.output)
             
+            # Print out Values
+            for idx, i_file in enumerate(good_files):
+                sys.stdout.write("\nFile: %s   -->  FWHM: %s"%(i_file, fwhm_values[idx]))
+
             #
             # Write focus value into text file for OT
             #
