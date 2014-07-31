@@ -64,7 +64,7 @@ class CheckQuality(object):
     -------
        If no error, a seeing estimation value
     """
-    def __init__(self, input_file, isomin=10.0, ellipmax=0.3, edge_x=20, edge_y=20, 
+    def __init__(self, input_file, isomin=32.0, ellipmax=0.3, edge_x=2, edge_y=2, 
                  pixsize=0.45, gain = 4.15, sat_level=1500000, write=False,
                  min_snr=5.0, window='all'):
         
@@ -115,7 +115,7 @@ class CheckQuality(object):
         A couple of values (efwhm, std):
         
         efwhm : float
-            Estimated FWHM.
+            Estimated FWHM (in pixels)
         std: float
             Standard deviation of the FWHM.
         """
@@ -221,11 +221,12 @@ class CheckQuality(object):
             if (x>self.edge_x and x<naxis1-self.edge_x and 
                 y>self.edge_y and y<naxis2-self.edge_y and
                 ellipticity<self.ellipmax and fwhm>0.1 and 
-                fwhm<20 and flags<=3 and   
+                fwhm<20 and flags<=31 and   
                 isoarea>float(self.isomin) and snr>self.min_snr): 
                 # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
                 #print "%s SNR_APER= %s " %(i, snr)
+                #print "ISO_AREA= %s  ISO_MIN=%s"%(isoarea,self.isomin)
             else:
                 """
                 print "STAR #%s"%i
@@ -340,18 +341,18 @@ detector (Q1,Q2,Q3,Q4).
                   default=5)
     
     parser.add_option("-e", "--ellipmax",
-                  action="store", dest="ellipmax", type=float, default=0.2,
+                  action="store", dest="ellipmax", type=float, default=0.3,
                   help="Maximum SExtractor ELLIPTICITY (default = %default)")
                   
     parser.add_option("-x", "--edge_x",
                   action="store", dest="edge_x", type=int, 
                   help="Consider sources out of image borders on X axis (default = %default)",
-                  default=200)
+                  default=2)
     
     parser.add_option("-y", "--edge_y",
                   action="store", dest="edge_y", type=int, 
                   help="Consider sources out of image borders on Y axis (default = %default)",
-                  default=200)
+                  default=2)
     
     parser.add_option("-p", "--pixsize",
                   action="store", dest="pixsize", type=float, 

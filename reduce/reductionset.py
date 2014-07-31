@@ -1278,8 +1278,9 @@ class ReductionSet(object):
         This function make use of skyfilter_single.c (IRDR)              
         
         INPUT
-            file_pos : file position in sci file list (the list is supposed 
-            to be sorted by obs-date)
+            file_pos : file position (1-N) in sci file list (the list is supposed 
+            to be sorted by obs-date).
+            (0 means all will be filtered)
         
         OUTPUT
             The function generate a sky subtrated image (*.skysub.fits)

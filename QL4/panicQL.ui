@@ -1729,39 +1729,31 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBox_subDark">
+        <widget class="QCheckBox" name="checkBox_subDark_FF_BPM">
+         <property name="toolTip">
+          <string>Substract Dark, apply Flat-Field and grab BPM</string>
+         </property>
          <property name="text">
-          <string>Dark subtraction</string>
+          <string>Dark subt. + Flat-Fielding + BPM</string>
          </property>
          <property name="checked">
           <bool>false</bool>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_appBPM">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Apply Bad Pixel Mask (BPM)</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_appFlat">
-         <property name="text">
-          <string>Flat-Fielding</string>
-         </property>
-         <property name="checked">
-          <bool>false</bool>
+         <property name="autoExclusive">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="checkBox_subLastFrame">
+         <property name="statusTip">
+          <string>Subtract last science frame for sky subtraction</string>
+         </property>
          <property name="text">
           <string>Subtract last frame (science)</string>
+         </property>
+         <property name="autoExclusive">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -1770,18 +1762,14 @@
          <property name="enabled">
           <bool>true</bool>
          </property>
+         <property name="statusTip">
+          <string>Subtract the sky computed from last sky sci frames</string>
+         </property>
          <property name="text">
           <string>Subtract nearest sky</string>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_appSAstrom">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Apply 'static' Astrometry</string>
+         <property name="autoExclusive">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
