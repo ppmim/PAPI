@@ -1726,7 +1726,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
             if len(self.m_popup_l_sel)!=2:
                 self.subAct.setEnabled(False)
-                self.sumAct.setEnabled(False)
+                # It allowed to sum/combine 2 or more images
+                #self.sumAct.setEnabled(False) 
                 self.divAct.setEnabled(False)
                 
             if len(self.m_popup_l_sel)<5:
@@ -3173,7 +3174,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 misc.utils.listToFile(files, t_dir+"/files.tmp") 
                 iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
                          output=outputFile,
-                         combine='average',
+                         combine='median',
                          ccdtype='',
                          reject='sigclip',
                          lsigma=3,
