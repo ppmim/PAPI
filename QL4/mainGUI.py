@@ -2577,7 +2577,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """ Give an FWHM estimation of the current selected image """
         
         file_info = self.inputsDB.GetFileInfo(self.m_popup_l_sel[0])
-        if file_info!=None and file_info[2]!='SCIENCE':
+        if file_info!=None and (file_info[2]!='SCIENCE' and file_info[2]!='FOCUS'):
             QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
         elif file_info==None:
             if self.outputsDB.GetFileInfo(self.m_popup_l_sel[0])[2]!='SCIENCE':
