@@ -1721,7 +1721,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.subOwnSkyAct.setEnabled(False)
                 self.astroAct.setEnabled(False)
                 self.photoAct.setEnabled(False)
-                self.fwhmAct.setEnabled(False)
+                #self.fwhmAct.setEnabled(False)
                 self.bckgroundAct.setEnabled(False)
 
             if len(self.m_popup_l_sel)!=2:
@@ -2576,28 +2576,29 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def fwhm_estimation_slot (self):
         """ Give an FWHM estimation of the current selected image """
         
-        file_info = self.inputsDB.GetFileInfo(self.m_popup_l_sel[0])
-        if file_info!=None and (file_info[2]!='SCIENCE' and file_info[2]!='FOCUS'):
-            QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
-        elif file_info==None:
-            if self.outputsDB.GetFileInfo(self.m_popup_l_sel[0])[2]!='SCIENCE':
+        for ifile in self.m_popup_l_sel:
+            file_info = self.inputsDB.GetFileInfo(ifile)
+            if file_info!=None and (file_info[2]!='SCIENCE' and file_info[2]!='FOCUS'):
                 QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
-        
-        pix_scale = self.config_opts['general']['pix_scale']
-        cq = reduce.checkQuality.CheckQuality(self.m_popup_l_sel[0], 
-                                              pixsize=pix_scale)
-        try:
-            fwhm,std = cq.estimateFWHM()
-            if fwhm>0:
-                self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
-                                         .arg(os.path.basename(self.m_popup_l_sel[0]))
-                                         .arg(fwhm)
-                                         .arg(std)))
-            else:
-                self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")           
-        except Exception,e:
-            self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")
-            raise e
+            elif file_info==None:
+                if self.outputsDB.GetFileInfo(ifile)[2]!='SCIENCE':
+                    QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
+            
+            pix_scale = self.config_opts['general']['pix_scale']
+            cq = reduce.checkQuality.CheckQuality(ifile, 
+                                                  pixsize=pix_scale)
+            try:
+                fwhm,std = cq.estimateFWHM()
+                if fwhm>0:
+                    self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
+                                             .arg(os.path.basename(ifile))
+                                             .arg(fwhm)
+                                             .arg(std)))
+                else:
+                    self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")           
+            except Exception,e:
+                self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")
+                #raise e
     
     def do_quick_reduction_slot(self):
         """ 
