@@ -193,11 +193,12 @@ class CheckQuality(object):
         #matrix=[line.split() for line in fileinput.input(source_file)]
         #b=numpy.array(matrix)
         
-        a = numpy.loadtxt(source_file)
+        a = numpy.loadtxt(source_file, ndmin=2)
 
         if len(a)==0:
             raise Exception("Empy catalog, No stars found.")
         
+
         good_stars = []
         # Select 'best' stars for the estimation
         std = numpy.std(a[:,8])
