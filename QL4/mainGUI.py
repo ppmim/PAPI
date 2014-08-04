@@ -828,7 +828,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             #display.showFrame(r) #_return is a file list
                             for i_file in r:
                                 if i_file.endswith(".fits"):
-                                    display.showFrame(i_file)
+                                    if self.m_show_imgs: display.showFrame(i_file)
                                 elif i_file.endswith(".pdf"):
                                     # Todo
                                     log.debug("PDF display not yet implemented.")
@@ -856,7 +856,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         self.logConsole.debug(str(QString("New file %1 created ")
                                                   .arg(r)))
                         if r.endswith(".fits"):
-                            display.showFrame(r)
+                            if self.m_show_imgs: display.showFrame(r)
                         # Keep updated the out-DB for future calibrations
                         # See comments above
                         if not self.checkBox_outDir_autocheck.isChecked():
@@ -902,7 +902,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             else:
                                 str_list = ""
                                 #print "FILES CREATED=",self._task_info._return
-                                display.showFrame(self._task_info._return) #_return is a file list
+                                if self.m_show_imgs: 
+                                    display.showFrame(self._task_info._return) #_return is a file list
                                 for file in self._task_info._return:
                                     #display.showFrame(file)
                                     str_list+=str(file)+"\n"
@@ -935,7 +936,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             self.logConsole.debug(str(QString("New file %1 created.")
                                                       .arg(self._task_info._return)))
                             if self._task_info._return.endswith(".fits"):
-                                display.showFrame(self._task_info._return)
+                                if self.m_show_imgs:
+                                    display.showFrame(self._task_info._return)
                             # Keep updated the out-DB for future calibrations
                             # See comments above
                             if not self.checkBox_outDir_autocheck.isChecked():
@@ -1191,9 +1193,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     
     def show_images_slot(self):
         if self.checkBox_show_imgs.isChecked():
-            self.m_show_imgs=True
+            self.m_show_imgs = True
         else:
-            self.m_show_imgs=False
+            self.m_show_imgs = False
             
     def data_grouping_slot(self):
         """
