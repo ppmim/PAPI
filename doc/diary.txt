@@ -4770,9 +4770,15 @@ varios errores.
 31-Julio-2014 
 -------------
 (P)- Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
+
+01-Agosto-2014 
+--------------
 (P)- Las primeras imágenes (Darks MEF) que le llegan al QL no las muestra bien en el DS9 !!! testLazy.xml
 
+Parece que los dark MEF se pueden leer sin problemas con la opción -mosaicimage
+del DS9 pues los darks ahora también tienen WCS !! 
 
+ > PENDIENTE implementar en display.py !!! 
 
 PANIC computers installation
 ============================
