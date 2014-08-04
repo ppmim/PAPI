@@ -125,6 +125,8 @@ class FocusSerie(object):
                 cq = checkQuality.CheckQuality(file, 
                                                pixsize=self.pix_size, 
                                                sat_level=self.sat_level,
+                                               isomin=32,
+                                               ellipmax=0.9, # basically, no limit !
                                                window=self.window)
                 try:
                     fwhm = cq.estimateFWHM()[0]
