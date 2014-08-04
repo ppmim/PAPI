@@ -378,7 +378,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def new_file_func_out(self, filename):
         """
-        Callback used when a new file is detected in output dir
+        Callback used when a new file is detected in output directory.
         """
                      
         self.new_file_func(filename, fromOutput=True)
@@ -395,6 +395,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ### Actually, the file was already detected, but this call is only used 
         ### to update the ListView and avoid updating the ListView each time
         ### a file is detected.
+        ### Note that 'filename' was already inserted in the DB; this
+        ### extra call is only used to update the ListView.
         if filename.endswith("__last__"):
             log.debug("Updating the ListView")
             self.slot_classFilter()
@@ -463,7 +465,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         ##################################################################
         ##  If selected, file or sequence processing will start ....
-        #   TODO : !! Not completelly well designed !!!
+        #   TODO : !! Not completelly finished !!!
         ##################################################################
         if self.proc_started:
             if self.comboBox_QL_Mode.currentText()=="None":
@@ -1296,32 +1298,44 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
     def clear_mainlist_slot(self):
         """
-        Remove all files from ListView, DataCollector and DB 
+        Remove all files from ListView, DataCollector and DB (source and OUTS !).
         """
          
         self.listView_dataS.clear()
         self.dc.Clear()
         self.inputsDB.clearDB()
+        self.outputsDB.clearDB()
 
 
     def add_slot(self):
         """
         Add a new file to the main list panel, but not to the DataCollector 
-        list (dc), so it might be already inside 
+        list (dc), so it might be already inside. 
+        Note: see the adding of "__last__" suffix.
         """     
         filenames = QFileDialog.getOpenFileNames( self,
                                                 "Select one or more files to add",
                                                 self.m_default_data_dir,
                                                 "FITS files (*.fit*)")
 
+        if self.comboBox_classFilter.currentText()=="OUTS":
+            ifFromOut = True
+        else:
+            ifFromOut = False
+
         if not filenames.isEmpty():
-            for file in filenames:
-                self.new_file_func(str(file))
+            for ifile in filenames:
+                self.new_file_func(str(ifile), ifFromOut)
         
+        # Due to the trick to avoid the overload of the QL when a full
+        # directory is loaded (see datacollector::findNewFiles) we 
+        # used an extra call with the suffix "__last__" to update the View
+        self.new_file_func(str(ifile+"__last__"), ifFromOut)
+
     def del_slot(self):
-        """ 
+        """     
         Delete the current selected file from the main list view panel, 
-        but we do not remote from the DataCollector neither file system
+        but we do not remote from the DataCollector neither file system.
         """
         
         self.m_popup_l_sel = []
@@ -1332,7 +1346,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             indx = self.listView_dataS.indexOfTopLevelItem(listViewItem.value())
             self.listView_dataS.takeTopLevelItem(indx)
             #self.dc.Clear(fileName)
-            self.inputsDB.delete( fileName )
+            if self.comboBox_classFilter.currentText()=="OUTS":
+                self.outputsDB.delete( fileName )
+            else:
+                self.inputsDB.delete( fileName )
             #listViewItem +=1 # because of remove, we do not need an increment
           
         #self.inputsDB.ListDataSetNames()
@@ -1916,7 +1933,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:
             display.startDisplay()
             
-        #os.system("/usr/local/bin/ds9 %s &" %((self.m_listView_item_selected)))
         self.logConsole.info("DS9 launched !")
         
     def start_aladin_slot(self):

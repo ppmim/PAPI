@@ -406,7 +406,8 @@ class DataCollector (object):
         # if it is the last file of a full-directory list, then notify QL to
         # update the ListView.
         # It is done to avoid overloading the QL update of the ListView each time
-        # when a long directory is loaded in one go.
+        # when a long directory is loaded in one go. Howerver, last file is not 
+        # inserted twice.
         if len(contents)>0:
             self.callback_func(contents[-1]+"__last__")
 
