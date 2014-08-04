@@ -1916,7 +1916,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:
             display.startDisplay()
             
-        #os.system("/usr/local/bin/ds9 %s &" %((self.m_listView_item_selected)))
         self.logConsole.info("DS9 launched !")
         
     def start_aladin_slot(self):
