@@ -334,7 +334,7 @@ detector (Q1,Q2,Q3,Q4).
     parser.add_option("-i", "--isoarea_min",
                   action="store", dest="isoarea_min",type=int,
                   help="Minimum value of ISOAREA (default = %default)",
-                  default=10)
+                  default=32)
     
     parser.add_option("-S", "--snr",
                   action="store", dest="snr", type=int,

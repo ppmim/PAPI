@@ -2601,7 +2601,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
             
             pix_scale = self.config_opts['general']['pix_scale']
-            cq = reduce.checkQuality.CheckQuality(ifile, 
+            satur_level = self.config_opts['skysub']['satur_level']
+            iso_min_size = self.config_opts['skysub']['mask_minarea']
+            cq = reduce.checkQuality.CheckQuality(ifile,
+                                                  sat_level=satur_level, 
+                                                  isomin=iso_min_size,
+                                                  ellipmax=0.9, # basically, no limit !
                                                   pixsize=pix_scale)
             try:
                 fwhm,std = cq.estimateFWHM()
