@@ -204,7 +204,8 @@ class MasterDomeFlat(object):
             if ( f_expt!=-1 and ( int(f.expTime()) != int(f_expt) or 
                                   f.getFilter()!=f_filter or 
                                   f.getReadMode()!=f_readmode)) :
-                log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with \n different FILTER or EXPTIME or READMODE. Skipped.")
+                log.warning("Found a FLAT frame with different FILTER or EXPTIME "
+                    "or READMODE. Frame skipped !")
                 continue
             else: 
                 f_expt = f.expTime()
@@ -221,7 +222,8 @@ class MasterDomeFlat(object):
             elif f.isDomeFlatOFF():
                 domelist_lampoff.append(iframe.replace("//","/"))
             else:
-                log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with different Flat-Field type (should be domeflat on/off).Skipped")
+                log.warning("Found a FLAT frame with different Flat-Field type "
+                    " It should be domeflat LAMP_ON/OFF. Frame skipped !")
         
         
         log.info('Right, all flat frames separated as:')

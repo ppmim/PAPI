@@ -4774,11 +4774,46 @@ varios errores.
 01-Agosto-2014 
 --------------
 (P)- Las primeras imágenes (Darks MEF) que le llegan al QL no las muestra bien en el DS9 !!! testLazy.xml
-
 Parece que los dark MEF se pueden leer sin problemas con la opción -mosaicimage
 del DS9 pues los darks ahora también tienen WCS !! 
 
- > PENDIENTE implementar en display.py !!! 
+  >>> DONE !
+
+
+
+05-Agosto-2014 
+--------------
+- Modificado display.py para mostar correctamente Darks con la opción -mosaicimage
+del DS9. RM me ha confirmado que todos los ficheros FITS (indepedientemente del tipo)
+tendrán WCS.
+
+- Modifico GUI del QL para añadir la opcion "Setup-Display", con las siguientes
+opciones:
+    * None
+    * Only new files in Input Dir
+    * Only results
+    * All
+
+- Modifico (y corrijo algún bug) calTwFlat.py para que también pueda procesar
+series de DomeFlat que no sean de LAMP ON/OFF. En principio no las usaremos en
+PANIC (???), pero llegado el caso, se procesarán como los TwiLight FF. Las series
+de DomeFlats (tengan igual TEXP o distinto) necesitan un DARK_MODEL, pues es lo
+que requieren también los TwiLight Flats (aunque a los domeFlats de tiempo fijo
+les bastaría un MASTER DARK con igual TEXP.).
+ >> QL: ahora procesa secuencias de Flat con un tiempo Fijo o una serie y que no 
+sean DOMEFLAT lamp ON/OFF.
+
+- Añado un segundo fichero de NLC (LIR y RRR-MPIA) en fichero de configuración
+y que PAPI lo use según el modo de lectura encontrado en la cabecera.
+
+- QL: en modo lazy, ahora se construyen por defecto los Dark y FF maestros cuando
+se detectan secuencias de calibración (no SCIENCE). De esta forma, pues si no es
+así, quizás no se pueda aplicar Dark y FF en la pre-reducción lazy !!
+
+
+
+
+
 
 PANIC computers installation
 ============================
@@ -5171,24 +5206,16 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Las primeras imágenes (Darks MEF) que le llegan al QL no las muestra bien en el DS9 !!! testLazy.xml
-
+- ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, SExtractor, ...)
 - Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
 - ver donde se está usando cosas como image[200:naxis1-200,200:naxis2-200] para que
 no de problemas con subwindows !!
 - $CAMHOME/scripts/QueueFiles: Considerar su posible uso para el QL, para la detección
 de nuevos ficheros; por lo visto se llama después de que termina el "save". Ver
 documentación GEIRS (3.3 Postprocessing) 
-- Añadir un segundo fichero de NLC (LIR y RRR-MPIA) en fichero de configuración
-y que PAPI lo use según el modo de lectura encontrado en la cabecera.
-- ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, Sextractor, ...)
-- QL: no procesa secuencias de Flat con un tiempo Fijo y que no sean DOMEFLAT ???
-- QL: en modo lazy, debaría procesar construir los Dark y FF maestros, pues si no 
-no puede aplicar Dark y FF en la pre-reducción lazy !!
 
 - En MEF:convertSimple2MEF, considerar la opción de cubos !!!
 - Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
-- Instalar r720M y actualzar el fichero GENERIC
 - Dejar muy claro en la documentación que tipo de ficheros son los mejores para
 PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
 - Comprobar lectura correcta de nuevas keys : CAM_DETROT90 y CAM_DETXYFLIP en r719M.
@@ -5205,7 +5232,6 @@ o SWARP (VTerrón lo está usando y está contento...)
    ...
 
 - "Collapsar" los cubos de PANIC con un average + sigmaclip !!!
-- Rutina para master_flat ala skyflats ! ==> OT=Fixed or Series; implemetar tb en QL !!!
 - Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
 de llamar directamente a calDark.py.
   ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
@@ -5218,7 +5244,6 @@ los ficheros de forma única (DATE+TIMESTAMP)!!
 - Second pass of sky-subtraction for extended objects
 - Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
 - Support for sub-windows (not tested, but probably does not work properly) 
-- Non-linearity computation ( fac = a0 + a1*I + a2*I^2 )
 - Method to empiricaly determine the geometric distortion based an auto-calibration 
 approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
 - Photometry: currently only 2MASS filters (J, H, Ks) supported. No color 
@@ -5226,6 +5251,10 @@ coefficients neither extinction taken into account.
 - Data Quality Control (frames to reject, ...)
 - Support for incomplete sequences (ie. aborted, corrupted, ...): a kind of 
 fix method to update the headers in order to build a valid sequence for PAPI.
+  >>>Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
+  Alguna otra solución ???
+
+
 
 - Ver si merece la pena implementar el metodo crclean() de image.py
 de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
@@ -5242,7 +5271,6 @@ usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
 - opción en PAPI para reducir sólo un detector/es
 - Configurar sonidos (pulseaudio)
-- Support for incomplete sequences
 - Add some kind of Quality check 
 - Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
 - No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
@@ -5271,10 +5299,6 @@ son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 - Documento instalación de PANIC-SW
 - PANIC Tesis ala O2000 !!!
 
-- Que hacer con las secuencias incompletas, por ejemplo, le falta el primero, 
-el último, o algunos del medio, etc .... 
-Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
-Alguna otra solución ???
 
 - PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
 sin embargo, parece que calDark.py no se queja !

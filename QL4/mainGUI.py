@@ -266,7 +266,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
         self.__initializeGUI()
         self.createActions()
-        
+
         ## Init in memory Database
         ## -----------------------
         #datahandler.dataset.initDB()
@@ -463,6 +463,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.logConsole.warning("Detected end of observing sequence [%s]"%(seqType))       
         
         
+        # Display new file detected
+        if self.getDisplayMode()==1 or self.getDisplayMode()==3:
+            display.showFrame(filename)
+        
         ##################################################################
         ##  If selected, file or sequence processing will start ....
         #   TODO : !! Not completelly finished !!!
@@ -471,7 +475,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if self.comboBox_QL_Mode.currentText()=="None":
                 return
             elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
-                display.showFrame(filename)
                 if end_seq: self.processFiles(seq)
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 if end_seq and seqType!="SCIENCE":
@@ -485,7 +488,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Do some operations to the last file detected. It depends on:
         
-            - checkBox_show_imgs
             - checkBox_subDark_FF_BPM
             - checkBox_subLastFrame
             
@@ -505,9 +507,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         (date, ut_time, type, filter, texp, detector_id, 
          run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(filename)
         
-        # Show frames on DS9
-        if self.checkBox_show_imgs.isChecked():
-            display.showFrame(filename)
         
         # ONLY SCIENCE frames will be pre-processed 
         if type!="SCIENCE":
@@ -519,7 +518,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # According to what options have been selected by the user, we do a processing or other...
         if self.checkBox_subDark_FF_BPM.isChecked():
             try:
-                #Look for (last received) calibration files
+                # Look for (last received) calibration files
                 mDark, mFlat, mBPM = self.getCalibFor([filename])
                 
                 # Both master_dark and master_flat are optional
@@ -622,7 +621,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # DARK - Do NOT require equal EXPTIME Master Dark ???
         master_dark = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark)==0 and self.outputsDB!=None:
-            master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime) 
+            master_dark = self.outputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
+            if len(master_dark)==0:
+                master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime) 
+        
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
         if master_flat==[]:
@@ -759,8 +761,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elem.setText (3, str(texp))
             elem.setText (4, str(date)+"::"+str(ut_time))
             
-            if self.m_show_imgs: 
-                display.showFrame(str(dir)+"/"+filename) 
             
             #self.listView_dataS.insertItem(str(filename))
         self.inputsDB.ListDataSet()
@@ -828,7 +828,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             #display.showFrame(r) #_return is a file list
                             for i_file in r:
                                 if i_file.endswith(".fits"):
-                                    if self.m_show_imgs: display.showFrame(i_file)
+                                    if self.getDisplayMode()>=2: 
+                                        display.showFrame(i_file)
                                 elif i_file.endswith(".pdf"):
                                     # Todo
                                     log.debug("PDF display not yet implemented.")
@@ -856,7 +857,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         self.logConsole.debug(str(QString("New file %1 created ")
                                                   .arg(r)))
                         if r.endswith(".fits"):
-                            if self.m_show_imgs: display.showFrame(r)
+                            if self.getDisplayMode()>=2: display.showFrame(r)
                         # Keep updated the out-DB for future calibrations
                         # See comments above
                         if not self.checkBox_outDir_autocheck.isChecked():
@@ -902,7 +903,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             else:
                                 str_list = ""
                                 #print "FILES CREATED=",self._task_info._return
-                                if self.m_show_imgs: 
+                                if self.getDisplayMode()>=2: 
                                     display.showFrame(self._task_info._return) #_return is a file list
                                 for file in self._task_info._return:
                                     #display.showFrame(file)
@@ -936,7 +937,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             self.logConsole.debug(str(QString("New file %1 created.")
                                                       .arg(self._task_info._return)))
                             if self._task_info._return.endswith(".fits"):
-                                if self.m_show_imgs:
+                                if self.getDisplayMode()>=2:
                                     display.showFrame(self._task_info._return)
                             # Keep updated the out-DB for future calibrations
                             # See comments above
@@ -1191,12 +1192,22 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if self.checkBox_outDir_autocheck.isChecked():
                 self.dc_outdir.check()
                     
-    def show_images_slot(self):
-        if self.checkBox_show_imgs.isChecked():
-            self.m_show_imgs = True
-        else:
-            self.m_show_imgs = False
-            
+    
+    def getDisplayMode(self):
+        """
+        Read the 'comboBox_show_imgs' and return the option selected:
+
+        """
+
+        if self.comboBox_show_imgs.currentText().contains("None"):
+            return 0 
+        elif self.comboBox_show_imgs.currentText().contains("Only new files"):
+            return 1
+        elif self.comboBox_show_imgs.currentText().contains("Only results"):
+            return 2
+        elif self.comboBox_show_imgs.currentText().contains("All"):
+            return 3
+
     def data_grouping_slot(self):
         """
         Slot called when the 'checkBox_data_grouping_OT' is clicked.
@@ -2236,10 +2247,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                       self.m_outputdir+"/master_twflat.fits", 
                                                       "*.fits") 
             if not outfileName.isEmpty():
+                # Look for master Dark
+                mDark, mFlat, mBPM = self.getCalibFor(self.m_popup_l_sel)
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel,
-                                                                      self.m_masterDark, 
+                                                                      mDark, 
                                                                       str(outfileName))
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
@@ -2364,7 +2377,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QMessageBox.critical(self, "Error", "Error while running Sextractor"+str(e))
                 raise e
             else:
-                display.showFrame(out_file)
+                if self.getDisplayMode()>=2:
+                    display.showFrame(out_file)
             finally:
                 QApplication.restoreOverrideCursor()
                 self.m_processing = False
@@ -2585,8 +2599,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             for line in values:
                 self.logConsole.info(str(line))
                 #self.logConsole.info(QString("Background estimation MEAN= %1   MODE=%2    STDDEV=%3    MIN=%4         MAX=%5").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
-            
-            display.showFrame(img)
+            if self.getDisplayMode()>=2:
+                display.showFrame(img)
         except Exception,e:
             self.logConsole.error("ERROR: something wrong while computing background")
             raise e

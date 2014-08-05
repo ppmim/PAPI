@@ -151,7 +151,7 @@
        </rect>
       </property>
       <property name="pixmap">
-       <pixmap>images/logo_PANIC.jpg</pixmap>
+       <pixmap>../../../.designer/backup/images/logo_PANIC.jpg</pixmap>
       </property>
       <property name="scaledContents">
        <bool>true</bool>
@@ -187,9 +187,15 @@
        <rect>
         <x>10</x>
         <y>390</y>
-        <width>102</width>
+        <width>131</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
       </property>
       <property name="text">
        <string>Last file received:</string>
@@ -201,7 +207,7 @@
      <widget class="QLineEdit" name="lineEdit_last_file">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>140</x>
         <y>390</y>
         <width>311</width>
         <height>21</height>
@@ -1709,25 +1715,15 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>153</y>
+        <y>251</y>
         <width>271</width>
-        <height>260</height>
+        <height>171</height>
        </rect>
       </property>
       <property name="title">
        <string>Lazy Mode</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QCheckBox" name="checkBox_show_imgs">
-         <property name="text">
-          <string>Only display image</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QCheckBox" name="checkBox_subDark_FF_BPM">
          <property name="toolTip">
@@ -1949,6 +1945,49 @@
        <property name="checked">
         <bool>true</bool>
        </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_4">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>150</y>
+        <width>271</width>
+        <height>91</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Display</string>
+      </property>
+      <widget class="QComboBox" name="comboBox_show_imgs">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>30</y>
+         <width>211</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>None</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Only new files in 'Input Dir'</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Only results</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All files</string>
+        </property>
+       </item>
       </widget>
      </widget>
     </widget>
@@ -2460,7 +2499,7 @@
   <action name="fileOpenAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -2481,7 +2520,7 @@
   <action name="fileDirAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -2502,7 +2541,7 @@
   <action name="fileShow">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</normaloff>../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Show</string>
@@ -2537,7 +2576,7 @@
   <action name="filePrintAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image4</normaloff>../../../../../../../../../../../.designer/backup/image4</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image4</normaloff>../../../../../../../../../../../../.designer/backup/image4</iconset>
    </property>
    <property name="text">
     <string>&amp;Print...</string>
@@ -2569,7 +2608,7 @@
   <action name="editUndoAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image5</normaloff>../../../../../../../../../../../.designer/backup/image5</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image5</normaloff>../../../../../../../../../../../../.designer/backup/image5</iconset>
    </property>
    <property name="text">
     <string>&amp;Undo</string>
@@ -2587,7 +2626,7 @@
   <action name="editRedoAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image6</normaloff>../../../../../../../../../../../.designer/backup/image6</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image6</normaloff>../../../../../../../../../../../../.designer/backup/image6</iconset>
    </property>
    <property name="text">
     <string>&amp;Redo</string>
@@ -2605,7 +2644,7 @@
   <action name="editCutAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image7</normaloff>../../../../../../../../../../../.designer/backup/image7</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image7</normaloff>../../../../../../../../../../../../.designer/backup/image7</iconset>
    </property>
    <property name="text">
     <string>Cu&amp;t</string>
@@ -2623,7 +2662,7 @@
   <action name="editCopyAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image8</normaloff>../../../../../../../../../../../.designer/backup/image8</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image8</normaloff>../../../../../../../../../../../../.designer/backup/image8</iconset>
    </property>
    <property name="text">
     <string>&amp;Copy</string>
@@ -2641,7 +2680,7 @@
   <action name="editPasteAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image9</normaloff>../../../../../../../../../../../.designer/backup/image9</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image9</normaloff>../../../../../../../../../../../../.designer/backup/image9</iconset>
    </property>
    <property name="text">
     <string>&amp;Paste</string>
@@ -2659,7 +2698,7 @@
   <action name="editFindAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image10</normaloff>../../../../../../../../../../../.designer/backup/image10</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image10</normaloff>../../../../../../../../../../../../.designer/backup/image10</iconset>
    </property>
    <property name="text">
     <string>&amp;Find...</string>
@@ -2757,7 +2796,7 @@
   <action name="fileSearchAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2772,7 +2811,7 @@
   <action name="quitAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2787,7 +2826,7 @@
   <action name="irafConsoleAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2807,7 +2846,7 @@
   <action name="actionAladin">
    <property name="icon">
     <iconset>
-     <normaloff>images/aladin_large.gif</normaloff>images/aladin_large.gif</iconset>
+     <normaloff>../../../.designer/backup/images/aladin_large.gif</normaloff>../../../.designer/backup/images/aladin_large.gif</iconset>
    </property>
    <property name="text">
     <string>Aladin</string>
