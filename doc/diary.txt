@@ -4810,9 +4810,22 @@ y que PAPI lo use según el modo de lectura encontrado en la cabecera.
 se detectan secuencias de calibración (no SCIENCE). De esta forma, pues si no es
 así, quizás no se pueda aplicar Dark y FF en la pre-reducción lazy !!
 
+- Hago un "poco" de limpieza en el GroupBox de "Pre-Reduction" del QL, y añado
+opciones como:
+   - Apply NLC
+   - Apply BPM
+   - Apply Dark + FF
+   - Astrometry Engine
+   - half window skyfilter size
+   - detector
+
+(P) Hay que probarlos bien !!
 
 
-
+06-Agosto-2014 
+--------------
+(P) - Ver como usar FLAG_IMAGE en Sextractor con los BPM !!!
+http://astronomy.case.edu/steven/Virgo/SExtractor.html#mask
 
 
 PANIC computers installation
@@ -5206,6 +5219,7 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Ver como usar FLAG_IMAGE en Sextractor con los BPM !!!
 - ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, SExtractor, ...)
 - Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
 - ver donde se está usando cosas como image[200:naxis1-200,200:naxis2-200] para que

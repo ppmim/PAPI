@@ -490,13 +490,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
             - checkBox_subDark_FF_BPM
             - checkBox_subLastFrame
-            
-            ToDo:
             - checkBox_subSky
             
-            Other:
+            TODO
             - checkBox_data_grouping
-            - checkBox_doRegrig
             - comboBox_AstromCatalog
             - comboBox_pre_skyWindow
             
@@ -3070,12 +3067,49 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else: l_group_by = group_by
             
             # Here, it is decided if last calibration files will be used 
-            if (self.checkBox_pre_subD.checkState()==Qt.Checked 
-                and self.checkBox_pre_appMF.checkState()==Qt.Checked): 
+            if self.checkBox_pre_subDark_FF.checkState()==Qt.Checked:
                 calib_db_files = self.outputsDB.GetFiles()
                 log.debug("ext-calibretion DB loaded")
             else:
                 calib_db_files = None
+
+            #
+            # Load config values from Setup Tab
+            #
+            if self.checkBox_pre_appNLC.isChecked():
+                self.config_opts['nonlinearity']['apply'] = True
+            else:
+                self.config_opts['nonlinearity']['apply'] = False
+            
+            if self.checkBox_pre_appBPM.isChecked():
+                self.config_opts['bpm']['mode'] = 'gain' # mark Bad Pixels
+            else:
+                self.config_opts['bpm']['mode'] = 'none'
+
+            #
+            if self.comboBox_AstromEngine.currentText()=="SCAMP":
+                self.config_opts['astrometry']['engine'] = "SCAMP"
+            else:
+                self.config_opts['astrometry']['engine'] = "AstrometryNet"
+            #
+            if self.comboBox_pre_skyWindow.currentText()=="2-frames": nhw = 1
+            elif self.comboBox_pre_skyWindow.currentText()=="4-frames": nhw = 2
+            elif self.comboBox_pre_skyWindow.currentText()=="6-frames": nhw = 3
+            elif self.comboBox_pre_skyWindow.currentText()=="8-frames": nhw = 4
+            else: nhw = 2
+            self.config_opts['skysub']['hwidth'] = nhw
+            
+            #
+            if self.comboBox_detector.currentText()=="All": detector = 'all'
+            elif self.comboBox_detector.currentText()=="SG1": detector = 'Q3'
+            elif self.comboBox_detector.currentText()=="SG2": detector = 'Q1'
+            elif self.comboBox_detector.currentText()=="SG3": detector = 'Q2'
+            elif self.comboBox_detector.currentText()=="SG4": detector = 'Q4'
+            else: detector = 'all'
+            self.config_opts['general']['detector'] = detector
+
+            
+
             #
             params = [(files, self.m_outputdir, outfilename,
                       "dither", None, 
