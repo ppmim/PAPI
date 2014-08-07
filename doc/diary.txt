@@ -4824,8 +4824,19 @@ opciones como:
 
 06-Agosto-2014 
 --------------
+- Mejoro el script de instalación y algo la documentación.
+
 (P) - Ver como usar FLAG_IMAGE en Sextractor con los BPM !!!
 http://astronomy.case.edu/steven/Virgo/SExtractor.html#mask
+
+Parace que es mejor usar WEIGHT_IMAGE para el BPM !!
+
+
+
+
+
+07-Agosto-2014 
+--------------
 
 
 PANIC computers installation
