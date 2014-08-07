@@ -26,7 +26,7 @@
 # imtrim.py
 #
 # Created    : 21/01/2009    jmiguel@iaa.es
-# Last update: 08/08/2013    jmiguel@iaa.es
+# Last update: 28/07/2014    jmiguel@iaa.es: eliminados import noao,ccdred, imred
 #
 ###############################################################################
 
@@ -40,6 +40,7 @@ import pyfits
 
 # Pyraf modules
 from pyraf import iraf
+
 
 # Interact with FITS files
 import pyfits

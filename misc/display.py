@@ -127,9 +127,9 @@ def showFrame(frame, del_all=False):
         f = datahandler.ClFits(file)
         if (f.mef==True):
                 # Multi-Extension FITS files
-                if (f.isDark() or f.isMasterDark() or f.isMasterDarkModel()
-                    and f.getInstrument()=='hawki'):
-                    # (Hawki) Dark files don't have WCS information required by ds9 mosaicimage
+                if f.getInstrument()=='hawki':
+                    # HAWK-I Dark files don't have WCS information required by ds9 mosaicimage
+                    # PANIC  Dark files do have WCS information.  
                     if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (ds9_path)))
                     os.system(("%s/xpaset -p ds9 frame new" % ds9_path))
                     os.system(("%s/xpaset -p ds9 cmap Heat" % ds9_path))

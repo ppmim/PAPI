@@ -76,7 +76,8 @@ class ApplyDarkFlat(object):
     sci_raw_files: list
         A list of science raw files to calibrate 
     dark: str
-        Master dark to subtract
+        Master dark to subtract; it can be a master dark model to produce a 
+        proper scaled master dark to subtract.
     mflat: str
         Master flat to divide by (not normalized !)
     bpm: str
@@ -109,7 +110,7 @@ class ApplyDarkFlat(object):
                  norm = False):
 
         self.__sci_files = sci_raw_files  # list of files which apply dark and flat
-        self.__mdark = mdark  # master dark (model) to apply
+        self.__mdark = mdark  # master dark (or master model) to apply
         self.__mflat = mflat  # master flat to apply (dome, twlight) - not normalized !!
         self.__bpm = bpm      # bad pixel mask file to apply
         self.__out_dir = out_dir_ # output directory of calibrated files
@@ -130,6 +131,11 @@ class ApplyDarkFlat(object):
         """   
 
         log.debug("Start applyDarkFlat")
+        log.debug(" + Master Dark: %s"%self.__mdark)
+        log.debug(" + Master Flat: %s"%self.__mflat)
+        log.debug(" + Master BPM: %s"%self.__bpm)
+        log.debug(" + SCI Source images: %s"%str(self.__sci_files))
+        
         
         start_time = time.time()
         t = utils.clock()
@@ -149,8 +155,9 @@ class ApplyDarkFlat(object):
         # Master DARK reading:
         if self.__mdark != None:
             if not os.path.exists(self.__mdark): # check whether input file exists
-                log.error('File %s does not exist', self.__mdark)
-                sys.exit(1)
+                msg = "Master Dark '%s' does not exist"%self.__mdark
+                log.error(msg)
+                raise Exception(msg)
             else:
                 dark = pyfits.open(self.__mdark)
                 cdark = datahandler.ClFits (self.__mdark)
@@ -171,7 +178,7 @@ class ApplyDarkFlat(object):
                 log.debug("Master DARK to be subtracted : %s"%self.__mdark)
         # No master dark provided, then no dark to subtract
         else:
-            log.debug("No master dark to be subtracted !")
+            log.warning("No master dark to be subtracted !")
             dark_data = 0
             dark_time = None
             
@@ -179,8 +186,9 @@ class ApplyDarkFlat(object):
         # Master FLAT reading
         if self.__mflat != None:    
             if not os.path.exists(self.__mflat): # check whether input file exists
-                log.error('File %s does not exist', self.__mflat)
-                sys.exit(2)
+                msg = "Master Flat '%s' does not exist"%self.__mflat
+                log.error(msg)
+                raise Exception(msg)
             else:
                 flat = pyfits.open(self.__mflat)
                 cflat = datahandler.ClFits (self.__mflat)
@@ -195,9 +203,9 @@ class ApplyDarkFlat(object):
                 if cflat.next>1:
                     ###fmef = True
                     if cdark!=None and cdark.next != cflat.next:
-                        raise Exception("Number of extensions does not match \
-                        in Dark and Flat files!")
-                    else: n_ext = cdark.next    
+                        raise Exception("Number of extensions does not match "
+                        "in Dark and Flat files!")
+                    else: n_ext = cflat.next    
                     log.debug("Flat MEF file with %d extensions", n_ext)
                     
                 # compute mode for n_ext normalization (in case of MEF, we normalize 
@@ -209,9 +217,13 @@ class ApplyDarkFlat(object):
                 else: 
                     ext = 0
                     
-                # Replace NaN values with 0.0
-                dat = flat[ext].data[200:naxis1-200, 200:naxis2-200]
-                dat[numpy.isnan(dat)]= 0.0
+                # Take the center of the image
+                off_naxis1 = int(naxis1*0.1)
+                off_naxis2 = int(naxis2*0.1)
+                dat = flat[ext].data[off_naxis1:naxis1-off_naxis1, 
+                                     off_naxis2:naxis2-off_naxis2]
+                # NaN values must not be replaced with 0.0 !!!
+                # dat[numpy.isnan(dat)]= 0.0 #
 
                 # Normalization is done with a robust estimator --> np.median()
                 median = numpy.median(dat)
@@ -263,10 +275,15 @@ class ApplyDarkFlat(object):
                 n_removed = n_removed+1
             else:
                 # check Number of Extension 
-                if (len(f)>1 and (len(f)-1) != n_ext) or len(f) != n_ext:
-                    raise Exception("File %s does not match the number of"
+                if (len(f)>1 and (len(f)-1) != n_ext):
+                    raise Exception("File %s does not match the number of "
                     "extensions (%d)"%( iframe, n_ext))
-                
+                elif len(f)==1 and n_ext!=1: 
+                    raise Exception("File %s does not match the number of "
+                    "extensions (%d)"%( iframe, n_ext))
+                else:
+                    log.debug("Good match of the number of extensions.")
+
                 # Delete old files
                 (path, name) = os.path.split(iframe)
                 newpathname = (self.__out_dir + "/" + \
@@ -364,6 +381,7 @@ class ApplyDarkFlat(object):
                     # #################################
                     sci_data = (sci_data - dark_data) / flat_data
                     
+
                     # Now, apply BPM
                     if self.__bpm!=None:
                         if self.__bpm_action=='fix':
@@ -398,7 +416,7 @@ class ApplyDarkFlat(object):
                      
                 f.close()
                 result_file_list.append(newpathname)            
-                log.debug('Saved new dark subtracted or/and flattened file  %s', \
+                log.debug('Saved new dark subtracted or/and flattened file  %s',
                           newpathname )
         
         log.debug(t.tac() )

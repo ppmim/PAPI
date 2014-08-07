@@ -38,6 +38,7 @@
 #                                              required scaled dark 
 #              27/03/2012    jmiguel@iaa.es  - Fixed bug wrt chip 1 normalization
 #              03/12/2012    jmiguel@iaa.es  - Modified normalization by median instead of mode
+#              05/08/2014    jmiguel@iaa.es  - Added support for DOME_FLAT series (not lamp on/off)
 #
 # TODO:
 #   - take into account BPM !!!
@@ -215,9 +216,9 @@ class MasterTwilightFlat (object):
         good_frames = []
         
         for iframe in framelist:
-            f=datahandler.ClFits ( iframe )
+            f = datahandler.ClFits(iframe)
             log.debug("Checking data compatibility (filter, texp, type)")
-            print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
+            log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter()))
             #Compute the mean count value in chip to find out good frames (enough check ??)
             mean = 0
             myfits = pyfits.open(iframe, ignore_missing_end=True)
@@ -249,13 +250,14 @@ class MasterTwilightFlat (object):
                 if f.isTwFlat():
                     f_type = f.getType()
                 else:
+                    # Added (temporal) support for DOME_FLAT series (not lamp on/off)
                     log.warning("Frame %s does not look like a TwiLight Flat field" %(iframe))
-                    f_type = f.getType()
+                    f_type = f.getType(False)
                     #log.error("Error, frame %s does not look a TwiLight Flat field" %(iframe))
                     #raise Exception("Error, frame %s does not look a TwiLight Flat field" %(iframe))
             
             # STEP 1.1: Check either over or under exposed frames
-            print "File %s filter[ %s ]  EXTP=%f TYPE=%s mean_window=%f" %(iframe, f_filter, f_expt, f_type, mean)
+            log.debug("Flat frame '%s' - FILTER=%s EXPTIME= %f TYPE= %s Mean= %f" %(iframe, f_filter, f_expt, f_type, mean))
             if mean>self.m_lthr and mean<self.m_hthr:
                 good_frames.append(iframe)
             else:
@@ -409,7 +411,7 @@ class MasterTwilightFlat (object):
                 msg = "Normalization of MEF master flat frame wrt chip 1. (MEDIAN=%d)"%median
 
             
-            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME']=='panic'
+            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower()=='panic'
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
@@ -459,16 +461,18 @@ class MasterTwilightFlat (object):
         else: 
             flatframe[0].header.add_history('Computed master (not normalized) twilight flat')
         
-        flatframe[0].header.add_history('Twilight files: %s' %framelist )
-        #Add a new keyword-->PAPI_TYPE
-        flatframe[0].header.update('PAPITYPE',
+        # Combined files is already added by IRAF:imcombine
+        #flatframe[0].header.add_history('Twilight files: %s' %good_frames)
+        
+        # Add a new keyword-->PAPI_TYPE
+        flatframe[0].header.set('PAPITYPE',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file')
-        flatframe[0].header.update('IMAGETYP',
+        flatframe[0].header.set('IMAGETYP',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file') 
         if 'PAT_NEXP' in flatframe[0].header:
-            flatframe[0].header.update('PAT_NEXP',
+            flatframe[0].header.set('PAT_NEXP',
                                    1,
                                    'Number of positions into the current dither pattern')
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
@@ -504,6 +508,7 @@ if __name__ == "__main__":
     usage = "usage: %prog [options]"  
     desc = """This module receives a series of Twilight Flats and
 and a Master Dark Model and then creates a Master Twilight Flat-Field.
+Note: Dome Flats series (not lamp ON/OFF) are also supported.
 """
     parser = OptionParser(usage, description = desc)
     

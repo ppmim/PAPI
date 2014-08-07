@@ -302,9 +302,17 @@ class ReductionSet(object):
         # 
         # Non-Linearity correction
         # 
-        self.non_linearity_model = self.config_dict['nonlinearity']['model']
         self.non_linearity_apply = self.config_dict['nonlinearity']['apply']
-
+        if self.non_linearity_apply:
+            myhdulist = pyfits.open(rs_filelist[-1])
+            if myhdulist[0].header['READMODE'] == 'line.interlaced.read':
+                self.non_linearity_model = self.config_dict['nonlinearity']['model_lir']
+            elif myhdulist[0].header['READMODE'] == 'fast-reset-read.read':
+                self.non_linearity_model = self.config_dict['nonlinearity']['model_rrrmpia']
+            else:
+                log.warning("Non-Linearity model does not match. Correction de-activated.")
+                self.non_linearity_apply = False
+                self.non_linearity_model = None
 
         #
         # Reduction mode (lemon=for LEMON pipeline, quick=for QL, science=for 
@@ -1289,8 +1297,9 @@ class ReductionSet(object):
         This function make use of skyfilter_single.c (IRDR)              
         
         INPUT
-            file_pos : file position in sci file list (the list is supposed 
-            to be sorted by obs-date)
+            file_pos : file position (1-N) in sci file list (the list is supposed 
+            to be sorted by obs-date).
+            (0 means all will be filtered)
         
         OUTPUT
             The function generate a sky subtrated image (*.skysub.fits)
@@ -2230,10 +2239,11 @@ class ReductionSet(object):
         # conversion to MEF if needed. 
         # Note2: NonLinearityCorrection() performs the NLC in parallel,
         # instead of processing the sequence file by file.
-        if self.config_dict['nonlinearity']['apply']==True:
-            master_nl = self.config_dict['nonlinearity']['model']
+        if self.non_linearity_apply==True:
+            master_nl = self.non_linearity_model # (lir or rrrmpia)
             try:
                 log.info("**** Applying Non-Linearity correction ****")
+                log.info("NLC Model: %s"%master_nl)
                 nl_task = correctNonLinearity.NonLinearityCorrection(master_nl, 
                             sequence, out_dir=self.temp_dir, suffix='_LC')
                 corr_sequence = nl_task.runMultiNLC()
@@ -2341,7 +2351,7 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DARK: %s",str(e))
                 raise e
-        elif fits.isDomeFlat():
+        elif fits.isDomeFlatON() or fits.isDomeFlatOFF():
             log.debug("[reduceSeq] A DomeFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Generate a random filename for the master, to ensure we do not
@@ -2375,7 +2385,8 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DomeFlat: %s",str(e))
                 raise e
-        elif fits.isTwFlat():
+        elif fits.isTwFlat() or fits.getType(False)=="DOME_FLAT":
+            # Added support to proccess DOME_FLATs series (not ON/OFF dome_flat)
             log.debug("[reduceSeq] A TwFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Look for the required MasterDark (any ExpTime);first in the 

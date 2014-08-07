@@ -470,9 +470,11 @@ def read_config_file(config_file = default_config_file()):
     nonlinearity["apply"] = read_parameter(config, "nonlinearity", "apply", bool, False, config_file)
 
     if nonlinearity["apply"]==True:
-        nonlinearity["model"] = read_file_parameter(config, "nonlinearity", "model", config_file, True)
+        nonlinearity["model_lir"] = read_file_parameter(config, "nonlinearity", "model_lir", config_file, True)
+        nonlinearity["model_rrrmpia"] = read_file_parameter(config, "nonlinearity", "model_rrrmpia", config_file, True)
     else:
-        nonlinearity["model"] = read_parameter(config, "nonlinearity", "model", str, False, config_file)
+        nonlinearity["model_lir"] = read_parameter(config, "nonlinearity", "model_lir", str, False, config_file)
+        nonlinearity["model_rrrmpia"] = read_parameter(config, "nonlinearity", "model_rrrmpia", str, False, config_file)
 
     options["nonlinearity"] = nonlinearity
 
