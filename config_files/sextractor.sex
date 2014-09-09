@@ -19,7 +19,8 @@ DETECT_THRESH	1.5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 ANALYSIS_THRESH	1.5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
 FILTER		Y		# apply filter for detection ("Y" or "N")?
-FILTER_NAME	$PAPI_HOME/config_files/sextractor.conv # name of the file containing the filter
+#FILTER_NAME	$PAPI_HOME/config_files/config.sex/gauss_3.0_5x5.conv # name of the file containing the filter
+FILTER_NAME     $PAPI_HOME/config_files/sextractor.conv
 
 DEBLEND_NTHRESH	32		# Number of deblending sub-thresholds
 DEBLEND_MINCONT	0.005		# Minimum contrast parameter for deblending

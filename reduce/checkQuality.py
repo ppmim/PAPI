@@ -39,7 +39,7 @@ from optparse import OptionParser
 import numpy
 import numpy.ma as ma 
 import os
-import pyfits
+import astropy.io.fits as fits
 import sys
 
 
@@ -108,7 +108,8 @@ class CheckQuality(object):
         parameter with a suitable value. In other case, we won't get any value 
         for FWHM. 
         
-        SNR estimation as FLUX_AUTO/FLUXERR_AUTO or FLUX_APER/FLUXERR_APER
+        SNR estimation as FLUX_AUTO/FLUXERR_AUTO or FLUX_APER/FLUXERR_APER,
+        that is, the signal divided by the noise.
         
         Returns
         -------
@@ -170,8 +171,8 @@ class CheckQuality(object):
         source_file = catalog_file
 
         try:
-            if self.write: fits_file = pyfits.open(self.input_file, 'update')
-            else: fits_file = pyfits.open(self.input_file, 'readonly')
+            if self.write: fits_file = fits.open(self.input_file, 'update')
+            else: fits_file = fits.open(self.input_file, 'readonly')
         except Exception,e:
             log.error("Error while openning file %s",self.input_file)
             raise e

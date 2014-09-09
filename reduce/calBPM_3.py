@@ -47,7 +47,7 @@ from pyraf import iraf
 from iraf import noao
 from iraf import mscred
 
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 # Logging
@@ -154,7 +154,7 @@ class BadPixelMask(object):
             log.debug("Created combined Dark %s"%dark_comb)
 
             # STEP 1.1: Define the threshold as: 75% of (mean-3*sigma)
-            dark = pyfits.open(dark_comb)
+            dark = fits.open(dark_comb)
             nExt = 1 if len(dark)==1 else len(dark)-1
             if nExt==1: nx1,nx2 = dark[0].data.shape
             else: nx1,nx2 = dark[1].data.shape
@@ -210,7 +210,7 @@ class BadPixelMask(object):
             except Exception,e:
                 raise e
 
-            flat = pyfits.open(flat_comb)
+            flat = fits.open(flat_comb)
             
             nExt = 1 if len(flat)==1 else len(flat)-1
             if nExt==1: nx1,nx2 = flat[0].data.shape
@@ -272,11 +272,11 @@ class BadPixelMask(object):
 
         # STEP 6: Save the BPM ---
         misc.fileUtils.removefiles(self.output)
-        hdulist = pyfits.HDUList()     
+        hdulist = fits.HDUList()     
         if self.flat_list!=None: hdr0 = flat[0].header
         else: hdr0 = dark[0].header
 
-        prihdu = pyfits.PrimaryHDU (data = None, header = None)
+        prihdu = fits.PrimaryHDU (data = None, header = None)
         try:
             if 'INSTRUME' in hdr0: prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
             if 'TELESCOP' in hdr0: prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
@@ -304,12 +304,12 @@ class BadPixelMask(object):
         prihdu.header.add_history('BPM created from %s' % src_files)
 
         if nExt>1:
-            prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
             prihdu.header.set('NEXTEND', nExt)
             prihdu.header.set('FILENAME', self.output)
             hdulist.append(prihdu)
             for i_ext in range(0, nExt):
-                hdu = pyfits.PrimaryHDU()
+                hdu = fits.PrimaryHDU()
                 hdu.scale('int16') # important to set first data type
                 hdu.data = bpm[i_ext]
                 ext = i_nExt + int(nExt>1)

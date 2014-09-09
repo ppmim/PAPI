@@ -22,7 +22,7 @@
 import sys
 import shutil
 import fileinput
-import pyfits
+import astropy.io.fits as fits
 from optparse import OptionParser
 import os.path
 import glob
@@ -76,7 +76,7 @@ def create_obs_sequence (filelist, instrument, ob_id, ob_pat, suffix = None,
             new_file = file
             
         try:
-            hdus = pyfits.open(new_file,"update")
+            hdus = fits.open(new_file,"update")
         except IOError:
             print '\n**** Error opening file %s ****\n'%new_file
             sys.exit(1)

@@ -32,7 +32,7 @@ import multiprocessing
 import glob
 from optparse import OptionParser
 
-import pyfits
+import astropy.io.fits as fits
 import sys
 import logging as log
 import time
@@ -354,7 +354,7 @@ in principle previously reduced, but not mandatory.
     if os.path.exists(options.source_file):
         if os.path.isfile(options.source_file):
             try:
-                hdulist = pyfits.open(options.source_file)
+                hdulist = fits.open(options.source_file)
                 filelist = [options.source_file]
             except:
                 filelist = [line.replace( "\n", "") 

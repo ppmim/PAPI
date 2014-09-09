@@ -27,13 +27,6 @@ _version     = "1.0.0"
 _date        = "19-03-2008"
 _author      = "Jose M. Ibanez (jmiguel@iaa.es)"
 
-
-_minversion_numpy   = "1.0.1"
-_minversion_pyfits  = "1.1"
-_minversion_pyraf   = "1.4"
-_minversion_biggles = "1.6.4"
-
-
 ################################################################################
 
 # Import necessary modules
@@ -44,7 +37,7 @@ import os
 import sys
 import time
 import dircache
-import pyfits
+import astropy.io.fits as fits
 import shutil
 import fileinput
 from optparse import OptionParser
@@ -87,7 +80,7 @@ def run(source, dest_path, in_data_type="all", delay=1.0, test=False, mef=False)
     for frame in list_s:
         toCopy = False
         if ( frame.endswith(".fits") or frame.endswith(".fit") ):
-            data = pyfits.open(frame, ignore_missing_end=True)
+            data = fits.open(frame, ignore_missing_end=True)
             read_type = data[0].header['OBJECT']
             print "FILE= %s ,TYPE = %s" %(frame, read_type)
             if  ( in_data_type == "" or in_data_type == "all" ):

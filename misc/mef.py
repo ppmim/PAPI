@@ -33,8 +33,7 @@ import misc.utils as utils
 
 
 # Interact with FITS files
-import pyfits
-import numpy as np
+import astropy.io.fits as fits
 from astropy import wcs
 import numpy
 
@@ -117,7 +116,7 @@ class MEF (object):
             if output_dir == None:
                 output_dir = os.path.dirname(file)
             try:
-                hdulist = pyfits.open(file)
+                hdulist = fits.open(file)
             except IOError:
                 print 'Error, can not open file %s' % (file)
                 return 0
@@ -136,8 +135,8 @@ class MEF (object):
                 os.path.basename(file).replace(".fits", output_filename_suffix)
             width = 2048
             height =  2048
-            temp12 = np.zeros((height, width*2), dtype = np.float32)
-            temp34 = np.zeros((height, width*2), dtype = np.float32)
+            temp12 = numpy.zeros((height, width*2), dtype = numpy.float32)
+            temp34 = numpy.zeros((height, width*2), dtype = numpy.float32)
             for i in range(0, height):
                 # Q1 i-row
                 temp12[i, 0 : width] = hdulist[1].data[i, 0 : width]
@@ -148,8 +147,8 @@ class MEF (object):
                 # Q4 i-row
                 temp34[i, width : 2*width] = hdulist[4].data[i, 0 : width]
 
-            joined_data = np.append(temp12, temp34).reshape(4096, 4096)
-            hdu = pyfits.HDUList([pyfits.PrimaryHDU(header=hdulist[0].header, 
+            joined_data = numpy.append(temp12, temp34).reshape(4096, 4096)
+            hdu = fits.HDUList([fits.PrimaryHDU(header=hdulist[0].header, 
                                                     data=joined_data)])
             #hdu.verify('silentfix')
             # now, copy extra keywords required
@@ -191,7 +190,7 @@ class MEF (object):
         n = 0 
         for file in self.input_files:        
             try:
-                hdulist = pyfits.open(file)
+                hdulist = fits.open(file)
             except IOError:
                 print 'Error, can not open file %s' % (file)
                 raise MEF_Exception ("Error, can not open file %s" % file)
@@ -213,7 +212,7 @@ class MEF (object):
                                     os.path.dirname(new_filename), out_dir
                                     ) 
                 out_filenames.append(new_filename)
-                out_hdulist = pyfits.HDUList( [pyfits.PrimaryHDU( 
+                out_hdulist = fits.HDUList( [fits.PrimaryHDU( 
                                 header = hdulist[i].header,
                                 data = hdulist[i].data)]
                                              )
@@ -264,10 +263,10 @@ class MEF (object):
         
         # Add primary header to output file...
         #prihdr = myflat[0].header.copy()
-        fo = pyfits.HDUList()
-        prihdu = pyfits.PrimaryHDU (data = None, header = primaryHeader)
+        fo = fits.HDUList()
+        prihdu = fits.PrimaryHDU (data = None, header = primaryHeader)
         # Start by updating PRIMARY header keywords...
-        prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+        prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
         prihdu.header.set('NEXTEND', 0)
         prihdu.header.set('FILENAME', output_file)
         
@@ -275,7 +274,7 @@ class MEF (object):
         n_ext = 0
         for file in self.input_files:        
             try:
-                f = pyfits.open(file)
+                f = fits.open(file)
             except IOError:
                 print 'Error, can not open file %s' %(file)
                 raise MEF_Exception ("Error, can not open file %s"%file)
@@ -295,7 +294,7 @@ class MEF (object):
                 n_ext = 1
                 log.debug("Simple FITS file")
                                         
-            hdu = pyfits.ImageHDU(data = f[0].data, header = f[0].header)
+            hdu = fits.ImageHDU(data = f[0].data, header = f[0].header)
             #hdu.header.update('EXTVER',1)
             fo.append(hdu)
             del hdu
@@ -375,7 +374,7 @@ class MEF (object):
         # Iterate over the whole input file list
         for file in self.input_files:        
             try:
-                in_hdulist = pyfits.open(file)
+                in_hdulist = fits.open(file)
             except IOError:
                 log.error('Error, can not open file %s', file)
                 raise MEF_Exception ("Error, can not open file %s" % file)
@@ -391,17 +390,20 @@ class MEF (object):
                 
             # copy primary header from input file
             primaryHeader = in_hdulist[0].header.copy()
-            out_hdulist = pyfits.HDUList()
+            out_hdulist = fits.HDUList()
             
             # Create primary HDU (without data, only the common header)
-            prihdu = pyfits.PrimaryHDU(data=None, header = primaryHeader)
+            prihdu = fits.PrimaryHDU(data=None, header = primaryHeader)
             # Start by updating PRIMARY header keywords...
-            prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
             prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
             prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
             
             # In the Primary Header we do not need the WCS keywords, only RA,DEC
-            keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2','CTYPE1','CTYPE2']
+            # Althought, the simple-images full-frames should not have any WCS 
+            # information due to the gap, we look for them and remove them.
+            keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2',
+                         'CTYPE1','CTYPE2']
             for key in keys_to_del:
                 if key in prihdu.header: del prihdu.header[key]
             #
@@ -428,7 +430,7 @@ class MEF (object):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i + j))
                     hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 2048*j:2048*(j+1)]
-                    hdu_i = pyfits.ImageHDU (data = hdu_data_i)
+                    hdu_i = fits.ImageHDU (data = hdu_data_i)
                     log.debug("Data size of %d-quadrant = %s" % (i, hdu_data_i.shape))
                     
                     # Create the new WCS
@@ -436,13 +438,13 @@ class MEF (object):
                         orig_ar = float(primaryHeader['RA'])
                         orig_dec = float(primaryHeader['DEC'])
                     except ValueError:
-                        #No RA,DEC values in the header, then can't re-compute 
-                        #the coordinates or update the wcs header.
+                        # No RA,DEC values in the header, then can't re-compute 
+                        # the coordinates or update the wcs header.
                         pass
                     else:
-                        #Due to PANICv0 header hasn't a proper WCS header, 
-                        #we built a basic one in order to computer the new 
-                        #ra, dec coordinates.
+                        # Due to PANICv0 header hasn't a proper WCS header, 
+                        # we built a basic one in order to compute the new 
+                        # RA, DEC coordinates.
                         
                         # ----
                         # WCS object is not USED !!!
@@ -471,6 +473,10 @@ class MEF (object):
                         new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
                                           [0, pix_scale/3600.0]]
 
+                        # wcs_pix2world: No SIP or Paper IV table lookup 
+                        # distortion correction is applied. To perform distortion 
+                        # correction, see on astropy all_pix2world, sip_pix2foc, 
+                        # p4_pix2foc, or pix2foc.
                         new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
                         # ----
 
@@ -715,7 +721,7 @@ class MEF (object):
         for file in self.input_files:
             log.debug("Splitting file %s"%file)        
             try:
-                in_hdulist = pyfits.open(file)
+                in_hdulist = fits.open(file)
             except IOError:
                 log.error('Error, can not open file %s', file)
                 raise MEF_Exception("Error, can not open file %s" % file)
@@ -754,12 +760,12 @@ class MEF (object):
                     log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
                                                                  hdu_data_i.shape))    
                     # Create primary HDU (data + header)
-                    out_hdulist = pyfits.HDUList()               
-                    prihdu = pyfits.PrimaryHDU(data = hdu_data_i, 
+                    out_hdulist = fits.HDUList()               
+                    prihdu = fits.PrimaryHDU(data = hdu_data_i, 
                                                header = primaryHeader)
                     # Start by updating PRIMARY header keywords...
                     prihdu.header.set('EXTEND', 
-                                          pyfits.FALSE, after = 'NAXIS')
+                                          fits.FALSE, after = 'NAXIS')
                     
                     # #############################################
                     # AR,DEC (WCS !!) need to be re-calculated !!!

@@ -25,7 +25,7 @@
 from optparse import OptionParser
 import sys
 import os
-import pyfits
+import astropy.io.fits as fits
 import fileinput
 import numpy
 
@@ -48,7 +48,7 @@ def collapse(frame_list, out_dir="/tmp"):
         return []
 
     for frame_i in frame_list:
-        f = pyfits.open(frame_i)
+        f = fits.open(frame_i)
         # First, we need to check if we have MEF files
         if len(f)>1 and len(f[1].data.shape)==3:
             try:
@@ -67,8 +67,8 @@ def collapse(frame_list, out_dir="/tmp"):
             new_frame_list.append(frame_i)
         else:            
             # Suppose we have single CUBE file ...
-            out_hdulist = pyfits.HDUList()               
-            prihdu = pyfits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
+            out_hdulist = fits.HDUList()               
+            prihdu = fits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
             prihdu.scale('float32') 
             # Updating PRIMARY header keywords...
             prihdu.header.update('NCOADDS', f[0].data.shape[0])
@@ -94,17 +94,17 @@ def collapse_mef_cube(inputfile, out_filename=None):
     Collapse each of the extensions of a MEF file
     """
 
-    f = pyfits.open(inputfile)
+    f = fits.open(inputfile)
 
-    out_hdulist = pyfits.HDUList()
-    prihdu = pyfits.PrimaryHDU (data = None, header = f[0].header)
+    out_hdulist = fits.HDUList()
+    prihdu = fits.PrimaryHDU (data = None, header = f[0].header)
     prihdu.header.update('NCOADDS', f[1].data.shape[0])
     prihdu.header.update('EXPTIME', f[0].header['EXPTIME']*f[1].data.shape[0])
     out_hdulist.append(prihdu)    
  
     # Sum each extension
     for ext in range(1,len(f)):
-        hdu = pyfits.ImageHDU (data = f[ext].data.sum(0), header = f[ext].header)
+        hdu = fits.ImageHDU (data = f[ext].data.sum(0), header = f[ext].header)
         hdu.scale('float32') 
         out_hdulist.append(hdu)    
     
@@ -138,7 +138,7 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
         return []
 
     for frame_i in frame_list:
-        f = pyfits.open(frame_i)
+        f = fits.open(frame_i)
         # First, we need to check if we have MEF files
         if len(f)>1 and len(f[1].data.shape)==3:
             log.error("MEF-cubes files cannot be collapsed. First need to be split !")
@@ -154,9 +154,9 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
             f.close()
         
     # Now, save the collapsed set of files in a new single file        
-    out_hdulist = pyfits.HDUList()
+    out_hdulist = fits.HDUList()
                    
-    prihdu = pyfits.PrimaryHDU (data = sum, header = header1)
+    prihdu = fits.PrimaryHDU (data = sum, header = header1)
     prihdu.scale('float32') 
         
     # Updating PRIMARY header keywords...

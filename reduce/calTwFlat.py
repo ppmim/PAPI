@@ -50,7 +50,6 @@
 ################################################################################
 # Import necessary modules
 
-import getopt
 import sys
 import os
 import logging
@@ -71,8 +70,7 @@ from iraf import mscred
 import numpy
 
 # Interact with FITS files
-import pyfits
-
+import astropy.io.fits as fits
 
 # Logging
 from misc.paLog import log
@@ -221,7 +219,7 @@ class MasterTwilightFlat (object):
             log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter()))
             #Compute the mean count value in chip to find out good frames (enough check ??)
             mean = 0
-            myfits = pyfits.open(iframe, ignore_missing_end=True)
+            myfits = fits.open(iframe, ignore_missing_end=True)
             if f.mef==True:
                 log.debug("Found a MEF file")
                 #log.error("Sorry, MEF files are not supported yet !")
@@ -234,7 +232,7 @@ class MasterTwilightFlat (object):
                 except Exception,e:
                     raise e
             else:
-                myfits = pyfits.open(iframe, ignore_missing_end=True)
+                myfits = fits.open(iframe, ignore_missing_end=True)
                 mean = numpy.mean(myfits[0].data)
                 log.debug("MEAN value of MEF = %d", mean)
                 
@@ -283,7 +281,7 @@ class MasterTwilightFlat (object):
         #Read Master Dark Model
         try:
             cdark = datahandler.ClFits ( self.__master_dark )
-            mdark = pyfits.open(self.__master_dark, ignore_missing_end=True)
+            mdark = fits.open(self.__master_dark, ignore_missing_end=True)
             #MASTER_DARK_MODEL is required !!!
             if not cdark.isMasterDarkModel():
                 log.error("File %s does not look a Master Dark Model"%self.__master_dark)
@@ -311,7 +309,7 @@ class MasterTwilightFlat (object):
             
             log.debug("Scaling master dark")
             # Build master dark with proper (scaled) EXPTIME and subtract ( I don't know how good is this method of scaling !!!)
-            f = pyfits.open(iframe, ignore_missing_end=True)
+            f = fits.open(iframe, ignore_missing_end=True)
             t_flat = datahandler.ClFits ( iframe ).expTime()
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
             if next>0:
@@ -394,7 +392,7 @@ class MasterTwilightFlat (object):
         # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
         # Compute the mean of the image
         if self.__normal:
-            f = pyfits.open(comb_flat_frame, ignore_missing_end=True)
+            f = fits.open(comb_flat_frame, ignore_missing_end=True)
             if next>0:
                 chip = 1 # normalize wrt to mode of chip 1
                 naxis1 = f[0].header['NAXIS1']
@@ -453,7 +451,7 @@ class MasterTwilightFlat (object):
         # Change back to the original working directory
         iraf.chdir()
         
-        flatframe = pyfits.open(self.__output_filename,'update', 
+        flatframe = fits.open(self.__output_filename,'update', 
                                 ignore_missing_end=True)
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master twilight flat')
@@ -495,7 +493,7 @@ def makemasterframe(list_or_array):
     if hasattr(list_or_array, 'shape') and len(list_or_array.shape)>1:
         masterframe = np.array(list_or_array, copy=False)
     else:
-        masterframe = np.median(map(pyfits.getdata, list_or_array), axis=0)
+        masterframe = np.median(map(fits.getdata, list_or_array), axis=0)
 
     return masterframe
         

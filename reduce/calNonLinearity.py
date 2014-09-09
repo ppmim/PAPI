@@ -120,7 +120,7 @@ import datahandler
 import misc.robust as robust
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 # Logging
@@ -266,7 +266,7 @@ class NonLinearityModel(object):
         # loop the images
         counter = 0
         for i in range(0, nframes):
-            file = pyfits.open(framelist[i])
+            file = fits.open(framelist[i])
             f = datahandler.ClFits ( framelist[i] )
             if flats[i]==1:
                 for i_ext in range(0, f_n_extensions):
@@ -305,9 +305,9 @@ class NonLinearityModel(object):
         misc.fileUtils.removefiles(self.__output_filename)               
 
         # Write result in a FITS
-        hdulist = pyfits.HDUList()
-        hdr0 = pyfits.getheader(framelist[numpy.where(flats==1)[0][0]])
-        prihdu = pyfits.PrimaryHDU (data = None, header = None)
+        hdulist = fits.HDUList()
+        hdr0 = fits.getheader(framelist[numpy.where(flats==1)[0][0]])
+        prihdu = fits.PrimaryHDU (data = None, header = None)
         try:
             prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
             prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
@@ -326,12 +326,12 @@ class NonLinearityModel(object):
         prihdu.header.add_history('Linearity model based on %s' % framelist)
         
         if f_n_extensions>1:
-            prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
             prihdu.header.set('NEXTEND', f_n_extensions)
             prihdu.header.set('FILENAME', self.__output_filename)
             hdulist.append(prihdu)
             for i_ext in range(0, f_n_extensions):
-                hdu = pyfits.PrimaryHDU()
+                hdu = fits.PrimaryHDU()
                 hdu.scale('float32') # important to set first data type
                 hdu.data = fit.reshape(pol_degree+1, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
                 hdulist.append(hdu)
@@ -412,7 +412,7 @@ class NonLinearityModel(object):
 
         # Get number of planes, ie. number of coeffs of the polynomial
         # We suppose a 3rd degree (4 coeffs) polynomial fit of the linearity model 
-        fits_model = pyfits.open(model)
+        fits_model = fits.open(model)
         model_n_extensions = 1 if len(fits_model)==1 else len(fits_model)-1
         if model_n_extensions==1:
             data_model = fits_model[0].data
@@ -427,7 +427,7 @@ class NonLinearityModel(object):
         # loop the images
         new_filenames = []
         for i in range(0, len(source)):
-            i_file = pyfits.open(source[i])
+            i_file = fits.open(source[i])
             f_n_extensions = 1 if len(i_file)==1 else len(i_file)-1
             
             log.debug("Raw Number of extensions = %s"%f_n_extensions)
@@ -522,14 +522,14 @@ class NonLinearityModel(object):
             raise Exception("Cannot read non-linearity model file")
         
         # open the source file
-        myfits_hdu = pyfits.open(source)
+        myfits_hdu = fits.open(source)
         myfits_hdr = myfits_hdu[0].header
         
         # store scaling information for later use, as this is deleted when the array is updated
         BZERO = myfits_hdr['BZERO']
         BSCALE = myfits_hdr['BSCALE']
         BITPIX = myfits_hdr['BITPIX']
-        bitpix_designation = pyfits.ImageHDU.NumCode[BITPIX]
+        bitpix_designation = fits.ImageHDU.NumCode[BITPIX]
         # print BSCALE, BZERO, BITPIX, bitpix_designation
         # read data array
         myfits_data = myfits_hdu[0].data
@@ -553,13 +553,13 @@ class NonLinearityModel(object):
         print 'Reading '+polyfile
         # for some weird reason I don't manage to read the cube using the standard functions
         # but have to use the convenience function getdata
-        poly = pyfits.getdata(polyfile)
+        poly = fits.getdata(polyfile)
         
         
         ### read bad pixel file (currently not used and commented out)
         # badfile = 'badpixel_'+rmode+'.fits'
         # print 'Reading '+badfile
-        # bad =z pyfits.getdata(badfile)
+        # bad =z fits.getdata(badfile)
         ###
         
         # Correct fits file

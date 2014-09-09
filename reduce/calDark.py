@@ -66,7 +66,7 @@ from iraf import noao
 from iraf import mscred
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 
 
 # Logging
@@ -256,7 +256,7 @@ class MasterDark(object):
         else:
             shutil.move(tmp1, self.__output_filename)
     
-        darkframe = pyfits.open(self.__output_filename,'update')
+        darkframe = fits.open(self.__output_filename,'update')
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.set('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         darkframe[0].header.set('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
@@ -277,7 +277,7 @@ class MasterDark(object):
         if self.show_stats:
             medians = []
             for i_frame in good_frames:
-                pf = pyfits.open(i_frame)
+                pf = fits.open(i_frame)
                 if len(pf)==1:
                     #print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
                     medians.append(numpy.median(pf[0].data[512:1536,512:1536]))

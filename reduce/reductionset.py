@@ -44,6 +44,7 @@ from iraf import noao
 
 # Math module for efficient array processing
 import numpy
+import astropy.io.fits as fits
 
 #Log
 import misc.paLog
@@ -271,7 +272,7 @@ class ReductionSet(object):
         # Main output file resulted from the data reduction process
         if out_file==None: 
             # if no filename, we take the DATE-OBS of the first file of the SEQ
-            with pyfits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
+            with fits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
                 if 'DATE-OBS' in myhdulist[0].header:
                     self.out_file = self.out_dir + "/PANIC." + \
                             myhdulist[0].header['DATE-OBS'] +".fits"
@@ -304,7 +305,7 @@ class ReductionSet(object):
         # 
         self.non_linearity_apply = self.config_dict['nonlinearity']['apply']
         if self.non_linearity_apply:
-            myhdulist = pyfits.open(rs_filelist[-1])
+            myhdulist = fits.open(rs_filelist[-1])
             if myhdulist[0].header['READMODE'] == 'line.interlaced.read':
                 self.non_linearity_model = self.config_dict['nonlinearity']['model_lir']
             elif myhdulist[0].header['READMODE'] == 'fast-reset-read.read':
@@ -2666,7 +2667,7 @@ class ReductionSet(object):
             # Get the output filename for the reduced sequence
             #            
             try:
-                with pyfits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
+                with fits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
                     if 'DATE-OBS' in myhdulist[0].header:
                         seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
                     else:
@@ -2722,7 +2723,7 @@ class ReductionSet(object):
             
             # Add the list of original raw-files to the result image header
             if len(out_ext)>0:
-                new_frame = pyfits.open(seq_result_outfile, 'update')
+                new_frame = fits.open(seq_result_outfile, 'update')
                 raw_frames = [os.path.basename(f) for f in sequence]
                 new_frame[0].header.add_history("RAW_FRAMES= %s"%str(raw_frames))
                 new_frame.close()
@@ -2992,12 +2993,12 @@ class ReductionSet(object):
                 log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
             else:
                 # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
-                bpm_data = pyfits.getdata(master_bpm_4gain, header=False)
+                bpm_data = fits.getdata(master_bpm_4gain, header=False)
                 badpix_p = numpy.where(bpm_data>0)
-                gain_data, gh = pyfits.getdata(gainmap, header=True)
+                gain_data, gh = fits.getdata(gainmap, header=True)
                 gain_data[badpix_p] = 0
                 gh.set('HISTORY','Combined with BPM:%s'%master_bpm_4gain)
-                pyfits.writeto(gainmap, gain_data, header=gh, clobber=True)
+                fits.writeto(gainmap, gain_data, header=gh, clobber=True)
         
         ########################################################################
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 

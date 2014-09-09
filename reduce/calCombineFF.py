@@ -65,7 +65,6 @@ from optparse import OptionParser
 import sys
 import os
 
-import pyfits
 import numpy
 
 import misc.fileUtils

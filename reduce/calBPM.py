@@ -51,7 +51,7 @@ from pyraf import iraf
 from iraf import noao
 from iraf import mscred
 
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 # Logging
@@ -181,7 +181,7 @@ class BadPixelMask(object):
         # STEP 2: Compute normalized flat 
         # - Divide the resulting combined flat by its median (robust estimator)
         log.debug("Divide the resulting combined flat by its median...")
-        flat_comb_hdu = pyfits.open(flat_comb)
+        flat_comb_hdu = fits.open(flat_comb)
         nExt = 1 if len(flat_comb_hdu)==1 else len(flat_comb_hdu)-1
         if nExt ==1:
             median = numpy.median(flat_comb_hdu[0].data)
@@ -201,7 +201,7 @@ class BadPixelMask(object):
         tmpf = numpy.zeros([nx1, nx2], dtype=numpy.float32)
         for flat in good_flats:
             log.debug("*** Processing file %s"%flat)
-            f_i = pyfits.open(flat)
+            f_i = fits.open(flat)
             for i_nExt in range(0, nExt):
                 log.info("*** Detector %d"%(i_nExt+1))
                 if nExt==1:
@@ -238,9 +238,9 @@ class BadPixelMask(object):
 
                 # Debug - save the normalized flat
                 #misc.fileUtils.removefiles(flat.replace(".fits","_N.fits"))
-                #hdulist = pyfits.HDUList()
-                #hdr0 = pyfits.getheader(good_flats[0])
-                #prihdu = pyfits.PrimaryHDU (data = tmpf, header = hdr0)
+                #hdulist = fits.HDUList()
+                #hdr0 = fits.getheader(good_flats[0])
+                #prihdu = fits.PrimaryHDU (data = tmpf, header = hdr0)
                 #hdulist.append(prihdu)
       
                 #hdulist.writeto(flat.replace(".fits","_N.fits"))
@@ -286,9 +286,9 @@ class BadPixelMask(object):
         
         # STEP 6: Save the BPM --- TODO MEF !!!!
         misc.fileUtils.removefiles(self.output)
-        hdulist = pyfits.HDUList()     
-        hdr0 = pyfits.getheader(good_flats[0])
-        prihdu = pyfits.PrimaryHDU (data = None, header = None)
+        hdulist = fits.HDUList()     
+        hdr0 = fits.getheader(good_flats[0])
+        prihdu = fits.PrimaryHDU (data = None, header = None)
         try:
             if 'INSTRUME' in hdr0: prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
             if 'TELESCOP' in hdr0: prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
@@ -307,12 +307,12 @@ class BadPixelMask(object):
         prihdu.header.add_history('BPM created from %s' % good_flats)
 
         if nExt>1:
-            prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
             prihdu.header.set('NEXTEND', nExt)
             prihdu.header.set('FILENAME', self.output)
             hdulist.append(prihdu)
             for i_ext in range(0, nExt):
-                hdu = pyfits.PrimaryHDU()
+                hdu = fits.PrimaryHDU()
                 hdu.scale('int16') # important to set first data type
                 hdu.data = bpm[i_ext]
                 hdulist.append(hdu)
@@ -417,7 +417,7 @@ class BadPixelMask(object):
             # STEP 2: Compute normalized flat 
             # - Divide the resulting combined flat by its median (robust estimator)
             log.debug("Divide the resulting combined flat by its median...")
-            flat_comb_hdu = pyfits.open(flat_comb)
+            flat_comb_hdu = fits.open(flat_comb)
             nExt = 1 if len(flat_comb_hdu)==1 else len(flat_comb_hdu)-1
             if nExt ==1:
                 median = numpy.median(flat_comb_hdu[0].data)
@@ -442,7 +442,7 @@ class BadPixelMask(object):
             tmpf = numpy.zeros([nx1, nx2], dtype=numpy.float32)
             for flat in  good_flats:
                 log.debug("Processing file %s"%flat)
-                f_i = pyfits.open(flat)
+                f_i = fits.open(flat)
                 #ceros=(mflat[0].data==0).sum()
                 #print "CEROS=", ceros
                 for i_nExt in range(0, nExt):
@@ -501,9 +501,9 @@ class BadPixelMask(object):
             
             # STEP 6: Save the BPM --- TODO MEF !!!!
             misc.fileUtils.removefiles(self.output)
-            hdulist = pyfits.HDUList()     
-            hdr0 = pyfits.getheader(good_flats[0])
-            prihdu = pyfits.PrimaryHDU (data = None, header = None)
+            hdulist = fits.HDUList()     
+            hdr0 = fits.getheader(good_flats[0])
+            prihdu = fits.PrimaryHDU (data = None, header = None)
             try:
                 prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
                 prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
@@ -522,12 +522,12 @@ class BadPixelMask(object):
             prihdu.header.add_history('BPM created from %s' % good_flats)
 
             if nExt>1:
-                prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+                prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
                 prihdu.header.set('NEXTEND', nExt)
                 prihdu.header.set('FILENAME', self.output)
                 hdulist.append(prihdu)
                 for i_ext in range(0, nExt):
-                    hdu = pyfits.PrimaryHDU()
+                    hdu = fits.PrimaryHDU()
                     hdu.scale('int16') # important to set first data type
                     hdu.data = bpm[i_ext]
                     hdulist.append(hdu)
@@ -551,6 +551,159 @@ class BadPixelMask(object):
             
             log.debug('Saved Bad Pixel Mask  to %s' , self.output)
             log.debug("createBPM' finished %s", t.tac() )
+
+#-------------------------------------------------------------------------------
+# Some util routines
+# ------------------------------------------------------------------------------
+def fixPix(image, mask):
+    """
+    Return an image with masked values replaced with a bi-linear
+    interpolation from nearby pixels.  Probably only good for isolated
+    badpixels.
+
+    Usage:
+      fixed = fixpix(im, mask, [iraf=])
+
+    Inputs:
+      image = the image 2D array
+      mask = an array that is True where im contains bad pixels
+
+    Outputs:
+      fixed = the corrected image
+
+    v1.0.0 Michael S. Kelley, UCF, Jan 2008
+
+    v1.1.0 Added the option to use IRAF's fixpix.  MSK, UMD, 25 Apr
+           2011
+    """
+    if iraf:
+        # importing globally is causing trouble
+        from pyraf import iraf as IRAF
+
+        badfits = os.tmpnam() + '.fits'
+        outfits = os.tmpnam() + '.fits'
+        fits.writeto(badfits, mask.astype(np.int16))
+        fits.writeto(outfits, im)
+        IRAF.fixpix(outfits, badfits)
+        cleaned = fits.getdata(outfits)
+        os.remove(badfits)
+        os.remove(outfits)
+        return cleaned
+
+    interp2d = interpolate.interp2d
+    #     x = xarray(im.shape)
+    #     y = yarray(im.shape)
+    #     z = im.copy()
+    #     good = (mask == False)
+    #     interp = interpolate.bisplrep(x[good], y[good],
+    #                                         z[good], kx=1, ky=1)
+    #     z[mask] = interp(x[mask], y[mask])
+
+    # create domains around masked pixels
+    dilated = ndimage.binary_dilation(mask)
+    domains, n = ndimage.label(dilated)
+
+    # loop through each domain, replace bad pixels with the average
+    # from nearest neigboors
+    x = xarray(image.shape)
+    y = yarray(image.shape)
+    cleaned = image.copy()
+    for d in (np.arange(n) + 1):
+        # find the current domain
+        i = (domains == d)
+
+        # extract the sub-image
+        x0, x1 = x[i].min(), x[i].max() + 1
+        y0, y1 = y[i].min(), y[i].max() + 1
+        subim = image[y0:y1, x0:x1]
+        submask = mask[y0:y1, x0:x1]
+        subgood = (submask == False)
+
+        cleaned[i * mask] = subim[subgood].mean()
+
+    return cleaned
+
+def applyBPM(filename, master_bpm, output_filename, overwrite=False):
+    """
+    Apply a BPM to a input file setting to NaN bad pixels
+
+    Parameters:
+    -----------
+    filename: str
+        Input file to apply the BPM.
+    
+    master_bpm: str
+        The master BPM to be applied to the input file. Bad pixels are masked
+        with 1's and good pixels with 0's.
+
+    output_filename: str
+        Filename of the new file created with bad pixels masked to NaN.
+
+    overwrite: bool
+        If True, the input filename will be masked with NaN on bad pixels.
+        If False, the input filename will no be modified, and bad pixels will 
+        be masked in the output_filename.
+
+     Returns
+     -------
+     output_filename: str
+        If success, the output filename with the masked pixels.
+
+
+    """
+    try:
+        # Load Bad Pixels mask (BP=1's)
+        bpm_data, bh = fits.getdata(master_bpm, header=True)
+        badpix_p = numpy.where(bpm_data==1)
+
+        # Load source data
+        source_data, gh = fits.getdata(filename, header=True)
+        source_data = source_data.astype(float) # NaN is a float value !
+
+        # First, check that data have the same shape
+        if source_data.shape==bpm_data.shape: 
+            source_data[badpix_p] = numpy.NaN
+        else:
+            if len(source_data.shape)!=len(bpm_data.shape):
+                raise Exception("Input file and BPM have not same data format or shape.")
+            else:
+                if 'DATASEC' in gh:
+
+        gh.set('HISTORY','Combined with BPM:%s'%master_bpm)
+
+        # Write masked data
+        if overwrite:
+            fits.writeto(filename, source_data, header=gh, clobber=True)
+        else:
+            fits.writeto(output_filename, source_data, header=gh, clobber=True)
+    except Exception,e:
+        raise e
+    else:
+        if not overwrite: return output_filename
+        else: return filename
+
+
+def gauss_kern(size, sizey=None):
+    """ Returns a normalized 2D gauss kernel array for convolutions """
+    size = int(size)
+    if not sizey:
+        sizey = size
+    else:
+        sizey = int(sizey)
+    x, y = numpy.mgrid[-size:size+1, -sizey:sizey+1]
+    g = numpy.exp(-(x**2/float(size) + y**2/float(sizey)))
+    return g / g.sum()
+
+def blur_image(im, n, ny=None) :
+    """ blurs the image by convolving with a gaussian kernel of typical
+        size n. The optional keyword argument ny allows for a different
+        size in the y direction.
+    """
+    g = gauss_kern(n, sizey=ny)
+    improc = signal.convolve(im, g, mode='valid')
+    return(improc)
+
+
 
 ###############################################################################
 usage = "usage: %prog [options] "

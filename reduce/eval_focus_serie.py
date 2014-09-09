@@ -35,7 +35,7 @@ import dircache
 import fileinput
 
 import numpy as np
-import pyfits
+import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 
 
@@ -256,7 +256,7 @@ class FocusSerie(object):
                 
         focus = -1           
         try:
-            fits = pyfits.open(file)
+            fits = fits.open(file)
             if "T-FOCUS" in fits[0].header:
                 focus = fits[0].header["T-FOCUS"]
             elif "T_FOCUS" in fits[0].header:
@@ -286,10 +286,11 @@ def check_python_env():
         
     # import non-standard modules:
     try:
-        import pyfits, numpy
+        import numpy
+        import astropy.io.fits as fits
     except ImportError:
-        sys.stderr.write("This script needs the modules 'pyfits' and 'numpy'!\n")
-        sys.stderr.write("see http://www.stsci.edu/resources/software_hardware/pyfits\n")
+        sys.stderr.write("This script needs the modules 'astropy.io.fits' and 'numpy'!\n")
+        sys.stderr.write("see http://www.astropy.org\n")
         sys.stderr.write("and/or http://numpy.scipy.org/\n")
         sys.exit(1)
 

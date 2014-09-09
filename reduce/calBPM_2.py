@@ -49,7 +49,7 @@ from pyraf import iraf
 from iraf import noao
 from iraf import mscred
 
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 # Logging
@@ -286,7 +286,7 @@ class BadPixelMask(object):
         misc.fileUtils.removefiles(self.output_file + ".pl")
 
         try:
-            my_hdu = pyfits.open(flat_ratio)
+            my_hdu = fits.open(flat_ratio)
             nExt = 1 if len(my_hdu)==1 else len(my_hdu)-1
         except Exception,e:
             log.error("Cannot read file: %"%flat_ratio)
@@ -336,9 +336,9 @@ class BadPixelMask(object):
         for mask_file in list_outfitsnames:
             new_file = mask_file.partition(".pl")[0]+".fits"
             iraf.imcopy(mask_file, new_file)
-            pyfits.setval(new_file, keyword="PAPITYPE", 
+            fits.setval(new_file, keyword="PAPITYPE", 
                                              value="MASTER_BPM")            
-            pyfits.setval(new_file, keyword="HISTORY",
+            fits.setval(new_file, keyword="HISTORY",
                                         value="BPM created from %s"%filelist)
             log.info("Bad Pixel Mask file created : %s"%new_file)
         
@@ -486,7 +486,7 @@ class BadPixelMask(object):
         log.debug( 'Now, computing bad pixel mask')
         misc.fileUtils.removefiles(self.output_file)
         
-        fr = pyfits.open(flat_ratio)
+        fr = fits.open(flat_ratio)
         
         # TBC: Bad pixel selection criterion 
         # Bad pixels >0, good_pixels=0
@@ -504,10 +504,10 @@ class BadPixelMask(object):
         bpm2 = bpm
          
         # Save the BPM
-        hdu = pyfits.PrimaryHDU()
+        hdu = fits.PrimaryHDU()
         hdu.data = bpm2     
         hdu.scale('int16') # importat to set first data type
-        hdulist = pyfits.HDUList([hdu])
+        hdulist = fits.HDUList([hdu])
         hdu.header.update('PAPITYPE','MASTER_BPM', 'TYPE of PANIC Pipeline generated file')
         hdulist.writeto(self.output_file)
         hdulist.close(output_verify='ignore')
@@ -550,10 +550,10 @@ def fixPix(image, mask):
 
         badfits = os.tmpnam() + '.fits'
         outfits = os.tmpnam() + '.fits'
-        pyfits.writeto(badfits, mask.astype(np.int16))
-        pyfits.writeto(outfits, im)
+        fits.writeto(badfits, mask.astype(np.int16))
+        fits.writeto(outfits, im)
         IRAF.fixpix(outfits, badfits)
-        cleaned = pyfits.getdata(outfits)
+        cleaned = fits.getdata(outfits)
         os.remove(badfits)
         os.remove(outfits)
         return cleaned

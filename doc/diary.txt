@@ -2104,6 +2104,12 @@ también aparece el problema (comprobado en udit22).
  
   """PV1_5 : Unrecognized coordinate transformation parameter"""
 
+Update 11-Agosto-2014: Parece que el problema ha sido solventado con: p4_pix2foc,
+al menos en astropy v0.3.1 ya está solucionado. De paso, cambiamos en clfits.py
+las llamadas a wcsutil, y pyfits por astropy.io.fits.
+
+
+
 
 07-Junio-2013
 =============
@@ -4837,6 +4843,77 @@ Parace que es mejor usar WEIGHT_IMAGE para el BPM !!
 
 07-Agosto-2014 
 --------------
+- Confirmo que para SCAMP, estoy usando XWIN_IMAGE,YWIN_IMAGE; eso está "hard-coded"
+en sextractor.py, que crea un .param por defecto cuando no se le da uno específico
+al llamar a SExtractor en Astrowarp.
+
+- Busco en el Foco de Astromatic sobre los NaN en SExtractor; parece que desde
+2006 es capaz de tratarlos bien:
+http://www.astromatic.net/forum/showthread.php?tid=99&highlight=NaN
+
+- Busco en el foro como tratarlos BPM en SExtractor, y encuentro esto:
+
+  Q) Is it possible to specify bad columns,rows, or pixels that sextractor will
+     not use in computing values such as magnitude or xwin_image? I can't see 
+     anything that refers to that in the documentation.
+  A) the easiest way to do that is using weighted detection: weight maps have to 
+     be zero where bad pixels are.
+     To produce weight maps you can use WeightWatcher, for example 
+
+  A2) Use WeightWatcher!  
+      If you set the bad pixel value to, for example, 100000, WeightWatcher can 
+      identify bad pixels and creates a bad pixel mask having 1 where pixels 
+      are ok and 0 where pixels are bad.
+
+      You have just to say
+
+      ww -WEIGHT_NAMES <your image> -WEIGHT_MIN 99000 -WEIGHT_MAX 200000 -WEIGHT_OUTFLAGS 1 -FLAG_NAMES "" -OUTWEIGHT_NAME weight.fits -OUTFLAG_NAME flag.fits
+
+      Then you can use flag.fits as WEIGHT_IMAGE (using WEIGHT_TYPE MAP_WEIGHT) in SExtractor detection.
+
+- Me creo una BPM para PANIC con BP=0 a partir de la BPM de Bernhard y pruebo 
+con SExtractor lo siguiente:
+
+/data1/PANIC/2014-07-30_SS_zenith/OPT_SS_SG2_1_FF_0001.fits 
+-WEIGHT_IMAGE /data1/Calibs/PANIC_BPM_zeros.fits -WEIGHT_TYPE MAP_WEIGHT
+
+y en principio no veo gran mejoría, y aunque hay algo de diferencia en cuanto a 
+tiempo de ejecución (15s vs 18s para una imagen 4kx4k). 
+No se si es que la weight_image con 0's en BP y 1's en el resto es suficiente.
+
+
+08-Agosto-2014 
+--------------
+- Añado nueva funcionalidad al QL (Pop-up:Apply and Show BPM) para aplicar la 
+BPM y que se pueda ver en rojo en el DS9. Para ello compodremos valores NaN 
+(en un fichero intermedio) y lo mostraremos en el DS9 con Edit->Preferences->Blank/Inf/NaN color.
+La idea me vino leyendo : 
+http://www.cfht.hawaii.edu/~chyan/wircam/badpix/badpix.html
+
+Queda pendiente hacer que se pueda aplicar el BPM a sub-windos y a MEFs !!
+
+11-Agosto-2014
+--------------
+- Eliminacion del modulo wcsutil y sustitucion port astropy.wcs. Esto
+requirió cambios en clfits, que implicaron ya la migración de pyfits a 
+astropy.io.fits, y más aún tras ver la nota siguiente en el web de PyFITS:
+
+"""
+All of the functionality of PyFITS is now available in Astropy as the astropy.io.fits package, which is now publicly available. Although we will continue to release PyFITS separately in the short term, including any critical bug fixes, we will eventually stop releasing new versions of PyFITS as a stand-alone product. The exact timing of when we will discontinue new PyFITS releases is not yet settled, but users should not expect PyFITS releases to extend much past early 2014. Users of PyFITS should plan to make suitable changes to support the transition to Astropy on such a timescale. For the vast majority of users this transition is mainly a matter of changing the import statements in their code--all APIs are otherwise identical to PyFITS. STScI will continue to provide support for questions related to PyFITS and to the new astropy.io.fits package in Astropy.
+"""
+
+!!! Por lo tanto, COMIENZO MIGRACION de PyFITS a astropy.io.fits !!!!
+
+
+09-Sep-2014 
+-----------
+- Continuo con la migración de PyFits a astropy.io.fits
+
+(P) - Borrar de la rama el modulo misc.wcsutil.py
+(P) - Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
+modificarlo para que use astropy.io.fits !!
+
+
 
 
 PANIC computers installation
@@ -5230,8 +5307,33 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Ver como usar FLAG_IMAGE en Sextractor con los BPM !!!
-- ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, SExtractor, ...)
+- modificar calBPM.applyBPM() para MEF y subwindows !!
+
+- IDEA de WFCAM: 
+"""
+The wings of stellar sources (under the 1.5 sigma threshold) can bias the sky 
+construction and produce dark rings after sky subtraction. To prevent this, the 
+idea is to enlarge each masked star to make sure no wing signal creeps in. The 
+fastest way to do this is to apply smoothing using a box of 5x5 (the smooth command in IDL).
+"""
+
+- Ver como puede influir para photometría el usar FLUX_AUTO o FLUX_APER o FLUX_BEST
+en lugar de MAG_AUTO (Kron-like elliptical aperture magnitude).
+
+
+- Ver como usar FLAG_IMAGE/WEIGHT_IMAGE en Sextractor con los BPM !!!
+- ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, SExtractor, Numpy...):
+
+    - SExtractor los sabe tratar (o eso encontré en el foro de Astrometic), y
+    supongo que simplemente los ignora.
+    - IRAF, aunque no he encontrado información al respecto, según las pruebas
+    que he hecho con una imagen 4kx4k de PANIC con los BP=NaN, imstat me da
+    unos valores sensatos, y muy parecidos a los que puedo obtener con misc.robust.mean().
+    - Numpy: en principio los reconoce, pero a la hora de trabajar con ellos,
+    por ejemplo, numpy.mean() no es capaz de dar un resultado. En cambio, 
+    con la rutina Numpy que tengo misc.robust.mean() si lo hace bien !!
+
+
 - Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
 - ver donde se está usando cosas como image[200:naxis1-200,200:naxis2-200] para que
 no de problemas con subwindows !!

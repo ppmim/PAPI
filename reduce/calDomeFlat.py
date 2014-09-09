@@ -76,7 +76,7 @@ from iraf import noao
 from iraf import mscred
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 import numpy as np
 
 # Logging
@@ -407,7 +407,7 @@ class MasterDomeFlat(object):
         iraf.chdir()
         
         log.debug("Updating the header ...")
-        flatframe = pyfits.open(self.__output_filename, 'update')
+        flatframe = fits.open(self.__output_filename, 'update')
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
             if msg!="": flatframe[0].header.add_history(msg)

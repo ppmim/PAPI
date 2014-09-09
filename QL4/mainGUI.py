@@ -62,6 +62,7 @@ os.environ['PYRAF_NO_DISPLAY'] = '1'
 import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
+import reduce.calBPM
 import reduce.checkQuality
 import reduce.astrowarp
 import reduce.reductionset as RS
@@ -1540,6 +1541,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
+        self.mBPM_appAct = QtGui.QAction("&Apply and Show BPM", self,
+            shortcut="Ctrl+Z",
+            statusTip="Apply BPM and show the masked pixels in a temp file.", 
+            triggered=self.applyBPM_slot)
+
         self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
             shortcut="Ctrl+f",
             statusTip="Run a telescope focus evaluation of a focus serie.", 
@@ -1676,6 +1682,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.mDTwFlatAct)
             popUpMenu.addAction(self.mGainMapAct)
             popUpMenu.addAction(self.mBPMAct)
+            popUpMenu.addAction(self.mBPM_appAct)
             popUpMenu.addAction(self.mFocusEval)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.subOwnSkyAct)
@@ -1717,6 +1724,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.mDTwFlatAct.setEnabled(True)
             self.mGainMapAct.setEnabled(True)
             self.mBPMAct.setEnabled(True)
+            self.mBPM_appAct.setEnabled(True)
             self.mFocusEval.setEnabled(True)
             self.subOwnSkyAct.setEnabled(True)
             self.subNearSkyAct.setEnabled(True)
@@ -1750,6 +1758,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.photoAct.setEnabled(False)
                 #self.fwhmAct.setEnabled(False)
                 self.bckgroundAct.setEnabled(False)
+                self.mBPM_appAct.setEnabled(False)
 
             if len(self.m_popup_l_sel)!=2:
                 self.subAct.setEnabled(False)
@@ -2523,15 +2532,62 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.critical(self, "Error","Error, not suitable frames selected (flat fields)")
 
 
+    def applyBPM_slot(self):
+        """
+        Apply to the selected file the BPM defined in the config file and show
+        in Red the masked pixels on DS9 (for this, user should select red 
+        from menu Edit->Preferences->Blank/Inf/NaN color).
+
+        Note that, the original selected file is not modified, all BPM is applied
+        to a temporal named by the user.
+
+        This routine can be useful to view on QL how the BPM affect our data.
+        """
+
+        if len(self.m_popup_l_sel)==1:
+            init_outdir = self.m_outputdir + "/" + \
+                    os.path.basename(self.m_popup_l_sel[0]).replace(".fits","_BPM.fits")
+            outfileName = QFileDialog.getSaveFileName(self,
+                                                      "Choose a filename so save under",
+                                                      init_outdir, 
+                                                      "fits (*.fits)", )
+            if not outfileName.isEmpty():
+                # Because in principle it is a quick proceduce, we do not use
+                # the processing queue. We run it on the current thread.
+                QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                try:
+                    master_bpm =  self.config_opts['bpm']['bpm_file']
+                    if os.path.isfile(master_bpm):
+                        result = reduce.calBPM.applyBPM(
+                                        self.m_popup_l_sel[0],
+                                        master_bpm,
+                                        str(outfileName),
+                                        False)
+                        if self.getDisplayMode()>=2:
+                            display.showFrame(result)
+                    else:
+                        msg = "Master BPM '%s' does not exist."%master_bpm
+                        QMessageBox.critical(self, "Error", msg)
+                except Exception,e:
+                    msg = "Error applying BPM: '%s'"%(str(e))
+                    self.logConsole.info(msg)
+                    QMessageBox.critical(self, "Error", msg)
+                    raise e
+                finally:
+                    QApplication.restoreOverrideCursor()
+
+
+
     def focus_eval(self):
         """
         Run the focus evaluation procedure of a set of files of focus serie.
         It is run **interactively**.
         """
         if len(self.m_popup_l_sel)>3:
+            init_outdir = self.m_tempdir + "/focus_eval.pdf"
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename so save under",
-                                                      "/tmp/focus_eval.pdf", 
+                                                      init_outdir, 
                                                       "pdf (*.pdf)", )
             if not outfileName.isEmpty():
                 show = True

@@ -45,18 +45,15 @@ import os
 
 import numpy
 import math
+import astropy.io.fits as fits
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
-import matplotlib.cm as cm
-import pylab
             
 
 # PAPI modules
 from misc.paLog import log
 from misc.utils import *
 import misc.robust as robust
-import datahandler
 from misc.print_table import print_table
 
 
@@ -228,7 +225,7 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
         raise Exception("Wrong values of packet file range")
       
     # check window-shape
-    pf = pyfits.open(filelist[0])
+    pf = fits.open(filelist[0])
     if len(pf)>1:
         msg = "MEF files are not supported. Expected a 4kx4k single image."
         log.error(msg)
@@ -268,8 +265,8 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
     for i in range(n):
         try:
             log.debug("Reading file %s"%(temp_dir+"/stack%02d.fits"%i)) 
-            pf = pyfits.open(temp_dir + "/stack%02d.fits"%i)
-            pf2 = pyfits.open(temp_dir + "/stack_sigma%02d.fits"%i)
+            pf = fits.open(temp_dir + "/stack%02d.fits"%i)
+            pf2 = fits.open(temp_dir + "/stack_sigma%02d.fits"%i)
         except Exception, e:
             log.error("Cannot open file %s"%(temp_dir+"/stack%02d.fits"%i))
             continue

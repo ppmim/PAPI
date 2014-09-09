@@ -19,7 +19,7 @@ import fnmatch
 
 #import misc.paLog
 from misc.paLog import log
-import pyfits
+import astropy.io.fits as fits
 
 ################################################################################
 
@@ -87,7 +87,7 @@ def splitMEF_deprecated(fnameMEF, out_filenames):
  next = 0
  
  try:
-   hdulist = pyfits.open(fnameMEF)
+   hdulist = fits.open(fnameMEF)
  except IOError:
    print 'Error, can not open file %s' %(fnameMEF)
    return 0
@@ -108,7 +108,7 @@ def splitMEF_deprecated(fnameMEF, out_filenames):
  for i in range(1,next+1):
    sufix="_%d.fits" %i
    out_filenames.append(fnameMEF.replace('.fits', sufix))
-   out_hdulist = pyfits.HDUList([pyfits.PrimaryHDU(header=hdulist[i].header, data=hdulist[i].data)])
+   out_hdulist = fits.HDUList([fits.PrimaryHDU(header=hdulist[i].header, data=hdulist[i].data)])
    out_hdulist.verify('silentfix')
    out_hdulist.writeto(out_filenames[i-1], output_verify='ignore', clobber=True)
    out_hdulist.close(output_verify='ignore')

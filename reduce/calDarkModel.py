@@ -47,7 +47,7 @@ import datahandler
 import misc.robust as robust
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 #import scipy.stats.stats
@@ -177,7 +177,7 @@ class MasterDarkModel(object):
         #loop the images
         counter = 0
         for i in range(0, nframes):
-            file = pyfits.open(framelist[i])
+            file = fits.open(framelist[i])
             f = datahandler.ClFits ( framelist[i] )
             if darks[i]==1:
                 for i_ext in range(0, f_n_extensions):
@@ -213,9 +213,9 @@ class MasterDarkModel(object):
         misc.fileUtils.removefiles( self.__output_filename )               
 
         # Write result in a FITS
-        hdulist = pyfits.HDUList()
-        hdr0 = pyfits.getheader(framelist[numpy.where(darks==1)[0][0]])
-        prihdu = pyfits.PrimaryHDU (data = None, header = None)
+        hdulist = fits.HDUList()
+        hdr0 = fits.getheader(framelist[numpy.where(darks==1)[0][0]])
+        prihdu = fits.PrimaryHDU (data = None, header = None)
         try:
             prihdu.header.update('INSTRUME', hdr0['INSTRUME'])
             prihdu.header.update('TELESCOP', hdr0['TELESCOP'])
@@ -234,12 +234,12 @@ class MasterDarkModel(object):
         prihdu.header.add_history('Dark model based on %s' % framelist)
         
         if f_n_extensions>1:
-            prihdu.header.update('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.update('EXTEND', fits.TRUE, after = 'NAXIS')
             prihdu.header.update('NEXTEND', f_n_extensions)
             prihdu.header.update('FILENAME', self.__output_filename)
             hdulist.append(prihdu)
             for i_ext in range(0, f_n_extensions):
-                hdu = pyfits.PrimaryHDU()
+                hdu = fits.PrimaryHDU()
                 hdu.scale('float32') # important to set first data type
                 hdu.data = fit.reshape(2, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
                 hdulist.append(hdu)

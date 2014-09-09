@@ -43,10 +43,10 @@ import numpy
 import math
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
-import matplotlib.cm as cm
 import pylab
             
+import astropy.io.fits as fits
+
 
 # PAPI modules
 from misc.paLog import log
@@ -102,7 +102,7 @@ def run_spatial_noise ( input_catalog, area, window, gain,
         raise Exception("Input file %s does not exist"%input_catalog)
     
     #Read image shape
-    with pyfits.open(filelist[0]) as pf:
+    with fits.open(filelist[0]) as pf:
         shape = pf[0].data.shape
     
     #Define window
@@ -154,7 +154,7 @@ def run_spatial_noise ( input_catalog, area, window, gain,
     print "Files (%d) = %s" %(n_files, filelist)
     
     # check window-shape
-    pf = pyfits.open(filelist[0])
+    pf = fits.open(filelist[0])
     if not (x1 < shape[0] and x2 < shape[0] and 
         y1 < shape[1] and y2 < shape[1]):
         raise Exception("Wrong window definition; check image and window size")
@@ -167,8 +167,8 @@ def run_spatial_noise ( input_catalog, area, window, gain,
     for packet in grouper(2, filelist):
         if len(packet)==2 and not (None in packet):
             try:
-                pf1 = pyfits.open(packet[0])
-                pf2 = pyfits.open(packet[1])
+                pf1 = fits.open(packet[0])
+                pf2 = fits.open(packet[1])
                 if (key_time in pf1[0].header and 
                     key_time in pf2[0].header and
                     pf1[0].header[key_time] == pf2[0].header[key_time]): 

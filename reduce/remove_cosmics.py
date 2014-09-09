@@ -53,7 +53,7 @@ U{http://www.astro.yale.edu/dokkum/lacosmic/}
 from optparse import OptionParser
 import sys
 
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 # Logging
@@ -98,7 +98,7 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
             out_file = out_image
             
     try:
-        f_in = pyfits.open(in_image)
+        f_in = fits.open(in_image)
         if len(f_in)==1:
             data_in = f_in[0].data
         else:
