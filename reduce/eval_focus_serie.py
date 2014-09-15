@@ -256,16 +256,16 @@ class FocusSerie(object):
                 
         focus = -1           
         try:
-            fits = fits.open(file)
-            if "T-FOCUS" in fits[0].header:
-                focus = fits[0].header["T-FOCUS"]
-            elif "T_FOCUS" in fits[0].header:
-                focus = fits[0].header["T_FOCUS"]
+            mfits = fits.open(file)
+            if "T-FOCUS" in mfits[0].header:
+                focus = mfits[0].header["T-FOCUS"]
+            elif "T_FOCUS" in mfits[0].header:
+                focus = mfits[0].header["T_FOCUS"]
             else:
                 sys.stderr.write("Cannot find the T-FOCUS value")
                 raise TFOCUSNotFound("Cannot find the T-FOCUS value")
         finally:
-            fits.close()
+            mfits.close()
         
         return focus
         

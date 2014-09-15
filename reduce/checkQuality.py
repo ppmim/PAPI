@@ -36,6 +36,7 @@
 # Import necessary modules
 
 from optparse import OptionParser
+import fileinput
 import numpy
 import numpy.ma as ma 
 import os
@@ -113,12 +114,15 @@ class CheckQuality(object):
         
         Returns
         -------
-        A couple of values (efwhm, std):
+        The values (efwhm, std, x, y):
         
         efwhm : float
             Estimated FWHM (in pixels)
         std: float
             Standard deviation of the FWHM.
+        x,y: coordinates of the last star found by sextractor. It is thought
+        for imagenes (subwindows) with a single star on the field.
+
         """
 
         # SExtractor configuration
@@ -150,23 +154,32 @@ class CheckQuality(object):
             raise e
         
         ## SExtractor Catalog columns required and expected (sextractor.param)
-        #0  NUMBER
-        #1  X_IMAGE
-        #2  Y_IMAGE
-        #3  ALPHA_J2000
-        #4  DELTA_J2000
-        #5  MAG_BEST
-        #6  ISOAREA_IMAGE
-        #7  ELLIPTICITY
-        #8  FWHM_IMAGE
-        #9  FLUX_RADIUS
-        #10 FLUX_APER
-        #11 FLUXERR_APER
-        #12 FLAGS
+        # 0 NUMBER           # Running object number
+        # --------- Position Parameters --------------
+        # 1 X_IMAGE          # Object position along x
+        # 2 Y_IMAGE          # Object position along y
+
+        # 3 ALPHA_J2000      # Right ascension of barycenter (J2000) [deg]
+        # 4 DELTA_J2000      # Declination of barycenter (J2000) [deg]
 
 
-        #xx FLUX_AUTO
-        #xx FLUXERR_AUTO
+        # --------- Photometric Parameters -----------
+        # 5 MAG_BEST         # Best of MAG_AUTO and MAG_ISOCOR
+        # 6 ISOAREA_IMAGE    # Isophotal area above Analysis threshold [pixel**2]
+        # 7 ELLIPTICITY      # 1 - B_IMAGE/A_IMAGE
+        # 8 FWHM_IMAGE       # FWHM assuming a gaussian core
+        # 9 FLUX_RADIUS      # Fraction-of-light radii 
+        # 10 FLUX_APER        # Flux vector within fixed circular aperture(s)
+        # 11 FLUXERR_APER     # RMS error vector for aperture flux(es) 
+
+        # --------- Flags  -----------
+        # 12 FLAGS            # Extraction flags
+
+        # -- Test (not read by PAPI) --
+        # 13 FLUX_AUTO        # Flux within a Kron-like elliptical aperture [counts] 
+        # 14 FLUXERR_AUTO     # RMS error for AUTO flux [counts]
+        # 15 XWIN_IMAGE       # Windowed position estimate along x [pix]
+        # 16 YWIN_IMAGE       # Windowed position estimate along y [pix]
       
         source_file = catalog_file
 
@@ -207,6 +220,8 @@ class CheckQuality(object):
         for i in range(0, a.shape[0]):
             x = a[i,1]
             y = a[i,2]
+            xwin = a[i,15]
+            ywin = a[i,16]
             isoarea = a[i,6]
             ellipticity = a[i,7]
             fwhm = a[i,8]
@@ -257,9 +272,9 @@ class CheckQuality(object):
                 print "Fits keyword updated " 
             
         else:
-            print "Not enough stars found !!"
+            print "Not enough good stars found !!"
             fits_file.close(output_verify='ignore')    
-            return -1,-1
+            return -1,-1,-1,-1
         
         #print "FWHM-median(pixels)= ", numpy.median(fwhm_world), numpy.amin(fwhm_world), numpy.amax(fwhm_world)
         #print "FWHM-mean(pixels)= ", numpy.mean(fwhm_world)
@@ -269,7 +284,7 @@ class CheckQuality(object):
         # cleanup files
         # os.unlink(catalog_file)
         
-        return efwhm, std
+        return efwhm, std, xwin, ywin
       
     def estimateBackground(self, output_file):
         """ 
@@ -330,8 +345,13 @@ detector (Q1,Q2,Q3,Q4).
     
     parser.add_option("-f", "--input_image",
                   action="store", dest="input_image", 
-                  help="Input image to computer FWHM estimation.")
-                  
+                  help="Input FITS image to run FWHM estimation.")
+
+    parser.add_option("-F", "--input_file_list",
+                  action="store", dest="input_file_list", 
+                  help="Text file with all FITS images to be FWHM-estimated. "
+                  "It will produce a Output.txt text file with the results.")
+
     parser.add_option("-i", "--isoarea_min",
                   action="store", dest="isoarea_min",type=int,
                   help="Minimum value of ISOAREA (default = %default)",
@@ -391,24 +411,57 @@ detector (Q1,Q2,Q3,Q4).
        parser.print_help()
        sys.exit(0)
     
-    if not options.input_image or len(args)!=0: 
+    if (not options.input_image and not options.input_file_list) or len(args)!=0: 
     # args is the leftover positional arguments after all options have been processed
         parser.print_help()
-        parser.error("wrong number of arguments " )
+        parser.error("Wrong number of arguments " )
     
 
-    if not os.path.exists(options.input_image):
-        log.error ("Input image %s does not exist", options.input_image)
-        sys.exit(0)
-        
-    try:
-        cq = CheckQuality(options.input_image, options.isoarea_min, 
-                          options.ellipmax, options.edge_x, options.edge_y, 
-                          options.pixsize, options.gain, options.satur_level , 
-                          options.write, options.snr, options.window)
-        cq.estimateFWHM()
-    except Exception,e:
-        log.error("There was some error: %s "%str(e))
-        sys.exit(0)
-        
+    #if not os.path.exists(options.input_image) and not os.path.exists(options.input_file_list):
+    #    log.error ("Input image %s does not exist", options.input_image)
+    #    sys.exit(0)
     
+    if options.input_file_list:
+        if not os.path.exists(options.input_file_list):
+            log.error ("Input image %s does not exist", options.input_file_list)
+            sys.exit(0)
+
+        filelist = [line.replace( "\n", "") 
+                for line in fileinput.input(options.input_file_list)]
+        
+        text_file = open("Output.txt", "w")
+        text_file.write("#  Filename \t FWHM \t STD \t X \t Y\n")
+        text_file.write("#  X,Y =spatial coordinates of last star found. \n")
+
+        for m_file in filelist:
+            try:
+                cq = CheckQuality(m_file, options.isoarea_min, 
+                                  options.ellipmax, options.edge_x, options.edge_y, 
+                                  options.pixsize, options.gain, options.satur_level , 
+                                  options.write, options.snr, options.window)
+                efwhm, std, x, y = cq.estimateFWHM()
+                text_file.write("%s    %s    %s    %s    %s\n"%(m_file, efwhm, std, x, y))
+            except Exception,e:
+                log.error("There was some error with image %s : %s "%(m_file, str(e)))
+                text_file.write("%s    %s    %s\n"%(m_file, -1, -1, -1, -1))
+        
+        text_file.close()
+    
+    elif options.input_image:
+        if not os.path.exists(options.input_image):
+            log.error ("Input image %s does not exist", options.input_image)
+            sys.exit(0)
+
+        try:
+            cq = CheckQuality(options.input_image, options.isoarea_min, 
+                                options.ellipmax, options.edge_x, options.edge_y, 
+                                options.pixsize, options.gain, options.satur_level , 
+                                options.write, options.snr, options.window)
+            efwhm, std, k, k = cq.estimateFWHM()
+            log.info("FWHM= %s  STD= %s"%(efwhm, std))
+        except Exception,e:
+            log.error("There was some error with image %s : %s "%(options.input_image, str(e)))
+    else:
+        log.error("No input file given.")
+        sys.exit(0)
+

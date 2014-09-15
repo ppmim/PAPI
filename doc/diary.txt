@@ -4909,10 +4909,42 @@ All of the functionality of PyFITS is now available in Astropy as the astropy.io
 -----------
 - Continuo con la migración de PyFits a astropy.io.fits
 
+10-Sep-2014 
+-----------
+- Videoconf y super post-videconf para tratar los temas de commissioning de 
+PANIC en CAHA.
+
+- Quedamos en que yo pregunto a CAHA el tema de la infraestructura para el tema
+de las pruebas de SW con telescopio, cupula y lamparas de FF.
+Escribo a E.Guindos y Jens sobre dichas cuestiones.
+
+
+11-Sep-2014 
+-----------
+- Modificacion en checkQuality.py para calcular los centroides de /data1/PANIC/2014-08-04_SS_tilt_1_0/
+
+
+12-Sep-2014 
+-----------
+- Respondo a BD el email sobre "QL FWHM issues".
+- Descubro un error en DS9_v72+IRAF; se soluciona instalando la v7.3b5, pues 
+soluciona un problema que me estaba ocurriendo la tener configurador en iraf el 
+valor stdimage=im4096 e intentar leer imagenes más pequeñas (ej. 16x16); 
+tareas como imexam o psfmeasure no funcionaban bien y daban el mensaje: Warning: Pixels out of bounds
+
+"If you're using DS9 v7.2 then the problem is a bug in the DS9 cursor read 
+causing the offset. The only workaround is to use an earlier version of DS9 
+or a more recent beta."
+Para más detalles: http://stackoverflow.com/questions/24919639/pixels-out-of-bounds-error-in-iraf
+
+
+
+(P) - Terminar  checkQuality.py para que funcione correctamente en PAPI/QL
+despues de la modificación para que devuelva x,y
+
 (P) - Borrar de la rama el modulo misc.wcsutil.py
 (P) - Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
 modificarlo para que use astropy.io.fits !!
-
 
 
 
@@ -5528,4 +5560,8 @@ no cumple el standard FITS y es rechazada por PAPI. Lo compruebo con fitsverify
 y da error. Es un bug en Sextractor que habría que informar a E.Bertin.
 
 
+THINGS TO DO ON panic1.mpia.de al llegar a CAHA
+===============================================
+- Actualzar la version del DS9 a la 7.3b5
+wget http://ds9.si.edu/download/linux64/ds9.linux64.7.3b5.tar.gz
 

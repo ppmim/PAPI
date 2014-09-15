@@ -2263,10 +2263,10 @@ class ReductionSet(object):
         # the sequence.
         # TODO: I should use 'type' parameter of this method instead to read the
         # type of the first file. I did not found any reason to not use 'type' !
-        fits = datahandler.ClFits(sequence[0])
+        cfits = datahandler.ClFits(sequence[0])
         
         
-        if fits.isDark():
+        if cfits.isDark():
             log.debug("[reduceSeq] A Dark sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Generate (and create the file) a random filename for the master, 
@@ -2340,7 +2340,7 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DARK: %s",str(e))
                 raise e
-        elif fits.isDomeFlatON() or fits.isDomeFlatOFF():
+        elif cfits.isDomeFlatON() or cfits.isDomeFlatOFF():
             log.debug("[reduceSeq] A DomeFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Generate a random filename for the master, to ensure we do not
@@ -2374,7 +2374,7 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DomeFlat: %s",str(e))
                 raise e
-        elif fits.isTwFlat() or fits.getType(False)=="DOME_FLAT":
+        elif cfits.isTwFlat() or cfits.getType(False)=="DOME_FLAT":
             # Added support to proccess DOME_FLATs series (not ON/OFF dome_flat)
             log.debug("[reduceSeq] A TwFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
@@ -2430,7 +2430,7 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
-        elif fits.isFocusSerie():
+        elif cfits.isFocusSerie():
             #
             # NOTE: Focus series are not pre-reduced, ie., neither Dark nor Flat
             # Field is applied.
@@ -2471,7 +2471,7 @@ class ReductionSet(object):
                 log.error("[reduceSeq] Error while processing Focus Series: %s",str(e))
                 raise e
 
-        elif fits.isScience():
+        elif cfits.isScience():
             l_out_dir = ''
             results = None
             out_ext = []
@@ -2737,7 +2737,7 @@ class ReductionSet(object):
         for file in files_created:
             # if source image was a science one, then products should be also 
             # science images.
-            if fits.isScience():
+            if cfits.isScience():
                 # input image is overwritten
                 misc.imtrim.imgTrim(file)
             if file!=None and os.path.splitext(file)[1]=='.fits':
@@ -3025,7 +3025,7 @@ class ReductionSet(object):
                     ellipmax=0.3, edge_x=100, edge_y=100, pixsize=pix_scale, 
                     gain=1, sat_level=satur_level)
                 try:
-                    (fwhm, std) = cq.estimateFWHM()
+                    (fwhm, std, k, k) = cq.estimateFWHM()
                     if fwhm>0 and fwhm<20:
                         log.info("File %s - FWHM = %s (pixels) std= %s"%(r_file, fwhm, std))
                         fwhm_t.append(fwhm)

@@ -667,7 +667,9 @@ def applyBPM(filename, master_bpm, output_filename, overwrite=False):
             if len(source_data.shape)!=len(bpm_data.shape):
                 raise Exception("Input file and BPM have not same data format or shape.")
             else:
-                if 'DATASEC' in gh:
+                raise Exception("Input file and BPM have not same data format or shape.")
+                # TO BE DONE: support for sub-windows  
+                #if 'DATASEC' in gh:
 
         gh.set('HISTORY','Combined with BPM:%s'%master_bpm)
 

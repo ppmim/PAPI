@@ -81,6 +81,12 @@ from misc.paLog import log
 
 
 # IRAF packages
+# When PyRAF is imported, it creates, unless it already exists, a pyraf/
+# directory for cache in the current working directory. It also complains that
+# "Warning: no login.cl found" if this IRAF file cannot be found either. 
+# To avoid these two annoying messages, and do not clutter the filesystem with pyraf/
+# directories, if $HOME/iraf/login.cl exists, it is used and pyraf/ directory
+# is created there. 
 from pyraf import iraf
 from iraf import noao
 from iraf import mscred
@@ -2678,7 +2684,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   ellipmax=0.9, # basically, no limit !
                                                   pixsize=pix_scale)
             try:
-                fwhm,std = cq.estimateFWHM()
+                fwhm,std,k,k = cq.estimateFWHM()
                 if fwhm>0:
                     self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
                                              .arg(os.path.basename(ifile))
