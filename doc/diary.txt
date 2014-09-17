@@ -4942,10 +4942,20 @@ Para más detalles: http://stackoverflow.com/questions/24919639/pixels-out-of-bo
 (P) - Terminar  checkQuality.py para que funcione correctamente en PAPI/QL
 despues de la modificación para que devuelva x,y
 
-(P) - Borrar de la rama el modulo misc.wcsutil.py
 (P) - Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
 modificarlo para que use astropy.io.fits !!
 
+
+15-Sep-2014 
+-----------
+- Encuentro en el Foro de Sextractor una pregunta sobre el FWHM, pues
+parece que está sobreetimado y no da los mismos valores que IRAF:imexam:
+
+http://www.astromatic.net/forum/showthread.php?tid=318
+
+Habrá que seguir investigando, o hacer uso de IRAF !!!
+- Revisar la documentación de iraf:psfmeasure, pues explica como calcula
+FWHM y es bastante interesante.
 
 
 PANIC computers installation
@@ -5344,9 +5354,7 @@ NEXT TODOs
 - IDEA de WFCAM: 
 """
 The wings of stellar sources (under the 1.5 sigma threshold) can bias the sky 
-construction and produce dark rings after sky subtraction. To prevent this, the 
-idea is to enlarge each masked star to make sure no wing signal creeps in. The 
-fastest way to do this is to apply smoothing using a box of 5x5 (the smooth command in IDL).
+construction and produce dark rings after sky subtraction. To prevent this, the idea is to enlarge each masked star to make sure no wing signal creeps in. The fastest way to do this is to apply smoothing using a box of 5x5 (the smooth command in IDL).
 """
 
 - Ver como puede influir para photometría el usar FLUX_AUTO o FLUX_APER o FLUX_BEST
@@ -5394,7 +5402,6 @@ o SWARP (VTerrón lo está usando y está contento...)
 - Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
 de llamar directamente a calDark.py.
   ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
-- Parametrizar los paths del ds9 en display.py y añadir al fichero de configuracion
 - Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
 - Rutina para copiar datos de varios directorios a un único directorio y renombrando
 los ficheros de forma única (DATE+TIMESTAMP)!!
