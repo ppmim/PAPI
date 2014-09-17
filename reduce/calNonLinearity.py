@@ -326,7 +326,7 @@ class NonLinearityModel(object):
         prihdu.header.add_history('Linearity model based on %s' % framelist)
         
         if f_n_extensions>1:
-            prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', True, after = 'NAXIS')
             prihdu.header.set('NEXTEND', f_n_extensions)
             prihdu.header.set('FILENAME', self.__output_filename)
             hdulist.append(prihdu)

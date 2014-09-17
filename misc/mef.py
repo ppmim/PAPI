@@ -266,7 +266,7 @@ class MEF (object):
         fo = fits.HDUList()
         prihdu = fits.PrimaryHDU (data = None, header = primaryHeader)
         # Start by updating PRIMARY header keywords...
-        prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
+        prihdu.header.set('EXTEND', True, after = 'NAXIS')
         prihdu.header.set('NEXTEND', 0)
         prihdu.header.set('FILENAME', output_file)
         
@@ -395,7 +395,7 @@ class MEF (object):
             # Create primary HDU (without data, only the common header)
             prihdu = fits.PrimaryHDU(data=None, header = primaryHeader)
             # Start by updating PRIMARY header keywords...
-            prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', True, after = 'NAXIS')
             prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
             prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
             
@@ -765,7 +765,7 @@ class MEF (object):
                                                header = primaryHeader)
                     # Start by updating PRIMARY header keywords...
                     prihdu.header.set('EXTEND', 
-                                          fits.FALSE, after = 'NAXIS')
+                                          False, after = 'NAXIS')
                     
                     # #############################################
                     # AR,DEC (WCS !!) need to be re-calculated !!!

@@ -234,7 +234,7 @@ class MasterDarkModel(object):
         prihdu.header.add_history('Dark model based on %s' % framelist)
         
         if f_n_extensions>1:
-            prihdu.header.update('EXTEND', fits.TRUE, after = 'NAXIS')
+            prihdu.header.update('EXTEND', True, after = 'NAXIS')
             prihdu.header.update('NEXTEND', f_n_extensions)
             prihdu.header.update('FILENAME', self.__output_filename)
             hdulist.append(prihdu)

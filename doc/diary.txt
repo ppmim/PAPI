@@ -4939,12 +4939,6 @@ Para más detalles: http://stackoverflow.com/questions/24919639/pixels-out-of-bo
 
 
 
-(P) - Terminar  checkQuality.py para que funcione correctamente en PAPI/QL
-despues de la modificación para que devuelva x,y
-
-(P) - Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
-modificarlo para que use astropy.io.fits !!
-
 
 15-Sep-2014 
 -----------
@@ -4956,6 +4950,45 @@ http://www.astromatic.net/forum/showthread.php?tid=318
 Habrá que seguir investigando, o hacer uso de IRAF !!!
 - Revisar la documentación de iraf:psfmeasure, pues explica como calcula
 FWHM y es bastante interesante.
+
+16-Sep-2014 
+-----------
+- Al intentar ponerme a implementar la obtención del FWHM a través de psfmeasure,
+me doy cuenta de que con las imagenes de 16x16 o 32x32 da el siguiente error:
+
+Warning: Pixel subscript out of bounds
+
+Sin embargo, eso mismo con una imagen mayor 132x132, ya no da ese problema.
+Parece que es una limitación en cuanto a tamaño mínimo de psfmeasure.
+
+No obstante, escribo en el foro de iraf.net para ver si me dan alguna solución.
+
+
+- Aprovecho que tengo la imagen recortada de 132x132 para probar de nuevo
+con Sextractor, y compruebo que el FWHM que da sigue siguendo mucho mayor, pero
+ahora el FLAG=0 (el lugar de 16 como antes). Por tanto, parece que a pesar
+de tener el FLAG=0, el valor que da SExtractor es mucho mayor.
+El valor que parece que quizás se acerque más es el FLUX_RADIUS:
+
+"""
+FLUX_RADIUS estimates the radius of the circle centered on the barycenter that encloses about half of the total flux. For a Gaussian profile, this is equal to 1/2 FWHM. But with most images on astronomical images it will be slightly higher.
+"""
+
+Pero para el caso de la imagen en cuestión (OPT_SS_SG2_2_FF_0001.fits),
+tendríamos los siguientes valores para el FWHM:
+
+imexam     ---> 7.17 (moffat), 7.16 (Gauss), 6.40 (enclosed), 6.42 (direct)
+psfmeasure ---> 6.37 (gauss)
+SExtractor ---> 12.2 (16x16), 12.3 (132x132), 2.75(FLUX_RADIUS) => 5.5
+
+
+17-Sep-2014 
+-----------
+Para configurar el tipo de ajuste (GAUSS, MOFFAT, etc) que hace imexam, lo hacemos con:
+iraf> epar rimexam
+
+iraf> help cursors (Section 3.7)
+
 
 
 PANIC computers installation
@@ -5349,6 +5382,13 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- how to manage MEF calibration files ? (currently darks, flats are not splited !)
+
+- Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
+
+- Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
+modificarlo para que use astropy.io.fits !!
+
 - modificar calBPM.applyBPM() para MEF y subwindows !!
 
 - IDEA de WFCAM: 
@@ -5391,8 +5431,7 @@ PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
 - Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
 o SWARP (VTerrón lo está usando y está contento...)
 
-(P) - Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
-
+(
 (P) - Actualizar TN de FITS headers:
 
    DET_ID = 'SGi'
@@ -5419,8 +5458,6 @@ coefficients neither extinction taken into account.
 fix method to update the headers in order to build a valid sequence for PAPI.
   >>>Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
   Alguna otra solución ???
-
-
 
 - Ver si merece la pena implementar el metodo crclean() de image.py
 de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
@@ -5469,7 +5506,6 @@ son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 - PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
 sin embargo, parece que calDark.py no se queja !
 - doc. y script de instalación de PAPI --> (Distribute vs distutils)
-- how to manage MEF calibration files ? (currently darks, flats are not splited !)
 - implementar procesamiento (detección y suma) de 'individual images' en 
 varios ficheros, en CUBOS en un solo fichero creo que si lo hace PAPI.
 - Añadir "todos" los principales parametros del fich. de configuración al QL !

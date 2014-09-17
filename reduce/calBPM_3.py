@@ -304,7 +304,7 @@ class BadPixelMask(object):
         prihdu.header.add_history('BPM created from %s' % src_files)
 
         if nExt>1:
-            prihdu.header.set('EXTEND', fits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', True, after = 'NAXIS')
             prihdu.header.set('NEXTEND', nExt)
             prihdu.header.set('FILENAME', self.output)
             hdulist.append(prihdu)

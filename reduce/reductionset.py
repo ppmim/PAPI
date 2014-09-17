@@ -3219,7 +3219,7 @@ class ReductionSet(object):
                     ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
                     gain=4.15, sat_level=satur_level)
                 try:
-                    (fwhm, std) = cq.estimateFWHM()
+                    (fwhm, std, k, k) = cq.estimateFWHM()
                     if fwhm>0 and fwhm<20:
                         log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
                     elif fwhm<0 or fwhm>20:
