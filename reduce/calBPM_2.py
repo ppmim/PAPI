@@ -234,6 +234,7 @@ class BadPixelMask(object):
         flats = self.temp_dir + "/flats_off.txt"
         misc.utils.listToFile(flats_off_frames, flats)
 
+        # For making a master flat, this parameter must always be set to 'mode'.
         iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_off_comb,
                         combine='median',
@@ -253,7 +254,8 @@ class BadPixelMask(object):
         flats = self.temp_dir + "flats_on.txt"
         misc.utils.listToFile(flats_on_frames, flats)
         
-        #Combine dome dark subtracted flats (on)
+        # Combine dome dark subtracted flats (on)
+        # For making a master flat, this parameter must always be set to 'mode'.
         iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_on_comb,
                         combine='median',
@@ -434,7 +436,9 @@ class BadPixelMask(object):
         # we need to build again a text file with the files
         flats = self.temp_dir + "/flats_off.txt"
         misc.utils.listToFile(flats_off_frames, flats)
-        #Combine dome dark subtracted OFF-flats
+        
+        # Combine dome dark subtracted OFF-flats
+        # For making a master flat, this parameter must always be set to 'mode'.
         iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_off_comb.replace('//','/'),
                         combine='median',
@@ -456,6 +460,7 @@ class BadPixelMask(object):
         misc.utils.listToFile(flats_on_frames, flats)
 
         # Combine dome dark subtracted ON-flats
+        # For making a master flat, this parameter must always be set to 'mode'.
         iraf.mscred.flatcombine(input="@"+flats.replace('//','/'),
                         output=flat_on_comb.replace('//','/'),
                         combine='median',

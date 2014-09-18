@@ -554,7 +554,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
                 if len(ltemp)>1:
                     last_file = ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
-                    #Change cursor
+                    # Change cursor
                     #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
                     #self._task = self.mathOp
@@ -564,7 +564,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #                               '-',None)
                     #thread.start()
                     
-                    #Put into the queue the task to be done
+                    # Put into the queue the task to be done
                     func_to_run = mathOp
                     _suffix = "_" + os.path.basename(last_file)
                     out_filename = self.m_outputdir + "/" + os.path.basename(filename).replace(".fits", _suffix) 
@@ -2087,7 +2087,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
                     self.m_processing = False    
-                    thread = reduce.ExecTaskThread(self.mathOp, 
+                    thread = reduce.ExecTaskThread(mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,'-', 
                                                    str(outFilename))
@@ -2116,7 +2116,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     self.m_processing = False    
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
-                    thread = reduce.ExecTaskThread(self.mathOp, 
+                    thread = reduce.ExecTaskThread(mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,
                                                    '+', str(outFilename))
@@ -2146,7 +2146,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
                     self.m_processing = False
-                    thread=reduce.ExecTaskThread(self.mathOp, 
+                    thread=reduce.ExecTaskThread(mathOp, 
                                                  self._task_info_list, 
                                                  self.m_popup_l_sel, 
                                                  '/',  str(outFilename))
@@ -3278,65 +3278,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.m_processing = False
             log.debug("Worker finished its task !")
     
-    def mathOp(self,files, operator, outputFile=None, tempDir=None):
-        """
-        This method will do the math operation (+,-,/) specified with the 
-        input files.
-        """
-        
-        log.debug("Start mathOp")
-        
-        if tempDir==None:
-            t_dir = "/tmp"
-        else:
-            t_dir = tempDir
-        
-        if outputFile==None:
-            output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
-            os.close(output_fd)
-    
-        if operator!='+' and operator!='-' and operator!='/':
-            log.error("Math operation not supported")
-            return None
-    
-        try:
-            # Remove an old output file (might it happen ?)
-            misc.fileUtils.removefiles(outputFile)
-            ## MATH operation '+'
-            if (operator=='+' and len(files)>2):
-                log.debug("Frame list to combine = [%s]", files )
-                misc.utils.listToFile(files, t_dir+"/files.tmp") 
-                iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
-                         output=outputFile,
-                         combine='median',
-                         ccdtype='',
-                         reject='sigclip',
-                         lsigma=3,
-                         hsigma=3,
-                         subset='no',
-                         scale='mode'
-                         #masktype='none'
-                         #verbose='yes'
-                         #scale='exposure',
-                         #expname='EXPTIME'
-                         #ParList = _getparlistname ('flatcombine')
-                         )
-            ## MATH operation '-,/,*'
-            else:
-                iraf.mscarith(operand1=files[0],
-                          operand2=files[1],
-                          op=operator,
-                          result=outputFile,
-                          verbose='yes'
-                          )
-        except Exception,e:
-            log.error("[mathOp] An erron happened while math operation with FITS files")
-            raise e
-        
-        log.debug("mathOp result : %s"%outputFile)
-        
-        return outputFile
-
     # Menus stuff functions 
     def editCopy(self):
         print "panicQL.editCopy(): Not implemented yet"
@@ -3372,8 +3313,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         QMessageBox.about(self,
                           "PANIC Quick-Look Tool",
 """
-PQL version: 1.2.0\nCopyright (c) 2008-2012 IAA-CSIC  - All rights reserved.\n
-Author: Jose M. Ibanez.
+PQL version: 1.2.0\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
+Author: Jose M. Ibanez. (jmiguel@iaa.es)
 Instituto de Astrofisica de Andalucia, IAA-CSIC
 
 This software is part of PAPI (PANIC Pipeline)
@@ -3459,9 +3400,9 @@ class LoggingConsole (object):
 ################################################################################
 # Some functions 
 ################################################################################
-#Because mathOp is used with the queue of process, it cannot belong to MainGUI
-#class or an error in multiprocessing:
-#  'objects should only be shared between processes through inheritance'
+# Because mathOp is aused with the queue of process, it cannot belong to MainGUI
+# class or an error in multiprocessing:
+#    'objects should only be shared between processes through inheritance'
 #            
 def mathOp(files, operator, outputFile=None, tempDir=None):
     """
@@ -3492,15 +3433,17 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         if (operator=='+' and len(files)>2):
             log.debug("Frame list to combine = [%s]", files )
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
+            # Very important to not scale the frames, because it could 
+            # produce wrong combined images due to outliers (bad pixels)
             iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
                      output=outputFile,
-                     combine='average',
+                     combine='median',
                      ccdtype='',
                      reject='sigclip',
                      lsigma=3,
                      hsigma=3,
                      subset='no',
-                     scale='mode'
+                     scale='none'
                      #masktype='none'
                      #verbose='yes'
                      #scale='exposure',

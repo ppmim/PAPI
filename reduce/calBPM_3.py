@@ -143,6 +143,7 @@ class BadPixelMask(object):
             misc.fileUtils.removefiles(dark_comb)
             # Call IRAF task (it works with MEF or simple images)
             # With next combine, cosmic rays are rejected.
+            # Note that frames are scaled by EXPTIME
             iraf.mscred.darkcombine(input=("'"+"@"+self.dark_list+"'").replace('//','/'), 
                             output=dark_comb, 
                             combine='median', 
@@ -150,6 +151,7 @@ class BadPixelMask(object):
                             process='no', 
                             reject='sigclip', 
                             scale='exposure'
+                            #scale='none'
                             )
             log.debug("Created combined Dark %s"%dark_comb)
 
@@ -197,6 +199,8 @@ class BadPixelMask(object):
             # Call IRAF task (it works with MEF or simple images)
             try:
                 # With next combine, cosmic rays are rejected.
+                # For making a master flat, scale must always? be set to 'mode'. 
+                # (read from literature) 
                 iraf.mscred.flatcombine(input=("'"+"@"+self.flat_list+"'").replace('//','/'), 
                                 output=flat_comb, 
                                 combine='median', 

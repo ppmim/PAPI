@@ -642,7 +642,7 @@ class ClFits (object):
                 #self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 # No SIP or Paper IV table lookup distortion correction is applied.
                 self._ra = m_wcs.wcs_pix2world([[self.naxis1/2, self.naxis2/2]], 1)[0][0]
-                log.debug("Read RA-WCS coordinate =%s", self._ra)
+                #log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA'] # degrees supposed
             elif 'OBJCTRA' in myfits[0].header:
@@ -671,7 +671,7 @@ class ClFits (object):
                 #self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 # No SIP or Paper IV table lookup distortion correction is applied.
                 self._dec = m_wcs.wcs_pix2world([[self.naxis1/2, self.naxis2/2]], 1)[0][1]
-                log.debug("Read Dec-WCS coordinate =%s", self._dec)
+                # log.debug("Read Dec-WCS coordinate =%s", self._dec)
             elif 'DEC' in myfits[0].header:
                 self._dec = myfits[0].header['DEC']
             elif 'OBJCTDEC' in myfits[0].header:

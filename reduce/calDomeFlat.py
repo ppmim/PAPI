@@ -254,6 +254,7 @@ class MasterDomeFlat(object):
         # Combine the images to find out the median using sigma-clip algorithm;
         # the input images are scaled to a common mode, the pixels containing 
         # objects are rejected by an algorithm based on the measured noise (sigclip).
+        # For making a master flat, scale must always be set to 'mode'. (read from literature)
         iraf.mscred.flatcombine(input="@"+(self.__temp_dir+"/files_on.list").replace('//','/'),
                         output=flat_lampon,
                         combine='median',

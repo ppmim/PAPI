@@ -783,45 +783,45 @@ class ReductionSet(object):
               will be checked (see ClFits class)
         """
                    
-        mode='other' # default
+        mode = 'other' # default
                    
         #Step 1: we suppose list file is sorted out  by MJD
         #Step 2: get the data type of the first file and check sequence starting from this file
-        fits_0=datahandler.ClFits(self.m_LAST_FILES[0])
-        fits_1=datahandler.ClFits(self.m_LAST_FILES[1])
-        i=0
+        fits_0 = datahandler.ClFits(self.m_LAST_FILES[0])
+        fits_1 = datahandler.ClFits(self.m_LAST_FILES[1])
+        i = 0
         if fits_0.isSky() and fits_1.isObject():
-            mode='dither_off_on'
+            mode = 'dither_off_on'
             # Then, we are going to suppose the sequence S-T-S-T-S- .... (dither_off_on)
             for file in self.m_LAST_FILES:
                 if not i%2: #even
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
                 elif i%2: #odd
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
-                i=i+1         
+                i = i+1         
         elif fits_0.isObject() and fits_1.isSky():
             # Then, we are going to suppose the sequence T-S-T-S-T- .... (dither_on_off)
-            mode='dither_on_off'
+            mode = 'dither_on_off'
             for file in self.m_LAST_FILES:
                 if not i%2: #even
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
                 elif i%2: #odd
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
-                i=i+1                 
+                i = i+1                 
         elif fits_0.isObject() and fits_1.isObject():
             # check if all are objects ...
             # and if are, then, we are going to suppose the sequence T-T-T-T-T- .... (dither)
-            mode='dither'
+            mode = 'dither'
             for file in self.m_LAST_FILES:
-                fits=datahandler.ClFits(file)
+                fits = datahandler.ClFits(file)
                 if not fits.isObject():
                     return 'other'
         else:
@@ -1214,7 +1214,10 @@ class ReductionSet(object):
 
         Notes
         -----                 
-        This function is a wrapper for skyfilter.c (IRDR).              
+        - This function is a wrapper for skyfilter.c (IRDR). 
+        - The detection of SKY/TARGET frames is done in 'skyfilter_general' based
+        on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
+
         """               
         
         # Skyfilter parameters
@@ -1233,6 +1236,8 @@ class ReductionSet(object):
             destripe + '  ' + skymodel
         elif obs_mode=='other':
             # It comprises nodding pattern for extended objects 
+            # The detection of SKY/TARGET frames is done in 'skyfilter_general' based
+            # on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
             skyfilter_cmd = self.m_irdr_path+'/skyfilter_general '+ list_file \
             + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
         elif obs_mode=='dither_on_off': 
@@ -3002,7 +3007,7 @@ class ReductionSet(object):
         
         ########################################################################
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
-        #      each raw frame. This mode try to fit 
+        #      each raw frame.  
         ########################################################################
         if self.red_mode=='lab':
             log.info("**** Computing FWHM of each pre-reduced image ****")

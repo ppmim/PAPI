@@ -4984,11 +4984,55 @@ SExtractor ---> 12.2 (16x16), 12.3 (132x132), 2.75(FLUX_RADIUS) => 5.5
 
 17-Sep-2014 
 -----------
-Para configurar el tipo de ajuste (GAUSS, MOFFAT, etc) que hace imexam, lo hacemos con:
++ Prueba de secuencia de Extended Object tal que: T-S-T-T-S-T-S-T-T-S-T-...
+Lanzo un OB con el OT tal que un patrón 'Single' de dithering + ExtendenObject
+hacia el Norte; en total se generan 30 ficheros (20 de Target y 10 de Sky).
+Lanzo PAPI con diche secuencia en modo quick y la reconoce como de tipo "other",
+pero ExtendedObject, y llama a skyfilter_general que detecta también bien
+los Sky y los Target gracias al keyword IMAGETYP="SKY" !
+Por tanto, en principio parece que todo funcionaría correctamente.
+
++ Prueba de secuencia de Extended Object tal que: T-S-T-S-T-S-T-...
+  ->También la procesa correctamente.
++ Repito la misma secuencia (T-S-T-S-...) pero con MEF-integrados.
+  -> OK
+
+
+(P) + ¿ Qué hace PAPI con los FLAT_SER ??? (ver Calibration Series del OT)
+
+
+
+Notas: Para configurar el tipo de ajuste (GAUSS, MOFFAT, etc) que hace imexam, lo hacemos con:
 iraf> epar rimexam
 
 iraf> help cursors (Section 3.7)
 
+18-Sep-2014 
+-----------
++ Mail de BD sobre un bug en QL con suma de imagenes. El problems estaba en que
+en el imcombine tenía puesto scale='mode', con lo cual el resultado del promedio
+no quedaba muy bien. Lo arreglo poniendo scale='none'.
+
++ Repaso en todo PAPI para ver donde tengo mas scale='mode' y ver como de 
+importante sería usar el iraf.unlearn() por si acaso.
+
+Encuentro los siguientes:
+
+- calDomeFlat.py - pero según he leido: For making a master flat, this parameter must
+always be set to 'mode'.
+- calDark.py : scale='exposure', pero parece que es algo común a hacer para 
+crear el masterDark; de echo es un parametro del propio módulo calDark.py.
+- calBPM_X.py - varios, por las mismas razones que antes.
+
+
++ Unifico en mainGUI.py una única funcion mathOp(), pues había dos casi iguales.
+
++ Prueba unitaria de getAverageFWHM() usando psfmeasure.
+  - Consigo echarla a andar, y funciona con 100x100 o mayores, pero no con la
+  imagen 32x32. Definitivamente parece un bug en psfmeasure.
+  Otra "problema" que aún no se como resolver es que muestra muy brevemente
+  una ventana en negro, o a veces se ven las gráficas propias de psfmeasure.
+  
 
 
 PANIC computers installation
@@ -5382,15 +5426,12 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Mejorar el calculo/estimación del FWHM (psfmesure, imexam ), sobre todo para
+las pruebas del commissioning y para el cálculo del mejor foco (eval_focus_serie)
 - how to manage MEF calibration files ? (currently darks, flats are not splited !)
-
-- Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
-
 - Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
 modificarlo para que use astropy.io.fits !!
-
 - modificar calBPM.applyBPM() para MEF y subwindows !!
-
 - IDEA de WFCAM: 
 """
 The wings of stellar sources (under the 1.5 sigma threshold) can bias the sky 
@@ -5399,8 +5440,6 @@ construction and produce dark rings after sky subtraction. To prevent this, the 
 
 - Ver como puede influir para photometría el usar FLUX_AUTO o FLUX_APER o FLUX_BEST
 en lugar de MAG_AUTO (Kron-like elliptical aperture magnitude).
-
-
 - Ver como usar FLAG_IMAGE/WEIGHT_IMAGE en Sextractor con los BPM !!!
 - ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, SExtractor, Numpy...):
 
@@ -5427,12 +5466,10 @@ documentación GEIRS (3.3 Postprocessing)
 PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
 - Comprobar lectura correcta de nuevas keys : CAM_DETROT90 y CAM_DETXYFLIP en r719M.
 
-
 - Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
 o SWARP (VTerrón lo está usando y está contento...)
 
-(
-(P) - Actualizar TN de FITS headers:
+- Actualizar TN de FITS headers:
 
    DET_ID = 'SGi'
    ...
@@ -5474,7 +5511,6 @@ usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
 - opción en PAPI para reducir sólo un detector/es
 - Configurar sonidos (pulseaudio)
-- Add some kind of Quality check 
 - Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
 - No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
 El problema surge cuando se mezcan distintos tipos de formatos FITS (MEF, single, ...),
@@ -5486,7 +5522,7 @@ según el instrumento (HAWK-I no tiene WCS en los Darks!)
 - Fotometría con SCAMP !!! (ver THELI) ??? todavia no tengo claro si se puede hacer !!
 - Quizás habría que añadir otro parametro para indicar si queremos que la
 distorsión del campo se elimine antes del coadd (a nivel individual en cada imagen
-del dithering) o bien despues del coadd final. Yo creo que se con hacerla al final
+del dithering) o bien despues del coadd final. Yo creo que con hacerla al final
 debería bastar, pues la diferencia de distorsión en cada uno de las imagenes
 de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho.
 - Probar bien solveAstrometry() con HAWK-I
@@ -5495,13 +5531,8 @@ de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho
 son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 - cuando RM nos pase la r711M, probar los MEF integrador, los subwindows con MEF, etc , etc ...
 - Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
-- Comporbar si la secuencia T-S-T-T-S-T-T-S-T-T-S ....la acepta bien PAPI !!! simular !!!
-- ¿ Qué hace PAPI con los FLAT_SER ??? (ver Calibration Series del OT)
-- FOCUS --> valor de IMAGETYP  para Series de FOCO (añadir en documentación y comprobar en PAPI)
 - Documento (TN) Data Grouping algorithms
 - Documento instalación de PANIC-SW
-- PANIC Tesis ala O2000 !!!
-
 
 - PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
 sin embargo, parece que calDark.py no se queja !
@@ -5522,6 +5553,8 @@ incluso la astrometria no parece funcionar
 
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
 - añadir sonidos con from PyQt4.phonon import Phonon (ver sound.py en tests)
+- PANIC Tesis ala O2000 !!!
+
 
 BUGS
 ====
