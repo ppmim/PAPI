@@ -568,7 +568,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     func_to_run = mathOp
                     _suffix = "_" + os.path.basename(last_file)
                     out_filename = self.m_outputdir + "/" + os.path.basename(filename).replace(".fits", _suffix) 
-                    params = ([filename, last_file], '-', out_filename, self.m_tempdir)
+                    params = ([filename, last_file], '-', 
+                                         out_filename, self.m_tempdir)
                     self._task_queue.put([(func_to_run, params)])
                     
                 else:
@@ -1603,12 +1604,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Subtract selected files", 
             triggered=self.subtractFrames_slot)
         
-        self.sumAct = QtGui.QAction("Sum Images", self,
+        self.sumAct = QtGui.QAction("Combine Images (median)", self,
             shortcut="Ctrl++",
-            statusTip="Sum selected files", 
+            statusTip="Median combine selected files", 
             triggered=self.sumFrames_slot)
         
-        self.divAct = QtGui.QAction("Div Images", self,
+        self.divAct = QtGui.QAction("Divide Images", self,
             shortcut="Ctrl+/",
             statusTip="Divide selected files", 
             triggered=self.divideFrames_slot)
@@ -2099,7 +2100,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def sumFrames_slot(self):
         """
-        This methot is called to sum two images selected from the File List View
+        This methot is called to **combine** the images selected from the 
+        File List View.
+        
+        Note: The type of combinning operation to the pixels is a median after
+        a sigma reject algorith.
+
         """
 
         if (len(self.m_popup_l_sel)<2):
@@ -2119,7 +2125,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread = reduce.ExecTaskThread(mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,
-                                                   '+', str(outFilename))
+                                                   'combine', str(outFilename))
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", 
@@ -3406,14 +3412,16 @@ class LoggingConsole (object):
 #            
 def mathOp(files, operator, outputFile=None, tempDir=None):
     """
-    This method will do the math operation (+,-,/) specified with the 
+    This method will do the math operation (+,-,/, combine) specified with the 
     input files.
+
+    Note: The type of combinning operation to the pixels is a median after
+    a sigma reject algorithm.
     """
     
     log.debug("Start mathOp")
     
     if tempDir==None:
-        print "TEMP DIR is None !!"
         t_dir = "/tmp"
     else:
         t_dir = tempDir
@@ -3422,7 +3430,7 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
         os.close(output_fd)
 
-    if operator!='+' and operator!='-' and operator!='/':
+    if operator!='+' and operator!='-' and operator!='/' and operator!='combine':
         log.error("Math operation not supported")
         return None
 
@@ -3430,8 +3438,8 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         # Remove an old output file (might it happen ?)
         misc.fileUtils.removefiles(outputFile)
         ## MATH operation '+'
-        if (operator=='+' and len(files)>2):
-            log.debug("Frame list to combine = [%s]", files )
+        if (operator=='combine' and len(files)>1):
+            log.debug("Files to combine = [%s]", files )
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
             # Very important to not scale the frames, because it could 
             # produce wrong combined images due to outliers (bad pixels)
@@ -3450,14 +3458,17 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
                      #expname='EXPTIME'
                      #ParList = _getparlistname ('flatcombine')
                      )
-        ## MATH operation '-,/,*'
-        else:
+        ## MATH operation '-,/,*' and just 2 files
+        elif len(files)==2:
             iraf.mscarith(operand1=files[0],
                       operand2=files[1],
                       op=operator,
                       result=outputFile,
                       verbose='yes'
                       )
+        else:
+            log.error("Operation not allowed")
+            return None
     except Exception,e:
         log.error("[mathOp] An erron happened while math operation with FITS files")
         raise e

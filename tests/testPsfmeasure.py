@@ -39,7 +39,8 @@ def getAverageFWHMfromPsfmeasure(image, coord_file):
     return float (match.group(1))
 
    
-myfile = "/home/panic/pruebaF.fits"
+#myfile = "/home/panic/pruebaF.fits"
+myfile = "/home/panic/Z_SG1_1_zopt.fits"
 coord_file = "/tmp/coord_file.txt"
 
 fwhm = getAverageFWHMfromPsfmeasure(myfile, coord_file)

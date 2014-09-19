@@ -5032,7 +5032,43 @@ crear el masterDark; de echo es un parametro del propio módulo calDark.py.
   imagen 32x32. Definitivamente parece un bug en psfmeasure.
   Otra "problema" que aún no se como resolver es que muestra muy brevemente
   una ventana en negro, o a veces se ven las gráficas propias de psfmeasure.
-  
+
+
+19-Sep-2014 
+-----------
++ Modificación en QL de rutina mathOp() y sumFrames_slot(); 
+ahora en lugar del operador '+', ahora uso el operador "combine"; además cambio
+el nombre en el Pop-up menu "Combine Images (median)" en lugar "Sum". Esto último
+me lo surió BD, y la verdad es que tiene razón. 
+Ahora, lo que no hace el QL es la suma aritmética de imagenes, aunque se podría
+añadir ....
+
++ BD además me dice que todos los calculos de FWHM de las segundas pruebas con
+el StarSimulator las han hecho con el QL, pero que en algunas imágenes extrañamente
+no da un valor para el FWHM, aunque yo he comprobado que IRAF.imexam si los da 
+sin problemas.
+
+
+"""
+Yes, all the values came from the QL, the range about 1-2px and the lowest being 0.92px. Actually, the image /home/panic/data2/out/2014-09-18_SS_zenith_Z/Z_SG1_1_zopt.fits was not even measurable. I'd be curious what iraf says there. 
+"""
+
+Modificando el DETECT_THRESH a 3 en lugar de 5, si da un valor de 6.8px, que 
+queda muy lejos del valor real....Sin embargo el FLUX_RADIUS si está mas cerca,
+pues da un valor de 0.537, que resultaría en un valor de FWHM=0.537*2.
+Pero esto no ocurre siempre. 
+
+En resumen, creo que no hay manera de que SExtractor nos des un valor bueno
+para FWHM.
+
+(P) - Buscar el artículo sobre SExtractor del chaval que trabajó en ALHAMBRA y
+que ahora está en Teruel.
+ 
+
+
+
+
+
 
 
 PANIC computers installation
