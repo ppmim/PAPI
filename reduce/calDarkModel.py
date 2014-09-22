@@ -138,30 +138,30 @@ class MasterDarkModel(object):
         f_readmode = -1
         f_n_extensions = -1
         for iframe in framelist:
-            fits = datahandler.ClFits(iframe)
-            log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
+            myfits = datahandler.ClFits(iframe)
+            log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, myfits.exptime, myfits.type)) 
             # Check TYPE (dark)
-            if not fits.isDark():
+            if not myfits.isDark():
                 log.warning("Warning: Task 'createDarkModel' found a non dark frame. Skipping %s", iframe)
                 darks[i] = 0
             else:
                 # Check READMODE
-                if ( f_readmode!=-1 and (f_readmode!= fits.getReadMode() )):
+                if ( f_readmode!=-1 and (f_readmode!= myfits.getReadMode() )):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different  READMODE")
                     darks[i] = 0  
                     #continue
                     raise Exception("Found a DARK frame with different READMODE") 
                 else: 
-                    f_readmode = fits.getReadMode()
-                    f_n_extensions = fits.getNExt()
+                    f_readmode = myfits.getReadMode()
+                    f_n_extensions = myfits.getNExt()
                     #log.debug("NEXT= %s"%(f_n_extensions))
                     darks[i] = 1
                 
             i = i+1
         log.debug('All frames checked')   
         
-        naxis1 = fits.naxis1
-        naxis2 = fits.naxis2            
+        naxis1 = myfits.naxis1
+        naxis2 = myfits.naxis2            
         ndarks = (darks==1).sum()
         
         if ndarks<2:
