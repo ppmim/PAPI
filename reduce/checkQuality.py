@@ -43,6 +43,8 @@ import os
 import astropy.io.fits as fits
 import sys
 
+from pyraf import iraf
+import re
 
 import misc.utils as utils
 import astromatic
@@ -264,13 +266,28 @@ class CheckQuality(object):
             print "STD2 = ",std
             efwhm = numpy.median(m_good_stars[:,8])
             print "best-FWHM-median(pixels) = ", efwhm
+            print "Mean-FWHM(px) = ", numpy.mean(m_good_stars[:,8])
             print "FLUX_RADIUS (as mentioned in Terapix T0004 explanatory table) =", numpy.median(m_good_stars[:,9])
             print "Masked-mean = ", ma.masked_outside(m_good_stars[:,8], 0.01, 3*std).mean()
             
             if self.write:
                 fits_file[0].header.update('hierarch PAPI.SEEING', efwhm*self.pixsize)
                 print "Fits keyword updated " 
-            
+
+            # 2nd Estimation Method (psfmeasure)
+            psfmeasure = True
+            if psfmeasure:
+                coord_text_file = "/tmp/coord_file.txt"
+                # Build the coord_file
+                with open(coord_text_file, "w") as text_file:
+                    for source in m_good_stars:
+                        text_file.write("%s   %s\n"%(source[15], source[16]))
+                try:        
+                    pfwhm = self.getAverageFWHMfromPsfmeasure(self.input_file, coord_text_file)
+                    log.debug("Average FWHM (psfmeasure-Moffat): %s"%pfwhm)
+                except Exception,e:
+                    log.error("Cannot run properly iraf.psfmeasure")
+                    log.error("%s"%str(e))
         else:
             print "Not enough good stars found !!"
             fits_file.close(output_verify='ignore')    
@@ -287,7 +304,7 @@ class CheckQuality(object):
         return efwhm, std, xwin, ywin
 
     
-    def getAverageFWHMfromPsfmeasure(image, coord_file):
+    def getAverageFWHMfromPsfmeasure(self, image, coord_file):
         """
         Calculate the average Full Width Half Max for the objects in image
         at the coords specified in coord_file calling iraf.obsutil.psfmeasure.
@@ -295,9 +312,11 @@ class CheckQuality(object):
         The coordinates in coord_file should be in the same world coordiantes
         as the WCS applied to the image.
         
-        Exam. coord_file:
+        Exam. of coord_file:
         1024  1024
-        
+        1100  1200
+        ...
+
         """
 
         iraf.noao(_doprint=0)
@@ -309,8 +328,8 @@ class CheckQuality(object):
         psfmeasure.coords = "mark1"
         psfmeasure.wcs = "world"
         psfmeasure.display = "no"
-        psfmeasure.size = "MFWHM"
-        psfmeasure.radius = 5
+        psfmeasure.size = "MFWHM"  # Moffat profile
+        psfmeasure.radius = 10
         psfmeasure.iterations = 2
         psfmeasure.imagecur = coord_file
         psfmeasure.graphcur = '/dev/null' #file that is empty by definition
@@ -466,7 +485,7 @@ detector (Q1,Q2,Q3,Q4).
         
         text_file = open("Output.txt", "w")
         text_file.write("#  Filename \t FWHM \t STD \t X \t Y\n")
-        text_file.write("#  X,Y =spatial coordinates of last star found. \n")
+        text_file.write("#  X,Y =spatial coordinates of **last** star found. \n")
 
         for m_file in filelist:
             try:

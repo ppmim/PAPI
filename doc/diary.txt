@@ -4998,9 +4998,6 @@ Por tanto, en principio parece que todo funcionaría correctamente.
   -> OK
 
 
-(P) + ¿ Qué hace PAPI con los FLAT_SER ??? (ver Calibration Series del OT)
-
-
 
 Notas: Para configurar el tipo de ajuste (GAUSS, MOFFAT, etc) que hace imexam, lo hacemos con:
 iraf> epar rimexam
@@ -5061,10 +5058,51 @@ Pero esto no ocurre siempre.
 En resumen, creo que no hay manera de que SExtractor nos des un valor bueno
 para FWHM.
 
-(P) - Buscar el artículo sobre SExtractor del chaval que trabajó en ALHAMBRA y
-que ahora está en Teruel.
- 
 
+21-Sep-2014 
+-----------
++ Buscar el artículo sobre SExtractor de Cristobal Hornillos que trabajó en 
+ALHAMBRA y que ahora está en Teruel: http://iopscience.iop.org/0004-637X/595/1/71/pdf/57361.web.pdf
+
+  To extract the sources from the images SExtractor (Bertin
+  & Arnouts 1996) has been used. Source detection in SExtractor is governed by 
+  three main parameters: 
+    
+    - detection kernel, 
+    - minimum area, and 
+    - detection threshold. 
+
+  The ﬁrst two are well constrained as a function of the seeing in each
+  image. To constrain the last one, DETECT_THRESH, an agreement between a good 
+  detection eﬃciency and a low number of spurious detections at the faintest 
+  magnitudes is necessary.
+
+
+Pruebo de nuevo con varios FILTER (gauss2.0_3x3) y no observo mejora, pues sigo 
+obteniendo valores ~6px para el FWHM, incluso cambiando el DETECT_THRESH.
+
++ Implemento en checkQuality.py la funcion getAverageFWHMfromPsfmeasure() para
+obtener la FWHM medio usando iraf.psfmeasure. Funciona, pero con los siguientes 
+problemas:
+
+   - el valor medio de FWHM (configurado para MOFFAT) depende mucho de los falsos
+   positivos de los objetos detectados por SExtracor, pues se contamina la media
+   de FWHM con valores muy grandes. Para obtener una lista adecuada de objetos
+   es **muy importante** fijar **correctamente** los siguientes valores:
+
+       - SATUR_LEVEL
+       - DETECT_THRESH,
+       - min_iso_area (DETECT_MINAREA)
+
+  en función de eso, los valores de SExtractor para FWHM y IRAF.psfmeasure 
+  coincidirán en mayor o menor medida.
+  
+  - la gráfica de IRAF.psfmeasure se muestra para cada imagen, con lo que no
+  queda muy bien, y puede dar problemas cuando se ejecute sin XWin (ssh -X).
+
+
+
+(P) + ¿ Qué hace PAPI con los FLAT_SER ??? (ver Calibration Series del OT)
 
 
 
@@ -5464,6 +5502,12 @@ NEXT TODOs
 ==========
 - Mejorar el calculo/estimación del FWHM (psfmesure, imexam ), sobre todo para
 las pruebas del commissioning y para el cálculo del mejor foco (eval_focus_serie)
+  ==> Ya he trabajado bastante sobre eso, pero no consigo encontrar algo que 
+  funcione para cualquier tipo de imagenes, depende mucho de:
+
+       - DETECT_THRESH, DETEC_MINAREA, SATUR_LEVEL
+
+
 - how to manage MEF calibration files ? (currently darks, flats are not splited !)
 - Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
 modificarlo para que use astropy.io.fits !!
