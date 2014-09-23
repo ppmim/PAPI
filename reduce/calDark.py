@@ -169,7 +169,7 @@ class MasterDark(object):
         good_frames = []
         
         for iframe in framelist:
-            f = datahandler.ClFits ( iframe )
+            f = datahandler.ClFits( iframe )
             log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" 
                       %(iframe, f.expTime(), f.getType(), f.getNcoadds(), 
                         f.getReadMode() )) 

@@ -1243,9 +1243,9 @@ class DataSet(object):
     ############################################################    
     def ListDataSet( self ):
         """
-           \brief List all entries in the dataset
+        List all entries in the dataset
 
-           \return 0 if all was successful, otherwise <0
+        Return 0 if all was successful, otherwise <0
         """
 
         FIELD_MAX_WIDTH = 20
@@ -1270,9 +1270,9 @@ class DataSet(object):
      
     def ListDataSetNames( self ):
         """
-            \brief List all entries in the dataset
+        List all entries in the dataset.
 
-            \return 0 if all was successful, otherwise <0
+        Return 0 if all was successful, otherwise <0
         """
 
         FIELD_MAX_WIDTH = 20

@@ -5059,7 +5059,7 @@ En resumen, creo que no hay manera de que SExtractor nos des un valor bueno
 para FWHM.
 
 
-21-Sep-2014 
+22-Sep-2014 
 -----------
 + Buscar el artículo sobre SExtractor de Cristobal Hornillos que trabajó en 
 ALHAMBRA y que ahora está en Teruel: http://iopscience.iop.org/0004-637X/595/1/71/pdf/57361.web.pdf
@@ -5100,12 +5100,45 @@ problemas:
   - la gráfica de IRAF.psfmeasure se muestra para cada imagen, con lo que no
   queda muy bien, y puede dar problemas cuando se ejecute sin XWin (ssh -X).
 
++ Encuentro un bug en mef.py: no permite hacer split() de fichero que no 
+contengan RA,DEC; y de cubos ?? (dark_model ???)
+
+ ==> Solucionado lo de RA,DEC, pero aún hay que solucionar la conversión
+ de los dark_model (cubos) a MEF o a single_file_per_detector en mef.py !!!
 
 
-(P) + ¿ Qué hace PAPI con los FLAT_SER ??? (ver Calibration Series del OT)
+23-Sep-2014 
+-----------
++ Incluyo el soporte de cubos en mef.convertGEIRSToMEF() y mef.splitGEIRSToSimple(),
+de forma que ahora (por ejemplo) los DARK_MODEL (full-frames cube) se pueden
+usar para la reducción de datos de PANIC dividiendo la reducción en 4 instancias,
+una para cada detector. Pare eso hay que dividir (split) también los datos de
+calibración (MASTER_DARK o DARK_MODE, FLATS, etc) para que cada detector se pueda
+reducir de forma independiente.
+Además añador alguna mejora en mef.py y/o bug.
+Hago una prueba/simulación de reducción de PANIC-SCI con Dark_Modely FF y se hace
+bien, se dividen bien y se procesan hasta donde se puede.
+
++ Encuentro un problema (nooooo, leer debajo) en QL: durante el procesamiento de 
+los datos on-line, como se hacen todos a la vez, es decir, que conforme llegan 
+nuevos DS se añaden a la cola de procesamiento pero de dicha cola se van 
+procesando conforme llegan, sin esperar que haya terminado el anterior trabajo.
+Esto provoca que una secuencia de TW-FF no se pueda procesar pues puede que el
+DARK_MODEL correspondiente no haya terminado aún.
+
+NOOOOO, eso no es cierto, compruebo que una sequencia no se procesa hasta que
+no termina la anterior, con lo que no hay tales problemas. El problema de no
+procesar una sequencia de TW-FF fue debido a que fallo la creación del DarkModel
+pero por otra razón.
+
++ ¿ Qué hace PAPI con los FLAT_SER (Calibration Series del OT) ?
+Pues aunque son etiquetadas como DOME_FLAT, PAPI luego las procesa como TWFLAT;
+por tanto, está contemplada correctamente dicha opción en reductionset.py.
 
 
 
+24-Sep-2014 
+-----------
 
 
 

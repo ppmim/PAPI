@@ -328,7 +328,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Timer for TaskQueue (pending tasks)
         self._queue_timer_todo = QTimer( self )
         self.connect( self._queue_timer_todo, QtCore.SIGNAL("timeout()"), 
-                      self.TaskRunner )
+                      self.taskRunner )
         self._queue_timer_todo.start(1000)    # 1 second continuous timer
         
         
@@ -809,7 +809,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
     def checkDoneQueue(self):
         """
-        Check Queue of done tasks launched with Process in TaskRunner.
+        Check Queue of done tasks launched with Process in taskRunner.
         Function called periodically (every 1 sec).
         """
         if not self._done_queue.empty():
@@ -2890,43 +2890,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else:
                 QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
     
-    def createCalibs_slot_PARA_BORRAR(self):
-        
-        """
-        Given the current dataset files, compute the whole master calibration 
-        files found in the DB dataset.
-        """
-        
-        fileList = self.inputsDB.GetFilesT("ANY")
-        
-        if len(fileList)>1:
-            #Change cursor
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-            
-            try:
-                self._task = RS.ReductionSet( fileList, self.m_outputdir, 
-                                            out_file=self.m_outputdir+"/red_result.fits",
-                                            obs_mode="dither", dark=None, 
-                                            flat=None, bpm=None, 
-                                            red_mode="quick",
-                                            group_by=self.group_by, 
-                                            check_data=True, 
-                                            config_dict=self.config_opts )
-                
-                thread = reduce.ExecTaskThread(self._task.buildCalibrations, 
-                                             self._task_info_list)
-                thread.start()
-            except Exception,e:
-                # Anyway, restore cursor.
-                # Although it should be restored in checkLastTask, could happend 
-                # an exception while creating the class RS, thus the 
-                # ExecTaskThread can't restore the cursor.
-                QApplication.restoreOverrideCursor() 
-                QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
-                raise e
-        else:
-            QMessageBox.information(self,"Info", QString("No files found"))
-    
+      
     def createCalibs_slot(self):
         
         """
@@ -3114,7 +3078,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #self.logConsole.info(QString("    - %1").arg(file))
         self.logConsole.info("... processing sequence ...")
             
-        #Create working thread that process the files
+        # Create working thread that process the files
         try:
     
             ###self._task = RS.ReductionSet(files, self.m_outputdir, out_file=outfilename,
@@ -3137,9 +3101,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Here, it is decided if last calibration files will be used 
             if self.checkBox_pre_subDark_FF.checkState()==Qt.Checked:
                 calib_db_files = self.outputsDB.GetFiles()
+                self.config_opts['general']['apply_dark_flat'] = 1
                 log.debug("ext-calibretion DB loaded")
             else:
                 calib_db_files = None
+                self.config_opts['general']['apply_dark_flat'] = 0
 
             #
             # Load config values from Setup Tab
@@ -3167,7 +3133,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else: nhw = 2
             self.config_opts['skysub']['hwidth'] = nhw
             
-            #
+            # Select detector (map SGi to Qi)
             if self.comboBox_detector.currentText()=="All": detector = 'all'
             elif self.comboBox_detector.currentText()=="SG1": detector = 'Q3'
             elif self.comboBox_detector.currentText()=="SG2": detector = 'Q1'
@@ -3200,10 +3166,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
             raise e # Para que seguir elevando la excepcion ?
         
-    def TaskRunner(self):
+    def taskRunner(self):
         """
         Procedure that continuisly in checking the queue of pending tasks to be 
         done. The results are obtained later at checkDoneQueue().
+
+        The tasks are processed sequentially, that is, a new proccesing start only
+        when the previous one has finished. 
         """
  
         # Update the number of tasks (not necessarialy equals to number of
@@ -3226,11 +3195,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             except Exception,e:
                 #NOTE: I think this point will never be reached !!!
                 log.error("Error in task Runner: %s"%(str(e)))
-                self.logConsole.debug("Error in TaskRunner")
+                self.logConsole.debug("Error in taskRunner")
                 self.m_processing = False
                 QApplication.restoreOverrideCursor()
             finally:
-                log.debug("End of TaskRunner")
+                log.debug("End of taskRunner")
                  
     def worker_original(self, input, output):
         """
@@ -3276,7 +3245,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             log.info("[worker] task done !")
         except Exception,e:
             log.error("[worker] Error while processing task: %s"%str(e))
-            # Because excetions cannot be catched in TaskRunner due to a 
+            # Because excetions cannot be catched in taskRunner due to a 
             # multiprocessing.Process exception is inserted in output queue 
             # and then recognized
             output.put(e) # the DoneQueue timer will detect it

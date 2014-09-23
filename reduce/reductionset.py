@@ -198,7 +198,7 @@ class ReductionSet(object):
             Then, if during the reduction of a ReductionSet(RS) no calibration 
             (dark, flat) are found in the current RS, then PAPI will look for 
             them into this directory.
-            If the directory does not exists, of no calibration are found, then
+            If the directory does not exists, or no calibration are found, then
             no calibrations will be used for the data reduction.
             Note that the calibrations into the current RS have always higher 
             priority than the ones in the external calibration DB.   
@@ -724,7 +724,7 @@ class ReductionSet(object):
                     (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
                                                                    out_dir=self.temp_dir)
                 except Exception,e:
-                    log.debug("Some error while splitting PANIC data set. %s",str(e))
+                    log.error("Some error while splitting PANIC data set. %s",str(e))
                     raise e   
             else:
                 # No split is required
@@ -2219,11 +2219,11 @@ class ReductionSet(object):
         """
         
         
-        log.debug("[reduceSeq] Starting ...")
+        log.debug("[reduceSeq] ** Starting reduction **")
 
         # print sequence in log file
         for i_file in sequence:
-            log.debug(sequence[0])
+            log.debug(i_file)
         
         #
         # First of all, let see whether Non-linearity correction must be done
@@ -2391,6 +2391,7 @@ class ReductionSet(object):
                 
                 #External (ExpTime is not a constraint)
                 if len(master_dark)==0 and self.ext_db!=None:
+                    log.debug("No MasterDarkModel in current local DB. Trying in external (historic) DB...")
                     master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
                 
                 # if required, master_dark will be scaled in MasterTwilightFlat class
@@ -2480,7 +2481,7 @@ class ReductionSet(object):
             l_out_dir = ''
             results = None
             out_ext = []
-            log.debug("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
+            log.info("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
             if len(sequence) < self.config_dict['general']['min_frames']:
                 log.info("[reduceSeq] Found a too SHORT Obs. object sequence.\n\
                  Only %d frames found. Required >%d frames"%(len(sequence),

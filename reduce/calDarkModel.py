@@ -232,6 +232,7 @@ class MasterDarkModel(object):
 
         prihdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
         prihdu.header.add_history('Dark model based on %s' % framelist)
+        prihdu.header.add_history('Plane 0: bias ; Plane 1: dark current')
         
         if f_n_extensions>1:
             prihdu.header.update('EXTEND', True, after = 'NAXIS')
