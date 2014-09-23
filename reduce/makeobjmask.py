@@ -46,7 +46,7 @@ import os
 import glob
 import fileinput
 from optparse import OptionParser
-import pyfits
+import astropy.io.fits as fits
 
 from misc.paLog import log
 import astromatic.sextractor
@@ -156,7 +156,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         if single_point==True:
             log.debug("Single point mask reduction")
             # NOTE we update/overwrite the image and don't create a new one
-            myfits = pyfits.open(fn+".objs", mode="update")
+            myfits = fits.open(fn+".objs", mode="update")
             if len(myfits)>1: # is a MEF file
                 next = len(myfits)-1
             else: 

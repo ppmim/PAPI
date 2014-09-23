@@ -55,7 +55,7 @@ import misc.robust as robust
 import calGainMap 
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 import numpy
 import datahandler
 
@@ -209,7 +209,7 @@ class SuperSkyFlat(object):
         # median, however we can use also robust.mean() that produces a similar
         # result. 
         if self.norm:
-            f = pyfits.open(tmp1, 'update', ignore_missing_end=True )
+            f = fits.open(tmp1, 'update', ignore_missing_end=True )
             #MEF frame
             if len(f)>1:
                 chip = 1 # normalize wrt to mode of chip 1
@@ -317,7 +317,7 @@ class SuperSkyFlat(object):
             f[0].header.add_history(msg)
         else:
             # Update FITS header 
-            f = pyfits.open(tmp1,'update', ignore_missing_end=True)
+            f = fits.open(tmp1,'update', ignore_missing_end=True)
             f[0].header.add_history("[calSuperFlat] Non-Normalized Super-Flat created from : %s"%str(m_filelist))
 
         f[0].header.set('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')

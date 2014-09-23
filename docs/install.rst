@@ -11,8 +11,7 @@ The pipeline is written in Python and developed at the `Institute of Astrophysic
 of Andalusia (CSIC) <http://www.iaa.es/>`_. The automated processing steps 
 include basic calibration (removeing instrumental signature), cosmic-ray removal, 
 treatment for electronic ghosts (cross-talk), sky subtraction, non-linear 
-count-rate correction, robust alignment and registration for 
-large mosaics. 
+count-rate correction, robust alignment and registration. 
 
 
 This manual is a complete description of the data reduction recipes implemented 

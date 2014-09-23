@@ -26,7 +26,7 @@ import shutil
 import tempfile
 from optparse import OptionParser
 import fileinput
-import pyfits
+import astropy.io.fits as fits
 
 
 # PAPI modules
@@ -60,7 +60,7 @@ def initWCS( input_image, pixel_scale):
         raise e
     
     try:
-        fits_file = pyfits.open(input_image, 'update', ignore_missing_end=True)
+        fits_file = fits.open(input_image, 'update', ignore_missing_end=True)
     except Exception,e:
         log.error("Error reading FITS %s : %s"%(f,str(e)))
         raise e
@@ -501,7 +501,7 @@ def filter_area(cat_filename, max_size=200):
 
     import numpy
     try:
-        hdus = pyfits.open(cat_filename, "update")
+        hdus = fits.open(cat_filename, "update")
         #mask = hdus[2].data.field('ISOAREA_IMAGE')<max_size
         mask = numpy.logical_and( hdus[2].data.field('ISOAREA_IMAGE')<max_size,
                                   hdus[2].data.field('FLAGS')==0)
@@ -777,8 +777,6 @@ class AstroWarp(object):
         log.debug("*** Creating objects catalog (SExtractor)....")
         for file in self.input_files:
             sex = astromatic.SExtractor()
-            #sex.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
-            #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
             sex.config['CATALOG_TYPE'] = "FITS_LDAC"
             sex.config['CATALOG_NAME'] = file + ".ldac"
             sex.config['DETECT_THRESH'] = self.config_dict['astrometry']['mask_thresh']

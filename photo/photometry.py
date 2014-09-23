@@ -156,7 +156,7 @@ def catalog_xmatch2( cat1, cat2, filter_column, error=2.0, min_snr=10):
     
     Returns
     -------
-        Two list: a list with MAG_AUTO from Sextractor and a second list 
+        Two list: a list with MAG_AUTO from SExtractor and a second list 
         with Magnitudes from 2MASS.  
     """
     
@@ -780,7 +780,8 @@ class STILTSwrapper (object):
 def doPhotometry(input_image, pixel_scale, catalog, output_filename, 
                  snr=10.0, zero_point=0.0):
     """
-    Run the rough photometric calibraiton
+    Run the rough photometric calibraiton based on MAG_AUTO (SExtractor, 
+    Kron-like elliptical aperture magnitude) and the 2MASS catalog magnitudes.
     
     Parameters
     ----------
@@ -855,6 +856,8 @@ def doPhotometry(input_image, pixel_scale, catalog, output_filename,
     image_catalog = os.path.splitext(input_image)[0]  + ".xml"
     
     sex = astromatic.SExtractor()
+    # The .param file is created automatically on sextractor.py, and
+    # includes the MAG_AUTO, FLUX_AUTO, etc.. 
     sex.ext_config['CHECKIMAGE_TYPE'] = "NONE"
     sex.config['CATALOG_TYPE'] = "ASCII_VOTABLE"
     sex.config['CATALOG_NAME'] = image_catalog

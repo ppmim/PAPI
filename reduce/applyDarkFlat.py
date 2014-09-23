@@ -54,7 +54,8 @@ import datahandler
 from misc.paLog import log
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
+
 import numpy
 
 
@@ -159,7 +160,7 @@ class ApplyDarkFlat(object):
                 log.error(msg)
                 raise Exception(msg)
             else:
-                dark = pyfits.open(self.__mdark)
+                dark = fits.open(self.__mdark)
                 cdark = datahandler.ClFits (self.__mdark)
                 dark_time = cdark.expTime()
                 
@@ -190,7 +191,7 @@ class ApplyDarkFlat(object):
                 log.error(msg)
                 raise Exception(msg)
             else:
-                flat = pyfits.open(self.__mflat)
+                flat = fits.open(self.__mflat)
                 cflat = datahandler.ClFits (self.__mflat)
                 
                 if not cflat.isMasterFlat() and not self.__force_apply:
@@ -261,7 +262,7 @@ class ApplyDarkFlat(object):
             if not os.path.exists(iframe):
                 log.error("File '%s' does not exist", iframe)
                 continue  
-            f = pyfits.open(iframe)
+            f = fits.open(iframe)
             cf = datahandler.ClFits (iframe)
             log.debug("Science frame %s EXPTIME= %f TYPE= %s FILTER= %s"\
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter()))
@@ -328,7 +329,7 @@ class ApplyDarkFlat(object):
 
                         # Get BPM
                         if self.__bpm!=None: 
-                            bpm_data = pyfits.getdata(self.__bpm, ext= chip+1, 
+                            bpm_data = fits.getdata(self.__bpm, ext= chip+1, 
                                                       header=False)
 
                     # Single
@@ -364,7 +365,7 @@ class ApplyDarkFlat(object):
                         if self.__bpm!=None:
                             # bpm_data: must be an array that is True or >0 
                             # where bad pixels
-                            bpm_data = pyfits.getdata(self.__bpm, header=False)
+                            bpm_data = fits.getdata(self.__bpm, header=False)
                                                                
                     # To avoid NaN values due to zero division
                     __epsilon = 1.0e-20
@@ -462,10 +463,10 @@ def fixpix(im, mask, iraf=False):
 
         badfits = tempfile.NamedTemporaryFile(suffix=".fits").name
         outfits = tempfile.NamedTemporaryFile(suffix=".fits").name
-        pyfits.writeto(badfits, mask.astype(numpy.int16))
-        pyfits.writeto(outfits, im)
+        fits.writeto(badfits, mask.astype(numpy.int16))
+        fits.writeto(outfits, im)
         IRAF.fixpix(outfits, badfits)
-        cleaned = pyfits.getdata(outfits)
+        cleaned = fits.getdata(outfits)
         os.remove(badfits)
         os.remove(outfits)
         return cleaned

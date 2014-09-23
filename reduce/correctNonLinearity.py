@@ -36,7 +36,7 @@ _version = '1.1'
 ################################################################################
 # Import necessary modules
 import numpy as np
-import pyfits
+import astropy.io.fits as fits
 import dateutil.parser
 import sys
 import os
@@ -194,7 +194,7 @@ class NonLinearityCorrection(object):
         """   
         
         # load raw data file
-        hdulist = pyfits.open(data_file)
+        hdulist = fits.open(data_file)
         dataheader = hdulist[0].header
         
         # Check if input files are in MEF format or saved as a full-frame with 
@@ -213,13 +213,13 @@ class NonLinearityCorrection(object):
                 raise ValueError('Mismatch in header data format. Only MEF files allowed.')
             
             # load new MEF raw data file
-            hdulist = pyfits.open(new_mef_files[0])
+            hdulist = fits.open(new_mef_files[0])
             dataheader = hdulist[0].header
             # copy the filename to be deleted after processing (?)
             to_delete = new_mef_files[0]
 
         # load model
-        nlhdulist = pyfits.open(self.model)
+        nlhdulist = fits.open(self.model)
         nlheader = nlhdulist[0].header
 
         # Check headers
@@ -231,7 +231,7 @@ class NonLinearityCorrection(object):
             raise e
 
         # Creates output fits HDU
-        linhdu = pyfits.PrimaryHDU()
+        linhdu = fits.PrimaryHDU()
         linhdu.header = dataheader.copy()
         hdus = []
 
@@ -268,7 +268,7 @@ class NonLinearityCorrection(object):
                 # we have a single 2D image
                 lindata[np.isnan(nlmaxs)] = np.nan
 
-            exthdu = pyfits.ImageHDU(lindata.astype('float32'), header=hdulist[extname].header.copy())
+            exthdu = fits.ImageHDU(lindata.astype('float32'), header=hdulist[extname].header.copy())
             # this may rearrange the MEF extensions, otherwise loop over extensions
             hdus.append(exthdu)
 
@@ -276,7 +276,7 @@ class NonLinearityCorrection(object):
         linhdu.header['HISTORY'] = 'Nonlinearity correction applied'
         linhdu.header['HISTORY'] = 'Nonlinearity data: %s' %nlheader['ID']
         linhdu.header['HISTORY'] = '<-- The German team made this on 2014/07/13'
-        linhdulist = pyfits.HDUList([linhdu] + hdus)
+        linhdulist = fits.HDUList([linhdu] + hdus)
         
         # Compose output filename
         mfnp = os.path.basename(data_file).partition('.fits')

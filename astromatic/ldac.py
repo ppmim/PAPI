@@ -22,10 +22,11 @@ import sys
 
 # import non-standard modules:
 try:
-    import pyfits, numpy
+    import numpy
+    import astropy.io.fits as fits
 except ImportError:
-    sys.stderr.write("This script needs the modules 'pyfits' and 'numpy'!\n")
-    sys.stderr.write("see http://www.stsci.edu/resources/software_hardware/pyfits\n")
+    sys.stderr.write("This script needs the modules 'astropy.io.fits' and 'numpy'!\n")
+    sys.stderr.write("see http://www.astropy.org\n")
     sys.stderr.write("and/or http://numpy.scipy.org/\n")
     sys.exit(1)
 
@@ -89,7 +90,7 @@ class LDACCat(object):
         return self.__contains__(key)
 
     def filter(self, mask):
-        return LDACCat(pyfits.BinTableHDU(data=self.hdu.data[mask],
+        return LDACCat(fits.BinTableHDU(data=self.hdu.data[mask],
                                           header=self.hdu.header))
     def next(self):
         if self.current >= self.__len__(): # len(self.hdu.data):
@@ -115,7 +116,7 @@ def openObjects(hdulist, table='LDAC_OBJECTS'):
     
 
 def openObjectFile(filename, table='LDAC_OBJECTS'):
-    hdulist = pyfits.open(filename)
+    hdulist = fits.open(filename)
     if hdulist is None:
         return None
     return openObjects(hdulist, table)

@@ -1,19 +1,35 @@
-NUMBER
-X_IMAGE
-Y_IMAGE
-ALPHA_J2000
-DELTA_J2000
+NUMBER           # Running object number
 
-MAG_BEST
-ISOAREA_IMAGE
-ELLIPTICITY
-FWHM_IMAGE
-FLUX_RADIUS
-FLUX_APER
-FLUXERR_APER
-FLAGS
-#FLUX_AUTO
-#FLUXERR_AUTO
+# --------- Position Parameters --------------
+X_IMAGE          # Object position along x
+Y_IMAGE          # Object position along y
+
+ALPHA_J2000      # Right ascension of barycenter (J2000) [deg]
+DELTA_J2000      # Declination of barycenter (J2000) [deg]
+
+#XWIN_IMAGE      # required by SCAMP, but "hard coded" in sextractor.py
+#YWIN_IMAGE      # required by SCAMP, but "hard coded" in sextractor.py
+
+# --------- Photometric Parameters -----------
+MAG_BEST         # Best of MAG_AUTO and MAG_ISOCOR
+ISOAREA_IMAGE    # Isophotal area above Analysis threshold [pixel**2]
+ELLIPTICITY      # 1 - B_IMAGE/A_IMAGE
+FWHM_IMAGE       # FWHM assuming a gaussian core
+FLUX_RADIUS      # Fraction-of-light radii 
+FLUX_APER        # Flux vector within fixed circular aperture(s)
+FLUXERR_APER     # RMS error vector for aperture flux(es) 
+
+#FLUX_AUTO       # for SCAMP, but "hard coded" in sextractor.py
+#FLUXERR_AUTO    # for SCAMP, but "hard coded" in sextractor.py
+
+# --------- Flags  -----------
+FLAGS            # Extraction flags
+
+# -- Test (not read by PAPI) --
+FLUX_AUTO        # Flux within a Kron-like elliptical aperture [counts] 
+FLUXERR_AUTO     # RMS error for AUTO flux [counts]
+XWIN_IMAGE       # Windowed position estimate along x [pix]
+YWIN_IMAGE       # Windowed position estimate along y [pix]
 
 
 #A_WORLD

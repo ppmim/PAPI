@@ -4,14 +4,14 @@
 PAPI (PANIC Pipeline) is the automatic image processing pipeline for data taken 
 with the PAnoramic Near Infrared Camera (PANIC_) for the 2.2m and 3.5m Telescopes at 
 Calar Alto Observatory (CAHA_). The pipeline is written in Python and developed 
-at the `Institute of Astrophysics of Andalusia (CSIC)`_. The automated processing 
-steps include basic calibration (removeing instrumental signature), cosmic-ray 
-removal, treatment for electronic ghosts (cross-talk), sky subtraction, 
-non-linear count-rate correction, robust alignment and registration for large 
-mosaics.
+at the `Institute of Astrophysics of Andalusia (CSIC) <http://www.iaa.es/>`_. 
+The automated processing steps include basic calibration (removeing instrumental 
+signature), cosmic-ray removal, treatment for electronic ghosts (cross-talk), 
+sky subtraction, non-linear count-rate correction, robust alignment and 
+registration.
 
 
-PANIC is a general purpose Panoramic Near Infrared camera for Calar Alto. 
+PANIC_ is a general purpose Panoramic Near Infrared camera for Calar Alto. 
 It is optimized for use at the 2.2m telescope, but can also be installed 
 at the 3.5m telescope. It will work in the nIR bands Z, J, H and K. 
 
@@ -37,46 +37,43 @@ PAPI also depends on next packages:
  - Sphinx_ to build the documentation (optional)
  
 
-Note that, for PyRAF you have to install IRAF (v2.16 or later), what can be a 
+Note that, for PyRAF_ you have to install IRAF_ (v2.16 or later), what can be a 
 tricky task. However, is has been simplified in recent versions.
 
 
 To install PAPI, follow the next steps:
 
-1. Clone the PAPI files in a suitable location. Note that, it is a development
-version.
+1. Clone the PAPI files in a suitable location. Note that, it is a development 
+version:
 
-    * ``git clone https://github.com/ppmim/PAPI ~/papi``
+	* ``git clone https://github.com/ppmim/PAPI ~/papi``
 
-
-#. Build the sources
+#. Build the sources:
 
     * cd papi/irdr/src
     * make all
 
-
-#. Edit papi_setup.sh script
+#. Edit papi_setup.sh script:
 
     * Modify the PAPI_HOME and PAPI_PROD in the papi_setup.[sh] file in the papi 
     directory
     * Run the papi_setup.sh 
     * Re-load your new profile (.bashrc or .cshrc ) 
 
-        * Bash: . ~/.bashrc
-        * CSH: source ~/.cshrc
+        - Bash: . ~/.bashrc
+        - CSH: source ~/.cshrc
 
 #. Go to config_files/ directory to setup the config file to use.
 
 
 Supported Platforms
--------------------
-* Currently PAPI has only be tested under openSuSE12.x and openSuSE13.1, but it
+===================
+Currently PAPI has only be tested under openSuSE12.x and openSuSE13.1, but it
 should work on any 64-bit Linux box with the software packages required above.
 
 
 Documentation
 =============
-
 You can browse the latest release documentation_ online.
 
 
@@ -86,8 +83,8 @@ Maintainer: jmiguel@iaa.es
 
 
 .. links:
-.. |logo| image:: ./QL4/images/logo_PANIC.jpg
-          :width: 100 px
+.. |logo| image:: ./QL4/images/logo_PANIC_100.jpg
+          :width: 127 px
           :alt: PANIC icon
 
 .. _PANIC: http://www.iaa.es/PANIC
@@ -103,3 +100,5 @@ Maintainer: jmiguel@iaa.es
 .. _Astropy: http://www.astropy.org/
 .. _Astrometry.net: http://astrometry.net/
 .. _Astromatic: http://www.astromatic.net/
+.. _Sphinx: http://sphinx-doc.org/
+.. _IRAF: http://www.iraf.net

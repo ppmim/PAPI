@@ -15,7 +15,6 @@
 ################################################################################
 # Import necessary modules
 
-import getopt
 import sys
 import os
 import logging
@@ -29,7 +28,6 @@ import misc.utils as utils
 
 
 # Interact with FITS files
-import pyfits
 import datahandler
 
 

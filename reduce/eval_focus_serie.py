@@ -35,7 +35,7 @@ import dircache
 import fileinput
 
 import numpy as np
-import pyfits
+import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 
 
@@ -54,7 +54,7 @@ class FocusSerie(object):
     """
     
     def __init__(self, input_files, output, pix_size, sat_level, show=False, 
-                    window='all', *a, **k):
+                    window='all', min_isoarea=32, *a, **k):
         """
         Init method.
 
@@ -78,6 +78,9 @@ class FocusSerie(object):
         window: str
             Window/detector to be processed.
 
+        min_isoarea: int
+            Minimum isoarea for the detected objects.
+
         """
         
         super (FocusSerie, self).__init__ (*a,**k)
@@ -97,6 +100,7 @@ class FocusSerie(object):
         self.sat_level = sat_level
         self.show = show # whether or not to show the pdf plot file genetated
         self.window = window
+        self.min_isoarea = min_isoarea
 
     def eval_serie(self):
         """
@@ -125,7 +129,7 @@ class FocusSerie(object):
                 cq = checkQuality.CheckQuality(file, 
                                                pixsize=self.pix_size, 
                                                sat_level=self.sat_level,
-                                               isomin=32,
+                                               isomin=self.min_isoarea,
                                                ellipmax=0.9, # basically, no limit !
                                                window=self.window)
                 try:
@@ -256,16 +260,16 @@ class FocusSerie(object):
                 
         focus = -1           
         try:
-            fits = pyfits.open(file)
-            if "T-FOCUS" in fits[0].header:
-                focus = fits[0].header["T-FOCUS"]
-            elif "T_FOCUS" in fits[0].header:
-                focus = fits[0].header["T_FOCUS"]
+            mfits = fits.open(file)
+            if "T-FOCUS" in mfits[0].header:
+                focus = mfits[0].header["T-FOCUS"]
+            elif "T_FOCUS" in mfits[0].header:
+                focus = mfits[0].header["T_FOCUS"]
             else:
                 sys.stderr.write("Cannot find the T-FOCUS value")
                 raise TFOCUSNotFound("Cannot find the T-FOCUS value")
         finally:
-            fits.close()
+            mfits.close()
         
         return focus
         
@@ -286,10 +290,11 @@ def check_python_env():
         
     # import non-standard modules:
     try:
-        import pyfits, numpy
+        import numpy
+        import astropy.io.fits as fits
     except ImportError:
-        sys.stderr.write("This script needs the modules 'pyfits' and 'numpy'!\n")
-        sys.stderr.write("see http://www.stsci.edu/resources/software_hardware/pyfits\n")
+        sys.stderr.write("This script needs the modules 'astropy.io.fits' and 'numpy'!\n")
+        sys.stderr.write("see http://www.astropy.org\n")
         sys.stderr.write("and/or http://numpy.scipy.org/\n")
         sys.exit(1)
 
@@ -342,6 +347,11 @@ if __name__ == "__main__":
                       "into account [default: %default].",
                       default=50000)
 
+    parser.add_option("-a", "--min_isoarea", dest="min_isoarea",
+                      help="Minimum isoarea of the objects detected."
+                      "[default: %default].",
+                      default=32)
+    
     parser.add_option('-W', '--window',
                       type='choice',
                       action='store',
@@ -375,7 +385,7 @@ if __name__ == "__main__":
     try:
         focus_serie = FocusSerie( files , options.output, 
                         options.pix_scale, options.satur_level,
-                        False, options.window )
+                        False, options.window , options.min_isoarea)
 
         best_focus = focus_serie.eval_serie()
         

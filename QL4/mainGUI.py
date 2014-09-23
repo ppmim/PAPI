@@ -62,6 +62,7 @@ os.environ['PYRAF_NO_DISPLAY'] = '1'
 import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
+import reduce.calBPM
 import reduce.checkQuality
 import reduce.astrowarp
 import reduce.reductionset as RS
@@ -80,6 +81,12 @@ from misc.paLog import log
 
 
 # IRAF packages
+# When PyRAF is imported, it creates, unless it already exists, a pyraf/
+# directory for cache in the current working directory. It also complains that
+# "Warning: no login.cl found" if this IRAF file cannot be found either. 
+# To avoid these two annoying messages, and do not clutter the filesystem with pyraf/
+# directories, if $HOME/iraf/login.cl exists, it is used and pyraf/ directory
+# is created there. 
 from pyraf import iraf
 from iraf import noao
 from iraf import mscred
@@ -321,7 +328,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Timer for TaskQueue (pending tasks)
         self._queue_timer_todo = QTimer( self )
         self.connect( self._queue_timer_todo, QtCore.SIGNAL("timeout()"), 
-                      self.TaskRunner )
+                      self.taskRunner )
         self._queue_timer_todo.start(1000)    # 1 second continuous timer
         
         
@@ -547,7 +554,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
                 if len(ltemp)>1:
                     last_file = ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
-                    #Change cursor
+                    # Change cursor
                     #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
                     #self._task = self.mathOp
@@ -557,11 +564,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #                               '-',None)
                     #thread.start()
                     
-                    #Put into the queue the task to be done
+                    # Put into the queue the task to be done
                     func_to_run = mathOp
                     _suffix = "_" + os.path.basename(last_file)
                     out_filename = self.m_outputdir + "/" + os.path.basename(filename).replace(".fits", _suffix) 
-                    params = ([filename, last_file], '-', out_filename, self.m_tempdir)
+                    params = ([filename, last_file], '-', 
+                                         out_filename, self.m_tempdir)
                     self._task_queue.put([(func_to_run, params)])
                     
                 else:
@@ -801,7 +809,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
     def checkDoneQueue(self):
         """
-        Check Queue of done tasks launched with Process in TaskRunner.
+        Check Queue of done tasks launched with Process in taskRunner.
         Function called periodically (every 1 sec).
         """
         if not self._done_queue.empty():
@@ -1540,6 +1548,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
+        self.mBPM_appAct = QtGui.QAction("&Apply and Show BPM", self,
+            shortcut="Ctrl+Z",
+            statusTip="Apply BPM and show the masked pixels in a temp file.", 
+            triggered=self.applyBPM_slot)
+
         self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
             shortcut="Ctrl+f",
             statusTip="Run a telescope focus evaluation of a focus serie.", 
@@ -1591,12 +1604,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Subtract selected files", 
             triggered=self.subtractFrames_slot)
         
-        self.sumAct = QtGui.QAction("Sum Images", self,
+        self.sumAct = QtGui.QAction("Combine Images (median)", self,
             shortcut="Ctrl++",
-            statusTip="Sum selected files", 
+            statusTip="Median combine selected files", 
             triggered=self.sumFrames_slot)
         
-        self.divAct = QtGui.QAction("Div Images", self,
+        self.divAct = QtGui.QAction("Divide Images", self,
             shortcut="Ctrl+/",
             statusTip="Divide selected files", 
             triggered=self.divideFrames_slot)
@@ -1676,6 +1689,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.mDTwFlatAct)
             popUpMenu.addAction(self.mGainMapAct)
             popUpMenu.addAction(self.mBPMAct)
+            popUpMenu.addAction(self.mBPM_appAct)
             popUpMenu.addAction(self.mFocusEval)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.subOwnSkyAct)
@@ -1717,6 +1731,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.mDTwFlatAct.setEnabled(True)
             self.mGainMapAct.setEnabled(True)
             self.mBPMAct.setEnabled(True)
+            self.mBPM_appAct.setEnabled(True)
             self.mFocusEval.setEnabled(True)
             self.subOwnSkyAct.setEnabled(True)
             self.subNearSkyAct.setEnabled(True)
@@ -1750,6 +1765,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.photoAct.setEnabled(False)
                 #self.fwhmAct.setEnabled(False)
                 self.bckgroundAct.setEnabled(False)
+                self.mBPM_appAct.setEnabled(False)
 
             if len(self.m_popup_l_sel)!=2:
                 self.subAct.setEnabled(False)
@@ -2072,7 +2088,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
                     self.m_processing = False    
-                    thread = reduce.ExecTaskThread(self.mathOp, 
+                    thread = reduce.ExecTaskThread(mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,'-', 
                                                    str(outFilename))
@@ -2084,7 +2100,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def sumFrames_slot(self):
         """
-        This methot is called to sum two images selected from the File List View
+        This methot is called to **combine** the images selected from the 
+        File List View.
+        
+        Note: The type of combinning operation to the pixels is a median after
+        a sigma reject algorith.
+
         """
 
         if (len(self.m_popup_l_sel)<2):
@@ -2101,10 +2122,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     self.m_processing = False    
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
-                    thread = reduce.ExecTaskThread(self.mathOp, 
+                    thread = reduce.ExecTaskThread(mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,
-                                                   '+', str(outFilename))
+                                                   'combine', str(outFilename))
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", 
@@ -2131,7 +2152,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
                     self.m_processing = False
-                    thread=reduce.ExecTaskThread(self.mathOp, 
+                    thread=reduce.ExecTaskThread(mathOp, 
                                                  self._task_info_list, 
                                                  self.m_popup_l_sel, 
                                                  '/',  str(outFilename))
@@ -2523,15 +2544,62 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.critical(self, "Error","Error, not suitable frames selected (flat fields)")
 
 
+    def applyBPM_slot(self):
+        """
+        Apply to the selected file the BPM defined in the config file and show
+        in Red the masked pixels on DS9 (for this, user should select red 
+        from menu Edit->Preferences->Blank/Inf/NaN color).
+
+        Note that, the original selected file is not modified, all BPM is applied
+        to a temporal named by the user.
+
+        This routine can be useful to view on QL how the BPM affect our data.
+        """
+
+        if len(self.m_popup_l_sel)==1:
+            init_outdir = self.m_outputdir + "/" + \
+                    os.path.basename(self.m_popup_l_sel[0]).replace(".fits","_BPM.fits")
+            outfileName = QFileDialog.getSaveFileName(self,
+                                                      "Choose a filename so save under",
+                                                      init_outdir, 
+                                                      "fits (*.fits)", )
+            if not outfileName.isEmpty():
+                # Because in principle it is a quick proceduce, we do not use
+                # the processing queue. We run it on the current thread.
+                QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                try:
+                    master_bpm =  self.config_opts['bpm']['bpm_file']
+                    if os.path.isfile(master_bpm):
+                        result = reduce.calBPM.applyBPM(
+                                        self.m_popup_l_sel[0],
+                                        master_bpm,
+                                        str(outfileName),
+                                        False)
+                        if self.getDisplayMode()>=2:
+                            display.showFrame(result)
+                    else:
+                        msg = "Master BPM '%s' does not exist."%master_bpm
+                        QMessageBox.critical(self, "Error", msg)
+                except Exception,e:
+                    msg = "Error applying BPM: '%s'"%(str(e))
+                    self.logConsole.info(msg)
+                    QMessageBox.critical(self, "Error", msg)
+                    raise e
+                finally:
+                    QApplication.restoreOverrideCursor()
+
+
+
     def focus_eval(self):
         """
         Run the focus evaluation procedure of a set of files of focus serie.
         It is run **interactively**.
         """
         if len(self.m_popup_l_sel)>3:
+            init_outdir = self.m_tempdir + "/focus_eval.pdf"
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename so save under",
-                                                      "/tmp/focus_eval.pdf", 
+                                                      init_outdir, 
                                                       "pdf (*.pdf)", )
             if not outfileName.isEmpty():
                 show = True
@@ -2622,7 +2690,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   ellipmax=0.9, # basically, no limit !
                                                   pixsize=pix_scale)
             try:
-                fwhm,std = cq.estimateFWHM()
+                fwhm,std,k,k = cq.estimateFWHM()
                 if fwhm>0:
                     self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
                                              .arg(os.path.basename(ifile))
@@ -2822,43 +2890,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else:
                 QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
     
-    def createCalibs_slot_PARA_BORRAR(self):
-        
-        """
-        Given the current dataset files, compute the whole master calibration 
-        files found in the DB dataset.
-        """
-        
-        fileList = self.inputsDB.GetFilesT("ANY")
-        
-        if len(fileList)>1:
-            #Change cursor
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-            
-            try:
-                self._task = RS.ReductionSet( fileList, self.m_outputdir, 
-                                            out_file=self.m_outputdir+"/red_result.fits",
-                                            obs_mode="dither", dark=None, 
-                                            flat=None, bpm=None, 
-                                            red_mode="quick",
-                                            group_by=self.group_by, 
-                                            check_data=True, 
-                                            config_dict=self.config_opts )
-                
-                thread = reduce.ExecTaskThread(self._task.buildCalibrations, 
-                                             self._task_info_list)
-                thread.start()
-            except Exception,e:
-                # Anyway, restore cursor.
-                # Although it should be restored in checkLastTask, could happend 
-                # an exception while creating the class RS, thus the 
-                # ExecTaskThread can't restore the cursor.
-                QApplication.restoreOverrideCursor() 
-                QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
-                raise e
-        else:
-            QMessageBox.information(self,"Info", QString("No files found"))
-    
+      
     def createCalibs_slot(self):
         
         """
@@ -3046,7 +3078,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #self.logConsole.info(QString("    - %1").arg(file))
         self.logConsole.info("... processing sequence ...")
             
-        #Create working thread that process the files
+        # Create working thread that process the files
         try:
     
             ###self._task = RS.ReductionSet(files, self.m_outputdir, out_file=outfilename,
@@ -3069,9 +3101,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Here, it is decided if last calibration files will be used 
             if self.checkBox_pre_subDark_FF.checkState()==Qt.Checked:
                 calib_db_files = self.outputsDB.GetFiles()
+                self.config_opts['general']['apply_dark_flat'] = 1
                 log.debug("ext-calibretion DB loaded")
             else:
                 calib_db_files = None
+                self.config_opts['general']['apply_dark_flat'] = 0
 
             #
             # Load config values from Setup Tab
@@ -3099,7 +3133,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else: nhw = 2
             self.config_opts['skysub']['hwidth'] = nhw
             
-            #
+            # Select detector (map SGi to Qi)
             if self.comboBox_detector.currentText()=="All": detector = 'all'
             elif self.comboBox_detector.currentText()=="SG1": detector = 'Q3'
             elif self.comboBox_detector.currentText()=="SG2": detector = 'Q1'
@@ -3132,10 +3166,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
             raise e # Para que seguir elevando la excepcion ?
         
-    def TaskRunner(self):
+    def taskRunner(self):
         """
         Procedure that continuisly in checking the queue of pending tasks to be 
         done. The results are obtained later at checkDoneQueue().
+
+        The tasks are processed sequentially, that is, a new proccesing start only
+        when the previous one has finished. 
         """
  
         # Update the number of tasks (not necessarialy equals to number of
@@ -3158,11 +3195,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             except Exception,e:
                 #NOTE: I think this point will never be reached !!!
                 log.error("Error in task Runner: %s"%(str(e)))
-                self.logConsole.debug("Error in TaskRunner")
+                self.logConsole.debug("Error in taskRunner")
                 self.m_processing = False
                 QApplication.restoreOverrideCursor()
             finally:
-                log.debug("End of TaskRunner")
+                log.debug("End of taskRunner")
                  
     def worker_original(self, input, output):
         """
@@ -3208,7 +3245,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             log.info("[worker] task done !")
         except Exception,e:
             log.error("[worker] Error while processing task: %s"%str(e))
-            # Because excetions cannot be catched in TaskRunner due to a 
+            # Because excetions cannot be catched in taskRunner due to a 
             # multiprocessing.Process exception is inserted in output queue 
             # and then recognized
             output.put(e) # the DoneQueue timer will detect it
@@ -3216,65 +3253,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.m_processing = False
             log.debug("Worker finished its task !")
     
-    def mathOp(self,files, operator, outputFile=None, tempDir=None):
-        """
-        This method will do the math operation (+,-,/) specified with the 
-        input files.
-        """
-        
-        log.debug("Start mathOp")
-        
-        if tempDir==None:
-            t_dir = "/tmp"
-        else:
-            t_dir = tempDir
-        
-        if outputFile==None:
-            output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
-            os.close(output_fd)
-    
-        if operator!='+' and operator!='-' and operator!='/':
-            log.error("Math operation not supported")
-            return None
-    
-        try:
-            # Remove an old output file (might it happen ?)
-            misc.fileUtils.removefiles(outputFile)
-            ## MATH operation '+'
-            if (operator=='+' and len(files)>2):
-                log.debug("Frame list to combine = [%s]", files )
-                misc.utils.listToFile(files, t_dir+"/files.tmp") 
-                iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
-                         output=outputFile,
-                         combine='median',
-                         ccdtype='',
-                         reject='sigclip',
-                         lsigma=3,
-                         hsigma=3,
-                         subset='no',
-                         scale='mode'
-                         #masktype='none'
-                         #verbose='yes'
-                         #scale='exposure',
-                         #expname='EXPTIME'
-                         #ParList = _getparlistname ('flatcombine')
-                         )
-            ## MATH operation '-,/,*'
-            else:
-                iraf.mscarith(operand1=files[0],
-                          operand2=files[1],
-                          op=operator,
-                          result=outputFile,
-                          verbose='yes'
-                          )
-        except Exception,e:
-            log.error("[mathOp] An erron happened while math operation with FITS files")
-            raise e
-        
-        log.debug("mathOp result : %s"%outputFile)
-        
-        return outputFile
-
     # Menus stuff functions 
     def editCopy(self):
         print "panicQL.editCopy(): Not implemented yet"
@@ -3310,8 +3288,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         QMessageBox.about(self,
                           "PANIC Quick-Look Tool",
 """
-PQL version: 1.2.0\nCopyright (c) 2008-2012 IAA-CSIC  - All rights reserved.\n
-Author: Jose M. Ibanez.
+PQL version: 1.2.0\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
+Author: Jose M. Ibanez. (jmiguel@iaa.es)
 Instituto de Astrofisica de Andalucia, IAA-CSIC
 
 This software is part of PAPI (PANIC Pipeline)
@@ -3397,20 +3375,22 @@ class LoggingConsole (object):
 ################################################################################
 # Some functions 
 ################################################################################
-#Because mathOp is used with the queue of process, it cannot belong to MainGUI
-#class or an error in multiprocessing:
-#  'objects should only be shared between processes through inheritance'
+# Because mathOp is aused with the queue of process, it cannot belong to MainGUI
+# class or an error in multiprocessing:
+#    'objects should only be shared between processes through inheritance'
 #            
 def mathOp(files, operator, outputFile=None, tempDir=None):
     """
-    This method will do the math operation (+,-,/) specified with the 
+    This method will do the math operation (+,-,/, combine) specified with the 
     input files.
+
+    Note: The type of combinning operation to the pixels is a median after
+    a sigma reject algorithm.
     """
     
     log.debug("Start mathOp")
     
     if tempDir==None:
-        print "TEMP DIR is None !!"
         t_dir = "/tmp"
     else:
         t_dir = tempDir
@@ -3419,7 +3399,7 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
         os.close(output_fd)
 
-    if operator!='+' and operator!='-' and operator!='/':
+    if operator!='+' and operator!='-' and operator!='/' and operator!='combine':
         log.error("Math operation not supported")
         return None
 
@@ -3427,32 +3407,37 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         # Remove an old output file (might it happen ?)
         misc.fileUtils.removefiles(outputFile)
         ## MATH operation '+'
-        if (operator=='+' and len(files)>2):
-            log.debug("Frame list to combine = [%s]", files )
+        if (operator=='combine' and len(files)>1):
+            log.debug("Files to combine = [%s]", files )
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
+            # Very important to not scale the frames, because it could 
+            # produce wrong combined images due to outliers (bad pixels)
             iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
                      output=outputFile,
-                     combine='average',
+                     combine='median',
                      ccdtype='',
                      reject='sigclip',
                      lsigma=3,
                      hsigma=3,
                      subset='no',
-                     scale='mode'
+                     scale='none'
                      #masktype='none'
                      #verbose='yes'
                      #scale='exposure',
                      #expname='EXPTIME'
                      #ParList = _getparlistname ('flatcombine')
                      )
-        ## MATH operation '-,/,*'
-        else:
+        ## MATH operation '-,/,*' and just 2 files
+        elif len(files)==2:
             iraf.mscarith(operand1=files[0],
                       operand2=files[1],
                       op=operator,
                       result=outputFile,
                       verbose='yes'
                       )
+        else:
+            log.error("Operation not allowed")
+            return None
     except Exception,e:
         log.error("[mathOp] An erron happened while math operation with FITS files")
         raise e
