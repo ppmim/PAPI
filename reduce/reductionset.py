@@ -744,7 +744,8 @@ class ReductionSet(object):
                    'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
-                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID'
+                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
+                   'PAPITYPE','OBSERVER','ORIGIN'
                 ]
             
             try:

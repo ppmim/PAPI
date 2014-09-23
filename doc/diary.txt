@@ -5136,6 +5136,7 @@ Pues aunque son etiquetadas como DOME_FLAT, PAPI luego las procesa como TWFLAT;
 por tanto, está contemplada correctamente dicha opción en reductionset.py.
 
 
+(P)- how to manage MEF calibration files ? (currently darks, flats are not splited !)
 
 24-Sep-2014 
 -----------
@@ -5541,7 +5542,6 @@ las pruebas del commissioning y para el cálculo del mejor foco (eval_focus_seri
        - DETECT_THRESH, DETEC_MINAREA, SATUR_LEVEL
 
 
-- how to manage MEF calibration files ? (currently darks, flats are not splited !)
 - Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
 modificarlo para que use astropy.io.fits !!
 - modificar calBPM.applyBPM() para MEF y subwindows !!
@@ -5573,7 +5573,6 @@ no de problemas con subwindows !!
 de nuevos ficheros; por lo visto se llama después de que termina el "save". Ver
 documentación GEIRS (3.3 Postprocessing) 
 
-- En MEF:convertSimple2MEF, considerar la opción de cubos !!!
 - Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
 - Dejar muy claro en la documentación que tipo de ficheros son los mejores para
 PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
@@ -5622,7 +5621,6 @@ usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
 - En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
 - Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m).
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
-- opción en PAPI para reducir sólo un detector/es
 - Configurar sonidos (pulseaudio)
 - Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
 - No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
@@ -5642,7 +5640,7 @@ de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho
  
 - Comprender bien el valor (unidades) de ASTRRMS1 que da SCAMP, pues parece que 
 son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
-- cuando RM nos pase la r711M, probar los MEF integrador, los subwindows con MEF, etc , etc ...
+- cuando RM nos pase la r711M, probar los MEF integrados, los subwindows con MEF, etc , etc ...
 - Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
 - Documento (TN) Data Grouping algorithms
 - Documento instalación de PANIC-SW
@@ -5651,8 +5649,8 @@ son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
 sin embargo, parece que calDark.py no se queja !
 - doc. y script de instalación de PAPI --> (Distribute vs distutils)
 - implementar procesamiento (detección y suma) de 'individual images' en 
-varios ficheros, en CUBOS en un solo fichero creo que si lo hace PAPI.
-- Añadir "todos" los principales parametros del fich. de configuración al QL !
+varios ficheros;
+- Añadir los principales parametros del fich. de configuración al QL de forma gráfica!
 - como tratar en PAPI las imágenes de subwindows ??? -> _win.fits !!! mejor MEF !!
 - mejorar interfaz de ETC en Web( Ejemplo--> http://www.cefca.es/jplusetc/etcjplus.cgi)
 - eliminar del todo RS::self.out_file

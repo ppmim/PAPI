@@ -184,7 +184,7 @@ class MEF (object):
                     'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
                     'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'NCOADDS',
                     'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT',
-                    'CASSPOS','PIXSCALE']
+                    'CASSPOS','PIXSCALE','PAPITYPE','OBSERVER','ORIGIN']
                 
         out_filenames = []
         n = 0 
@@ -195,7 +195,7 @@ class MEF (object):
                 print 'Error, can not open file %s' % (file)
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
-            #Check if is a MEF file 
+            # Check if is a MEF file 
             if len(hdulist)>1:
                 n_ext = len(hdulist)-1
                 log.debug("MEF file with %d extensions", n_ext)

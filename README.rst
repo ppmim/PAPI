@@ -1,7 +1,7 @@
 |logo| PAPI
 ===========
 
-PAPI (PANIC Pipeline) is the automatic image processing pipeline for data taken 
+PAPI (PANIC Pipeline) is the automatic image processing pipeline for data obtained 
 with the PAnoramic Near Infrared Camera (PANIC_) for the 2.2m and 3.5m Telescopes at 
 Calar Alto Observatory (CAHA_). The pipeline is written in Python and developed 
 at the `Institute of Astrophysics of Andalusia (CSIC) <http://www.iaa.es/>`_. 
@@ -13,7 +13,7 @@ registration.
 
 PANIC_ is a general purpose Panoramic Near Infrared camera for Calar Alto. 
 It is optimized for use at the 2.2m telescope, but can also be installed 
-at the 3.5m telescope. It will work in the nIR bands Z, J, H and K. 
+at the 3.5m telescope. It works in the nIR bands Z, J, H and K. 
 
 
 
@@ -78,7 +78,7 @@ You can browse the latest release documentation_ online.
 
 
 
-Webpage: https://www.iaa.es/PANIC
+Webpage: http://www.iaa.es/PANIC
 Maintainer: jmiguel@iaa.es
 
 

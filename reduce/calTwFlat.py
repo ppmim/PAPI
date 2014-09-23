@@ -395,39 +395,25 @@ class MasterTwilightFlat (object):
             f = fits.open(comb_flat_frame, ignore_missing_end=True)
             if next>0:
                 chip = 1 # normalize wrt to mode of chip 1
-                naxis1 = f[0].header['NAXIS1']
-                naxis2 = f[0].header['NAXIS2']
+                naxis1 = f[chip].header['NAXIS1']
+                naxis2 = f[chip].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                #mode = (3*numpy.median(f[chip].data[offset1:naxis1-offset1,
-                #                                    offset2:naxis2-offset2])-
-                #        2*numpy.mean(f[chip].data[offset1:naxis1-offset1, 
-                #                                  offset2:naxis2-offset2]))
                 median = numpy.median(f[chip].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
-                
                 msg = "Normalization of MEF master flat frame wrt chip 1. (MEDIAN=%d)"%median
-
-            
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower()=='panic'
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
-                #mode = (3*numpy.median(f[0].data[200:2048-200,200:2048-200])- 
-                #       2*numpy.mean(f[0].data[200:2048-200,200:2048-200]) )
                 median = numpy.median(f[0].data[200:2048-200,200:2048-200])
-                
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
-                
             else:
+                # Not MEF, not PANIC full-frame, but could be a PANIC subwindow
                 naxis1 = f[0].header['NAXIS1']
                 naxis2 = f[0].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                #mode = (3*numpy.median(f[0].data[offset1:naxis1-offset1,
-                #                                    offset2:naxis2-offset2])-
-                #        2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
-                #                                  offset2:naxis2-offset2]))
                 median = numpy.median(f[0].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
                 msg = "Normalization of master (O2k?) flat frame. (MEDIAN=%d)"%median 
