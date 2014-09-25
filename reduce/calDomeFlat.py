@@ -81,6 +81,8 @@ import numpy as np
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
+
 
 class MasterDomeFlat(object):
     """
@@ -419,6 +421,7 @@ class MasterDomeFlat(object):
         #Add a new keyword-->PAPITYPE
         flatframe[0].header.set('PAPITYPE', 'MASTER_DOME_FLAT', 
                                    'TYPE of PANIC Pipeline generated file')
+        flatframe[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
         flatframe[0].header.set('IMAGETYP', 'MASTER_DOME_FLAT', 
                                    'TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in flatframe[0].header:

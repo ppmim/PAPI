@@ -48,6 +48,7 @@ import multiprocessing
 # PAPI modules
 import misc.mef
 from misc.paLog import log
+from misc.version import __version__
 
 # If you want to use the new multiprocessing module in Python 2.6 within a class, 
 # you might run into some problems. Here's a trick how to do a work-around. 
@@ -276,6 +277,7 @@ class NonLinearityCorrection(object):
         linhdu.header['HISTORY'] = 'Nonlinearity correction applied'
         linhdu.header['HISTORY'] = 'Nonlinearity data: %s' %nlheader['ID']
         linhdu.header['HISTORY'] = '<-- The German team made this on 2014/07/13'
+        linhdu.header.set('PAPIVERS', __version__,'PANIC Pipeline version')
         linhdulist = fits.HDUList([linhdu] + hdus)
         
         # Compose output filename

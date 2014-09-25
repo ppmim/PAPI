@@ -67,6 +67,7 @@ import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 def remove_crosstalk(in_image, out_image=None, overwrite=False):
     """
@@ -288,6 +289,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     
     hdr0 = fits.getheader(in_image)
     hdr0.add_history('De-crosstalk procedure executed ')
+    hdr0.set('PAPIVERS', __version__, 'PANIC Pipeline version')
     hdu.header = hdr0
     
     try:
@@ -445,6 +447,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     
     hdr0 = fits.getheader(in_image)
     hdr0.add_history('De-crosstalk procedure executed ')
+    hdr0.set('PAPIVERS', __version__, 'PANIC Pipeline version')
     hdu.header = hdr0
     
     try:

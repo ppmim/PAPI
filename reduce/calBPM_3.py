@@ -57,6 +57,7 @@ import datahandler
 import misc.fileUtils
 import misc.utils as utils
 import misc.robust as robust
+from misc.version import __version__
 
 
 class BadPixelMask(object):
@@ -296,7 +297,8 @@ class BadPixelMask(object):
             log.warning("%s"%str(e))
 
         prihdu.header.set('PAPITYPE','MASTER_BPM','TYPE of PANIC Pipeline generated file')
-        
+        prihdu.header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
+                
         src_files = []
         if self.dark_list:
             src_files = [line.replace( "\n", "") for line in 

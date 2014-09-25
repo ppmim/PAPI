@@ -5136,10 +5136,40 @@ Pues aunque son etiquetadas como DOME_FLAT, PAPI luego las procesa como TWFLAT;
 por tanto, está contemplada correctamente dicha opción en reductionset.py.
 
 
-(P)- how to manage MEF calibration files ? (currently darks, flats are not splited !)
+- how to manage MEF calibration files ? (currently darks, flats are not splited !)
+Haga algunas pruebas y encuentro alguno bug !! que soluciono sobre la marcha.
+
 
 24-Sep-2014 
 -----------
+- Instalo la version 724 de GEIRS en panic2, y también actualizo el script
+GENERIC de dicha version, que en principio sólo cambian algunas IPs, pues RM
+ha configurado en dicho scripts las IPs (definitivas) para CAHA.
+
+- El OT y GEIRS a veces se quedan pillados, no se bien quién es el culpable, 
+y tengo que re-lanzar GEIRS y OT.
+
+- Continuo con pruebas de calibraciones (DomeFlats, Focus, etc) en distintos 
+formatos (integrador, cubos, MEF y MEF-integrados).
+
+
+                    DomeFlat      DarkSerie     Dark   FocusSer    SciDither  
+Simple                 ok            
+Simple-cube            ok
+MEF                    ok
+MEF-cube               ok
+
+
+- Informo a RM de un bug en GEIR cuando crep=1 y haces un save -1 (cubos)
+
+
+25-Sep-2014 
+-----------
+(P) - Añadir PAPIVERS a los datos generador por PAPI !!! y a la documentación
+de los FITS (TN-FITS)--> ya está en la documetación.
+Basicamente lo voy a añadir en todos los sitios en los que también se añade PAPITYPE.
+
+
 
 
 
@@ -5534,6 +5564,11 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Añadir PAPIVERS a los datos generador por PAPI !!!
+- Cambiar nombre de rama 'limpia' por 'stable'
+- chequear tamaños imagen (shape) en getCalibrations() o en checkDataIntegrity()
+- ¿ cómo de importante es el gainmap en skyfilter ?
+- Añadir en el QL una vista para las estadísticas de las imágenes (mean, median, std, fwhm)
 - Mejorar el calculo/estimación del FWHM (psfmesure, imexam ), sobre todo para
 las pruebas del commissioning y para el cálculo del mejor foco (eval_focus_serie)
   ==> Ya he trabajado bastante sobre eso, pero no consigo encontrar algo que 
@@ -5751,4 +5786,201 @@ THINGS TO DO ON panic1.mpia.de al llegar a CAHA
 ===============================================
 - Actualzar la version del DS9 a la 7.3b5
 wget http://ds9.si.edu/download/linux64/ds9.linux64.7.3b5.tar.gz
+
+
+
+DOCUMENATION
+============
+
++ How to reduce a sequence with PAPI observed from the CL ?
+
+To reduce a observing sequence of PANIC there are two options; the first and most
+convenient way is when the sequence has been observed with the OT through the
+execution of an OB. Then the steps to follow shoudl be the next ones:
+
+
+0) First, we must configure the configuration file of PAPI. It comes with a set
+of defaults values, but likely you may to modify some of them.
+The configuration file is pointed by the environment variable PAPI_CONFIG, and
+it is under papi/config_files/papi.cfg.
+
+
+1) Next, we need to find out the sequence to reduce. For this, we must
+type the next command:
+
+> papi -s /source/raw/data_directory -p
+
+for example:
+
+> papi -s /data1/PANIC/calibrationTest/ -p
+
+and we get the next output:
+
+    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1033: Found 11 groups of files
+    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1040: =========================================================
+    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1041: =========== GROUPED SEQUENCES (by ot) ==============
+    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1042: =========================================================
+    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1047: SEQUENCE #[0]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 1.370302  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0001.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0002.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0003.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0004.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0005.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1047: SEQUENCE #[1]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 5.000000  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0006.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0007.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0008.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0009.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0010.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1047: SEQUENCE #[2]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 1.370302  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0011.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0012.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0013.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0014.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0015.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1047: SEQUENCE #[3]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 5.000000  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0016.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0017.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0018.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0019.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0020.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1047: SEQUENCE #[4]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 1.370302  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0021.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0022.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0023.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0024.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0025.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1047: SEQUENCE #[5]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 8.000000  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0026.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0027.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0028.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0029.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0030.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1047: SEQUENCE #[6]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 1.370302  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0031.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0032.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0033.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0034.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0035.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1047: SEQUENCE #[7]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 5.000000  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0036.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0037.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0038.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0039.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0040.fits type = DARK
+    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1047: SEQUENCE #[8]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 1.370302  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0041.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0042.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0043.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0044.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0045.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1047: SEQUENCE #[9]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 8.000000  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0046.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0047.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0048.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0049.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0050.fits type = DOME_FLAT
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1047: SEQUENCE #[10]  - TYPE= SCIENCE   FILTER= KS  TEXP= 2.740604  #files = 5 
+    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1048: -------------------------------------------------------------------
+    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0051.fits type = SCIENCE
+    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0052.fits type = SCIENCE
+    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0053.fits type = SCIENCE
+    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0054.fits type = SCIENCE
+    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0055.fits type = SCIENCE
+
+
+2) Now, for example, let suppose that we want to reduce the sequences from 
+number 1 to 5. Then we type:
+
+> papi -s /data1/PANIC/calibrationTest/ -S 1 5
+
+If we want to reduce only the sequence number 10, we type:
+
+> papi -s /data1/PANIC/calibrationTest/ -S 10 10
+
+3) However, if we would like to reduce all the sequences included in the source
+directory, we should type:
+
+> papi -s /data1/PANIC/calibrationTest/ 
+
+
+If we did not used the OT to run the observation (ie., used GEIRS macros or whatever),
+then the successful reduction is not asured. In this case, we must indicate to PAPI
+that try to group the data using FILTER, DATE-OBS, and RA,DEC coordinates. It is
+done with the '-G filter' parameter as follow:
+
+> papi -s /data1/PANIC/calibrationTest/ -g filter
+
+Then we should get the list of sequences found and select what we want to reduce:
+
+
+> papi -s /data1/PANIC/calibrationTest/ -g filter -S 1 5
+
+
+
+PAPI FAQ
+========
+
+0) Are there any known problems with PANIC data?
+
+Please, go to www.iaa.es/PANIC to get the list of last known problems.
+
+1) Where can I get PAPI ?
+
+The stable version can be dowloaded from https://github.com/ppmim/PAPI/.
+
+
+2) Where can I find tutorial on PANIC data reduction?
+
+Please, visit http://www.iaa.es/~jmiguel/PANIC/PAPI/html/index.html for a detaild
+description.
+
+
+2) I have a problem with the Hawk-I pipeline. What should I do?
+
+The PANIC pipeline is continuosly under development; please, follow the changes
+and publish issues on https://github.com/ppmim/PAPI/issues.
+
+
+3) What is the best way to reduce PAPI data?
+
+The recommend to use the OT and execute the OBs. That way the headers will include
+meta-data about the observetion, and thus the pipeline can group the data and
+find the required calibrations for a successful reduction. Then, you only have to
+type:
+
+> papi -s /data1/PANIC/my_program/ 
+
+
+4) How can we reach hundredth of magnitude accuracy in photometry ?
+
+The best way to accurately photometrically calibrate PANIC images is to use 2MASS 
+stars in the field itself to derive the photometric solution. The accuracy 
+strongly depends on the number of bright 2MASS stars within the filed of view, 
+but ranges from a few 1/100th of a magnitude to 0.1 magnitudes if only faint 
+stars are contained in the field. Additionally, observing supplementary standard
+star fields can be asked for when preparing the observations. To perform the 2MASS 
+photometric calibration on an image you should use the 'photometry' command as 
+follow:
+
+>  photometry -i /directory/prereducedField.fits -o test.pdf
+
+
+5) How good is PAPI astrometry and how are PSF variations corrected ?
+
+At present the pipeline applies a correction for PSF distortions based on a 
+distortion map derived during the astrometric calibration done with SCAMP (a 
+software developped by Emmanuel Bertin) and 2MASS.
+This way, the reached accuracy ranges from 0.1 to 0.3 pixels (TBC).
+
 

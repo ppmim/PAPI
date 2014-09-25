@@ -105,8 +105,8 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
 
-__version__ = "1.2.0 - July 2014"
 
+from misc.version import __version__
 #-------------------------------------------------------------------------------
 #
 # Next functions are needed to allow the use of  multiprocessing.Pool() with 
@@ -2637,7 +2637,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """Show image statistics in the log console of the files selected"""
         
         length_fn = len(self.m_popup_l_sel[0])
-        msg = "FILE" + (length_fn+15)*" " + "MEAN     MODE       STDDEV      MIN        MAX"
+        msg = "FILE" + (length_fn+25)*" " + "MEAN     MODE       STDDEV      MIN        MAX"
         self.logConsole.info(msg)
         for file in self.m_popup_l_sel:
             values = (iraf.mscstat (images=file,
@@ -3288,7 +3288,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         QMessageBox.about(self,
                           "PANIC Quick-Look Tool",
 """
-PQL version: 1.2.0\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
+PQL version: %s\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
 Author: Jose M. Ibanez. (jmiguel@iaa.es)
 Instituto de Astrofisica de Andalucia, IAA-CSIC
 
@@ -3306,7 +3306,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""")
+"""%__version__)
 
     def setSFlat_slot(self):
         print "panicQL.setSFlat_slot(): Not implemented yet"

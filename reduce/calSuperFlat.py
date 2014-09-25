@@ -68,6 +68,8 @@ from pyraf import iraf
 from iraf import noao
 from iraf import mscred
 
+from misc.version import __version__
+
 class SuperSkyFlat(object):
     """
     Class used to build a super sky Flat from a dither set of science 
@@ -321,7 +323,7 @@ class SuperSkyFlat(object):
             f[0].header.add_history("[calSuperFlat] Non-Normalized Super-Flat created from : %s"%str(m_filelist))
 
         f[0].header.set('PAPITYPE','MASTER_SKY_FLAT','TYPE of PANIC Pipeline generated file')
-        
+        f[0].header.set('PAPIVERS', __version__, "PANIC Pipeline version")
         #
         if 'PAT_NEXP' in f[0].header:
             f[0].header.set('PAT_NEXP', 1, 'Number of Positions into the dither pattern')

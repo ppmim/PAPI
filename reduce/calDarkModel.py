@@ -55,6 +55,7 @@ import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 class MasterDarkModel(object):
     """
@@ -217,27 +218,29 @@ class MasterDarkModel(object):
         hdr0 = fits.getheader(framelist[numpy.where(darks==1)[0][0]])
         prihdu = fits.PrimaryHDU (data = None, header = None)
         try:
-            prihdu.header.update('INSTRUME', hdr0['INSTRUME'])
-            prihdu.header.update('TELESCOP', hdr0['TELESCOP'])
-            prihdu.header.update('CAMERA', hdr0['CAMERA'])
-            prihdu.header.update('MJD-OBS', hdr0['MJD-OBS'])
-            prihdu.header.update('DATE-OBS', hdr0['DATE-OBS'])
-            prihdu.header.update('DATE', hdr0['DATE'])
-            prihdu.header.update('UT', hdr0['UT'])
-            prihdu.header.update('LST', hdr0['LST'])
-            prihdu.header.update('ORIGIN', hdr0['ORIGIN'])
-            prihdu.header.update('OBSERVER', hdr0['OBSERVER'])
+            prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
+            prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
+            prihdu.header.set('CAMERA', hdr0['CAMERA'])
+            prihdu.header.set('MJD-OBS', hdr0['MJD-OBS'])
+            prihdu.header.set('DATE-OBS', hdr0['DATE-OBS'])
+            prihdu.header.set('DATE', hdr0['DATE'])
+            prihdu.header.set('UT', hdr0['UT'])
+            prihdu.header.set('LST', hdr0['LST'])
+            prihdu.header.set('ORIGIN', hdr0['ORIGIN'])
+            prihdu.header.set('OBSERVER', hdr0['OBSERVER'])
         except Exception,e:
             log.warning("%s"%str(e))
 
-        prihdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
+        prihdu.header.set('PAPITYPE','MASTER_DARK_MODEL')
+        prihdu.header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
+        
         prihdu.header.add_history('Dark model based on %s' % framelist)
         prihdu.header.add_history('Plane 0: bias ; Plane 1: dark current')
         
         if f_n_extensions>1:
-            prihdu.header.update('EXTEND', True, after = 'NAXIS')
-            prihdu.header.update('NEXTEND', f_n_extensions)
-            prihdu.header.update('FILENAME', self.__output_filename)
+            prihdu.header.set('EXTEND', True, after = 'NAXIS')
+            prihdu.header.set('NEXTEND', f_n_extensions)
+            prihdu.header.set('FILENAME', self.__output_filename)
             hdulist.append(prihdu)
             for i_ext in range(0, f_n_extensions):
                 hdu = fits.PrimaryHDU()

@@ -125,6 +125,7 @@ import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 class NonLinearityModel(object):
     """
@@ -323,6 +324,7 @@ class NonLinearityModel(object):
             log.warning("%s"%str(e))
 
         prihdu.header.set('PAPITYPE','MASTER_LIN_MODEL')
+        prihdu.header.set('PAPIVERS', __version__, "PANIC Pipeline version")
         prihdu.header.add_history('Linearity model based on %s' % framelist)
         
         if f_n_extensions>1:

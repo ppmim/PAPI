@@ -60,6 +60,7 @@ import reduce.calSuperFlat
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 class SkyGainMap(object):
     """ Compute the gain map from a list of sky frames """
@@ -386,7 +387,8 @@ class GainMap(object):
         output = self.output_filename
         log.debug('Generating output file: %s', output)
         prihdr = myflat[0].header.copy()
-        prihdr.update('PAPITYPE','MASTER_GAINMAP','TYPE of PANIC Pipeline generated file')
+        prihdr.set('PAPITYPE','MASTER_GAINMAP', 'TYPE of PANIC Pipeline generated file')
+        prihdr.set('PAPIVERS', __version__, 'PANIC Pipeline version')
         prihdr.add_history('Gain map based on %s' % self.flat)
         if self.do_norm:
             prihdr.add_history('Normalization wrt chip 0 done.')

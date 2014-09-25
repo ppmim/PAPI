@@ -49,6 +49,8 @@ import astropy.io.fits as fits
 #Log
 import misc.paLog
 from misc.paLog import log    
+from misc.version import __version__
+
 
 #PAPI packages 
 import datahandler
@@ -414,6 +416,7 @@ class ReductionSet(object):
 
         # Print config_dictonary values in log file for debugging
         log.info("[ReductionSet] CONFIGURATION VALUES OF RS ------------------")
+        log.info("PAPI Version: %s" %__version__)
         log.info(printDict(self.config_dict))
         log.info("------------------------------------------------------------")
   
@@ -745,7 +748,7 @@ class ReductionSet(object):
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
                    'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
-                   'PAPITYPE','OBSERVER','ORIGIN'
+                   'PAPITYPE','PAPIVERS','OBSERVER','ORIGIN'
                 ]
             
             try:
@@ -2675,6 +2678,9 @@ class ReductionSet(object):
             #            
             try:
                 with fits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
+                    # Add the PAPI version
+                    myhdulist[0].header.set('PAPIVERS', 
+                                            '1.2', 'PANIC Pipeline version')
                     if 'DATE-OBS' in myhdulist[0].header:
                         seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
                     else:
@@ -2697,7 +2703,9 @@ class ReductionSet(object):
                 
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
-                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,NDIT'
+                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,'
+                'IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,'
+                'NDIT,PAPIVERS'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'

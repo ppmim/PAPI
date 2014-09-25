@@ -60,7 +60,9 @@ from optparse import OptionParser
 
 import misc.fileUtils
 import misc.utils as utils
+from misc.version import __version__
 import datahandler
+
 
 # Pyraf modules
 from pyraf import iraf
@@ -448,10 +450,13 @@ class MasterTwilightFlat (object):
         # Combined files is already added by IRAF:imcombine
         #flatframe[0].header.add_history('Twilight files: %s' %good_frames)
         
-        # Add a new keyword-->PAPI_TYPE
+        # Add new keywords (PAPITYPE, PAPIVERS, IMAGETYP)
         flatframe[0].header.set('PAPITYPE',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file')
+        flatframe[0].header.set('PAPIVERS',
+                                   __version__,
+                                   'PANIC Pipeline version')
         flatframe[0].header.set('IMAGETYP',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file') 

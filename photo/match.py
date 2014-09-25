@@ -3,8 +3,8 @@
 # Utilties for matching catalogs by RA & Dec or ID
 # H. Ferguson 11/22/05
 
-__version__ = 2.0 # Updated for Numpy 5/15/08 not tested yet
-__author__ = "H. C. Ferguson"
+#__version__ = 2.0 # Updated for Numpy 5/15/08 not tested yet
+#__author__ = "H. C. Ferguson"
 
 from numpy import *
 import angsep

@@ -184,7 +184,7 @@ class MEF (object):
                     'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
                     'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'NCOADDS',
                     'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT',
-                    'CASSPOS','PIXSCALE','PAPITYPE','OBSERVER','ORIGIN']
+                    'CASSPOS','PIXSCALE','PAPITYPE', 'PAPIVERS','OBSERVER','ORIGIN']
                 
         out_filenames = []
         n = 0 
