@@ -5165,9 +5165,32 @@ MEF-cube               ok
 
 25-Sep-2014 
 -----------
-(P) - Añadir PAPIVERS a los datos generador por PAPI !!! y a la documentación
+- Añado PAPIVERS a los datos generador por PAPI !!! y a la documentación
 de los FITS (TN-FITS)--> ya está en la documetación.
 Basicamente lo voy a añadir en todos los sitios en los que también se añade PAPITYPE.
+Para eso creo el modulo make_release.py que a su vez crea el version.py; este 
+último es el que se importa en el resto de modulos.
+Ahora mismo, cada vez que queramos crear una nueva version, debemos ejecutar
+a mano make_release.py para que se actualice el fichero version.py.
+Habría que pensar si se podría hacer de forma automática cada vez que se haga
+un commit con git !!!
+
+
+26-Sep-2014 
+-----------
+- Devel. OSN
+
+29-Sep-2014 
+-----------
+- Pruebas con QL y mode Lazy para Dark y Flat.
+
+- Añador a QL otra opción para ejecutar ApplyDarkFlat a un conjunto de ficheros
+seleccionados en el QL.
+
+
+30-Sep-2014 
+-----------
+
 
 
 

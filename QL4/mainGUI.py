@@ -63,6 +63,7 @@ import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
 import reduce.calBPM
+import reduce.applyDarkFlat
 import reduce.checkQuality
 import reduce.astrowarp
 import reduce.reductionset as RS
@@ -1553,6 +1554,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Apply BPM and show the masked pixels in a temp file.", 
             triggered=self.applyBPM_slot)
 
+        self.mDF_appAct = QtGui.QAction("&Apply Dark & FlatField", self,
+            shortcut="Ctrl+f",
+            statusTip="Apply Dark and FlatField", 
+            triggered=self.applyDarkFlat)
+
         self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
             shortcut="Ctrl+f",
             statusTip="Run a telescope focus evaluation of a focus serie.", 
@@ -1689,9 +1695,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.mDTwFlatAct)
             popUpMenu.addAction(self.mGainMapAct)
             popUpMenu.addAction(self.mBPMAct)
+            popUpMenu.addSeparator()
+            popUpMenu.addAction(self.mDF_appAct)
             popUpMenu.addAction(self.mBPM_appAct)
             popUpMenu.addAction(self.mFocusEval)
-            popUpMenu.addSeparator()
             popUpMenu.addAction(self.subOwnSkyAct)
             popUpMenu.addAction(self.subNearSkyAct)
             popUpMenu.addAction(self.quickRedAct)
@@ -1731,6 +1738,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.mDTwFlatAct.setEnabled(True)
             self.mGainMapAct.setEnabled(True)
             self.mBPMAct.setEnabled(True)
+            self.mDF_appAct.setEnabled(True)
             self.mBPM_appAct.setEnabled(True)
             self.mFocusEval.setEnabled(True)
             self.subOwnSkyAct.setEnabled(True)
@@ -2543,6 +2551,44 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:
             QMessageBox.critical(self, "Error","Error, not suitable frames selected (flat fields)")
 
+    def applyDarkFlat(self):
+        """
+        Apply to the selected files the master Dark and master Flat found in the
+        database. The master Dark and FlatField are searched individualy for each
+        selected file.
+
+        The original files are not modified, but new output files with _D_F.fits
+        suffix are created.
+        """
+        
+        if len(self.m_popup_l_sel)>0:
+            for filename in self.m_popup_l_sel:
+                try:
+                    # Look for (last received) calibration files
+                    mDark, mFlat, mBPM = self.getCalibFor([filename])
+                    log.debug("Source file: %s"%filename)
+                    log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
+                    # Both master_dark and master_flat are optional
+                    if mDark or mFlat:
+                        #Put into the queue the task to be done
+                        func_to_run = reduce.ApplyDarkFlat([filename], 
+                                                         mDark, mFlat, mBPM, 
+                                                         self.m_outputdir,
+                                                         bpm_action='grab') # fix is a heavy process for QL
+                        params = ()
+                        log.debug("Inserting in queue the task ....")
+                        self._task_queue.put([(func_to_run.apply, params)])
+                        
+                    else:
+                        self.logConsole.error("[ApplyDarkFlat] Cannot find the appropriate master calibrations for file %s"%filename)
+                        #QMessageBox.critical(self, 
+                        #                     "Error", 
+                        #                     "Error, cannot find the master calibration files")
+                except Exception, e:
+                    QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
+                    #self.m_processing = False
+                    #QApplication.restoreOverrideCursor()
+                    raise e 
 
     def applyBPM_slot(self):
         """
