@@ -2560,12 +2560,56 @@ class MainGUI(QtGui.QMainWindow, form_class):
         The original files are not modified, but new output files with _D_F.fits
         suffix are created.
         """
+
+        # Ask for master calibration 
+        msgBox = QMessageBox()
+        msgBox.setText("        Apply Dark and Flat-Field")
+        msgBox.setInformativeText("Do you want to <Select> the calibration files or use <Defaults> ones ?")
+        button_select = msgBox.addButton("Select Calibrations", QMessageBox.ActionRole)
+        button_defaults = msgBox.addButton("Use Defaults", QMessageBox.ActionRole)
+        button_cancel = msgBox.addButton("Cancel", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_defaults)
         
+        msgBox.exec_()
+        
+        calibrations = []
+        if msgBox.clickedButton()== button_select or msgBox.clickedButton()==button_defaults:
+            if msgBox.clickedButton()== button_select:
+                # Select master DARK
+                filenames = QFileDialog.getOpenFileNames( self,
+                                                "Select master Dark to use",
+                                                self.m_outputdir,
+                                                "FITS files (*.fit*)")
+                if not filenames.isEmpty():
+                    calibrations.append(str(filenames[0]))
+
+                # Select master Flat
+                filenames = QFileDialog.getOpenFileNames( self,
+                                                "Select master Flat to use",
+                                                self.m_outputdir,
+                                                "FITS files (*.fit*)")
+                if not filenames.isEmpty():
+                    calibrations.append(str(filenames[0]))
+
+            elif msgBox.clickedButton()== button_defaults:
+                # Nothing to do
+                calibrations = []
+        else:
+            # Cancel button pressed
+            return
+
+        # Now, start dark subtraction and Flat-Fielding...
         if len(self.m_popup_l_sel)>0:
             for filename in self.m_popup_l_sel:
                 try:
-                    # Look for (last received) calibration files
-                    mDark, mFlat, mBPM = self.getCalibFor([filename])
+                    if calibrations==[]:
+                        # Look for (last received) calibration files
+                        mDark, mFlat, mBPM = self.getCalibFor([filename])
+                    else:
+                        mDark = calibrations[0]
+                        mFlat = calibrations[1]
+                        mBPM = None
+
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
                     # Both master_dark and master_flat are optional

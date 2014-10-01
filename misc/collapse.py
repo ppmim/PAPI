@@ -36,9 +36,10 @@ from misc.version import __version__
 
 def collapse(frame_list, out_dir="/tmp"):
     """
-    Collapse (sum) a (list) of data cubes into a single 2D image.
+    Collapse (add them up arithmetically) a (list) of data cubes into a single 
+    2D image.
 
-    Return a list with the new collapsed frames.
+    Return a list with the new collapsed  frames.
     """
 
     log.debug("Starting collapse() method ....")
@@ -189,7 +190,7 @@ if __name__ == "__main__":
     # Get and check command-line options
         
     USAGE = "usage: %prog [options] arg1 arg2 ..."
-    desc = "Collapse (sum) each cube of a list files into a single 2D image"
+    desc = "Collapse (add them up arithmetically) each cube of a list files into a single 2D image"
     
     parser = OptionParser(USAGE, description=desc)
     

@@ -5190,9 +5190,25 @@ seleccionados en el QL.
 
 30-Sep-2014 
 -----------
+- Añado a ApplyDarkFlat en el QL la opción de seleccionar el master Dark y el 
+master Flat a usar o bien usar lo defults (es decir, buscar en la BD actual).
 
 
+01-Oct-2014 
+-----------
+- Averiguar que coordenadas (RA,DEC) se guardan en la cabecera (FK5, J2000, instrumetales, etc...)
+(mirar en manual de GEIRS)
+En el manual de GEIRS sólo se dice lo siguiente:
 
+EQUINOX: Julian year of the RA and DEC information and of the data acquisition.
+Le pregunto a RM si se supeno que está referido a FK5, pues EQUINOX=2000.
+
+
+- Estudiar/revisar el Email de RM sobre las instrucciones para CAHA. Ver que cosas
+podrían quedar en el aire !!
+
+- Elaborar procedimiento de Test para CAHA !!
+- Elaborar pruebas/Test PAPI/QL durante el commissioning!
 
 
 
@@ -5587,7 +5603,6 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Añadir PAPIVERS a los datos generador por PAPI !!!
 - Cambiar nombre de rama 'limpia' por 'stable'
 - chequear tamaños imagen (shape) en getCalibrations() o en checkDataIntegrity()
 - ¿ cómo de importante es el gainmap en skyfilter ?
@@ -5644,7 +5659,8 @@ o SWARP (VTerrón lo está usando y está contento...)
    DET_ID = 'SGi'
    ...
 
-- "Collapsar" los cubos de PANIC con un average + sigmaclip !!!
+- "Collapsar" los cubos de PANIC con un average + sigmaclip en lugar de una
+simple suma aritmética !!! --> imcobine !
 - Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
 de llamar directamente a calDark.py.
   ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
@@ -5679,6 +5695,11 @@ usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
 - En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
 - Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m).
 - Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
+  ==> de momento creo que no merece la pena; es mucho más sencillo el módulo catalog_query.py,
+  y aún no esta integrado en astropy, es un modulo que hay que instalar a parte
+  y que tiene dependencias adicionales.
+
+
 - Configurar sonidos (pulseaudio)
 - Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
 - No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
