@@ -171,6 +171,7 @@ class ApplyDarkFlat(object):
                     raise Exception("File %sdoes not look a neither MASTER_DARK nor MASTER_DARK_MODEL"%self.__mdark)
                 
                 #dark_data=dark[0].data
+                n_ext = cdark.next  
                 """if len(dark)>1:
                     dmef = True
                     n_ext = len(dark)-1
@@ -202,13 +203,12 @@ class ApplyDarkFlat(object):
                 flat_filter = cflat.getFilter()
                 #flat_data = flat[0].data
                 #MEF
-                if cflat.next>1:
-                    ###fmef = True
-                    if cdark!=None and cdark.next != cflat.next:
-                        raise Exception("Number of extensions does not match "
+                ###fmef = True
+                if cdark!=None and cdark.next != cflat.next:
+                    raise Exception("Number of extensions does not match "
                         "in Dark and Flat files!")
-                    else: n_ext = cflat.next    
-                    log.debug("Flat MEF file with %d extensions", n_ext)
+                else: n_ext = cflat.next    
+                log.debug("Flat MEF file with %d extensions", n_ext)
                     
                 # compute mode for n_ext normalization (in case of MEF, we normalize 
                 # all extension wrt chip 0)
@@ -338,12 +338,12 @@ class ApplyDarkFlat(object):
                         # Get Dark
                         if self.__mdark != None: 
                             if time_scale != 1.0: # for dark_model time_scale==-1
-                                log.debug("Dark EXPTIME mismatch ! looking for dark model ...")
+                                log.debug("Dark EXPTIME mismatch ! checking if it is a dark model ...")
                                 if not cdark.isMasterDarkModel():
                                     log.error("Cannot find out a scaled dark to apply")
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
-                                    log.debug("Scaling dark with dark model...")
+                                    log.debug("DarkModel found: Scaling dark with dark model...")
                                     dark_data = dark[0].data[1]*exp_time + dark[0].data[0]
                                     log.info("AVG(scaled_dark)=%s"%numpy.mean(dark_data))
                             else:

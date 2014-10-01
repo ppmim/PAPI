@@ -1322,6 +1322,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
          
         self.listView_dataS.clear()
         self.dc.Clear()
+        self.dc_outdir.Clear()
         self.inputsDB.clearDB()
         self.outputsDB.clearDB()
 

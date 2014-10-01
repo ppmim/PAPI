@@ -5202,7 +5202,37 @@ En el manual de GEIRS sólo se dice lo siguiente:
 
 EQUINOX: Julian year of the RA and DEC information and of the data acquisition.
 Le pregunto a RM si se supeno que está referido a FK5, pues EQUINOX=2000.
+RM me respondo (1/Oct/2014) diciendo que no sabe, que eso depende de CAHA, y que
+en la documentación del Telescopio que el tiene no ha visto nada al respecto, que
+el único que podría saberlo sería U.Thiele. Lo deja por tanto para que lo averigue yo.
 
+"""
+jm> In the header, there is only the EQUINOX value written as J2000.
+jm> Should we then assume it is FK5? if it is, it could be specified in
+jm> the comment field of EQUINOX.
+
+i) According to the FITS standard defaults understanding
+  J2000 with an unspecified reference system defaults to FK5.
+  So you are correct that the reader "should" assume it is FK5,
+  and if we are indeed sure that it is FK5 we do not need to
+  add comments about it.
+ii) However, I have found no hint on specifications concerning
+  which coordinate system all the CAHA telescope operations
+  are working in. (Actually, I have not found anything online
+  like a CAHA telescope  operation manual anywhere. There are probably
+  on some shells in the observatory hardcopies of them, and while you
+  will be visiting, you might try to read them and to report back.)
+
+  In particular there is no information on the reference system
+  mentioned in the (official?) telescope commands that I assembled
+  from a 2013 email in the GEIRS PANIC manual. This information
+  originates from U. Thiele who is no longer working on Calar Alto.
+
+So I am as entirely left in the dark and cannot answer that
+question. Given that the operations started in the mid 70's it
+might as well be some B-system which has never been promoted to other
+systems.
+"""
 
 - Estudiar/revisar el Email de RM sobre las instrucciones para CAHA. Ver que cosas
 podrían quedar en el aire !!
@@ -5661,6 +5691,7 @@ o SWARP (VTerrón lo está usando y está contento...)
 
 - "Collapsar" los cubos de PANIC con un average + sigmaclip en lugar de una
 simple suma aritmética !!! --> imcobine !
+
 - Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
 de llamar directamente a calDark.py.
   ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
