@@ -58,6 +58,7 @@ import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 import thirdparty.cosmics.cosmics as cosmics
 
@@ -126,6 +127,9 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
         
         # Write the cleaned image into a new FITS file, conserving the original header :
         cosmics.tofits(out_file, c.cleanarray, header)
+        
+        fits.setval(out_file, keyword="PAPIVERS",
+                        value= __version__, comment="PANIC Pipeline version")
         
         # If you want the mask, here it is :
         if want_mask:

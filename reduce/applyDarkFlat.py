@@ -52,6 +52,7 @@ import datahandler
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 # Interact with FITS files
 import astropy.io.fits as fits
@@ -406,6 +407,8 @@ class ApplyDarkFlat(object):
                     f[0].header.add_history('Flat-Field with %s' %self.__mflat)        
                 if self.__bpm != None and self.__bpm_action!='none':
                     f[0].header.add_history('BPM with %s' %self.__bpm)
+
+                f[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
 
                 # Write output to outframe (data object actually still points 
                 # to input data)

@@ -31,12 +31,15 @@ import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
+
 
 def collapse(frame_list, out_dir="/tmp"):
     """
-    Collapse (sum) a (list) of data cubes into a single 2D image.
+    Collapse (add them up arithmetically) a (list) of data cubes into a single 
+    2D image.
 
-    Return a list with the new collapsed frames.
+    Return a list with the new collapsed  frames.
     """
 
     log.debug("Starting collapse() method ....")
@@ -71,9 +74,10 @@ def collapse(frame_list, out_dir="/tmp"):
             prihdu = fits.PrimaryHDU (data = f[0].data.sum(0), header = f[0].header)
             prihdu.scale('float32') 
             # Updating PRIMARY header keywords...
-            prihdu.header.update('NCOADDS', f[0].data.shape[0])
-            prihdu.header.update('EXPTIME', f[0].header['EXPTIME']*f[0].data.shape[0])
-            
+            prihdu.header.set('NCOADDS', f[0].data.shape[0])
+            prihdu.header.set('EXPTIME', f[0].header['EXPTIME']*f[0].data.shape[0])
+            prihdu.header.set('PAPIVERS', __version__, "PANIC Pipeline version")
+
             out_hdulist.append(prihdu)    
             #out_hdulist.verify ('ignore')
             # Now, write the new collapsed file
@@ -98,8 +102,9 @@ def collapse_mef_cube(inputfile, out_filename=None):
 
     out_hdulist = fits.HDUList()
     prihdu = fits.PrimaryHDU (data = None, header = f[0].header)
-    prihdu.header.update('NCOADDS', f[1].data.shape[0])
-    prihdu.header.update('EXPTIME', f[0].header['EXPTIME']*f[1].data.shape[0])
+    prihdu.header.set('NCOADDS', f[1].data.shape[0])
+    prihdu.header.set('EXPTIME', f[0].header['EXPTIME']*f[1].data.shape[0])
+    prihdu.header.set('PAPIVERS', __version__, "PANIC Pipeline version")
     out_hdulist.append(prihdu)    
  
     # Sum each extension
@@ -160,8 +165,9 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     prihdu.scale('float32') 
         
     # Updating PRIMARY header keywords...
-    prihdu.header.update('NCOADDS', len(new_frame_list))
-    prihdu.header.update('EXPTIME', header1['EXPTIME']*len(new_frame_list))
+    prihdu.header.set('NCOADDS', len(new_frame_list))
+    prihdu.header.set('EXPTIME', header1['EXPTIME']*len(new_frame_list))
+    prihdu.header.set('PAPIVERS', __version__, "PANIC Pipeline version")
     
     out_hdulist.append(prihdu)    
     #out_hdulist.verify ('ignore')
@@ -184,7 +190,7 @@ if __name__ == "__main__":
     # Get and check command-line options
         
     USAGE = "usage: %prog [options] arg1 arg2 ..."
-    desc = "Collapse (sum) each cube of a list files into a single 2D image"
+    desc = "Collapse (add them up arithmetically) each cube of a list files into a single 2D image"
     
     parser = OptionParser(USAGE, description=desc)
     

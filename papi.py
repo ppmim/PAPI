@@ -29,11 +29,6 @@
 # Last update 17/May/2011
 #
 ################################################################################
-__date__ = "$Date$"
-__author__ = "$Author$"
-__revision__ = "$Rev$"
-
-__version__ = "1.2.0"
 
 '''User command line interface of PAPI.'''
 
@@ -65,6 +60,8 @@ import misc.config
 import misc.utils as utils
 import misc.genLogsheet as gls
 import misc.check_papi_modules
+from misc.version import __version__
+
 
 ################################################################################
 # main
@@ -81,13 +78,14 @@ def main(arguments = None):
     # Get and check command-line options
     
     description = \
-    "This is the main module of the PANIC data reduction system (PAPI)"
+    "This is the main module of the PANIC data reduction system (PAPI) "\
+    "- IAA-CSIC - Version %s"%__version__
 
     #wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
     parser = OptionParser(description = description, 
                           #formatter = wider_format, 
                           usage = "%prog [OPTION]... DIRECTORY...", 
-                          version = "%prog "+__version__)
+                          version = "%%prog %s"%__version__)
     # general options
 
     parser.add_option("-c", "--config", type = "str",

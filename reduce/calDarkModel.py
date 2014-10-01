@@ -55,6 +55,7 @@ import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 class MasterDarkModel(object):
     """
@@ -231,13 +232,15 @@ class MasterDarkModel(object):
             log.warning("%s"%str(e))
 
         prihdu.header.set('PAPITYPE','MASTER_DARK_MODEL')
+        prihdu.header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
+        
         prihdu.header.add_history('Dark model based on %s' % framelist)
         prihdu.header.add_history('Plane 0: bias ; Plane 1: dark current')
         
         if f_n_extensions>1:
-            prihdu.header.update('EXTEND', True, after = 'NAXIS')
-            prihdu.header.update('NEXTEND', f_n_extensions)
-            prihdu.header.update('FILENAME', self.__output_filename)
+            prihdu.header.set('EXTEND', True, after = 'NAXIS')
+            prihdu.header.set('NEXTEND', f_n_extensions)
+            prihdu.header.set('FILENAME', self.__output_filename)
             hdulist.append(prihdu)
             for i_ext in range(0, f_n_extensions):
                 hdu = fits.PrimaryHDU()

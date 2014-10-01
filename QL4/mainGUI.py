@@ -63,6 +63,7 @@ import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
 import reduce.calBPM
+import reduce.applyDarkFlat
 import reduce.checkQuality
 import reduce.astrowarp
 import reduce.reductionset as RS
@@ -105,8 +106,8 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
 
-__version__ = "1.2.0 - July 2014"
 
+from misc.version import __version__
 #-------------------------------------------------------------------------------
 #
 # Next functions are needed to allow the use of  multiprocessing.Pool() with 
@@ -1553,6 +1554,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Apply BPM and show the masked pixels in a temp file.", 
             triggered=self.applyBPM_slot)
 
+        self.mDF_appAct = QtGui.QAction("&Apply Dark & FlatField", self,
+            shortcut="Ctrl+f",
+            statusTip="Apply Dark and FlatField", 
+            triggered=self.applyDarkFlat)
+
         self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
             shortcut="Ctrl+f",
             statusTip="Run a telescope focus evaluation of a focus serie.", 
@@ -1689,9 +1695,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.mDTwFlatAct)
             popUpMenu.addAction(self.mGainMapAct)
             popUpMenu.addAction(self.mBPMAct)
+            popUpMenu.addSeparator()
+            popUpMenu.addAction(self.mDF_appAct)
             popUpMenu.addAction(self.mBPM_appAct)
             popUpMenu.addAction(self.mFocusEval)
-            popUpMenu.addSeparator()
             popUpMenu.addAction(self.subOwnSkyAct)
             popUpMenu.addAction(self.subNearSkyAct)
             popUpMenu.addAction(self.quickRedAct)
@@ -1731,6 +1738,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.mDTwFlatAct.setEnabled(True)
             self.mGainMapAct.setEnabled(True)
             self.mBPMAct.setEnabled(True)
+            self.mDF_appAct.setEnabled(True)
             self.mBPM_appAct.setEnabled(True)
             self.mFocusEval.setEnabled(True)
             self.subOwnSkyAct.setEnabled(True)
@@ -2543,6 +2551,88 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:
             QMessageBox.critical(self, "Error","Error, not suitable frames selected (flat fields)")
 
+    def applyDarkFlat(self):
+        """
+        Apply to the selected files the master Dark and master Flat found in the
+        database. The master Dark and FlatField are searched individualy for each
+        selected file.
+
+        The original files are not modified, but new output files with _D_F.fits
+        suffix are created.
+        """
+
+        # Ask for master calibration 
+        msgBox = QMessageBox()
+        msgBox.setText("        Apply Dark and Flat-Field")
+        msgBox.setInformativeText("Do you want to <Select> the calibration files or use <Defaults> ones ?")
+        button_select = msgBox.addButton("Select Calibrations", QMessageBox.ActionRole)
+        button_defaults = msgBox.addButton("Use Defaults", QMessageBox.ActionRole)
+        button_cancel = msgBox.addButton("Cancel", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_defaults)
+        
+        msgBox.exec_()
+        
+        calibrations = []
+        if msgBox.clickedButton()== button_select or msgBox.clickedButton()==button_defaults:
+            if msgBox.clickedButton()== button_select:
+                # Select master DARK
+                filenames = QFileDialog.getOpenFileNames( self,
+                                                "Select master Dark to use",
+                                                self.m_outputdir,
+                                                "FITS files (*.fit*)")
+                if not filenames.isEmpty():
+                    calibrations.append(str(filenames[0]))
+
+                # Select master Flat
+                filenames = QFileDialog.getOpenFileNames( self,
+                                                "Select master Flat to use",
+                                                self.m_outputdir,
+                                                "FITS files (*.fit*)")
+                if not filenames.isEmpty():
+                    calibrations.append(str(filenames[0]))
+
+            elif msgBox.clickedButton()== button_defaults:
+                # Nothing to do
+                calibrations = []
+        else:
+            # Cancel button pressed
+            return
+
+        # Now, start dark subtraction and Flat-Fielding...
+        if len(self.m_popup_l_sel)>0:
+            for filename in self.m_popup_l_sel:
+                try:
+                    if calibrations==[]:
+                        # Look for (last received) calibration files
+                        mDark, mFlat, mBPM = self.getCalibFor([filename])
+                    else:
+                        mDark = calibrations[0]
+                        mFlat = calibrations[1]
+                        mBPM = None
+
+                    log.debug("Source file: %s"%filename)
+                    log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
+                    # Both master_dark and master_flat are optional
+                    if mDark or mFlat:
+                        #Put into the queue the task to be done
+                        func_to_run = reduce.ApplyDarkFlat([filename], 
+                                                         mDark, mFlat, mBPM, 
+                                                         self.m_outputdir,
+                                                         bpm_action='grab') # fix is a heavy process for QL
+                        params = ()
+                        log.debug("Inserting in queue the task ....")
+                        self._task_queue.put([(func_to_run.apply, params)])
+                        
+                    else:
+                        self.logConsole.error("[ApplyDarkFlat] Cannot find the appropriate master calibrations for file %s"%filename)
+                        #QMessageBox.critical(self, 
+                        #                     "Error", 
+                        #                     "Error, cannot find the master calibration files")
+                except Exception, e:
+                    QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
+                    #self.m_processing = False
+                    #QApplication.restoreOverrideCursor()
+                    raise e 
 
     def applyBPM_slot(self):
         """
@@ -2637,7 +2727,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """Show image statistics in the log console of the files selected"""
         
         length_fn = len(self.m_popup_l_sel[0])
-        msg = "FILE" + (length_fn+15)*" " + "MEAN     MODE       STDDEV      MIN        MAX"
+        msg = "FILE" + (length_fn+25)*" " + "MEAN     MODE       STDDEV      MIN        MAX"
         self.logConsole.info(msg)
         for file in self.m_popup_l_sel:
             values = (iraf.mscstat (images=file,
@@ -3288,7 +3378,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         QMessageBox.about(self,
                           "PANIC Quick-Look Tool",
 """
-PQL version: 1.2.0\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
+PQL version: %s\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
 Author: Jose M. Ibanez. (jmiguel@iaa.es)
 Instituto de Astrofisica de Andalucia, IAA-CSIC
 
@@ -3306,7 +3396,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""")
+"""%__version__)
 
     def setSFlat_slot(self):
         print "panicQL.setSFlat_slot(): Not implemented yet"

@@ -499,7 +499,7 @@ class ClFits (object):
                         # By default, the image is classified as SCIENCE object
                         self.type = "SCIENCE"
             except KeyError:
-                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
+                log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
         elif self.instrument=='hawki':
             try:
@@ -524,7 +524,7 @@ class ClFits (object):
                     #By default, the image is classified as SCIENCE object
                     self.type = "SCIENCE"
             except KeyError:
-                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
+                log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
                 
         else: #o2000, Roper or  ??
@@ -560,7 +560,7 @@ class ClFits (object):
                     self.type = "SCIENCE"
                     #log.debug("DEFAULT Image type: %s"%self.type)
             except KeyError:
-                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
+                log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
         
         #Is pre-reduced the image ? by default, isn't
@@ -654,7 +654,7 @@ class ClFits (object):
             else:
                 raise Exception("No valid RA coordinate found")
         except Exception,e:
-            log.error('Error reading RA keyword :%s',str(e))
+            log.warning('Error reading RA keyword :%s',str(e))
             self._ra  = -1
         finally:
             #log.debug("RA = %s"%str(self._ra))
@@ -684,7 +684,7 @@ class ClFits (object):
             else:
                 raise Exception("No valid DEC coordinates found")
         except Exception,e:
-            log.error('Error reading DEC keyword : %s', str(e))
+            log.warning('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
         finally:
             #log.debug("DEC = %s"%str(self._dec))
@@ -844,7 +844,6 @@ class ClFits (object):
                 # default scale ?
                 self.pix_scale = 0.45 * self.binning
 
-
         # 
         # Close the file. Some updates can be done (PRESS1, ...) but it mustn't
         #            
@@ -853,22 +852,6 @@ class ClFits (object):
         except Exception, e:
             log.error("Error while closing FITS file %s   : %s",
                       self.pathname, str(e))
-        
-            
-    def addHistory(self, string_history):
-        """ Add a history keyword to the header
-            NOTE: The update is only done in memory-header(my_header). To flush to disk, we should
-            to write/update to a new file. 
-            
-            STILL NOT USED !!!!
-        """
-        log.warning("Header not updated nicely !!")
-        try:
-            self.my_header.add_history(string_history)
-            log.warning('History added')
-        except:
-            log.error('Error while adding history to header')
-            
         
         
     def print_info(self):

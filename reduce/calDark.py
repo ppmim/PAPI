@@ -58,6 +58,8 @@ import numpy
 # PAPI modules
 import misc.fileUtils
 import misc.utils as utils
+from misc.version import __version__
+
 import datahandler
 
 # Pyraf modules
@@ -259,6 +261,7 @@ class MasterDark(object):
         darkframe = fits.open(self.__output_filename,'update')
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.set('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
+        darkframe[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
         darkframe[0].header.set('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in darkframe[0].header:
             darkframe[0].header.set('PAT_NEXP',1,'Number of position into the current dither pattern')

@@ -44,6 +44,7 @@ from pyraf import iraf
 
 # Interact with FITS files
 from misc.paLog import log
+from misc.version import __version__
 
 
                 
@@ -249,7 +250,10 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     iraf.imcopy(input=file+"["+str(xmin)+":"+str(xmax)+","+
             str(ymin)+":"+str(ymax)+"]", output=outputfile)
     
-    
+    fits.setval(outputfile, keyword='HISTORY', value='Image trimmed', ext=0)
+    fits.setval(outputfile, keyword='PAPIVERS', value=__version__, 
+                    comment='PANIC Pipeline version', ext=0)
+
     # 
     # Look for weight and objs images
     #

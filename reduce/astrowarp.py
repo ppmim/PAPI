@@ -36,6 +36,7 @@ import datahandler
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 import misc.config
 import reduce.solveAstrometry
 
@@ -110,17 +111,17 @@ def initWCS( input_image, pixel_scale):
                 if create_wcs:
                     #Create initial WCS
                     #
-                    header.update("CRPIX1", naxis1/2.0, "RA and DEC reference pixel along axis 1")
-                    header.update("CRPIX2", naxis2/2.0, "RA and DEC reference pixel along axis 2")
-                    header.update("CRVAL1", ra, "[deg] RA Coordinate value of ref. pixel")
-                    header.update("CRVAL2", dec, "[deg] DEC Coordinate value of ref. pixel")
-                    #header.update("RA", new_ra, "Coordinate value of ref. pixel")
-                    #header.update("DEC", new_dec, "Coordinate value of ref. pixel")
-                    header.update("CUNIT1", "deg", "WCS units along axis 1")
-                    header.update("CUNIT2", "deg", "WCS units along axis 2")
-                    header.update("CTYPE1", "RA---TAN", "Pixel coordinate system")
-                    header.update("CTYPE2", "DEC--TAN", "Pixel coordinate system")
-                    #header.update("RADECSYS","FK5","Coordinate reference frame")
+                    header.set("CRPIX1", naxis1/2.0, "RA and DEC reference pixel along axis 1")
+                    header.set("CRPIX2", naxis2/2.0, "RA and DEC reference pixel along axis 2")
+                    header.set("CRVAL1", ra, "[deg] RA Coordinate value of ref. pixel")
+                    header.set("CRVAL2", dec, "[deg] DEC Coordinate value of ref. pixel")
+                    #header.set("RA", new_ra, "Coordinate value of ref. pixel")
+                    #header.set("DEC", new_dec, "Coordinate value of ref. pixel")
+                    header.set("CUNIT1", "deg", "WCS units along axis 1")
+                    header.set("CUNIT2", "deg", "WCS units along axis 2")
+                    header.set("CTYPE1", "RA---TAN", "Pixel coordinate system")
+                    header.set("CTYPE2", "DEC--TAN", "Pixel coordinate system")
+                    #header.set("RADECSYS","FK5","Coordinate reference frame")
                     # CD matrix (the CDi_j elements) encode the sky position angle,
                     # the pixel scale, and a possible flipping.
                     # CD1_1 is <0 because East is supposed at Left = flipX
@@ -128,15 +129,15 @@ def initWCS( input_image, pixel_scale):
                     # In addition, it must be noted that:
                     # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
                     # r = clockwise rotation_angle  
-                    header.update("CD1_1", -degscale, "[deg/px] Translation WCS matrix element")
-                    header.update("CD1_2", 0.0, "[deg/px] Translation WCS matrix element")
-                    header.update("CD2_1", 0.0, "[deg/px] Translation WCS matrix element")
-                    header.update("CD2_2", degscale, "[deg/px] Translation WCS matrix element")
-                    header.update("SCALE", scale, "[arcsec/px] Image scale")
-                    #header.update("EQUINOX", 2000.0, "Standard FK5(years)")
+                    header.set("CD1_1", -degscale, "[deg/px] Translation WCS matrix element")
+                    header.set("CD1_2", 0.0, "[deg/px] Translation WCS matrix element")
+                    header.set("CD2_1", 0.0, "[deg/px] Translation WCS matrix element")
+                    header.set("CD2_2", degscale, "[deg/px] Translation WCS matrix element")
+                    header.set("SCALE", scale, "[arcsec/px] Image scale")
+                    #header.set("EQUINOX", 2000.0, "Standard FK5(years)")
                 else:
-                    header.update("RA", ra, "Right Ascension (degree)")
-                    header.update("DEC", dec, "Declination (degree)")
+                    header.set("RA", ra, "Right Ascension (degree)")
+                    header.set("DEC", dec, "Declination (degree)")
                     
                 # clean incompatible CDi_j and CDELT matrices
                 if "CDELT1" in header:
@@ -158,17 +159,19 @@ def initWCS( input_image, pixel_scale):
                 log.info("Updating CRPIX1 taking into account border pixels due to coadd")
                 log.debug("NAXIS1=%s  CRPIX1=%s"%(header['NAXIS1'],header['CRPIX1']))
                 value = header['CRPIX1'] + (header['NAXIS1']-2048)/2
-                header.update('CRPIX1', value )
+                header.set('CRPIX1', value )
                 log.debug("VALUE1=%s"%value)
             if 'CRPIX2' in header and header['NAXIS2']>2048:
                 log.info("Updating CRPIX2 taking into account border pixels due to coadd")
                 value = header['CRPIX2'] + (header['NAXIS2']-2048)/2            
-                header.update('CRPIX2', value )
+                header.set('CRPIX2', value )
                 log.debug("VALUE2=%s"%value)
         except Exception,e:
             log.critial("[initWCS] Error updating header: %s"%str(e))
             raise e
 
+    fits_file[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version') 
+    
     try:        
         fits_file.close(output_verify='ignore')
     except Exception,e:

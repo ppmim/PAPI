@@ -64,7 +64,7 @@ Additional packages are optionally required:
 
 Download
 ********
-The latest stable version of PAPI can be downloaded from `here <http://www.iaa.es/~jmiguel/software/papi.tgz>`_
+The latest stable version of PAPI can be downloaded from `here <https://github.com/ppmim/PAPI>`_
 
 Installing
 **********

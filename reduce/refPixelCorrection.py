@@ -73,6 +73,7 @@ import scipy.ndimage.filters
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 def refPixelCorrection(in_image, out_image=None, overwrite=False):
     """
@@ -200,6 +201,7 @@ def refPixelCorrection(in_image, out_image=None, overwrite=False):
     
     hdr0 = fits.getheader(in_image)
     hdr0.add_history('Reference pixel correction done.')
+    hdr0.set('PAPIVERS', __version__, 'PANIC Pipeline version')
     hdu.header = hdr0
     
     try:

@@ -58,6 +58,7 @@ from misc.paLog import log
 import datahandler
 import misc.fileUtils
 import misc.utils as utils
+from misc.version import __version__
 
 class ExError(Exception):
     pass
@@ -339,7 +340,9 @@ class BadPixelMask(object):
             new_file = mask_file.partition(".pl")[0]+".fits"
             iraf.imcopy(mask_file, new_file)
             fits.setval(new_file, keyword="PAPITYPE", 
-                                             value="MASTER_BPM")            
+                                             value="MASTER_BPM")
+            fits.setval(new_file, keyword="PAPIVERS", 
+                                             value=__version__)                                             
             fits.setval(new_file, keyword="HISTORY",
                                         value="BPM created from %s"%filelist)
             log.info("Bad Pixel Mask file created : %s"%new_file)
@@ -514,6 +517,8 @@ class BadPixelMask(object):
         hdu.scale('int16') # importat to set first data type
         hdulist = fits.HDUList([hdu])
         hdu.header.update('PAPITYPE','MASTER_BPM', 'TYPE of PANIC Pipeline generated file')
+        hdu.header.update('PAPIVERS', __version__, 'PANIC Pipeline version')
+        
         hdulist.writeto(self.output_file)
         hdulist.close(output_verify='ignore')
         

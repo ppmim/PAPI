@@ -61,7 +61,7 @@ import datahandler
 import misc.fileUtils
 import misc.utils as utils
 import misc.robust as robust
-
+from misc.version import __version__
 
 class BadPixelMask(object):
     """
@@ -303,7 +303,9 @@ class BadPixelMask(object):
         except Exception,e:
             log.warning("%s"%str(e))
 
-        prihdu.header.set('PAPITYPE','MASTER_BPM','TYPE of PANIC Pipeline generated file')
+        prihdu.header.set('PAPITYPE',
+                          'MASTER_BPM','TYPE of PANIC Pipeline generated file')
+        prihdu.header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
         prihdu.header.add_history('BPM created from %s' % good_flats)
 
         if nExt>1:
@@ -519,6 +521,7 @@ class BadPixelMask(object):
                 log.warning("%s"%str(e))
 
             prihdu.header.set('PAPITYPE','MASTER_BPM','TYPE of PANIC Pipeline generated file')
+            prihdu.header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
             prihdu.header.add_history('BPM created from %s' % good_flats)
 
             if nExt>1:
