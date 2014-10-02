@@ -41,7 +41,7 @@ def getAverageFWHMfromPsfmeasure(image, coord_file):
    
 #myfile = "/home/panic/pruebaF.fits"
 myfile = "/home/panic/prueba.fits"
-myfile = "/home/panic/DATA/Foco/focus_H0007.fits"
+myfile = "/home/panic/PANIC.2012-01-04T03:30:31.1782.fits"
 coord_file = "/tmp/coord_file.txt"
 
 fwhm = getAverageFWHMfromPsfmeasure(myfile, coord_file)

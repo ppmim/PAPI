@@ -950,7 +950,7 @@ class ReductionSet(object):
         same shape (dimensions).
 
         This routine is also used (copy) on the QL (mainGUI.py)
-        
+
         Returns
         -------
         Returns the calibration file that match the src_frame, otherwise, None
@@ -2151,6 +2151,7 @@ class ReductionSet(object):
         reduced_sequences = 0
         files_created = []
         failed_sequences = 0
+        failed_sequeces_files = []
         
         # set the reduction mode
         if red_mode is not None:
@@ -2188,7 +2189,8 @@ class ReductionSet(object):
                     # However, if there is only one sequence, raise the exception,
                     # what it is very useful for the QL
                     failed_sequences +=1
-                    log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
+                    failed_sequeces_files.append(seq)
+                    log.error("[reduceSet] Error, cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
                     if len(sequences)==1:
                         raise e
                     elif len(sequences)>1:
@@ -2205,6 +2207,8 @@ class ReductionSet(object):
         log.debug("[reduceSet] Files generated # %d #: ***"%len(files_created))
         for r_file in files_created: log.debug("\t    - %s"%r_file)
         log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
+        for seq_failed in failed_sequeces_files:
+            log.debug("Seq. failed: \t    - %s\n"%seq_failed) 
 
         # WARNING : Purging output !!
         if self.config_dict['general']['purge_output']:
@@ -2410,8 +2414,8 @@ class ReductionSet(object):
                         #raise Exception("Dark series are not processed in quick mode")
                         out = None
                 else:
-                    log.error("Some kind of data checking was found. Review your data")
-                    raise Exception("Some kind of data checking was found. Review your data")
+                    log.error("An error in data checking was found. Review your data.")
+                    raise Exception("An error in data checking was found. Review your data.")
                         
                 if out!=None: files_created.append(out) # out must be equal to outfile
             except Exception,e:
@@ -3233,7 +3237,7 @@ class ReductionSet(object):
             offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
                                                  out_dir+'/offsets1.pap')                
         except Exception,e:
-            log.error("Erron while getting pointing offsets. Cannot continue with data reduction...")
+            log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
             raise e
         
         ########################################################################

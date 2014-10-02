@@ -5256,9 +5256,12 @@ Además, se devuelve el más reciente atendiento a MJD.
 Este rutina (getBestShapedFrame), la implemento en QL y RS.
 La pruebas dan buen resultado.
 
-
+(P) - Bug psfmeasure en checkQuality.py !!
+(P) - terminar de probar getBestShapedFrame() con PAPI: reducir noches de Matilde para probar
+(P) - Ver como compilar BIEN el paquete irdr y meter en la instalación !!!
 (P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
- 
+
+
 
 
 PANIC computers installation

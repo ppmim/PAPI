@@ -326,10 +326,11 @@ class CheckQuality(object):
         psfmeasure = iraf.obsutil.psfmeasure
         # setup all paramaters
         psfmeasure.coords = "mark1"
-        psfmeasure.wcs = "world"
+        # 'world' gives problems with SIP headers (ie. Astrometry.net) 
+        psfmeasure.wcs = "physical" 
         psfmeasure.display = "no"
-        psfmeasure.size = "MFWHM"  # Moffat profile
-        psfmeasure.radius = 10
+        psfmeasure.size = "GFWHM"  # Moffat profile
+        psfmeasure.radius = 5
         psfmeasure.iterations = 2
         psfmeasure.imagecur = coord_file
         psfmeasure.graphcur = '/dev/null' #file that is empty by definition
