@@ -127,9 +127,15 @@ class ApplyDarkFlat(object):
         Both master DARK and FLAT are optional,i.e., each one can be applied 
         even the other is not present.
         
-        If dark_EXPTIME matches with the sci_EXPTIME, a straight subtraction is done,
-        otherwise, a Master_Dark_Model is required in order to compute a scaled dark
-          
+        If dark_EXPTIME matches with the sci_EXPTIME, a straight subtraction is 
+        done, otherwise, a Master_Dark_Model is required in order to compute a 
+        scaled dark.
+
+        Note: This routine works fine with MEF files and data cubes, of a with
+        MEF-cubes. If means that if sci_data is a cube (3D array), the dark is 
+        subtracted to each layer, and flat is applied also to each layer. Thus,
+        the calibrations works correctly for data cubes of data, 
+        no matter if they are MEF or single HDU fits.   
         """   
 
         log.debug("Start applyDarkFlat")
@@ -359,9 +365,12 @@ class ApplyDarkFlat(object):
                                 # we suppose it's already normalized
                                 flat_data = flat[0].data
 
-                        else: flat_data = 1     
+                        else: flat_data = 1
+                        
+                        ## Get RAW_SCI data    
                         sci_data = f[0].data
-
+                        ## 
+                        
                         # Get BPM
                         if self.__bpm!=None:
                             # bpm_data: must be an array that is True or >0 
@@ -381,6 +390,10 @@ class ApplyDarkFlat(object):
                     ###################################
                     # Finally, apply dark, Flat and BPM
                     # #################################
+                    # Note: if sci_data is a cube (3D array), dark is subtracted
+                    # to each layer, and flat is applied also to each layer. Thus,
+                    # the calibrations works correctly for data cubes of data, 
+                    # no matter if they are MEF or single HDU fits.  
                     sci_data = (sci_data - dark_data) / flat_data
                     
 
@@ -523,6 +536,7 @@ if __name__ == "__main__":
 This module receives a series of FITS images and applies a master Dark, Flat and
 BPM (subtract dark, divide Flat, and fix bad pixel) using the given
 calibration files (master dark, master flat-field, bad pixel mask). 
+Source raw files can be MEFs and data cubes. 
 """
     parser = OptionParser(usage, description=desc)
     

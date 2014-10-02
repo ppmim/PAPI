@@ -5234,12 +5234,31 @@ might as well be some B-system which has never been promoted to other
 systems.
 """
 
-- Estudiar/revisar el Email de RM sobre las instrucciones para CAHA. Ver que cosas
-podrían quedar en el aire !!
++ Encuentro y soluciono dos bugs:
 
-- Elaborar procedimiento de Test para CAHA !!
-- Elaborar pruebas/Test PAPI/QL durante el commissioning!
+  1) applyDarkFlat: no detectaba los dark MEF
+  2) QL GUI: al pulsar el boton "Clear all", no se borraban el datacollector (dc_outdir)
 
++ Renombro la rama limpia por stable en GIT y github.
+
+02-Oct-2014 
+-----------
+- compruebo que applyDarkFlat.py funciona correctamente con cubos de datos; el
+dark y el flat aplica sin problemas. Es decir, podemos restar a un array 3d un 
+array 2d, restandose a cada capa del cubo el array 2d. En el caso de la division
+tampoco hay problema.
+
+- Implemento la rutina getBestShapedFrame() para usar en getCalibFor(), para que
+se busque el fichero de calibración que se ajuste en forma (dimesiones y extensiones),
+al fichero raw de ciencia a calibrar. Hasta ahora se devolvia el primero fichero
+de calibración que se ajustaba en TEXP y/o FILTRO, pero no se comprobaba el tamaño.
+Además, se devuelve el más reciente atendiento a MJD.
+Este rutina (getBestShapedFrame), la implemento en QL y RS.
+La pruebas dan buen resultado.
+
+
+(P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
+ 
 
 
 PANIC computers installation
@@ -5633,7 +5652,22 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Cambiar nombre de rama 'limpia' por 'stable'
++ (P) Mejorar en QL la rutina getCalibFor() para que devuelva las calibraciones
+atendiedo al tamaño (shape) de la imagen raw a calibrar.
+Idem para RS.getCalibFor().
+No es algo que de demasiados problemas, pero si hay "mezcla" de formatos/tamaños
+de imágenes y calibraciones, puede que no encuentre el fichero de calibración 
+correcto a pesar de que dicho fichero exista.
+ 
+
+(P)- Estudiar/revisar el Email de RM sobre las instrucciones para CAHA. Ver que cosas
+podrían quedar en el aire !!
+
+(P)- Elaborar procedimiento de Test para CAHA !!
+(P)- Elaborar pruebas/Test PAPI/QL durante el commissioning!
+(P)- Instalar x2go en panic2 y ver el problema del ds9
+
+
 - chequear tamaños imagen (shape) en getCalibrations() o en checkDataIntegrity()
 - ¿ cómo de importante es el gainmap en skyfilter ?
 - Añadir en el QL una vista para las estadísticas de las imágenes (mean, median, std, fwhm)

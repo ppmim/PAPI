@@ -861,6 +861,8 @@ class ReductionSet(object):
         The search of the calibration files is done, firstly in the local DB, 
         but if no results, then in the external DB if it was provided.
         
+        This routine is also used (copy) on the QL (mainGUI.py)
+
         Returns
         -------  
         A triplet with the calibration files (dark, flat, bpm) found; If more 
@@ -915,16 +917,82 @@ class ReductionSet(object):
         log.debug("Master Flats found %s", master_flat)
         log.debug("Master BPMs  found %s", master_bpm)
         
-        # Return the most recently created (according to MJD order)
-        if len(master_dark)>0: r_dark = master_dark[-1]
-        else: r_dark = None
-        if len(master_flat)>0: r_flat = master_flat[-1]
-        else: r_flat = None
-        if len(master_bpm)>0: r_bpm = master_bpm[-1]
-        else: r_bpm = None
         
+        # Return the most recently created (according to MJD order)
+        if len(master_dark)>0: 
+            r_dark = master_dark[-1]
+            log.debug("First DARK candidate: %s"%r_dark)            
+            r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
+            log.debug("Second DARK candidate: %s"%r_dark)            
+        else: 
+            r_dark = None
+        if len(master_flat)>0:
+            r_flat = master_flat[-1]
+            log.debug("First FLAT candidate: %s"%r_flat)            
+            r_flat = self.getBestShapedFrame(master_flat, sci_obj_list[0])
+            log.debug("Second FLAT candidate: %s"%r_flat)            
+        else: 
+            r_flat = None
+        if len(master_bpm)>0: 
+            r_bpm = master_bpm[-1]
+            log.debug("First BPM candidate: %s"%r_bpm)            
+            r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
+            log.debug("Second BPM candidate: %s"%r_bpm)            
+        else: 
+            r_bpm = None
+
         return r_dark, r_flat, r_bpm
         
+    def getBestShapedFrame(self, framelist, src_frame):
+        """
+        Given a list of frames (calibrations) sorted by MJD, return the frame that
+        has the same number of extension (MEF) than src_frame and with the 
+        same shape (dimensions).
+
+        This routine is also used (copy) on the QL (mainGUI.py)
+        
+        Returns
+        -------
+        Returns the calibration file that match the src_frame, otherwise, None
+        is returned.
+        
+        """
+
+        candidate = None
+        with fits.open(src_frame) as src_fd:
+            for iframe in framelist:
+                with fits.open(iframe) as ifd:
+                    # not MEF
+                    if len(ifd)==len(src_fd) and len(ifd)==1:
+                        if ifd[0].data.shape==src_fd[0].shape:
+                            return iframe
+                        elif datahandler.ClFits(iframe).isMasterDarkModel():
+                            # Exception,  DarkModel will have always 2 layers 
+                            # per extension.
+                            return iframe
+                        else: 
+                            continue
+                    # MEF 
+                    elif len(ifd)==len(src_fd) and len(ifd)>1:
+                        # We should check each extension, but it would be strange
+                        # to have extension with different shapes.
+                        if ifd[1].data.shape==src_fd[1].shape:
+                            return iframe
+                        elif datahandler.ClFits(iframe).isMasterDarkModel():
+                            # Exception, DarkModel will have always 2 layers 
+                            # per extension
+                            return iframe
+                        else:
+                            # dimesions do not fit
+                            continue
+                    # diferent number of extensions
+                    else:
+                        continue
+
+            # If this point is reached, it means that any suitable file was found.
+            return None
+
+
     def getDarkFrames(self):
         """
         Given a list of files (data set), return the files matching as dark frames
