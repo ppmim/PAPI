@@ -5184,7 +5184,7 @@ un commit con git !!!
 -----------
 - Pruebas con QL y mode Lazy para Dark y Flat.
 
-- Añador a QL otra opción para ejecutar ApplyDarkFlat a un conjunto de ficheros
+- Añado a QL otra opción para ejecutar ApplyDarkFlat a un conjunto de ficheros
 seleccionados en el QL.
 
 
@@ -5234,6 +5234,11 @@ might as well be some B-system which has never been promoted to other
 systems.
 """
 
+El 6-Oct-2014 RM me dice que ha preguntado a JF/Meisenheimer  y que lo más probable
+es que el EQUINOX por defecto de los telescopios de CAHA sea Fk5, pero quien
+de verdad lo sabe es Karl Zimmermann.
+
+
 + Encuentro y soluciono dos bugs:
 
   1) applyDarkFlat: no detectaba los dark MEF
@@ -5254,12 +5259,86 @@ al fichero raw de ciencia a calibrar. Hasta ahora se devolvia el primero fichero
 de calibración que se ajustaba en TEXP y/o FILTRO, pero no se comprobaba el tamaño.
 Además, se devuelve el más reciente atendiento a MJD.
 Este rutina (getBestShapedFrame), la implemento en QL y RS.
-La pruebas dan buen resultado.
+La pruebas son satisfactorias.
 
-(P) - Bug psfmeasure en checkQuality.py !!
-(P) - terminar de probar getBestShapedFrame() con PAPI: reducir noches de Matilde para probar
-(P) - Ver como compilar BIEN el paquete irdr y meter en la instalación !!!
+
+03-Oct-2014 
+-----------
+
+- Bug psfmeasure en checkQuality.py !! ---> no termina de ejecutarse bien en PAPI, da un error !!,
+sin embargo en checkQuality.py si funciona bien...
+    [PAPI]: 2014-10-02 20:10:31,245 ERROR    checkQuality:289: Cannot run properly iraf.psfmeasure
+          ERROR:PAPI:Cannot run properly iraf.psfmeasure
+    [PAPI]: 2014-10-02 20:10:31,245 ERROR    checkQuality:290: XWindows Error!
+    XWindows IO exception.
+    ERROR:PAPI:XWindows Error!
+    XWindows IO exception.
+    PANIC in `/iraf/iraf/noao/bin.linux64/x_obsutil.e': Write to IPC with no reader
+
+El problema de la ejecución del obsutil.psfmeasure se debe a la ejecución en modo
+paralelo, es decir, usando el módulo multiprocessing. Si lo pongo en modo serial
+no hay problema. Es debido a que psfmeasure abre una ventana con los puntos marcados,
+y eso con hebras ya es sabido que provoca el error en las XWindows !!
+La única solución sería poder desactiva la ventana de psfmeasure, pero no parece
+que eso sea muy posible, pues es una función fundamental de psfmeasure.
+Lo soluciono añadiendo un flag a checkQuality.py para que no se use desde PAPI,
+pero si desde la línea de comandos >checkQuality.py -f fichero.fits
+
+- Me pongo a mirar los script de telescopio que se supone que RM ha preparado
+en GEIRS. Me doy cuenta que lo que ha hecho son simples dummy scripts que simulan
+a los de CAHA (t_xxxx), pero que los reales de CAHA son scripts tcl con interfaz
+EPICS (et_wish) que necesitan por tanto tener instalado EPICS y la extensión caTCL !!
+Tenemos un problema !!
+
+
+
+06-Oct-2014 
+-----------
+- Respondo al email original de RM del 10-Sep-2014, y le digo que necesita 
+instalar y configurar EPICS. Me responde que eso no es problema suyo, que es de
+CAHA, y comienza una serie de emails contestando de malas maneras.
+
+- Para ir ganando tiempo, comienzo la instalación y configuración de EPICS+caTCL;
+pregunto a E.Guindos por si ellos tiene algo ya hecho para openSUSE13.x, y me dice
+que no, que lo último es para 10.x, pero que la extensión caTCL no la tienen.
+
+07-Oct-2014 
+-----------
+- No hay manera de que la extensión caTCL (et_wish) se instale, pues da problemas 
+de compilación y linkado.
+Encuentro que la evolución de et_wish es oagwish. Instalo el paquete:
+
+ OAGTclTk-1.21-1.openSUSE.12.3.x86_64.rpm
+
+ en openSuSE 12.2 y consigo que el script t_request (con una cabecera nueva) 
+ funcione aunque no me responde pues no hay ningún EPICS detras. La cabecera debe
+ ser tal que:
+
+---
+#!/usr/bin/oagwish
+#
+#start ohne window
+#
+set auto_path [linsert $auto_path 0 /usr/local/oag/apps/lib/$env(HOST_ARCH)]
+set auto_path [linsert $auto_path 0 /usr/local/oag/lib_patch/$env(HOST_ARCH)]
+
+package require ca
+---
+
+Se lo digo a E.Guindos, y dice que la solución del OAG le suena. Van a montar
+una máquina virtual con openSUSE13.1 y van a probar los scripts con oagwish.
+
+
+- Miro como compilar BIEN el paquete irdr y meter en la instalación !!!
+Habia un problema en irdr/extenr/wcstools/Makefile, pues no se creaba el directorio
+bin y por eso fallaba la compilación, aunque la libraría que es lo que realmente
+necesitamos si se creaba.
+
+
+
+(P) - terminar de probar getBestShapedFrame() con PAPI: reducir noches de Matilde para probar --> in progress
 (P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
+
 
 
 
@@ -5655,23 +5734,11 @@ PIPELINE
  
 NEXT TODOs
 ==========
-+ (P) Mejorar en QL la rutina getCalibFor() para que devuelva las calibraciones
-atendiedo al tamaño (shape) de la imagen raw a calibrar.
-Idem para RS.getCalibFor().
-No es algo que de demasiados problemas, pero si hay "mezcla" de formatos/tamaños
-de imágenes y calibraciones, puede que no encuentre el fichero de calibración 
-correcto a pesar de que dicho fichero exista.
- 
-
-(P)- Estudiar/revisar el Email de RM sobre las instrucciones para CAHA. Ver que cosas
-podrían quedar en el aire !!
 
 (P)- Elaborar procedimiento de Test para CAHA !!
 (P)- Elaborar pruebas/Test PAPI/QL durante el commissioning!
 (P)- Instalar x2go en panic2 y ver el problema del ds9
 
-
-- chequear tamaños imagen (shape) en getCalibrations() o en checkDataIntegrity()
 - ¿ cómo de importante es el gainmap en skyfilter ?
 - Añadir en el QL una vista para las estadísticas de las imágenes (mean, median, std, fwhm)
 - Mejorar el calculo/estimación del FWHM (psfmesure, imexam ), sobre todo para
@@ -6095,4 +6162,48 @@ distortion map derived during the astrometric calibration done with SCAMP (a
 software developped by Emmanuel Bertin) and 2MASS.
 This way, the reached accuracy ranges from 0.1 to 0.3 pixels (TBC).
 
+
+
+
+
+
+BLT2.5 (la version 2.4 no es compatible con tcl/tk 8.5)
+------
+
+http://sourceforge.net/projects/blt/files/BLT/BLT%202.4z/BLT2.4z.tar.gz
+./configure --with-tcl=/usr/lib64/ --with-cflags="-fPIC"
+
+
+Cabecera scripts tcl con interfaz EPICS
+
+#!/usr/bin/oagwish
+#
+#start ohne window
+#
+set auto_path [linsert $auto_path 0 /usr/local/oag/apps/lib/$env(HOST_ARCH)]
+set auto_path [linsert $auto_path 0 /usr/local/oag/lib_patch/$env(HOST_ARCH)]
+
+package require ca
+
+
+COSAS A PREPARAR PARA EL COMMISSIONING
+======================================
+- Quitar tarjeta OPTPCI del panic2 y eviarla para MPIA (o mejor dársela en CAHA a alguién del MPIA)
+- Empaquetar máquina de PANIC y dejarla preparad para sólo llevarla a CAHA.
+- Limpiar la GUI del QL !!! dejar sólo lo que funciona.
+- Preparar batería de pruebas de PAPI en CAHA !! 
+- Instalar x2go en panic2
+- EPICS + oagwish en panic2 ??
+- Copiar todo aquello necesario en HD y portatil
+- Hacer copias de seguridad !!
+- Imprimir documentación necesaria (GEIRS, EPICS, ...)
+- Preparar portatil para CAHA: tiene openSuSE 12.2 y Ubuntu. En principio debe 
+ser suficiente.
+- Terminar documentación de PAPI !!
+
+
+TESTs QL en CAHA
+================
+1- Probar Lazy-Subtract_near_sky
+2- 
 

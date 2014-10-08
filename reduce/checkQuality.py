@@ -99,7 +99,7 @@ class CheckQuality(object):
              
         
     
-    def estimateFWHM(self):
+    def estimateFWHM(self, psfmeasure=False):
         """ 
         A FWHM of the current image is estimated using the 'best' stars on it.
         Generating an ascii text catalog with Sextractor, we can read the FWHM 
@@ -275,7 +275,6 @@ class CheckQuality(object):
                 print "Fits keyword updated " 
 
             # 2nd Estimation Method (psfmeasure)
-            psfmeasure = True
             if psfmeasure:
                 coord_text_file = "/tmp/coord_file.txt"
                 # Build the coord_file
@@ -317,6 +316,10 @@ class CheckQuality(object):
         1100  1200
         ...
 
+        Note: iraf.obsutil.psfmeasure does not work with multiprocessing, as it 
+        opens a window with the graphic representation of the measurements.
+        So, in PAPI cannot be used with parallel reduction enabled.
+
         """
 
         iraf.noao(_doprint=0)
@@ -326,8 +329,9 @@ class CheckQuality(object):
         psfmeasure = iraf.obsutil.psfmeasure
         # setup all paramaters
         psfmeasure.coords = "mark1"
-        # 'world' gives problems with SIP headers (ie. Astrometry.net) 
-        psfmeasure.wcs = "physical" 
+        # 'world' gives problems with SIP headers (ie. Astrometry.net)
+        # 'phycal' gives too many 'Warning: Invalid flux profile ' 
+        psfmeasure.wcs = "logical" 
         psfmeasure.display = "no"
         psfmeasure.size = "GFWHM"  # Moffat profile
         psfmeasure.radius = 5
@@ -460,6 +464,10 @@ detector (Q1,Q2,Q3,Q4).
                       "window/dectector/extension to process: "
                       "Q1, Q2, Q3, Q4, full [default: %default]")
 
+    parser.add_option("-P", "--psfmeasure",
+                  action="store_true", dest="psfmeasure", default=False,
+                  help="Show iraf.obsutil.psfmeasure FWHM measurements [default=%default]")
+
     (options, args) = parser.parse_args()
     
     if len(sys.argv[1:])<1:
@@ -512,7 +520,7 @@ detector (Q1,Q2,Q3,Q4).
                                 options.ellipmax, options.edge_x, options.edge_y, 
                                 options.pixsize, options.gain, options.satur_level , 
                                 options.write, options.snr, options.window)
-            efwhm, std, k, k = cq.estimateFWHM()
+            efwhm, std, k, k = cq.estimateFWHM(options.psfmeasure)
             log.info("FWHM= %s  STD= %s"%(efwhm, std))
         except Exception,e:
             log.error("There was some error with image %s : %s "%(options.input_image, str(e)))

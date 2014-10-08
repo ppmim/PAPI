@@ -36,14 +36,14 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>5</x>
       <y>0</y>
       <width>940</width>
       <height>460</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -491,17 +491,17 @@
       </item>
       <item>
        <property name="text">
-        <string>UserDef_1</string>
+        <string>Quick-LEMON</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>UserDef_2</string>
+        <string>Full-LEMON</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>UserDef_3</string>
+        <string>Full-Reduction</string>
        </property>
       </item>
      </widget>
@@ -1681,19 +1681,6 @@
         </property>
        </item>
       </widget>
-      <widget class="QCheckBox" name="checkBox_doRegrig">
-       <property name="geometry">
-        <rect>
-         <x>28</x>
-         <y>70</y>
-         <width>140</width>
-         <height>19</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Apply (re-grid)</string>
-       </property>
-      </widget>
       <widget class="QLabel" name="textLabel1_2">
        <property name="geometry">
         <rect>
@@ -1730,7 +1717,7 @@
           <string>Substract Dark, apply Flat-Field and grab BPM</string>
          </property>
          <property name="text">
-          <string>Dark subt. + Flat-Fielding + BPM</string>
+          <string>Apply DARK + FLAT + BPM</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1746,7 +1733,7 @@
           <string>Subtract last science frame for sky subtraction</string>
          </property>
          <property name="text">
-          <string>Subtract last frame (science)</string>
+          <string>Subtract Last Frame (science)</string>
          </property>
          <property name="autoExclusive">
           <bool>true</bool>
@@ -1762,7 +1749,7 @@
           <string>Subtract the sky computed from last sky sci frames</string>
          </property>
          <property name="text">
-          <string>Subtract nearest sky</string>
+          <string>Subtract Nearest Sky</string>
          </property>
          <property name="autoExclusive">
           <bool>true</bool>
@@ -1786,8 +1773,8 @@
       <widget class="QComboBox" name="comboBox_pre_skyWindow">
        <property name="geometry">
         <rect>
-         <x>27</x>
-         <y>170</y>
+         <x>30</x>
+         <y>190</y>
          <width>118</width>
          <height>21</height>
         </rect>
@@ -1822,23 +1809,29 @@
        </item>
       </widget>
       <widget class="QCheckBox" name="checkBox_pre_QM">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
-         <x>196</x>
-         <y>89</y>
-         <width>291</width>
+         <x>260</x>
+         <y>70</y>
+         <width>311</width>
          <height>19</height>
         </rect>
        </property>
        <property name="text">
         <string>Quality measurements  (background, psf, ....)</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
       <widget class="QLabel" name="textLabel3">
        <property name="geometry">
         <rect>
-         <x>27</x>
-         <y>150</y>
+         <x>30</x>
+         <y>170</y>
          <width>151</width>
          <height>16</height>
         </rect>
@@ -1851,10 +1844,13 @@
        </property>
       </widget>
       <widget class="QCheckBox" name="checkBox_pre_MA">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
-         <x>196</x>
-         <y>39</y>
+         <x>260</x>
+         <y>40</y>
          <width>180</width>
          <height>19</height>
         </rect>
@@ -1866,49 +1862,33 @@
         <bool>true</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_pre_compDM">
+      <widget class="QCheckBox" name="checkBox_pre_appBPM">
        <property name="geometry">
         <rect>
-         <x>196</x>
-         <y>63</y>
+         <x>30</x>
+         <y>100</y>
          <width>180</width>
          <height>19</height>
         </rect>
        </property>
        <property name="text">
-        <string>Compute distortion map</string>
+        <string>Apply BPM</string>
        </property>
        <property name="checked">
         <bool>true</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_pre_subD">
+      <widget class="QCheckBox" name="checkBox_pre_subDark_FF">
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>39</y>
-         <width>140</width>
-         <height>19</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Substract dark</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="checkBox_pre_appMF">
-       <property name="geometry">
-        <rect>
-         <x>30</x>
-         <y>65</y>
+         <y>40</y>
          <width>180</width>
          <height>19</height>
         </rect>
        </property>
        <property name="text">
-        <string>Apply Master Flat</string>
+        <string>Apply DARK/FLAT</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -1918,7 +1898,7 @@
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>90</y>
+         <y>70</y>
          <width>180</width>
          <height>19</height>
         </rect>
@@ -1931,10 +1911,13 @@
        </property>
       </widget>
       <widget class="QCheckBox" name="checkBox_pre_BS">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
-         <x>198</x>
-         <y>120</y>
+         <x>260</x>
+         <y>100</y>
          <width>171</width>
          <height>19</height>
         </rect>
@@ -1944,6 +1927,115 @@
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_pre_appNLC">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>130</y>
+         <width>181</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Correct for non-linearity</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_detector">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>190</y>
+         <width>118</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>All</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG4</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QLabel" name="textLabel3_3">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>170</y>
+         <width>151</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Detector to reduce</string>
+       </property>
+       <property name="wordWrap">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_AstromEngine">
+       <property name="geometry">
+        <rect>
+         <x>380</x>
+         <y>190</y>
+         <width>118</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>SCAMP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>AstrometryNet</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QLabel" name="textLabel3_4">
+       <property name="geometry">
+        <rect>
+         <x>380</x>
+         <y>170</y>
+         <width>151</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Astrometric Engine</string>
+       </property>
+       <property name="wordWrap">
+        <bool>false</bool>
        </property>
       </widget>
      </widget>
@@ -1993,12 +2085,15 @@
     </widget>
     <widget class="QWidget" name="tab">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <attribute name="title">
       <string>Calibrations</string>
      </attribute>
      <widget class="QPushButton" name="pushButton_Darks_add">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>19</x>
@@ -2056,6 +2151,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_Darks_del">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>88</x>
@@ -2145,6 +2243,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_master_mask">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>12</x>
@@ -2158,6 +2259,9 @@
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterMask">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>138</x>
@@ -2171,6 +2275,9 @@
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterFlat">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>139</x>
@@ -2184,6 +2291,9 @@
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterDark">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>141</x>
@@ -2197,6 +2307,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_master_flat">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>11</x>
@@ -2210,6 +2323,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_master_dark">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>12</x>
@@ -2223,6 +2339,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_createMDark">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>16</x>
@@ -2310,6 +2429,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_test1">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -2343,6 +2465,9 @@
       </property>
      </widget>
      <widget class="QListWidget" name="listBox_darks">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -3502,23 +3627,7 @@
   <connection>
    <sender>checkBox_pre_appSF</sender>
    <signal>clicked()</signal>
-   <receiver>checkBox_pre_subD</receiver>
-   <slot>toggle()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>437</x>
-     <y>322</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>417</x>
-     <y>271</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_pre_appSF</sender>
-   <signal>clicked()</signal>
-   <receiver>checkBox_pre_appMF</receiver>
+   <receiver>checkBox_pre_subDark_FF</receiver>
    <slot>toggle()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -3532,7 +3641,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>checkBox_pre_appMF</sender>
+   <sender>checkBox_pre_subDark_FF</sender>
    <signal>clicked()</signal>
    <receiver>checkBox_pre_appSF</receiver>
    <slot>toggle()</slot>
