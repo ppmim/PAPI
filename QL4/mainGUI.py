@@ -214,7 +214,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.m_masterDark = ''
         self.m_masterFlat = ''
         self.m_masterMask = ''
-
+        
+        self.m_popup_l_sel = []
 
         # Stuff to detect end of an observation sequence to know if data reduction could start
         self.curr_sequence = []  # list having the files of the current sequence received

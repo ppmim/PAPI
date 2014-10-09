@@ -387,9 +387,9 @@ class ClFits (object):
             self.naxis1 = myfits[1].header['NAXIS1']
             self.naxis2 = myfits[1].header['NAXIS2']
             #self._shape = myfits[1].data.shape # (naxis3, naxis2, naxis1)
-            #Because the fits.data.shape makes extremealy slow read
-            #of the FITS-file (mainly because shape need to read the whole image),
-            #we build a shape tuple from the header values (NAXIS1, NAXIS2, and NAXIS3 )
+            # Because the fits.data.shape makes extremealy slow read
+            # of the FITS-file (mainly because shape need to read the whole image),
+            # we build a shape tuple from the header values (NAXIS1, NAXIS2, and NAXIS3 )
             if 'NAXIS3' in myfits[1].header:
                 self._shape = (myfits[1].header['NAXIS3'], self.naxis2, self.naxis1)
             else:
