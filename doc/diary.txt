@@ -5336,7 +5336,20 @@ necesitamos si se creaba.
 
 
 
-(P) - terminar de probar getBestShapedFrame() con PAPI: reducir noches de Matilde para probar --> in progress
+08-Oct-2014 
+-----------
+- Analisis de Telescope-Interface CAHA;
+ 
+
+09-Oct-2014 
+-----------
+- Tests y mejoras en QL.
+- Analisis de Telescope-Interface CAHA 
+
+10-Oct-2014 
+-----------
+
+
 (P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
 
 

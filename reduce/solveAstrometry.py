@@ -25,12 +25,14 @@ from __future__ import division
 
 import sys
 import os
+import shutil
 import fileinput
 import logging
 import subprocess
 import multiprocessing
 import glob
 from optparse import OptionParser
+from distutils import spawn
 
 import astropy.io.fits as fits
 import sys
@@ -106,12 +108,12 @@ def solveField(filename, tmp_dir, pix_scale=None):
         
     Returns
     -------
-    Filename of solved file (filename.new) 
+    Filename of solved file (filename.new.fits) 
     
     """
     
     #
-    #Create temporal directory
+    # Create temporal directory
     #    
     if not os.path.isdir(tmp_dir):
         os.makedirs(tmp_dir)
@@ -133,7 +135,8 @@ def solveField(filename, tmp_dir, pix_scale=None):
     INSTRUMENT= %s"%(filename, scale, ra , dec, instrument))
     
     # Hardcoded the path !
-    path_astrometry = "/usr/local/astrometry/bin"  
+    #path_astrometry = "/usr/local/astrometry/bin"
+    path_astrometry = os.path.dirname(spawn.find_executable("solve-field"))  
     if not os.path.exists(path_astrometry+"/solve-field"):
         raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s"%path_astrometry)
 
@@ -197,7 +200,9 @@ def solveField(filename, tmp_dir, pix_scale=None):
     #print "FILE=",solved_file
     if os.path.exists(solved_file):
         logging.info("Field solved !")
-        return os.path.join(tmp_dir, os.path.splitext(os.path.basename(filename))[0] + ".new")
+        new_file = os.path.join(tmp_dir, os.path.splitext(os.path.basename(filename))[0] + ".new")
+        shutil.move(new_file, new_file+".fits")
+        return new_file+".fits"
     else:
         log.error("Field was not solved.")
         raise Exception("Field was not solved")
@@ -373,7 +378,7 @@ in principle previously reduced, but not mandatory.
                                       options.pixel_scale)
         for file in filelist:
             ren_file = os.path.join(options.output_dir,
-                    os.path.basename(os.path.splitext(file)[0]+".new"))
+                    os.path.basename(os.path.splitext(file)[0]+".new.fits"))
             if ren_file not in files_solved and file+".not_science" not in files_solved:
                 files_not_solved.append(file)
         

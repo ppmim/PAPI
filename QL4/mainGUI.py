@@ -214,7 +214,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.m_masterDark = ''
         self.m_masterFlat = ''
         self.m_masterMask = ''
-        
+
         self.m_popup_l_sel = []
 
         # Stuff to detect end of an observation sequence to know if data reduction could start
@@ -1827,7 +1827,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.mGainMapAct.setEnabled(False)
                 self.mBPMAct.setEnabled(False)
                 self.mFocusEval.setEnabled(False)
-                self.subNearSkyAct.setEnabled(False)
+                #self.subNearSkyAct.setEnabled(False)
                 self.subAct.setEnabled(False)
                 self.sumAct.setEnabled(False)
                 self.divAct.setEnabled(False)
@@ -1836,6 +1836,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 #print "#SEL_2",len(self.m_popup_l_sel)
                 self.dispAct.setEnabled(False)
                 self.subOwnSkyAct.setEnabled(False)
+                self.subNearSkyAct.setEnabled(False)
                 self.astroAct.setEnabled(False)
                 self.photoAct.setEnabled(False)
                 #self.fwhmAct.setEnabled(False)
@@ -1849,8 +1850,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.divAct.setEnabled(False)
                 
             if len(self.m_popup_l_sel)<5:
+                pass
                 #print "#SEL_5-",len(self.m_popup_l_sel)
-                self.subNearSkyAct.setEnabled(False)
+                #self.subNearSkyAct.setEnabled(False)
                 #self.quickRedAct.setEnabled(False)
             
         ## Finally, execute the popup
@@ -2480,7 +2482,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             
                          
     def subtract_nearSky_slot(self, last_files=False):
-        """ Subtract nearest sky using skyfiler from IRDR package"""
+        """ 
+        Subtract nearest sky using skyfiler from IRDR package:
+
+        Parameters
+        ----------
+            - If last_files==False, it looks for the nearest files to the 
+            currently selected file.
+            - If last_files==True, the last N-1 files received are used to 
+            compute the sky to subtract.  
+        
+        Returns
+        -------
+        Nothing or Exception in case of error.
+
+        """
       
         
         # #####################################
@@ -2490,8 +2506,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Compute search-radius of nearest frames
             ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
             time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
-            print "RA_DEC_OFFSET", ra_dec_near_offset
-            print "TIME_NEAR_OFFSET", time_near_offset
+            #print "RA_DEC_OFFSET", ra_dec_near_offset
+            #print "TIME_NEAR_OFFSET", time_near_offset
           
             # Look for NEAREST science files
             if self.m_listView_item_selected:
@@ -2517,7 +2533,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 for file in near_list:
                     my_list = my_list + file + "\n"
                     if (file==self.m_listView_item_selected): 
-                        file_n=p
+                        file_n = p
                     else: 
                         p+=1
                 
@@ -2679,6 +2695,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
+                    self.logConsole.info("Calibrations to use:")
+                    self.logConsole.info("+ Dark=%s"%mDark)
+                    self.logConsole.info("+ Flat=%s"%mFlat)
+                    self.logConsole.info("+ BPM =%s"%mBPM)
                     # Both master_dark and master_flat are optional
                     if mDark or mFlat:
                         #Put into the queue the task to be done
@@ -2966,38 +2986,53 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Todo
         ---- 
         We should check the image is pre-reduced or at least, with 
-        enough objects 
+        enough objects.
         """
         
         if len(self.m_popup_l_sel)==1:
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE': 
-                ## Run astrometry parameters
+                # Run astrometry parameters
                 out_file = self.m_outputdir+"/"+os.path.basename(self.m_listView_item_selected.replace(".fits",".wcs.fits"))
                 # Catalog
-                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): catalog="2MASS"
-                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): catalog="USNO-B1"
-                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): catalog="GSC-2.2"
-                else: catalog="2MASS"
+                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): 
+                    catalog = "2MASS"
+                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): 
+                    catalog = "USNO-B1"
+                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): 
+                    catalog = "GSC-2.2"
+                else: 
+                    catalog = "2MASS"
                 
-                #Change to working directory
+                # Change to working directory
                 os.chdir(self.m_tempdir)
-                #Change cursor
+                # Change cursor
                 QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                #Create working thread that compute sky-frame
+                # Create working thread that compute sky-frame
                 try:
-                    thread = reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, 
-                                                   self._task_info_list,
-                                                   #args of the doAstrometry function
-                                                   self.m_listView_item_selected, 
-                                                   out_file, catalog, 
-                                                   self.config_opts)
+                    self.logConsole.info("Starting Astrometric calibration (%s)"%catalog)
+                    if self.comboBox_AstromEngine.currentText()=="SCAMP":
+                        self.logConsole.info(" +Engine: SCAMP")
+                        thread = reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, 
+                                                       self._task_info_list,
+                                                       #args of the doAstrometry function
+                                                       self.m_listView_item_selected, 
+                                                       out_file, catalog, 
+                                                       self.config_opts)
+                    else: # Astrometry.net
+                        self.logConsole.info(" +Engine: Astrometry.net")
+                        thread = reduce.ExecTaskThread(reduce.solveAstrometry.solveField,
+                                                    self._task_info_list,
+                                                    # args of the solveAstrometry
+                                                    self.m_listView_item_selected, 
+                                                    self.m_outputdir,
+                                                    self.config_opts['general']['pix_scale'])
                     thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                    QMessageBox.critical(self, "Error", "Error while computing astrometry.")
                     raise
             else:
-                QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
+                QMessageBox.information(self,"Info", QString("Sorry, but you need a science frame."))
         
     def do_raw_photometry(self):
         """
@@ -3023,10 +3058,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 out_file = self.m_outputdir+"/" + \
                     os.path.basename(self.m_listView_item_selected.replace(".fits","_photo.pdf"))
                 # Catalog
-                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): catalog="2MASS"
-                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): catalog="USNO-B1"
-                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): catalog="GSC-2.2"
-                else: catalog="2MASS"
+                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): 
+                    catalog = "2MASS"
+                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): 
+                    catalog = "USNO-B1"
+                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): 
+                    catalog = "GSC-2.2"
+                else: 
+                    catalog = "2MASS"
                 
                 #Change to working directory
                 os.chdir(self.m_tempdir)
@@ -3034,18 +3073,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                 #Create working thread that compute sky-frame
                 try:
+                    snr = 10.0
+                    zero_point = 0.0
+                    self.logConsole.info("Starting Photometric calibration (%s)"%catalog)
                     thread = reduce.ExecTaskThread(photo.photometry.doPhotometry,
                                                    self._task_info_list,
                                                    #args of the doPhotometry function
                                                    self.m_listView_item_selected,
+                                                   self.config_opts['general']['pix_scale'],
                                                    catalog,
-                                                   out_file)
+                                                   out_file,
+                                                   snr,
+                                                   zero_point)
                     thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                    QMessageBox.critical(self, "Error", "Error while computing photometry.")
                     raise
             else:
-                QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
+                QMessageBox.information(self,"Info", QString("Sorry, but you need a science frame."))
     
       
     def createCalibs_slot(self):
@@ -3310,6 +3355,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
                       calib_db_files, None)]
             
             log.debug("Let's create a ReductionSet ...")
+
+            # Show the calibration to be used
+            if self.config_opts['general']['apply_dark_flat']!=0:
+                md, mf, mb = self.getCalibFor(files)
+                self.logConsole.info("Calibrations to use:")
+                self.logConsole.info("+ Dark=%s"%md)
+                self.logConsole.info("+ Flat=%s"%mf)
+                self.logConsole.info("+ BPM =%s"%mb)
+            else:
+                self.logConsole.info("No calibrations used.")
+
             func_to_run = RS.ReductionSet(*(params[0])).reduceSet
             log.debug("ReductionSet created !")
             self._task_queue.put([(func_to_run,())])
