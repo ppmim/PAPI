@@ -14,8 +14,8 @@ PARAMETERS_NAME	$PAPI_HOME/config_files/sextractor.param # name of the file cont
 
 DETECT_TYPE	CCD		# "CCD" or "PHOTO" (*)
 FLAG_IMAGE	flag.fits	# filename for an input FLAG-image
-DETECT_MINAREA	5		# minimum number of pixels above threshold
-DETECT_THRESH	1.5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+DETECT_MINAREA	32		# minimum number of pixels above threshold
+DETECT_THRESH	5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 ANALYSIS_THRESH	1.5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
 FILTER		Y		# apply filter for detection ("Y" or "N")?
@@ -51,7 +51,7 @@ STARNNW_NAME	$PAPI_HOME/irdr/src/config/default.nnw	# Neural-Network_Weight tabl
 
 #------------------------------ Background -----------------------------------
 
-BACK_SIZE	64		# Background mesh: <size> or <width>,<height>
+BACK_SIZE	8		# Background mesh: <size> or <width>,<height>
 BACK_FILTERSIZE	3		# Background filter: <size> or <width>,<height>
 
 BACKPHOTO_TYPE	GLOBAL		# can be "GLOBAL" or "LOCAL" (*)
