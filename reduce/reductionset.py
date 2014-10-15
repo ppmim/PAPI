@@ -40,14 +40,17 @@ import itertools
 # IRAF packages
 import pyraf
 from pyraf import iraf
-from iraf import noao
+#from iraf import noao
 
 # Math module for efficient array processing
 import numpy
+import astropy.io.fits as fits
 
 #Log
 import misc.paLog
 from misc.paLog import log    
+from misc.version import __version__
+
 
 #PAPI packages 
 import datahandler
@@ -197,7 +200,7 @@ class ReductionSet(object):
             Then, if during the reduction of a ReductionSet(RS) no calibration 
             (dark, flat) are found in the current RS, then PAPI will look for 
             them into this directory.
-            If the directory does not exists, of no calibration are found, then
+            If the directory does not exists, or no calibration are found, then
             no calibrations will be used for the data reduction.
             Note that the calibrations into the current RS have always higher 
             priority than the ones in the external calibration DB.   
@@ -271,7 +274,7 @@ class ReductionSet(object):
         # Main output file resulted from the data reduction process
         if out_file==None: 
             # if no filename, we take the DATE-OBS of the first file of the SEQ
-            with pyfits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
+            with fits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
                 if 'DATE-OBS' in myhdulist[0].header:
                     self.out_file = self.out_dir + "/PANIC." + \
                             myhdulist[0].header['DATE-OBS'] +".fits"
@@ -302,9 +305,17 @@ class ReductionSet(object):
         # 
         # Non-Linearity correction
         # 
-        self.non_linearity_model = self.config_dict['nonlinearity']['model']
         self.non_linearity_apply = self.config_dict['nonlinearity']['apply']
-
+        if self.non_linearity_apply:
+            myhdulist = fits.open(rs_filelist[-1])
+            if myhdulist[0].header['READMODE'] == 'line.interlaced.read':
+                self.non_linearity_model = self.config_dict['nonlinearity']['model_lir']
+            elif myhdulist[0].header['READMODE'] == 'fast-reset-read.read':
+                self.non_linearity_model = self.config_dict['nonlinearity']['model_rrrmpia']
+            else:
+                log.warning("Non-Linearity model does not match. Correction de-activated.")
+                self.non_linearity_apply = False
+                self.non_linearity_model = None
 
         #
         # Reduction mode (lemon=for LEMON pipeline, quick=for QL, science=for 
@@ -405,6 +416,7 @@ class ReductionSet(object):
 
         # Print config_dictonary values in log file for debugging
         log.info("[ReductionSet] CONFIGURATION VALUES OF RS ------------------")
+        log.info("PAPI Version: %s" %__version__)
         log.info(printDict(self.config_dict))
         log.info("------------------------------------------------------------")
   
@@ -424,7 +436,7 @@ class ReductionSet(object):
         http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         
         """
-        #Local DataBase (in memory)
+        # Local DataBase (in memory)
         log.info("Initializing Local DataBase")
         instrument = self.config_dict['general']['instrument'].lower()
         try:
@@ -444,7 +456,7 @@ class ReductionSet(object):
         
         self.db.ListDataSet()
         
-        #External DataBase (in memory)
+        # External DataBase (in memory)
         if len(self.ext_db_files)>0:
             log.info("Initializing External DataBase")
             try:
@@ -715,7 +727,7 @@ class ReductionSet(object):
                     (nExt, sp_frame_list) = mef.splitGEIRSToSimple(".Q%02d.fits", 
                                                                    out_dir=self.temp_dir)
                 except Exception,e:
-                    log.debug("Some error while splitting PANIC data set. %s",str(e))
+                    log.error("Some error while splitting PANIC data set. %s",str(e))
                     raise e   
             else:
                 # No split is required
@@ -735,7 +747,8 @@ class ReductionSet(object):
                    'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
-                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID'
+                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
+                   'PAPITYPE','PAPIVERS','OBSERVER','ORIGIN'
                 ]
             
             try:
@@ -774,45 +787,45 @@ class ReductionSet(object):
               will be checked (see ClFits class)
         """
                    
-        mode='other' # default
+        mode = 'other' # default
                    
         #Step 1: we suppose list file is sorted out  by MJD
         #Step 2: get the data type of the first file and check sequence starting from this file
-        fits_0=datahandler.ClFits(self.m_LAST_FILES[0])
-        fits_1=datahandler.ClFits(self.m_LAST_FILES[1])
-        i=0
+        fits_0 = datahandler.ClFits(self.m_LAST_FILES[0])
+        fits_1 = datahandler.ClFits(self.m_LAST_FILES[1])
+        i = 0
         if fits_0.isSky() and fits_1.isObject():
-            mode='dither_off_on'
+            mode = 'dither_off_on'
             # Then, we are going to suppose the sequence S-T-S-T-S- .... (dither_off_on)
             for file in self.m_LAST_FILES:
                 if not i%2: #even
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
                 elif i%2: #odd
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
-                i=i+1         
+                i = i+1         
         elif fits_0.isObject() and fits_1.isSky():
             # Then, we are going to suppose the sequence T-S-T-S-T- .... (dither_on_off)
-            mode='dither_on_off'
+            mode = 'dither_on_off'
             for file in self.m_LAST_FILES:
                 if not i%2: #even
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
                 elif i%2: #odd
-                    fits=datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
-                i=i+1                 
+                i = i+1                 
         elif fits_0.isObject() and fits_1.isObject():
             # check if all are objects ...
             # and if are, then, we are going to suppose the sequence T-T-T-T-T- .... (dither)
-            mode='dither'
+            mode = 'dither'
             for file in self.m_LAST_FILES:
-                fits=datahandler.ClFits(file)
+                fits = datahandler.ClFits(file)
                 if not fits.isObject():
                     return 'other'
         else:
@@ -848,6 +861,8 @@ class ReductionSet(object):
         The search of the calibration files is done, firstly in the local DB, 
         but if no results, then in the external DB if it was provided.
         
+        This routine is also used (copy) on the QL (mainGUI.py)
+
         Returns
         -------  
         A triplet with the calibration files (dark, flat, bpm) found; If more 
@@ -869,6 +884,10 @@ class ReductionSet(object):
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
+        # Init the DB (ext_db is always initialited whether db!=None)  
+        if self.db==None: 
+            self.__initDB()
+
         # DARK - Does require equal EXPTIME Master Dark ???
         # First, look for a DARK_MODEL
         master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) 
@@ -902,16 +921,82 @@ class ReductionSet(object):
         log.debug("Master Flats found %s", master_flat)
         log.debug("Master BPMs  found %s", master_bpm)
         
-        # Return the most recently created (according to MJD order)
-        if len(master_dark)>0: r_dark = master_dark[-1]
-        else: r_dark = None
-        if len(master_flat)>0: r_flat = master_flat[-1]
-        else: r_flat = None
-        if len(master_bpm)>0: r_bpm = master_bpm[-1]
-        else: r_bpm = None
         
+        # Return the most recently created (according to MJD order)
+        if len(master_dark)>0: 
+            r_dark = master_dark[-1]
+            log.debug("First DARK candidate: %s"%r_dark)            
+            r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
+            log.debug("Second DARK candidate: %s"%r_dark)            
+        else: 
+            r_dark = None
+        if len(master_flat)>0:
+            r_flat = master_flat[-1]
+            log.debug("First FLAT candidate: %s"%r_flat)            
+            r_flat = self.getBestShapedFrame(master_flat, sci_obj_list[0])
+            log.debug("Second FLAT candidate: %s"%r_flat)            
+        else: 
+            r_flat = None
+        if len(master_bpm)>0: 
+            r_bpm = master_bpm[-1]
+            log.debug("First BPM candidate: %s"%r_bpm)            
+            r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
+            log.debug("Second BPM candidate: %s"%r_bpm)            
+        else: 
+            r_bpm = None
+
         return r_dark, r_flat, r_bpm
         
+    def getBestShapedFrame(self, framelist, src_frame):
+        """
+        Given a list of frames (calibrations) sorted by MJD, return the frame that
+        has the same number of extension (MEF) than src_frame and with the 
+        same shape (dimensions).
+
+        This routine is also used (copy) on the QL (mainGUI.py)
+
+        Returns
+        -------
+        Returns the calibration file that match the src_frame, otherwise, None
+        is returned.
+        
+        """
+
+        candidate = None
+        with fits.open(src_frame) as src_fd:
+            for iframe in framelist:
+                with fits.open(iframe) as ifd:
+                    # not MEF
+                    if len(ifd)==len(src_fd) and len(ifd)==1:
+                        if ifd[0].data.shape==src_fd[0].shape:
+                            return iframe
+                        elif datahandler.ClFits(iframe).isMasterDarkModel():
+                            # Exception,  DarkModel will have always 2 layers 
+                            # per extension.
+                            return iframe
+                        else: 
+                            continue
+                    # MEF 
+                    elif len(ifd)==len(src_fd) and len(ifd)>1:
+                        # We should check each extension, but it would be strange
+                        # to have extension with different shapes.
+                        if ifd[1].data.shape==src_fd[1].shape:
+                            return iframe
+                        elif datahandler.ClFits(iframe).isMasterDarkModel():
+                            # Exception, DarkModel will have always 2 layers 
+                            # per extension
+                            return iframe
+                        else:
+                            # dimesions do not fit
+                            continue
+                    # diferent number of extensions
+                    else:
+                        continue
+
+            # If this point is reached, it means that any suitable file was found.
+            return None
+
+
     def getDarkFrames(self):
         """
         Given a list of files (data set), return the files matching as dark frames
@@ -1205,7 +1290,10 @@ class ReductionSet(object):
 
         Notes
         -----                 
-        This function is a wrapper for skyfilter.c (IRDR).              
+        - This function is a wrapper for skyfilter.c (IRDR). 
+        - The detection of SKY/TARGET frames is done in 'skyfilter_general' based
+        on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
+
         """               
         
         # Skyfilter parameters
@@ -1224,6 +1312,8 @@ class ReductionSet(object):
             destripe + '  ' + skymodel
         elif obs_mode=='other':
             # It comprises nodding pattern for extended objects 
+            # The detection of SKY/TARGET frames is done in 'skyfilter_general' based
+            # on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
             skyfilter_cmd = self.m_irdr_path+'/skyfilter_general '+ list_file \
             + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
         elif obs_mode=='dither_on_off': 
@@ -2065,6 +2155,7 @@ class ReductionSet(object):
         reduced_sequences = 0
         files_created = []
         failed_sequences = 0
+        failed_sequeces_files = []
         
         # set the reduction mode
         if red_mode is not None:
@@ -2102,7 +2193,8 @@ class ReductionSet(object):
                     # However, if there is only one sequence, raise the exception,
                     # what it is very useful for the QL
                     failed_sequences +=1
-                    log.error("[reduceSet] Cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
+                    failed_sequeces_files.append(seq)
+                    log.error("[reduceSet] Error, cannot reduce sequence : \n %s \n %s"%(str(seq),str(e)))
                     if len(sequences)==1:
                         raise e
                     elif len(sequences)>1:
@@ -2119,6 +2211,8 @@ class ReductionSet(object):
         log.debug("[reduceSet] Files generated # %d #: ***"%len(files_created))
         for r_file in files_created: log.debug("\t    - %s"%r_file)
         log.debug("\t    Sequences failed  # %d #: ***"%failed_sequences)
+        for seq_failed in failed_sequeces_files:
+            log.debug("Seq. failed: \t    - %s\n"%seq_failed) 
 
         # WARNING : Purging output !!
         if self.config_dict['general']['purge_output']:
@@ -2205,11 +2299,11 @@ class ReductionSet(object):
         """
         
         
-        log.debug("[reduceSeq] Starting ...")
+        log.debug("[reduceSeq] ** Starting reduction **")
 
         # print sequence in log file
         for i_file in sequence:
-            log.debug(sequence[0])
+            log.debug(i_file)
         
         #
         # First of all, let see whether Non-linearity correction must be done
@@ -2219,10 +2313,11 @@ class ReductionSet(object):
         # conversion to MEF if needed. 
         # Note2: NonLinearityCorrection() performs the NLC in parallel,
         # instead of processing the sequence file by file.
-        if self.config_dict['nonlinearity']['apply']==True:
-            master_nl = self.config_dict['nonlinearity']['model']
+        if self.non_linearity_apply==True:
+            master_nl = self.non_linearity_model # (lir or rrrmpia)
             try:
                 log.info("**** Applying Non-Linearity correction ****")
+                log.info("NLC Model: %s"%master_nl)
                 nl_task = correctNonLinearity.NonLinearityCorrection(master_nl, 
                             sequence, out_dir=self.temp_dir, suffix='_LC')
                 corr_sequence = nl_task.runMultiNLC()
@@ -2253,10 +2348,10 @@ class ReductionSet(object):
         # the sequence.
         # TODO: I should use 'type' parameter of this method instead to read the
         # type of the first file. I did not found any reason to not use 'type' !
-        fits = datahandler.ClFits(sequence[0])
+        cfits = datahandler.ClFits(sequence[0])
         
         
-        if fits.isDark():
+        if cfits.isDark():
             log.debug("[reduceSeq] A Dark sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Generate (and create the file) a random filename for the master, 
@@ -2323,14 +2418,14 @@ class ReductionSet(object):
                         #raise Exception("Dark series are not processed in quick mode")
                         out = None
                 else:
-                    log.error("Some kind of data checking was found. Review your data")
-                    raise Exception("Some kind of data checking was found. Review your data")
+                    log.error("An error in data checking was found. Review your data.")
+                    raise Exception("An error in data checking was found. Review your data.")
                         
                 if out!=None: files_created.append(out) # out must be equal to outfile
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DARK: %s",str(e))
                 raise e
-        elif fits.isDomeFlat():
+        elif cfits.isDomeFlatON() or cfits.isDomeFlatOFF():
             log.debug("[reduceSeq] A DomeFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Generate a random filename for the master, to ensure we do not
@@ -2364,7 +2459,8 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master DomeFlat: %s",str(e))
                 raise e
-        elif fits.isTwFlat():
+        elif cfits.isTwFlat() or cfits.getType(False)=="DOME_FLAT":
+            # Added support to proccess DOME_FLATs series (not ON/OFF dome_flat)
             log.debug("[reduceSeq] A TwFlat sequence is going to be reduced: \n%s"%str(sequence))
             try:
                 # Look for the required MasterDark (any ExpTime);first in the 
@@ -2375,6 +2471,7 @@ class ReductionSet(object):
                 
                 #External (ExpTime is not a constraint)
                 if len(master_dark)==0 and self.ext_db!=None:
+                    log.debug("No MasterDarkModel in current local DB. Trying in external (historic) DB...")
                     master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
                 
                 # if required, master_dark will be scaled in MasterTwilightFlat class
@@ -2419,7 +2516,7 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
-        elif fits.isFocusSerie():
+        elif cfits.isFocusSerie():
             #
             # NOTE: Focus series are not pre-reduced, ie., neither Dark nor Flat
             # Field is applied.
@@ -2460,11 +2557,11 @@ class ReductionSet(object):
                 log.error("[reduceSeq] Error while processing Focus Series: %s",str(e))
                 raise e
 
-        elif fits.isScience():
+        elif cfits.isScience():
             l_out_dir = ''
             results = None
             out_ext = []
-            log.debug("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
+            log.info("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
             if len(sequence) < self.config_dict['general']['min_frames']:
                 log.info("[reduceSeq] Found a too SHORT Obs. object sequence.\n\
                  Only %d frames found. Required >%d frames"%(len(sequence),
@@ -2656,7 +2753,10 @@ class ReductionSet(object):
             # Get the output filename for the reduced sequence
             #            
             try:
-                with pyfits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
+                with fits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
+                    # Add the PAPI version
+                    myhdulist[0].header.set('PAPIVERS', 
+                                            '1.2', 'PANIC Pipeline version')
                     if 'DATE-OBS' in myhdulist[0].header:
                         seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
                     else:
@@ -2679,7 +2779,9 @@ class ReductionSet(object):
                 
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
-                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,NDIT'
+                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,'
+                'IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,'
+                'NDIT,PAPIVERS'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
                 swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
@@ -2712,7 +2814,7 @@ class ReductionSet(object):
             
             # Add the list of original raw-files to the result image header
             if len(out_ext)>0:
-                new_frame = pyfits.open(seq_result_outfile, 'update')
+                new_frame = fits.open(seq_result_outfile, 'update')
                 raw_frames = [os.path.basename(f) for f in sequence]
                 new_frame[0].header.add_history("RAW_FRAMES= %s"%str(raw_frames))
                 new_frame.close()
@@ -2726,7 +2828,7 @@ class ReductionSet(object):
         for file in files_created:
             # if source image was a science one, then products should be also 
             # science images.
-            if fits.isScience():
+            if cfits.isScience():
                 # input image is overwritten
                 misc.imtrim.imgTrim(file)
             if file!=None and os.path.splitext(file)[1]=='.fits':
@@ -2982,16 +3084,16 @@ class ReductionSet(object):
                 log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
             else:
                 # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
-                bpm_data = pyfits.getdata(master_bpm_4gain, header=False)
+                bpm_data = fits.getdata(master_bpm_4gain, header=False)
                 badpix_p = numpy.where(bpm_data>0)
-                gain_data, gh = pyfits.getdata(gainmap, header=True)
+                gain_data, gh = fits.getdata(gainmap, header=True)
                 gain_data[badpix_p] = 0
                 gh.set('HISTORY','Combined with BPM:%s'%master_bpm_4gain)
-                pyfits.writeto(gainmap, gain_data, header=gh, clobber=True)
+                fits.writeto(gainmap, gain_data, header=gh, clobber=True)
         
         ########################################################################
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
-        #      each raw frame. This mode try to fit 
+        #      each raw frame.  
         ########################################################################
         if self.red_mode=='lab':
             log.info("**** Computing FWHM of each pre-reduced image ****")
@@ -3014,7 +3116,7 @@ class ReductionSet(object):
                     ellipmax=0.3, edge_x=100, edge_y=100, pixsize=pix_scale, 
                     gain=1, sat_level=satur_level)
                 try:
-                    (fwhm, std) = cq.estimateFWHM()
+                    (fwhm, std, k, k) = cq.estimateFWHM()
                     if fwhm>0 and fwhm<20:
                         log.info("File %s - FWHM = %s (pixels) std= %s"%(r_file, fwhm, std))
                         fwhm_t.append(fwhm)
@@ -3139,7 +3241,7 @@ class ReductionSet(object):
             offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
                                                  out_dir+'/offsets1.pap')                
         except Exception,e:
-            log.error("Erron while getting pointing offsets. Cannot continue with data reduction...")
+            log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
             raise e
         
         ########################################################################
@@ -3208,7 +3310,7 @@ class ReductionSet(object):
                     ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
                     gain=4.15, sat_level=satur_level)
                 try:
-                    (fwhm, std) = cq.estimateFWHM()
+                    (fwhm, std, k, k) = cq.estimateFWHM()
                     if fwhm>0 and fwhm<20:
                         log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
                     elif fwhm<0 or fwhm>20:

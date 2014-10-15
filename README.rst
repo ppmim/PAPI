@@ -1,62 +1,104 @@
-PAPI 
-====
+|logo| PAPI
+===========
 
-This is PAPI, the PANIC data reduction PIpeline. 
+PAPI (PANIC Pipeline) is the automatic image processing pipeline for data obtained 
+with the PAnoramic Near Infrared Camera (PANIC_) for the 2.2m and 3.5m Telescopes at 
+Calar Alto Observatory (CAHA_). The pipeline is written in Python and developed 
+at the `Institute of Astrophysics of Andalusia (CSIC) <http://www.iaa.es/>`_. 
+The automated processing steps include basic calibration (removeing instrumental 
+signature), cosmic-ray removal, treatment for electronic ghosts (cross-talk), 
+sky subtraction, non-linear count-rate correction, robust alignment and 
+registration.
 
-PAPI is distributed under GNU GPL, either version 3 of the License, 
-or (at your option) any later version. See the file COPYING for details.
 
-PAPI requires the following packages installed in order to
-be able to be installed and work properly:
-
- - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
- - numpy (http://numpy.scipy.org/) 
- - scipy (http://www.scipy.org)
- - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
- - pyraf (http://www.stsci.edu/institute/software_hardware/pyraf)
- - pywcs (http://stsdas.stsci.edu/astrolib/pywcs/)
-
-PANIC is a general purpose Panoramic Near Infrared camera for Calar Alto. 
+PANIC_ is a general purpose Panoramic Near Infrared camera for Calar Alto. 
 It is optimized for use at the 2.2m telescope, but can also be installed 
-at the 3.5m telescope. It will work in the nIR bands Z, J, H and K. 
-
-Installing
-==========
-
-1. Unzip and untar the papi files in a suitable location.
-
-    * tar zxf papi_X.X.X.tgz
-    * ln -s papi_X.X.X papi
-    * cd papi
+at the 3.5m telescope. It works in the nIR bands Z, J, H and K. 
 
 
-2. Build the sources
 
-        * cd papi/irdr/src
-        * make all
+Installation
+============
+
+PAPI has the following strict requirements:
+ 
+ - Python 2.7
+ - Numpy 1.6 or later 
+
+PAPI also depends on next packages:
+
+ - SciPy_ 
+ - PyFITS_
+ - PyRAF_
+ - Astropy_
+ - PyQt4_
+ - Astromatic_ suite tools (SExtractor v2.8, SCAMP v1.7, SWARP v2.19.1)
+ - `Astrometry.net`_ (>=v0.46) and 42xx index files
+ - Sphinx_ to build the documentation (optional)
+ 
+
+Note that, for PyRAF_ you have to install IRAF_ (v2.16 or later), what can be a 
+tricky task. However, is has been simplified in recent versions.
 
 
-3. Edit papi_setup.sh script
+To install PAPI, follow the next steps:
 
-    * Modify the PAPI_HOME and PAPI_PROD in the papi_setup.[sh] file in the papi directory
-    * Add the papi_setup.[sh] to your .bash_profile 
+1. Clone the PAPI files in a suitable location. Note that, it is a development 
+version:
 
-        * Bash: . $PAPI_HOME/papi_setup.sh
-        * CSH: source $PAPI_HOME/papi_setup.csh
+	* ``git clone https://github.com/ppmim/PAPI ~/papi``
 
-4. Have a look to config_files/ directory to set up the config file to use.
+#. Build the sources:
 
+    * cd papi/irdr/src
+    * make all
+
+#. Edit papi_setup.sh script:
+
+    * Modify the PAPI_HOME and PAPI_PROD in the papi_setup.[sh] file in the papi 
+    directory
+    * Run the papi_setup.sh 
+    * Re-load your new profile (.bashrc or .cshrc ) 
+
+        - Bash: . ~/.bashrc
+        - CSH: source ~/.cshrc
+
+#. Go to config_files/ directory to setup the config file to use.
+
+
+Supported Platforms
+===================
+Currently PAPI has only be tested under openSuSE12.x and openSuSE13.1, but it
+should work on any 64-bit Linux box with the software packages required above.
 
 
 Documentation
 =============
-
-See the docs/ directory for full documentation or www.iaa.es/PANIC/software_tools
-
+You can browse the latest release documentation_ online.
 
 
 
-Webpage: https://www.iaa.es/PANIC
+Webpage: http://www.iaa.es/PANIC
 Maintainer: jmiguel@iaa.es
 
-     
+
+.. links:
+.. |logo| image:: ./QL4/images/logo_PANIC_100.jpg
+          :width: 127 px
+          :alt: PANIC icon
+
+.. _PANIC: http://www.iaa.es/PANIC
+.. _CAHA: http://www.caha.es
+.. _iaa_web: http://www.iaa.es
+.. _mpia_web: http://www.mpia.de
+.. _source code: http://github.com/ppmim/PAPI
+.. _documentation: http://www.iaa.es/~jmiguel/PANIC/PAPI/html/index.html
+.. _SciPy: http://www.scipy.org
+.. _PyFITS: http://www.stsci.edu/resources/software_hardware/pyfits
+.. _PyRAF: http://www.stsci.edu/institute/software_hardware/pyraf
+.. _PyQt4: http://www.riverbankcomputing.co.uk/software/pyqt/download
+.. _Astropy: http://www.astropy.org/
+.. _Astrometry.net: http://astrometry.net/
+.. _Astromatic: http://www.astromatic.net/
+.. _Sphinx: http://sphinx-doc.org/
+.. _IRAF: http://www.iraf.net

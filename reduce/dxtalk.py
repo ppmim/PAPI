@@ -62,11 +62,12 @@ field of next observations.
 from optparse import OptionParser
 import sys
 
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 def remove_crosstalk(in_image, out_image=None, overwrite=False):
     """
@@ -91,9 +92,9 @@ def remove_crosstalk(in_image, out_image=None, overwrite=False):
     """
     
     try:
-        if pyfits.getval(in_image, 'INSTRUME').lower()=='omega2000':
+        if fits.getval(in_image, 'INSTRUME').lower()=='omega2000':
             return de_crosstalk_o2k(in_image, out_image, overwrite)
-        elif pyfits.getval(in_image, 'INSTRUME').lower()=='panic':
+        elif fits.getval(in_image, 'INSTRUME').lower()=='panic':
             return de_crosstalk_PANIC (in_image, out_image, overwrite)
         else:
             log.error("Instrument is not supported !")
@@ -135,7 +136,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
             out_file = out_image
             
     try:
-        f_in = pyfits.open(in_image)
+        f_in = fits.open(in_image)
         if len(f_in)==1:
             data_in = f_in[0].data
         else:
@@ -281,13 +282,14 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     ### write FITS ###
     
             
-    hdu = pyfits.PrimaryHDU()
+    hdu = fits.PrimaryHDU()
     hdu.scale('float32') # important to set first data type
     hdu.data = data_out
-    hdulist = pyfits.HDUList([hdu])
+    hdulist = fits.HDUList([hdu])
     
-    hdr0 = pyfits.getheader(in_image)
+    hdr0 = fits.getheader(in_image)
     hdr0.add_history('De-crosstalk procedure executed ')
+    hdr0.set('PAPIVERS', __version__, 'PANIC Pipeline version')
     hdu.header = hdr0
     
     try:
@@ -330,7 +332,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
             out_file = out_image
             
     try:
-        f_in = pyfits.open(in_image)
+        f_in = fits.open(in_image)
         if len(f_in)==1:
             data_in = f_in[0].data
         else:
@@ -438,13 +440,14 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     ### write FITS ###
     
             
-    hdu = pyfits.PrimaryHDU()
+    hdu = fits.PrimaryHDU()
     hdu.scale('float32') # important to set first data type
     hdu.data = data_out
-    hdulist = pyfits.HDUList([hdu])
+    hdulist = fits.HDUList([hdu])
     
-    hdr0 = pyfits.getheader(in_image)
+    hdr0 = fits.getheader(in_image)
     hdr0.add_history('De-crosstalk procedure executed ')
+    hdr0.set('PAPIVERS', __version__, 'PANIC Pipeline version')
     hdu.header = hdr0
     
     try:

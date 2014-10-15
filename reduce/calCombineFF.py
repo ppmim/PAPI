@@ -65,14 +65,15 @@ from optparse import OptionParser
 import sys
 import os
 
-import pyfits
 import numpy
+import astropy.io.fits as fits
 
 import misc.fileUtils
 import datahandler
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 # IRAF
 from pyraf import iraf
@@ -160,6 +161,9 @@ def combineFF(domeFF, skyFF, combinedFF=None):
                     result=combinedFF,
                     )
         
+        fits.setval(combinedFF, keyword="PAPIVERS", 
+            value=__version__, comment="PANIC Pipeline version")
+
         # Remove all temporal
         misc.fileUtils.removefiles(domeFF.replace(".fits", "_smooth.fits"))
         misc.fileUtils.removefiles(skyFF.replace(".fits", "_smooth.fits"))

@@ -47,7 +47,7 @@ import datahandler
 import misc.robust as robust
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 #import scipy.stats.stats
@@ -55,6 +55,7 @@ import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 class MasterDarkModel(object):
     """
@@ -138,30 +139,30 @@ class MasterDarkModel(object):
         f_readmode = -1
         f_n_extensions = -1
         for iframe in framelist:
-            fits = datahandler.ClFits(iframe)
-            log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
+            myfits = datahandler.ClFits(iframe)
+            log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, myfits.exptime, myfits.type)) 
             # Check TYPE (dark)
-            if not fits.isDark():
+            if not myfits.isDark():
                 log.warning("Warning: Task 'createDarkModel' found a non dark frame. Skipping %s", iframe)
                 darks[i] = 0
             else:
                 # Check READMODE
-                if ( f_readmode!=-1 and (f_readmode!= fits.getReadMode() )):
+                if ( f_readmode!=-1 and (f_readmode!= myfits.getReadMode() )):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different  READMODE")
                     darks[i] = 0  
                     #continue
                     raise Exception("Found a DARK frame with different READMODE") 
                 else: 
-                    f_readmode = fits.getReadMode()
-                    f_n_extensions = fits.getNExt()
+                    f_readmode = myfits.getReadMode()
+                    f_n_extensions = myfits.getNExt()
                     #log.debug("NEXT= %s"%(f_n_extensions))
                     darks[i] = 1
                 
             i = i+1
         log.debug('All frames checked')   
         
-        naxis1 = fits.naxis1
-        naxis2 = fits.naxis2            
+        naxis1 = myfits.naxis1
+        naxis2 = myfits.naxis2            
         ndarks = (darks==1).sum()
         
         if ndarks<2:
@@ -177,7 +178,7 @@ class MasterDarkModel(object):
         #loop the images
         counter = 0
         for i in range(0, nframes):
-            file = pyfits.open(framelist[i])
+            file = fits.open(framelist[i])
             f = datahandler.ClFits ( framelist[i] )
             if darks[i]==1:
                 for i_ext in range(0, f_n_extensions):
@@ -213,33 +214,36 @@ class MasterDarkModel(object):
         misc.fileUtils.removefiles( self.__output_filename )               
 
         # Write result in a FITS
-        hdulist = pyfits.HDUList()
-        hdr0 = pyfits.getheader(framelist[numpy.where(darks==1)[0][0]])
-        prihdu = pyfits.PrimaryHDU (data = None, header = None)
+        hdulist = fits.HDUList()
+        hdr0 = fits.getheader(framelist[numpy.where(darks==1)[0][0]])
+        prihdu = fits.PrimaryHDU (data = None, header = None)
         try:
-            prihdu.header.update('INSTRUME', hdr0['INSTRUME'])
-            prihdu.header.update('TELESCOP', hdr0['TELESCOP'])
-            prihdu.header.update('CAMERA', hdr0['CAMERA'])
-            prihdu.header.update('MJD-OBS', hdr0['MJD-OBS'])
-            prihdu.header.update('DATE-OBS', hdr0['DATE-OBS'])
-            prihdu.header.update('DATE', hdr0['DATE'])
-            prihdu.header.update('UT', hdr0['UT'])
-            prihdu.header.update('LST', hdr0['LST'])
-            prihdu.header.update('ORIGIN', hdr0['ORIGIN'])
-            prihdu.header.update('OBSERVER', hdr0['OBSERVER'])
+            prihdu.header.set('INSTRUME', hdr0['INSTRUME'])
+            prihdu.header.set('TELESCOP', hdr0['TELESCOP'])
+            prihdu.header.set('CAMERA', hdr0['CAMERA'])
+            prihdu.header.set('MJD-OBS', hdr0['MJD-OBS'])
+            prihdu.header.set('DATE-OBS', hdr0['DATE-OBS'])
+            prihdu.header.set('DATE', hdr0['DATE'])
+            prihdu.header.set('UT', hdr0['UT'])
+            prihdu.header.set('LST', hdr0['LST'])
+            prihdu.header.set('ORIGIN', hdr0['ORIGIN'])
+            prihdu.header.set('OBSERVER', hdr0['OBSERVER'])
         except Exception,e:
             log.warning("%s"%str(e))
 
-        prihdu.header.update('PAPITYPE','MASTER_DARK_MODEL')
+        prihdu.header.set('PAPITYPE','MASTER_DARK_MODEL')
+        prihdu.header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
+        
         prihdu.header.add_history('Dark model based on %s' % framelist)
+        prihdu.header.add_history('Plane 0: bias ; Plane 1: dark current')
         
         if f_n_extensions>1:
-            prihdu.header.update('EXTEND', pyfits.TRUE, after = 'NAXIS')
-            prihdu.header.update('NEXTEND', f_n_extensions)
-            prihdu.header.update('FILENAME', self.__output_filename)
+            prihdu.header.set('EXTEND', True, after = 'NAXIS')
+            prihdu.header.set('NEXTEND', f_n_extensions)
+            prihdu.header.set('FILENAME', self.__output_filename)
             hdulist.append(prihdu)
             for i_ext in range(0, f_n_extensions):
-                hdu = pyfits.PrimaryHDU()
+                hdu = fits.PrimaryHDU()
                 hdu.scale('float32') # important to set first data type
                 hdu.data = fit.reshape(2, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
                 hdulist.append(hdu)

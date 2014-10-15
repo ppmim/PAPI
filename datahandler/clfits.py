@@ -13,21 +13,19 @@
 ###############################################################################
 
 """
-   Class for FITS data classifying
+Module containing all basic operation with FITS files.
 """
 
 # import external modules
 
 
 import os.path
-import pyfits
 import sys
 import time
-
-
 from time import strftime
 
-import misc.wcsutil as wcsutil
+from astropy import wcs
+import astropy.io.fits as fits
 
 # Logging (PAPI or Python built-in)
 try:
@@ -51,8 +49,8 @@ class ClFits (object):
 
     """
       Represents a Classified FITS of PANIC
-      A class for PANIC FITS file classification and recognition. Actually it is a
-      wrapper for pyfits.
+      A class for PANIC FITS file classification and recognition. Actually it is 
+      a wrapper for astropy.io.fits.
 
       TYPE of files to be considered :
          UNKNOW,
@@ -310,7 +308,7 @@ class ClFits (object):
             log.error("Wrong extension number especified. Not a MEF file.")
         else:
             try:
-                myfits = pyfits.open(self.pathname, 
+                myfits = fits.open(self.pathname, 
                                      ignore_missing_end=True) # since some problems with O2k files   
                 temp = myfits[0].data
                 myfits.close(output_verify='ignore')
@@ -335,9 +333,9 @@ class ClFits (object):
 
         if self.check_integrity: 
 
-            # We change that behavior of (pyfits) warnings with a filter.
+            # We change that behavior of fits warnings with a filter.
             # See http://bit.ly/1etvfJC
-            # It is very useful because some pyfits warnings are quite usual
+            # It is very useful because some fits warnings are quite usual
             # when reading non completely written files. Non captured warnings 
             # slow down the reading process.
             # Ex. 
@@ -345,13 +343,14 @@ class ClFits (object):
             #     FITS-compliant. Nulls may be replaced with spaces upon writing."
             # 
             #log.debug("Cheking FITS integrity")
+            # Turn matching warnings into exceptions
             warnings.simplefilter('error', UserWarning)
             while True:
                 try:
                     # First level of checking
                     found_size = fits_simple_verify(self.pathname)
                     # Now, try to read the whole FITS file
-                    myfits = pyfits.open(self.pathname, 
+                    myfits = fits.open(self.pathname, 
                                      ignore_missing_end=True) # since some problems with O2k files 
                 except Exception, e:
                     if nTry<retries:
@@ -369,7 +368,7 @@ class ClFits (object):
             # non-hard warnings!
             warnings.resetwarnings()
         else:
-            myfits = pyfits.open(self.pathname, 
+            myfits = fits.open(self.pathname, 
                                      ignore_missing_end=True) # since some problems with O2k files     
 
         # Check if is a MEF file 
@@ -388,9 +387,9 @@ class ClFits (object):
             self.naxis1 = myfits[1].header['NAXIS1']
             self.naxis2 = myfits[1].header['NAXIS2']
             #self._shape = myfits[1].data.shape # (naxis3, naxis2, naxis1)
-            #Because the pyfits.data.shape makes extremealy slow read
-            #of the FITS-file (mainly because shape need to read the whole image),
-            #we build a shape tuple from the header values (NAXIS1, NAXIS2, and NAXIS3 )
+            # Because the fits.data.shape makes extremealy slow read
+            # of the FITS-file (mainly because shape need to read the whole image),
+            # we build a shape tuple from the header values (NAXIS1, NAXIS2, and NAXIS3 )
             if 'NAXIS3' in myfits[1].header:
                 self._shape = (myfits[1].header['NAXIS3'], self.naxis2, self.naxis1)
             else:
@@ -399,7 +398,7 @@ class ClFits (object):
             self.naxis1 = myfits[0].header['NAXIS1']
             self.naxis2 = myfits[0].header['NAXIS2']
             #self._shape = myfits[0].data.shape # (naxis2, naxis1)
-            #see comments about pyfits.data.shape above 
+            #see comments about fits.data.shape above 
             if 'NAXIS3' in myfits[0].header:
                 self._shape = (myfits[0].header['NAXIS3'], self.naxis2, self.naxis1)
             else:
@@ -500,7 +499,7 @@ class ClFits (object):
                         # By default, the image is classified as SCIENCE object
                         self.type = "SCIENCE"
             except KeyError:
-                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
+                log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
         elif self.instrument=='hawki':
             try:
@@ -525,7 +524,7 @@ class ClFits (object):
                     #By default, the image is classified as SCIENCE object
                     self.type = "SCIENCE"
             except KeyError:
-                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
+                log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
                 
         else: #o2000, Roper or  ??
@@ -561,7 +560,7 @@ class ClFits (object):
                     self.type = "SCIENCE"
                     #log.debug("DEFAULT Image type: %s"%self.type)
             except KeyError:
-                log.error('PAPITYPE/OBJECT/IMAGETYP keyword not found')
+                log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
         
         #Is pre-reduced the image ? by default, isn't
@@ -639,9 +638,11 @@ class ClFits (object):
             # WCS-coordinates are preferred than RA,DEC (both in degrees)
             if ('CTYPE1' in myfits[0].header and
                      'TAN' in myfits[0].header['CTYPE1'] ): #'RA---TAN' or 'RA---TAN--SIP'
-                wcs = wcsutil.WCS(myfits[0].header)
-                self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
-                log.debug("Read RA-WCS coordinate =%s", self._ra)
+                m_wcs = wcs.WCS(myfits[0].header)
+                #self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
+                # No SIP or Paper IV table lookup distortion correction is applied.
+                self._ra = m_wcs.wcs_pix2world([[self.naxis1/2, self.naxis2/2]], 1)[0][0]
+                #log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA'] # degrees supposed
             elif 'OBJCTRA' in myfits[0].header:
@@ -653,7 +654,7 @@ class ClFits (object):
             else:
                 raise Exception("No valid RA coordinate found")
         except Exception,e:
-            log.error('Error reading RA keyword :%s',str(e))
+            log.warning('Error reading RA keyword :%s',str(e))
             self._ra  = -1
         finally:
             #log.debug("RA = %s"%str(self._ra))
@@ -666,9 +667,11 @@ class ClFits (object):
             # WCS-coordinates are preferred than RA,DEC
             if ('CTYPE2' in myfits[0].header and
                      'TAN' in myfits[0].header['CTYPE2']): #=='DEC--TAN' or 'DEC--TAN--SIP'
-                wcs = wcsutil.WCS(myfits[0].header)
-                self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
-                log.debug("Read Dec-WCS coordinate =%s", self._dec)
+                m_wcs = wcs.WCS(myfits[0].header)
+                #self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
+                # No SIP or Paper IV table lookup distortion correction is applied.
+                self._dec = m_wcs.wcs_pix2world([[self.naxis1/2, self.naxis2/2]], 1)[0][1]
+                # log.debug("Read Dec-WCS coordinate =%s", self._dec)
             elif 'DEC' in myfits[0].header:
                 self._dec = myfits[0].header['DEC']
             elif 'OBJCTDEC' in myfits[0].header:
@@ -681,7 +684,7 @@ class ClFits (object):
             else:
                 raise Exception("No valid DEC coordinates found")
         except Exception,e:
-            log.error('Error reading DEC keyword : %s', str(e))
+            log.warning('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
         finally:
             #log.debug("DEC = %s"%str(self._dec))
@@ -841,7 +844,6 @@ class ClFits (object):
                 # default scale ?
                 self.pix_scale = 0.45 * self.binning
 
-
         # 
         # Close the file. Some updates can be done (PRESS1, ...) but it mustn't
         #            
@@ -850,24 +852,6 @@ class ClFits (object):
         except Exception, e:
             log.error("Error while closing FITS file %s   : %s",
                       self.pathname, str(e))
-        
-            
-    def addHistory(self, string_history):
-        """ Add a history keyword to the header
-            NOTE: The update is only done in memory-header(my_header). To flush to disk, we should
-            to write/update to a new file. 
-            
-            STILL NOT USED !!!!
-        """
-        log.warning("Header not updated nicely !!")
-        try:
-            #t=pyfits.open(self.pathname,'update')
-            self.my_header.add_history(string_history)
-            #t.close(output_verify='ignore')
-            log.warning('History added')
-        except:
-            log.error('Error while adding history to header')
-            
         
         
     def print_info(self):
@@ -951,7 +935,7 @@ def isaFITS(filepath):
     
     if os.path.exists(filepath):
         try:
-            fd = pyfits.open(filepath, ignore_missing_end=True)
+            fd = fits.open(filepath, ignore_missing_end=True)
             if fd[0].header['SIMPLE']==True:
                 return True
             else:

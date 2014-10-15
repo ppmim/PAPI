@@ -52,7 +52,7 @@ import misc.utils as utils
 
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 import numpy as np
 import datahandler
 import reduce.calSuperFlat
@@ -60,6 +60,7 @@ import reduce.calSuperFlat
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 class SkyGainMap(object):
     """ Compute the gain map from a list of sky frames """
@@ -282,7 +283,7 @@ class GainMap(object):
          
         
         gain = np.zeros([nExt, naxis1, naxis2], dtype=np.float32)
-        myflat = pyfits.open(self.flat)
+        myflat = fits.open(self.flat)
         
         # Check if normalization is already done to FF or otherwise it must be
         # done here
@@ -386,25 +387,26 @@ class GainMap(object):
         output = self.output_filename
         log.debug('Generating output file: %s', output)
         prihdr = myflat[0].header.copy()
-        prihdr.update('PAPITYPE','MASTER_GAINMAP','TYPE of PANIC Pipeline generated file')
+        prihdr.set('PAPITYPE','MASTER_GAINMAP', 'TYPE of PANIC Pipeline generated file')
+        prihdr.set('PAPIVERS', __version__, 'PANIC Pipeline version')
         prihdr.add_history('Gain map based on %s' % self.flat)
         if self.do_norm:
             prihdr.add_history('Normalization wrt chip 0 done.')
         
-        fo = pyfits.HDUList()
+        fo = fits.HDUList()
         # Add primary header to output file...
         if isMEF: 
-            prihdu = pyfits.PrimaryHDU(None,prihdr)
+            prihdu = fits.PrimaryHDU(None,prihdr)
             fo.append(prihdu)
             # Add each extension
             for chip in range(0, nExt):
-                hdu = pyfits.ImageHDU(data=gain[chip], header=myflat[chip+1].header)
+                hdu = fits.ImageHDU(data=gain[chip], header=myflat[chip+1].header)
                 hdu.scale('float32') # important to set first data type ??
                 #hdu.header.update('EXTVER',1)
                 fo.append(hdu)
                 del hdu
         else: 
-            prihdu = pyfits.PrimaryHDU(gain[0],prihdr)
+            prihdu = fits.PrimaryHDU(gain[0],prihdr)
             fo.append(prihdu)
         
         fo.writeto(output,output_verify='ignore')

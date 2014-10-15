@@ -52,9 +52,11 @@ import datahandler
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
+
 import numpy
 
 
@@ -125,9 +127,15 @@ class ApplyDarkFlat(object):
         Both master DARK and FLAT are optional,i.e., each one can be applied 
         even the other is not present.
         
-        If dark_EXPTIME matches with the sci_EXPTIME, a straight subtraction is done,
-        otherwise, a Master_Dark_Model is required in order to compute a scaled dark
-          
+        If dark_EXPTIME matches with the sci_EXPTIME, a straight subtraction is 
+        done, otherwise, a Master_Dark_Model is required in order to compute a 
+        scaled dark.
+
+        Note: This routine works fine with MEF files and data cubes, of a with
+        MEF-cubes. If means that if sci_data is a cube (3D array), the dark is 
+        subtracted to each layer, and flat is applied also to each layer. Thus,
+        the calibrations works correctly for data cubes of data, 
+        no matter if they are MEF or single HDU fits.   
         """   
 
         log.debug("Start applyDarkFlat")
@@ -159,7 +167,7 @@ class ApplyDarkFlat(object):
                 log.error(msg)
                 raise Exception(msg)
             else:
-                dark = pyfits.open(self.__mdark)
+                dark = fits.open(self.__mdark)
                 cdark = datahandler.ClFits (self.__mdark)
                 dark_time = cdark.expTime()
                 
@@ -169,6 +177,7 @@ class ApplyDarkFlat(object):
                     raise Exception("File %sdoes not look a neither MASTER_DARK nor MASTER_DARK_MODEL"%self.__mdark)
                 
                 #dark_data=dark[0].data
+                n_ext = cdark.next  
                 """if len(dark)>1:
                     dmef = True
                     n_ext = len(dark)-1
@@ -190,7 +199,7 @@ class ApplyDarkFlat(object):
                 log.error(msg)
                 raise Exception(msg)
             else:
-                flat = pyfits.open(self.__mflat)
+                flat = fits.open(self.__mflat)
                 cflat = datahandler.ClFits (self.__mflat)
                 
                 if not cflat.isMasterFlat() and not self.__force_apply:
@@ -200,13 +209,12 @@ class ApplyDarkFlat(object):
                 flat_filter = cflat.getFilter()
                 #flat_data = flat[0].data
                 #MEF
-                if cflat.next>1:
-                    ###fmef = True
-                    if cdark!=None and cdark.next != cflat.next:
-                        raise Exception("Number of extensions does not match "
+                ###fmef = True
+                if cdark!=None and cdark.next != cflat.next:
+                    raise Exception("Number of extensions does not match "
                         "in Dark and Flat files!")
-                    else: n_ext = cflat.next    
-                    log.debug("Flat MEF file with %d extensions", n_ext)
+                else: n_ext = cflat.next    
+                log.debug("Flat MEF file with %d extensions", n_ext)
                     
                 # compute mode for n_ext normalization (in case of MEF, we normalize 
                 # all extension wrt chip 0)
@@ -261,7 +269,7 @@ class ApplyDarkFlat(object):
             if not os.path.exists(iframe):
                 log.error("File '%s' does not exist", iframe)
                 continue  
-            f = pyfits.open(iframe)
+            f = fits.open(iframe)
             cf = datahandler.ClFits (iframe)
             log.debug("Science frame %s EXPTIME= %f TYPE= %s FILTER= %s"\
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter()))
@@ -328,7 +336,7 @@ class ApplyDarkFlat(object):
 
                         # Get BPM
                         if self.__bpm!=None: 
-                            bpm_data = pyfits.getdata(self.__bpm, ext= chip+1, 
+                            bpm_data = fits.getdata(self.__bpm, ext= chip+1, 
                                                       header=False)
 
                     # Single
@@ -336,12 +344,12 @@ class ApplyDarkFlat(object):
                         # Get Dark
                         if self.__mdark != None: 
                             if time_scale != 1.0: # for dark_model time_scale==-1
-                                log.debug("Dark EXPTIME mismatch ! looking for dark model ...")
+                                log.debug("Dark EXPTIME mismatch ! checking if it is a dark model ...")
                                 if not cdark.isMasterDarkModel():
                                     log.error("Cannot find out a scaled dark to apply")
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
-                                    log.debug("Scaling dark with dark model...")
+                                    log.debug("DarkModel found: Scaling dark with dark model...")
                                     dark_data = dark[0].data[1]*exp_time + dark[0].data[0]
                                     log.info("AVG(scaled_dark)=%s"%numpy.mean(dark_data))
                             else:
@@ -357,14 +365,17 @@ class ApplyDarkFlat(object):
                                 # we suppose it's already normalized
                                 flat_data = flat[0].data
 
-                        else: flat_data = 1     
+                        else: flat_data = 1
+                        
+                        ## Get RAW_SCI data    
                         sci_data = f[0].data
-
+                        ## 
+                        
                         # Get BPM
                         if self.__bpm!=None:
                             # bpm_data: must be an array that is True or >0 
                             # where bad pixels
-                            bpm_data = pyfits.getdata(self.__bpm, header=False)
+                            bpm_data = fits.getdata(self.__bpm, header=False)
                                                                
                     # To avoid NaN values due to zero division
                     __epsilon = 1.0e-20
@@ -379,6 +390,10 @@ class ApplyDarkFlat(object):
                     ###################################
                     # Finally, apply dark, Flat and BPM
                     # #################################
+                    # Note: if sci_data is a cube (3D array), dark is subtracted
+                    # to each layer, and flat is applied also to each layer. Thus,
+                    # the calibrations works correctly for data cubes of data, 
+                    # no matter if they are MEF or single HDU fits.  
                     sci_data = (sci_data - dark_data) / flat_data
                     
 
@@ -405,6 +420,8 @@ class ApplyDarkFlat(object):
                     f[0].header.add_history('Flat-Field with %s' %self.__mflat)        
                 if self.__bpm != None and self.__bpm_action!='none':
                     f[0].header.add_history('BPM with %s' %self.__bpm)
+
+                f[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
 
                 # Write output to outframe (data object actually still points 
                 # to input data)
@@ -462,10 +479,10 @@ def fixpix(im, mask, iraf=False):
 
         badfits = tempfile.NamedTemporaryFile(suffix=".fits").name
         outfits = tempfile.NamedTemporaryFile(suffix=".fits").name
-        pyfits.writeto(badfits, mask.astype(numpy.int16))
-        pyfits.writeto(outfits, im)
+        fits.writeto(badfits, mask.astype(numpy.int16))
+        fits.writeto(outfits, im)
         IRAF.fixpix(outfits, badfits)
-        cleaned = pyfits.getdata(outfits)
+        cleaned = fits.getdata(outfits)
         os.remove(badfits)
         os.remove(outfits)
         return cleaned
@@ -519,6 +536,7 @@ if __name__ == "__main__":
 This module receives a series of FITS images and applies a master Dark, Flat and
 BPM (subtract dark, divide Flat, and fix bad pixel) using the given
 calibration files (master dark, master flat-field, bad pixel mask). 
+Source raw files can be MEFs and data cubes. 
 """
     parser = OptionParser(usage, description=desc)
     

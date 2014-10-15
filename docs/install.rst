@@ -4,15 +4,14 @@
 Installation & Configuration  
 ============================
 
-PAPI is an automatic image processing pipeline for data taken with the 
+PAPI is the automatic image processing pipeline for data taken with the 
 `PAnoramic Near Infrared Camera (PANIC) <http://www.iaa.es/PANIC>`_ for the 2.2m 
 and 3.5m Telescopes at `Calar Alto Observatory (CAHA) <http://www.caha.es>`_. 
 The pipeline is written in Python and developed at the `Institute of Astrophysics 
 of Andalusia (CSIC) <http://www.iaa.es/>`_. The automated processing steps 
 include basic calibration (removeing instrumental signature), cosmic-ray removal, 
 treatment for electronic ghosts (cross-talk), sky subtraction, non-linear 
-count-rate correction, artifact masking, robust alignment and registration for 
-large mosaics, weight map generation, and drizzling onto a final image mosaic. 
+count-rate correction, robust alignment and registration. 
 
 
 This manual is a complete description of the data reduction recipes implemented 
@@ -65,7 +64,7 @@ Additional packages are optionally required:
 
 Download
 ********
-The latest stable version of PAPI can be downloaded from `here <http://www.iaa.es/~jmiguel/software/papi.tgz>`_
+The latest stable version of PAPI can be downloaded from `here <https://github.com/ppmim/PAPI>`_
 
 Installing
 **********

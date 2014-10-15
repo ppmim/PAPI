@@ -453,11 +453,20 @@ zypper install python-qt4-devel (optional, pero necesario para pyuic4)
   python-qt4-devel python-qt4-utils python-sip-bin python-sip-devel)
   
 
-8. DS9 + XPA (v7.2)
-===================
+8. DS9 + XPA (v7.3b5)
+=====================
+- Mejor instalar la v7.3b5, pues soluciona un problema que me estaba ocurriendo
+la tener configurador en iraf el valor stdimage=im4096 e intentar leer imagenes
+más pequeñas (ej. 16x16); tareas como imexam o psfmeasure no funcionaban bien
+y daban el mensaje: Warning: Pixels out of bounds
+
+Para más detalles: http://stackoverflow.com/questions/24919639/pixels-out-of-bounds-error-in-iraf
+
+
 ds9
 ---
-wget http://ds9.si.edu/download/linux64/ds9.linux64.7.2.tar.gz
+#wget http://ds9.si.edu/download/linux64/ds9.linux64.7.2.tar.gz
+wget http://ds9.si.edu/download/linux64/ds9.linux64.7.3b5.tar.gz
 
 tar xfz ds9.linux64.7.2.tar.gz
 sudo cp ds9 /usr/local/bin
@@ -782,3 +791,16 @@ LEMON requirements
 - zypper install openmpi-devel (para Montage)
 - zypper install python-gtk (para GUI)
 - zypper install p7zip (p7zip-9.20.1-10.1.4.x86_64)
+
+
+Remote Control
+==============
+1) Add x2go repository
+
+> zypper ar http://download.opensuse.org/repositories/X11:/RemoteDesktop:/x2go/openSUSE_13.1 x2go
+
+2) Install x2go packages
+
+> zypper install x2goserver
+> zypper install x2goclient
+

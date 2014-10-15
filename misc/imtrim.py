@@ -35,7 +35,7 @@ import os
 import shutil
 from optparse import OptionParser
 import fileinput
-import pyfits
+import astropy.io.fits as fits
 
 
 # Pyraf modules
@@ -43,8 +43,8 @@ from pyraf import iraf
 
 
 # Interact with FITS files
-import pyfits
 from misc.paLog import log
+from misc.version import __version__
 
 
                 
@@ -85,7 +85,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     log.debug("Start imgTrim ....")
     
     try:
-        indata = pyfits.open(file, ignore_missing_end=True)
+        indata = fits.open(file, ignore_missing_end=True)
         if len(indata)>1:
             raise Exception("MEF files currently not supported")
         indata[0].verify()
@@ -250,7 +250,10 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     iraf.imcopy(input=file+"["+str(xmin)+":"+str(xmax)+","+
             str(ymin)+":"+str(ymax)+"]", output=outputfile)
     
-    
+    fits.setval(outputfile, keyword='HISTORY', value='Image trimmed', ext=0)
+    fits.setval(outputfile, keyword='PAPIVERS', value=__version__, 
+                    comment='PANIC Pipeline version', ext=0)
+
     # 
     # Look for weight and objs images
     #

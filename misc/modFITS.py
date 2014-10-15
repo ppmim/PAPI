@@ -29,10 +29,9 @@ import time
 from datetime import datetime
 from optparse import OptionParser
 
-
-
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
+
 
 def modFITS(files, keyword, value, ext=0):
     """
@@ -62,24 +61,12 @@ def modFITS(files, keyword, value, ext=0):
     print "Starting modFITS..."
     n = 0
 
-    pyfitsversion = pyfits.__version__.split(".")
-    pyfitsversion = [ a.split('-')[0] for a in pyfitsversion ]
-    if map(int, pyfitsversion) < map(int, ['2','4']):
-        old_version = True
-        print "Warning, old version of PyFITS found. BITPIX could be modified !"
-    else:
-        old_version = False
-        
     for file in files:        
         try:
             # To preserve image scale (BITPIX)--> do_not_scale_image_data 
             # (http://goo.gl/zYkc6)
-            # Other option, is use pyfits.ImageHDU.scale_back
-            if not old_version:
-                hdulist = pyfits.open(file, "update", do_not_scale_image_data=True)
-            else:
-                hdulist = pyfits.open(file, "update")
-                
+            # Other option, is use fits.ImageHDU.scale_back
+            hdulist = fits.open(file, "update", do_not_scale_image_data=True)
         except IOError:
             print 'Error, can not open file %s' %(file)
             continue
@@ -99,7 +86,7 @@ def modFITS(files, keyword, value, ext=0):
                 BZERO = hdulist[ext].header['BZERO']
                 BSCALE = hdulist[ext].header['BSCALE']
                 BITPIX = hdulist[ext].header['BITPIX']
-                bitpix_designation = pyfits.ImageHDU.NumCode[BITPIX]
+                bitpix_designation = fits.ImageHDU.NumCode[BITPIX]
 
             hdulist[ext].header.update(keyword, value)
             if old_version:

@@ -38,6 +38,7 @@
 #                                              required scaled dark 
 #              27/03/2012    jmiguel@iaa.es  - Fixed bug wrt chip 1 normalization
 #              03/12/2012    jmiguel@iaa.es  - Modified normalization by median instead of mode
+#              05/08/2014    jmiguel@iaa.es  - Added support for DOME_FLAT series (not lamp on/off)
 #
 # TODO:
 #   - take into account BPM !!!
@@ -49,7 +50,6 @@
 ################################################################################
 # Import necessary modules
 
-import getopt
 import sys
 import os
 import logging
@@ -60,7 +60,9 @@ from optparse import OptionParser
 
 import misc.fileUtils
 import misc.utils as utils
+from misc.version import __version__
 import datahandler
+
 
 # Pyraf modules
 from pyraf import iraf
@@ -70,8 +72,7 @@ from iraf import mscred
 import numpy
 
 # Interact with FITS files
-import pyfits
-
+import astropy.io.fits as fits
 
 # Logging
 from misc.paLog import log
@@ -215,12 +216,12 @@ class MasterTwilightFlat (object):
         good_frames = []
         
         for iframe in framelist:
-            f=datahandler.ClFits ( iframe )
+            f = datahandler.ClFits(iframe)
             log.debug("Checking data compatibility (filter, texp, type)")
-            print "Flat frame %s EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter())
+            log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter()))
             #Compute the mean count value in chip to find out good frames (enough check ??)
             mean = 0
-            myfits = pyfits.open(iframe, ignore_missing_end=True)
+            myfits = fits.open(iframe, ignore_missing_end=True)
             if f.mef==True:
                 log.debug("Found a MEF file")
                 #log.error("Sorry, MEF files are not supported yet !")
@@ -233,7 +234,7 @@ class MasterTwilightFlat (object):
                 except Exception,e:
                     raise e
             else:
-                myfits = pyfits.open(iframe, ignore_missing_end=True)
+                myfits = fits.open(iframe, ignore_missing_end=True)
                 mean = numpy.mean(myfits[0].data)
                 log.debug("MEAN value of MEF = %d", mean)
                 
@@ -249,13 +250,14 @@ class MasterTwilightFlat (object):
                 if f.isTwFlat():
                     f_type = f.getType()
                 else:
+                    # Added (temporal) support for DOME_FLAT series (not lamp on/off)
                     log.warning("Frame %s does not look like a TwiLight Flat field" %(iframe))
-                    f_type = f.getType()
+                    f_type = f.getType(False)
                     #log.error("Error, frame %s does not look a TwiLight Flat field" %(iframe))
                     #raise Exception("Error, frame %s does not look a TwiLight Flat field" %(iframe))
             
             # STEP 1.1: Check either over or under exposed frames
-            print "File %s filter[ %s ]  EXTP=%f TYPE=%s mean_window=%f" %(iframe, f_filter, f_expt, f_type, mean)
+            log.debug("Flat frame '%s' - FILTER=%s EXPTIME= %f TYPE= %s Mean= %f" %(iframe, f_filter, f_expt, f_type, mean))
             if mean>self.m_lthr and mean<self.m_hthr:
                 good_frames.append(iframe)
             else:
@@ -281,7 +283,7 @@ class MasterTwilightFlat (object):
         #Read Master Dark Model
         try:
             cdark = datahandler.ClFits ( self.__master_dark )
-            mdark = pyfits.open(self.__master_dark, ignore_missing_end=True)
+            mdark = fits.open(self.__master_dark, ignore_missing_end=True)
             #MASTER_DARK_MODEL is required !!!
             if not cdark.isMasterDarkModel():
                 log.error("File %s does not look a Master Dark Model"%self.__master_dark)
@@ -309,7 +311,7 @@ class MasterTwilightFlat (object):
             
             log.debug("Scaling master dark")
             # Build master dark with proper (scaled) EXPTIME and subtract ( I don't know how good is this method of scaling !!!)
-            f = pyfits.open(iframe, ignore_missing_end=True)
+            f = fits.open(iframe, ignore_missing_end=True)
             t_flat = datahandler.ClFits ( iframe ).expTime()
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
             if next>0:
@@ -392,42 +394,28 @@ class MasterTwilightFlat (object):
         # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
         # Compute the mean of the image
         if self.__normal:
-            f = pyfits.open(comb_flat_frame, ignore_missing_end=True)
+            f = fits.open(comb_flat_frame, ignore_missing_end=True)
             if next>0:
                 chip = 1 # normalize wrt to mode of chip 1
-                naxis1 = f[0].header['NAXIS1']
-                naxis2 = f[0].header['NAXIS2']
+                naxis1 = f[chip].header['NAXIS1']
+                naxis2 = f[chip].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                #mode = (3*numpy.median(f[chip].data[offset1:naxis1-offset1,
-                #                                    offset2:naxis2-offset2])-
-                #        2*numpy.mean(f[chip].data[offset1:naxis1-offset1, 
-                #                                  offset2:naxis2-offset2]))
                 median = numpy.median(f[chip].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
-                
                 msg = "Normalization of MEF master flat frame wrt chip 1. (MEDIAN=%d)"%median
-
-            
-            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME']=='panic'
+            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower()=='panic'
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
-                #mode = (3*numpy.median(f[0].data[200:2048-200,200:2048-200])- 
-                #       2*numpy.mean(f[0].data[200:2048-200,200:2048-200]) )
                 median = numpy.median(f[0].data[200:2048-200,200:2048-200])
-                
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
-                
             else:
+                # Not MEF, not PANIC full-frame, but could be a PANIC subwindow
                 naxis1 = f[0].header['NAXIS1']
                 naxis2 = f[0].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                #mode = (3*numpy.median(f[0].data[offset1:naxis1-offset1,
-                #                                    offset2:naxis2-offset2])-
-                #        2*numpy.mean(f[0].data[offset1:naxis1-offset1, 
-                #                                  offset2:naxis2-offset2]))
                 median = numpy.median(f[0].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
                 msg = "Normalization of master (O2k?) flat frame. (MEDIAN=%d)"%median 
@@ -451,7 +439,7 @@ class MasterTwilightFlat (object):
         # Change back to the original working directory
         iraf.chdir()
         
-        flatframe = pyfits.open(self.__output_filename,'update', 
+        flatframe = fits.open(self.__output_filename,'update', 
                                 ignore_missing_end=True)
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master twilight flat')
@@ -459,16 +447,21 @@ class MasterTwilightFlat (object):
         else: 
             flatframe[0].header.add_history('Computed master (not normalized) twilight flat')
         
-        flatframe[0].header.add_history('Twilight files: %s' %framelist )
-        #Add a new keyword-->PAPI_TYPE
-        flatframe[0].header.update('PAPITYPE',
+        # Combined files is already added by IRAF:imcombine
+        #flatframe[0].header.add_history('Twilight files: %s' %good_frames)
+        
+        # Add new keywords (PAPITYPE, PAPIVERS, IMAGETYP)
+        flatframe[0].header.set('PAPITYPE',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file')
-        flatframe[0].header.update('IMAGETYP',
+        flatframe[0].header.set('PAPIVERS',
+                                   __version__,
+                                   'PANIC Pipeline version')
+        flatframe[0].header.set('IMAGETYP',
                                    'MASTER_TW_FLAT',
                                    'TYPE of PANIC Pipeline generated file') 
         if 'PAT_NEXP' in flatframe[0].header:
-            flatframe[0].header.update('PAT_NEXP',
+            flatframe[0].header.set('PAT_NEXP',
                                    1,
                                    'Number of positions into the current dither pattern')
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
@@ -491,7 +484,7 @@ def makemasterframe(list_or_array):
     if hasattr(list_or_array, 'shape') and len(list_or_array.shape)>1:
         masterframe = np.array(list_or_array, copy=False)
     else:
-        masterframe = np.median(map(pyfits.getdata, list_or_array), axis=0)
+        masterframe = np.median(map(fits.getdata, list_or_array), axis=0)
 
     return masterframe
         
@@ -504,6 +497,7 @@ if __name__ == "__main__":
     usage = "usage: %prog [options]"  
     desc = """This module receives a series of Twilight Flats and
 and a Master Dark Model and then creates a Master Twilight Flat-Field.
+Note: Dome Flats series (not lamp ON/OFF) are also supported.
 """
     parser = OptionParser(usage, description = desc)
     

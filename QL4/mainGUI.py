@@ -62,6 +62,8 @@ os.environ['PYRAF_NO_DISPLAY'] = '1'
 import reduce
 import reduce.calTwFlat
 import reduce.calBPM_2
+import reduce.calBPM
+import reduce.applyDarkFlat
 import reduce.checkQuality
 import reduce.astrowarp
 import reduce.reductionset as RS
@@ -76,10 +78,17 @@ import photo.photometry
 #Log
 import misc.paLog
 from misc.paLog import log
-
+# Fits
+import astropy.io.fits as fits
 
 
 # IRAF packages
+# When PyRAF is imported, it creates, unless it already exists, a pyraf/
+# directory for cache in the current working directory. It also complains that
+# "Warning: no login.cl found" if this IRAF file cannot be found either. 
+# To avoid these two annoying messages, and do not clutter the filesystem with pyraf/
+# directories, if $HOME/iraf/login.cl exists, it is used and pyraf/ directory
+# is created there. 
 from pyraf import iraf
 from iraf import noao
 from iraf import mscred
@@ -98,8 +107,8 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
 
-__version__ = "1.2.0 - July 2014"
 
+from misc.version import __version__
 #-------------------------------------------------------------------------------
 #
 # Next functions are needed to allow the use of  multiprocessing.Pool() with 
@@ -206,6 +215,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.m_masterFlat = ''
         self.m_masterMask = ''
 
+        self.m_popup_l_sel = []
 
         # Stuff to detect end of an observation sequence to know if data reduction could start
         self.curr_sequence = []  # list having the files of the current sequence received
@@ -266,7 +276,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
         self.__initializeGUI()
         self.createActions()
-        
+
         ## Init in memory Database
         ## -----------------------
         #datahandler.dataset.initDB()
@@ -321,7 +331,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Timer for TaskQueue (pending tasks)
         self._queue_timer_todo = QTimer( self )
         self.connect( self._queue_timer_todo, QtCore.SIGNAL("timeout()"), 
-                      self.TaskRunner )
+                      self.taskRunner )
         self._queue_timer_todo.start(1000)    # 1 second continuous timer
         
         
@@ -463,6 +473,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.logConsole.warning("Detected end of observing sequence [%s]"%(seqType))       
         
         
+        # Display new file detected
+        if self.getDisplayMode()==1 or self.getDisplayMode()==3:
+            display.showFrame(filename)
+        
         ##################################################################
         ##  If selected, file or sequence processing will start ....
         #   TODO : !! Not completelly finished !!!
@@ -471,7 +485,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if self.comboBox_QL_Mode.currentText()=="None":
                 return
             elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
-                display.showFrame(filename)
                 if end_seq: self.processFiles(seq)
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 if end_seq and seqType!="SCIENCE":
@@ -485,16 +498,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Do some operations to the last file detected. It depends on:
         
-            - checkBox_show_imgs
             - checkBox_subDark_FF_BPM
             - checkBox_subLastFrame
-            
-            ToDo:
             - checkBox_subSky
             
-            Other:
+            TODO
             - checkBox_data_grouping
-            - checkBox_doRegrig
             - comboBox_AstromCatalog
             - comboBox_pre_skyWindow
             
@@ -505,9 +514,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         (date, ut_time, type, filter, texp, detector_id, 
          run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(filename)
         
-        # Show frames on DS9
-        if self.checkBox_show_imgs.isChecked():
-            display.showFrame(filename)
         
         # ONLY SCIENCE frames will be pre-processed 
         if type!="SCIENCE":
@@ -519,7 +525,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # According to what options have been selected by the user, we do a processing or other...
         if self.checkBox_subDark_FF_BPM.isChecked():
             try:
-                #Look for (last received) calibration files
+                # Look for (last received) calibration files
                 mDark, mFlat, mBPM = self.getCalibFor([filename])
                 
                 # Both master_dark and master_flat are optional
@@ -551,7 +557,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
                 if len(ltemp)>1:
                     last_file = ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
-                    #Change cursor
+                    # Change cursor
                     #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
                     #self._task = self.mathOp
@@ -561,11 +567,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #                               '-',None)
                     #thread.start()
                     
-                    #Put into the queue the task to be done
+                    # Put into the queue the task to be done
                     func_to_run = mathOp
                     _suffix = "_" + os.path.basename(last_file)
                     out_filename = self.m_outputdir + "/" + os.path.basename(filename).replace(".fits", _suffix) 
-                    params = ([filename, last_file], '-', out_filename, self.m_tempdir)
+                    params = ([filename, last_file], '-', 
+                                         out_filename, self.m_tempdir)
                     self._task_queue.put([(func_to_run, params)])
                     
                 else:
@@ -620,12 +627,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #self.outputsDB.ListDataSet()
         
         # DARK - Do NOT require equal EXPTIME Master Dark ???
+        # First, look for a DARK_MODEL, then MASTER_DARK
         master_dark = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark)==0 and self.outputsDB!=None:
-            master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime) 
+            master_dark = self.outputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
+            if len(master_dark)==0:
+                master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime) 
+        
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
-        if master_flat==[]:
+        if len(master_flat)==0:
             master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
         if len(master_flat)==0 and self.outputsDB!=None:
             master_flat = self.outputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
@@ -646,19 +657,82 @@ class MainGUI(QtGui.QMainWindow, form_class):
         log.debug("Master BPMs  found %s", master_bpm)
         
         # Return the most recently created (according to MJD order)
-        if len(master_dark)>0: r_dark = master_dark[-1]
-        else: r_dark = None
-        if len(master_flat)>0: r_flat = master_flat[-1]
-        else: r_flat = None
-        if len(master_bpm)>0: r_bpm = master_bpm[-1]
-        else: r_bpm = None
+        if len(master_dark)>0: 
+            r_dark = master_dark[-1]
+            log.debug("First DARK candidate: %s"%r_dark)            
+            r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
+            log.debug("Second DARK candidate: %s"%r_dark)            
+        else: 
+            r_dark = None
+        if len(master_flat)>0:
+            r_flat = master_flat[-1]
+            log.debug("First FLAT candidate: %s"%r_flat)            
+            r_flat = self.getBestShapedFrame(master_flat, sci_obj_list[0])
+            log.debug("Second FLAT candidate: %s"%r_flat)            
+        else: 
+            r_flat = None
+        if len(master_bpm)>0: 
+            r_bpm = master_bpm[-1]
+            log.debug("First BPM candidate: %s"%r_bpm)            
+            r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
+            log.debug("Second BPM candidate: %s"%r_bpm)            
+        else: 
+            r_bpm = None
         
         return r_dark, r_flat, r_bpm
         
+    
+    def getBestShapedFrame(self, framelist, src_frame):
+        """
+        Given a list of frames (calibrations) sorted by MJD, return the frame that
+        has the same number of extension (MEF) than src_frame and with the 
+        same shape (dimensions).
+
+        Returns
+        -------
+        Returns the calibration file that match the src_frame, otherwise, None
+        is returned.
+        
+        """
+
+        candidate = None
+        with fits.open(src_frame) as src_fd:
+            for iframe in framelist:
+                with fits.open(iframe) as ifd:
+                    # not MEF
+                    if len(ifd)==len(src_fd) and len(ifd)==1:
+                        if ifd[0].data.shape==src_fd[0].shape:
+                            return iframe
+                        elif datahandler.ClFits(iframe).isMasterDarkModel():
+                            # Exception,  DarkModel will have always 2 layers 
+                            # per extension.
+                            return iframe
+                        else: 
+                            continue
+                    # MEF 
+                    elif len(ifd)==len(src_fd) and len(ifd)>1:
+                        # We should check each extension, but it would be strange
+                        # to have extension with different shapes.
+                        if ifd[1].data.shape==src_fd[1].shape:
+                            return iframe
+                        elif datahandler.ClFits(iframe).isMasterDarkModel():
+                            # Exception, DarkModel will have always 2 layers 
+                            # per extension
+                            return iframe
+                        else:
+                            # dimesions do not fit
+                            continue
+                    # diferent number of extensions
+                    else:
+                        continue
+
+            # If this point is reached, it means that any suitable file was found.
+            return None
+
     #####################################################
     ### SLOTS ###########################################
     #####################################################
-    
+
     def setDataSourceDir_slot(self):
         """
         Slot function called when the "Input Dir" button is clicked
@@ -759,8 +833,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elem.setText (3, str(texp))
             elem.setText (4, str(date)+"::"+str(ut_time))
             
-            if self.m_show_imgs: 
-                display.showFrame(str(dir)+"/"+filename) 
             
             #self.listView_dataS.insertItem(str(filename))
         self.inputsDB.ListDataSet()
@@ -804,7 +876,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
     def checkDoneQueue(self):
         """
-        Check Queue of done tasks launched with Process in TaskRunner.
+        Check Queue of done tasks launched with Process in taskRunner.
         Function called periodically (every 1 sec).
         """
         if not self._done_queue.empty():
@@ -828,7 +900,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             #display.showFrame(r) #_return is a file list
                             for i_file in r:
                                 if i_file.endswith(".fits"):
-                                    if self.m_show_imgs: display.showFrame(i_file)
+                                    if self.getDisplayMode()>=2: 
+                                        display.showFrame(i_file)
                                 elif i_file.endswith(".pdf"):
                                     # Todo
                                     log.debug("PDF display not yet implemented.")
@@ -856,7 +929,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         self.logConsole.debug(str(QString("New file %1 created ")
                                                   .arg(r)))
                         if r.endswith(".fits"):
-                            if self.m_show_imgs: display.showFrame(r)
+                            if self.getDisplayMode()>=2: display.showFrame(r)
                         # Keep updated the out-DB for future calibrations
                         # See comments above
                         if not self.checkBox_outDir_autocheck.isChecked():
@@ -902,7 +975,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             else:
                                 str_list = ""
                                 #print "FILES CREATED=",self._task_info._return
-                                if self.m_show_imgs: 
+                                if self.getDisplayMode()>=2: 
                                     display.showFrame(self._task_info._return) #_return is a file list
                                 for file in self._task_info._return:
                                     #display.showFrame(file)
@@ -936,7 +1009,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             self.logConsole.debug(str(QString("New file %1 created.")
                                                       .arg(self._task_info._return)))
                             if self._task_info._return.endswith(".fits"):
-                                if self.m_show_imgs:
+                                if self.getDisplayMode()>=2:
                                     display.showFrame(self._task_info._return)
                             # Keep updated the out-DB for future calibrations
                             # See comments above
@@ -1191,12 +1264,22 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if self.checkBox_outDir_autocheck.isChecked():
                 self.dc_outdir.check()
                     
-    def show_images_slot(self):
-        if self.checkBox_show_imgs.isChecked():
-            self.m_show_imgs = True
-        else:
-            self.m_show_imgs = False
-            
+    
+    def getDisplayMode(self):
+        """
+        Read the 'comboBox_show_imgs' and return the option selected:
+
+        """
+
+        if self.comboBox_show_imgs.currentText().contains("None"):
+            return 0 
+        elif self.comboBox_show_imgs.currentText().contains("Only new files"):
+            return 1
+        elif self.comboBox_show_imgs.currentText().contains("Only results"):
+            return 2
+        elif self.comboBox_show_imgs.currentText().contains("All"):
+            return 3
+
     def data_grouping_slot(self):
         """
         Slot called when the 'checkBox_data_grouping_OT' is clicked.
@@ -1305,6 +1388,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
          
         self.listView_dataS.clear()
         self.dc.Clear()
+        self.dc_outdir.Clear()
         self.inputsDB.clearDB()
         self.outputsDB.clearDB()
 
@@ -1532,6 +1616,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
+        self.mBPM_appAct = QtGui.QAction("&Apply and Show BPM", self,
+            shortcut="Ctrl+Z",
+            statusTip="Apply BPM and show the masked pixels in a temp file.", 
+            triggered=self.applyBPM_slot)
+
+        self.mDF_appAct = QtGui.QAction("&Apply Dark & FlatField", self,
+            shortcut="Ctrl+f",
+            statusTip="Apply Dark and FlatField", 
+            triggered=self.applyDarkFlat)
+
         self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
             shortcut="Ctrl+f",
             statusTip="Run a telescope focus evaluation of a focus serie.", 
@@ -1583,12 +1677,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Subtract selected files", 
             triggered=self.subtractFrames_slot)
         
-        self.sumAct = QtGui.QAction("Sum Images", self,
+        self.sumAct = QtGui.QAction("Combine Images (median)", self,
             shortcut="Ctrl++",
-            statusTip="Sum selected files", 
+            statusTip="Median combine selected files", 
             triggered=self.sumFrames_slot)
         
-        self.divAct = QtGui.QAction("Div Images", self,
+        self.divAct = QtGui.QAction("Divide Images", self,
             shortcut="Ctrl+/",
             statusTip="Divide selected files", 
             triggered=self.divideFrames_slot)
@@ -1668,8 +1762,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.mDTwFlatAct)
             popUpMenu.addAction(self.mGainMapAct)
             popUpMenu.addAction(self.mBPMAct)
-            popUpMenu.addAction(self.mFocusEval)
             popUpMenu.addSeparator()
+            popUpMenu.addAction(self.mDF_appAct)
+            popUpMenu.addAction(self.mBPM_appAct)
+            popUpMenu.addAction(self.mFocusEval)
             popUpMenu.addAction(self.subOwnSkyAct)
             popUpMenu.addAction(self.subNearSkyAct)
             popUpMenu.addAction(self.quickRedAct)
@@ -1709,6 +1805,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.mDTwFlatAct.setEnabled(True)
             self.mGainMapAct.setEnabled(True)
             self.mBPMAct.setEnabled(True)
+            self.mDF_appAct.setEnabled(True)
+            self.mBPM_appAct.setEnabled(True)
             self.mFocusEval.setEnabled(True)
             self.subOwnSkyAct.setEnabled(True)
             self.subNearSkyAct.setEnabled(True)
@@ -1729,7 +1827,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.mGainMapAct.setEnabled(False)
                 self.mBPMAct.setEnabled(False)
                 self.mFocusEval.setEnabled(False)
-                self.subNearSkyAct.setEnabled(False)
+                #self.subNearSkyAct.setEnabled(False)
                 self.subAct.setEnabled(False)
                 self.sumAct.setEnabled(False)
                 self.divAct.setEnabled(False)
@@ -1738,10 +1836,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 #print "#SEL_2",len(self.m_popup_l_sel)
                 self.dispAct.setEnabled(False)
                 self.subOwnSkyAct.setEnabled(False)
+                self.subNearSkyAct.setEnabled(False)
                 self.astroAct.setEnabled(False)
                 self.photoAct.setEnabled(False)
                 #self.fwhmAct.setEnabled(False)
                 self.bckgroundAct.setEnabled(False)
+                self.mBPM_appAct.setEnabled(False)
 
             if len(self.m_popup_l_sel)!=2:
                 self.subAct.setEnabled(False)
@@ -1750,8 +1850,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.divAct.setEnabled(False)
                 
             if len(self.m_popup_l_sel)<5:
+                pass
                 #print "#SEL_5-",len(self.m_popup_l_sel)
-                self.subNearSkyAct.setEnabled(False)
+                #self.subNearSkyAct.setEnabled(False)
                 #self.quickRedAct.setEnabled(False)
             
         ## Finally, execute the popup
@@ -2064,7 +2165,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
                     self.m_processing = False    
-                    thread = reduce.ExecTaskThread(self.mathOp, 
+                    thread = reduce.ExecTaskThread(mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,'-', 
                                                    str(outFilename))
@@ -2076,7 +2177,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
     def sumFrames_slot(self):
         """
-        This methot is called to sum two images selected from the File List View
+        This methot is called to **combine** the images selected from the 
+        File List View.
+        
+        Note: The type of combinning operation to the pixels is a median after
+        a sigma reject algorith.
+
         """
 
         if (len(self.m_popup_l_sel)<2):
@@ -2093,10 +2199,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     self.m_processing = False    
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
-                    thread = reduce.ExecTaskThread(self.mathOp, 
+                    thread = reduce.ExecTaskThread(mathOp, 
                                                    self._task_info_list, 
                                                    self.m_popup_l_sel,
-                                                   '+', str(outFilename))
+                                                   'combine', str(outFilename))
                     thread.start()
                 except:
                     QMessageBox.critical(self, "Error", 
@@ -2123,7 +2229,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
                     self.m_processing = False
-                    thread=reduce.ExecTaskThread(self.mathOp, 
+                    thread=reduce.ExecTaskThread(mathOp, 
                                                  self._task_info_list, 
                                                  self.m_popup_l_sel, 
                                                  '/',  str(outFilename))
@@ -2236,10 +2342,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                       self.m_outputdir+"/master_twflat.fits", 
                                                       "*.fits") 
             if not outfileName.isEmpty():
+                # Look for master Dark
+                mDark, mFlat, mBPM = self.getCalibFor(self.m_popup_l_sel)
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel,
-                                                                      self.m_masterDark, 
+                                                                      mDark, 
                                                                       str(outfileName))
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
@@ -2364,7 +2472,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QMessageBox.critical(self, "Error", "Error while running Sextractor"+str(e))
                 raise e
             else:
-                display.showFrame(out_file)
+                if self.getDisplayMode()>=2:
+                    display.showFrame(out_file)
             finally:
                 QApplication.restoreOverrideCursor()
                 self.m_processing = False
@@ -2373,7 +2482,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.information(self, "Info", "Sorry, selected file does not look a science file ")                             
                          
     def subtract_nearSky_slot(self, last_files=False):
-        """ Subtract nearest sky using skyfiler from IRDR package"""
+        """ 
+        Subtract nearest sky using skyfiler from IRDR package:
+
+        Parameters
+        ----------
+            - If last_files==False, it looks for the nearest files to the 
+            currently selected file.
+            - If last_files==True, the last N-1 files received are used to 
+            compute the sky to subtract.  
+        
+        Returns
+        -------
+        Nothing or Exception in case of error.
+
+        """
       
         
         # #####################################
@@ -2383,8 +2506,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Compute search-radius of nearest frames
             ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
             time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
-            print "RA_DEC_OFFSET", ra_dec_near_offset
-            print "TIME_NEAR_OFFSET", time_near_offset
+            #print "RA_DEC_OFFSET", ra_dec_near_offset
+            #print "TIME_NEAR_OFFSET", time_near_offset
           
             # Look for NEAREST science files
             if self.m_listView_item_selected:
@@ -2410,7 +2533,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 for file in near_list:
                     my_list = my_list + file + "\n"
                     if (file==self.m_listView_item_selected): 
-                        file_n=p
+                        file_n = p
                     else: 
                         p+=1
                 
@@ -2511,6 +2634,138 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:
             QMessageBox.critical(self, "Error","Error, not suitable frames selected (flat fields)")
 
+    def applyDarkFlat(self):
+        """
+        Apply to the selected files the master Dark and master Flat found in the
+        database. The master Dark and FlatField are searched individualy for each
+        selected file.
+
+        The original files are not modified, but new output files with _D_F.fits
+        suffix are created.
+        """
+
+        # Ask for master calibration 
+        msgBox = QMessageBox()
+        msgBox.setText("        Apply Dark and Flat-Field")
+        msgBox.setInformativeText("Do you want to <Select> the calibration files or use <Defaults> ones ?")
+        button_select = msgBox.addButton("Select Calibrations", QMessageBox.ActionRole)
+        button_defaults = msgBox.addButton("Use Defaults", QMessageBox.ActionRole)
+        button_cancel = msgBox.addButton("Cancel", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_defaults)
+        
+        msgBox.exec_()
+        
+        calibrations = []
+        if msgBox.clickedButton()== button_select or msgBox.clickedButton()==button_defaults:
+            if msgBox.clickedButton()== button_select:
+                # Select master DARK
+                filenames = QFileDialog.getOpenFileNames( self,
+                                                "Select master Dark to use",
+                                                self.m_outputdir,
+                                                "FITS files (*.fit*)")
+                if not filenames.isEmpty():
+                    calibrations.append(str(filenames[0]))
+
+                # Select master Flat
+                filenames = QFileDialog.getOpenFileNames( self,
+                                                "Select master Flat to use",
+                                                self.m_outputdir,
+                                                "FITS files (*.fit*)")
+                if not filenames.isEmpty():
+                    calibrations.append(str(filenames[0]))
+
+            elif msgBox.clickedButton()== button_defaults:
+                # Nothing to do
+                calibrations = []
+        else:
+            # Cancel button pressed
+            return
+
+        # Now, start dark subtraction and Flat-Fielding...
+        if len(self.m_popup_l_sel)>0:
+            for filename in self.m_popup_l_sel:
+                try:
+                    if calibrations==[]:
+                        # Look for (last received) calibration files
+                        mDark, mFlat, mBPM = self.getCalibFor([filename])
+                    else:
+                        mDark = calibrations[0]
+                        mFlat = calibrations[1]
+                        mBPM = None
+
+                    log.debug("Source file: %s"%filename)
+                    log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
+                    self.logConsole.info("Calibrations to use:")
+                    self.logConsole.info("+ Dark=%s"%mDark)
+                    self.logConsole.info("+ Flat=%s"%mFlat)
+                    self.logConsole.info("+ BPM =%s"%mBPM)
+                    # Both master_dark and master_flat are optional
+                    if mDark or mFlat:
+                        #Put into the queue the task to be done
+                        func_to_run = reduce.ApplyDarkFlat([filename], 
+                                                         mDark, mFlat, mBPM, 
+                                                         self.m_outputdir,
+                                                         bpm_action='grab') # fix is a heavy process for QL
+                        params = ()
+                        log.debug("Inserting in queue the task ....")
+                        self._task_queue.put([(func_to_run.apply, params)])
+                        
+                    else:
+                        self.logConsole.error("[ApplyDarkFlat] Cannot find the appropriate master calibrations for file %s"%filename)
+                        #QMessageBox.critical(self, 
+                        #                     "Error", 
+                        #                     "Error, cannot find the master calibration files")
+                except Exception, e:
+                    QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
+                    #self.m_processing = False
+                    #QApplication.restoreOverrideCursor()
+                    raise e 
+
+    def applyBPM_slot(self):
+        """
+        Apply to the selected file the BPM defined in the config file and show
+        in Red the masked pixels on DS9 (for this, user should select red 
+        from menu Edit->Preferences->Blank/Inf/NaN color).
+
+        Note that, the original selected file is not modified, all BPM is applied
+        to a temporal named by the user.
+
+        This routine can be useful to view on QL how the BPM affect our data.
+        """
+
+        if len(self.m_popup_l_sel)==1:
+            init_outdir = self.m_outputdir + "/" + \
+                    os.path.basename(self.m_popup_l_sel[0]).replace(".fits","_BPM.fits")
+            outfileName = QFileDialog.getSaveFileName(self,
+                                                      "Choose a filename so save under",
+                                                      init_outdir, 
+                                                      "fits (*.fits)", )
+            if not outfileName.isEmpty():
+                # Because in principle it is a quick proceduce, we do not use
+                # the processing queue. We run it on the current thread.
+                QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                try:
+                    master_bpm =  self.config_opts['bpm']['bpm_file']
+                    if os.path.isfile(master_bpm):
+                        result = reduce.calBPM.applyBPM(
+                                        self.m_popup_l_sel[0],
+                                        master_bpm,
+                                        str(outfileName),
+                                        False)
+                        if self.getDisplayMode()>=2:
+                            display.showFrame(result)
+                    else:
+                        msg = "Master BPM '%s' does not exist."%master_bpm
+                        QMessageBox.critical(self, "Error", msg)
+                except Exception,e:
+                    msg = "Error applying BPM: '%s'"%(str(e))
+                    self.logConsole.info(msg)
+                    QMessageBox.critical(self, "Error", msg)
+                    raise e
+                finally:
+                    QApplication.restoreOverrideCursor()
+
+
 
     def focus_eval(self):
         """
@@ -2518,9 +2773,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         It is run **interactively**.
         """
         if len(self.m_popup_l_sel)>3:
+            init_outdir = self.m_tempdir + "/focus_eval.pdf"
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename so save under",
-                                                      "/tmp/focus_eval.pdf", 
+                                                      init_outdir, 
                                                       "pdf (*.pdf)", )
             if not outfileName.isEmpty():
                 show = True
@@ -2558,7 +2814,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """Show image statistics in the log console of the files selected"""
         
         length_fn = len(self.m_popup_l_sel[0])
-        msg = "FILE" + (length_fn+15)*" " + "MEAN     MODE       STDDEV      MIN        MAX"
+        msg = "FILE" + (length_fn+25)*" " + "MEAN     MODE       STDDEV      MIN        MAX"
         self.logConsole.info(msg)
         for file in self.m_popup_l_sel:
             values = (iraf.mscstat (images=file,
@@ -2585,8 +2841,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             for line in values:
                 self.logConsole.info(str(line))
                 #self.logConsole.info(QString("Background estimation MEAN= %1   MODE=%2    STDDEV=%3    MIN=%4         MAX=%5").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
-            
-            display.showFrame(img)
+            if self.getDisplayMode()>=2:
+                display.showFrame(img)
         except Exception,e:
             self.logConsole.error("ERROR: something wrong while computing background")
             raise e
@@ -2611,7 +2867,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   ellipmax=0.9, # basically, no limit !
                                                   pixsize=pix_scale)
             try:
-                fwhm,std = cq.estimateFWHM()
+                fwhm,std,k,k = cq.estimateFWHM()
                 if fwhm>0:
                     self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
                                              .arg(os.path.basename(ifile))
@@ -2730,38 +2986,53 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Todo
         ---- 
         We should check the image is pre-reduced or at least, with 
-        enough objects 
+        enough objects.
         """
         
         if len(self.m_popup_l_sel)==1:
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.getType()=='SCIENCE': 
-                ## Run astrometry parameters
+                # Run astrometry parameters
                 out_file = self.m_outputdir+"/"+os.path.basename(self.m_listView_item_selected.replace(".fits",".wcs.fits"))
                 # Catalog
-                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): catalog="2MASS"
-                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): catalog="USNO-B1"
-                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): catalog="GSC-2.2"
-                else: catalog="2MASS"
+                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): 
+                    catalog = "2MASS"
+                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): 
+                    catalog = "USNO-B1"
+                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): 
+                    catalog = "GSC-2.2"
+                else: 
+                    catalog = "2MASS"
                 
-                #Change to working directory
+                # Change to working directory
                 os.chdir(self.m_tempdir)
-                #Change cursor
+                # Change cursor
                 QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                #Create working thread that compute sky-frame
+                # Create working thread that compute sky-frame
                 try:
-                    thread = reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, 
-                                                   self._task_info_list,
-                                                   #args of the doAstrometry function
-                                                   self.m_listView_item_selected, 
-                                                   out_file, catalog, 
-                                                   self.config_opts)
+                    self.logConsole.info("Starting Astrometric calibration (%s)"%catalog)
+                    if self.comboBox_AstromEngine.currentText()=="SCAMP":
+                        self.logConsole.info(" +Engine: SCAMP")
+                        thread = reduce.ExecTaskThread(reduce.astrowarp.doAstrometry, 
+                                                       self._task_info_list,
+                                                       #args of the doAstrometry function
+                                                       self.m_listView_item_selected, 
+                                                       out_file, catalog, 
+                                                       self.config_opts)
+                    else: # Astrometry.net
+                        self.logConsole.info(" +Engine: Astrometry.net")
+                        thread = reduce.ExecTaskThread(reduce.solveAstrometry.solveField,
+                                                    self._task_info_list,
+                                                    # args of the solveAstrometry
+                                                    self.m_listView_item_selected, 
+                                                    self.m_outputdir,
+                                                    self.config_opts['general']['pix_scale'])
                     thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                    QMessageBox.critical(self, "Error", "Error while computing astrometry.")
                     raise
             else:
-                QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
+                QMessageBox.information(self,"Info", QString("Sorry, but you need a science frame."))
         
     def do_raw_photometry(self):
         """
@@ -2787,10 +3058,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 out_file = self.m_outputdir+"/" + \
                     os.path.basename(self.m_listView_item_selected.replace(".fits","_photo.pdf"))
                 # Catalog
-                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): catalog="2MASS"
-                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): catalog="USNO-B1"
-                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): catalog="GSC-2.2"
-                else: catalog="2MASS"
+                if self.comboBox_AstromCatalog.currentText().contains("2MASS"): 
+                    catalog = "2MASS"
+                elif self.comboBox_AstromCatalog.currentText().contains("USNO-B1"): 
+                    catalog = "USNO-B1"
+                elif self.comboBox_AstromCatalog.currentText().contains("GSC-2.2"): 
+                    catalog = "GSC-2.2"
+                else: 
+                    catalog = "2MASS"
                 
                 #Change to working directory
                 os.chdir(self.m_tempdir)
@@ -2798,56 +3073,26 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                 #Create working thread that compute sky-frame
                 try:
+                    snr = 10.0
+                    zero_point = 0.0
+                    self.logConsole.info("Starting Photometric calibration (%s)"%catalog)
                     thread = reduce.ExecTaskThread(photo.photometry.doPhotometry,
                                                    self._task_info_list,
                                                    #args of the doPhotometry function
                                                    self.m_listView_item_selected,
+                                                   self.config_opts['general']['pix_scale'],
                                                    catalog,
-                                                   out_file)
+                                                   out_file,
+                                                   snr,
+                                                   zero_point)
                     thread.start()
                 except:
-                    QMessageBox.critical(self, "Error", "Error while subtracting near sky")
+                    QMessageBox.critical(self, "Error", "Error while computing photometry.")
                     raise
             else:
-                QMessageBox.information(self,"Info", QString("Sorry, but you need a reduced science frame."))
+                QMessageBox.information(self,"Info", QString("Sorry, but you need a science frame."))
     
-    def createCalibs_slot_PARA_BORRAR(self):
-        
-        """
-        Given the current dataset files, compute the whole master calibration 
-        files found in the DB dataset.
-        """
-        
-        fileList = self.inputsDB.GetFilesT("ANY")
-        
-        if len(fileList)>1:
-            #Change cursor
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-            
-            try:
-                self._task = RS.ReductionSet( fileList, self.m_outputdir, 
-                                            out_file=self.m_outputdir+"/red_result.fits",
-                                            obs_mode="dither", dark=None, 
-                                            flat=None, bpm=None, 
-                                            red_mode="quick",
-                                            group_by=self.group_by, 
-                                            check_data=True, 
-                                            config_dict=self.config_opts )
-                
-                thread = reduce.ExecTaskThread(self._task.buildCalibrations, 
-                                             self._task_info_list)
-                thread.start()
-            except Exception,e:
-                # Anyway, restore cursor.
-                # Although it should be restored in checkLastTask, could happend 
-                # an exception while creating the class RS, thus the 
-                # ExecTaskThread can't restore the cursor.
-                QApplication.restoreOverrideCursor() 
-                QMessageBox.critical(self, "Error", "Error while building  master calibrations files")
-                raise e
-        else:
-            QMessageBox.information(self,"Info", QString("No files found"))
-    
+      
     def createCalibs_slot(self):
         
         """
@@ -3035,7 +3280,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #self.logConsole.info(QString("    - %1").arg(file))
         self.logConsole.info("... processing sequence ...")
             
-        #Create working thread that process the files
+        # Create working thread that process the files
         try:
     
             ###self._task = RS.ReductionSet(files, self.m_outputdir, out_file=outfilename,
@@ -3056,12 +3301,51 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else: l_group_by = group_by
             
             # Here, it is decided if last calibration files will be used 
-            if (self.checkBox_pre_subD.checkState()==Qt.Checked 
-                and self.checkBox_pre_appMF.checkState()==Qt.Checked): 
+            if self.checkBox_pre_subDark_FF.checkState()==Qt.Checked:
                 calib_db_files = self.outputsDB.GetFiles()
+                self.config_opts['general']['apply_dark_flat'] = 1
                 log.debug("ext-calibretion DB loaded")
             else:
                 calib_db_files = None
+                self.config_opts['general']['apply_dark_flat'] = 0
+
+            #
+            # Load config values from Setup Tab
+            #
+            if self.checkBox_pre_appNLC.isChecked():
+                self.config_opts['nonlinearity']['apply'] = True
+            else:
+                self.config_opts['nonlinearity']['apply'] = False
+            
+            if self.checkBox_pre_appBPM.isChecked():
+                self.config_opts['bpm']['mode'] = 'gain' # mark Bad Pixels
+            else:
+                self.config_opts['bpm']['mode'] = 'none'
+
+            #
+            if self.comboBox_AstromEngine.currentText()=="SCAMP":
+                self.config_opts['astrometry']['engine'] = "SCAMP"
+            else:
+                self.config_opts['astrometry']['engine'] = "AstrometryNet"
+            #
+            if self.comboBox_pre_skyWindow.currentText()=="2-frames": nhw = 1
+            elif self.comboBox_pre_skyWindow.currentText()=="4-frames": nhw = 2
+            elif self.comboBox_pre_skyWindow.currentText()=="6-frames": nhw = 3
+            elif self.comboBox_pre_skyWindow.currentText()=="8-frames": nhw = 4
+            else: nhw = 2
+            self.config_opts['skysub']['hwidth'] = nhw
+            
+            # Select detector (map SGi to Qi)
+            if self.comboBox_detector.currentText()=="All": detector = 'all'
+            elif self.comboBox_detector.currentText()=="SG1": detector = 'Q3'
+            elif self.comboBox_detector.currentText()=="SG2": detector = 'Q1'
+            elif self.comboBox_detector.currentText()=="SG3": detector = 'Q2'
+            elif self.comboBox_detector.currentText()=="SG4": detector = 'Q4'
+            else: detector = 'all'
+            self.config_opts['general']['detector'] = detector
+
+            
+
             #
             params = [(files, self.m_outputdir, outfilename,
                       "dither", None, 
@@ -3071,6 +3355,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
                       calib_db_files, None)]
             
             log.debug("Let's create a ReductionSet ...")
+
+            # Show the calibration to be used
+            if self.config_opts['general']['apply_dark_flat']!=0:
+                md, mf, mb = self.getCalibFor(files)
+                self.logConsole.info("Calibrations to use:")
+                self.logConsole.info("+ Dark=%s"%md)
+                self.logConsole.info("+ Flat=%s"%mf)
+                self.logConsole.info("+ BPM =%s"%mb)
+            else:
+                self.logConsole.info("No calibrations used.")
+
             func_to_run = RS.ReductionSet(*(params[0])).reduceSet
             log.debug("ReductionSet created !")
             self._task_queue.put([(func_to_run,())])
@@ -3084,10 +3379,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
             raise e # Para que seguir elevando la excepcion ?
         
-    def TaskRunner(self):
+    def taskRunner(self):
         """
         Procedure that continuisly in checking the queue of pending tasks to be 
         done. The results are obtained later at checkDoneQueue().
+
+        The tasks are processed sequentially, that is, a new proccesing start only
+        when the previous one has finished. 
         """
  
         # Update the number of tasks (not necessarialy equals to number of
@@ -3110,11 +3408,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             except Exception,e:
                 #NOTE: I think this point will never be reached !!!
                 log.error("Error in task Runner: %s"%(str(e)))
-                self.logConsole.debug("Error in TaskRunner")
+                self.logConsole.debug("Error in taskRunner")
                 self.m_processing = False
                 QApplication.restoreOverrideCursor()
             finally:
-                log.debug("End of TaskRunner")
+                log.debug("End of taskRunner")
                  
     def worker_original(self, input, output):
         """
@@ -3160,7 +3458,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             log.info("[worker] task done !")
         except Exception,e:
             log.error("[worker] Error while processing task: %s"%str(e))
-            # Because excetions cannot be catched in TaskRunner due to a 
+            # Because excetions cannot be catched in taskRunner due to a 
             # multiprocessing.Process exception is inserted in output queue 
             # and then recognized
             output.put(e) # the DoneQueue timer will detect it
@@ -3168,65 +3466,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.m_processing = False
             log.debug("Worker finished its task !")
     
-    def mathOp(self,files, operator, outputFile=None, tempDir=None):
-        """
-        This method will do the math operation (+,-,/) specified with the 
-        input files.
-        """
-        
-        log.debug("Start mathOp")
-        
-        if tempDir==None:
-            t_dir = "/tmp"
-        else:
-            t_dir = tempDir
-        
-        if outputFile==None:
-            output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
-            os.close(output_fd)
-    
-        if operator!='+' and operator!='-' and operator!='/':
-            log.error("Math operation not supported")
-            return None
-    
-        try:
-            # Remove an old output file (might it happen ?)
-            misc.fileUtils.removefiles(outputFile)
-            ## MATH operation '+'
-            if (operator=='+' and len(files)>2):
-                log.debug("Frame list to combine = [%s]", files )
-                misc.utils.listToFile(files, t_dir+"/files.tmp") 
-                iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
-                         output=outputFile,
-                         combine='median',
-                         ccdtype='',
-                         reject='sigclip',
-                         lsigma=3,
-                         hsigma=3,
-                         subset='no',
-                         scale='mode'
-                         #masktype='none'
-                         #verbose='yes'
-                         #scale='exposure',
-                         #expname='EXPTIME'
-                         #ParList = _getparlistname ('flatcombine')
-                         )
-            ## MATH operation '-,/,*'
-            else:
-                iraf.mscarith(operand1=files[0],
-                          operand2=files[1],
-                          op=operator,
-                          result=outputFile,
-                          verbose='yes'
-                          )
-        except Exception,e:
-            log.error("[mathOp] An erron happened while math operation with FITS files")
-            raise e
-        
-        log.debug("mathOp result : %s"%outputFile)
-        
-        return outputFile
-
     # Menus stuff functions 
     def editCopy(self):
         print "panicQL.editCopy(): Not implemented yet"
@@ -3262,8 +3501,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         QMessageBox.about(self,
                           "PANIC Quick-Look Tool",
 """
-PQL version: 1.2.0\nCopyright (c) 2008-2012 IAA-CSIC  - All rights reserved.\n
-Author: Jose M. Ibanez.
+PQL version: %s\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
+Author: Jose M. Ibanez. (jmiguel@iaa.es)
 Instituto de Astrofisica de Andalucia, IAA-CSIC
 
 This software is part of PAPI (PANIC Pipeline)
@@ -3280,7 +3519,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""")
+"""%__version__)
 
     def setSFlat_slot(self):
         print "panicQL.setSFlat_slot(): Not implemented yet"
@@ -3349,20 +3588,22 @@ class LoggingConsole (object):
 ################################################################################
 # Some functions 
 ################################################################################
-#Because mathOp is used with the queue of process, it cannot belong to MainGUI
-#class or an error in multiprocessing:
-#  'objects should only be shared between processes through inheritance'
+# Because mathOp is aused with the queue of process, it cannot belong to MainGUI
+# class or an error in multiprocessing:
+#    'objects should only be shared between processes through inheritance'
 #            
 def mathOp(files, operator, outputFile=None, tempDir=None):
     """
-    This method will do the math operation (+,-,/) specified with the 
+    This method will do the math operation (+,-,/, combine) specified with the 
     input files.
+
+    Note: The type of combinning operation to the pixels is a median after
+    a sigma reject algorithm.
     """
     
     log.debug("Start mathOp")
     
     if tempDir==None:
-        print "TEMP DIR is None !!"
         t_dir = "/tmp"
     else:
         t_dir = tempDir
@@ -3371,7 +3612,7 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
         os.close(output_fd)
 
-    if operator!='+' and operator!='-' and operator!='/':
+    if operator!='+' and operator!='-' and operator!='/' and operator!='combine':
         log.error("Math operation not supported")
         return None
 
@@ -3379,32 +3620,37 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         # Remove an old output file (might it happen ?)
         misc.fileUtils.removefiles(outputFile)
         ## MATH operation '+'
-        if (operator=='+' and len(files)>2):
-            log.debug("Frame list to combine = [%s]", files )
+        if (operator=='combine' and len(files)>1):
+            log.debug("Files to combine = [%s]", files )
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
+            # Very important to not scale the frames, because it could 
+            # produce wrong combined images due to outliers (bad pixels)
             iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
                      output=outputFile,
-                     combine='average',
+                     combine='median',
                      ccdtype='',
                      reject='sigclip',
                      lsigma=3,
                      hsigma=3,
                      subset='no',
-                     scale='mode'
+                     scale='none'
                      #masktype='none'
                      #verbose='yes'
                      #scale='exposure',
                      #expname='EXPTIME'
                      #ParList = _getparlistname ('flatcombine')
                      )
-        ## MATH operation '-,/,*'
-        else:
+        ## MATH operation '-,/,*' and just 2 files
+        elif len(files)==2:
             iraf.mscarith(operand1=files[0],
                       operand2=files[1],
                       op=operator,
                       result=outputFile,
                       verbose='yes'
                       )
+        else:
+            log.error("Operation not allowed")
+            return None
     except Exception,e:
         log.error("[mathOp] An erron happened while math operation with FITS files")
         raise e

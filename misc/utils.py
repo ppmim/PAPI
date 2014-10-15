@@ -40,7 +40,6 @@ import time
 import subprocess
 import fileinput
 
-import pyfits
 
 # PAPI modules
 from misc.paLog import log

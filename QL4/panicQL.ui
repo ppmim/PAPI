@@ -36,7 +36,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>5</x>
       <y>0</y>
       <width>940</width>
       <height>460</height>
@@ -151,7 +151,7 @@
        </rect>
       </property>
       <property name="pixmap">
-       <pixmap>images/logo_PANIC.jpg</pixmap>
+       <pixmap>../../../.designer/backup/images/logo_PANIC.jpg</pixmap>
       </property>
       <property name="scaledContents">
        <bool>true</bool>
@@ -187,9 +187,15 @@
        <rect>
         <x>10</x>
         <y>390</y>
-        <width>102</width>
+        <width>131</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
       </property>
       <property name="text">
        <string>Last file received:</string>
@@ -201,7 +207,7 @@
      <widget class="QLineEdit" name="lineEdit_last_file">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>140</x>
         <y>390</y>
         <width>311</width>
         <height>21</height>
@@ -485,17 +491,17 @@
       </item>
       <item>
        <property name="text">
-        <string>UserDef_1</string>
+        <string>Quick-LEMON</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>UserDef_2</string>
+        <string>Full-LEMON</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>UserDef_3</string>
+        <string>Full-Reduction</string>
        </property>
       </item>
      </widget>
@@ -1675,19 +1681,6 @@
         </property>
        </item>
       </widget>
-      <widget class="QCheckBox" name="checkBox_doRegrig">
-       <property name="geometry">
-        <rect>
-         <x>28</x>
-         <y>70</y>
-         <width>140</width>
-         <height>19</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Apply (re-grid)</string>
-       </property>
-      </widget>
       <widget class="QLabel" name="textLabel1_2">
        <property name="geometry">
         <rect>
@@ -1709,9 +1702,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>153</y>
+        <y>251</y>
         <width>271</width>
-        <height>260</height>
+        <height>171</height>
        </rect>
       </property>
       <property name="title">
@@ -1719,22 +1712,12 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QCheckBox" name="checkBox_show_imgs">
-         <property name="text">
-          <string>Only display image</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QCheckBox" name="checkBox_subDark_FF_BPM">
          <property name="toolTip">
           <string>Substract Dark, apply Flat-Field and grab BPM</string>
          </property>
          <property name="text">
-          <string>Dark subt. + Flat-Fielding + BPM</string>
+          <string>Apply DARK + FLAT + BPM</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1750,7 +1733,7 @@
           <string>Subtract last science frame for sky subtraction</string>
          </property>
          <property name="text">
-          <string>Subtract last frame (science)</string>
+          <string>Subtract Last Frame (science)</string>
          </property>
          <property name="autoExclusive">
           <bool>true</bool>
@@ -1766,7 +1749,7 @@
           <string>Subtract the sky computed from last sky sci frames</string>
          </property>
          <property name="text">
-          <string>Subtract nearest sky</string>
+          <string>Subtract Nearest Sky</string>
          </property>
          <property name="autoExclusive">
           <bool>true</bool>
@@ -1790,8 +1773,8 @@
       <widget class="QComboBox" name="comboBox_pre_skyWindow">
        <property name="geometry">
         <rect>
-         <x>27</x>
-         <y>170</y>
+         <x>30</x>
+         <y>190</y>
          <width>118</width>
          <height>21</height>
         </rect>
@@ -1826,23 +1809,29 @@
        </item>
       </widget>
       <widget class="QCheckBox" name="checkBox_pre_QM">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
-         <x>196</x>
-         <y>89</y>
-         <width>291</width>
+         <x>260</x>
+         <y>70</y>
+         <width>311</width>
          <height>19</height>
         </rect>
        </property>
        <property name="text">
         <string>Quality measurements  (background, psf, ....)</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
       <widget class="QLabel" name="textLabel3">
        <property name="geometry">
         <rect>
-         <x>27</x>
-         <y>150</y>
+         <x>30</x>
+         <y>170</y>
          <width>151</width>
          <height>16</height>
         </rect>
@@ -1855,10 +1844,13 @@
        </property>
       </widget>
       <widget class="QCheckBox" name="checkBox_pre_MA">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
-         <x>196</x>
-         <y>39</y>
+         <x>260</x>
+         <y>40</y>
          <width>180</width>
          <height>19</height>
         </rect>
@@ -1870,49 +1862,33 @@
         <bool>true</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_pre_compDM">
+      <widget class="QCheckBox" name="checkBox_pre_appBPM">
        <property name="geometry">
         <rect>
-         <x>196</x>
-         <y>63</y>
+         <x>30</x>
+         <y>100</y>
          <width>180</width>
          <height>19</height>
         </rect>
        </property>
        <property name="text">
-        <string>Compute distortion map</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="checkBox_pre_subD">
-       <property name="geometry">
-        <rect>
-         <x>30</x>
-         <y>39</y>
-         <width>140</width>
-         <height>19</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Substract dark</string>
+        <string>Apply BPM</string>
        </property>
        <property name="checked">
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_pre_appMF">
+      <widget class="QCheckBox" name="checkBox_pre_subDark_FF">
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>65</y>
+         <y>40</y>
          <width>180</width>
          <height>19</height>
         </rect>
        </property>
        <property name="text">
-        <string>Apply Master Flat</string>
+        <string>Apply DARK/FLAT</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -1922,7 +1898,7 @@
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>90</y>
+         <y>70</y>
          <width>180</width>
          <height>19</height>
         </rect>
@@ -1935,10 +1911,13 @@
        </property>
       </widget>
       <widget class="QCheckBox" name="checkBox_pre_BS">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
-         <x>198</x>
-         <y>120</y>
+         <x>260</x>
+         <y>100</y>
          <width>171</width>
          <height>19</height>
         </rect>
@@ -1950,6 +1929,158 @@
         <bool>true</bool>
        </property>
       </widget>
+      <widget class="QCheckBox" name="checkBox_pre_appNLC">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>130</y>
+         <width>181</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Correct for non-linearity</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_detector">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>190</y>
+         <width>118</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>All</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG4</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QLabel" name="textLabel3_3">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>170</y>
+         <width>151</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Detector to reduce</string>
+       </property>
+       <property name="wordWrap">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_AstromEngine">
+       <property name="geometry">
+        <rect>
+         <x>380</x>
+         <y>190</y>
+         <width>118</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>SCAMP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>AstrometryNet</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QLabel" name="textLabel3_4">
+       <property name="geometry">
+        <rect>
+         <x>380</x>
+         <y>170</y>
+         <width>151</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Astrometric Engine</string>
+       </property>
+       <property name="wordWrap">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_4">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>150</y>
+        <width>271</width>
+        <height>91</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Display</string>
+      </property>
+      <widget class="QComboBox" name="comboBox_show_imgs">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>30</y>
+         <width>211</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>None</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Only new files in 'Input Dir'</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Only results</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All files</string>
+        </property>
+       </item>
+      </widget>
      </widget>
     </widget>
     <widget class="QWidget" name="tab">
@@ -1960,6 +2091,9 @@
       <string>Calibrations</string>
      </attribute>
      <widget class="QPushButton" name="pushButton_Darks_add">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>19</x>
@@ -2017,6 +2151,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_Darks_del">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>88</x>
@@ -2106,6 +2243,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_master_mask">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>12</x>
@@ -2119,6 +2259,9 @@
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterMask">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>138</x>
@@ -2132,6 +2275,9 @@
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterFlat">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>139</x>
@@ -2145,6 +2291,9 @@
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterDark">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>141</x>
@@ -2158,6 +2307,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_master_flat">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>11</x>
@@ -2171,6 +2323,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_master_dark">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>12</x>
@@ -2184,6 +2339,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_createMDark">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>16</x>
@@ -2271,6 +2429,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_test1">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -2304,6 +2465,9 @@
       </property>
      </widget>
      <widget class="QListWidget" name="listBox_darks">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -2460,7 +2624,7 @@
   <action name="fileOpenAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -2481,7 +2645,7 @@
   <action name="fileDirAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/archive-insert-directory.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -2502,7 +2666,7 @@
   <action name="fileShow">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</normaloff>../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Show</string>
@@ -2537,7 +2701,7 @@
   <action name="filePrintAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image4</normaloff>../../../../../../../../../../../.designer/backup/image4</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image4</normaloff>../../../../../../../../../../../../.designer/backup/image4</iconset>
    </property>
    <property name="text">
     <string>&amp;Print...</string>
@@ -2569,7 +2733,7 @@
   <action name="editUndoAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image5</normaloff>../../../../../../../../../../../.designer/backup/image5</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image5</normaloff>../../../../../../../../../../../../.designer/backup/image5</iconset>
    </property>
    <property name="text">
     <string>&amp;Undo</string>
@@ -2587,7 +2751,7 @@
   <action name="editRedoAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image6</normaloff>../../../../../../../../../../../.designer/backup/image6</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image6</normaloff>../../../../../../../../../../../../.designer/backup/image6</iconset>
    </property>
    <property name="text">
     <string>&amp;Redo</string>
@@ -2605,7 +2769,7 @@
   <action name="editCutAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image7</normaloff>../../../../../../../../../../../.designer/backup/image7</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image7</normaloff>../../../../../../../../../../../../.designer/backup/image7</iconset>
    </property>
    <property name="text">
     <string>Cu&amp;t</string>
@@ -2623,7 +2787,7 @@
   <action name="editCopyAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image8</normaloff>../../../../../../../../../../../.designer/backup/image8</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image8</normaloff>../../../../../../../../../../../../.designer/backup/image8</iconset>
    </property>
    <property name="text">
     <string>&amp;Copy</string>
@@ -2641,7 +2805,7 @@
   <action name="editPasteAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image9</normaloff>../../../../../../../../../../../.designer/backup/image9</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image9</normaloff>../../../../../../../../../../../../.designer/backup/image9</iconset>
    </property>
    <property name="text">
     <string>&amp;Paste</string>
@@ -2659,7 +2823,7 @@
   <action name="editFindAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../.designer/backup/image10</normaloff>../../../../../../../../../../../.designer/backup/image10</iconset>
+     <normaloff>../../../../../../../../../../../../.designer/backup/image10</normaloff>../../../../../../../../../../../../.designer/backup/image10</iconset>
    </property>
    <property name="text">
     <string>&amp;Find...</string>
@@ -2757,7 +2921,7 @@
   <action name="fileSearchAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/edit-find.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2772,7 +2936,7 @@
   <action name="quitAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/actions/system-shutdown.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2787,7 +2951,7 @@
   <action name="irafConsoleAction">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</normaloff>../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</normaloff>../../../../../../../../../../../../../../usr/share/icons/default.kde4/32x32/apps/package_system_shell.png</iconset>
    </property>
    <property name="iconText">
     <string>Action</string>
@@ -2807,7 +2971,7 @@
   <action name="actionAladin">
    <property name="icon">
     <iconset>
-     <normaloff>images/aladin_large.gif</normaloff>images/aladin_large.gif</iconset>
+     <normaloff>../../../.designer/backup/images/aladin_large.gif</normaloff>../../../.designer/backup/images/aladin_large.gif</iconset>
    </property>
    <property name="text">
     <string>Aladin</string>
@@ -3463,23 +3627,7 @@
   <connection>
    <sender>checkBox_pre_appSF</sender>
    <signal>clicked()</signal>
-   <receiver>checkBox_pre_subD</receiver>
-   <slot>toggle()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>437</x>
-     <y>322</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>417</x>
-     <y>271</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_pre_appSF</sender>
-   <signal>clicked()</signal>
-   <receiver>checkBox_pre_appMF</receiver>
+   <receiver>checkBox_pre_subDark_FF</receiver>
    <slot>toggle()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -3493,7 +3641,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>checkBox_pre_appMF</sender>
+   <sender>checkBox_pre_subDark_FF</sender>
    <signal>clicked()</signal>
    <receiver>checkBox_pre_appSF</receiver>
    <slot>toggle()</slot>

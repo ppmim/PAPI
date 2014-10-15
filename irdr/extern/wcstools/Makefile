@@ -9,7 +9,7 @@ BIN = bin
 .c.o:
 	$(CC) -c $(CFLAGS) $(DEFS) $<
 
-all:	cphead delwcs delhead edhead fixpix gethead i2f imcat imhead immatch \
+all:	clean cphead delwcs delhead edhead fixpix gethead i2f imcat imhead immatch \
 	imrot imsize imstar imwcs scat sethead addpix getpix setpix sky2xy \
 	keyhead skycoor subpix xy2sky wcshead conpix gettab newfits getfits \
 	imstack imextract sumpix remap getcol getdate imfill imsmooth imresize \

@@ -291,15 +291,18 @@ class SExtractor(object):
          "value": "QUIET"},
 
         # -- Extra-keys (will not be saved in the main configuration file
+        #    Some of them are needed by SCAMP (XWIN_IMAGE, YWIN_IMAGE, 
+        #    ERRAWIN_IMAGE, ERRBWIN_IMAGE, FLUX_AUTO, FLUXERR_AUTO, ERRTHETAWIN_IMAGE)
 
         "PARAMETERS_LIST":
         {"comment": '[Extra key] catalog contents (to put in PARAMETERS_NAME)',
          "value": ["NUMBER", "XWIN_IMAGE", "YWIN_IMAGE","ERRAWIN_IMAGE",
-                   "ERRBWIN_IMAGE", 
+                   "ERRBWIN_IMAGE", "ERRTHETAWIN_IMAGE",
                    "FLUX_BEST", "FLUXERR_BEST", 
                    "X_IMAGE", "Y_IMAGE", "X_WORLD", "Y_WORLD", 
                    "FLAGS", "FWHM_IMAGE","FLUX_RADIUS","FLUX_AUTO", 
-                   "FLUXERR_AUTO", "MAG_AUTO", "MAG_APER","ISOAREA_IMAGE","ISOAREAF_IMAGE"]},
+                   "FLUXERR_AUTO", "MAG_AUTO", "MAG_APER","ISOAREA_IMAGE",
+                   "ISOAREAF_IMAGE"]},
 
         "CONFIG_FILE":
         {"comment": '[Extra key] name of the main configuration file',

@@ -76,11 +76,13 @@ from iraf import noao
 from iraf import mscred
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 import numpy as np
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
+
 
 class MasterDomeFlat(object):
     """
@@ -204,7 +206,8 @@ class MasterDomeFlat(object):
             if ( f_expt!=-1 and ( int(f.expTime()) != int(f_expt) or 
                                   f.getFilter()!=f_filter or 
                                   f.getReadMode()!=f_readmode)) :
-                log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with \n different FILTER or EXPTIME or READMODE. Skipped.")
+                log.warning("Found a FLAT frame with different FILTER or EXPTIME "
+                    "or READMODE. Frame skipped !")
                 continue
             else: 
                 f_expt = f.expTime()
@@ -221,7 +224,8 @@ class MasterDomeFlat(object):
             elif f.isDomeFlatOFF():
                 domelist_lampoff.append(iframe.replace("//","/"))
             else:
-                log.error("Error: Task 'createMasterDomeFlat' finished. Found a FLAT frame with different Flat-Field type (should be domeflat on/off).Skipped")
+                log.warning("Found a FLAT frame with different Flat-Field type "
+                    " It should be domeflat LAMP_ON/OFF. Frame skipped !")
         
         
         log.info('Right, all flat frames separated as:')
@@ -252,6 +256,7 @@ class MasterDomeFlat(object):
         # Combine the images to find out the median using sigma-clip algorithm;
         # the input images are scaled to a common mode, the pixels containing 
         # objects are rejected by an algorithm based on the measured noise (sigclip).
+        # For making a master flat, scale must always be set to 'mode'. (read from literature)
         iraf.mscred.flatcombine(input="@"+(self.__temp_dir+"/files_on.list").replace('//','/'),
                         output=flat_lampon,
                         combine='median',
@@ -405,7 +410,7 @@ class MasterDomeFlat(object):
         iraf.chdir()
         
         log.debug("Updating the header ...")
-        flatframe = pyfits.open(self.__output_filename, 'update')
+        flatframe = fits.open(self.__output_filename, 'update')
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
             if msg!="": flatframe[0].header.add_history(msg)
@@ -416,6 +421,7 @@ class MasterDomeFlat(object):
         #Add a new keyword-->PAPITYPE
         flatframe[0].header.set('PAPITYPE', 'MASTER_DOME_FLAT', 
                                    'TYPE of PANIC Pipeline generated file')
+        flatframe[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
         flatframe[0].header.set('IMAGETYP', 'MASTER_DOME_FLAT', 
                                    'TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in flatframe[0].header:

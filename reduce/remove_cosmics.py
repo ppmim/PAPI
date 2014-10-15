@@ -53,11 +53,12 @@ U{http://www.astro.yale.edu/dokkum/lacosmic/}
 from optparse import OptionParser
 import sys
 
-import pyfits
+import astropy.io.fits as fits
 import numpy
 
 # Logging
 from misc.paLog import log
+from misc.version import __version__
 
 import thirdparty.cosmics.cosmics as cosmics
 
@@ -98,7 +99,7 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
             out_file = out_image
             
     try:
-        f_in = pyfits.open(in_image)
+        f_in = fits.open(in_image)
         if len(f_in)==1:
             data_in = f_in[0].data
         else:
@@ -126,6 +127,9 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
         
         # Write the cleaned image into a new FITS file, conserving the original header :
         cosmics.tofits(out_file, c.cleanarray, header)
+        
+        fits.setval(out_file, keyword="PAPIVERS",
+                        value= __version__, comment="PANIC Pipeline version")
         
         # If you want the mask, here it is :
         if want_mask:

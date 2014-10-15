@@ -21,7 +21,7 @@
 
 import logging
 
-__version__ = '1.0.1'
+__version__ = '1.2.0'
 
 # Top level NullHandler
 logging.getLogger("papi").addHandler(logging.NullHandler())

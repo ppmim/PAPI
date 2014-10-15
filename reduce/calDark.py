@@ -58,6 +58,8 @@ import numpy
 # PAPI modules
 import misc.fileUtils
 import misc.utils as utils
+from misc.version import __version__
+
 import datahandler
 
 # Pyraf modules
@@ -66,7 +68,7 @@ from iraf import noao
 from iraf import mscred
 
 # Interact with FITS files
-import pyfits
+import astropy.io.fits as fits
 
 
 # Logging
@@ -169,7 +171,7 @@ class MasterDark(object):
         good_frames = []
         
         for iframe in framelist:
-            f = datahandler.ClFits ( iframe )
+            f = datahandler.ClFits( iframe )
             log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" 
                       %(iframe, f.expTime(), f.getType(), f.getNcoadds(), 
                         f.getReadMode() )) 
@@ -256,9 +258,10 @@ class MasterDark(object):
         else:
             shutil.move(tmp1, self.__output_filename)
     
-        darkframe = pyfits.open(self.__output_filename,'update')
+        darkframe = fits.open(self.__output_filename,'update')
         #Add a new keyword-->PAPITYPE
         darkframe[0].header.set('PAPITYPE','MASTER_DARK','TYPE of PANIC Pipeline generated file')
+        darkframe[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
         darkframe[0].header.set('IMAGETYP','MASTER_DARK','TYPE of PANIC Pipeline generated file')
         if 'PAT_NEXP' in darkframe[0].header:
             darkframe[0].header.set('PAT_NEXP',1,'Number of position into the current dither pattern')
@@ -277,7 +280,7 @@ class MasterDark(object):
         if self.show_stats:
             medians = []
             for i_frame in good_frames:
-                pf = pyfits.open(i_frame)
+                pf = fits.open(i_frame)
                 if len(pf)==1:
                     #print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
                     medians.append(numpy.median(pf[0].data[512:1536,512:1536]))

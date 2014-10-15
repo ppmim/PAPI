@@ -33,8 +33,7 @@ import misc.utils as utils
 
 
 # Interact with FITS files
-import pyfits
-import numpy as np
+import astropy.io.fits as fits
 from astropy import wcs
 import numpy
 
@@ -117,7 +116,7 @@ class MEF (object):
             if output_dir == None:
                 output_dir = os.path.dirname(file)
             try:
-                hdulist = pyfits.open(file)
+                hdulist = fits.open(file)
             except IOError:
                 print 'Error, can not open file %s' % (file)
                 return 0
@@ -136,8 +135,8 @@ class MEF (object):
                 os.path.basename(file).replace(".fits", output_filename_suffix)
             width = 2048
             height =  2048
-            temp12 = np.zeros((height, width*2), dtype = np.float32)
-            temp34 = np.zeros((height, width*2), dtype = np.float32)
+            temp12 = numpy.zeros((height, width*2), dtype = numpy.float32)
+            temp34 = numpy.zeros((height, width*2), dtype = numpy.float32)
             for i in range(0, height):
                 # Q1 i-row
                 temp12[i, 0 : width] = hdulist[1].data[i, 0 : width]
@@ -148,8 +147,8 @@ class MEF (object):
                 # Q4 i-row
                 temp34[i, width : 2*width] = hdulist[4].data[i, 0 : width]
 
-            joined_data = np.append(temp12, temp34).reshape(4096, 4096)
-            hdu = pyfits.HDUList([pyfits.PrimaryHDU(header=hdulist[0].header, 
+            joined_data = numpy.append(temp12, temp34).reshape(4096, 4096)
+            hdu = fits.HDUList([fits.PrimaryHDU(header=hdulist[0].header, 
                                                     data=joined_data)])
             #hdu.verify('silentfix')
             # now, copy extra keywords required
@@ -185,18 +184,18 @@ class MEF (object):
                     'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
                     'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'NCOADDS',
                     'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT',
-                    'CASSPOS','PIXSCALE']
+                    'CASSPOS','PIXSCALE','PAPITYPE', 'PAPIVERS','OBSERVER','ORIGIN']
                 
         out_filenames = []
         n = 0 
         for file in self.input_files:        
             try:
-                hdulist = pyfits.open(file)
+                hdulist = fits.open(file)
             except IOError:
                 print 'Error, can not open file %s' % (file)
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
-            #Check if is a MEF file 
+            # Check if is a MEF file 
             if len(hdulist)>1:
                 n_ext = len(hdulist)-1
                 log.debug("MEF file with %d extensions", n_ext)
@@ -213,7 +212,7 @@ class MEF (object):
                                     os.path.dirname(new_filename), out_dir
                                     ) 
                 out_filenames.append(new_filename)
-                out_hdulist = pyfits.HDUList( [pyfits.PrimaryHDU( 
+                out_hdulist = fits.HDUList( [fits.PrimaryHDU( 
                                 header = hdulist[i].header,
                                 data = hdulist[i].data)]
                                              )
@@ -264,10 +263,10 @@ class MEF (object):
         
         # Add primary header to output file...
         #prihdr = myflat[0].header.copy()
-        fo = pyfits.HDUList()
-        prihdu = pyfits.PrimaryHDU (data = None, header = primaryHeader)
+        fo = fits.HDUList()
+        prihdu = fits.PrimaryHDU (data = None, header = primaryHeader)
         # Start by updating PRIMARY header keywords...
-        prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+        prihdu.header.set('EXTEND', True, after = 'NAXIS')
         prihdu.header.set('NEXTEND', 0)
         prihdu.header.set('FILENAME', output_file)
         
@@ -275,7 +274,7 @@ class MEF (object):
         n_ext = 0
         for file in self.input_files:        
             try:
-                f = pyfits.open(file)
+                f = fits.open(file)
             except IOError:
                 print 'Error, can not open file %s' %(file)
                 raise MEF_Exception ("Error, can not open file %s"%file)
@@ -295,7 +294,7 @@ class MEF (object):
                 n_ext = 1
                 log.debug("Simple FITS file")
                                         
-            hdu = pyfits.ImageHDU(data = f[0].data, header = f[0].header)
+            hdu = fits.ImageHDU(data = f[0].data, header = f[0].header)
             #hdu.header.update('EXTVER',1)
             fo.append(hdu)
             del hdu
@@ -317,9 +316,9 @@ class MEF (object):
         """ 
         Method used to convert a single FITS file (PANIC-GEIRS v0) 
         having a full 4-detector-frame to a MEF with a 4-extension FITS, 
-        one per each frame.
+        one per each frame. The full-4kx4k frame can be a cube with N planes.
 
-        It is **NOT valid for cubes** of data, by the moment.
+        It **IS** also valid for cubes of data.
         
         Parameters
         ----------
@@ -362,7 +361,6 @@ class MEF (object):
         Todo
         ----
         - Header is not well formed.
-        - identify of SGi detector properly
 
         
         """
@@ -375,33 +373,44 @@ class MEF (object):
         # Iterate over the whole input file list
         for file in self.input_files:        
             try:
-                in_hdulist = pyfits.open(file)
+                in_hdulist = fits.open(file)
             except IOError:
                 log.error('Error, can not open file %s', file)
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
-            #Check if is a MEF file 
+            # Check if is a MEF file 
             if len(in_hdulist)>1:
                 log.error("Found a MEF file with %d extensions.\
                  Cannot convert to MEF file", len(in_hdulist)-1)
                 raise MEF_Exception("Cannot convert an already MEF to MEF file")
-            else:
-                log.info("Found a single FITS file. Let's convert it to MEF...")
-                
-                
+            
+
+            # Check if is a cube 
+            if len(in_hdulist[0].data.shape)!=2:
+                log.debug("Found a Cube of data.")
+            
+            # Check file is a 4kx4k full-frame  
+            if in_hdulist[0].header['NAXIS1']!=4096 or in_hdulist[0].header['NAXIS2']!=4096:
+                log.error('Error, file %s is not a full frame image', file)
+                raise MEF_Exception("Error, file %s is not a full frame image" % file)
+
+
             # copy primary header from input file
             primaryHeader = in_hdulist[0].header.copy()
-            out_hdulist = pyfits.HDUList()
+            out_hdulist = fits.HDUList()
             
             # Create primary HDU (without data, only the common header)
-            prihdu = pyfits.PrimaryHDU(data=None, header = primaryHeader)
+            prihdu = fits.PrimaryHDU(data=None, header = primaryHeader)
             # Start by updating PRIMARY header keywords...
-            prihdu.header.set('EXTEND', pyfits.TRUE, after = 'NAXIS')
+            prihdu.header.set('EXTEND', True, after = 'NAXIS')
             prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
             prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
             
             # In the Primary Header we do not need the WCS keywords, only RA,DEC
-            keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2','CTYPE1','CTYPE2']
+            # Althought, the simple-images full-frames should not have any WCS 
+            # information due to the gap, we look for them and remove them.
+            keys_to_del=['CRPIX1','CRPIX2','CRVAL1','CRVAL2','CDELT1','CDELT2',
+                         'CTYPE1','CTYPE2']
             for key in keys_to_del:
                 if key in prihdu.header: del prihdu.header[key]
             #
@@ -427,22 +436,35 @@ class MEF (object):
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i + j))
-                    hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 2048*j:2048*(j+1)]
-                    hdu_i = pyfits.ImageHDU (data = hdu_data_i)
+                    # Check if we have a cube of data
+                    if len(in_hdulist[0].data.shape)==2:
+                        hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
+                                                        2048*j:2048*(j+1)]
+                    elif len(in_hdulist[0].data.shape)>2:
+                        hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1), 
+                                                        2048*j:2048*(j+1)]
+                    else:
+                        log.error("Wrong frame shape found, that's why" 
+                        "cannot convert file %"%file)
+                        raise MEF_Exception("Error, file %s has wrong image" 
+                            "shape."%file)
+
+                    hdu_i = fits.ImageHDU (data = hdu_data_i)
                     log.debug("Data size of %d-quadrant = %s" % (i, hdu_data_i.shape))
                     
                     # Create the new WCS
                     try:
                         orig_ar = float(primaryHeader['RA'])
                         orig_dec = float(primaryHeader['DEC'])
-                    except ValueError:
-                        #No RA,DEC values in the header, then can't re-compute 
-                        #the coordinates or update the wcs header.
+                    except Exception:
+                        # No RA,DEC values in the header, then can't re-compute 
+                        # the coordinates or update the wcs header.
+                        log.warning("Cannot read AR and/or Dec coordinates.")
                         pass
                     else:
-                        #Due to PANICv0 header hasn't a proper WCS header, 
-                        #we built a basic one in order to computer the new 
-                        #ra, dec coordinates.
+                        # Due to PANICv0 header hasn't a proper WCS header, 
+                        # we built a basic one in order to compute the new 
+                        # RA, DEC coordinates.
                         
                         # ----
                         # WCS object is not USED !!!
@@ -471,6 +493,10 @@ class MEF (object):
                         new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
                                           [0, pix_scale/3600.0]]
 
+                        # wcs_pix2world: No SIP or Paper IV table lookup 
+                        # distortion correction is applied. To perform distortion 
+                        # correction, see on astropy all_pix2world, sip_pix2foc, 
+                        # p4_pix2foc, or pix2foc.
                         new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
                         # ----
 
@@ -494,122 +520,122 @@ class MEF (object):
                         hdu_i.header.set('CUNIT1', 'deg')
                         hdu_i.header.set('CUNIT2', 'deg')
                         
-                        # Force BITPIX=-32
-                        prihdu.scale('float32')
+                    # Force BITPIX=-32
+                    prihdu.scale('float32')
 
-                        if 'DETXYFLIP' in primaryHeader:
-                            # When DETXYFLIP=0, no flip; default
-                            # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
-                            # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
-                            detflipxy = primaryHeader['DETXYFLIP']
-                            log.debug("Found DETXYFLIP in header =%s"%detflipxy)
-                        else: 
-                            detflipxy = 0
+                    if 'DETXYFLIP' in primaryHeader:
+                        # When DETXYFLIP=0, no flip; default
+                        # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
+                        # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
+                        detflipxy = primaryHeader['DETXYFLIP']
+                        log.debug("Found DETXYFLIP in header =%s"%detflipxy)
+                    else: 
+                        detflipxy = 0
 
-                    
-                        if 'DETROT90' in primaryHeader:
-                            log.debug("Found DETROT90 in header")
-                            # When DETROT90=0, no rotation;
-                            # When DETROT90=1, 90deg clockwise rotation
-                            # When DETROT90=2, 180deg clockwise rotation (default
-                            # for PANIC)
-                            if primaryHeader['DETROT90']==0:
-                                if (i*2+j)==0: 
-                                    if detflipxy==0: det_id = 2
-                                    elif detflipxy==1: det_id = 3
-                                    elif detflipxy==2: det_id = 1
-                                    elif detflipxy==3: det_id = 4
-                                elif (i*2+j)==1: 
-                                    if detflipxy==0: det_id = 1
-                                    elif detflipxy==1: det_id = 4
-                                    elif detflipxy==2: det_id = 2
-                                    elif detflipxy==3: det_id = 3
-                                elif (i*2+j)==2: 
-                                    if detflipxy==0: det_id = 3
-                                    elif detflipxy==1: det_id = 2
-                                    elif detflipxy==2: det_id = 4
-                                    elif detflipxy==3: det_id = 1
-                                elif (i*2+j)==3:
-                                    if detflipxy==0: det_id = 4
-                                    elif detflipxy==1: det_id = 1 
-                                    elif detflipxy==2: det_id = 3
-                                    elif detflipxy==3: det_id = 2
-                            elif primaryHeader['DETROT90']==1:
-                                if (i*2+j)==0:
-                                    if detflipxy==0: det_id = 3
-                                    elif detflipxy==1: det_id = 4 
-                                    elif detflipxy==2: det_id = 2
-                                    elif detflipxy==3: det_id = 1
-                                elif (i*2+j)==1:
-                                    if detflipxy==0: det_id = 2
-                                    elif detflipxy==1: det_id = 1
-                                    elif detflipxy==2: det_id = 3
-                                    elif detflipxy==3: det_id = 4                                
-                                elif (i*2+j)==2: 
-                                    if detflipxy==0: det_id = 4
-                                    elif detflipxy==1: det_id = 3
-                                    elif detflipxy==2: det_id = 1
-                                    elif detflipxy==3: det_id = 2                                
-                                elif (i*2+j)==3:
-                                    if detflipxy==0: det_id = 1
-                                    elif detflipxy==1: det_id = 2
-                                    elif detflipxy==2: det_id = 4
-                                    elif detflipxy==3: det_id = 3                               
-                            elif primaryHeader['DETROT90']==2:
-                                if (i*2+j)==0:
-                                    if detflipxy==0: det_id = 4
-                                    elif detflipxy==1: det_id = 1 
-                                    elif detflipxy==2: det_id = 3
-                                    elif detflipxy==3: det_id = 2                               
-                                elif (i*2+j)==1:
-                                    if detflipxy==0: det_id = 3
-                                    elif detflipxy==1: det_id = 2 
-                                    elif detflipxy==2: det_id = 4
-                                    elif detflipxy==3: det_id = 1                               
-                                elif (i*2+j)==2:
-                                    if detflipxy==0: det_id = 1
-                                    elif detflipxy==1: det_id = 4 
-                                    elif detflipxy==2: det_id = 2
-                                    elif detflipxy==3: det_id = 3                              
-                                elif (i*2+j)==3: 
-                                    if detflipxy==0: det_id = 2
-                                    elif detflipxy==1: det_id = 3 
-                                    elif detflipxy==2: det_id = 1
-                                    elif detflipxy==3: det_id = 4
-                            elif primaryHeader['DETROT90']==3:
-                                if (i*2+j)==0:
-                                    if detflipxy==0: det_id = 1
-                                    elif detflipxy==1: det_id = 2 
-                                    elif detflipxy==2: det_id = 4
-                                    elif detflipxy==3: det_id = 3
-                                elif (i*2+j)==1:
-                                    if detflipxy==0: det_id = 4
-                                    elif detflipxy==1: det_id = 2
-                                    elif detflipxy==2: det_id = 1
-                                    elif detflipxy==3: det_id = 3
-                                elif (i*2+j)==2:
-                                    if detflipxy==0: det_id = 2
-                                    elif detflipxy==1: det_id = 1
-                                    elif detflipxy==2: det_id = 3
-                                    elif detflipxy==3: det_id = 4
-                                elif (i*2+j)==3:
-                                    if detflipxy==0: det_id = 3
-                                    elif detflipxy==1: det_id = 4
-                                    elif detflipxy==2: det_id = 2
-                                    elif detflipxy==3: det_id = 1
-                        else:
-                            # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
-                            log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
-                            if (i*2+j)==0: det_id = 4
-                            elif (i*2+j)==1: det_id = 3
-                            elif (i*2+j)==2: det_id = 1
-                            elif (i*2+j)==3: det_id = 2                       
+                
+                    if 'DETROT90' in primaryHeader:
+                        log.debug("Found DETROT90 in header")
+                        # When DETROT90=0, no rotation;
+                        # When DETROT90=1, 90deg clockwise rotation
+                        # When DETROT90=2, 180deg clockwise rotation (default
+                        # for PANIC)
+                        if primaryHeader['DETROT90']==0:
+                            if (i*2+j)==0: 
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 3
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 4
+                            elif (i*2+j)==1: 
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 4
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 3
+                            elif (i*2+j)==2: 
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 2
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 1
+                            elif (i*2+j)==3:
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 1 
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 2
+                        elif primaryHeader['DETROT90']==1:
+                            if (i*2+j)==0:
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 4 
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 1
+                            elif (i*2+j)==1:
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 1
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 4                                
+                            elif (i*2+j)==2: 
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 3
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 2                                
+                            elif (i*2+j)==3:
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 2
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 3                               
+                        elif primaryHeader['DETROT90']==2:
+                            if (i*2+j)==0:
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 1 
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 2                               
+                            elif (i*2+j)==1:
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 2 
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 1                               
+                            elif (i*2+j)==2:
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 4 
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 3                              
+                            elif (i*2+j)==3: 
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 3 
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 4
+                        elif primaryHeader['DETROT90']==3:
+                            if (i*2+j)==0:
+                                if detflipxy==0: det_id = 1
+                                elif detflipxy==1: det_id = 2 
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 3
+                            elif (i*2+j)==1:
+                                if detflipxy==0: det_id = 4
+                                elif detflipxy==1: det_id = 2
+                                elif detflipxy==2: det_id = 1
+                                elif detflipxy==3: det_id = 3
+                            elif (i*2+j)==2:
+                                if detflipxy==0: det_id = 2
+                                elif detflipxy==1: det_id = 1
+                                elif detflipxy==2: det_id = 3
+                                elif detflipxy==3: det_id = 4
+                            elif (i*2+j)==3:
+                                if detflipxy==0: det_id = 3
+                                elif detflipxy==1: det_id = 4
+                                elif detflipxy==2: det_id = 2
+                                elif detflipxy==3: det_id = 1
+                    else:
+                        # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
+                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
+                        if (i*2+j)==0: det_id = 4
+                        elif (i*2+j)==1: det_id = 3
+                        elif (i*2+j)==2: det_id = 1
+                        elif (i*2+j)==3: det_id = 2                       
 
-                        hdu_i.header.set('DET_ID', "SG%i"%det_id, 
-                                            "PANIC Detector id SGi [i=1..4]")
-                        hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
-                        hdu_i.header.set('DETSEC',
-                            "[%i:%i,%i:%i]"%(2048*i+1, 2048*(i+1), 2048*j+1, 2048*(j+1) ))
+                    hdu_i.header.set('DET_ID', "SG%i"%det_id, 
+                                        "PANIC Detector id SGi [i=1..4]")
+                    hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
+                    hdu_i.header.set('DETSEC',
+                        "[%i:%i,%i:%i]"%(2048*i+1, 2048*(i+1), 2048*j+1, 2048*(j+1) ))
 
                         
                     # now, copy extra keywords required
@@ -647,7 +673,7 @@ class MEF (object):
         """ 
         Method used to convert a single FITS file (PANIC-GEIRS v0) 
         having a full (4kx4k) 4-detector-frame to 4 single FITS files with a 
-        frame per file. 
+        file per detector. The 4-detector-frame can be a cube of data.
         Header is fully copied from original file, and added new WCS keywords.
         
         With FITS extensions (MEF) is easy to identify each detector, i.e.,  
@@ -696,7 +722,7 @@ class MEF (object):
             
         Notes
         -----
-        - It is NOT valid for cubes of data, by the moment                           
+        - It **IS** valid for cubes of data, ie., a DARK_MODEL.                           
         - The enumeration order of the quadrants read is:
         
         |------------|
@@ -707,7 +733,7 @@ class MEF (object):
         
         """
         
-        log.info("Starting splitGEIRSToSimple")
+        log.info("Starting splitGEIRSToSimple (one file per detector)")
         n = 0 
         out_filenames = []
 
@@ -715,7 +741,7 @@ class MEF (object):
         for file in self.input_files:
             log.debug("Splitting file %s"%file)        
             try:
-                in_hdulist = pyfits.open(file)
+                in_hdulist = fits.open(file)
             except IOError:
                 log.error('Error, can not open file %s', file)
                 raise MEF_Exception("Error, can not open file %s" % file)
@@ -725,9 +751,12 @@ class MEF (object):
                 log.error("Found a MEF file with %d extensions. Cannot convert", 
                           len(in_hdulist)-1)
                 raise MEF_Exception("Error, found a MEF file, expected a single FITS ")
-            else:
-                log.info("OK, found a single FITS file")
      
+            # Check if it is a cube 
+            if len(in_hdulist[0].data.shape)!=2:
+                log.debug("Found a Cube of data.")
+
+            # Check file is a 4kx4k full-frame  
             if in_hdulist[0].header['NAXIS1']!=4096 or in_hdulist[0].header['NAXIS2']!=4096:
                 log.error('Error, file %s is not a full frame image', file)
                 raise MEF_Exception("Error, file %s is not a full frame image" % file)
@@ -749,17 +778,29 @@ class MEF (object):
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i*2 + j))
-                    hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
-                                                    2048*j:2048*(j+1)]
-                    log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
-                                                                 hdu_data_i.shape))    
+                    # Check if we have a cube, then copy all the planes
+                    if len(in_hdulist[0].data.shape)==2: 
+                        hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
+                                                        2048*j:2048*(j+1)]
+                        log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
+                                                              hdu_data_i.shape))    
+                    elif len(in_hdulist[0].data.shape)>2:
+                        hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1), 
+                                                        2048*j:2048*(j+1)]
+                        log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
+                                                              hdu_data_i.shape))
+                    else:
+                        log.error("Wrong frame shape found, that's why" 
+                        "cannot convert file %"%file)
+                        raise MEF_Exception("Error, file %s has wrong image" 
+                            "shape."%file)
+
                     # Create primary HDU (data + header)
-                    out_hdulist = pyfits.HDUList()               
-                    prihdu = pyfits.PrimaryHDU(data = hdu_data_i, 
+                    out_hdulist = fits.HDUList()               
+                    prihdu = fits.PrimaryHDU(data = hdu_data_i, 
                                                header = primaryHeader)
                     # Start by updating PRIMARY header keywords...
-                    prihdu.header.set('EXTEND', 
-                                          pyfits.FALSE, after = 'NAXIS')
+                    prihdu.header.set('EXTEND', False, after = 'NAXIS')
                     
                     # #############################################
                     # AR,DEC (WCS !!) need to be re-calculated !!!
@@ -769,10 +810,12 @@ class MEF (object):
                     try:
                         orig_ar = float(primaryHeader['RA'])
                         orig_dec = float(primaryHeader['DEC'])
-                    except ValueError:
+                    except Exception:
                         # No RA,DEC values in the header, then can't re-compute 
                         # ra,dec coordinates nor update the wcs header.
                         # Then, we DO NOT create a new WCS header !!!
+                        log.warning("Cannot read AR and/or Dec coordinates. "
+                            "No WCS header will be added.")
                         pass
                     else:
                         # Due to PANICv0 header hasn't a proper WCS header, we 
