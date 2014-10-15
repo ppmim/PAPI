@@ -5302,6 +5302,8 @@ CAHA, y comienza una serie de emails contestando de malas maneras.
 pregunto a E.Guindos por si ellos tiene algo ya hecho para openSUSE13.x, y me dice
 que no, que lo último es para 10.x, pero que la extensión caTCL no la tienen.
 
+- Compilación de BLT2.5 (la version 2.4 no es compatible con tcl/tk 8.5)
+
 07-Oct-2014 
 -----------
 - No hay manera de que la extensión caTCL (et_wish) se instale, pues da problemas 
@@ -5339,7 +5341,7 @@ necesitamos si se creaba.
 08-Oct-2014 
 -----------
 - Analisis de Telescope-Interface CAHA;
- 
+
 
 09-Oct-2014 
 -----------
@@ -6180,7 +6182,6 @@ This way, the reached accuracy ranges from 0.1 to 0.3 pixels (TBC).
 
 
 
-BLT2.5 (la version 2.4 no es compatible con tcl/tk 8.5)
 ------
 
 http://sourceforge.net/projects/blt/files/BLT/BLT%202.4z/BLT2.4z.tar.gz
@@ -6204,19 +6205,49 @@ COSAS A PREPARAR PARA EL COMMISSIONING
 - Quitar tarjeta OPTPCI del panic2 y eviarla para MPIA (o mejor dársela en CAHA a alguién del MPIA)
 - Empaquetar máquina de PANIC y dejarla preparad para sólo llevarla a CAHA.
 - Limpiar la GUI del QL !!! dejar sólo lo que funciona.
-- Preparar batería de pruebas de PAPI en CAHA !! 
-- Instalar x2go en panic2
-- EPICS + oagwish en panic2 ??
+*- Preparar batería de pruebas de PAPI en CAHA !! 
+*- Instalar x2go en panic2
+*- EPICS + oagwish en panic2 ??
 - Copiar todo aquello necesario en HD y portatil
 - Hacer copias de seguridad !!
 - Imprimir documentación necesaria (GEIRS, EPICS, ...)
-- Preparar portatil para CAHA: tiene openSuSE 12.2 y Ubuntu. En principio debe 
+*- Preparar portatil para CAHA: tiene openSuSE 12.2 y Ubuntu. En principio debe 
 ser suficiente.
-- Terminar documentación de PAPI !!
+*- Terminar documentación de PAPI !!
 
 
 TESTs QL en CAHA
 ================
-1- Probar Lazy-Subtract_near_sky
-2- 
+1- Probar en modo Lazy:Subtract_near_sky
++ Darks (fixed and scale)
++ Focus Serie:
+   - Test Focus movement (abs,rel)
+   - Test OT routine 
+   - Test QL analysis
+   - Check FOCUS values in headers
++ Dome Flat-Fields:
+   - dome control
+   - lamp control
+   - check headers
+   - test procedure driven by level (cfr. U.Tille)
++ Sky Flat-Fields: (in principle, two methods sugested by JF)
+   - test telescope-dither movements
+   - test auto-start/stop procedure driven by level
+   - 
++ Telescope Pointing
+   - Test Abs. pointing (equinox=FK5 ?, check headers RA,DEC,MEF-WCS)
+   - Test Rel. pointing
+   - Test accuracy of dither-pattern (ala O2K??)
+   - Test Extended object dither-pattern
 
+
+TODO @ CAHA
+===========
+- Update PAPI/QL on panic1
+- Sync panic1 & panic2
+- Config proxy web: check OT, SCAMP, Aladin Catalogs
+- config NTP sync
+- Create obs22 account and install software (GEIRS/OT/PAPI)
+
+- DOME control from OT: Dome Flat-Fields
+T
