@@ -39,7 +39,8 @@ openSuSE 13.1-64 bit
 ************
 ** SYSTEM **
 ************
--) NTP Config
++) NTP Config
+
 > zypper install ntp
 > sudo chkconfig --add ntp
 > sudo service ntp status|start
@@ -48,6 +49,8 @@ Add to /etc/ntp.conf next lines for NTP server:
 
 ## IAA
 server ntp.iaa.csic.es burst iburst
+## CAHA
+server derfel.caha.es burst iburst
 ## Spain - es.pool.ntp.org
 server 1.es.pool.ntp.org iburst
 server 1.europe.pool.ntp.org iburst
@@ -59,7 +62,62 @@ server 1.opensuse.pool.ntp.org iburst
 server 2.opensuse.pool.ntp.org iburst
 server 3.opensuse.pool.ntp.org iburst
 
- 
+
++) Proxy Config
+
+1. Add to /etc/sysconfig/proxy the next configuration for the proxy:
+
+PROXY_ENABLED="yes"
+HTTP_PROXY="http://derfel.caha.es:3128"
+
+2. In addition, for the OT and SCAMP applications it is need to setup the shell 
+with the next variables:
+
+export http_proxy=derfel.caha.es:3128
+export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'
+
+
++) Crontab Config (see 2.5.6 of GEIRS manual)
+For the automated inclusion of temperatures and pressures of the 2 temperature 
+channels of a LakeShore controller, the 8 temperature channels of a LakeShore 
+monitor and of one Pfeier pressure in GEIRS(FITS output and GUI) the next lines
+are required in the crontab:
+
+10 12 * * * export CAMHOME=${HOME}/GEIRS ; cd $CAMHOME/log ; ./glogRotate.sh
+0,3,6,9,11,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57 * * * * GEIRS/scripts/panictempress -i 192.168.70.10 >> GEIRS/log/panictemp.log 2> GEIRS/log/panictemp.err
+
+
+*************************
+** Telescope Interface **
+*************************
+The telescope interface of CAHA telescopes (2.2m and 3.5m) is EPICS-based and it
+is composed by a set of Tcl/Tk scripts. Those scripts use the OAGTclTk library to
+interac with the EPICS systems. That library substitute the old caTCL EPICS 
+extension (et_wish). The library can be get from next site:
+
+http://www.aps.anl.gov/Accelerator_Systems_Division/Accelerator_Operations_Physics/installationGuide_Linux.shtml
+
+1. Install the OAGTclTk library:
+
+>rpm -ivvl OAGTclTk-1.21-1.openSUSE.12.3.x86_64.rpm
+
+2. Copy the TECS scrtips:
+
+> mkdir $HOME/TECS/scripts
+> scp -av user@source.caha.es:TECS/scripts $HOME/TECS/scripts
+
+3. Add the TELESCOPE variable to the shell:
+
+export TELESCOPE=CA2.2m (or CA3.5m)
+
+Actually, that variable is not required for GEIRS anymore, as it is set on the 
+after the interactive selection in the GEIRS GUI. However, the command line 
+scripts (t_xxxx) still need that variable defined on the shell.
+
+
+
+
+
  
 ***********
 ** GEIRS **
@@ -771,7 +829,7 @@ export QT_GRAPHICSSYSTEM=native
 #CA_FFLTEST=$PAPI_HOME/trunk/simu/caha/ffltest
 #AUPLAY=/usr/bin/play
 #FLAT_COMMAND=$PAPI_HOME/trunk/simu/caha/flats
-#TECS_SCRIPT=$PAPI_HOME/trunk/simu/caha
+TECS_SCRIPT=$HOME/TECS/scripts
 #PANIC_UTIL=$PAPI_HOME/trunk/MIDAS
 #PANIC_SCI=$PAPI_HOME/trunk/MIDAS
 

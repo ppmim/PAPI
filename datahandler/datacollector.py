@@ -217,7 +217,7 @@ class DataCollector (object):
         """
         @summary: Function to read at self.source the GEIRS log files listing 
         the FITS files created. There are two options: 
-            - ~GEIRS/log/save_CA2.2m.log
+            - ~/GEIRS/log/save_CA2.2m.log
             - ~/tmp/fitsfiles.corrected
         
         @param type: 1 if source is a 'save_CA2.2m.log' file or 2 if it is a 
