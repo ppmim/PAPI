@@ -2,7 +2,7 @@
 # User Configurable Settings
 #------------------------------------------------------------------------------
 # path to PAPI source directory
-export PAPI_HOME=${HOME}/DEVELOP/papi
+export PAPI_HOME=${HOME}/papi
 export PAPI_BIN=${HOME}/bin
 
 # path to PAPI output data products
@@ -16,15 +16,13 @@ export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg
 export PATH=${PATH}:${PAPI_BIN}
 export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}
 
-
-echo "PATH="$PATH
 #--------------------------------
 # IRAF settings
 #--------------------------------
-#mkdir $HOME/.iraf
-#ln -s $HOME/.iraf $HOME/iraf
-#cd $HOME/.iraf
-#mkiraf 
+mkdir $HOME/.iraf
+ln -s $HOME/.iraf $HOME/iraf
+cd $HOME/.iraf
+mkiraf 
 
 # comment-out chkupdate on login.cl
 ## To be done
@@ -32,8 +30,8 @@ echo "PATH="$PATH
 #-------------------------------
 # IRDR build
 #------------------------------
-#cd irdr
-#make all
+cd $PAPI_HOME/irdr
+make clean; make all
 
 
 #-------------------------------
@@ -80,17 +78,15 @@ chmod a+x $PAPI_HOME/photo/photometry.py
 ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 
 
-
-
-
-
-
-
-
 # ---------------------------------------
 # Add Environment Variables to bash shell
 # ---------------------------------------
+echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
+echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
+echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc
+echo "export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg" >> ~/.bashrc
+echo "export PATH=${PATH}:${PAPI_BIN}" >> ~/.bashrc
+echo "export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}" >> ~/.bashrc
 echo "export PATH=\$PATH:${PAPI_BIN}" >> ~/.bashrc
-PS1='$ '
+
 source ~/.bashrc
-echo $PATH

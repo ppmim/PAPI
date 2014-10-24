@@ -52,7 +52,7 @@ class DataCollector (object):
             'geirs-file' - Read the file contents from a generated GEIRS file of 
             type 1, i.e, ~GEIRS/log/save_CA2.2m.log
             'geirs-file2' - Read the file contents from a generated GEIRS file of 
-            type 1, i.e., ~/tmp/fitsfiles.corrected
+            type 2, i.e., ~/tmp/fitsGeirsWritten (old fitsfiles.corrected)
             
         source: str
             directory name or filename to be read for inputs
@@ -218,10 +218,10 @@ class DataCollector (object):
         @summary: Function to read at self.source the GEIRS log files listing 
         the FITS files created. There are two options: 
             - ~/GEIRS/log/save_CA2.2m.log
-            - ~/tmp/fitsfiles.corrected
+            - ~/tmp/fitsGeirsWritten
         
         @param type: 1 if source is a 'save_CA2.2m.log' file or 2 if it is a 
-        fitsfiles.corrected.
+        'fitsGeirsWritten'.
         
         @param start_date: datetime object for the first file to consider, 
         where start to look for.
@@ -256,6 +256,7 @@ class DataCollector (object):
                                                      "%Y-%m-%d %H:%M:%S")
                     except ValueError,e:
                         print "Error, cannot read datetime stamp in log file line :",line
+                        print str(e)
                         continue
                     if line_date > l_start_datetime and line_date < l_end_datetime:
                         contents.append(sline[6])
@@ -264,16 +265,21 @@ class DataCollector (object):
                         pass
                         #print "File too old ...."
                         #print "file datetime = %s"%line_date
-        # To read ~/tmp/fitsfiles.corrected
+        # To read ~/tmp/fitsGeirsWritten
         elif type == 2:
             # Read the file contents from a generated GEIRS file
             for line in fileinput.input(self.source):
                 sline = string.split(line)
                 if sline[0][0]!="#" and sline[1]!="ERROR":
                     try:
-                        line_date = dt.datetime.strptime(sline[0],"%Y-%m-%d_%Hh%Mm%S")
+                        # The lines in the log file have two fields: timestamp+filename
+                        # timestap = `date --iso-8601=seconds` --> 2014-10-23T12:32:38+0200
+                        # Due to datetime.strptime does not work with %z directive,
+                        # the UTC offset is skipped. 
+                        line_date = dt.datetime.strptime(sline[0].split("+")[0],"%Y-%m-%dT%H:%M:%S")
                     except ValueError,e:
                         print "Error, cannot read datetime stamp in log file line",line
+                        print sline[0]
                         continue
                     if line_date > l_start_datetime and line_date < l_end_datetime:
                         contents.append(sline[1])
@@ -315,7 +321,7 @@ class DataCollector (object):
 	                    contents.append(sline[6])
 	                    #print "FILE = ", sline[6]
 	            """
-            # To read ~/tmp/fitsfiles.corrected
+            # To read ~/tmp/fitsGeirsWritten 
             elif self.mode=="geirs-file2":
                 contents = self.read_GEIRS_fitsLog(type=2)
                 """

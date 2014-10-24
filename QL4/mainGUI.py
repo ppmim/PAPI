@@ -294,7 +294,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #                                    self.file_pattern , self.new_file_func)
         
         if os.path.basename(self.m_sourcedir)=='save_CA2.2m.log': s_mode = 'geirs-file'
-        elif os.path.basename(self.m_sourcedir)=='fitsfiles.corrected': s_mode = 'geirs-file2'
+        elif os.path.basename(self.m_sourcedir)=='fitsGeirsWritten': s_mode = 'geirs-file2'
         else: s_mode = 'dir'
         
         self.dc = datahandler.DataCollector(s_mode, self.m_sourcedir, 

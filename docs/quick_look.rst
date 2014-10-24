@@ -96,11 +96,3 @@ Here's a listing of the PQL command line options::
    
 	
 .. index:: quicklook, off-line, on-line, configuration
-
-.. _troubleshooting:
-
-Troubleshooting
-***************
-
-
-*Add tips here*

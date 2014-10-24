@@ -25,17 +25,21 @@ PAPI has the following strict requirements:
  - Python 2.7
  - Numpy 1.6 or later 
 
-PAPI also depends on next packages:
+and also depends on next packages:
 
- - SciPy_ 
- - PyFITS_
- - PyRAF_
- - Astropy_
- - PyQt4_
- - Astromatic_ suite tools (SExtractor v2.8, SCAMP v1.7, SWARP v2.19.1)
- - `Astrometry.net`_ (>=v0.46) and 42xx index files
- - Sphinx_ to build the documentation (optional)
- 
+ - `SciPy <http://www.scipy.org>`_ (> v0.12.2)
+ - `Astropy <http://www.astropy.org/>`_ (> v0.3.1)
+ - `Matplotlib <http://matplotlib.org/>`_ (> v1.3.0)
+ - `PyQt4 <http://www.riverbankcomputing.co.uk/software/pyqt/download>`_
+ - `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (< v2.16 or higher)
+ - `stsci_python <http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python>`_ (> v2.14)
+ - `CDSClient <http://cdsarc.u-strasbg.fr/doc/cdsclient.html>`_
+ - `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (> v2.8.6)
+ - `SCAMP <http://www.astromatic.net/software/scamp>`_ (> v1.7.0)
+ - `SWarp <http://www.astromatic.net/software/swarp>`_ (> v2.19.1)
+ - `Astrometry.net <http://astrometry.net/>`_ with 42xx index files (optional to SCAMP)
+ - `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (> v7.3b5)
+
 
 Note that, for PyRAF_ you have to install IRAF_ (v2.16 or later), what can be a 
 tricky task. However, is has been simplified in recent versions.
