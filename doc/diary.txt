@@ -5362,6 +5362,18 @@ necesitamos si se creaba.
 en lugar del ~/tmp/fitsfiles.corrected. El formato es casi igual, excepto que ahora
 es usa un formato algo diferente para el timestamp. 
 
+
+24-Oct-2014 
+-----------
+- Modifico el panic_setup.sh para el procedimiento de instalación de PAPI; hago
+las pruebas con el usuario staff en udit22.
+- Modifico papi.py para que cuando no lo demos parámetros muestre el help !
+- Actualizo documentación de PAPI...
+
+
+
+(P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
+modificar ficheros sensibles ni los fuentes del software de PANIC.
 (P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
 
 

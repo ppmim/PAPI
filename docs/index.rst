@@ -5,6 +5,11 @@
 
 PANIC Data Pipeline Documentation
 =================================
+.. warning::
+
+   This "Documentation" is still a work in progress; some of the material
+   is not organized, and several aspects of PAPI are not yet covered
+   with sufficient detail.
 
 Welcome! This is the Documentation for PAPI, the Data Reduction Pipeline of PANIC
 instrument (PANIC Pipeline, version |version|, |today|). 
@@ -43,12 +48,6 @@ galaxy cluster surveys). Other types imaging data have been reduced with PAPI
 but results can not be as good as desired. (See :ref:`troubleshooting` for tips).
 PAPI is **not** designed to reduce any kind of field taken with PANIC.  
 
-
-.. warning::
-
-   This "Documentation" is still a work in progress; some of the material
-   is not organized, and several aspects of PAPI are not yet covered
-   with sufficient detail.
    
 Contents
 ********

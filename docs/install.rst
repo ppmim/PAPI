@@ -7,12 +7,14 @@ Installation & Configuration
 .. index:: prerequisites, requirements, pipeline
 
 
-Prerequisites
-*************
+Requirements and Supported Platforms
+************************************
 
-Because PAPI is written mostly in Python, `Python 2.7.x <http://www.python.org>`_  
-or  higher is required. In addition, PAPI requires the following packages 
-installed in order to work properly:
+Because PAPI is written mostly in Python and ANSI C, it can run on any platform
+that has the required Python modules and GCC compilier. However, it has been developed
+and deeply tested under `openSuSE`_ 12.x/13.x x86_64 Linux OS.  
+`Python 2.7.x <http://www.python.org>`_ or higher and the following packages 
+are required:
 
     * `NumPy <http://numpy.scipy.org/>`_ (> v1.6)
     * `SciPy <http://www.scipy.org>`_ (> v0.12.2)
@@ -37,9 +39,9 @@ Download
 ********
 The latest stable version of PAPI can be downloaded from `here <https://github.com/ppmim/PAPI>`_
 
-Installing
-**********
-Once you have installed the packages described above, you are ready to install
+Building and Installation
+*************************
+Once you have installed the required packages described above, you are ready to install
 PAPI; for this, follow the next steps::
 
     $ git clone https://github.com/ppmim/PAPI.git ~/papi
@@ -47,47 +49,22 @@ PAPI; for this, follow the next steps::
     $ ./papi_setup.sh
 
 
- * Modify the PAPI_HOME in the papi_setup.[sh][.csh] file in the PAPI bin directory
- * Add the papi_setup.[sh][.csh] to your .bash_profile or .cshrc (.tcshrc)
-
-    	* Bash: ``. $PAPI_HOME/bin/papi_setup.sh``
-    	* CSH: ``source $PAPI_HOME/bin/papi_setup.csh``
-
-
-Example papi_setup.sh::
-	
-    #---------------------------------------------------------------------------
-    # User Configurable Settings
-    #---------------------------------------------------------------------------
-
-    # path to PAPI directory
-    export PAPI_HOME=${HOME}/pipelines/papi
-
-    # path to PAPI output data products
-    export PAPI_PROD=${HOME}/DataProd
-
-    #---------------------------------------------------------------------------
-    # Fixed Settings
-    #---------------------------------------------------------------------------
-    # path to PAPI reference files
-    export PAPI_CONFIG=${PAPI_HOME}/config_files
-    export PATH=${PATH}:${PAPI_HOME}/bin
-    export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}/lib
-
-
 Building the documentation
 **************************
 The PAPI documentation is base on `sphinx`_. With the package installed, the 
 html documentation can be built from the `doc` directory::
 
-  $ cd doc
+  $ cd papi/doc
   $ make html
   
 The documentation will be copied to a directory under `build/sphinx`.
   
 The documentation can be built in different formats. The complete list will appear
 if you type `make`.
- 
+
+Bug reports
+***********
+Please file an issue with the `issue tracker <https://github.com/ppmim/PAPI/issues>`_ on github.
 
 .. _PANIC: http://www.iaa.es/PANIC
 .. _CAHA: http://www.caha.es
@@ -95,4 +72,6 @@ if you type `make`.
 .. _HAWK-I: http://www.eso.org/sci/facilities/paranal/instruments/hawki/
 .. _sphinx: http://sphinx.pocoo.org
 .. _pdf: http://www.iaa.es/~jmiguel/PANIC/PAPI/PAPI.pdf
+.. _openSuSE: http://www.opensuse.org/
+.. _issue tracker
   

@@ -85,8 +85,12 @@ echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
 echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
 echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc
 echo "export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg" >> ~/.bashrc
-echo "export PATH=${PATH}:${PAPI_BIN}" >> ~/.bashrc
 echo "export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}" >> ~/.bashrc
 echo "export PATH=\$PATH:${PAPI_BIN}" >> ~/.bashrc
 
 source ~/.bashrc
+
+echo "--------------------"
+echo "PAPI was installed !"
+echo "Run 'papi --test' to check all is succesful installed."
+echo "------------------------------------------------------"

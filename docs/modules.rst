@@ -13,29 +13,28 @@ as they are needed in order to accomplish a complete data reduction of a set of 
 
 .. tabularcolumns:: |r|l|
 
-====================     ===========
-Module                   Description
-====================     ===========
-``papi``                 Main pipeline script to start the entire data reduction process 
-``applyDarkFlat``        Finds out the best Focus value from a focus series
-``astrowarp``            Creates final aligned and coadded frame using SEx, SCAMP and SWARP 
-``calBPM``               Creates a master Bad Pixel Mask from a set of darks and flats calibration files
-``calCombineFF``         Combine a dome Flat-field and a sky Flat-field into a new Flat-field
-``calDark``              Creates a master dark by combination of a dark sequence
-``calDarkModel``         Creates a master dark model from a dark series
-``calDomeFlat``          Creates a master Dome Flat 
-``calSuperFlat``         Creates a master Super Flat from a set of object or sky frames
-``calTwFlat``            Creates a master Twilight Flat
-``calGainMap``           Creates a Gain Map from any master flat
-``calNonLinearity``      Corrects the images pixel values for non-linearity (TBC)
-``dxtalk``               Removes cross-talk spots from input images
-``makeobjmask``          Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
-``photometry``           Performs a photometric calibration comparison with 2MASS
-====================     ===========
-
-.. tabularcolumns:: |r|l|
-
-.. index:: setup, sqlite
+=======================     ===========
+Module                      Description
+=======================     ===========
+``papi``                    Main pipeline script to start the entire data reduction process 
+``applyDarkFlat``           Finds out the best Focus value from a focus series
+``astrowarp``               Creates final aligned and coadded frame using SEx, SCAMP and SWARP 
+``calBPM``                  Creates a master Bad Pixel Mask from a set of darks and flats calibration files
+``calCombineFF``            Combine a dome Flat-field and a sky Flat-field into a new Flat-field
+``calDark``                 Creates a master dark by combination of a dark sequence
+``calDarkModel``            Creates a master dark model from a dark series
+``calDomeFlat``             Creates a master Dome Flat 
+``calSuperFlat``            Creates a master Super Flat from a set of object or sky frames
+``calTwFlat``               Creates a master Twilight Flat
+``calGainMap``              Creates a Gain Map from any master flat
+``correctNonLinearity``     Corrects the images pixel values for non-linearity
+``dxtalk``                  Removes cross-talk spots from input images
+``makeobjmask``             Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
+``photometry``              Performs a photometric calibration comparison with 2MASS
+``solveAstrometry``         Performs a astrometric calibration using Astrometry.net and 42xx index files
+``remove_cosmics``          Detect and clean cosmic ray hits on images based on Pieter van Dokkum's L.A.Cosmic algorithm.
+``eval_focus_serie``        Estimate the best focus value of a focus exposures
+=======================     ===========
 
 
 ``papi``
@@ -508,7 +507,58 @@ Usage::
 Example::
 
     $ photometry.py -i /data/reduced.fits -o /tmp/calibration.pdf
-    
+
+``correctNonLinearity``
+***********************
+Performs the non-linearity correction of the PANIC raw data files using the 
+proper NL-Model (FITS file).
+
+Usage::
+  
+  Options:
+    -h, --help            show this help message and exit
+    -m MODEL, --model=MODEL
+                          FITS MEF-cube file of polinomial coeffs (c4, c3, c2, c1).
+    -s SOURCE_FILE_LIST, --source=SOURCE_FILE_LIST
+                          Source file list of FITS files to be corrected.
+    -o OUT_DIR, --out_dir=OUT_DIR
+                          filename of out data file (default=/tmp)
+    -S SUFFIX, --suffix=SUFFIX
+                          Suffix to use for new corrected files.
+    -f, --force           Force Non-linearity correction with no check of headervalues (NCOADD, DATE-OBS, DETROT90, ...
+
+
+
+``solveAstrometry``
+*******************
+Performs the astrometric calibration of a set of images, in principle previously 
+reduced, but not mandatory; Astromety.net tool is used.
+
+Options:
+
+  -h, --help            show this help message and exit
+  -s SOURCE_FILE, --source=SOURCE_FILE
+                        Source file list of data frames. It can be a file or directory name.
+  -o OUTPUT_DIR, --output_dir=OUTPUT_DIR
+                        Place all output files in the specified directory [default=/tmp]
+  -p PIXEL_SCALE, --pixel_scale=PIXEL_SCALE
+                        Pixel scale of the images
+  -r, --recursive       Recursive subdirectories (only first level)
+
+
+``remove_cosmics``
+******************
+Remove the cosmic ray hits in the input image.
+
+Options:
+
+  -h, --help            show this help message and exit
+  -i INPUT_IMAGE, --input_image=INPUT_IMAGE
+                        input image to remove cosmics
+  -o OUTPUT_IMAGE, --output=OUTPUT_IMAGE
+                        output filename (default = without_cosmics.fits)
+  -O, --overwrite       overwrite the original image with the corrected one
+  -m, --mask            If true, the mask with cosmics detected and removed is written into a FITS file.
 
 .. _astromatic: http://www.astromatic.net/
 .. _SExtractor: http://www.astromatic.net/software/sextractor
