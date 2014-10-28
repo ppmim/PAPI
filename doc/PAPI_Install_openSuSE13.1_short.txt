@@ -1,4 +1,4 @@
-Last Update: 03-Mar-2014
+Last Update: 22-Oct-2014
 
 ========================================
 PANIC SOFTWARE INSTALLATION INSTRUCTIONS (under openSUSE13.1)
@@ -7,13 +7,23 @@ PANIC SOFTWARE INSTALLATION INSTRUCTIONS (under openSUSE13.1)
 Summary
 *******
 
-1-GEIRS
+0-System
+  0.1 Network interfaces
+  0.2 NTP Config
+  0.3 Proxy Config
+  0.4 Interfaces
+      0.4.1 Telescopes
+      0.4.2 CAHA Archive
+      0.4.3 Dome Flat Lamps 
 
-2-OT
+
+1-GEIRS (see PANIC - GEIRS Installation and User's Manual)
+
+2-OT (see PANIC - OT Installation and User's Manual)
   2.1 Netbeans 7.0
   2.2 Java 1.7u1 ??
 
-3-PAPI
+3-PAPI (see PANIC - PAPI Installation and User's Manual)
   3.1 PAPI sources
   3.2 Python v2.7.5 and modules (numpy, scipy, matplotlib, PyQt4, ...)
   3.3 Astromatic suite (SExtractor, SCAMP, SWARP)
@@ -39,7 +49,59 @@ openSuSE 13.1-64 bit
 ************
 ** SYSTEM **
 ************
--) NTP Config
++) Network interfaces
+
+The Dell Broadcom BCM5720 Quad-port 1 GB Network card of the PANIC computer is 
+configured as follow:
+
+CA2.2m computer
+---------------
+Port  -   IP
+em1   -   150.214.222.119 (main IP address - panic22.caha.es)
+em2/3 -   150.214.222.120 (bonding for CAHA Archive; mode=balance_rr - panic22b.caha.es)
+em4   -   192.168.70.2 (private network for ROE/MOCON/MOXA - panic22p.caha.es)
+
+CA3.5m computer
+---------------
+Port  -   IP
+em1   -   150.214.222.121 (main IP address - panic35.caha.es)
+em2/3 -   150.214.222.122 (bonding for CAHA Archive; mode=balance_rr - panic35b.caha.es)
+em4   -   192.168.70.5 (private network for ROE/MOCON/MOXA - panic35p.caha.es)
+
+
+These configuration can be done from the YaST (Network Devices > Network Settings)
+or manually editing the next files:
+
+/etc/resolv.conf
+/etc/sysconfig/network/config
+/etc/sysconfig/network/ifcfg-em[1,2,3,4]
+/etc/sysconfig/network/ifcfg-bond0
+/etc/sysconfig/network/routes
+/etc/sysconfig/proxy
+/etc/sysconfig/postfix
+/etc/hosts
+/etc/HOSTNAME
+
+After seting up the configuration, it is recommended to reboot the system.
+
+
+
+PANIC Hardware (private VLAN 70)
+--------------------------------
+panicmoxa.caha.es  - (192.168.70.10)
+panicmocon.caha.es - (192.168.70.20)
+panicroe.caha.es   - (192.168.70.30)
+
+Network devices
+---------------
+Masks: 255.255.255.0
+DNS: 150.214.222.10
+Gateways: 150.214.222.1 / 192.168.70.1  
+Proxy: derfel.caha.es:3128
+NTP server: derfel.caha.es
+
++) NTP Config
+
 > zypper install ntp
 > sudo chkconfig --add ntp
 > sudo service ntp status|start
@@ -48,6 +110,8 @@ Add to /etc/ntp.conf next lines for NTP server:
 
 ## IAA
 server ntp.iaa.csic.es burst iburst
+## CAHA
+server derfel.caha.es burst iburst
 ## Spain - es.pool.ntp.org
 server 1.es.pool.ntp.org iburst
 server 1.europe.pool.ntp.org iburst
@@ -59,7 +123,198 @@ server 1.opensuse.pool.ntp.org iburst
 server 2.opensuse.pool.ntp.org iburst
 server 3.opensuse.pool.ntp.org iburst
 
- 
+
++) Proxy Config
+
+1. Add to /etc/sysconfig/proxy the next configuration for the proxy:
+
+PROXY_ENABLED="yes"
+HTTP_PROXY="http://derfel.caha.es:3128"
+
+2. In addition, for the OT and SCAMP applications it is need to setup the shell 
+with the next variables:
+
+export http_proxy=derfel.caha.es:3128
+export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'
+
+
++) Crontab Config (see 2.5.6 of GEIRS manual)
+For the automated inclusion of temperatures and pressures of the 2 temperature 
+channels of a LakeShore controller, the 8 temperature channels of a LakeShore 
+monitor and of one Pfeier pressure in GEIRS(FITS output and GUI) the next lines
+are required in the crontab:
+
+10 12 * * * export CAMHOME=${HOME}/GEIRS ; cd $CAMHOME/log ; ./glogRotate.sh
+*/3 * * * *  GEIRS/scripts/panictempress -i 192.168.70.10 >> GEIRS/log/panictemp.log 2> GEIRS/log/panictemp.err
+
+On panic35, idem but:
+1-58/3 * * * * GEIRS/scripts/panictempress -i 192.168.70.10 >> GEIRS/log/panictemp.log 2> GEIRS/log/panictemp.err
+to prevent problems when polling at the same time from two machines
+
++) FTP Config
+
+For the CAHA Archive, the PANIC computer must have installed and setted up an
+FTP server. Next steps must be followed:
+
+1. Install vsftp (Very Secure FTP Daemon)
+  
+   > zypper install vsftpd
+   > zypper install yast2-ftp-server
+
+2. Setting up the FTP server with Yast:
+
+If the YaST FTP Server module is not available in the system, install the yast2-ftp-server package.
+
+To configure the FTP server using YaST, follow these steps:
+
+Open YaST Control Center and choose Network Services > FTP Server or run the yast2 ftp-server command as root.
+
+If there is not any FTP server installed in your system, you will be asked which server to install when the YaST FTP Server module starts. Choose a server and confirm the dialog. If there are two servers installed, choose the preferred server and click OK.
+
+In the Start-Up dialog, configure the options for starting of the FTP server. For more information, see Section 31.1, Starting the FTP Server.
+
+In the General dialog, configure FTP directories, welcome message, file creation masks and various other parameters. For more information, see Section 31.2, FTP General Settings.
+
+In the Performance dialog, set the parameters that affect the load on the FTP server. For more information, see Section 31.3, FTP Performance Settings.
+
+In the Authentication dialog, set whether the FTP server should be available for anonymous and/or authenticated users. For more information, see Section 31.4, Authentication.
+
+In the Expert Settings dialog, configure the operation mode of the FTP server, SSL connections and firewall settings. For more information, see Section 31.5, Expert Settings.
+
+Press Finish to save the configurations.
+
+
+*************************
+** Telescope Interface **
+*************************
+The telescope interface of CAHA telescopes (2.2m and 3.5m) is EPICS-based and it
+is composed by a set of Tcl/Tk scripts. Those scripts use the OAGTclTk library to
+interac with the EPICS systems. That library substitute the old caTCL EPICS 
+extension (et_wish). The library can be get from next site:
+
+http://www.aps.anl.gov/Accelerator_Systems_Division/Accelerator_Operations_Physics/installationGuide_Linux.shtml
+
+1. Install the OAGTclTk library:
+
+>rpm -ivvl OAGTclTk-1.21-1.openSUSE.12.3.x86_64.rpm
+
+2. Copy the TECS scrtips:
+
+> mkdir $HOME/TECS/scripts
+> scp -av user@source.caha.es:TECS/scripts $HOME/TECS/scripts
+
+3. Add the TELESCOPE variable to the shell:
+
+export TELESCOPE=CA2.2m (or CA3.5m)
+
+Actually, that variable is not required for GEIRS anymore, as it is set on the 
+after the interactive selection in the GEIRS GUI. However, the command line 
+scripts (t_xxxx) still need that variable defined on the shell.
+
+4. Add the TECS_SCRIPT variable to the shell. It is used by GEIRS when calling
+to TECS scripts.
+
+export TECS_SCRIPT=$HOME/TECS/scripts
+
+
+*******************************
+** Dome flat lamps interface **
+*******************************
+- Requirements: rsh package installed
+
+> zypper install rsh
+
+- Under ~/GEIRS/scripts directory is the lamp.sh script. That script call
+remotely (rsh) the 'rflats' procedure on ultra3 or ultra1.
+
+
+The lamp interface with the PANIC system is implemented throught the RSH protocol.
+A remote procedure is called on ultra3 (CA2.2m) or ultra1 (CA3.5m) as follow:
+
+rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats STATUS
+
+This call will return the flat field lamps status.
+
+The command syntax is nearly the same as for the old flats command. The only
+difference is  rflats  includes the  STATUS  argument:
+
+rflats [ ALLOFF || STATUS ] || [ L<x>  ON || OFF [i] ]
+
+Where:
+x   is the lamp number (from 1 to 5)
+i   is the intensity (0-9) of lamp 5
+
+When lamp 5 is set to ON, you MUST select an intensity from 0 to 9
+All arguments are not case sensitive except ALLOFF and STATUS
+which must be upper case in both cases
+
+If called from rsh, the command takes about 2-3 seconds for it
+execution.
+
+rflats' return could be:
+
+0  -->  Command completed successfully.
+1  -->  Command could not be finished successfully. This could be due to a communication problem.
+xxxxxn -->  Exit from STATUS argument. First five bits (xxxxx) correspond with 
+lamps 1 to 5. If 0, the associated lamp is off, while if 1, the lamp is on. The
+last bit (n) is the lamp 5 intensity, and could be from 0 to 9.
+Once an intensity is selected, this intensity remains inside the registry even 
+if the lamp 5 is off, so an exit like 000007 is totally correct. This indicates
+that although lamp 5 is off, the last intensity it had was intensity 7.
+
+ERRORS [10-21]:
+
+10  -->  Not enough arguments
+11  -->  First argument is not ok (Must be L<x>  0<x<5)
+12  -->  First argument is not ok (first digit must be L)
+13  -->  First argument is not ok (Second digit must be
+0<x<5)
+14  -->  Second argument is not ok
+15   -->  Not enough arguments for lamp 5 or incorrect
+intensity
+16  -->  Cannot check if FFL is working
+17  -->  FFL is working and blocking serial port
+18  -->  Configuration file rflats.conf not found
+19  -->  Not allowed (user/host)
+20  -->  Cannot open Serial Port
+21  -->  Cannot initialize Serial Port
+
+The argument ALLOFF doesn't return anything. This is because the PLC is
+returning nothing at all. My suggestion is to ask for STATUS imediately
+after ALLOFF. The exit shoul be some thing like 00000n (where n is the lamp
+5 last intensity)
+
+Finally, some real examples from monster (user guindos):
+
+monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats STATUS
+000009
+
+(All lamps are off. Last intensity for lamp 5 was 9)
+
+monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats l4 on
+0
+
+(set lamp 4 to ON. The return 0 indicates all went ok)
+
+monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats l5 on 4
+0
+
+(set lamp 5 to ON with an intensity of 4. Return shows ok)
+
+monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats STATUS
+000114
+
+(STATUS shows lamps 4 and 5 are on, and lamp 5 has intensity 4)
+
+monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats ALLOFF
+
+(All to OFF - No exit status from PLC)
+
+monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats STATUS
+000004
+
+(STATUS shows all lamps are off and last intensity of lamp 5)
+
  
 ***********
 ** GEIRS **
@@ -729,7 +984,8 @@ Files to patch:
 15. PAPI SOURCES
 ================
 
-git clone https://github.com/ppmim/PAPI#
+git clone https://github.com/ppmim/PAPI.git ~/papi (public)
+git clone git@github.com:ppmim/PAPI.git ~/papi
 git clone jmiguel@feynman.iaa.es:/home/jmiguel/DEVELOP/papi.git
 
 > cd papi/irdr
@@ -771,7 +1027,7 @@ export QT_GRAPHICSSYSTEM=native
 #CA_FFLTEST=$PAPI_HOME/trunk/simu/caha/ffltest
 #AUPLAY=/usr/bin/play
 #FLAT_COMMAND=$PAPI_HOME/trunk/simu/caha/flats
-#TECS_SCRIPT=$PAPI_HOME/trunk/simu/caha
+TECS_SCRIPT=$HOME/TECS/scripts
 #PANIC_UTIL=$PAPI_HOME/trunk/MIDAS
 #PANIC_SCI=$PAPI_HOME/trunk/MIDAS
 
@@ -795,6 +1051,8 @@ LEMON requirements
 
 Remote Control
 ==============
+x2go
+====
 1) Add x2go repository
 
 > zypper ar http://download.opensuse.org/repositories/X11:/RemoteDesktop:/x2go/openSUSE_13.1 x2go
@@ -804,3 +1062,48 @@ Remote Control
 > zypper install x2goserver
 > zypper install x2goclient
 
+VNC
+===
+Option 1
+--------
+See: http://activedoc.opensuse.org/book/opensuse-reference/chapter-5-remote-access-with-vnc
+
+From the KDE desktop, select the YaST icon, enter the root password, and select OK; then select Network Services > Remote Administration.
+
+Select Allow Remote Administration; then select Finish
+
+It installs a lot of x11 packages, but finally it does noe work !!! 
+Se supone que eso instala el vncserver, que es un script 
+para lanzar una servidor Xvnc (un servidor “especial”), un x11 virtual. 
+
+
+Option 2
+--------
+
+Instalación de VNC server en panic22:
+
+
+1) comprobar que el paquete x11vnc-xx-xx está instalado
+rpm -qa |grep x11vnc
+2) Creamos el password :
+ > x11vnc -storepasswd
+3) Lo podemos lanzar simplemente con:
+> x11vnc -display :0
+o mejor
+> /usr/bin/x11vnc -forever -rfbport 5900 -rfbauth /home/panic/.vnc/passwd -o /home/panic/.vnc/x11vnc.log -display :0
+
+
+y para que arranque cada vez que entra el usuario panic,
+
+echo "/usr/bin/x11vnc -forever -rfbport 5900 -rfbauth ~/.vnc/passwd -o ~/.vnc/x11vnc.log  -display :0" > ~/.kde4/Autostart/x11vnc.sh
+
+chmod +x ~/.kde4/Autostart/x11vnc.sh
+
+
+* You can test the startup script:
+
+~/.kde4/Autostart/x11vnc.sh
+
+También habría que comprobar que en el Firewall está abierto el puerto 5900 (display 0), 5901 (display 1), etc …
+
+/sbin/SuSEfirewall2 stop | start | stop

@@ -42,52 +42,43 @@ Then, the listing of the PAPI command line options::
 
     Usage: papi.py [OPTION]... DIRECTORY...
     
-    This is the main module of the PANIC data reduction system (PAPI)
-    
+    This is PAPI, the PANIC PIpeline data reduction system - IAA-CSIC - Version 1.2.20141023145908
+
     Options:
       --version             show program's version number and exit
       -h, --help            show this help message and exit
       -c CONFIG_FILE, --config=CONFIG_FILE
-                            Config file for the PANIC Pipeline application.
-                            If not specified, './config_files/papi_suse11.cfg' is
-                            used.
+                            Config file for the PANIC Pipeline application.If not specified, './config_files/papi.cfg' is used.
       -C, --Check           Check if versions of PAPI modules are right.
       -s SOURCE, --source=SOURCE
-                            Source file list of data frames. It can be a file
-                            or directory name.
+                            Source file list of data frames. It can be a fileor directory name.
       -o OUTPUT_FILE, --output_file=OUTPUT_FILE
                             Final reduced output image
       -t TEMP_DIR, --temp_dir=TEMP_DIR
                             Directory for temporal files
       -d OUTPUT_DIR, --out_dir=OUTPUT_DIR
                             Output dir for product files
-      -r ROWS, --rows=ROWS  Use *only* files of the source file-list in the range
-                            of rows specified (0 to N, both included)
+      -r ROWS, --rows=ROWS  Use _only_ files of the source file-list in the rangeof rows specified (0 to N, both included)
       -R, --recursive       Does recursive search for files in source directory
-      -l, --list            Generate a list with all the source files read from
-                            the source only sorted by MJD
+      -l, --list            Generate a list with all the source files read fromthe source and sorted by MJD
       -M REDUCTION_MODE, --red_mode=REDUCTION_MODE
-                            Mode of data reduction to do (lemon|quick|science)
+                            Mode of data reduction to do (quick|science|lab|lemon|quick-lemon).
       -m OBS_MODE, --obs_mode=OBS_MODE
                             Observing mode (dither|ext_dither|other)
       -p, --print           Print detected sequences in the Data Set
       -S SEQ_TO_REDUCE, --seq_to_reduce=SEQ_TO_REDUCE
-                            Sequence number to reduce. By default,
-                            all sequences found will be reduced.
+                            Sequence number to reduce. By default, all sequences found will be reduced.
       -D MASTER_DARK, --master_dark=MASTER_DARK
-                            master dark to subtract
+                            Master dark to subtract
       -F MASTER_FLAT, --master_flat=MASTER_FLAT
-                            master flat to divide by
-      -b BPM_FILE, --bpm_file=BPM_FILE
-                            bad pixel mask file
+                            Master flat to divide by
+      -B BPM_FILE, --bpm_file=BPM_FILE
+                            Bad pixel mask file
       -g GROUP_BY, --group_by=GROUP_BY
-                            kind of data grouping (based on) to do with the
-                            dataset files (ot |filter)
-      -k, --check_data      if true, check data properties matching (type, expt,
-                            filter, ncoadd, mjd)
-      -v, --verbose         Verbose mode [default]
-
+                            kind of data grouping (based on) to do with thedataset files (ot |filter)
+      -k, --check_data      if true, check data properties matching (type, expt, filter, ncoadd, mjd)
   
+
 Input FITS data files
 *********************
 GEIRS is capable of saving the frames in different modes (integrated, FITS-cubes,

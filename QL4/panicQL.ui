@@ -43,7 +43,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -1875,7 +1875,7 @@
         <string>Apply BPM</string>
        </property>
        <property name="checked">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
       <widget class="QCheckBox" name="checkBox_pre_subDark_FF">
@@ -1942,7 +1942,7 @@
         <string>Correct for non-linearity</string>
        </property>
        <property name="checked">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
       <widget class="QComboBox" name="comboBox_detector">
@@ -2085,14 +2085,14 @@
     </widget>
     <widget class="QWidget" name="tab">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <attribute name="title">
       <string>Calibrations</string>
      </attribute>
      <widget class="QPushButton" name="pushButton_Darks_add">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2152,7 +2152,7 @@
      </widget>
      <widget class="QPushButton" name="pushButton_Darks_del">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2244,7 +2244,7 @@
      </widget>
      <widget class="QPushButton" name="pushButton_master_mask">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2260,7 +2260,7 @@
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterMask">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2276,7 +2276,7 @@
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterFlat">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2292,7 +2292,7 @@
      </widget>
      <widget class="QLineEdit" name="lineEdit_masterDark">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2308,7 +2308,7 @@
      </widget>
      <widget class="QPushButton" name="pushButton_master_flat">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2324,7 +2324,7 @@
      </widget>
      <widget class="QPushButton" name="pushButton_master_dark">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2340,7 +2340,7 @@
      </widget>
      <widget class="QPushButton" name="pushButton_createMDark">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2430,7 +2430,7 @@
      </widget>
      <widget class="QPushButton" name="pushButton_test1">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -2466,7 +2466,7 @@
      </widget>
      <widget class="QListWidget" name="listBox_darks">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="geometry">
        <rect>

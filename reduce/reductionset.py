@@ -436,7 +436,7 @@ class ReductionSet(object):
         http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         
         """
-        #Local DataBase (in memory)
+        # Local DataBase (in memory)
         log.info("Initializing Local DataBase")
         instrument = self.config_dict['general']['instrument'].lower()
         try:
@@ -456,7 +456,7 @@ class ReductionSet(object):
         
         self.db.ListDataSet()
         
-        #External DataBase (in memory)
+        # External DataBase (in memory)
         if len(self.ext_db_files)>0:
             log.info("Initializing External DataBase")
             try:
@@ -884,6 +884,10 @@ class ReductionSet(object):
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
         
+        # Init the DB (ext_db is always initialited whether db!=None)  
+        if self.db==None: 
+            self.__initDB()
+
         # DARK - Does require equal EXPTIME Master Dark ???
         # First, look for a DARK_MODEL
         master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) 

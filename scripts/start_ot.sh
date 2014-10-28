@@ -1,3 +1,4 @@
 #!/bin/bash
-java -jar /home/panic/DEVELOP/OT/dist/PANIC\ Observation\ Tool.jar
+OT_HOME=$HOME/OT
+java -jar $OT_HOME/dist/PANIC\ Observation\ Tool.jar
 
