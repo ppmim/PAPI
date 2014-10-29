@@ -5351,9 +5351,30 @@ necesitamos si se creaba.
 10-Oct-2014 
 -----------
 
+14al16-Oct-2014
+---------------
+- Test de software en CAHA
 
+
+23-Oct-2014 
+-----------
+- Modifico datacollector.py para que contemple el nuevo fichero de log ~/tmp/fitsGeirsWritten
+en lugar del ~/tmp/fitsfiles.corrected. El formato es casi igual, excepto que ahora
+es usa un formato algo diferente para el timestamp. 
+
+
+24-Oct-2014 
+-----------
+- Modifico el panic_setup.sh para el procedimiento de instalación de PAPI; hago
+las pruebas con el usuario staff en udit22.
+- Modifico papi.py para que cuando no lo demos parámetros muestre el help !
+- Actualizo documentación de PAPI...
+
+
+
+(P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
+modificar ficheros sensibles ni los fuentes del software de PANIC.
 (P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
-
 
 
 
@@ -5752,7 +5773,6 @@ NEXT TODOs
 
 (P)- Elaborar procedimiento de Test para CAHA !!
 (P)- Elaborar pruebas/Test PAPI/QL durante el commissioning!
-(P)- Instalar x2go en panic2 y ver el problema del ds9
 
 - ¿ cómo de importante es el gainmap en skyfilter ?
 - Añadir en el QL una vista para las estadísticas de las imágenes (mean, median, std, fwhm)
@@ -6179,41 +6199,13 @@ This way, the reached accuracy ranges from 0.1 to 0.3 pixels (TBC).
 
 
 
-
-
-
-------
-
-http://sourceforge.net/projects/blt/files/BLT/BLT%202.4z/BLT2.4z.tar.gz
-./configure --with-tcl=/usr/lib64/ --with-cflags="-fPIC"
-
-
-Cabecera scripts tcl con interfaz EPICS
-
-#!/usr/bin/oagwish
-#
-#start ohne window
-#
-set auto_path [linsert $auto_path 0 /usr/local/oag/apps/lib/$env(HOST_ARCH)]
-set auto_path [linsert $auto_path 0 /usr/local/oag/lib_patch/$env(HOST_ARCH)]
-
-package require ca
-
-
 COSAS A PREPARAR PARA EL COMMISSIONING
 ======================================
-- Quitar tarjeta OPTPCI del panic2 y eviarla para MPIA (o mejor dársela en CAHA a alguién del MPIA)
-- Empaquetar máquina de PANIC y dejarla preparad para sólo llevarla a CAHA.
 - Limpiar la GUI del QL !!! dejar sólo lo que funciona.
-*- Preparar batería de pruebas de PAPI en CAHA !! 
-*- Instalar x2go en panic2
-*- EPICS + oagwish en panic2 ??
-- Copiar todo aquello necesario en HD y portatil
+- Preparar batería de pruebas de PAPI en CAHA !! 
+- Instalar x2go en panic2
 - Hacer copias de seguridad !!
-- Imprimir documentación necesaria (GEIRS, EPICS, ...)
-*- Preparar portatil para CAHA: tiene openSuSE 12.2 y Ubuntu. En principio debe 
-ser suficiente.
-*- Terminar documentación de PAPI !!
+- Terminar documentación de PAPI !!
 
 
 TESTs QL en CAHA
@@ -6243,11 +6235,14 @@ TESTs QL en CAHA
 
 TODO @ CAHA
 ===========
-- Update PAPI/QL on panic1
+*- Update PAPI/QL on panic1
 - Sync panic1 & panic2
-- Config proxy web: check OT, SCAMP, Aladin Catalogs
-- config NTP sync
+*- Config proxy web: check OT, SCAMP, Aladin Catalogs
+*- config NTP sync
 - Create obs22 account and install software (GEIRS/OT/PAPI)
-
 - DOME control from OT: Dome Flat-Fields
-T
+- Absolute focus at CA2.2m
+- t_posit ar dec epoch
+- Movimientos relativos telescopio: verificar que se ejecutan correctamente (eg. +100,+100)
+- Pruebas archivo CAHA: definir configuración FTP server y usuario, etc...
+- Simulación observación remota desde Biblioteca !

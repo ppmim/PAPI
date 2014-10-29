@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# The order of the Lake Shore channels is
+# (PANIC CE technical manual of March 2014)
+# 1 = LS218 cold plate
+# 2 = LS218 lens mount 1
+# 3 = LS218 charcoal
+# 4 = LS218 N2 detector tank
+# 5 = LS218 filter wheel housing
+# 6 = LS218 detector preamplifiers
+# 7 = LS218 N2 main tank
+# 8 = LS218 heat shield
+# 9 = LS332 detector base plate
+# 10 = LS332 detector focal plane
+# column 1=date, column2=time column 3=pressure 1, column 4= pressure 2
+# and columns 5 to columns 12 are LakeShore LS218S temperatures 1 to 8.
+# Columns 13 and 14 are LakeShore LS332 temperatures A and B.
+
+cd $CAMHOME/INFO
+xterm -geometry 70x2 -e gnuplot $CAMHOME/INFO/tmp_gp.panic &
+xterm -geometry 120x20 -e tail -f -n 20 $CAMHOME/log/panictemp.log &

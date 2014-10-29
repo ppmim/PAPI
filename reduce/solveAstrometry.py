@@ -282,7 +282,7 @@ if __name__ == "__main__":
     # Get and check command-line options
     usage = "usage: %prog [options] arg1 arg2 ..."
     desc = """Performs the astrometric calibration of a set of images,
-in principle previously reduced, but not mandatory.
+in principle previously reduced, but not mandatory; Astromety.net tool is used.
 
 """
     parser = OptionParser(usage, description=desc)

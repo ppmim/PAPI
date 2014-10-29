@@ -99,8 +99,24 @@ The resulting object mask is extended by a certain fraction to reject also
 the undetected object tails. 
   
 
- 
+Crosstalk
+*********
+Crosstalk can in general be corrected well, provided that it is spatially stable. 
+The latter is not always the case for near-IR detector arrays. In particular 
+recent HAWAII2 sensors with multiple parallel readout sections can show crosstalk 
+in form of compact positive and negative ghost images whose amplitude varies between 
+readout sections. PAPI has a optional de-crosstalk module that assumes that the 
+amplitude is the same, therefore the correction will only partially remove the 
+effect (if at all). If you know in advance that this will be a problem for your 
+science case, then consider choosing different camera rotator angles for your observations.
 
+
+Extended Objects
+****************
+If your targets are really extended and/or very faint, then you should seriously 
+consider observing blank SKY fields. They will be recognized and automatically 
+used in the correct manner once identified by PAPI. No additional settings 
+have to be made. You should check though that the images have correct header keys.
 
 
 .. _astromatic: http://www.astromatic.net/

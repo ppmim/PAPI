@@ -294,7 +294,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #                                    self.file_pattern , self.new_file_func)
         
         if os.path.basename(self.m_sourcedir)=='save_CA2.2m.log': s_mode = 'geirs-file'
-        elif os.path.basename(self.m_sourcedir)=='fitsfiles.corrected': s_mode = 'geirs-file2'
+        elif os.path.basename(self.m_sourcedir)=='fitsGeirsWritten': s_mode = 'geirs-file2'
         else: s_mode = 'dir'
         
         self.dc = datahandler.DataCollector(s_mode, self.m_sourcedir, 
@@ -1553,6 +1553,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem.setText (5, str(object))
                 elem.setText (6, str(ra))
                 elem.setText (7, str(dec))
+            
+            # In addition, if "ALL" is selected, we show the OUTS as well
+            if str(self.comboBox_classFilter.currentText())=="ALL":
+                elem = None
+                fileList = self.outputsDB.GetFilesT("ANY")
+                db = self.outputsDB
+                for file in fileList:
+                    elem = QTreeWidgetItem( self.listView_dataS )
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
+                     dec, object, mjd)=db.GetFileInfo(file)
+                    elem.setText (0, str(file))
+                    elem.setText (1, str(type))
+                    elem.setText (2, str(filter))
+                    elem.setText (3, str(texp))
+                    elem.setText (4, str(date)+"::"+str(ut_time))
+                    elem.setText (5, str(object))
+                    elem.setText (6, str(ra))
+                    elem.setText (7, str(dec))
             
             if elem:
                 self.listView_dataS.setCurrentItem(elem)

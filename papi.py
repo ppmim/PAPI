@@ -78,7 +78,7 @@ def main(arguments = None):
     # Get and check command-line options
     
     description = \
-    "This is the main module of the PANIC data reduction system (PAPI) "\
+    "This is PAPI, the PANIC PIpeline data reduction system "\
     "- IAA-CSIC - Version %s"%__version__
 
     #wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
@@ -175,9 +175,13 @@ def main(arguments = None):
                   "filter, ncoadd, mjd)")
     
         
-    (init_options, i_args) = parser.parse_args (args = arguments)
+    (init_options, i_args) = parser.parse_args(args = arguments)
     
-    
+    # If no arguments, print help
+    if len(arguments)<1:
+       parser.print_help()
+       sys.exit(0)
+
     # Check required modules and versions
     if init_options.check_modules:
         misc.check_papi_modules.check_modules()
@@ -209,7 +213,9 @@ def main(arguments = None):
     
     #print "options = ",options
     
-    if i_args: # i_args is the leftover positional arguments after all options have been processed
+    # 'i_args' is the leftover positional arguments after all options have been 
+    # processed.
+    if i_args: 
         parser.print_help()
         sys.exit(2) 
     
