@@ -1554,6 +1554,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem.setText (6, str(ra))
                 elem.setText (7, str(dec))
             
+            # In addition, if "ALL" is selected, we show the OUTS as well
+            if str(self.comboBox_classFilter.currentText())=="ALL":
+                elem = None
+                fileList = self.outputsDB.GetFilesT("ANY")
+                db = self.outputsDB
+                for file in fileList:
+                    elem = QTreeWidgetItem( self.listView_dataS )
+                    (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
+                     dec, object, mjd)=db.GetFileInfo(file)
+                    elem.setText (0, str(file))
+                    elem.setText (1, str(type))
+                    elem.setText (2, str(filter))
+                    elem.setText (3, str(texp))
+                    elem.setText (4, str(date)+"::"+str(ut_time))
+                    elem.setText (5, str(object))
+                    elem.setText (6, str(ra))
+                    elem.setText (7, str(dec))
+            
             if elem:
                 self.listView_dataS.setCurrentItem(elem)
                 
