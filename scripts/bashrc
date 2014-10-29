@@ -30,10 +30,16 @@ test -s ~/.alias && . ~/.alias || true
 alias panic='cd ${PAPI_HOME}'
 alias data='cd /data1/'
 
+### GEIRS environment ###
+###
+# In case the operator has already set TELESCOPE in the shell,
+# GEIRS accept this. Otherwise, the operator must select on the
+# GEIRS init window the right telescope. Note: It does not move the cold stop.
+export TELESCOPE="CA3.5m"
+export CAMHOME=${HOME}/GEIRS
 
 ### PAPI environment ###
 ##
-export CAMHOME=${HOME}/GEIRS
 export PAPI_HOME=${HOME}/DEVELOP/papi
 PYTHONPATH=$PYTHONPATH:$PAPI_HOME
 PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_PANIC.cfg
