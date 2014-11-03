@@ -175,7 +175,7 @@ class DataCollector (object):
             # filter out files already detected as bad files
             if file not in self.bad_files_found:
                 try:
-                    fits = datahandler.ClFits(file)
+                    fits = datahandler.ClFits(file, check_integrity=True)
                 except Exception,e:
                     print "[__sortFilesMJD] Error reading file %s , skipped..."%(file)
                     print str(e)
@@ -183,28 +183,6 @@ class DataCollector (object):
                 else:
                     dataset.append((file, fits.getMJD()))
         
-        """            
-        # Now, try to re-read the bad_files_found
-        # In fact the next code is no necessary because it is done in clfits:recognize()
-        sleep_time = 0.0
-        while len(self.bad_files_found)>0 and sleep_time<5.0:
-                sleep_time +=0.5
-                print "[__sortFilesMJD] Start to re-read bad_files_found (sleep_time=%f)"%sleep_time
-                for file in self.bad_files_found:
-                    time.sleep(sleep_time)
-                    try:
-                        fits = datahandler.ClFits(file)
-                        self.bad_files_found.remove(file)
-                        print "[__sortFilesMJD] file successfully re-read !"
-                    except Exception,e:
-                        print "[__sortFilesMJD] Error re-reading file %s , skipped..."%(file)
-                        print str(e)
-                    else:
-                        dataset.append((file, fits.getMJD()))
-        #Files that failed to re-read are discarded for ever
-        self.discarded_files += self.bad_files_found
-        self.bad_files_found = []
-        """
         
         dataset = sorted(dataset, key=lambda data_file: data_file[1])          
         sorted_files = []
@@ -370,8 +348,9 @@ class DataCollector (object):
         # Before adding to dirlist and process the new files, we sort out by MJD
         # Only when mode=dir, because it is supposed in 'file's-modes are already sorted
         if self.mode=="dir":
+            # check of data integrity is also done at sortFilesMJD
             contents = self.__sortFilesMJD(contents)
-        
+            
         # Now loop over the remaining files
         for file in contents:
 
@@ -394,14 +373,16 @@ class DataCollector (object):
                 # Try-to-read the file (only for integrity check)
                 try:
                     # Now, try to read the file
-                    fits = datahandler.ClFits(file)
-                    del fits
+                    if self.mode!="dir": # for dir, it was already done above in __sortFilesMJD()
+                        fits = datahandler.ClFits(file)
+                        del fits
                 except Exception,e:
                     print "[findNewFiles] Error reading file %s , skipped..."%(file)
                     print str(e)
                     self.remove(file)
                     self.bad_files_found.append(file)
                 else:
+                    print "New File to be inserted : %s"%file
                     self.callback_func(file)
                     # Only then, send message to the receiver client
                     #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12

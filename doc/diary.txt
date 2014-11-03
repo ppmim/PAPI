@@ -5371,6 +5371,19 @@ las pruebas con el usuario staff en udit22.
 - Actualizo documentación de PAPI...
 
 
+24-al-27-Oct-2014 
+-----------------
+- @CAHA
+- QL: Modificación para que cuando esté selecionado "ALL" también se muestren 
+los fichero de OUTS. Esto fue una sugerencia de BD y Conchi.
+
+
+
+03-Nov-2014 
+-----------
+- 
+
+
 
 (P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
 modificar ficheros sensibles ni los fuentes del software de PANIC.

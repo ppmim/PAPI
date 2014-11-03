@@ -320,7 +320,7 @@ class ClFits (object):
 
     def recognize(self, retries=5):
      
-        ###log.info("Recognizing file %s" %self.filename)
+        log.info("Recognizing file %s" %self.filename)
 
         # Check the file exists
         if not os.path.exists( self.pathname ):
@@ -346,16 +346,18 @@ class ClFits (object):
             # Turn matching warnings into exceptions
             warnings.simplefilter('error', UserWarning)
             while True:
+                log.debug("FITS integrity check. FILE=%s ITER=%d"%(self.pathname,nTry))
                 try:
                     # First level of checking
-                    found_size = fits_simple_verify(self.pathname)
+                    # found_size = fits_simple_verify(self.pathname)
                     # Now, try to read the whole FITS file
-                    myfits = fits.open(self.pathname, 
-                                     ignore_missing_end=True) # since some problems with O2k files 
+                    myfits = fits.open(self.pathname, mode='readonly', memmap=True,
+                                     ignore_missing_end=False) # since some problems with O2k files 
                 except Exception, e:
+                    log.warning("Error reading FITS : %s"%self.pathname)
                     if nTry<retries:
                         nTry +=1
-                        time.sleep(nTry*0.5)
+                        time.sleep(nTry*1.0)
                         log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
                     else:
                         log.error("Finally, FITS-file could not be read with data integrity:  %s\n %s"%(self.pathname, str(e)))
@@ -853,7 +855,9 @@ class ClFits (object):
             log.error("Error while closing FITS file %s   : %s",
                       self.pathname, str(e))
         
+        log.debug("End of FITS recognition: %s"%self.pathname)
         
+
     def print_info(self):
         print "---------------------------------"
         print "Fichero   : ", self.pathname

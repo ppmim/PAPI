@@ -789,12 +789,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
                 # Activate DataCollector timer                 
                 if self.timer_dc!=None:
+                    self.timer_dc.setSingleShot(True)
                     self.timer_dc.start(1500)
                 else:
                     self.timer_dc = QTimer( self )
                     self.connect( self.timer_dc, 
                                  QtCore.SIGNAL("timeout()"), 
                                  self.checkFunc )
+                    self.timer_dc.setSingleShot(True)
                     self.timer_dc.start(1500) ## 1 seconds continuous timer
                     
             else:
@@ -844,14 +846,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.checkBox_autocheck.isChecked():
             if self.timer_dc !=None and not self.timer_dc.isActive():
                 # Already created in a former user action 
-                self.timer_dc.setSingleShot(False)
+                self.timer_dc.setSingleShot(True)
                 self.timer_dc.start(1500)
             else:
                 ##Create QTimer for the data collector
                 self.timer_dc = QTimer( self )
                 self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), 
                              self.checkFunc )
-                self.timer_dc.setSingleShot(False)
+                self.timer_dc.setSingleShot(True)
                 self.timer_dc.start(1500) ## 1,5 seconds continuous timer
         else:
             self.checkBox_outDir_autocheck.setChecked(False)
@@ -1139,7 +1141,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         typeSeq = ''
         
         # Read the FITS file
-        fits = datahandler.ClFits(filename)
+        fits = datahandler.ClFits(filename, check_integrity=False)
         #only for debug !!
         log.info("Current_FILTER= %s, Last_FILTER=%s, Current_OB_ID=%s, Last_OB_ID=%s",
                  fits.getFilter(), self.last_filter, fits.getOBId(), self.last_ob_id )
@@ -1259,12 +1261,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Receiver function signaled by QTimer 'self.timer_dc' object.
         Funtion called periodically to check for new files.
         """
+        # start_test
+        #for i in range(1000):
+        #    print "I=%d"%i
+        #    time.sleep(0.1)
+        #self.timer_dc.setSingleShot(True)
+        #self.timer_dc.start(1500)
+        #return
+        # end_test
+
         if True:
             self.dc.check()
             if self.checkBox_outDir_autocheck.isChecked():
                 self.dc_outdir.check()
-                    
-    
+
+            log.debug("Activating new DC Timer...")
+            self.timer_dc.setSingleShot(True)
+            self.timer_dc.start(1500)
+
     def getDisplayMode(self):
         """
         Read the 'comboBox_show_imgs' and return the option selected:

@@ -150,7 +150,7 @@ class DataSet(object):
             raise e
         
         try:
-            fitsf = datahandler.ClFits ( filename )
+            fitsf = datahandler.ClFits(filename, check_integrity=False)
         except Exception,e:
             log.exception( "Unexpected error reading FITS file %s" %filename )
             raise e
