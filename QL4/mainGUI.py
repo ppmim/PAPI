@@ -179,6 +179,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:      
             self.m_default_data_dir = os.environ['PANIC_DATA']
             
+        self._fitsGeirsWritten_ = os.environ['HOME']+"/tmp/fitsGeirsWritten"
+        if not os.path.exists(self._fitsGeirsWritten_):
+            self._fitsGeirsWritten_ = "Error: Cannot find ~/tmp/fitsGeirsWritten"
+
         self.m_sourcedir =  self.m_default_data_dir 
         self.m_outputdir = output_dir 
         self.m_tempdir = temp_dir
@@ -789,14 +793,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
                 # Activate DataCollector timer                 
                 if self.timer_dc!=None:
-                    self.timer_dc.setSingleShot(True)
+                    self.timer_dc.setSingleShot(False)
                     self.timer_dc.start(1500)
                 else:
                     self.timer_dc = QTimer( self )
                     self.connect( self.timer_dc, 
                                  QtCore.SIGNAL("timeout()"), 
                                  self.checkFunc )
-                    self.timer_dc.setSingleShot(True)
+                    self.timer_dc.setSingleShot(False)
                     self.timer_dc.start(1500) ## 1 seconds continuous timer
                     
             else:
@@ -817,9 +821,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             return
 
         self.lineEdit_sourceD.setText(dir)
-        self.m_sourcedir=str(dir)
-        filelist=os.listdir(str(dir))
-        filelist=fnmatch.filter(filelist, "*.fit*")
+        self.m_sourcedir = str(dir)
+        filelist = os.listdir(str(dir))
+        filelist = fnmatch.filter(filelist, "*.fit*")
        
         for filename in filelist:
             #print "FILENAME= " , filename
@@ -839,6 +843,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #self.listView_dataS.insertItem(str(filename))
         self.inputsDB.ListDataSet()
 
+    def setGEIRS_Input_slot(self):
+        """Called when check-button for Input GEIRS-file is clicked"""
+        
+        ## Activate or deactivate the autochecking of new files
+        if self.checkBox_geirsFile.isChecked():
+            self.lineEdit_sourceD.setText(self._fitsGeirsWritten_)
+        else:
+            self.lineEdit_sourceD.setText("")
+
+
     def autocheck_slot(self):
         """Called when check-button for Input dir is clicked"""
         
@@ -846,14 +860,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.checkBox_autocheck.isChecked():
             if self.timer_dc !=None and not self.timer_dc.isActive():
                 # Already created in a former user action 
-                self.timer_dc.setSingleShot(True)
+                self.timer_dc.setSingleShot(False)
                 self.timer_dc.start(1500)
             else:
                 ##Create QTimer for the data collector
                 self.timer_dc = QTimer( self )
                 self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), 
                              self.checkFunc )
-                self.timer_dc.setSingleShot(True)
+                self.timer_dc.setSingleShot(False)
                 self.timer_dc.start(1500) ## 1,5 seconds continuous timer
         else:
             self.checkBox_outDir_autocheck.setChecked(False)
@@ -1261,23 +1275,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Receiver function signaled by QTimer 'self.timer_dc' object.
         Funtion called periodically to check for new files.
         """
-        # start_test
-        #for i in range(1000):
-        #    print "I=%d"%i
-        #    time.sleep(0.1)
-        #self.timer_dc.setSingleShot(True)
-        #self.timer_dc.start(1500)
-        #return
-        # end_test
 
         if True:
             self.dc.check()
             if self.checkBox_outDir_autocheck.isChecked():
                 self.dc_outdir.check()
 
-            log.debug("Activating new DC Timer...")
-            self.timer_dc.setSingleShot(True)
-            self.timer_dc.start(1500)
 
     def getDisplayMode(self):
         """
@@ -1401,8 +1404,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
          
         self.listView_dataS.clear()
-        self.dc.Clear()
-        self.dc_outdir.Clear()
+        if self.dc!=None: self.dc.Clear()
+        if self.dc_outdir!=None: self.dc_outdir.Clear()
         self.inputsDB.clearDB()
         self.outputsDB.clearDB()
 
@@ -1427,10 +1430,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             for ifile in filenames:
                 self.new_file_func(str(ifile), ifFromOut)
         
-        # Due to the trick to avoid the overload of the QL when a full
-        # directory is loaded (see datacollector::findNewFiles) we 
-        # used an extra call with the suffix "__last__" to update the View
-        self.new_file_func(str(ifile+"__last__"), ifFromOut)
+            # Due to the trick to avoid the overload of the QL when a full
+            # directory is loaded (see datacollector::findNewFiles) we 
+            # used an extra call with the suffix "__last__" to update the View
+            self.new_file_func(str(ifile+"__last__"), ifFromOut)
 
     def del_slot(self):
         """     
@@ -1538,7 +1541,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #############################################
             self.listView_dataS.clear()
             db = None
-            if str(self.comboBox_classFilter.currentText())=="ALL":
+            if str(self.comboBox_classFilter.currentText())=="INPUTS":
+                fileList = self.inputsDB.GetFilesT("ANY")
+                db = self.inputsDB
+            elif str(self.comboBox_classFilter.currentText())=="ALL":
                 fileList = self.inputsDB.GetFilesT("ANY")
                 db = self.inputsDB
                 #db.ListDataSet()
@@ -1558,7 +1564,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             for file in fileList:
                 elem = QTreeWidgetItem( self.listView_dataS )
                 (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
-                 dec, object, mjd)=db.GetFileInfo(file)
+                 dec, object, mjd)= db.GetFileInfo(file)
                 elem.setText (0, str(file))
                 elem.setText (1, str(type))
                 elem.setText (2, str(filter))

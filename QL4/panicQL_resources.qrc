@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="my_icon">
+    <file>images/logo_PANIC_100.jpg</file>
+  </qresource>
+</RCC>
