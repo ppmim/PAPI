@@ -1049,7 +1049,7 @@ class Ui_panicQL(object):
         self.lineEdit_queue_size.setToolTip(QtGui.QApplication.translate("panicQL", "Number of task currently queued", None, QtGui.QApplication.UnicodeUTF8))
         self.lineEdit_queue_size.setText(QtGui.QApplication.translate("panicQL", "0", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("panicQL", "#Tasks in the queue", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBox_geirsFile.setToolTip(QtGui.QApplication.translate("panicQL", "Autocheck for new incoming images", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox_geirsFile.setToolTip(QtGui.QApplication.translate("panicQL", "Auto-select GEIRS log file ~/tmp/fitsGeirsWritten", None, QtGui.QApplication.UnicodeUTF8))
         self.textLabel1_5.setStatusTip(QtGui.QApplication.translate("panicQL", "Read input files from GEIRS log file ~/tmp/fitsGeirsWritten", None, QtGui.QApplication.UnicodeUTF8))
         self.textLabel1_5.setText(QtGui.QApplication.translate("panicQL", "Use GEIRS file", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget3.setTabText(self.tabWidget3.indexOf(self.tab), QtGui.QApplication.translate("panicQL", "Main", None, QtGui.QApplication.UnicodeUTF8))
