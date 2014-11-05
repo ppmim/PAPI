@@ -26,6 +26,7 @@ from time import strftime
 
 from astropy import wcs
 import astropy.io.fits as fits
+from misc.check_open import check_open
 
 # Logging (PAPI or Python built-in)
 try:
@@ -320,7 +321,7 @@ class ClFits (object):
 
     def recognize(self, retries=5):
      
-        ###log.info("Recognizing file %s" %self.filename)
+        log.info("Recognizing file %s" %self.filename)
 
         # Check the file exists
         if not os.path.exists( self.pathname ):
@@ -332,6 +333,10 @@ class ClFits (object):
         found_size = 0
 
         if self.check_integrity: 
+            # First, we check if file is still being saved
+            if check_open(self.pathname, "save"):
+                # File is still open by 'save' process of GEIRS 
+                raise IOError("Error, file %s still being saved"%self.pathname)
 
             # We change that behavior of fits warnings with a filter.
             # See http://bit.ly/1etvfJC
@@ -344,15 +349,24 @@ class ClFits (object):
             # 
             #log.debug("Cheking FITS integrity")
             # Turn matching warnings into exceptions
+
             warnings.simplefilter('error', UserWarning)
             while True:
+                log.debug("FITS integrity check. FILE=%s ITER=%d"%(self.pathname,nTry))
                 try:
                     # First level of checking
-                    found_size = fits_simple_verify(self.pathname)
+                    #found_size = fits_simple_verify(self.pathname)
+                    
                     # Now, try to read the whole FITS file
-                    myfits = fits.open(self.pathname, 
-                                     ignore_missing_end=True) # since some problems with O2k files 
+                    # Note: memmmap allows the array data of each HDU to be 
+                    # accessed with mmap, rather than being read into memory all
+                    # at once. This is particularly useful for working with very 
+                    # large arrays that cannot fit entirely into physical memory. 
+                    # memmap=True is the default value as of PyFITS v3.1.0.
+                    myfits = fits.open(self.pathname, mode='readonly', memmap=True,
+                                     ignore_missing_end=False) # since some problems with O2k files 
                 except Exception, e:
+                    log.warning("Error reading FITS : %s"%self.pathname)
                     if nTry<retries:
                         nTry +=1
                         time.sleep(nTry*0.5)
@@ -369,7 +383,7 @@ class ClFits (object):
             warnings.resetwarnings()
         else:
             myfits = fits.open(self.pathname, 
-                                     ignore_missing_end=True) # since some problems with O2k files     
+                                     ignore_missing_end=False)     
 
         # Check if is a MEF file 
         if len(myfits)>1:
@@ -853,7 +867,9 @@ class ClFits (object):
             log.error("Error while closing FITS file %s   : %s",
                       self.pathname, str(e))
         
+        log.debug("End of FITS recognition: %s"%self.pathname)
         
+
     def print_info(self):
         print "---------------------------------"
         print "Fichero   : ", self.pathname
@@ -947,7 +963,7 @@ def isaFITS(filepath):
 
 def fits_simple_verify(fitsfile):
     """
-    Performs 2 simple checks on the input fitsfile, which is a string
+    Performs two simple checks on the input fitsfile, which is a string
     containing a path to a FITS file.  First, it checks that the first card is
     SIMPLE, and second it checks that the file 2880 byte aligned.
     

@@ -5371,6 +5371,78 @@ las pruebas con el usuario staff en udit22.
 - Actualizo documentación de PAPI...
 
 
+24-al-27-Oct-2014 
+-----------------
+- @CAHA
+- QL: Modificación para que cuando esté selecionado "ALL" también se muestren 
+los fichero de OUTS. Esto fue una sugerencia de BD y Conchi.
+
+
+
+03-Nov-2014 
+-----------
+- Me pongo a investigar el tema de los bloqueos en el QL cuando se leen ficheros
+grandes, y parece que pyfits.open() se bloquea una 20s cuando el fichero aún
+esta siendo escrito por GEIRS; es como si pyfits (o cfitsio o el SO) hiciera un
+sleep() para luego volver a intentar leer el fichero.
+(solucionado !! ver más abajo 4-Nov)
+
+- Compruebo que las llamadas de se hacen con QTimer para el DataCollector (timer_dc),
+no se solapan, es decir, que aunque setSingleShot(False), no se realiza otra llamada
+hasta que no termina la anterior.
+
+
+
+04-Nov-2014 
+-----------
+- Añado al QL el logo de PANIC en un botón, pues el lo más sencillo. Para ello
+tengo que crear un fichero de recursos panicQL_resources.qrc en el cual incluyo
+el logo de PANIC. Depues, añado en el compile.sh la llamada a pyrcc4 para que
+cree el correspondiente modulo python panicQL_resources_rc.py que se importa 
+en panicQL.py:
+
+pyrcc4 -o panicQL_resources_rc.py panicQL_resources.qrc
+
+Note:
+
+**pyrcc4** is PyQt4’s equivalent to Qt’s rcc utility and is used in exactly the same way. 
+pyrcc4 reads the .qrc file, and the resource files, and generates a Python 
+module that only needs to be import ed by the application in order for those 
+resources to be made available just as if they were the original files.
+
+- Añado al QL la opción de auto seleccionar el fichero de log de los ficheros
+generados por GEIRS ~/tmp/fitsGeirsWritten que a su vez es creado por ~/GEIRS/scripts/QueueFiles 
+como sigue:
+
+echo `date --iso-8601=seconds` $1   >> ${CAMTMP}/fitsGeirsWritten
+
+- Añado al QL la sugerencia de BD sobre un nuevo filtro "INPUTS" para que muestre
+sólo los ficheros de entrada. De esta forma, tendremos:
+
+   * ALL: muestra todos los ficheros (INPUTS & OUTPUTS)
+   * INPUTS: muestra sólo los ficheros de entrada (RAW)
+   * OUTPUTS: muestra sólo los ficheros de salida generados por el QL.
+   * DARK, FLAT, SCIENCE etc ...: pues según indica la propia key
+
+
+- Finalmente consigo solucionar el tema de los bloqueos de pyfits.open con ficheros
+grandes que aún se están grabando. 
+La solución fue crear una funcion para saber si el proceso 'save' de GEIRS está
+aún grabando la imagen; para ellos uso la función 'check_open' que me hizo V.Terrón
+usando pgrep según https://stackoverflow.com/q/17321930/184363.
+Además modifico el datacollector.py para que detecte el error de que el fichero
+está aún grabandose y lo intente leer más tarde. Esto **sólo** se hace para los
+ficheros leidos de un directorio, no los leidos del fichero de log de GEIRS, que
+si fallan, son descartados directamente.
+ 
+
+
+
+05-Nov-2014 
+-----------
+
+
+
 
 (P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
 modificar ficheros sensibles ni los fuentes del software de PANIC.
