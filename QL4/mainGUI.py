@@ -3341,7 +3341,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if group_by==None: l_group_by = self.group_by
             else: l_group_by = group_by
             
-            # Here, it is decided if last calibration files will be used 
+            # Here, it is decided if last calibration files will be used
+            # GUI preferences have higher priority than values selected in
+            # config file. 
             if self.checkBox_pre_subDark_FF.checkState()==Qt.Checked:
                 calib_db_files = self.outputsDB.GetFiles()
                 self.config_opts['general']['apply_dark_flat'] = 1
