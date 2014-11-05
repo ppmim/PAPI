@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/panic/DEVELOP/papi/QL4/panicQL.ui'
+# Form implementation generated from reading ui file 'panicQL.ui'
 #
 # Created by: PyQt4 UI code generator 4.10.3
 #

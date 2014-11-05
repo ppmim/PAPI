@@ -763,7 +763,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if (self.m_sourcedir != dir and self.m_outputdir!=dir):
                 self.lineEdit_sourceD.setText(dir)
                 self.m_sourcedir = str(dir)
-                ##Create DataCollector for a path     
+                self.checkBox_geirsFile.setChecked(False)
+                ## Create DataCollector for a path     
                 self.file_pattern = str(self.lineEdit_filename_filter.text())
                 if os.path.isfile(dir) and os.path.basename(dir)=="save_CA2.2m.log":
                     self.dc = datahandler.DataCollector("geirs-file", str(dir), 
@@ -849,8 +850,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_geirsFile.isChecked():
             self.lineEdit_sourceD.setText(self._fitsGeirsWritten_)
+            self.m_sourcedir = self._fitsGeirsWritten_
         else:
             self.lineEdit_sourceD.setText("")
+            self.m_sourcedir = ""
 
 
     def autocheck_slot(self):
