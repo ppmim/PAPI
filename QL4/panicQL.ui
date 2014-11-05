@@ -1305,7 +1305,7 @@
        </rect>
       </property>
       <property name="toolTip">
-       <string>Autocheck for new incoming images</string>
+       <string>Auto-select GEIRS log file ~/tmp/fitsGeirsWritten</string>
       </property>
       <property name="text">
        <string/>
