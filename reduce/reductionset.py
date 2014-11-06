@@ -2633,7 +2633,11 @@ class ReductionSet(object):
                             #if n!=0 and n!=1: continue
                             ## end-of-test
 
-                            log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
+                            if next==1 and q!=-1: # single detector processing
+                                q_ext = q +1
+                            else:
+                                q_ext = n + 1
+                            log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", q_ext)
                             
                             #
                             # For the moment, we have the first calibration file 
@@ -2646,7 +2650,7 @@ class ReductionSet(object):
                             if bpm_ext==[]: mbpm = None
                             else: mbpm = bpm_ext[n][0] 
                             
-                            l_out_dir = self.out_dir + "/Q%02d" % (n+1)
+                            l_out_dir = self.out_dir + "/Q%02d" % q_ext
                             if not os.path.isdir(l_out_dir):
                                 try:
                                     os.mkdir(l_out_dir)
@@ -2656,7 +2660,7 @@ class ReductionSet(object):
                             
                             # async call to procedure
                             #extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% (n+1)
+                            extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext
                             ##calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
                             
                             red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
@@ -2704,8 +2708,13 @@ class ReductionSet(object):
                 else:
                     ######## Serial #########
                     for n in range(next):
+                        if next==1 and q!=-1: # single detector processing
+                                q_ext = q + 1
+                            else:
+                                q_ext = n + 1
+
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
-                        log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", n+1)
+                        log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", q_ext)
                         
                         #
                         # For the moment, we take the first calibration file 
@@ -2725,15 +2734,23 @@ class ReductionSet(object):
                         #if n!=1: continue
                         # 
                         
+                        l_out_dir = self.out_dir + "/Q%02d" % q_ext
+                        if not os.path.isdir(l_out_dir):
+                            try:
+                                os.mkdir(l_out_dir)
+                            except OSError:
+                                log.error("[reduceSeq] Cannot create output directory %s",l_out_dir)
+                        else: self.cleanUpFiles([l_out_dir])
+                        extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext
+                        
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n],
                                             mdark, mflat,
                                             bpm, self.red_mode,
                                             out_dir=self.out_dir,
-                                            output_file = self.out_dir + \
-                                            "/out_Q%02d.fits"%(n+1)))
+                                            output_file = extension_outfilename))
                         except Exception,e:
-                            log.error("[reduceSeq] Error while serial data reduction of extension %d of object sequence", n+1)
+                            log.error("[reduceSeq] Error while serial data reduction of extension %d of object sequence", q_ext)
                             raise e
         
             # LEMON mode
@@ -2756,7 +2773,7 @@ class ReductionSet(object):
                 with fits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
                     # Add the PAPI version
                     myhdulist[0].header.set('PAPIVERS', 
-                                            '1.2', 'PANIC Pipeline version')
+                                            __version__, 'PANIC Pipeline version')
                     if 'DATE-OBS' in myhdulist[0].header:
                         seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
                     else:
