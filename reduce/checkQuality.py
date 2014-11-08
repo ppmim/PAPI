@@ -86,10 +86,6 @@ class CheckQuality(object):
         self.MIN_NUMBER_GOOD_STARS = 0
         self.window = window
 
-        if self.window!='all':
-            f = fits.open(self.input_file)
-            if len(f)!=5:
-                raise Exception("Error, expected a MEF file with 4 extensions")
 
         if self.window=='Q1':
             self.sex_input_file = input_file+'[%d]'%0
@@ -131,9 +127,15 @@ class CheckQuality(object):
         for imagenes (subwindows) with a single star on the field.
 
         """
-
-        # SExtractor configuration
         
+        # Check whether detector selection can be done
+        if self.window!='all':
+            f = fits.open(self.input_file)
+            if len(f)!=5:
+                raise Exception("Error, expected a MEF file with 4 extensions")
+
+        
+        # SExtractor configuration
         catalog_file = "test.cat"
         try:
             sex_cnf = os.environ['PAPI_HOME'] + "/config_files/sextractor.sex"

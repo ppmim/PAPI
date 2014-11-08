@@ -2954,6 +2954,26 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def fwhm_estimation_slot (self):
         """ Give an FWHM estimation of the current selected image """
         
+        # Ask for detector to be used 
+        msgBox = QMessageBox()
+        msgBox.setText("Detector selection:")
+        msgBox.setInformativeText("Do you want to use <ALL> detectors or <SELECT> one ?")
+        button_all = msgBox.addButton("ALL", QMessageBox.ActionRole)
+        button_sg1 = msgBox.addButton("SG1", QMessageBox.ActionRole)
+        button_sg2 = msgBox.addButton("SG2", QMessageBox.ActionRole)
+        button_sg3 = msgBox.addButton("SG3", QMessageBox.ActionRole)
+        button_sg4 = msgBox.addButton("SG4", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_sg2)
+        msgBox.exec_()
+        
+        if msgBox.clickedButton()== button_all: detector = 'all'
+        elif msgBox.clickedButton()==button_sg1: detector = 'Q2'
+        elif msgBox.clickedButton()==button_sg2: detector = 'Q4'
+        elif msgBox.clickedButton()==button_sg3: detector = 'Q3'
+        elif msgBox.clickedButton()==button_sg4: detector = 'Q1'
+        else: detector = 'all'
+        #
+        
         for ifile in self.m_popup_l_sel:
             file_info = self.inputsDB.GetFileInfo(ifile)
             if file_info!=None and (file_info[2]!='SCIENCE' and file_info[2]!='FOCUS'):
@@ -2969,7 +2989,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   sat_level=satur_level, 
                                                   isomin=iso_min_size,
                                                   ellipmax=0.9, # basically, no limit !
-                                                  pixsize=pix_scale)
+                                                  pixsize=pix_scale,
+                                                  window=detector)
             try:
                 fwhm,std,k,k = cq.estimateFWHM()
                 if fwhm>0:
@@ -2980,7 +3001,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 else:
                     self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")           
             except Exception,e:
-                self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")
+                self.logConsole.error("ERROR: Cannot estimate FWHM of selected image: %s"%str(e))
                 #raise e
     
     def do_quick_reduction_slot(self):
