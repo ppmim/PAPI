@@ -1554,7 +1554,7 @@ class ReductionSet(object):
         
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
-        search_box = 10 # half_width of search box in arcsec (default 10)
+        search_box = 20 # half_width of search box in arcsec (default 10)
         offsets_cmd = self.m_irdr_path+'/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
             log.critical("Some error while computing dither offsets")
@@ -2538,11 +2538,13 @@ class ReductionSet(object):
                 misc.utils.listToFile(sequence, self.temp_dir+"/focus.list")
                 pix_scale = self.config_dict['general']['pix_scale']
                 satur_level =  self.config_dict['skysub']['satur_level']
+                detector = self.config_dict['general']['detector']
                 task = reduce.eval_focus_serie.FocusSerie(self.temp_dir+"/focus.list", 
                                                                    str(outfile),
                                                                    pix_scale, 
                                                                    satur_level,
-                                                                   show=False)
+                                                                   show=False,
+                                                                   window=detector)
                 red_parameters = ()
                 result = pool.apply_async(task.eval_serie, red_parameters)
                 result.wait()
@@ -2556,7 +2558,6 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Error while processing Focus Series: %s",str(e))
                 raise e
-
         elif cfits.isScience():
             l_out_dir = ''
             results = None
@@ -2594,6 +2595,7 @@ class ReductionSet(object):
                 
                 # Select the detector to process (Q1,Q2,Q3,Q4,all)
                 detector = self.config_dict['general']['detector']
+                q = -1
                 if next==4:
                     if detector=='Q1': q = 0
                     elif detector=='Q2': q = 1
@@ -2709,9 +2711,9 @@ class ReductionSet(object):
                     ######## Serial #########
                     for n in range(next):
                         if next==1 and q!=-1: # single detector processing
-                                q_ext = q + 1
-                            else:
-                                q_ext = n + 1
+                            q_ext = q + 1
+                        else:
+                            q_ext = n + 1
 
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
                         log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", q_ext)

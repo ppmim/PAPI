@@ -334,7 +334,7 @@ class ClFits (object):
 
         if self.check_integrity: 
             # First, we check if file is still being saved
-            if check_open(self.pathname, "save"):
+            if check_open(self.pathname, "geirs_save"):
                 # File is still open by 'save' process of GEIRS 
                 raise IOError("Error, file %s still being saved"%self.pathname)
 

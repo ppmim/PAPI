@@ -182,6 +182,10 @@ class SExtractor(object):
         {"comment": "minimum number of pixels above threshold",
          "value": 5},
         
+        "DETECT_MAXAREA":
+        {"comment": "maximun number of pixels above threshold",
+         "value": 200},
+
         "DETECT_THRESH":
         {"comment": "<sigmas> or <threshold>,<ZP> in mag.arcsec-2",
          "value": 1.5},

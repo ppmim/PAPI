@@ -148,7 +148,19 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
         if len(f)>1 and len(f[1].data.shape)==3:
             log.error("MEF-cubes files cannot be collapsed. First need to be split !")
             raise Exception("MEF-cubes files cannot be collapsed. First need to be split !")
-        elif len(f[0].data.shape)==2:
+        elif len(f)>1 and len(f[1].data.shape)==2:
+            log.error("Not implemented yet.")
+            raise Exception("MEF-2D files cannot be collapsed. Not implemented yet.")
+            ## TO BE COMPLETED !!! ##
+            log.debug("Found a MEF with a 2D-image: %s:"%frame_i)
+            new_frame_list.append(frame_i)
+            if len(new_frame_list)==1:
+                sum = numpy.zeros(len(f)-1, [f[1].header['NAXIS1'], 
+                                   f[1].header['NAXIS2']], dtype='float32')
+                header1 = f[0].header
+            for i in range(len(f)):
+                sum[i] += f[i+1].data
+        elif len(f)==1 and len(f[0].data.shape)==2:
             log.debug("Found a 2D-image: %s:"%frame_i)
             new_frame_list.append(frame_i)
             if len(new_frame_list)==1:

@@ -5442,6 +5442,15 @@ si fallan, son descartados directamente.
 -----------
 
 
+06-Nov-2014 
+-----------
+- Modifico check_open con el nuevo sombre 'geirs_save' en lugar de 'save'.
+- Añado DETECT_MAXAREA a sextractor.py y makeobjmask.py ; habría que añadirlo tambien al fichero de configuración.
+- Intento reducir el cumulo NGC6121 de HAWK-I con PAPI; me doy cuenta de que no puedo reducir
+una secuencia de dithering incompleta, o mejor dicho, si tener el frame 0 de referencia pues los entonces
+los offsets no los cacula bien, pues son demasido grandes. !!
+- 
+
 
 
 (P) - crear usuario obs22 para el control de PANIC, de forma que no pueda

@@ -726,6 +726,19 @@ wget http://ds9.si.edu/download/linux64/ds9.linux64.7.3b5.tar.gz
 tar xfz ds9.linux64.7.2.tar.gz
 sudo cp ds9 /usr/local/bin
 
+To set proxy server in ds9:  under Edit menu, select Preferences>, HTTP 
+                          then type proxy host and proxy port in the pop-up box
+                          also, save Preferences:   under Edit menu, select Preferences>,  Save Preferences
+It is required to enable query catalogs at CAHA:
+
+proxy host: derfel.caha.es
+proxy port: 3128
+
+Then, restart DS9.
+ 
+
+For 
+
 xpa library
 -----------
 wget http://ds9.si.edu/download/linux64/xpa.linux64.2.1.14.tar.gz

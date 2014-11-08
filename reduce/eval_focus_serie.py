@@ -101,6 +101,11 @@ class FocusSerie(object):
         self.show = show # whether or not to show the pdf plot file genetated
         self.window = window
         self.min_isoarea = min_isoarea
+        
+        with fits.open(self.input_files[0]) as myfits:
+            if len(myfits)!=5 and self.window!='all':
+                raise Exception("Detector selection only supported for MEF files.")
+             
 
     def eval_serie(self):
         """
@@ -125,7 +130,8 @@ class FocusSerie(object):
         # Find out the FWHM of each image
         for file in self.input_files:
             try:
-                print "Evaluating %s\n"%file    
+                print "Evaluating %s\n"%file
+                print "Detector %s\n"%self.window
                 cq = checkQuality.CheckQuality(file, 
                                                pixsize=self.pix_size, 
                                                sat_level=self.sat_level,

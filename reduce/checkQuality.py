@@ -86,14 +86,19 @@ class CheckQuality(object):
         self.MIN_NUMBER_GOOD_STARS = 0
         self.window = window
 
+        if self.window!='all':
+            f = fits.open(self.input_file)
+            if len(f)!=5:
+                raise Exception("Error, expected a MEF file with 4 extensions")
+
         if self.window=='Q1':
-            self.sex_input_file = input_file+'[%d]'%1
+            self.sex_input_file = input_file+'[%d]'%0
         elif self.window=='Q2':
-            self.sex_input_file = input_file+'[%d]'%2
+            self.sex_input_file = input_file+'[%d]'%1
         elif self.window=='Q3':
-            self.sex_input_file = input_file+'[%d]'%3
+            self.sex_input_file = input_file+'[%d]'%2
         elif self.window=='Q4':
-            self.sex_input_file = input_file+'[%d]'%4
+            self.sex_input_file = input_file+'[%d]'%3
         else:
             self.sex_input_file = input_file
              
