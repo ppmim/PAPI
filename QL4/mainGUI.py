@@ -179,7 +179,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:      
             self.m_default_data_dir = os.environ['PANIC_DATA']
             
-        self._fitsGeirsWritten_ = os.environ['HOME']+"/tmp/fitsGeirsWritten"
+        self._fitsGeirsWritten_ = os.environ['HOME'] + "/tmp/fitsGeirsWritten"
         if not os.path.exists(self._fitsGeirsWritten_):
             self._fitsGeirsWritten_ = "Error: Cannot find ~/tmp/fitsGeirsWritten"
 
@@ -1718,9 +1718,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Subtract selected files", 
             triggered=self.subtractFrames_slot)
         
-        self.sumAct = QtGui.QAction("Combine Images (median)", self,
-            shortcut="Ctrl++",
+        self.combAct = QtGui.QAction("Combine Images (median)", self,
+            shortcut="Ctrl+*",
             statusTip="Median combine selected files", 
+            triggered=self.combFrames_slot)
+        
+        self.sumAct = QtGui.QAction("Sum Images", self,
+            shortcut="Ctrl++",
+            statusTip="Sum selected files", 
             triggered=self.sumFrames_slot)
         
         self.divAct = QtGui.QAction("Divide Images", self,
@@ -1820,9 +1825,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             newAction = popUpMenu.addAction("Math")
             subMenu_arith = QtGui.QMenu("Popup Submenu", self)
-            subMenu_arith.addAction(self.subAct)
             subMenu_arith.addAction(self.sumAct)
+            subMenu_arith.addAction(self.subAct)
             subMenu_arith.addAction(self.divAct)
+            subMenu_arith.addAction(self.combAct)
             newAction.setMenu(subMenu_arith)
             
             newAction = popUpMenu.addAction("FITS")
@@ -1859,6 +1865,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.subAct.setEnabled(True)
             self.sumAct.setEnabled(True)
             self.divAct.setEnabled(True)
+            self.combAct.setEnabled(True)
             
             if len(self.m_popup_l_sel)==1:
                 #print "#SEL_1=",len(self.m_popup_l_sel)
@@ -1872,6 +1879,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.subAct.setEnabled(False)
                 self.sumAct.setEnabled(False)
                 self.divAct.setEnabled(False)
+                self.combAct.setEnabled(False)
                 
             if len(self.m_popup_l_sel)>1:
                 #print "#SEL_2",len(self.m_popup_l_sel)
@@ -2216,7 +2224,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                          "Error while subtracting files")
                     raise
         
-    def sumFrames_slot(self):
+    def combFrames_slot(self):
         """
         This methot is called to **combine** the images selected from the 
         File List View.
@@ -2250,7 +2258,37 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                          "Error while adding files")
                     raise
                 
+    def sumFrames_slot(self):
+        """
+        This methot is called to **sum** the images selected from the 
+        File List View.
 
+        """
+
+        if (len(self.m_popup_l_sel)<2):
+            QMessageBox.critical(self, "Error", "You need to select  at least 2 files")
+        else:
+            outFilename = QFileDialog.getSaveFileName(self,
+                                                      "Choose a filename to save under",
+                                                      self.m_outputdir+"/sum.fits", 
+                                                      "*.fits")
+            if not outFilename.isEmpty():
+                try:
+                    #Change cursor
+                    QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                    self.m_processing = False    
+                    # Pause autochecking coming files - ANY MORE REQUIRED ?, 
+                    # now using a mutex in thread !!!!
+                    thread = reduce.ExecTaskThread(mathOp, 
+                                                   self._task_info_list, 
+                                                   self.m_popup_l_sel,
+                                                   '+', str(outFilename))
+                    thread.start()
+                except:
+                    QMessageBox.critical(self, "Error", 
+                                         "Error while adding files")
+                    raise
+                
     def divideFrames_slot(self):
         """
         This methot is called to divide two images selected from the File List View
@@ -2726,12 +2764,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if len(self.m_popup_l_sel)>0:
             for filename in self.m_popup_l_sel:
                 try:
+                    mDark = None
+                    mFlat = None
+                    mBPM = None
                     if calibrations==[]:
                         # Look for (last received) calibration files
                         mDark, mFlat, mBPM = self.getCalibFor([filename])
                     else:
-                        mDark = calibrations[0]
-                        mFlat = calibrations[1]
+                        if len(calibrations)>0: mDark = calibrations[0]
+                        if len(calibrations)>1: mFlat = calibrations[1]
                         mBPM = None
 
                     log.debug("Source file: %s"%filename)
@@ -2820,17 +2861,39 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                       init_outdir, 
                                                       "pdf (*.pdf)", )
             if not outfileName.isEmpty():
+                # Ask for detector to use 
+                msgBox = QMessageBox()
+                msgBox.setText("Detector selection:")
+                msgBox.setInformativeText("Do you want to use <ALL> detectors or <SELECT> one ?")
+                button_all = msgBox.addButton("ALL", QMessageBox.ActionRole)
+                button_sg1 = msgBox.addButton("SG1", QMessageBox.ActionRole)
+                button_sg2 = msgBox.addButton("SG2", QMessageBox.ActionRole)
+                button_sg3 = msgBox.addButton("SG3", QMessageBox.ActionRole)
+                button_sg4 = msgBox.addButton("SG4", QMessageBox.ActionRole)
+                msgBox.setDefaultButton(button_sg2)
+                msgBox.exec_()
+        
+                if msgBox.clickedButton()== button_all: detector = 'all'
+                elif msgBox.clickedButton()==button_sg1: detector = 'Q2'
+                elif msgBox.clickedButton()==button_sg2: detector = 'Q4'
+                elif msgBox.clickedButton()==button_sg3: detector = 'Q3'
+                elif msgBox.clickedButton()==button_sg4: detector = 'Q1'
+                else: detector = 'all'
+                    
+                #
                 show = True
                 try:
                     self.genFileList(self.m_popup_l_sel, "/tmp/focus.list")
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     pix_scale = self.config_opts['general']['pix_scale']
                     satur_level =  self.config_opts['skysub']['satur_level']
+                    #detector = self.config_opts['general']['detector']
                     self._task = reduce.eval_focus_serie.FocusSerie("/tmp/focus.list", 
                                                                str(outfileName),
                                                                pix_scale, 
                                                                satur_level,
-                                                               show=True)
+                                                               show=True,
+                                                               window=detector)
 
                     best_focus, outfile = self._task.eval_serie()
                     self.logConsole.info(str(QString("Best Focus (mm)= %1 --> File = %2")
@@ -3341,7 +3404,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if group_by==None: l_group_by = self.group_by
             else: l_group_by = group_by
             
-            # Here, it is decided if last calibration files will be used 
+            # Here, it is decided if last calibration files will be used
+            # GUI preferences have higher priority than values selected in
+            # config file. 
             if self.checkBox_pre_subDark_FF.checkState()==Qt.Checked:
                 calib_db_files = self.outputsDB.GetFiles()
                 self.config_opts['general']['apply_dark_flat'] = 1
@@ -3675,6 +3740,27 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
                      hsigma=3,
                      subset='no',
                      scale='none'
+                     #masktype='none'
+                     #verbose='yes'
+                     #scale='exposure',
+                     #expname='EXPTIME'
+                     #ParList = _getparlistname ('flatcombine')
+                     )
+        elif (operator=='+' and len(files)>1):
+            log.debug("Files to sum = [%s]", files )
+            misc.utils.listToFile(files, t_dir+"/files.tmp") 
+            # Very important to not scale the frames, because it could 
+            # produce wrong combined images due to outliers (bad pixels)
+            iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
+                     output=outputFile,
+                     combine='sum',
+                     ccdtype='',
+                     reject='none',
+                     lsigma=3,
+                     hsigma=3,
+                     subset='no',
+                     scale='none',
+                     weight = 'none'
                      #masktype='none'
                      #verbose='yes'
                      #scale='exposure',

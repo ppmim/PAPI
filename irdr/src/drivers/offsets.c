@@ -24,7 +24,7 @@
 #include "fitsIO.h"
 #include "listIO.h"
 
-#define HWID 10.0     /* default half-width of cross-corr search box, arcsec */
+#define HWID 30.0     /* default half-width of cross-corr search box, arcsec */
 #define MAXNFILES 999
 #define MAXNLIST 999999L
 #define MINFRAC  0.1      /* 0.15; correlation failed if overlap < MINFRAC */
@@ -142,7 +142,7 @@ static float readwcs(char *fn, int *ixoff, int *iyoff)
         if (get_wcs(fn, &ra0, &dec0, &scale0, &posang0) < 0)
             eprintf("offsets: RA/DEC/SCALE missing from %s\n", fn);
         posang0 = posang0/57.2958;
-        /*printf("RA=%f  DEC=%f  SCL=%f  ANG=%f\n", ra0, dec0, scale0, posang0);*/ 
+        /*printf("RA=%f  DEC=%f  SCL=%f  ANG=%f\n", ra0, dec0, scale0, posang0); */
         return (float)scale0;
     }
 

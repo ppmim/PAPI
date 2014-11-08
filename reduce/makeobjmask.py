@@ -125,6 +125,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         sex.config['CATALOG_TYPE'] = "FITS_LDAC"
         sex.config['CATALOG_NAME'] = fn + ".ldac"
         sex.config['DETECT_MINAREA'] = minarea
+        sex.config['DETECT_MAXAREA'] = 200
         sex.config['DETECT_THRESH'] = threshold
         sex.config['CHECKIMAGE_TYPE'] = "OBJECTS"
         sex.config['CHECKIMAGE_NAME'] = fn + ".objs"

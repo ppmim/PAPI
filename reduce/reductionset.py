@@ -1554,7 +1554,7 @@ class ReductionSet(object):
         
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
-        search_box = 10 # half_width of search box in arcsec (default 10)
+        search_box = 20 # half_width of search box in arcsec (default 10)
         offsets_cmd = self.m_irdr_path+'/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
             log.critical("Some error while computing dither offsets")
@@ -2538,11 +2538,13 @@ class ReductionSet(object):
                 misc.utils.listToFile(sequence, self.temp_dir+"/focus.list")
                 pix_scale = self.config_dict['general']['pix_scale']
                 satur_level =  self.config_dict['skysub']['satur_level']
+                detector = self.config_dict['general']['detector']
                 task = reduce.eval_focus_serie.FocusSerie(self.temp_dir+"/focus.list", 
                                                                    str(outfile),
                                                                    pix_scale, 
                                                                    satur_level,
-                                                                   show=False)
+                                                                   show=False,
+                                                                   window=detector)
                 red_parameters = ()
                 result = pool.apply_async(task.eval_serie, red_parameters)
                 result.wait()
@@ -2556,7 +2558,6 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Error while processing Focus Series: %s",str(e))
                 raise e
-
         elif cfits.isScience():
             l_out_dir = ''
             results = None
@@ -2594,6 +2595,7 @@ class ReductionSet(object):
                 
                 # Select the detector to process (Q1,Q2,Q3,Q4,all)
                 detector = self.config_dict['general']['detector']
+                q = -1
                 if next==4:
                     if detector=='Q1': q = 0
                     elif detector=='Q2': q = 1
@@ -2633,7 +2635,11 @@ class ReductionSet(object):
                             #if n!=0 and n!=1: continue
                             ## end-of-test
 
-                            log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", n+1)
+                            if next==1 and q!=-1: # single detector processing
+                                q_ext = q +1
+                            else:
+                                q_ext = n + 1
+                            log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", q_ext)
                             
                             #
                             # For the moment, we have the first calibration file 
@@ -2646,7 +2652,7 @@ class ReductionSet(object):
                             if bpm_ext==[]: mbpm = None
                             else: mbpm = bpm_ext[n][0] 
                             
-                            l_out_dir = self.out_dir + "/Q%02d" % (n+1)
+                            l_out_dir = self.out_dir + "/Q%02d" % q_ext
                             if not os.path.isdir(l_out_dir):
                                 try:
                                     os.mkdir(l_out_dir)
@@ -2656,7 +2662,7 @@ class ReductionSet(object):
                             
                             # async call to procedure
                             #extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% (n+1)
+                            extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext
                             ##calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
                             
                             red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
@@ -2704,8 +2710,13 @@ class ReductionSet(object):
                 else:
                     ######## Serial #########
                     for n in range(next):
+                        if next==1 and q!=-1: # single detector processing
+                            q_ext = q + 1
+                        else:
+                            q_ext = n + 1
+
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
-                        log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", n+1)
+                        log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", q_ext)
                         
                         #
                         # For the moment, we take the first calibration file 
@@ -2725,15 +2736,23 @@ class ReductionSet(object):
                         #if n!=1: continue
                         # 
                         
+                        l_out_dir = self.out_dir + "/Q%02d" % q_ext
+                        if not os.path.isdir(l_out_dir):
+                            try:
+                                os.mkdir(l_out_dir)
+                            except OSError:
+                                log.error("[reduceSeq] Cannot create output directory %s",l_out_dir)
+                        else: self.cleanUpFiles([l_out_dir])
+                        extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext
+                        
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n],
                                             mdark, mflat,
                                             bpm, self.red_mode,
                                             out_dir=self.out_dir,
-                                            output_file = self.out_dir + \
-                                            "/out_Q%02d.fits"%(n+1)))
+                                            output_file = extension_outfilename))
                         except Exception,e:
-                            log.error("[reduceSeq] Error while serial data reduction of extension %d of object sequence", n+1)
+                            log.error("[reduceSeq] Error while serial data reduction of extension %d of object sequence", q_ext)
                             raise e
         
             # LEMON mode
@@ -2756,7 +2775,7 @@ class ReductionSet(object):
                 with fits.open(obj_ext[0][0], ignore_missing_end=True) as myhdulist:
                     # Add the PAPI version
                     myhdulist[0].header.set('PAPIVERS', 
-                                            '1.2', 'PANIC Pipeline version')
+                                            __version__, 'PANIC Pipeline version')
                     if 'DATE-OBS' in myhdulist[0].header:
                         seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
                     else:
