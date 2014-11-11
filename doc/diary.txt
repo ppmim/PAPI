@@ -5440,16 +5440,50 @@ si fallan, son descartados directamente.
 
 05-Nov-2014 
 -----------
+- Viaje a CAHA por la tarde 
 
 
-06-Nov-2014 
+06-Nov-2014 (CAHA)
 -----------
 - Modifico check_open con el nuevo sombre 'geirs_save' en lugar de 'save'.
 - Añado DETECT_MAXAREA a sextractor.py y makeobjmask.py ; habría que añadirlo tambien al fichero de configuración.
 - Intento reducir el cumulo NGC6121 de HAWK-I con PAPI; me doy cuenta de que no puedo reducir
 una secuencia de dithering incompleta, o mejor dicho, si tener el frame 0 de referencia pues los entonces
 los offsets no los cacula bien, pues son demasido grandes. !!
-- 
+
+- First Light de PANIC !!!
+
+
+07-Nov-2014 
+-----------
+CAHA
+
+08-Nov-2014 
+-----------
+- Regreso de CAHA por la tarde.
+
+
+10-Nov-2014 
+-----------
+- Encuentro un posible bug (?) en GetSeqFiles() a la hora de buscar las secuencias.
+puede ocurrir que en medio de una secuencia se metan ficheros que no pertenezcan
+a la secuencia (por ejemplo, sin header de OT por fallo de sincronización) pero 
+GetSeqFiles como solo comprueba el inicio y el final de la secuencia, pues dichos
+ficheros se "colarian" como ficheros de la secuencia.
+Se puede arreglar comprobando que sean del mismo tipo y que sean del mismo OB (OB_NAME)!! 
+
+11-Nov-2014 
+-----------
+(P) - ver tema de los errores en el interfaz de telescopio !! --> teleconf con Enrique Guindos.
+
+- Mejoras al QL:
+
+   - Conversiones de FITS (2MEF, 2Single, etc)
+   - Intentando automatizar la llamada a iraf.obstuil.starfocus para la serie de foco.
+   No se puede, pues necesita un terminal (xgterm) para que funcione el display ! 
+   
+
+
 
 
 
