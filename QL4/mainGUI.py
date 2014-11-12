@@ -56,7 +56,7 @@ import datetime
 # Any tasks which attempt to display graphics will fail, of course, but we are
 # not going to make use of any of them, anyway.
 
-os.environ['PYRAF_NO_DISPLAY'] = '1'
+os.environ['PYRAF_NO_DISPLAY'] = '0'
 
 # PANIC modules
 import reduce
@@ -83,6 +83,7 @@ import astropy.io.fits as fits
 
 
 # IRAF packages
+
 # When PyRAF is imported, it creates, unless it already exists, a pyraf/
 # directory for cache in the current working directory. It also complains that
 # "Warning: no login.cl found" if this IRAF file cannot be found either. 
@@ -168,7 +169,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #panicQL.__init__(self)
         
         self.setupUi(self)
-            
+        
+        # Short-keys
+        #self.fileShow.setShortcut(QKeySequence("Ctrl+S"))
+
         self.config_opts = config_opts
               
         ## Init member variables
@@ -182,6 +186,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self._fitsGeirsWritten_ = os.environ['HOME'] + "/tmp/fitsGeirsWritten"
         if not os.path.exists(self._fitsGeirsWritten_):
             self._fitsGeirsWritten_ = "Error: Cannot find ~/tmp/fitsGeirsWritten"
+
 
         self.m_sourcedir =  self.m_default_data_dir 
         self.m_outputdir = output_dir 
@@ -1364,7 +1369,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # CAREFUL: <sourcedir> must be DISTINT  to <tempdir>, infinite loop
         if dir and self.m_sourcedir!=dir:
             self.lineEdit_tempD.setText(dir)
-            self.m_tempdir=str(dir)
+            self.m_tempdir = str(dir)
 
     def setDarks_slot(self):
         """
@@ -1618,7 +1623,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
 #########################################################################
     def createActions(self):
         """
-        Create actions used in the Pop-Up menu (contextMenuEvent)
+        Create actions used in the Pop-Up menu (contextMenuEvent).
+        Shurtcut: Note that, for letters, the case used in the specification 
+        string does not matter.
         """
         
         #### Main Pop-up actions
@@ -1632,6 +1639,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Copy current selected files to clipboard", 
             triggered=self.copy_sel_files_slot)
         
+        self.toTextFileAct = QtGui.QAction("&Copy files to text file", self,
+            shortcut="Shift+T",
+            statusTip="Copy current selected files text file.", 
+            triggered=self.copy_files2TextFile_slot)
+
         self.mDarkAct = QtGui.QAction("&Build Master Dark", self,
             shortcut="Ctrl+M",
             statusTip="Build master dark with selected files", 
@@ -1653,22 +1665,22 @@ class MainGUI(QtGui.QMainWindow, form_class):
             triggered=self.createGainMap_slot)
         
         self.mBPMAct = QtGui.QAction("&Build BPM", self,
-            shortcut="Ctrl+P",
+            shortcut="Ctrl+B",
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
         self.mBPM_appAct = QtGui.QAction("&Apply and Show BPM", self,
-            shortcut="Ctrl+Z",
+            shortcut="Shift+B",
             statusTip="Apply BPM and show the masked pixels in a temp file.", 
             triggered=self.applyBPM_slot)
 
         self.mDF_appAct = QtGui.QAction("&Apply Dark & FlatField", self,
-            shortcut="Ctrl+f",
+            shortcut="Ctrl+A",
             statusTip="Apply Dark and FlatField", 
             triggered=self.applyDarkFlat)
 
         self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
-            shortcut="Ctrl+f",
+            shortcut="Ctrl+F",
             statusTip="Run a telescope focus evaluation of a focus serie.", 
             triggered=self.focus_eval)
 
@@ -1688,27 +1700,27 @@ class MainGUI(QtGui.QMainWindow, form_class):
             triggered=self.do_quick_reduction_slot)
         
         self.astroAct = QtGui.QAction("Astrometric Calib.", self,
-            shortcut="Ctrl+a",
+            shortcut="Shift+A",
             statusTip="Run astrometric calibration of selected file", 
             triggered=self.do_raw_astrometry)
         
         self.photoAct = QtGui.QAction("Photometric Calib.", self,
-            shortcut="Ctrl+p",
+            shortcut="Shift+P",
             statusTip="Run photometric calibration of selected file", 
             triggered=self.do_raw_photometry)
         
         self.statsAct = QtGui.QAction("Statistics", self,
-            shortcut="Ctrl+s",
+            shortcut="Shift+S",
             statusTip="Get statistincs of selected file", 
             triggered=self.show_stats_slot)
         
-        self.fwhmAct = QtGui.QAction("FWHM", self,
+        self.fwhmAct = QtGui.QAction("FWHM mean estimation", self,
             shortcut="Ctrl+W",
             statusTip="Get FWHM selected file", 
             triggered=self.fwhm_estimation_slot)
         
         self.bckgroundAct = QtGui.QAction("Background estimation", self,
-            shortcut="Ctrl+b",
+            shortcut="Shift+B",
             statusTip="Get image background of selected file", 
             triggered=self.background_estimation_slot)
             
@@ -1733,25 +1745,36 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Divide selected files", 
             triggered=self.divideFrames_slot)
 
-        # Sub-menu fits actions       
-        self.splitAct = QtGui.QAction("Split MEF", self,
-            shortcut="Ctrl+m",
-            statusTip="Split currect selected MEF file", 
+        # Sub-menu FITS actions       
+        self.mef2singleAct = QtGui.QAction("MEF2Single", self,
+            #shortcut="Ctrl+M",
+            statusTip="Convert a MEF to a single file", 
+            triggered=self.MEF2Single_slot)
+
+        self.single2mefAct = QtGui.QAction("Single2MEF", self,
+            #shortcut="Ctrl+",
+            statusTip="Convert a single file to MEF file", 
+            triggered=self.Single2MEF_slot)
+
+
+        self.splitMEFAct = QtGui.QAction("Split MEF", self,
+            #shortcut="Ctrl+s",
+            statusTip="Split MEF file into 4-single files.", 
             triggered=self.splitMEF_slot)
         
-        self.joinAct = QtGui.QAction("Join MEF", self,
-            shortcut="Ctrl+j",
-            statusTip="Join currect selected files into a MEF", 
-            triggered=self.joinMEF_slot)
+        self.splitSingleAct = QtGui.QAction("Split Single", self,
+            #shortcut="Ctrl+j",
+            statusTip="Split single file into 4-single files.", 
+            triggered=self.splitSingle_slot)
         
         # Group-menu actions
         self.redSeqAct = QtGui.QAction("Reduce Sequence", self,
-            shortcut="Ctrl+r",
+            shortcut="Ctrl+R",
             statusTip="Reduce the selected sequence", 
             triggered=self.reduceSequence_slot)
         
         self.copyGAct = QtGui.QAction("&Copy files to clipboard", self,
-            shortcut="Ctrl+c",
+            shortcut="Shift+C",
             statusTip="Copy current selected files to clipboard", 
             triggered=self.copy_files_slot)
         
@@ -1802,6 +1825,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu = QtGui.QMenu("QL popup menu", self)
             popUpMenu.addAction(self.dispAct)
             popUpMenu.addAction(self.copyAct)
+            popUpMenu.addAction(self.toTextFileAct)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.mDarkAct)
             popUpMenu.addAction(self.mDFlatAct)
@@ -1833,8 +1857,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             newAction = popUpMenu.addAction("FITS")
             subMenu_fits = QtGui.QMenu("Popup Submenu", self)
-            subMenu_fits.addAction(self.splitAct)
-            subMenu_fits.addAction(self.joinAct)
+            subMenu_fits.addAction(self.mef2singleAct)
+            subMenu_fits.addAction(self.single2mefAct)
+            subMenu_fits.addAction(self.splitMEFAct)
+            subMenu_fits.addAction(self.splitSingleAct)
             newAction.setMenu(subMenu_fits)
             
 
@@ -1946,7 +1972,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def copy_sel_files_slot(self):
         """
         Copy the selected file list fullnames to the clipboard in order to 
-        allow copy&paste
+        allow copy&paste.
         """
         
         text = ""
@@ -1955,34 +1981,79 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         clipboard = QApplication.clipboard()
         clipboard.setText(text)    
-            
+    
+    def copy_files2TextFile_slot(self):
+        """
+        Copy selected files into a text file. In addition, the name of the text 
+        file is copied to the clipboard.
+        """
+
+        textFile = QFileDialog.getOpenFileName( self,
+                                            "Select output text file",
+                                            self.m_tempdir,   
+                                            "(*.txt*")
+        textFile = str(textFile)
+        if str(textFile):
+            self.genFileList(self.m_popup_l_sel, textFile)
+            clipboard = QApplication.clipboard()
+            clipboard.setText(textFile)
+            QMessageBox.information(self, "Info", "Text file %s created and copied to clipboard"%(textFile))
+
+    def MEF2Single_slot(self):
+        """
+        Convert a MEF file with 4-extensions to a single file of 4kx4k.
+        """
+        for file in self.m_popup_l_sel:
+            try:
+                mef = misc.mef.MEF([file])
+                mef.doJoin(".join.fits", output_dir=self.m_outputdir)
+            except Exception,e:
+                log.debug("Cannot convert MEF to Single file %s. Maybe it's not a MEF file", str(e))
+                QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file"%(file))
+
+    def Single2MEF_slot(self):
+        """
+        Convert a GEIRS single file (4kx4k) to a MEF file with 4-extensions,
+        2kx2k each.
+        """
+        for file in self.m_popup_l_sel:
+            try:
+                mef = misc.mef.MEF([file])
+                mef.convertGEIRSToMEF(out_dir=self.m_outputdir)
+            except Exception,e:
+                log.debug("Cannot convert Single to MEF file %s. Maybe it's not a single file", str(e))
+                QMessageBox.critical(self, "Error", "Cannot convert Single to MEF file : %s \n Maybe it's not a single file"%(file))
+
     def splitMEF_slot(self):
         """
         Split each MEF selected file from the list view into NEXT separate 
-        single FITS file, where NEXT is number of extensions.
+        single FITS files, where NEXT is number of extensions.
         As result, NEXT files should be created
         """
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
-                mef.doSplit(".%02d.fits")
+                mef.doSplit(".Q%02d.fits", out_dir=self.m_outputdir)
             except Exception,e:
                 log.debug("Cannot split file %s. Maybe it's not a MEF file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file"%(file))
                 #self.logConsole.info(QString(str(line)))
     
-    def joinMEF_slot(self):
+
+    def splitSingle_slot(self):
         """
-        Join/stitch a MEF file to stitch them together
-        As result, one single FITS file with the stitched image should be created
+        Split the Single selected files (4kx4k) from the list view into 4 separate 
+        single FITS files or 2kx2k. The 4-detector-frame can be a cube of data.
+        As result, 4 files should be created.
         """
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
-                mef.doJoin(".join.fits")
+                mef.splitGEIRSToSimple(out_dir=self.m_outputdir)
             except Exception,e:
-                log.debug("Cannot stitch file %s. Maybe it's not a MEF file",str(e))
-                QMessageBox.critical(self, "Error", "Cannot stitch file: %s. \n Maybe it's not a MEF file"%(file))
+                log.debug("Cannot split file %s. Maybe it's not a 4kx4k Single file", str(e))
+                QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a 4kx4k single file"%(file))
+                #self.logConsole.info(QString(str(line)))
     
     def selected_file_slot(self, listItem):
         """
@@ -2847,12 +2918,60 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 finally:
                     QApplication.restoreOverrideCursor()
 
-
-
     def focus_eval(self):
+        """
+        Ask what method is prefered, iraf.starfocus or SExtractor based.
+        """
+
+        msgBox = QMessageBox()
+        msgBox.setText("Method selection:")
+        msgBox.setInformativeText("Do you want to use <iraf.starfocus> or <SExtractor>?")
+        button_iraf = msgBox.addButton("IRAF", QMessageBox.ActionRole)
+        button_sex = msgBox.addButton("SExtractor", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_iraf)
+        msgBox.exec_()
+
+        if msgBox.clickedButton()== button_iraf: self.focus_eval_iraf()
+        elif msgBox.clickedButton()==button_sex: self.focus_eval_sex()
+        else: pass
+
+        
+    def focus_eval_iraf(self):
         """
         Run the focus evaluation procedure of a set of files of focus serie.
         It is run **interactively**.
+
+        NOTE: it only works for non-MEF files !!!
+        """
+        
+        if len(self.m_popup_l_sel)>3:
+            text_file = "/tmp/focus_seq.txt"
+            iraf_logfile = self.m_tempdir + "/starfocus.log"
+            # if file exists, overwrite
+            self.genFileList(self.m_popup_l_sel, text_file)
+            try:
+                # if not started, launch DS9
+                display.startDisplay()
+                # Launch IRAF; not that next call is asynchronous, that is,
+                # it retutns inmediately after launch IRAF.
+                self.iraf_console_slot()
+            except Exception,e:
+                os.unlink(text_file)
+                log.error("Error, cannot run iraf.obsutil.starfocus(): %s"%str(e))
+                QMessageBox.critical(self, "Error", str(e))
+            else:
+                # text_file is removed by papi_ql_user.cl script
+                pass
+        else:
+            QMessageBox.critical(self, "Error","Error, not enough number (>3) of frames selected")
+
+    def focus_eval_sex(self):
+        """
+        Run the focus evaluation procedure of a set of files of focus serie.
+        It is run **non interactively**.
+        
+        NOTE: it only works for MEF files !!!
+
         """
         if len(self.m_popup_l_sel)>3:
             init_outdir = self.m_tempdir + "/focus_eval.pdf"
