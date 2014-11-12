@@ -2650,16 +2650,12 @@
     <addaction name="separator"/>
     <addaction name="fileExitAction"/>
    </widget>
-   <widget class="QMenu" name="editMenu">
+   <widget class="QMenu" name="viewMenu">
     <property name="title">
-     <string>&amp;Edit</string>
+     <string>View</string>
     </property>
-    <addaction name="editUndoAction"/>
-    <addaction name="editRedoAction"/>
-    <addaction name="separator"/>
-    <addaction name="editCutAction"/>
-    <addaction name="editCopyAction"/>
-    <addaction name="editPasteAction"/>
+    <addaction name="viewHeaderAction"/>
+    <addaction name="viewImageAction"/>
     <addaction name="separator"/>
     <addaction name="editFindAction"/>
    </widget>
@@ -2693,7 +2689,7 @@
     <addaction name="actionAbout"/>
    </widget>
    <addaction name="fileMenu"/>
-   <addaction name="editMenu"/>
+   <addaction name="viewMenu"/>
    <addaction name="Settings"/>
    <addaction name="Calibrations"/>
    <addaction name="Tools"/>
@@ -2736,7 +2732,7 @@
     <string>Change data source directory</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+O</string>
+    <string>Ctrl+I</string>
    </property>
    <property name="name" stdset="0">
     <cstring>fileDirAction</cstring>
@@ -2757,7 +2753,7 @@
     <string>Show image</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S</string>
+    <string>Ctrl+D</string>
    </property>
    <property name="name" stdset="0">
     <cstring>fileShow</cstring>
@@ -2788,9 +2784,6 @@
    <property name="iconText">
     <string>Print</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+P</string>
-   </property>
    <property name="name" stdset="0">
     <cstring>filePrintAction</cstring>
    </property>
@@ -2809,42 +2802,6 @@
     <cstring>fileExitAction</cstring>
    </property>
   </action>
-  <action name="editUndoAction">
-   <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../../../../../../../.designer/backup/image5</normaloff>../../../../../../../../../../../../.designer/backup/image5</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Undo</string>
-   </property>
-   <property name="iconText">
-    <string>Undo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Z</string>
-   </property>
-   <property name="name" stdset="0">
-    <cstring>editUndoAction</cstring>
-   </property>
-  </action>
-  <action name="editRedoAction">
-   <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../../../../../../../.designer/backup/image6</normaloff>../../../../../../../../../../../../.designer/backup/image6</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Redo</string>
-   </property>
-   <property name="iconText">
-    <string>Redo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Y</string>
-   </property>
-   <property name="name" stdset="0">
-    <cstring>editRedoAction</cstring>
-   </property>
-  </action>
   <action name="editCutAction">
    <property name="icon">
     <iconset>
@@ -2856,32 +2813,26 @@
    <property name="iconText">
     <string>Cut</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+X</string>
-   </property>
    <property name="name" stdset="0">
     <cstring>editCutAction</cstring>
    </property>
   </action>
-  <action name="editCopyAction">
+  <action name="viewHeaderAction">
    <property name="icon">
     <iconset>
      <normaloff>../../../../../../../../../../../../.designer/backup/image8</normaloff>../../../../../../../../../../../../.designer/backup/image8</iconset>
    </property>
    <property name="text">
-    <string>&amp;Copy</string>
+    <string>&amp;Header</string>
    </property>
    <property name="iconText">
     <string>Copy</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+C</string>
    </property>
    <property name="name" stdset="0">
     <cstring>editCopyAction</cstring>
    </property>
   </action>
-  <action name="editPasteAction">
+  <action name="viewImageAction">
    <property name="icon">
     <iconset>
      <normaloff>../../../../../../../../../../../../.designer/backup/image9</normaloff>../../../../../../../../../../../../.designer/backup/image9</iconset>
@@ -2891,9 +2842,6 @@
    </property>
    <property name="iconText">
     <string>Paste</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+V</string>
    </property>
    <property name="name" stdset="0">
     <cstring>editPasteAction</cstring>
@@ -2909,9 +2857,6 @@
    </property>
    <property name="iconText">
     <string>Find</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+F</string>
    </property>
    <property name="name" stdset="0">
     <cstring>editFindAction</cstring>
@@ -2971,6 +2916,9 @@
    <property name="iconText">
     <string>IRAF console</string>
    </property>
+   <property name="shortcut">
+    <string>Shift+I</string>
+   </property>
    <property name="name" stdset="0">
     <cstring>toolsIRAF_consoleAction</cstring>
    </property>
@@ -2982,6 +2930,9 @@
    <property name="iconText">
     <string>DS9 display</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
    <property name="name" stdset="0">
     <cstring>toolsDS9_displayAction</cstring>
    </property>
@@ -2992,6 +2943,9 @@
    </property>
    <property name="iconText">
     <string>Aladin</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
    </property>
    <property name="name" stdset="0">
     <cstring>toolsAladinAction</cstring>
@@ -3038,6 +2992,9 @@
    <property name="toolTip">
     <string>Open an IRAF console</string>
    </property>
+   <property name="shortcut">
+    <string>Shift+I</string>
+   </property>
    <property name="name" stdset="0">
     <cstring>irafConsoleAction</cstring>
    </property>
@@ -3058,6 +3015,9 @@
    <property name="toolTip">
     <string>Open Aladin application</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
+   </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
@@ -3066,7 +3026,7 @@
  </resources>
  <connections>
   <connection>
-   <sender>editCopyAction</sender>
+   <sender>viewHeaderAction</sender>
    <signal>activated()</signal>
    <receiver>panicQL</receiver>
    <slot>editCopy()</slot>
@@ -3114,42 +3074,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>editPasteAction</sender>
+   <sender>viewImageAction</sender>
    <signal>activated()</signal>
    <receiver>panicQL</receiver>
    <slot>editPaste()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>editRedoAction</sender>
-   <signal>activated()</signal>
-   <receiver>panicQL</receiver>
-   <slot>editRedo()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>editUndoAction</sender>
-   <signal>activated()</signal>
-   <receiver>panicQL</receiver>
-   <slot>editUndo()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
