@@ -56,6 +56,10 @@ from misc.paLog import log
 #PAPI packages
 from PyQt4 import QtCore, QtGui
 
+# If tmp/focus_seq.txt exists, QL fails because it try to launch iraf.obsutil.starfocus() 
+if os.path.exists("/tmp/focus_seq.txt"):
+    os.unlink("/tmp/focus_seq.txt")
+
 import mainGUI
 import misc.config
 

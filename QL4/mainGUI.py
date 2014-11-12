@@ -83,6 +83,7 @@ import astropy.io.fits as fits
 
 
 # IRAF packages
+
 # When PyRAF is imported, it creates, unless it already exists, a pyraf/
 # directory for cache in the current working directory. It also complains that
 # "Warning: no login.cl found" if this IRAF file cannot be found either. 
@@ -185,6 +186,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self._fitsGeirsWritten_ = os.environ['HOME'] + "/tmp/fitsGeirsWritten"
         if not os.path.exists(self._fitsGeirsWritten_):
             self._fitsGeirsWritten_ = "Error: Cannot find ~/tmp/fitsGeirsWritten"
+
 
         self.m_sourcedir =  self.m_default_data_dir 
         self.m_outputdir = output_dir 
@@ -1367,7 +1369,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # CAREFUL: <sourcedir> must be DISTINT  to <tempdir>, infinite loop
         if dir and self.m_sourcedir!=dir:
             self.lineEdit_tempD.setText(dir)
-            self.m_tempdir=str(dir)
+            self.m_tempdir = str(dir)
 
     def setDarks_slot(self):
         """
@@ -1677,15 +1679,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Apply Dark and FlatField", 
             triggered=self.applyDarkFlat)
 
-        self.mFocusEval = QtGui.QAction("&Focus evaluation (Sextractor)", self,
+        self.mFocusEval = QtGui.QAction("&Focus evaluation", self,
             shortcut="Ctrl+F",
             statusTip="Run a telescope focus evaluation of a focus serie.", 
-            triggered=self.focus_eval_iraf)
-
-        self.mFocusEvalIraf = QtGui.QAction("&Focus evaluation (iraf.starfocus)", self,
-            shortcut="Shift+F",
-            statusTip="Run a telescope focus evaluation of a focus serie using iraf.obsutil.starfocus()", 
-            triggered=self.focus_eval_iraf)
+            triggered=self.focus_eval)
 
         self.subOwnSkyAct = QtGui.QAction("Subtract own-sky", self,
             shortcut="Ctrl+S",
@@ -1991,13 +1988,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         file is copied to the clipboard.
         """
 
-        textFile = "/tmp/focus_seq.txt"
-
-        self.genFileList(self.m_popup_l_sel, textFile)
-        clipboard = QApplication.clipboard()
-        clipboard.setText(textFile)
-
-        QMessageBox.information(self, "Info", "Text file %s created and copied to clipboard"%(textFile))
+        textFile = QFileDialog.getOpenFileName( self,
+                                            "Select output text file",
+                                            self.m_tempdir,   
+                                            "(*.txt*")
+        textFile = str(textFile)
+        if str(textFile):
+            self.genFileList(self.m_popup_l_sel, textFile)
+            clipboard = QApplication.clipboard()
+            clipboard.setText(textFile)
+            QMessageBox.information(self, "Info", "Text file %s created and copied to clipboard"%(textFile))
 
     def MEF2Single_slot(self):
         """
@@ -2918,36 +2918,60 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 finally:
                     QApplication.restoreOverrideCursor()
 
+    def focus_eval(self):
+        """
+        Ask what method is prefered, iraf.starfocus or SExtractor based.
+        """
+
+        msgBox = QMessageBox()
+        msgBox.setText("Method selection:")
+        msgBox.setInformativeText("Do you want to use <iraf.starfocus> or <SExtractor>?")
+        button_iraf = msgBox.addButton("IRAF", QMessageBox.ActionRole)
+        button_sex = msgBox.addButton("SExtractor", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_iraf)
+        msgBox.exec_()
+
+        if msgBox.clickedButton()== button_iraf: self.focus_eval_iraf()
+        elif msgBox.clickedButton()==button_sex: self.focus_eval_sex()
+        else: pass
+
+        
     def focus_eval_iraf(self):
         """
         Run the focus evaluation procedure of a set of files of focus serie.
         It is run **interactively**.
+
+        NOTE: it only works for non-MEF files !!!
         """
+        
         if len(self.m_popup_l_sel)>3:
-            init_outdir = self.m_tempdir + "/starfocus.log"
-            self.genFileList(self.m_popup_l_sel, "/tmp/focus.list")
+            text_file = "/tmp/focus_seq.txt"
+            iraf_logfile = self.m_tempdir + "/starfocus.log"
+            # if file exists, overwrite
+            self.genFileList(self.m_popup_l_sel, text_file)
+            try:
+                # if not started, launch DS9
+                display.startDisplay()
+                # Launch IRAF; not that next call is asynchronous, that is,
+                # it retutns inmediately after launch IRAF.
+                self.iraf_console_slot()
+            except Exception,e:
+                os.unlink(text_file)
+                log.error("Error, cannot run iraf.obsutil.starfocus(): %s"%str(e))
+                QMessageBox.critical(self, "Error", str(e))
+            else:
+                # text_file is removed by papi_ql_user.cl script
+                pass
+        else:
+            QMessageBox.critical(self, "Error","Error, not enough number (>3) of frames selected")
 
-            iraf.noao()
-            iraf.obsutil()
-            os.environ['PYRAF_NO_DISPLAY'] = '0'
-            iraf.module.starfocus("@/tmp/focus.txt", 
-                            focus = "T_FOCUS", fstep = "", nexposures = "1",
-                            coords = "mark1", wcs = "logical", 
-                            size = "MFWHM", scale = 1,  
-                            sbuffer = 10, swidth=10, radius=5,
-                            satura = 55000, ignore_sat = "no",
-                            imagecur = "", display = "yes", frame = 1,
-                            graphcur = "", logfile = "starfocus.log"
-                            )
-
-            text_edit = QPlainTextEdit()
-            text = open(self.m_tempdir + "/starfocus.log").read()
-            text_edit.setPlainText(text)
-
-    def focus_eval(self):
+    def focus_eval_sex(self):
         """
         Run the focus evaluation procedure of a set of files of focus serie.
-        It is run **interactively**.
+        It is run **non interactively**.
+        
+        NOTE: it only works for MEF files !!!
+
         """
         if len(self.m_popup_l_sel)>3:
             init_outdir = self.m_tempdir + "/focus_eval.pdf"

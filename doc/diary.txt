@@ -5474,14 +5474,54 @@ Se puede arreglar comprobando que sean del mismo tipo y que sean del mismo OB (O
 
 11-Nov-2014 
 -----------
-(P) - ver tema de los errores en el interfaz de telescopio !! --> teleconf con Enrique Guindos.
+-  ver tema de los errores en el interfaz de telescopio !! --> 
+Antonio y yo tenemos una Teleconf  con Enrique Guindos y acordamos lo siguiente:
+
 
 - Mejoras al QL:
 
    - Conversiones de FITS (2MEF, 2Single, etc)
    - Intentando automatizar la llamada a iraf.obstuil.starfocus para la serie de foco.
    No se puede, pues necesita un terminal (xgterm) para que funcione el display ! 
-   
+   Una opción sería poder lanzar starfocus directamente con la llamada a ecl con un
+   xgterm, pero no hay manera !! pregunto en el foro de IRAF.net, pero no hay respuesta.
+
+   Finalmente, lo que hago es crear un opción "Copy files to text file" que permite
+   copiar los ficheros seleccinados al fichero de texto /tmp/focus_seq.txt, de forma
+   que sólo tengamos que abrir desde el QL la consola IRAF y lanzar el starfocus
+   (que previamente tiene configurado focus = "T_FOCUS") con @/tmp/focus_seq.txt.
+
+
+
+12-Nov-2014 
+-----------
+- Encuentro una forma le lanzar IRAF y que se ejecute una tarea espefífica:
+
+  En el fichero login.cl de IRAF se puede añadir al final que se llame a un script .cl,
+
+     if (access ("home$papi_ql_user.cl"))
+        if (access("/tmp/focus_seq.txt"))
+          cl < "home$papi_ql_user.cl"
+     ;
+     keep
+
+  de forma que en dicho script .cl (panic_ql_user.cl) se invoque a starfocus:
+
+     obsutil
+     starfocus("@/tmp/focus_seq.txt")
+
+ Por tanto, la nueva rutina del Foco del QL escribirá dicho fichero panic_ql_user.cl
+ y abrirá la consola de IRAF. Tras eso, borrará el fichero papi_ql_user.cl.
+
+ NOTA: si el ds9 no esta abierto, IRAF no se puedrá abrir y falla.
+ NOTA2: si el fichero /tmp/focus_seq.txt no existe, no se llamara a la tarea starfocus.
+ NOTA3: si el fichero /tmp/focus_seq.txt existe al lanzar el QL (start_ql), este
+ fallará pues intentan ejecutar la tarea starfocus. Para evitarlo, al inicio
+ del QL elimindo dicho fichero en runQL.py.
+
+
+
+
 
 
 
