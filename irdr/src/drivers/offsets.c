@@ -24,7 +24,7 @@
 #include "fitsIO.h"
 #include "listIO.h"
 
-#define HWID 30.0     /* default half-width of cross-corr search box, arcsec */
+#define HWID 60.0     /* default half-width of cross-corr search box, arcsec */
 #define MAXNFILES 999
 #define MAXNLIST 999999L
 #define MINFRAC  0.1      /* 0.15; correlation failed if overlap < MINFRAC */

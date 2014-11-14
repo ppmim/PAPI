@@ -1554,7 +1554,7 @@ class ReductionSet(object):
         
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
-        search_box = 20 # half_width of search box in arcsec (default 10)
+        search_box = 50 # half_width of search box in arcsec (default 10)
         offsets_cmd = self.m_irdr_path+'/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd )==0:
             log.critical("Some error while computing dither offsets")
