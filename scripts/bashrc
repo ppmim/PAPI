@@ -35,7 +35,7 @@ alias data='cd /data1/'
 # In case the operator has already set TELESCOPE in the shell,
 # GEIRS accept this. Otherwise, the operator must select on the
 # GEIRS init window the right telescope. Note: It does not move the cold stop.
-export TELESCOPE="CA3.5m"
+export TELESCOPE="CA2.2m"
 export CAMHOME=${HOME}/GEIRS
 
 ### PAPI environment ###
@@ -46,6 +46,7 @@ PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_PANIC.cfg
 PAPI_PROD=/data2/out
 # Proxy required for cdsclient at MPIA
 http_proxy=derfel.caha.es:3128
+export QT_GRAPHICSSYSTEM=native
 export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy
 
 # PANIC-MIDAS PROCEDURES
@@ -69,4 +70,8 @@ export QT_GRAPHICSSYSTEM=native
 ### OT environment ###
 export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'
 ### end OT environment ###
+
+### Para enviar el sonido al SOR del 2.2
+export AUDIOSERVER="xt22:0"
+###
 

@@ -5520,6 +5520,21 @@ Antonio y yo tenemos una Teleconf  con Enrique Guindos y acordamos lo siguiente:
  del QL elimindo dicho fichero en runQL.py.
 
 
+- Noche de observación/commissioning PANIC @ CAHA:
+
+
+13-Nov-2014 
+-----------
+
+14-Nov-2014 
+-----------
+- Comienzo instalación de nueva máquina de PANIC en el CC:
+
+Disk0 + Disk1: RAID1 - OS
+Disk[2-6] : RAID 5 - /data1 (2TB) y /data1 (~13 TB)
+
+
+
 
 
 
@@ -5925,6 +5940,13 @@ PIPELINE
  
 NEXT TODOs
 ==========
+- Solucinar bug al lanzar starfocus (se queda el fichero /tmp/focus_seq.txt)
+- Solucinar problema cálculo de offsets en datos 12-Nov-2014
+- Implementar sugerencias de Klaus.
+- Añadir MAX_AREA en la configuración de PAPI
+- Añadir parametro 'detector' a la CL de PAPI
+- Añadir ruta en panic2 para tráfico hacia el archvio2.caha.es
+ 
 
 (P)- Elaborar procedimiento de Test para CAHA !!
 (P)- Elaborar pruebas/Test PAPI/QL durante el commissioning!

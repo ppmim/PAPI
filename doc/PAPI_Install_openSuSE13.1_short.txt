@@ -110,6 +110,10 @@ Add to /etc/ntp.conf next lines for NTP server:
 
 ## IAA
 server ntp.iaa.csic.es burst iburst
+
+## ROA
+server hora.roa.es  burst iburst
+
 ## CAHA
 server derfel.caha.es burst iburst
 ## Spain - es.pool.ntp.org
@@ -161,6 +165,10 @@ FTP server. Next steps must be followed:
    > zypper install vsftpd
    > zypper install yast2-ftp-server
 
+1.1 Edit /etc/xinetd.d/vsftpd  and comment disable=yes
+1.2 Type >rcxinetd --full-restart vsftpd
+
+--- next is not required ---
 2. Setting up the FTP server with Yast:
 
 If the YaST FTP Server module is not available in the system, install the yast2-ftp-server package.
@@ -491,12 +499,12 @@ zypper install python-numpy python-numpy-devel
 zypper install python-scipy
 zypper install python-matplotlib python-matplotlib-tk
 zypper install python-qt4 
-zypper install libXmu6-32bit
+zypper install libXmu6-32bit  (needed by xgterm)
 zypper install cfitsio libcfitsio-devel
 zypper install python-pip
 
 + LEMON Requirements:
-sudo zypper install openmpi-devel python-gtk
+sudo zypper install openmpi-devel python-gtk p7zip
 
 In one single line:
 
@@ -529,15 +537,18 @@ again all the python modules, ie:
  * PyQt4
 
 
-2a-Astrometry.net
+2a-Astrometry.net (v0.50)
 =================
 
+1- Create a tmp dir where untar the file to be compiled and installed (into /usr/local/astrometry)
 > mkdir astrometry.install
 > cd astrometry.install
-> wget http://astrometry.net/downloads/astrometry.net-0.46.tar.gz
+> wget http://astrometry.net/downloads/astrometry.net-0.46.tar.gz  --> astrometry.net-0.50
 > tar xvzf astrometry.net-0.46.tar.gz
 > ./configure
 > make install
+(by default will be installed on /usr/local/astrometry)
+
 
 - Grab index files from http://broiler.astrometry.net/~dstn/4200/
 > wget http://broiler.astrometry.net/~dstn/4200/wget.sh
@@ -555,12 +566,12 @@ Two options:
 A) Binary packages
 +++++++++++++++++++
 
-2.1 SExtractor v2.8.6: from astromatic get rpm for 64 bit
----------------------------------------------------------
+2.1 SExtractor v2.19.5-1: from astromatic get rpm for 64 bit
+-------------------------------------------------------------
 - Download from astromatic.net -->
-http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
+http://www.astromatic.net/download/sextractor/sextractor-2.19.5-1.x86_64.rpm
 
-> rpm -ivl sextractor-2.8.6-1.x86_64.rpm
+> rpm -ivl sextractor-2.19.5-1.x86_64.rpm
 
 
 2.2 SCAMP v1.7.0 
@@ -570,7 +581,7 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 
 > wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz
 > tar xvfz cdsclient.tar.gz
-> cd cdsclient-3.72
+> cd cdsclient-3.77
 > ./configure
 > make
 > make install
@@ -710,7 +721,7 @@ zypper install python-qt4-devel (optional, pero necesario para pyuic4)
 
 8. DS9 + XPA (v7.3b5)
 =====================
-- Mejor instalar la v7.3b5, pues soluciona un problema que me estaba ocurriendo
+- Mejor instalar la v7.3.x, pues soluciona un problema que me estaba ocurriendo
 la tener configurador en iraf el valor stdimage=im4096 e intentar leer imagenes
 más pequeñas (ej. 16x16); tareas como imexam o psfmeasure no funcionaban bien
 y daban el mensaje: Warning: Pixels out of bounds
@@ -721,7 +732,7 @@ Para más detalles: http://stackoverflow.com/questions/24919639/pixels-out-of-bo
 ds9
 ---
 #wget http://ds9.si.edu/download/linux64/ds9.linux64.7.2.tar.gz
-wget http://ds9.si.edu/download/linux64/ds9.linux64.7.3b5.tar.gz
+wget http://ds9.si.edu/download/linux64/ds9.linux64.7.3.2.tar.gz
 
 tar xfz ds9.linux64.7.2.tar.gz
 sudo cp ds9 /usr/local/bin
@@ -743,11 +754,10 @@ xpa library
 -----------
 wget http://ds9.si.edu/download/linux64/xpa.linux64.2.1.14.tar.gz
 > tar -xvzf
-> ./configure
-> make install
+> cp * /usr/local/bin
 
 
-9. Astropy (v0.3.1)
+9. Astropy (v0.3.1) --> astropy-0.4.2.tar.gz
 ===================
 
 (It already includes atpy and vo.table, and PyFITS !!!)
@@ -772,14 +782,8 @@ to build and install the package. For more on installing from source code, see t
 - Before intall STSCI_PYTHON, IRAF must be installed:
 
 
-1) Install Pmw v.2.0.0  (PENDIENTE, required ??)
------------------------
-From: http://sourceforge.net/projects/pmw/files/Pmw/Pmw.2.0.0/
 
-> unpack 
-> python setup.py install
-
-2) IRAF v2.16.1 x86_64
+12.1) IRAF v2.16.1 x86_64
 ----------------------
 Doc --> http://iraf.noao.edu/iraf//ftp/ftp/v216/PCIX/RELEASE.txt
 
@@ -803,10 +807,11 @@ yourself as one of the following users and follow the steps described:
 > cd /iraf/iraf
 > export iraf=/iraf/iraf/
 > wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
+> tar -xvzf iraf.lnux.x86_64.tar.gz
 > sudo ./install --system
 
 
-2.1) Externs (MSCRED, STSDAS & TABLES)
+12.1.1) Externs (MSCRED, STSDAS & TABLES)
 ---------------------------------
 Since IRAF v2.15, the system is shipped with no defined external packages,
 instead we assume packages will be installed using this new feature.  To
@@ -821,7 +826,7 @@ the files needed.
 > make mscred (v5.05) --> need patch, see below
 > make stsdas (tables also installed)
 
-2.2) x11iraf (xgterm) 
+12.1.2) x11iraf (xgterm) 
 ---------------------
 > sudo mkdir /iraf/x11iraf
 >cd /iraf/x11iraf (temporal directory used only for packege installation)
@@ -831,7 +836,7 @@ the files needed.
 > sudo rm x11iraf-v2.0BETA-bin.linux.tar.gz
 > ln -s bin.linux bin.suse
 > ln -s lib.linux lib.suse
-> mkdir /usr/lib64/X11/app-defaults (??? no es necesario)
+#> mkdir /usr/lib64/X11/app-defaults (??? no es necesario)
 > sudo ./install
 
 
@@ -839,7 +844,7 @@ the files needed.
 
  > sudo zypper install libXmu6-32bit
  
-2.3) mscred 5.05 (patch)
+12.1.3) mscred 5.05 (patch)
 ------------------------
 Fix the bug in mscimarith:
 
@@ -874,14 +879,14 @@ Nadia Dencheva
 """
 
 
-2.3) nmisc v05-06-2003
+12.1.4) nmisc v05-06-2003
 ----------------------
 Since IRAFv2.15, nmisc is any more required. Included in obsutil package:
 
  obsutil.psfmeasure - Measure PSF sizes from stellar images
  obsutil.starfocus - Determine direct focus variations from stellar images
 
-2.4) login.cl
+12.1.5) login.cl
 -------------
 - Next setup must be on the IRAF login.cl file:
 
@@ -917,11 +922,12 @@ This should be done by papi_setup.sh.
 
 
 
-3) stsci_python 2.14 (include PyRAF v2.1)
+12.2) stsci_python 2.14 (include PyRAF v2.1)
 -----------------------------------------
 zypper install python-pip
-pip install d2to1
-pip install distribute !!!
+#pip install d2to1
+#pip install distribute !!!
+pip install stsci.distutils
 pip install stscipython
 
 -- output of seconf execution of pip install stscipython --
@@ -1015,34 +1021,49 @@ alias xg='/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geome
 alias panic='cd ${PAPI_HOME}'
 alias data='cd /data/'
 
+### GEIRS environment ###
+###
+# In case the operator has already set TELESCOPE in the shell,
+# GEIRS accept this. Otherwise, the operator must select on the
+# GEIRS init window the right telescope. Note: It does not move the cold stop.
+export TELESCOPE="CA2.2m"
+export CAMHOME=${HOME}/GEIRS
 
 ### PAPI environment ###
 ##
-export CAMHOME=${HOME}/GEIRS
-PAPI_HOME=${HOME}/DEVELOP/papi
+export PAPI_HOME=${HOME}/DEVELOP/papi
 PYTHONPATH=$PYTHONPATH:$PAPI_HOME
-PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_o2k.cfg
-ASTROMETRY=/usr/local/astrometry/bin
-
+PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_PANIC.cfg
+PAPI_PROD=/data2/out
 # Proxy required for cdsclient at MPIA
-http_proxy=ftp-proxy.mpia.de:3128
-export http_proxy
-export PYTHONPATH PAPI_HOME PAPI_CONFIG ASTROMETRY
-
-PATH=$PATH:$HOME/GEIRS/scripts:$HOME/GEIRS/binrjm:$ASTROMETRY
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
-
-export LD_LIBRARY_PATH PATH
-export QT_GRAPHICSSYSTEM=native
+http_proxy=derfel.caha.es:3128
+export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy
 
 # PANIC-MIDAS PROCEDURES
-#GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
-#CA_FFLTEST=$PAPI_HOME/trunk/simu/caha/ffltest
-#AUPLAY=/usr/bin/play
-#FLAT_COMMAND=$PAPI_HOME/trunk/simu/caha/flats
+GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
+CA_FFLTEST=$PAPI_HOME/simu/caha/ffltest
+AUPLAY=/usr/bin/play
+GEIRS_DIR=/home/panic/GEIRS
+FLAT_COMMAND=$PAPI_HOME/simu/caha/flats
 TECS_SCRIPT=$HOME/TECS/scripts
-#PANIC_UTIL=$PAPI_HOME/trunk/MIDAS
-#PANIC_SCI=$PAPI_HOME/trunk/MIDAS
+PANIC_UTIL=$PAPI_HOME/MIDAS
+PANIC_SCI=$PAPI_HOME/MIDAS
+ASTROMETRY=/usr/local/astrometry/bin
+
+PATH=$PATH:$HOME/GEIRS/scripts:$HOME/GEIRS/binrjm:$ASTROMETRY:$HOME/bin:$HOME/TECS/scripts
+export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
+export LD_LIBRARY_PATH
+export QT_GRAPHICSSYSTEM=native
+
+### OT environment ###
+export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'
+### end OT environment ###
+
+### Para enviar el sonido al SOR del 2.2
+export AUDIOSERVER="xt22:0"
+###
 
 
 IRAF ENVIRONMENT CONFIGURATION
