@@ -367,7 +367,7 @@ if __name__ == "__main__":
                       default='all',
                       help="When input is a MEF, it means the "
                       "window/dectector/extension to process: "
-                      "Q1, Q2, Q3, Q4, full [default: %default]")
+                      "Q1(SG4), Q2(SG1), Q3(SG3), Q4(SG2), all [default: %default]")
 
     (options, args) = parser.parse_args()
     

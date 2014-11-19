@@ -55,8 +55,9 @@ import datahandler
 
 
 #-----------------------------------------------------------------------
-def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, 
-                 outputfile="/tmp/out.txt", single_point=False):
+def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0, 
+                 saturlevel=300000, outputfile="/tmp/out.txt", 
+                 single_point=False):
     """
     DESCRIPTION
       Create an object mask of the inputfile/s based on SExtractor
@@ -70,7 +71,9 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
       outputfile   filename of file list with the object file/s 
                    created by SExtractor
             
-      minarea      SExtractor DETECT_MINAREA (minimun object area)
+      minarea      SExtractor DETECT_MINAREA (min. # of pixels above threshold)
+      
+      maxarea      SExtractor DETECT_MAXAREA (max. # of pixels above threshold, 0=unlimited)
                        
       threshold    SExtractor DETECT_THRESH
             
@@ -83,21 +86,8 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
     OUTPUTS
       n             Number of object mask created        
     """
-         
-    """
-    # Some pathname settings and check
-    irdr_basedir=''
-    try:
-        irdr_basedir=os.environ['IRDR_BASEDIR']
-    except KeyError:
-        log.error("Please, setenv IRDR_BASEDIR")
-        sys.exit(0)
-        
-    sex_config=irdr_basedir+"/src/config/default.sex"        
-    if not os.path.exists(sex_config):      # check whether input file exists
-        log.error( 'File %s does not exist', sex_config)
-        raise Exception("Files %s does not exists"%sex_config) 
-    """
+       
+    log.debug("Start of [makeObjMask]")
     
     files = []       
     # Check if inputfile is FITS file 
@@ -125,7 +115,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         sex.config['CATALOG_TYPE'] = "FITS_LDAC"
         sex.config['CATALOG_NAME'] = fn + ".ldac"
         sex.config['DETECT_MINAREA'] = minarea
-        sex.config['DETECT_MAXAREA'] = 200
+        sex.config['DETECT_MAXAREA'] = maxarea
         sex.config['DETECT_THRESH'] = threshold
         sex.config['CHECKIMAGE_TYPE'] = "OBJECTS"
         sex.config['CHECKIMAGE_NAME'] = fn + ".objs"

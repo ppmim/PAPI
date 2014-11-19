@@ -149,7 +149,15 @@ def main(arguments = None):
                   default = -1, help = "Sequence number to reduce. By default, " 
                   "all sequences found will be reduced.")
 
-                  
+    parser.add_option('-W', '--window_detector',
+                      type='choice',
+                      action='store',
+                      dest='detector',
+                      choices=['Q1', 'Q2', 'Q3', 'Q4', 'all'],
+                      default='all',
+                      help="Specify which detector to process:"
+                      "Q1(SG4), Q2(SG1), Q3(SG3), Q4(SG2), all [default: %default]")
+    
     # file calibration options
     
     parser.add_option("-D", "--master_dark",

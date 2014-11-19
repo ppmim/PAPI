@@ -1512,11 +1512,13 @@ class ReductionSet(object):
         
         if self.config_dict:
             mask_minarea = self.config_dict['offsets']['mask_minarea']
+            mask_maxarea = self.config_dict['offsets']['mask_maxarea']
             mask_thresh = self.config_dict['offsets']['mask_thresh']
             satur_level = self.config_dict['offsets']['satur_level']
             single_p= self.config_dict['offsets']['single_point']
         else:
             mask_minarea = 5
+            mask_maxarea = 200
             mask_thresh = 1.5
             satur_level = 300000
             single_p = True
@@ -1546,7 +1548,7 @@ class ReductionSet(object):
 
         # Make mask    
         try:
-            makeObjMask( my_input, mask_minarea, mask_thresh, 
+            makeObjMask( my_input, mask_minarea, mask_maxarea, mask_thresh, 
                          satur_level, output_list_file, single_point=single_p)
         except Exception,e:
             log.error("Error making object mask")
@@ -1562,8 +1564,8 @@ class ReductionSet(object):
         else:
             try:
                 offsets_mat = numpy.loadtxt(p_offsets_file, usecols = (1,2,3)) # columns => (xoffset, yoffset, match fraction) in PIXELS
-                # check if correlation overlap fraction is good enough
-                if (offsets_mat[:,2]<self.MIN_CORR_FRAC).sum()>1:
+                # check if correlation overlap fraction is good enough for all offsets computed
+                if (offsets_mat[:,2]<self.MIN_CORR_FRAC).sum()>0:
                     log.critical("Some error while computing dither offsets. Overlap correlation fraction is < %f",self.MIN_CORR_FRAC)
                     raise Exception("Wrong overlap correlation fraction for translation offsets")
                     
@@ -1643,13 +1645,15 @@ class ReductionSet(object):
         # STEP 1: create mask
         if self.config_dict:
             mask_minarea = self.config_dict['skysub']['mask_minarea']
+            mask_maxarea = self.config_dict['skysub']['mask_maxarea']
             mask_thresh = self.config_dict['skysub']['mask_thresh']
             satur_level = self.config_dict['skysub']['satur_level']
         else:
             print "Program should never enter here !!!"
             mask_minarea = 5
+            mask_maxarea = 0 # unlimited
             mask_thresh = 1.5
-            satur_level = 300000
+            satur_level = 55000
         
         # In order to set a real value for satur_level, we have to check the
         # number of coadds of the images (NCOADDS or NDIT keywords).
@@ -1659,15 +1663,15 @@ class ReductionSet(object):
         except:
             log.warning("Error read NCOADDS value. Taken default value (=1)")
             satur_level = satur_level
-            
-                               
+
+
         # BUG ! -> input_file+"*" as first parameter to makeObjMask ! (2011-09-23)                                                               
-        makeObjMask( input_file, mask_minarea, mask_thresh, satur_level,
+        makeObjMask( input_file, mask_minarea, mask_maxarea, mask_thresh, satur_level,
                     outputfile=self.out_dir+"/objmask_file.txt", single_point=False)
         if os.path.exists(input_file+".objs"): 
             shutil.move(input_file+".objs", output_master_obj_mask)
             log.debug("New Object mask created : %s", output_master_obj_mask)
-            
+
         # STEP 2: dilate mask (NOT DONE)
         dilate = False                                                     
         if dilate:
@@ -1676,7 +1680,7 @@ class ReductionSet(object):
             scale = 1.5 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
             cmd  = prog + " " + output_master_obj_mask + " " + str(scale)
             # dilate will overwrite the master object mask
-            
+
             e = misc.utils.runCmd( cmd )
             if e==0:
                 log.debug("Some error while running command %s", cmd)
@@ -2521,6 +2525,12 @@ class ReductionSet(object):
             # NOTE: Focus series are not pre-reduced, ie., neither Dark nor Flat
             # Field is applied.
             #
+            
+            # Because has been found that the automatic focus evaluation based on SExtractor
+            # does not work pretty good, it is deactivated for the momment.
+            log.waring("[reduceSeq] Proccessing of Focus Serie deactivated")
+            return files_created
+            
             log.warning("[reduceSeq] Focus Serie is going to be reduced:\n%s"%str(sequence))
             try:
                 # 
@@ -2597,10 +2607,10 @@ class ReductionSet(object):
                 detector = self.config_dict['general']['detector']
                 q = -1
                 if next==4:
-                    if detector=='Q1': q = 0
-                    elif detector=='Q2': q = 1
-                    elif detector=='Q3': q = 2
-                    elif detector=='Q4': q = 3
+                    if detector=='Q1': q = 0   # SG4
+                    elif detector=='Q2': q = 1 # SG1
+                    elif detector=='Q3': q = 2 # SG3
+                    elif detector=='Q4': q = 3 # SG2
                     else: q = -1 # all detectors
                     if q!=-1:
                         obj_ext = [obj_ext[q]]
@@ -2803,8 +2813,8 @@ class ReductionSet(object):
                 'NDIT,PAPIVERS'
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
-                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-                swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
+                #swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+                #swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
                 swarp.ext_config['RESAMPLE'] = 'Y'
                 
                 
@@ -3195,7 +3205,7 @@ class ReductionSet(object):
         # So, it is implemented here only for academic purposes !
         ########################################################################
         if self.apply_dark_flat==2 and master_flat!=None:
-            log.info("**** Applying FLEMONlat AFTER sky subtraction ****")
+            log.info("**** Applying Flat AFTER sky subtraction ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        None,  
                                        master_flat,
@@ -3231,8 +3241,9 @@ class ReductionSet(object):
         # No obstante, con Astrometry.net igual si se puede conseguir algo estable ...
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        prueba = False
-        if prueba:
+        self.coadd_mode = 'swarp'
+        #self.coadd_mode = 'dithercubemean'
+        if self.coadd_mode=='swarp':
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
@@ -3363,7 +3374,7 @@ class ReductionSet(object):
         ########################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
         ########################################################################
-        # T O D O 
+        # TODO 
         
         ########################################################################
         # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK
@@ -3458,8 +3469,7 @@ class ReductionSet(object):
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         #######################################################################
-        _astrowarp = False
-        if _astrowarp:
+        if self.coadd_mode=='swarp':
             print "astrowarp--->LAST_FILES=",self.m_LAST_FILES
             
             log.info("**** Astrometric calibration and stack of individual \
@@ -3469,8 +3479,7 @@ class ReductionSet(object):
                                             config_dict=self.config_dict,
                                             do_votable=False)
             try:
-                aw.run()
-                # aw.run(engine='Astrometry.net')
+                aw.run(engine=self.config_dict['astrometry']['engine'])
             except Exception,e:
                 log.error("Some error while running Astrowarp....")
                 raise e

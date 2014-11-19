@@ -577,7 +577,7 @@ http://www.astromatic.net/download/sextractor/sextractor-2.19.5-1.x86_64.rpm
 2.2 SCAMP v1.7.0 
 ----------------
 
-1- CDSclient package 
+2.2.1- CDSclient package 
 
 > wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz
 > tar xvfz cdsclient.tar.gz
@@ -596,21 +596,12 @@ with a proxy using 'http_proxy' environment:
 
 For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
 
+2.2.2- PLPLOT para SCAMP (para generar ficheros png's): (new version)
 
-2- PLPLOT para SCAMP (para generar ficheros png's): (PENDIENTE)
-
-     1) Descargar el fuente de gd-libgd (con zypper no consigo encontrar dicha libreria) de https://bitbucket.org/pierrejoye/gd-libgd/overview
-        (la última version a fecha 03-Marzo-2014 no compilaba bien!!! tuve que usar la que tenía yo de May-2013)
-
-        >git clone https://bitbucket.org/libgd/gd-libgd.git      
-
-     2) Compilar dicha libraria (libgd):  --> zypper install gd  (/usr/lib64/libgd.so.2 -> libgd.so.2.0.0)
-       
-       > wget https://bitbucket.org/libgd/gd-libgd/downloads/libgd-2.1.0.tar.gz
-       > tar xvzf
-       > ./configure --prefix=/usr/local
-       > make install
-       
+     1) Instalar gd-libgd 
+     
+       > zypper install gd  (/usr/lib64/libgd.so.2 -> libgd.so.2.0.0)
+            
  
     3) Descargar la plplot-5.9.4 (pues parece que es la que recomiendan en el foro de SCAMP  http://www.astromatic.net/forum/showthread.php?tid=761)
        aunque la 5.9.9 también funciona.
@@ -620,6 +611,13 @@ For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
     
     4) Compilar plplot-5.9.9 (la version 5.10.0 se compila, pero al correr SCAMP da un error tipo "scamp: symbol lookup error: scamp: undefined symbol: c_plwid)
     
+      Aunque en el repositorio de openSUSE_13.1 encontramos la libreria plplot, si la instalamos luego SCAMP no se entiende con ella, pues al ejecutar
+      SCAMP no pide el nro. del device para el plot (o algo así). Da igual que le digamos CHECKPLOT_DEV=NULL.
+      
+      > zypper install plplot) --> plplot-5.9.9-16.1.5.x86_64 --> /usr/lib64/libplplotd.so.11 ---> NO NOS SIRVE !!
+      
+      Por tanto, hay que compilar e instalar manualmente:
+      
        > cd plplot-5.9.9
        > mkdir build
        > cd build 
@@ -636,7 +634,56 @@ For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
         básicamente eso.
         
      > make 
-     > make install
+     > sudo make install
+     MUY IMPORTANTE hacer en enlace o copia (como se prefiera):
+     > ln -s /usr/local/plplot599/lib/libplplotd.so.11.0.0 /usr/lib64/libplplotd.so.9 
+     
+     y listo !!! SCAMP debe generar los graficos PNG sin problema (glup!).
+        
+    
+2.2.2 (old)- PLPLOT para SCAMP (para generar ficheros png's): (long and old version)
+
+     1) Descargar el fuente de gd-libgd (con zypper no consigo encontrar dicha libreria) de https://bitbucket.org/pierrejoye/gd-libgd/overview
+        (la última version a fecha 03-Marzo-2014 no compilaba bien!!! tuve que usar la que tenía yo de May-2013)
+
+        >git clone https://bitbucket.org/libgd/gd-libgd.git      
+
+     2) Compilar dicha libreria (libgd):  --> zypper install gd  (/usr/lib64/libgd.so.2 -> libgd.so.2.0.0)
+       
+       > wget https://bitbucket.org/libgd/gd-libgd/downloads/libgd-2.1.0.tar.gz
+       > tar xvzf
+       > ./configure --prefix=/usr/local
+       > make install
+       
+ 
+    3) Descargar la plplot-5.9.4 (pues parece que es la que recomiendan en el foro de SCAMP  http://www.astromatic.net/forum/showthread.php?tid=761)
+       aunque la 5.9.9 también funciona.
+       
+       http://sourceforge.net/projects/plplot/files/plplot/
+       
+    
+    4) Compilar plplot-5.9.9 (la version 5.10.0 se compila, pero al correr SCAMP da un error tipo "scamp: symbol lookup error: scamp: undefined symbol: c_plwid)
+    
+    (zypper install plplot) --> plplot-5.9.9-16.1.5.x86_64 --> /usr/lib64/libplplotd.so.11 ---> NO NOS SIRVE, no se entiende con SCAMP aunque le digamos CHECKPLOT_DEV=NULL
+!!
+      
+       > cd plplot-5.9.9
+       > mkdir build
+       > cd build 
+       > cmake -DCMAKE_INSTALL_PREFIX=/usr/local/plplot599 -DBUILD_TEST=ON ../../plplot-5.9.9 >&cmake.out
+       > ccmake ..
+         y editar a mano 
+ 
+          GDI32_LIBRARY /usr/local/lib/libgd.so (en la 599 no es necesario, lo detecta bien)
+          ENABLE_python OFF (pues da un problema al no encontrar un .h de numpy ??)
+          PLD_png ON
+          PLD_tcl OFF (dan error de compilacion)
+          PLD_tk  OFF (dan error de compilacion)
+
+        básicamente eso.
+        
+     > make 
+     > sudo make install
      > ln -s /usr/local/plplot599/lib/libplplotd.so.11.0.0 /usr/lib64/libplplotd.so.9
 
      IMPORTANTE: copiar /usr/local/lib/libgd.so en /usr/local/plplot599/lib/ pues si no se quejará el PLPLOT de que no la encuentra.

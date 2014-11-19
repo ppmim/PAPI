@@ -559,6 +559,7 @@ def read_config_file(config_file = default_config_file()):
     skysub["min_frames"] = read_parameter(config, "skysub", "min_frames", int, False, config_file)
     skysub["hwidth"] = read_parameter(config, "skysub", "hwidth", int, False, config_file)
     skysub["mask_minarea"] = read_parameter(config, "skysub", "mask_minarea", int, False, config_file)
+    skysub["mask_maxarea"] = read_parameter(config, "skysub", "mask_maxarea", int, False, config_file)
     skysub["mask_thresh"] = read_parameter(config, "skysub", "mask_thresh", float, False, config_file)
     skysub["satur_level"] = read_parameter(config, "skysub", "satur_level", long, False, config_file)
     skysub["skymodel"] = read_parameter(config, "skysub", "skymodel", str, False, config_file)
@@ -576,6 +577,7 @@ def read_config_file(config_file = default_config_file()):
     offsets = {}
     
     offsets["mask_minarea"] = read_parameter(config, "offsets", "mask_minarea", int, False, config_file)
+    offsets["mask_maxarea"] = read_parameter(config, "offsets", "mask_maxarea", int, False, config_file)
     offsets["mask_thresh"] = read_parameter(config, "offsets", "mask_thresh", float, False, config_file)
     offsets["min_corr_frac"] = read_parameter(config, "offsets", "min_corr_frac", float, False, config_file)
     offsets["satur_level"] = read_parameter(config, "offsets", "satur_level", long, False, config_file)
@@ -584,7 +586,7 @@ def read_config_file(config_file = default_config_file()):
     
     options["offsets"] = offsets     
     
-    ########################## "skysub" section ################################
+    ########################## "gainmap" section ################################
     gainmap = {}
     
     gainmap["object_names"] = read_list_of_strings(config, "gainmap", "object_names")

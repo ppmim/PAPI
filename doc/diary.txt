@@ -5513,7 +5513,7 @@ Antonio y yo tenemos una Teleconf  con Enrique Guindos y acordamos lo siguiente:
  Por tanto, la nueva rutina del Foco del QL escribirá dicho fichero panic_ql_user.cl
  y abrirá la consola de IRAF. Tras eso, borrará el fichero papi_ql_user.cl.
 
- NOTA: si el ds9 no esta abierto, IRAF no se puedrá abrir y falla.
+ NOTA: si el ds9 no esta abierto, IRAF no se podrá abrir y falla.
  NOTA2: si el fichero /tmp/focus_seq.txt no existe, no se llamara a la tarea starfocus.
  NOTA3: si el fichero /tmp/focus_seq.txt existe al lanzar el QL (start_ql), este
  fallará pues intentan ejecutar la tarea starfocus. Para evitarlo, al inicio
@@ -5534,13 +5534,83 @@ Disk0 + Disk1: RAID1 - OS
 Disk[2-6] : RAID 5 - /data1 (2TB) y /data1 (~13 TB)
 
 
+17-Nov-2014 
+-----------
+- Termino la instalación de la nueva máquina de PANIC (panic1.iaa.es)
+
+18-Nov-2014 
+-----------
+- Parece que ds9v7.3.2 no funciona con IRAF !! 
+(P)- Me pongo a procesar la serie de foco del 10-Nov; observo diferencias entre
+los valores que da iraf.imexam y iraf.psfmeasure, a pesar de tener aparentemente
+la misma configuracion.
+
+- Comienzo las mejoras de PAPI de cara al próximo commissioning:
+ 
+  - bug de starfocus debido a una finalización errónea (se quede el fichero /tmp/focus_seq.txt).
+  - desactivo el procesamiento de series de foco en PAPI, pues con SExtractor 
+  no funciona aún bien, y habría que mejorarla.
+  - Añador   DETECT_MAXAREA al fichero de configuración de PAPI (skysub, offsets, astrometry), 
+  y ya de paso lo usamos donde puede ser util en PAPI: getPointingOffsets()
+  - Añador al CL de PAPI la elección del detector a procesar.
+  - Encuentro un par de bugs muy interesantes:
+     1) en getPointingOffsets, pues no comprobaba bien si MIN_CORR_FRAC era superado en algun offset
+     2) en scamp.py la excepcion SCAMP_Exception estaba mal deletreada (error tipográfico)
+     3) tras añadir DETECT_MAXAREA, a la hora de crear la maskObject es muy importante poner dicho valor = 0
+     para no dejarnos objetos grandes !!
+  
+  - Pruebo el modo science en PAPI con NGC752_focus000[1-5].fits, y va, pero en los bordes las 
+  estrellas tiene muy mala pinta !! hay que probar con astrowarp !!
+  
+  
+  
+19-Nov-2014 
+-----------
+- Reduzco la secuencia NGC752_focus000[1-5].fits en modo 'science' y con
+astrowarp usando Astrometry.net para que haga el coadding. La imagen 
+resultante la des-rota y ya no aparecen falsas estrellas "sobles" que aparecen
+cuando hago el coadd con dithercubemean, tanto en modo quick como en modo science !! 
+No se si el la causa puede estar en que los offsets calculados no son muy buenos (??)
+o que al estar la imagenes rotadas el coadd (sin regristrado como hace swarp) no es
+muy bueno !!
+- Consigo montar el mosaico reducido (modo=quick) de la seq. NGC752_focus000[1-5];
+incluso saco los mapas de distorsión con SCAMP y se los enseño a CC por si le 
+aportan alguna información. Según el mapa del mosaico, el centro de la imagen está desplazado !!
+Esto lo consigo ejecutando lo siguiente en el directorio /data2/tmp/:
+
+   > cd /data2/tmp
+   > scamp -c /home/panic/DEVELOP/papi/config_files/scamp.conf  -SOLVE_PHOTOM N -ASTREF_CATALOG 2MASS *.ldac
+   
+Lo bueno es que SCAMP distingue los campos por filtro y nos crea un mapa de distorsión por cada filtro.
+(parece muy interesante !!)
+
+   
+   
+- Aunque con coadd_mode='swarp' consigo montar el mosaico y me evito el problema
+del calculo de los offsets, eso **SOLO** es válido para el modo de reducción 'quick'.
 
 
+- Analizo un poco el antiguo problema de ver sobre estimación del background
+al restar el cielo en irdr:skyfilter; todo indica que el problema está en cube_median(),
+aunque con skymodel='min' en el fichero de configuración la cosa mejora algo.
+(P) Habría que revisar dicha rutina (cube_median) !!
 
+20-Nov-2014 
+-----------
+TODO:
+====
+- (P) Habría que revisar dicha rutina (cube_median) !!
+- ver el tema de los WEIGHT_MAPS, al construir el mosaico final; ahora
+están comentados, pero ver si realmente son necesarios y que diferencia hay en usarlos !!
+Tal y como estaba implementado parece que no funciona (probar con HAWKI)
 
-
-
-
+- implementar coadd_mode en el fichero de configuración de PAPI !!
+- Probar astrowarp en con NGC752_focus000[1-5].fits
+- Ver como reducir todos los cuandrantes de NGC752_focus000[1-5].fits !!
+- Buscar otra forma mas robusta de calcular los offsets --->cfr LEMON !!
+- Analizar secuencias de foco y enviar datos a BD y CC.
+(bug)- Astrowarp no genera el .weight.fits con el mismo nombre que coadd_tmp.fits, sino coadd.weight.fits !!! pero
+luego para construir todo el mosaico si lo necesita !!!
 
 (P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
 modificar ficheros sensibles ni los fuentes del software de PANIC.
@@ -5940,11 +6010,8 @@ PIPELINE
  
 NEXT TODOs
 ==========
-- Solucinar bug al lanzar starfocus (se queda el fichero /tmp/focus_seq.txt)
 - Solucinar problema cálculo de offsets en datos 12-Nov-2014
 - Implementar sugerencias de Klaus.
-- Añadir MAX_AREA en la configuración de PAPI
-- Añadir parametro 'detector' a la CL de PAPI
 - Añadir ruta en panic2 para tráfico hacia el archvio2.caha.es
  
 
@@ -6109,8 +6176,9 @@ over-estimation of skybackground when no object masking is done (see skyfilter).
   sky-estimation is 'contamined' by bright stars, so in principle, on the second
   pass of the sky-subtraction where an object mask is used, the sky-subtraction
   is much better.
-  In addition and for crowded fields, we could set in the config file the    
-
+  In addition and for crowded fields, we could set in the config file the 
+  'skymodel=min' instead of 'skymodel=median'.
+  JM (2014-11-19): creo que el problema también puede estar en cube_median() (cube/cube.c) !!!
 
 Paper
 =====

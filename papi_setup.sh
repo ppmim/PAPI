@@ -2,7 +2,7 @@
 # User Configurable Settings
 #------------------------------------------------------------------------------
 # path to PAPI source directory
-export PAPI_HOME=${HOME}/papi
+export PAPI_HOME=${HOME}/DEVELOP/papi
 export PAPI_BIN=${HOME}/bin
 
 # path to PAPI output data products
@@ -25,6 +25,14 @@ cd $HOME/.iraf
 mkiraf 
 
 # comment-out chkupdate on login.cl
+# and add the next:
+# set stdimage        = imt4096
+# set imtype          = "fits"
+#if (access ("home$papi_ql_user.cl"))
+#   if (access ("/tmp/focus_seq.txt"))
+#      cl < "home$papi_ql_user.cl"
+#;
+ 
 ## To be done
 
 #-------------------------------
@@ -81,12 +89,14 @@ ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 # ---------------------------------------
 # Add Environment Variables to bash shell
 # ---------------------------------------
-echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
-echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
-echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc
-echo "export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg" >> ~/.bashrc
-echo "export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}" >> ~/.bashrc
-echo "export PATH=\$PATH:${PAPI_BIN}" >> ~/.bashrc
+cp ${PAPI_HOME}/scripts/bashrc ${HOME}/.bashrc
+
+#echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
+#echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
+#echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc
+#echo "export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg" >> ~/.bashrc
+#echo "export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}" >> ~/.bashrc
+#echo "export PATH=\$PATH:${PAPI_BIN}" >> ~/.bashrc
 
 source ~/.bashrc
 

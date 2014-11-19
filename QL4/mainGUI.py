@@ -177,6 +177,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
               
         ## Init member variables
         self.timer_dc = None
+        # File used to run the iraf.obsutil.starfocus task
+        self.focus_tmp_file = "/tmp/focus_seq.txt"
+        
         # Init main directories
         if source_dir!= None:
             self.m_default_data_dir = source_dir
@@ -2141,8 +2144,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         return
 
-    def iraf_console_slot(self):
+    def iraf_console_slot(self, isForFocus=False):
         """Open a IRAF console session"""
+        
+        # To avoid that the 'self.focus_tmp_file' file could be left due
+        # some error/abort while running the iraf.startfocus procedure,
+        # the file is removed if the call to this routine is not for
+        # the focus evaluation with iraf.starfocus.
+        if not isForFocus and os.path.exists(self.focus_tmp_file)
+	    os.unlink(self.focus_tmp_file)
+	    
         os.system("cd $HOME/iraf;/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 100x30 -bg grey -fg black -e cl &")
         
     def start_ds9_slot(self):
@@ -2945,16 +2956,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         
         if len(self.m_popup_l_sel)>3:
-            text_file = "/tmp/focus_seq.txt"
+            text_file = self.focus_tmp_file
             iraf_logfile = self.m_tempdir + "/starfocus.log"
             # if file exists, overwrite
             self.genFileList(self.m_popup_l_sel, text_file)
             try:
                 # if not started, launch DS9
                 display.startDisplay()
-                # Launch IRAF; not that next call is asynchronous, that is,
+                # Launch IRAF; note that next call is asynchronous, that is,
                 # it retutns inmediately after launch IRAF.
-                self.iraf_console_slot()
+                self.iraf_console_slot(True)
             except Exception,e:
                 os.unlink(text_file)
                 log.error("Error, cannot run iraf.obsutil.starfocus(): %s"%str(e))
@@ -3583,10 +3594,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             # Select detector (map SGi to Qi)
             if self.comboBox_detector.currentText()=="All": detector = 'all'
-            elif self.comboBox_detector.currentText()=="SG1": detector = 'Q3'
-            elif self.comboBox_detector.currentText()=="SG2": detector = 'Q1'
-            elif self.comboBox_detector.currentText()=="SG3": detector = 'Q2'
-            elif self.comboBox_detector.currentText()=="SG4": detector = 'Q4'
+            elif self.comboBox_detector.currentText()=="SG1": detector = 'Q2'
+            elif self.comboBox_detector.currentText()=="SG2": detector = 'Q4'
+            elif self.comboBox_detector.currentText()=="SG3": detector = 'Q3'
+            elif self.comboBox_detector.currentText()=="SG4": detector = 'Q1'
             else: detector = 'all'
             self.config_opts['general']['detector'] = detector
 

@@ -386,8 +386,9 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     #but, "ext_config" parameters will be used in any case
     try:
         scamp.run(cat_file, updateconfig=False, clean=False)
-    except:
-        raise
+    except Exception,e:
+        log.error("Error running SCAMP: %s"%str(e))
+        raise e
     
     ## STEP 3: Merge and Warp the astrometric parameters (.head keywords) with 
     ## SWARP, and using .head files created by SCAMP. Therefore, a field distortion
