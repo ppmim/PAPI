@@ -5597,20 +5597,50 @@ aunque con skymodel='min' en el fichero de configuración la cosa mejora algo.
 
 20-Nov-2014 
 -----------
+- Añado coadd_mode al fichero de configuración
+- Analizando las imágenes NGC752_focus000[26-30].fits en el filtro Z, me
+doy cuenta que hay un "halo" alrededor de las estrellas muy brillantes;
+Además, en las menos brillantes, imexam no es capaz de ajustar la gaussiana,
+y no pinta bien el perfil. ==> Puede que sea por que no la imagen no está
+bien enfocada, pues la anterior sequencia (21-25) con filtro Y tiene el 
+mismo foco (T_FOCUS=22.812) que tiene la secuencia con filtroZ.
+
+- Probando dxtalk, encuentro bug en dxtalk con imagenes de PANIC !! ---> corregido !!
+
+(P) - Observo que en una imagen (filtroZ, NGC752_focus000[21-25]) tras reducirla no se distinguen bien
+las estrellas que hay cerca de estrallas brillantes y grandes, aunque en la imagen
+original (raw) si se pueden distinguir perfectamente !! ¿ por qué ? mala sustracción 
+del cielo ?? parece que ajustando los valores de la escala de colores se pueden distinguir
+mejor. El resultado es similar con swarp que con dithercubemean.
+
+
+
+
+PRE-videoconf
+-------------
+- Email de BD
+- Crosstalk in PANIC (Y,Z,..)
+- mapa de distorsión full_frame VS single detector.
+
+
+
 TODO:
 ====
+- Buscar otra forma mas robusta de calcular los offsets --->cfr LEMON !!
+- Propagar T_FOCUS al hacer split para reducción en parelelo ! y donde haga falta !
+- ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'
 - (P) Habría que revisar dicha rutina (cube_median) !!
 - ver el tema de los WEIGHT_MAPS, al construir el mosaico final; ahora
 están comentados, pero ver si realmente son necesarios y que diferencia hay en usarlos !!
 Tal y como estaba implementado parece que no funciona (probar con HAWKI)
 
-- implementar coadd_mode en el fichero de configuración de PAPI !!
-- Probar astrowarp en con NGC752_focus000[1-5].fits
 - Ver como reducir todos los cuandrantes de NGC752_focus000[1-5].fits !!
-- Buscar otra forma mas robusta de calcular los offsets --->cfr LEMON !!
 - Analizar secuencias de foco y enviar datos a BD y CC.
 (bug)- Astrowarp no genera el .weight.fits con el mismo nombre que coadd_tmp.fits, sino coadd.weight.fits !!! pero
 luego para construir todo el mosaico si lo necesita !!!
+- Añadir relojo de busy a la rutina MEF2Single.
+- Añadir MEF2Single a la serie de foco para que haga automaticamente en caso necesario.
+
 
 (P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
 modificar ficheros sensibles ni los fuentes del software de PANIC.

@@ -2151,7 +2151,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # some error/abort while running the iraf.startfocus procedure,
         # the file is removed if the call to this routine is not for
         # the focus evaluation with iraf.starfocus.
-        if not isForFocus and os.path.exists(self.focus_tmp_file)
+        if not isForFocus and os.path.exists(self.focus_tmp_file):
 	    os.unlink(self.focus_tmp_file)
 	    
         os.system("cd $HOME/iraf;/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 100x30 -bg grey -fg black -e cl &")

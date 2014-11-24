@@ -292,7 +292,8 @@ class ReductionSet(object):
         self.master_dark = dark # master dark to use (input)
         self.master_flat = flat # master flat to use (input)
         self.apply_dark_flat = self.config_dict['general']['apply_dark_flat'] # 0=no, 1=before, 2=after
-
+        self.coadd_mode = self.config_dict['general']['coadd_mode']
+        
         #
         # Bad Pixel Maks
         # 
@@ -1472,6 +1473,40 @@ class ReductionSet(object):
             
         return out_filename
     
+    def getWCSPointingOffsets(self, images_in,
+                              p_offsets_file="/tmp/offsets.pap"):
+      """
+      Derive pointing offsets between each image using WCS astrometric 
+      calibration of the image.
+      
+        Parameters
+        ----------
+                
+        images_in: str
+            filename of list file  
+        p_offsets_file: str
+            filename of file where offset will be saved (it can be used
+            later by dithercubemean)
+        
+        Returns
+        -------    
+        offsets: narray          
+                two dimensional array with offsets
+                
+        Notes:
+            It assumed that the input images have a good enough astrometric
+            calibration (hopefully obtained with Astrometry.net).
+            
+        
+      """
+      
+      log.info("Starting getWCSPointingOffsets....")
+      
+      offsets_mat = None
+      
+      #for my_image in images_in:
+          
+        
     def getPointingOffsets (self, images_in=None, 
                             p_offsets_file='/tmp/offsets.pap'):
         """
@@ -1498,7 +1533,7 @@ class ReductionSet(object):
         """
             
         log.info("Starting getPointingOffsets....")
-        offsets_mat=None
+        offsets_mat = None
            
         # STEP 1: Create SExtractor OBJECTS images
         suffix = '_' + self.m_filter+'.skysub.fits'
@@ -2528,7 +2563,7 @@ class ReductionSet(object):
             
             # Because has been found that the automatic focus evaluation based on SExtractor
             # does not work pretty good, it is deactivated for the momment.
-            log.waring("[reduceSeq] Proccessing of Focus Serie deactivated")
+            log.warning("[reduceSeq] Proccessing of Focus Serie deactivated")
             return files_created
             
             log.warning("[reduceSeq] Focus Serie is going to be reduced:\n%s"%str(sequence))
@@ -3186,7 +3221,7 @@ class ReductionSet(object):
             self.config_dict['general']['remove_crosstalk']):
             log.info("**** Removing crosstalk ****")
             try:
-                res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
+                res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
                             [None]*len(self.m_LAST_FILES), 
                             [True]*len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
@@ -3241,7 +3276,7 @@ class ReductionSet(object):
         # No obstante, con Astrometry.net igual si se puede conseguir algo estable ...
         # 6b - Computer dither offsets and coadd
         ########################################################################
-        self.coadd_mode = 'swarp'
+        #self.coadd_mode = 'swarp'
         #self.coadd_mode = 'dithercubemean'
         if self.coadd_mode=='swarp':
             if self.obs_mode!='dither' or self.red_mode=="quick":
@@ -3418,8 +3453,8 @@ class ReductionSet(object):
         if self.config_dict['general']['remove_crosstalk']:
             log.info("**** Removing crosstalk ****")
             try:
-                res = map ( reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
-                            [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
+                res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
+                         [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
             except Exception,e:
                 raise e
@@ -3429,7 +3464,7 @@ class ReductionSet(object):
         ########################################################################
         if self.config_dict['general']['remove_cosmic_ray']:
             try:
-                res = map ( reduce.remove_cosmics.remove_cr, self.m_LAST_FILES, 
+                res = map(reduce.remove_cosmics.remove_cr, self.m_LAST_FILES, 
                             [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES),
                             [False]*len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
