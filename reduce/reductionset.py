@@ -36,6 +36,7 @@ import tempfile
 import dircache
 import multiprocessing
 import itertools
+import math
 
 # IRAF packages
 import pyraf
@@ -45,6 +46,7 @@ from pyraf import iraf
 # Math module for efficient array processing
 import numpy
 import astropy.io.fits as fits
+from astropy import wcs
 
 #Log
 import misc.paLog
@@ -69,6 +71,7 @@ from astromatic.swarp import *
 import datahandler.dataset
 import misc.collapse
 import correctNonLinearity
+
 
 
 # If your parallel tasks are going to use the same instance of PyRAF (and thus 
@@ -1476,37 +1479,89 @@ class ReductionSet(object):
     def getWCSPointingOffsets(self, images_in,
                               p_offsets_file="/tmp/offsets.pap"):
       """
-      Derive pointing offsets between each image using WCS astrometric 
-      calibration of the image.
+      Derive pointing offsets of each image taking as reference the first one and
+      using WCS astrometric calibration of the images. 
       
         Parameters
         ----------
                 
         images_in: str
-            filename of list file  
+            list of filename 
         p_offsets_file: str
             filename of file where offset will be saved (it can be used
-            later by dithercubemean)
-        
+            later by dithercubemean). The format of the file will be:
+            
+            /path/to/filename00   offsetX00   offsetY00
+            /path/to/filename01   offsetX01   offsetY01
+            ...
+            /path/to/filename0N   offsetX0N   offsetY0N
+            
         Returns
         -------    
         offsets: narray          
-                two dimensional array with offsets
+                two dimensional array (Nx2) with offsets (in pixles),
+                where N=number of files.
                 
         Notes:
             It assumed that the input images have a good enough astrometric
-            calibration (hopefully obtained with Astrometry.net).
+            calibration (hopefully obtained with Astrometry.net), and North
+            is up and East is left, and no rotation angle exists.
             
         
       """
       
       log.info("Starting getWCSPointingOffsets....")
       
+      # Init variables
+      i = 0 
       offsets_mat = None
+      pix_scale = self.config_dict['general']['pix_scale']
+      ra0 = -1
+      dec0 = -1
+      x_pix = 1024.0
+      y_pix = 1024.0
+      offsets = numpy.zeros([len(images_in),2] , dtype=numpy.float32)
       
-      #for my_image in images_in:
-          
+      # Reference image
+      ref_image = images_in[0]
+      try:
+            h0 = fits.getheader(ref_image)
+            w0 = wcs.WCS(h0)
+            ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
+            dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
+            log.debug("RA0= %s DEC0= %s"%(ra0,dec0))
+      except Exception,e:
+          raise e
         
+      offset_txt_file = open(p_offsets_file, "w")
+      for my_image in images_in:
+        try:
+              h = fits.getheader(my_image)
+              w = wcs.WCS(h)
+              ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
+              dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
+              log.debug("RA[%d]= %s DEC[%d]= %s"%(i,ra, i, dec))
+              # Assummed that North is up and East is left
+              offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
+              offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
+              
+              log.debug("offset_ra  = %s"%offsets[i][0])
+              log.debug("offset_dec = %s"%offsets[i][1])
+              
+              offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
+              i+=1
+        except Exception,e:
+          raise e
+        
+      offset_txt_file.close()
+      
+      # Write out offsets to file
+      # numpy.savetxt(p_offsets_file, offsets, fmt='%.6f')
+      log.debug("(WCS) Image Offsets (pixels): ")
+      log.debug(offsets)
+      
+      return offsets
+    
     def getPointingOffsets (self, images_in=None, 
                             p_offsets_file='/tmp/offsets.pap'):
         """
@@ -3283,7 +3338,7 @@ class ReductionSet(object):
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
-                coadded_file=output_file, config_dict=self.config_dict)
+                              coadded_file=output_file, config_dict=self.config_dict)
                 try:
                     aw.run(engine=self.config_dict['astrometry']['engine'])
                 except Exception,e:
@@ -3296,18 +3351,47 @@ class ReductionSet(object):
                 return output_file
         
         ## -- fin prueba !!
-        
         ########################################################################
-        # 6 - Compute dither offsets from the first sky subtracted/filtered 
-        # images using cross-correlation (SExtractor + offsets)
+        # 6new - Compute dither offsets from the first sky subtracted/filtered 
+        # images using astrometric calibration (Astrometric.Net).
         ########################################################################
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
-        try:
-            offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
-                                                 out_dir+'/offsets1.pap')                
-        except Exception,e:
-            log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
-            raise e
+        new_files = []
+        if True:
+            for my_file in self.m_LAST_FILES:
+                # Run astrometric calibration
+                try:
+                    solved = reduce.solveAstrometry.solveField(my_file, 
+                                  out_dir, # self.temp_dir produces collision
+                                  self.config_dict['general']['pix_scale'])
+                except Exception,e:
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+                else:
+                    # Rename the file
+                    out_filename = my_file.replace(".fits", ".ast.fits")
+                    new_files.append(out_filename)
+                    shutil.move(solved, out_filename)
+            
+            self.m_LAST_FILES = new_files
+            try:
+                offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
+                                                    out_dir+'/offsets1.pap')                
+            except Exception,e:
+                log.error("Error while getting WCS pointing offsets. Cannot continue with data reduction...")
+                raise e
+        
+        ########################################################################
+        # 6old - Compute dither offsets from the first sky subtracted/filtered 
+        # images using cross-correlation (SExtractor + offsets)
+        ########################################################################
+        if False:
+            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+            try:
+                offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
+                                                    out_dir+'/offsets1.pap')                
+            except Exception,e:
+                log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
+                raise e
         
         ########################################################################
         # 7 - First pass coaddition using offsets

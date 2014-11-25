@@ -5613,7 +5613,36 @@ original (raw) si se pueden distinguir perfectamente !! ¿ por qué ? mala sustr
 del cielo ?? parece que ajustando los valores de la escala de colores se pueden distinguir
 mejor. El resultado es similar con swarp que con dithercubemean.
 
+21-Nov-2014 
+-----------
+- Prevideoconf: básicamente para panicficar el próximo commissioning
+- Por la tarde me reuno con Matilde para ver y analizar las imaǵenes
+de la series de foco del 12-Nov-2014, y ver si se podría sacar información
+sobre el tilt. Matilde y yo concluimos que parece que no (para más detalles
+ver email de Matilde del 23-Nov y ss.).
 
+
+
+24-Nov-2014 
+-----------
+- Implementación de nuevo método para calcular los offsets usando la astrometría 
+obtenida con Astrometry.net:
+
+  + Ventajas: casi siempre tendremos unos offsets, debido a la robustez de Astrometry.net
+  + Inconvesnietes: +CPU, es offset se calcula para toda la imagen, o mejor dicho,
+  para un punto de la imagen (1024,1024), pero los offsets que obtengo dependen
+  del punto elegido; por ejemplo, si tomo el (0,0) los offset me salen algo diferentes,
+  con diferencias +-3pixeles !!!!!
+  Esto implica que dithercubemean no funcionaría bien !!!, pero ahora que lo pienso, tampoco
+  funcionaría bien antes, pues el offset también era **unico** para toda la imagen !!!!
+  Quizás por eso obtengo estrellas alargadas en los bordes de la imagen !!!! 
+  La solución parece que pasa por usar SWARP para hacer la suma !!!
+  
+  
+  
+
+24-Nov-2014 
+-----------
 
 
 PRE-videoconf
