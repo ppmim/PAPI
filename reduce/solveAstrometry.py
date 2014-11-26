@@ -40,6 +40,9 @@ import logging as log
 import time
 
 # Project modules
+from astropy import wcs
+import astropy.io.fits as fits
+
 try: 
     import clfits
 except ImportError:
@@ -62,34 +65,50 @@ except ImportError:
 # - log file
 
 
-def readHeader(filename):
+def readHeader(filename, extension=1):
     """
-    Read from the FITS header values required for astrometric calibration
+    Read from the FITS header values required for astrometric calibration.
+    If input file is a MEF, extension[1,N] must be specified.
+    
+    Parameters
+    ----------
+    
+    filename: str
+        File name of the file to read.
+    
+    extension: int
+        For MEF files, extension number to use. If input file is
+        not a MEF, then 'extesion' has no effect.
+    
     """
     
     try:
-        fits = clfits.ClFits(filename)
+        myfits = clfits.ClFits(filename)
     except Exception,e:
         msg = "Error reading FITS file: " + filename
         log.error(msg)
         log.error(str(e))
         raise e
     else:
-        if fits.isMEF():
-            log.error("Currently MEF files are not supported.")
-            raise Exception("Currently MEF files are not supported.")
+        if myfits.isMEF():
+            log.info("Found a MEF file. Extension to use = %s"%extension)
+            m_wcs = wcs.WCS(fits.getheader(filename, ext=int(extension)))
+            # No SIP or Paper IV table lookup distortion correction is applied.
+            ra = m_wcs.wcs_pix2world([[myfits.naxis1/2, myfits.naxis2/2]], 1)[0][0]
+            dec = m_wcs.wcs_pix2world([[myfits.naxis1/2, myfits.naxis2/2]], 1)[0][1]
+        else:
+            ra = myfits.ra
+            dec = myfits.dec
 
         # Return values
-        scale = fits.pix_scale
-        ra = fits.ra
-        dec = fits.dec
-        instrument = fits.getInstrument()
-        is_science = fits.isScience()
+        scale = myfits.pix_scale
+        instrument = myfits.getInstrument()
+        is_science = myfits.isScience()
         
         return (scale, ra, dec, instrument, is_science)
         
     
-def solveField(filename, tmp_dir, pix_scale=None):
+def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     """
     Do astrometric calibration to the given filename using Astrometry.net 
     function 'solve-field'.
@@ -99,12 +118,19 @@ def solveField(filename, tmp_dir, pix_scale=None):
     
     Parameters
     ----------
-    
-    pix_scale: float
-        Default pixel scale to use in case it cannot be find out from header
-    
+    filename: str
+        Filename of the frame to solve; cannot be a MEF file, Astrometry.net
+        only supports MEF files with the option --extension. 
+        
     tmp_dir: str
         Directory where output files are saved
+
+    pix_scale: float
+        Default pixel scale to use in case it cannot be find out from header
+
+    extension: int
+        In case of MEF file, extension to be used to solve field. Default 0
+        extension means 'no-mef', and then one single extension.
         
     Returns
     -------
@@ -121,11 +147,17 @@ def solveField(filename, tmp_dir, pix_scale=None):
     #
     # Read header parameters
     #    
-    (scale, ra, dec, instrument, is_science) = readHeader(filename)
+    (scale, ra, dec, instrument, is_science) = readHeader(filename, extension)
 
     # Whether no scale was found out and some was given as default, we use it
     if scale == -1 and pix_scale != None:
         scale = pix_scale
+    
+    # Extension paramter
+    if extension>0:
+        ext_str = "--extension %d"%int(extension)
+    else:
+        ext_str = ""
         
     if not is_science:
         log.info("Frame %s is not a science frame"%filename)
@@ -134,8 +166,6 @@ def solveField(filename, tmp_dir, pix_scale=None):
     logging.debug("Starting to solve-field for: %s  Scale=%s  RA= %s Dec= %s \
     INSTRUMENT= %s"%(filename, scale, ra , dec, instrument))
     
-    # Hardcoded the path !
-    #path_astrometry = "/usr/local/astrometry/bin"
     path_astrometry = os.path.dirname(spawn.find_executable("solve-field"))  
     if not os.path.exists(path_astrometry+"/solve-field"):
         raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s"%path_astrometry)
@@ -152,19 +182,19 @@ def solveField(filename, tmp_dir, pix_scale=None):
         # radius is used (0.5 degrees)
         # Although --downsample is used, scale does not need to be modified
         str_cmd = "%s/solve-field -O -p --scale-units arcsecperpix --scale-low %s \
-        --scale-high %s --ra %s --dec %s --radius 0.5 -D %s %s --downsample 2\
-        "%(path_astrometry, scale-0.05, scale+0.05, ra, dec, tmp_dir, filename)
+        --scale-high %s --ra %s --dec %s --radius 0.5 -D %s %s --downsample 2 %s\
+        "%(path_astrometry, scale-0.05, scale+0.05, ra, dec, tmp_dir, filename, ext_str)
     # 2) RA, Dec are unknown but scale is
     elif ra == -1 or dec ==-1 :
         log.debug("RA, Dec are unknown but scale is")
         str_cmd = "%s/solve-field -O -p --scale-units arcsecperpix --scale-low %s \
-        --scale-high %s -D %s %s\
-        "%(path_astrometry, scale-0.1, scale+0.1, tmp_dir, filename)
+        --scale-high %s -D %s %s %s\
+        "%(path_astrometry, scale-0.1, scale+0.1, tmp_dir, filename, ext_str)
     # 3) None is known -- blind calibration
     if (ra==-1 or dec==-1) and scale==-1:
         log.debug("Nothing is known")
-        str_cmd = "%s/solve-field -O -p -D %s %s\
-        "%(path_astrometry, tmp_dir, filename)
+        str_cmd = "%s/solve-field -O -p -D %s %s %s\
+        "%(path_astrometry, tmp_dir, filename, ext_str)
     
     log.debug("CMD="+str_cmd)
     
@@ -219,7 +249,7 @@ def calc(args):
         """
         return solveField(*args)
         
-def runMultiSolver(files, tmp_dir, pix_scale=None):
+def runMultiSolver(files, tmp_dir, pix_scale=None, extension=1):
     """
     Run a parallel proceesing to solve astrometry for the input files taking
     advantege of multi-core CPUs.
@@ -237,7 +267,7 @@ def runMultiSolver(files, tmp_dir, pix_scale=None):
     results = []
     solved = []
     for file in files:
-        red_parameters = (file, tmp_dir, pix_scale)
+        red_parameters = (file, tmp_dir, pix_scale, extension)
         try:
             # Instead of pool.map() that blocks until
             # the result is ready, we use pool.map_async()
@@ -300,10 +330,14 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
     parser.add_option("-p", "--pixel_scale",
                   action="store", dest="pixel_scale", type=float, 
                   help="Pixel scale of the images")
+    
+    parser.add_option("-e", "--extension",
+                  action="store", dest="extension", type=float, 
+                  help="If file is a MEF, extension to be used for solving the field.")
                   
     parser.add_option("-r", "--recursive",
                   action="store_true", dest="recursive", default=False,
-                  help="Recursive subdirectories (only first level)")
+                  help="Recursive subdirectories if source is a directory name (only first level)")
     
                                 
     (options, args) = parser.parse_args()
@@ -375,7 +409,8 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
                 
         # Parallel approach        
         files_solved = runMultiSolver(filelist, options.output_dir, 
-                                      options.pixel_scale)
+                                      options.pixel_scale,
+                                      options.extension)
         for file in filelist:
             ren_file = os.path.join(options.output_dir,
                     os.path.basename(os.path.splitext(file)[0]+".new.fits"))
@@ -394,6 +429,7 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
                     
     else:
         logging.error("Source file %s does not exists",options.source_file)
+        sys.exit()
 
     toc = time.time()
 

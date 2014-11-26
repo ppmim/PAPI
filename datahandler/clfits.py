@@ -137,6 +137,7 @@ class ClFits (object):
         self.ncoadds = -1
         self.itime = 0.0
         self.readmode = ""
+        # pointer to the primary-main header
         self.my_header = None
         self.obs_tool = False
         self.pix_scale = 1.0
@@ -246,7 +247,8 @@ class ClFits (object):
         return self.instrument=='panic'
 
     def isPANICFullFrame(self):
-        return (self.instrument=='panic' and self.naxis1>=4096 and self.naxis2>=4096)
+        # Raw PANIC full frame
+        return (self.instrument=='panic' and self.naxis1==4096 and self.naxis2==4096)
                 
     def expTime(self):
         return (self.exptime)

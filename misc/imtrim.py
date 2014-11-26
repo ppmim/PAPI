@@ -99,7 +99,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
         raise e
     
     indata.close()
-            
+
     xmin = 0
     lasti = 0
     start = 1
@@ -117,7 +117,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
             std = float(iraf.imstat (
                 images=file+"["+str(i)+",*]",
                 fields='stddev', format='no', Stdout=1)[0])
-        if (std!=0.0) :
+        if (std!=0.0):
             if (i==1):
                 xmin = 1
                 break
@@ -134,7 +134,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
         i+=step
         #print "DEBUG_xmin (i,std,lasti):" , i, std, lasti
          
-    if (xmin==0 ):
+    if (xmin==0):
         log.error("No data in file %s"%file)
         raise Exception("No data in file %s"%file)
     

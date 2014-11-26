@@ -2,8 +2,8 @@ obsutil
 if (access("/tmp/focus_seq.txt"))
 {
    starfocus(images="@/tmp/focus_seq.txt", focus = "T_FOCUS", fstep = "", nexposures = 1, 
-             coords = "mark1", wcs = "logical", size = "MFWHM", scale = 1, sbuffer = 10, 
-             swidth=10, radius = 5, satura = 55000, ignore_sat =no , 
+             coords = "mark1", wcs = "logical", size = "GFWHM", scale = 1, sbuffer = 10, 
+             swidth= 10, radius = 5, satura = INDEF, ignore_sat =no , 
              imagecur = "", display =yes, frame = 1, graphcur = "", 
              logfile = "starfocus.log")
              

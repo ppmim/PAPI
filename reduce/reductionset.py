@@ -2888,7 +2888,7 @@ class ReductionSet(object):
                 log.error("Error: %s"%str(e))
                 raise e
             
-            if len(out_ext) >1:
+            if len(out_ext)>1:
                 log.debug("[reduceSeq] *** Creating final output file *WARPING* single output frames....***")
                 #option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
@@ -2898,11 +2898,13 @@ class ReductionSet(object):
                 
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
-                swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,'
-                'IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,'
-                'NDIT,PAPIVERS'
+                # Note: copy_keywords must be without spaces between keys and 'coma'
+                swarp.ext_config['COPY_KEYWORDS'] = "OBJECT,INSTRUME,TELESCOPE,FILTER"\
+                "IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,"\
+                "NDIT,PAPIVERS"
                 swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
                 swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
+                # TBC
                 #swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
                 #swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
                 swarp.ext_config['RESAMPLE'] = 'Y'
@@ -2960,7 +2962,7 @@ class ReductionSet(object):
         return files_created
  
         
-    def reduceSingleObj(self, obj_frames, master_dark, master_flat, master_bpm, 
+    def reduceSingleObj_OLD(self, obj_frames, master_dark, master_flat, master_bpm, 
                   red_mode, out_dir, output_file):
         
         """ 
@@ -3658,7 +3660,676 @@ class ReductionSet(object):
         
         return output_file 
 
+    def reduceSingleObj(self, obj_frames, master_dark, master_flat, master_bpm, 
+                  red_mode, out_dir, output_file):
+        
+        """ 
+        Main reduction procedure for a dither sequence. 
+        Given a set of object(science) frames and (optionally) master calibration 
+        files, run the data reduction of the observing object sequence, producing 
+        an reduced ouput frame if no error; otherwise return None or raise exception.
+            
+        NOTE: Currently this method only accepts single FITS files (not MEF), 
+        it means the splitting must be done previusly to call this method.
+       
+        Parameters
+        ----------
+        
+        obj_frames : list
+            list of files to be processed
+        
+        master_dark : str
+            Master dark filename to be used in the processing
+            
+        master_flat : str
+            Master flat filename to be used in the processing
+            
+        master_bpm: str
+            Master BPM filename to be used in the processing (fixing or adding 
+            to gainmap).
 
+        red_mode: str
+            Reduction mode 
+
+        out_dir: str
+            Output directory
+
+        output_file: str
+            Output filename to be create
+
+        
+        Returns
+        -------
+        
+        output_file : str 
+            If 'red_mode' = 'quick' or 'science', then the function return the 
+            coadded frame obtained from the reduction, both 'quick' and 'science' 
+            reduction mode.
+            If 'red_mode' = 'lemon', the method return a file listing the files
+            obtained of the pre-processing done (dark, flat and sky subtraction) 
+        
+        """
+        
+        log.info("#########################################")
+        log.info("#### Starting Object Data Reduction #####")
+        log.info("#### MODE = %s  ", self.red_mode)
+        log.info("#### OUT_DIR = %s ",out_dir)
+        log.info("#### OUT_FILE = %s ", output_file)
+        log.info(" ----------------------------------")
+        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
+        log.info("#### FILTER = %s", c_filter)
+        log.info("#### MASTER_DARK = %s ", master_dark)
+        log.info("#### MASTER_FLAT = %s ", master_flat)
+        log.info("#### MASTER_BPM = %s ", master_bpm)
+        log.info("#########################################")
+        
+        # if given, set the reduction mode, else use default mode.
+        if red_mode != None: self.red_mode = red_mode
+        
+        
+        # Clean old files
+        #self.cleanUpFiles()
+        
+        # Change cwd to self.out_dir
+        old_cwd = os.getcwd()
+        os.chdir(out_dir) 
+        
+        # Copy/link source files (file or directory) to reduce to the working directory
+        # and Initialize self.m_LAST_FILES
+        if not os.path.dirname(obj_frames[0])==out_dir:
+            misc.fileUtils.linkSourceFiles(obj_frames, out_dir)
+            self.m_LAST_FILES = [out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
+        else:
+            self.m_LAST_FILES = obj_frames
+            
+        
+        ########################################################################
+        # 0 - Some checks (filter, ....) 
+        ########################################################################
+        # TODO : it could/should be done in reduceSeq, to avoid the spliting ...??
+        log.info("**** Data Validation ****")
+        if self.check_data:
+            if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, 
+                               chk_expt=True, chk_itime=True, chk_ncoadd=True, 
+                               chk_readmode=True, chk_instrument=True)[0]==True):
+                log.debug("Data checking was OK !")
+            else:
+                raise Exception("Mismatch in data checking !")
+        
+        ########################################################################
+        # 00 - Sort out data by MJD (self.m_LAST_FILES)
+        ########################################################################
+        # in principle, it is suppossed they are already ascending sorter, but...
+        try:
+            self.m_LAST_FILES = self.sortOutData() 
+        except:
+            raise
+        
+        ########################################################################
+        # 000 - Find out dither mode
+        ########################################################################
+        try:
+            # overwrite initial given observing mode
+            self.obs_mode = self.getObsMode()  
+        except:
+            raise
+        
+        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" )
+        log.info( "OBSERVING SEQUENCE DETECTED. OBS_MODE= %s", self.obs_mode)
+        log.info( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" )
+        
+        # keep a copy of the original file names
+        self.m_rawFiles = self.m_LAST_FILES        
+
+        ########################################################################
+        # 0 - Bad Pixels; two options:
+        # To Fix: replace with a bi-linear interpolation from nearby pixels.
+        # To add to gainmap:  to set bad pixels to bkg level 
+        # Both options are incompatible.
+        ########################################################################
+        if self.config_dict['bpm']['mode'].lower()=='none':
+            master_bpm_4gain = None
+            master_bpm_4fix = None
+        elif self.config_dict['bpm']['mode'].lower()=='fix':
+            master_bpm_4gain = None
+            master_bpm_4fix = master_bpm
+        elif self.config_dict['bpm']['mode'].lower()=='gain':
+            master_bpm_4gain = master_bpm
+            master_bpm_4fix = None
+        else:
+            master_bpm_4gain = None
+            master_bpm_4fix = None
+
+        ########################################################################
+        # 1 - Apply dark, flat to ALL files 
+        ########################################################################
+        if self.apply_dark_flat==1 and \
+            (master_dark!=None or master_flat!=None or master_bpm_4fix!=None):
+            log.info("**** Applying Dark, Flat and BPM ****")
+            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
+                                       master_dark, 
+                                       master_flat,
+                                       master_bpm_4fix, 
+                                       out_dir)
+            self.m_LAST_FILES = res.apply()
+        
+        ########################################################################
+        # 2 - Compute Super Sky Flat-Field --> GainMap
+        #      The 'local_master_flat' is ONLY used to build the GainMap, and
+        #      can come from the 'master_flat' provided by the user or from the 
+        #      just created 'super_flat' with sci images 
+        ########################################################################
+        if master_flat==None:
+            try:
+                # - Find out what kind of observing mode we have (dither, ext_dither, ...)
+                log.info('**** Computing Super-Sky Flat-Field (local_master_flat) ****')
+                local_master_flat = out_dir+"/superFlat.fits"
+                if self.obs_mode=="dither":
+                    log.debug("---> dither sequece <----")
+                    misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
+                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                                                    local_master_flat, bpm=None, 
+                                                    norm=True, 
+                                                    temp_dir=self.temp_dir)
+                    superflat.create()
+                elif (self.obs_mode=="dither_on_off" or
+                      self.obs_mode=="dither_off_on" or
+                      self.obs_mode=="other"):
+                    log.debug("----> EXTENDED SOURCE !!! <----")
+                    sky_list = self.getSkyFrames()
+                    misc.utils.listToFile(sky_list, out_dir+"/files.list")
+                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                                                    local_master_flat, bpm=None, 
+                                                    norm=True, 
+                                                    temp_dir=self.temp_dir)
+                    superflat.create()                            
+                else:
+                    log.error("Dither mode not supported")
+                    raise Exception("Error, dither mode not supported")
+            except Exception,e:
+                raise e    
+        else:
+            local_master_flat = master_flat 
+            log.info("Using the given (dome or twlight) master flat")
+                 
+        ########################################################################
+        # 3 - Compute Gain map and apply BPM
+        ########################################################################
+        log.info("**** Computing gain-map from ****")
+        gainmap = out_dir+'/gain_'+self.m_filter+'.fits'
+        # get gainmap parameters
+        if self.config_dict:
+            mingain = self.config_dict['gainmap']['mingain']
+            maxgain = self.config_dict['gainmap']['maxgain']
+            nxblock = self.config_dict['gainmap']['nxblock']
+            nyblock = self.config_dict['gainmap']['nyblock']
+            nsigma = self.config_dict['gainmap']['nsigma']
+        else:
+            mingain = 0.5
+            maxgain = 1.5
+            nxblock = 16
+            nyblock = 16
+            nsigma = 5
+            
+        # When gainmap is created (from dome or sky flats), it must be normalized
+        # wrt mode of chip 1 to get gain differences, set bad pixels, 
+        # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
+        # pixels deviating >30%(?),...
+        # do_normalization=False because it is suppossed that FF is already 
+        # normalized.
+        g = reduce.calGainMap.GainMap(local_master_flat, gainmap, 
+                                    bpm=master_bpm_4gain, 
+                                    do_normalization=False,  
+                                    mingain=mingain, maxgain=maxgain,
+                                    nxblock=nxblock, nyblock=nyblock,
+                                    nsigma=nsigma)
+        g.create() 
+           
+        ########################################################################
+        # Add/combine external Bad Pixel Map to gainmap (maybe from master DARKS,FLATS ?)
+        # BPMask ==> Bad pixeles >0, Good pixels = 0
+        # GainMap ===> Bad pixels <=0, Good pixels = 1
+        # Later, in skyfilter procedure bad pixels are set to bkg level.
+        ########################################################################
+        if master_bpm_4gain !=None:
+            log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm_4gain, gainmap))
+            if not os.path.exists( master_bpm_4gain ):
+                log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
+            else:
+                # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
+                bpm_data = fits.getdata(master_bpm_4gain, header=False)
+                badpix_p = numpy.where(bpm_data>0)
+                gain_data, gh = fits.getdata(gainmap, header=True)
+                gain_data[badpix_p] = 0
+                gh.set('HISTORY','Combined with BPM:%s'%master_bpm_4gain)
+                fits.writeto(gainmap, gain_data, header=gh, clobber=True)
+        
+        ########################################################################
+        # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
+        #      each raw frame.
+        ########################################################################
+        if self.red_mode=='lab':
+            log.info("**** Computing FWHM of each pre-reduced image ****")
+            # First, get input parameter for FWHM estimation
+            satur_level = self.config_dict['astrometry']['satur_level']
+            pix_scale = self.config_dict['general']['pix_scale']
+            fwhm_t = []
+            std_t = []
+            for r_file in self.m_LAST_FILES:
+                try:
+                    pf = datahandler.ClFits(r_file)
+                    satur_level = int(satur_level) * int(pf.getNcoadds())
+                except:
+                    log.warning("Cannot get NCOADDS. Taken default (=1)")
+                    satur_level = satur_level
+                
+                # Note that we could compute FWHM for a well-defined area
+                # using edge_x and edge_y parameters.    
+                cq = reduce.checkQuality.CheckQuality(r_file, isomin=10.0,
+                    ellipmax=0.3, edge_x=100, edge_y=100, pixsize=pix_scale, 
+                    gain=1, sat_level=satur_level)
+                try:
+                    (fwhm, std, k, k) = cq.estimateFWHM()
+                    if fwhm>0 and fwhm<20:
+                        log.info("File %s - FWHM = %s (pixels) std= %s"%(r_file, fwhm, std))
+                        fwhm_t.append(fwhm)
+                        std_t.append(std)
+                    elif fwhm<0 or fwhm>20:
+                        log.error("Wrong estimation of FWHM of file %s"%r_file)
+                        log.error("Please, review your data.")           
+                    else:
+                        log.error("ERROR: Cannot estimate FWHM of file %s"%r_file)           
+                except Exception,e:
+                    log.error("ERROR: something wrong while computing FWHM")
+                    raise e
+            
+            log.info("**********************************")
+            log.info("*** Mean-FWHM = %s"%numpy.mean(fwhm_t))
+            log.info("*** Mean-STD = %s"%numpy.mean(std_t))
+            log.info("*** END of Lab data reduction ****")
+            return self.m_LAST_FILES[0]
+            
+                        
+        ########################################################################
+        # 4 - First Sky subtraction (IRDR) - sliding window technique
+        #     (and set bad pixels to bkg lvl)
+        ########################################################################
+        log.info("**** 1st Sky subtraction (without object mask) ****")
+        misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
+        # Return only filtered images; in extended-sources, sky frames  are not 
+        # included.
+        #  
+        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
+                                           gainmap, 'nomask', self.obs_mode)
+        
+        ########################################################################
+        # 4.1 - Remove crosstalk - (only if bright stars are present)
+        #       (if red_mode!=quick, then crosstalk will be done later)
+        ########################################################################
+        if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
+            self.config_dict['general']['remove_crosstalk']):
+            log.info("**** Removing crosstalk ****")
+            try:
+                res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
+                            [None]*len(self.m_LAST_FILES), 
+                            [True]*len(self.m_LAST_FILES))
+                self.m_LAST_FILES = res
+            except Exception,e:
+                raise e      
+
+        ########################################################################
+        # 4.2 - Divide by the master flat after sky subtraction ! 
+        # some people think it is better do it now (M.J.Irwing, CASU)
+        # But, dark is not applied/required, as it was implicity done when sky 
+        # subtraction.
+        # However, it does not produce good results, it looks like if we undo the 
+        # sky subtraction, because sky subtraction is quite related with 
+        # flatfielding.
+        # For further details, check TN and Wei-Hao (SIMPLE) mails. 
+        # So, it is implemented here only for academic purposes !
+        ########################################################################
+        if self.apply_dark_flat==2 and master_flat!=None:
+            log.info("**** Applying Flat AFTER sky subtraction ****")
+            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
+                                       None,  
+                                       master_flat,
+                                       None, 
+                                       out_dir)
+            self.m_LAST_FILES = res.apply()
+        
+        ########################################################################
+        # Preliminary Astrometric calibration of sky-subtracted frames.
+        # ######################################################################
+        log.info("**** Preliminary Astrometric calibatrion ****")
+        new_files = []
+        for my_file in self.m_LAST_FILES:
+            # Run astrometric calibration
+            try:
+                solved = reduce.solveAstrometry.solveField(my_file, 
+                               out_dir, # self.temp_dir produces collision
+                               self.config_dict['general']['pix_scale'])
+            except Exception,e:
+                raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+            else:
+                # Rename the file
+                out_filename = my_file.replace(".fits", ".ast.fits")
+                new_files.append(out_filename)
+                shutil.move(solved, out_filename)
+        
+        self.m_LAST_FILES = new_files
+        
+        ########################################################################
+        # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
+        ########################################################################
+        if self.red_mode=='quick-lemon':
+            output_fd, papi_output = \
+                tempfile.mkstemp(prefix = out_dir,
+                                 suffix = '.papi_output', text = True)
+            os.close(output_fd)
+            os.unlink(papi_output)
+            misc.utils.listToFile(self.m_LAST_FILES, papi_output)
+            log.info("Quick-LEMON output generated !")
+            return papi_output
+         
+        ########################################################################
+        # 5 - Compute dither offsets:
+        #        - using astrometric calibration
+        #        - using cross-correlation
+        ########################################################################
+        self.offsets_mode = 'wcs'
+        #self.offsets_mode = 'cross-correlation'
+        if self.offsets_mode=='wcs':
+            log.info("Computing dither offset using astrometric calibration")
+            try:
+                offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
+                                                        out_dir+'/offsets1.pap')                
+            except Exception,e:
+                log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
+                raise e
+        else:
+            log.info("Computing dither offset using cross-correlation")
+            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+            try:
+                offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
+                                                    out_dir+'/offsets1.pap')                
+            except Exception,e:
+                log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
+                raise e
+        
+        ########################################################################
+        # End of first cycle: SINGLE REDUCTION (quick mode or extended object !)    
+        # 6 - Preliminary coaddition and registering of the stack.
+        #     We use SCAMP + SWARP
+        ########################################################################
+        if self.obs_mode!='dither' or self.red_mode=="quick":
+            if self.coadd_mode=='swarp':
+                log.info("**** Doing 1st Stack Coaddition (swarp)****")
+                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+                            coadded_file=output_file, config_dict=self.config_dict)
+                try:
+                    aw.run(engine=self.config_dict['astrometry']['engine'])
+                except Exception,e:
+                    log.error("Some error while running Astrowarp....")
+                    raise e
+            else:
+                log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")
+                # create input file for dithercubemean
+                fo = open(out_dir+'/offsets1.pap', "r")
+                fs = open(out_dir+'/stack1.pap','w+')
+                for line in fo:
+                    n_line = line.replace(".fits.objs", ".fits") 
+                    fs.write(n_line)
+                fo.close()
+                fs.close()    
+                self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
+                                      out_dir+'/coadd1.fits','average')
+                
+                log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
+                if self.config_dict['astrometry']['engine']=='SCAMP':
+                    try:
+                        reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
+                                              self.config_dict['astrometry']['catalog'], 
+                                              config_dict=self.config_dict, 
+                                              do_votable=False)
+                    except Exception,e:
+                        raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
+                else:
+                    try:
+                        solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
+                                                        out_dir, # self.temp_dir produces collision
+                                                        self.config_dict['general']['pix_scale'])
+
+                    except Exception,e:
+                        raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
+                    else:
+                        # Rename the file
+                        shutil.move(solved, output_file)
+                        
+            # ###########################
+            # Data quality estimation
+            # ###########################
+            if self.config_dict['general']['estimate_fwhm']:
+                log.info("**** FWHM estimation of coadded_1 result frame ****")
+                satur_level = self.config_dict['astrometry']['satur_level']
+                pix_scale = self.config_dict['general']['pix_scale']
+                
+                try:
+                    pf = datahandler.ClFits(output_file)
+                    satur_level = int(satur_level) * int(pf.getNcoadds())
+                except:
+                    log.warning("Cannot get NCOADDS. Taken default (=1)")
+                    satur_level = satur_level
+                    
+                cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
+                    ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
+                    gain=4.15, sat_level=satur_level)
+                try:
+                    (fwhm, std, k, k) = cq.estimateFWHM()
+                    if fwhm>0 and fwhm<20:
+                        log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
+                    elif fwhm<0 or fwhm>20:
+                        log.error("Wrong estimation of FWHM of file %s"%output_file)
+                        log.error("Please, review your data.")           
+                    else:
+                        log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
+                except Exception,e:
+                    log.error("ERROR: something wrong while computing FWHM")
+                    raise e
+                            
+            log.info("Generated output file ==>%s", output_file)
+            log.info("#########################################")
+            log.info("##### End of QUICK  data reduction ######")
+            log.info("#########################################")
+            
+            return output_file
+        
+               
+            
+        ########################################################################
+        # 8 - Create master object mask of the 1st stack coadd.
+        ########################################################################
+        log.info("************************")
+        log.info(" START SECOND PASS      ")
+        log.info("************************")
+        
+        #############
+        # Build coadd 
+        #############
+        log.info("**** Initial coaddition of sky subtracted frames ****")
+
+        fo = open(out_dir+'/offsets1.pap', "r")
+        fs = open(out_dir+'/stack1.pap','w+')
+        for line in fo:
+            n_line = line.replace(".fits.objs", ".fits") 
+            fs.write(n_line)
+        fo.close()
+        fs.close()    
+        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
+                              out_dir+'/coadd1.fits','average')
+
+        #####################
+        # Create object mask 
+        #####################
+        
+        log.info("**** Master object mask creation ****")
+        obj_mask  = self.__createMasterObjMask(out_dir+'/coadd1.fits', 
+                                               out_dir+'/masterObjMask.fits') 
+
+        ########################################################################
+        # 8.5 - Re-compute the gainmap taking into account the object mask
+        ########################################################################
+        # TODO ???
+        
+        ########################################################################
+        # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK
+        ########################################################################
+        log.info("**** Sky subtraction with 2nd object mask ****")
+        # 9.1 Compound masked sky file list as input to IRDR::skyfilter()
+        fs = open(out_dir+"/skylist2.pap","w+")
+        i = 0
+        j = 0
+        
+        for file in self.m_rawFiles:
+            if self.apply_dark_flat==1 and master_flat!=None and master_dark!=None:
+                line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
+                + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+            elif self.apply_dark_flat==1 and master_flat!=None:
+                line = file.replace(".fits","_F.fits") + " " + obj_mask + " "\
+                + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+            elif self.apply_dark_flat==1 and master_dark!=None:
+                line = file.replace(".fits","_D.fits") + " " + obj_mask + " "\
+                + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
+            else:
+                line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
+                " " + str(offset_mat[j][1])
+            
+            fs.write(line+"\n")
+            
+            if (self.obs_mode=='dither_on_off' or 
+                self.obs_mode=='dither_off_on') and i%2:
+                j = j+1
+            elif self.obs_mode=='dither':
+                j = j+1
+            i = i+1
+        
+        fs.close()
+        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
+                                           'mask', self.obs_mode)      
+    
+        ########################################################################
+        # 9.1 - Remove crosstalk - (only if bright stars are present)    
+        ########################################################################
+        if self.config_dict['general']['remove_crosstalk']:
+            log.info("**** Removing crosstalk ****")
+            try:
+                res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
+                         [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES))
+                self.m_LAST_FILES = res
+            except Exception,e:
+                raise e
+
+        ########################################################################
+        # 9.2 - Remove Cosmic Rays -    
+        ########################################################################
+        if self.config_dict['general']['remove_cosmic_ray']:
+            try:
+                res = map(reduce.remove_cosmics.remove_cr, self.m_LAST_FILES, 
+                            [None]*len(self.m_LAST_FILES), [True]*len(self.m_LAST_FILES),
+                            [False]*len(self.m_LAST_FILES))
+                self.m_LAST_FILES = res
+            except Exception,e:
+                raise e
+        ########################################################################
+        # 9.3 - LEMON connection - End here for LEMON processing    
+        ########################################################################
+        
+        if self.red_mode=='lemon':
+            output_fd, papi_output = \
+                tempfile.mkstemp(prefix = out_dir,
+                                 suffix = '.papi_output', text = True)
+            os.close(output_fd)
+            os.unlink(papi_output)
+            misc.utils.listToFile(self.m_LAST_FILES, papi_output)
+            log.info("End of sequence LEMON-reduction. # %s # files created. ",
+                     len(self.m_LAST_FILES))
+            return papi_output
+    
+        #######################################################################
+        # 9.4 - Divide by the master flat after sky subtraction ! (see notes above)
+        # (the same task as above 4.2) --> HAS NO SENSE !!! only for a test ??? or a.l.a. O2k 
+        #######################################################################
+        if self.apply_dark_flat==2 and master_flat!=None:
+            log.info("**** Applying Flat AFTER sky subtraction ****")
+            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
+                                       None,  
+                                       master_flat,
+                                       None, 
+                                       out_dir)
+            self.m_LAST_FILES = res.apply()
+            
+        #######################################################################
+        # 10 - Compute field distortion and make final stack:
+        #       1-Remove field distortion from individual images (SCAMP+SWARP)
+        #       2-Coaddition of corrected field distortion images (SWARP)
+        #       3-Final Astrometric calibration (SCAMP) of the coadded image
+        #######################################################################
+        if self.coadd_mode=='swarp':
+            log.info("**** Doing Final Stack Coaddition (swarp)****")
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+                         coadded_file=output_file, config_dict=self.config_dict,
+                         resample=True, subtract_back=True)
+            try:
+                aw.run(engine=self.config_dict['astrometry']['engine'])
+            except Exception,e:
+                log.error("Some error while running Astrowarp....")
+                raise e
+        else:
+            log.info("**** Doing Final Stack Coaddition (dithercubemean) ****")
+            # create input file for dithercubemean
+            fo = open(out_dir+'/offsets1.pap', "r")
+            fs = open(out_dir+'/stack2.pap','w+')
+            for line in fo:
+                n_line = line.replace(".fits.objs", ".fits") 
+                fs.write(n_line)
+            fo.close()
+            fs.close()    
+            self.coaddStackImages(out_dir+'/stack2.pap', gainmap, 
+                                    out_dir+'/coadd2.fits','average')
+                
+            log.info("**** Doing Astrometric calibration of Final coadd stack ****")
+            if self.config_dict['astrometry']['engine']=='SCAMP':
+                try:
+                    reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
+                                     self.config_dict['astrometry']['catalog'], 
+                                     config_dict=self.config_dict, 
+                                     do_votable=False,
+                                     resample=True, # it means remove field distorion
+                                     subtract_back=True)
+                except Exception,e:
+                    raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
+                else:
+                    try:
+                        solved = reduce.solveAstrometry.solveField(out_dir+'/coadd2.fits', 
+                                         out_dir, # self.temp_dir produces collision
+                                         self.config_dict['general']['pix_scale'])
+
+                    except Exception,e:
+                        raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
+                    else:
+                        # Rename the file
+                        shutil.move(solved, output_file)
+        
+
+        log.info("Generated output file ==>%s", output_file)
+        
+        os.chdir(old_cwd)
+        
+        log.info("##################################")
+        log.info("##### End of data reduction ######")
+        log.info("##################################")
+        
+        return output_file
+      
 ## {{{ http://code.activestate.com/recipes/327142/ (r1)
 def printDict(aDict, br='\n', html=0,
             keyAlign='l',   sortKey=0,

@@ -1798,7 +1798,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         listViewItem = QTreeWidgetItemIterator(self.listView_dataS, 
                                                QTreeWidgetItemIterator.Selected)
         father = None
-        while listViewItem.value(): 
+        while listViewItem.value():
             self.m_popup_l_sel.append(str(listViewItem.value().text(0)))
             # if a parent of the group, no popup to show 
             if (self.comboBox_classFilter.currentText()=="GROUP" and \
@@ -1932,7 +1932,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 #print "#SEL_5-",len(self.m_popup_l_sel)
                 #self.subNearSkyAct.setEnabled(False)
                 #self.quickRedAct.setEnabled(False)
-            
+        
+        print "self.m_popup_l_sel=",self.m_popup_l_sel
+        
         ## Finally, execute the popup
         popUpMenu.exec_(event.globalPos())
         
@@ -2009,11 +2011,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
-                mef.doJoin(".join.fits", output_dir=self.m_outputdir)
+                res = mef.doJoin(".join.fits", output_dir=self.m_outputdir)[1]
             except Exception,e:
                 log.debug("Cannot convert MEF to Single file %s. Maybe it's not a MEF file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file"%(file))
-
+            else:
+                line = "Files generated: \n%s"%res
+                self.logConsole.info(QString(str(line)))
+                
     def Single2MEF_slot(self):
         """
         Convert a GEIRS single file (4kx4k) to a MEF file with 4-extensions,
@@ -2022,11 +2027,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
-                mef.convertGEIRSToMEF(out_dir=self.m_outputdir)
+                res = mef.convertGEIRSToMEF(out_dir=self.m_outputdir)[1]
             except Exception,e:
                 log.debug("Cannot convert Single to MEF file %s. Maybe it's not a single file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot convert Single to MEF file : %s \n Maybe it's not a single file"%(file))
-
+            else:
+                line = "Files generated: \n%s"%res
+                self.logConsole.info(QString(str(line)))
+                
     def splitMEF_slot(self):
         """
         Split each MEF selected file from the list view into NEXT separate 
@@ -2036,12 +2044,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
-                mef.doSplit(".Q%02d.fits", out_dir=self.m_outputdir)
+                res = mef.doSplit(".Q%02d.fits", out_dir=self.m_outputdir)[1]
             except Exception,e:
                 log.debug("Cannot split file %s. Maybe it's not a MEF file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file"%(file))
                 #self.logConsole.info(QString(str(line)))
-    
+            else:
+                line = "Files generated: \n%s"%res
+                self.logConsole.info(QString(str(line)))
 
     def splitSingle_slot(self):
         """
@@ -2052,12 +2062,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
-                mef.splitGEIRSToSimple(out_dir=self.m_outputdir)
+                res = mef.splitGEIRSToSimple(out_dir=self.m_outputdir)[1]
             except Exception,e:
                 log.debug("Cannot split file %s. Maybe it's not a 4kx4k Single file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a 4kx4k single file"%(file))
                 #self.logConsole.info(QString(str(line)))
-    
+            else:
+                line = "Files generated: \n%s"%res
+                self.logConsole.info(QString(str(line)))
+                
     def selected_file_slot(self, listItem):
         """
         To know which item is selected 
@@ -2956,6 +2969,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         
         if len(self.m_popup_l_sel)>3:
+            with fits.open(self.m_popup_l_sel[0]) as myfits:
+                if len(myfits)>1:
+                    msg = "Found a MEF file, but this routine only works for single FITS. Run FITS->MEF2Single."
+                    self.logConsole.error(msg)
+                    QMessageBox.critical(self, "Error", msg)
+                    return
+            
             text_file = self.focus_tmp_file
             iraf_logfile = self.m_tempdir + "/starfocus.log"
             # if file exists, overwrite
@@ -2984,7 +3004,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
         NOTE: it only works for MEF files !!!
 
         """
+        
         if len(self.m_popup_l_sel)>3:
+            with fits.open(self.m_popup_l_sel[0]) as myfits:
+                if len(myfits)!=5:
+                    msg = "This routine only works for MEF files. Run FITS->Single2MEF."
+                    self.logConsole.error(msg)
+                    QMessageBox.critical(self, "Error", msg)
+                    return
+                
             init_outdir = self.m_tempdir + "/focus_eval.pdf"
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename so save under",
@@ -3224,8 +3252,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 raise e
         
         
-      
-      
     def do_raw_astrometry(self):
         """
         Compute an astrometric solution for the selected file in the 
@@ -3246,6 +3272,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         if len(self.m_popup_l_sel)==1:
             fits = datahandler.ClFits(self.m_listView_item_selected)
+            if fits.isMEF():
+                  QMessageBox.information(self,"Info", QString("Sorry, but it only "
+                    "works for single detertor images (2kx2k)"
+                    "Run FITS->Split MEF."))
+                  return
+            if fits.isPANICFullFrame():
+                  QMessageBox.information(self,"Info", QString("Sorry, but it only "
+                    "works for single detertor images (2kx2k)"
+                    "Run FITS->Split Single."))
+                  return
             if fits.getType()=='SCIENCE': 
                 # Run astrometry parameters
                 out_file = self.m_outputdir+"/"+os.path.basename(self.m_listView_item_selected.replace(".fits",".wcs.fits"))

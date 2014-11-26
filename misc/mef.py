@@ -174,7 +174,7 @@ class MEF (object):
                  copy_keyword = None):
         """ 
         Method used to split a MEF into single FITS frames, 
-        copying all the header information required.                           
+        copying all the header information required.
         """
         log.info("Starting SplitMEF")
         
@@ -250,7 +250,7 @@ class MEF (object):
                 
             
         log.info("End of SplitMEF. %d files created", n)
-        return n_ext , out_filenames
+        return n_ext, out_filenames
                     
     def createMEF (self, output_file = os.getcwd()+"/mef.fits" ,
                    primaryHeader = None):
