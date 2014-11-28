@@ -343,7 +343,7 @@ class ApplyDarkFlat(object):
                     else:
                         # Get Dark
                         if self.__mdark != None: 
-                            if time_scale != 1.0: # for dark_model time_scale==-1
+                            if not self.__force_apply and time_scale != 1.0: # for dark_model time_scale==-1
                                 log.debug("Dark EXPTIME mismatch ! checking if it is a dark model ...")
                                 if not cdark.isMasterDarkModel():
                                     log.error("Cannot find out a scaled dark to apply")
@@ -377,7 +377,9 @@ class ApplyDarkFlat(object):
                             # where bad pixels
                             bpm_data = fits.getdata(self.__bpm, header=False)
                                                                
-                    # To avoid NaN values due to zero division
+                                                             
+                    
+                    # To avoid NaN values due to zero division by FLAT
                     __epsilon = 1.0e-20
                     flat_data = numpy.where(numpy.fabs(flat_data)<__epsilon, 
                                             1.0, flat_data)

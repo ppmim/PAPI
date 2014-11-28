@@ -628,12 +628,12 @@ def fixPix(image, mask):
 
 def applyBPM(filename, master_bpm, output_filename, overwrite=False):
     """
-    Apply a BPM to a input file setting to NaN bad pixels
+    Apply a BPM to a input file setting to NaN the bad pixels.
 
     Parameters:
     -----------
     filename: str
-        Input file to apply the BPM.
+        Input file to apply the BPM. MEF files are not supported yet.
     
     master_bpm: str
         The master BPM to be applied to the input file. Bad pixels are masked
@@ -652,8 +652,17 @@ def applyBPM(filename, master_bpm, output_filename, overwrite=False):
      output_filename: str
         If success, the output filename with the masked pixels.
 
-
+    TODO
+    ----
+    - add support for MEF files
+    
     """
+    
+    # Check input filename is non-MEF
+    with fits.open(filename) as myfits:
+        if len(myfits)>1:
+            raise Exception("MEF files are not supported yet.")
+    
     try:
         # Load Bad Pixels mask (BP=1's)
         bpm_data, bh = fits.getdata(master_bpm, header=True)
@@ -749,7 +758,7 @@ parser.add_option("-H", "--hthr",
 
 parser.add_option("-r", "--raw",
               action="store_true", dest="raw_flag", default=False,
-              help="Neither check FLAT type nor Readout-mode [default=%default]")    
+              help="Neither check FLAT type nor Readout-mode [default=%default]")
 
 
 

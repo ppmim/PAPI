@@ -2269,7 +2269,7 @@ class ReductionSet(object):
             # This is required because some calibration sequence could be created 
             # after the science sequence, and might happen no other calibration is 
             # available to process the current sequence.
-            sequences, seq_types = self.reorder_sequences( sequences, seq_types)
+            sequences, seq_types = self.reorder_sequences(sequences, seq_types)
         
         if len(sequences)==0:
             raise Exception("No well-defined sequence to process was found")

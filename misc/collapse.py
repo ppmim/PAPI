@@ -202,7 +202,7 @@ if __name__ == "__main__":
     # Get and check command-line options
         
     USAGE = "usage: %prog [options] arg1 arg2 ..."
-    desc = "Collapse (add them up arithmetically) each cube of a list files into a single 2D image"
+    desc = "Collapse (add them up arithmetically) each cube of a list files into a single 2D image."
     
     parser = OptionParser(USAGE, description=desc)
     
