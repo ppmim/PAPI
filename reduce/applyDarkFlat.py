@@ -66,12 +66,13 @@ class ExError (Exception):
 
 class ApplyDarkFlat(object):
     """
-    Class used to subtract a master dark (or dark model) and then divide 
-    by a master flat field
+    Class used to subtract a master dark (or dark model), divide 
+    by a master flat field and apply a BPM.
     
-    Applies a master dark and master flat to a list of non-calibrated science files
-    For each file processed a new file it is generated with the same filename but 
-    with the suffix '_DF.fits'
+    Applies a master dark, master flat and BPM to a list of 
+    non-calibrated science files.
+    For each file processed a new file it is generated with the same 
+    filename but with the suffix '_DF.fits' and/or '_BPM.fits'.
     
     Parameters
     ----------
@@ -88,7 +89,7 @@ class ApplyDarkFlat(object):
     out_dir: str
         Output directory where calibrated files will be created
     
-    bmp_action: str
+    bpm_action: str
         Action to perform with BPM:
             - fix, to fix Bad pixels
             - grab, to set to 'NaN' Bad pixels.
@@ -243,7 +244,7 @@ class ApplyDarkFlat(object):
                 out_suffix = out_suffix.replace(".fits","_F.fits")
                 log.debug("Found master FLAT to divide by: %s"%self.__mflat)
         else:
-            log.debug("No master flat to be divided by")
+            log.warning("No master flat to be divided by !")
             flat_data = 1.0
             flat_filter = None
             modian = 1 
@@ -258,13 +259,17 @@ class ApplyDarkFlat(object):
         
         # STEP 2: Check the TYPE and FILTER of each science file
         # If any frame on list missmatch the FILTER, then the procedure will be 
-        # aborted
+        # aborted. 
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
+        # However, if force_apply==True no checking will be done.
         n_removed = 0
         
         # List of files generated as result of this procedure and that will be returned
         result_file_list = [] 
-            
+        
+        #
+        # Start the applying of calibrations
+        #
         for iframe in framelist:
             if not os.path.exists(iframe):
                 log.error("File '%s' does not exist", iframe)
@@ -282,7 +287,7 @@ class ApplyDarkFlat(object):
                 f.close()
                 n_removed = n_removed+1
             else:
-                # check Number of Extension 
+                # check Number of Extensions
                 if (len(f)>1 and (len(f)-1) != n_ext):
                     raise Exception("File %s does not match the number of "
                     "extensions (%d)"%( iframe, n_ext))
@@ -308,7 +313,7 @@ class ApplyDarkFlat(object):
                     dark_data = None
                     # MEF
                     if n_ext > 1: # it means, MEF
-                        # Get dark
+                        # Get DARK
                         if self.__mdark != None: 
                             if time_scale != 1.0: # for dark_model time_scale==-1
                                 log.debug("Dark EXPTIME mismatch ! looking for dark model ...")
@@ -322,7 +327,7 @@ class ApplyDarkFlat(object):
                                 dark_data = dark[chip+1].data
                         else: dark_data = 0
                     
-                        # Get normalized flat
+                        # Get normalized FLAT
                         if self.__mflat!=None: 
                             if self.__norm:
                                 # normalization wrt chip 0
@@ -341,7 +346,7 @@ class ApplyDarkFlat(object):
 
                     # Single
                     else:
-                        # Get Dark
+                        # Get DARK
                         if self.__mdark != None: 
                             if not self.__force_apply and time_scale != 1.0: # for dark_model time_scale==-1
                                 log.debug("Dark EXPTIME mismatch ! checking if it is a dark model ...")
@@ -356,7 +361,7 @@ class ApplyDarkFlat(object):
                                 dark_data = dark[0].data
                         else: dark_data = 0
                         
-                        # Get normalized Flat
+                        # Get normalized FLAT
                         if self.__mflat!=None: 
                             if self.__norm:
                                 log.debug("Normalizing FF...")
@@ -401,9 +406,14 @@ class ApplyDarkFlat(object):
 
                     # Now, apply BPM
                     if self.__bpm!=None:
+                        if sci_data.shape!=bpm_data.shape:
+                            print "SCI=",sci_data.shape
+                            print "BPM=",bpm_data.shape
+                            log.error("Source data and BPM do not match image shape")
+                            raise Exception("Source data and BPM do not match image shape")
                         if self.__bpm_action=='fix':
                             log.debug("Fixing Bad Pixles...")
-                            sci_data = fixpix(sci_data, bpm_data, iraf=True)    
+                            sci_data = fixpix(sci_data, bpm_data, iraf=True)
                         elif self.__bpm_action=='grab':
                             log.debug("Grabbing BPM")
                             sci_data[bpm_data==1] = numpy.NaN
@@ -435,7 +445,7 @@ class ApplyDarkFlat(object):
                      
                 f.close()
                 result_file_list.append(newpathname)            
-                log.debug('Saved new dark subtracted or/and flattened file  %s',
+                log.debug('Saved new dark subtracted or/and flattened or/and BP Masked file  %s',
                           newpathname )
         
         log.debug(t.tac() )
@@ -494,15 +504,17 @@ def fixpix(im, mask, iraf=False):
     # Next approach is too slow !!!
     #
 
-    interp2d = interpolate.interp2d
-    #     x = xarray(im.shape)
-    #     y = yarray(im.shape)
-    #     z = im.copy()
-    #     good = (mask == False)
-    #     interp = interpolate.bisplrep(x[good], y[good],
-    #                                         z[good], kx=1, ky=1)
-    #     z[mask] = interp(x[mask], y[mask])
+    # interp2d = interpolate.interp2d
+    # x = numpy.array(im.shape)
+    # y = numpy.array(im.shape)
+    # z = im.copy()
+    # good = (mask == False)
+    # interp = interpolate.bisplrep(x[good], y[good],
+    #                            z[good], kx=1, ky=1)
+    # z[mask] = interp(x[mask], y[mask])
 
+    # return z
+  
     # create domains around masked pixels
     dilated = ndimage.binary_dilation(mask)
     domains, n = ndimage.label(dilated)
@@ -535,10 +547,12 @@ if __name__ == "__main__":
     # Get and check command-line options
     usage = "usage: %prog [options]"
     desc = """
-This module receives a series of FITS images and applies a master Dark, Flat and
+This module receives a series of FITS source images and applies a master Dark, Flat and
 BPM (subtract dark, divide Flat, and fix bad pixel) using the given
 calibration files (master dark, master flat-field, bad pixel mask). 
-Source raw files can be MEFs and data cubes. 
+In principle, source raw files can be MEFs and data cubes, but cannot be
+mixed MEF files and non-MEF files, and of course, images must have the
+same image size.
 """
     parser = OptionParser(usage, description=desc)
     
@@ -565,7 +579,7 @@ Source raw files can be MEFs and data cubes.
                       dest='bpm_action',
                       choices=['fix', 'grab', 'none',],
                       default='none',
-                      help='Action to perform with BPM [default: %default]')
+                      help='Action (none,grab,fix) to perform with BPM [default: %default]')
 
     parser.add_option("-o", "--out_dir",
                   action="store", dest="out_dir", default="/tmp/",
@@ -610,7 +624,7 @@ Source raw files can be MEFs and data cubes.
                             options.normalize)
         res.apply() 
     except Exception,e:
-        log.error("Error running task %s"%str(e))
+        log.error("Error running task: %s"%str(e))
         sys.exit(0)
     
     

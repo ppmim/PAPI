@@ -5638,23 +5638,25 @@ obtenida con Astrometry.net:
   Quizás por eso obtengo estrellas alargadas en los bordes de la imagen !!!! 
   La solución parece que pasa por usar SWARP para hacer la suma !!!
   
-  
-  
 
-24-Nov-2014 
+01-Dic-2014 
 -----------
+- Añado la lectura del angulo de rotación que da Astromery.net a
+la rutina solveField (cortería de VTerron).
+- Reviso la rutina applyDarkFlat para el caso de sustituir/arreglar los BP !
+
+(P) Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
+hacer una propia en Python.
 
 
-PRE-videoconf
--------------
-- Email de BD
-- Crosstalk in PANIC (Y,Z,..)
-- mapa de distorsión full_frame VS single detector.
+
 
 
 
 TODO:
 ====
+- Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
+hacer una propia en Python.
 - Buscar otra forma mas robusta de calcular los offsets --->cfr LEMON !!
 - Propagar T_FOCUS al hacer split para reducción en parelelo ! y donde haga falta !
 - ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'

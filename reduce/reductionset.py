@@ -2673,15 +2673,19 @@ class ReductionSet(object):
             else:
                 # Check and collapse if required (cube images)
                 sequence = misc.collapse.collapse(sequence, out_dir=self.temp_dir)
-
-                # Get calibration files
+                
+                #
+                # Get calibration files.
+                # If no calibrations are found, the reduction continues
+                # without dark subtraction and/or flat-fielding and/or BPM.
                 dark, flat, bpm = None, None, None
                 if self.red_mode == "quick":
-                    # Quick-Mode: optionally calibrations are used
+                    # Quick-Mode: optionally calibrations are used.
                     if self.apply_dark_flat==1 or self.apply_dark_flat==2: 
                         dark, flat, bpm = self.getCalibFor(sequence)
                 else:
                     # Science-Mode: always calibration are required !
+                    # but if not found, it continues without them.
                     dark, flat, bpm = self.getCalibFor(sequence)
                     # Return 3 filenames of master calibration frames (dark, flat, bpm), 
 
@@ -3101,7 +3105,7 @@ class ReductionSet(object):
         elif self.config_dict['bpm']['mode'].lower()=='fix':
             master_bpm_4gain = None
             master_bpm_4fix = master_bpm
-        elif self.config_dict['bpm']['mode'].lower()=='gain':
+        elif self.config_dict['bpm']['mode'].lower()=='grab':
             master_bpm_4gain = master_bpm
             master_bpm_4fix = None
         else:

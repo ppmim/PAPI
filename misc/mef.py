@@ -153,9 +153,9 @@ class MEF (object):
             #hdu.verify('silentfix')
             # now, copy extra keywords required
             try:
-                hdu[0].header.update("BITPIX", -32)
-                hdu[0].header.update("NAXIS1", 4096)
-                hdu[0].header.update("NAXIS2", 4096)
+                hdu[0].header.set("BITPIX", -32)
+                hdu[0].header.set("NAXIS1", 4096)
+                hdu[0].header.set("NAXIS2", 4096)
                 # TODO: deduce RA,DEC pointing coordinates 
             except KeyError:
                 log.warning("Some key cannot be copied into header")

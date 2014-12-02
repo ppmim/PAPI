@@ -1,8 +1,10 @@
+#!/bin/bash
+
 #------------------------------------------------------------------------------
 # User Configurable Settings
 #------------------------------------------------------------------------------
 # path to PAPI source directory
-export PAPI_HOME=${HOME}/DEVELOP/papi
+export PAPI_HOME=${HOME}/papi
 export PAPI_BIN=${HOME}/bin
 
 # path to PAPI output data products
@@ -23,6 +25,12 @@ mkdir $HOME/.iraf
 ln -s $HOME/.iraf $HOME/iraf
 cd $HOME/.iraf
 mkiraf 
+# Copy custom iraf scripts
+cp ${PAPI_HOME}/scripts/login.cl ${HOME}/iraf
+cp ${PAPI_HOME}/scripts/papi_ql_user.cl ${HOME}/iraf
+user=$(whoami)
+sed -i "s/panic/$user/g" ${HOME}/iraf/login.cl
+
 
 # comment-out chkupdate on login.cl
 # and add the next:

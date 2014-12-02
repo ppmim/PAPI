@@ -40,7 +40,7 @@ export CAMHOME=${HOME}/GEIRS
 
 ### PAPI environment ###
 ##
-export PAPI_HOME=${HOME}/DEVELOP/papi
+export PAPI_HOME=${HOME}/papi
 PYTHONPATH=$PYTHONPATH:$PAPI_HOME
 PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_PANIC.cfg
 PAPI_PROD=/data2/out

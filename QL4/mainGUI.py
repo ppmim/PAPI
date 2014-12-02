@@ -546,7 +546,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
                 # Both master_dark and master_flat are optional
                 if mDark or mFlat:
-                    #Put into the queue the task to be done
+                    # Put into the queue the task to be done
                     func_to_run = reduce.ApplyDarkFlat([filename], mDark, mFlat, 
                                                      mBPM, self.m_outputdir,
                                                      bpm_action='grab') # fix is a heavy process for QL
@@ -631,7 +631,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         master_dark = [] # we'll get a list of master dark candidates
         master_flat = [] # we'll get a list of master flat candidates
-        master_bpm = [] # we'll get a list of master flat candidates
+        master_bpm = []
         
         obj_frame = datahandler.ClFits(sci_obj_list[0])
         # We take as sample, the first frame in the list, but all frames must
@@ -661,7 +661,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
         # BPM: it is read from config file
         if self.config_opts['bpm']['mode']!='none':
-            master_bpm  = self.config_opts['bpm']['bpm_file']
+            master_bpm.append(self.config_opts['bpm']['bpm_file'])
         """
         master_bpm = self.inputsDB.GetFilesT('MASTER_BPM')
         if len(master_bpm)==0 and self.outputsDB!=None:
@@ -680,6 +680,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             log.debug("Second DARK candidate: %s"%r_dark)            
         else: 
             r_dark = None
+        
         if len(master_flat)>0:
             r_flat = master_flat[-1]
             log.debug("First FLAT candidate: %s"%r_flat)            
@@ -687,7 +688,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             log.debug("Second FLAT candidate: %s"%r_flat)            
         else: 
             r_flat = None
-        if len(master_bpm)>0: 
+            
+        if len(master_bpm)>0:
             r_bpm = master_bpm[-1]
             log.debug("First BPM candidate: %s"%r_bpm)            
             r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
@@ -1996,6 +1998,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Convert a MEF file with 4-extensions to a single file of 4kx4k.
         """
+        
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
@@ -2004,14 +2009,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 log.debug("Cannot convert MEF to Single file %s. Maybe it's not a MEF file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file"%(file))
             else:
-                line = "Files generated: \n%s"%res
+                line = "File generated: %s"%res
                 self.logConsole.info(QString(str(line)))
+        
+        QApplication.restoreOverrideCursor()
                 
     def Single2MEF_slot(self):
         """
         Convert a GEIRS single file (4kx4k) to a MEF file with 4-extensions,
         2kx2k each.
         """
+        
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
@@ -2020,15 +2030,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 log.debug("Cannot convert Single to MEF file %s. Maybe it's not a single file", str(e))
                 QMessageBox.critical(self, "Error", "Cannot convert Single to MEF file : %s \n Maybe it's not a single file"%(file))
             else:
-                line = "Files generated: \n%s"%res
+                line = "File generated: %s"%res
                 self.logConsole.info(QString(str(line)))
-                
+        
+        QApplication.restoreOverrideCursor()
+        
     def splitMEF_slot(self):
         """
         Split each MEF selected file from the list view into NEXT separate 
         single FITS files, where NEXT is number of extensions.
         As result, NEXT files should be created
         """
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
@@ -2038,15 +2052,20 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file"%(file))
                 #self.logConsole.info(QString(str(line)))
             else:
-                line = "Files generated: \n%s"%res
+                line = "File generated: %s"%res
                 self.logConsole.info(QString(str(line)))
-
+                
+        QApplication.restoreOverrideCursor()
+    
     def splitSingle_slot(self):
         """
         Split the Single selected files (4kx4k) from the list view into 4 separate 
         single FITS files or 2kx2k. The 4-detector-frame can be a cube of data.
         As result, 4 files should be created.
         """
+        
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
         for file in self.m_popup_l_sel:
             try:
                 mef = misc.mef.MEF([file])
@@ -2056,9 +2075,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a 4kx4k single file"%(file))
                 #self.logConsole.info(QString(str(line)))
             else:
-                line = "Files generated: \n%s"%res
+                line = "File generated: %s"%res
                 self.logConsole.info(QString(str(line)))
-                
+        
+        QApplication.restoreOverrideCursor()
+        
     def selected_file_slot(self, listItem):
         """
         To know which item is selected 
@@ -2891,6 +2912,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     mDark = None
                     mFlat = None
                     mBPM = None
+                    bpm_mode = self.config_opts['bpm']['mode']
                     if msgBox.clickedButton()== button_autosearch:
                         # Look for (last received) calibration files
                         mDark, mFlat, mBPM = self.getCalibFor([filename])
@@ -2899,23 +2921,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             mDark = calibrations['dark']
                         if calibrations['flat']!='':
                             mFlat = calibrations['flat']
-                        if self.config_opts['bpm']['mode']!='none':
+                        if bpm_mode!='none':
                             mBPM = self.config_opts['bpm']['bpm_file']
 
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
                     self.logConsole.info("Calibrations to use:")
-                    self.logConsole.info("+ Dark=%s"%mDark)
-                    self.logConsole.info("+ Flat=%s"%mFlat)
-                    self.logConsole.info("+ BPM =%s"%mBPM)
+                    self.logConsole.info("+ Dark :%s"%mDark)
+                    self.logConsole.info("+ Flat :%s"%mFlat)
+                    self.logConsole.info("+ BPM (mode=%s) :%s"%(bpm_mode,mBPM))
                     
-                    # Both master_dark and master_flat are optional
-                    if mDark or mFlat:
-                        #Put into the queue the task to be done
+                    # Both master_dark and master_flat and BPM are optional
+                    if mDark or mFlat or mBPM:
+                        # Put into the queue the task to be done
                         func_to_run = reduce.ApplyDarkFlat([filename], 
                                                          mDark, mFlat, mBPM, 
                                                          self.m_outputdir,
-                                                         bpm_action='grab', # fix is a heavy process for QL
+                                                         bpm_action=bpm_mode, # fix is a heavy process for QL
                                                          force_apply=force_apply)
                         params = ()
                         log.debug("Inserting in queue the task ....")
@@ -2934,47 +2956,75 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
     def applyBPM_slot(self):
         """
-        Apply to the selected file the BPM defined in the config file and show
-        in Red the masked pixels on DS9 (for this, user should select red 
-        from menu Edit->Preferences->Blank/Inf/NaN color).
-
+        Apply to the selected file the BPM defined in the config file and :
+        
+         1) 'grab': show in Red the masked pixels on DS9 (for this, user 
+             should select red from menu Edit->Preferences->Blank/Inf/NaN color).
+         2) 'fix': Bad Pixels are replaced with a bi-linear interpolation 
+             from nearby pixels.
+        
         Note that, the original selected file is not modified, all BPM is applied
-        to a temporal named by the user.
+        to a new output file.
 
         This routine can be useful to view on QL how the BPM affect our data.
         """
 
-        if len(self.m_popup_l_sel)==1:
-            init_outdir = self.m_outputdir + "/" + \
-                    os.path.basename(self.m_popup_l_sel[0]).replace(".fits","_BPM.fits")
-            outfileName = QFileDialog.getSaveFileName(self,
-                                                      "Choose a filename so save under",
-                                                      init_outdir, 
-                                                      "fits (*.fits)", )
-            if not outfileName.isEmpty():
-                # Because in principle it is a quick proceduce, we do not use
-                # the processing queue. We run it on the current thread.
-                QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                try:
-                    master_bpm =  self.config_opts['bpm']['bpm_file']
-                    if os.path.isfile(master_bpm):
-                        result = reduce.calBPM.applyBPM(
-                                        self.m_popup_l_sel[0],
-                                        master_bpm,
-                                        str(outfileName),
-                                        False)
-                        if self.getDisplayMode()>=2:
-                            display.showFrame(result)
-                    else:
-                        msg = "Master BPM '%s' does not exist."%master_bpm
-                        QMessageBox.critical(self, "Error", msg)
-                except Exception,e:
-                    msg = "Error applying BPM: '%s'"%(str(e))
+        if len(self.m_popup_l_sel)>0:
+            
+            msgBox = QMessageBox()
+            msgBox.setText("Method selection:")
+            msgBox.setInformativeText("Do you want to <Grab (set to NaN)>  or <Fix> the Bad Pixels?")
+            button_grab = msgBox.addButton("Grab (set to NaN)", QMessageBox.ActionRole)
+            button_fix = msgBox.addButton("Fix (bi-linear interpol)", QMessageBox.ActionRole)
+            msgBox.setDefaultButton(button_grab)
+            msgBox.exec_()
+
+            if msgBox.clickedButton()== button_fix: bpm_mode = 'fix'
+            elif msgBox.clickedButton()== button_grab: bpm_mode = 'grab'
+            else: return
+            
+            #init_outdir = self.m_outputdir + "/" + \
+            #        os.path.basename(self.m_popup_l_sel[0]).replace(".fits","_BPM.fits")
+            #outfileName = QFileDialog.getSaveFileName(self,
+            #                                          "Choose a filename so save under",
+            #                                          init_outdir, 
+            #
+            #                                      "fits (*.fits)", )
+            
+            #if not outfileName.isEmpty():
+            # Because in principle it is a quick proceduce, we do not use
+            # the processing queue. We run it on the current thread.
+            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+            try:
+                master_bpm =  self.config_opts['bpm']['bpm_file']
+                if os.path.isfile(master_bpm):
+                    task = reduce.ApplyDarkFlat(self.m_popup_l_sel, 
+                                            None, None, 
+                                            master_bpm, 
+                                            self.m_outputdir,
+                                            bpm_action=bpm_mode)
+                    result = task.apply()
+                    #result = reduce.calBPM.applyBPM(
+                    #                self.m_popup_l_sel[0],
+                    #                master_bpm,
+                    #                str(outfileName),
+                    #                False)
+                    
+                    msg = "New file created: %s"%result[0]
                     self.logConsole.info(msg)
+                    
+                    if self.getDisplayMode()>=2:
+                      display.showFrame(result[0])
+                else:
+                    msg = "Master BPM '%s' does not exist."%master_bpm
                     QMessageBox.critical(self, "Error", msg)
-                    raise e
-                finally:
-                    QApplication.restoreOverrideCursor()
+            except Exception,e:
+                msg = "Error applying BPM: '%s'"%(str(e))
+                self.logConsole.info(msg)
+                QMessageBox.critical(self, "Error", msg)
+                raise e
+            finally:
+                QApplication.restoreOverrideCursor()
 
     def focus_eval(self):
         """
@@ -3645,7 +3695,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.config_opts['nonlinearity']['apply'] = False
             
             if self.checkBox_pre_appBPM.isChecked():
-                self.config_opts['bpm']['mode'] = 'gain' # mark Bad Pixels
+                self.config_opts['bpm']['mode'] = 'grab' # mark Bad Pixels to NaN
             else:
                 self.config_opts['bpm']['mode'] = 'none'
 

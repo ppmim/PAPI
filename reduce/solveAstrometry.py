@@ -38,6 +38,7 @@ import astropy.io.fits as fits
 import sys
 import logging as log
 import time
+import re
 
 # Project modules
 from astropy import wcs
@@ -216,8 +217,6 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     (stdoutdata, stderrdata) = p.communicate()
     solve_out =  stdoutdata + "\n" + stderrdata
 
-    #print "STDOUTDATA=",stdoutdata
-    #print "STDERRDATA=",stderrdata
     
     if len(solve_out)>1:
         logging.info("Solve-field output:")
@@ -227,15 +226,30 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     #
     solved_file = os.path.join(tmp_dir, 
         os.path.splitext(os.path.basename(filename))[0] + ".solved")
-    #print "FILE=",solved_file
+
     if os.path.exists(solved_file):
         logging.info("Field solved !")
         new_file = os.path.join(tmp_dir, os.path.splitext(os.path.basename(filename))[0] + ".new")
         shutil.move(new_file, new_file+".fits")
-        return new_file+".fits"
+        
+        # Get rotation angle
+        # Extract rotation angle from a line like the following one:
+        # Field rotation angle: up is 0.214027 degrees E of N
+        # (code from vterron)
+        ROT_ANGLE = "Unknown"
+        float_regexp = r"[-+]?\d*\.\d+|\d+"
+        regexp = "Field rotation angle: up is ({0}) degrees".format(float_regexp)
+        
+        match = re.search(regexp, solve_out)
+        if match:
+                ROT_ANGLE = float(match.group(1))
+                
+        log.info("ROT_ANGLE = %s"%ROT_ANGLE)
+        
+        return new_file + ".fits"
     else:
         log.error("Field was not solved.")
-        raise Exception("Field was not solved")
+        raise Exception("Field was not solved.")
             
 
 def calc(args):
@@ -358,24 +372,7 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
     console.setFormatter(formatter)
     # add the handler to the root logger
     logging.getLogger('').addHandler(console)
-
-
-    # logging = logging.getLogger('field-solver')
-    # logging.setLevel(logging.DEBUG)
-    # # create file handler which logs even debug messages
-    # fh = logging.FileHandler('field-solver.log')
-    # fh.setLevel(logging.DEBUG)
-    # # create console handler with a higher log level
-    # ch = logging.StreamHandler()
-    # ch.setLevel(logging.DEBUG)
-    # # create formatter and add it to the handlers
-    # FORMAT =  "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    # formatter = logging.Formatter(FORMAT)
-    # ch.setFormatter(formatter)
-    # fh.setFormatter(formatter)
-    # # add the handlers to logger
-    # logging.addHandler(ch)
-    # logging.addHandler(fh)
+    
 
     logging.debug("Logging setup done !")
     

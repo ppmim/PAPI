@@ -34,7 +34,8 @@ import datahandler
 ds9_path = os.path.dirname(spawn.find_executable("ds9"))
 xpa_path = os.path.dirname(spawn.find_executable("xpaaccess"))
 frame_no = 0
-MAX_FRAMES_NO = 4
+created_frames = 0
+MAX_FRAMES_NO = 10
 
 ################################################################################
 # Launch the DS9 display
@@ -56,8 +57,8 @@ def startDisplay():
         if stdout_handle.read() =='no\n':
             time.sleep(3)
         time.sleep(1)
-        for i in range(0, MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
-            os.system(("%s/xpaset -p ds9 frame new" % xpa_path))
+        #for i in range(0, MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
+        #    os.system(("%s/xpaset -p ds9 frame new" % xpa_path))
             
     else:
         pass
@@ -78,6 +79,7 @@ def showFrame(frame, del_all=False):
   startDisplay()
   
   global frame_no
+  global created_frames
   
   # frame could be a single file or a file list 
   if type(frame)==type(list()): 
@@ -105,7 +107,9 @@ def showFrame(frame, del_all=False):
                     # Beware, 'mosaicimage' ds9 facility require WCS information
                     if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (xpa_path)))
                     if frame_no<MAX_FRAMES_NO:
-                        #os.system(("%s/xpaset -p ds9 frame new" % xpa_path))
+                        if created_frames<(frame_no+1):
+                            os.system(("%s/xpaset -p ds9 frame new" % xpa_path))
+                            created_frames+=1
                         os.system(("%s/xpaset -p ds9 frame frameno %d" % (xpa_path, frame_no+1)))
                         frame_no+=1
                     else:

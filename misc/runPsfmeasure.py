@@ -58,7 +58,6 @@ def getAverageFWHMfromPsfmeasure(images, coord_file, log_file):
     except Exception,e:
         print "Error running IRAF.psfmeasure: %s"%str(e)
         
-    
 
 
 if __name__ == "__main__":
