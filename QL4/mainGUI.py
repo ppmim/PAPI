@@ -1093,13 +1093,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # BPM                
         # master_bpm = self.outputsDB.GetFilesT('MASTER_BPM')
-        if self.config_opts['bpm']['mode']!='none':
-            master_bpm  = self.config_opts['bpm']['bpm_file']
+        #if self.config_opts['bpm']['mode']!='none':
+        master_bpm  = self.config_opts['bpm']['bpm_file']
 
         # NLC                
         # master_nlc = self.outputsDB.GetFilesT('MASTER_NLC')
-        if self.config_opts['nonlinearity']['apply']!='False':
-            master_nlc  = self.config_opts['nonlinearity']['model_lir']
+        #if self.config_opts['nonlinearity']['apply']!=False:
+        master_nlc  = self.config_opts['nonlinearity']['model_lir']
             
         """
         log.debug("Master Darks found %s", master_dark)
@@ -1125,6 +1125,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if master_nlc: 
             self.m_masterNLC = master_nlc
             self.lineEdit_masterNLC.setText(QString(self.m_masterNLC))
+            self.lineEdit_readout_mode.setText(QString("unknown"))
         #else: self.m_masterMask = None
                 
 
@@ -2905,6 +2906,22 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Cancel button pressed
             return
 
+        # Select BPM action
+        msgBox = QMessageBox()
+        msgBox.setText("        BPM Action to do")
+        msgBox.setInformativeText("Do you want to <Set NaNs (=0)> or <Fix> BPM ?")
+        button_nans = msgBox.addButton("NaNs", QMessageBox.ActionRole)
+        button_fix = msgBox.addButton("Fix Bab Pixels", QMessageBox.ActionRole)
+        button_cancel = msgBox.addButton("Cancel", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_nans)
+        msgBox.exec_()
+        if msgBox.clickedButton()==button_nans:
+            bpm_mode = 'grab' # set NaNs
+        elif msgBox.clickedButton()==button_fix:
+            bpm_mode = 'fix'
+        else:
+            bpm_mode = 'none'
+            
         # Now, start dark subtraction and Flat-Fielding...
         if len(self.m_popup_l_sel)>0:
             for filename in self.m_popup_l_sel:
@@ -2912,7 +2929,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     mDark = None
                     mFlat = None
                     mBPM = None
-                    bpm_mode = self.config_opts['bpm']['mode']
+                    
+                    #bpm_mode = self.config_opts['bpm']['mode']
+                    #if self.comboBox_bpm_action.currentText()=="None":
+                    #    bpm_mode = 'none'
+                    #elif self.comboBox_bpm_action.currentText()=="Set NaNs":
+                    #    bpm_mode = 'grab'
+                    #elif self.comboBox_bpm_action.currentText()=="Fix":
+                    #    bpm_mode = 'fix'
+                    
                     if msgBox.clickedButton()== button_autosearch:
                         # Look for (last received) calibration files
                         mDark, mFlat, mBPM = self.getCalibFor([filename])
@@ -3358,15 +3383,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
             fits = datahandler.ClFits(self.m_listView_item_selected)
             if fits.isMEF():
                   QMessageBox.information(self,"Info", QString("Sorry, but it only "
-                    "works for single detertor images (2kx2k)"
+                    "works for single detertor images (2kx2k). "
                     "Run FITS->Split MEF."))
                   return
             if fits.isPANICFullFrame():
                   QMessageBox.information(self,"Info", QString("Sorry, but it only "
-                    "works for single detertor images (2kx2k)"
+                    "works for single detertor images (2kx2k). "
                     "Run FITS->Split Single."))
                   return
-            if fits.getType()=='SCIENCE': 
+            if True: #fits.getType()=='SCIENCE': 
                 # Run astrometry parameters
                 out_file = self.m_outputdir+"/"+os.path.basename(self.m_listView_item_selected.replace(".fits",".wcs.fits"))
                 # Catalog

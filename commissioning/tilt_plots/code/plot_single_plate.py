@@ -64,13 +64,13 @@ if __name__ == "__main__":
         points = [list(x) for x in np.loadtxt(path)]
         
         # To take into account the gap (167px)
-        print("----Original POINTS {0}".format(points))
-        for row in points:
-            if row[0]<2048: row[0]-=84
-            elif row[0]>=2048: row[0]+=84
-            if row[1]<2048: row[1]-=84
-            elif row[1]>=2048: row[1]+=84
-        print("****New Points = {0}".format(points))
+        #print("----Original POINTS {0}".format(points))
+        #for row in points:
+        #    if row[0]<2048: row[0]-=84
+        #    elif row[0]>=2048: row[0]+=84
+        #    if row[1]<2048: row[1]-=84
+        #    elif row[1]>=2048: row[1]+=84
+        #print("****New Points = {0}".format(points))
         # end_gap_correction
         
         all_points += points

@@ -42,12 +42,14 @@ def getAverageFWHMfromPsfmeasure(images, coord_file, log_file):
         psfmeasure.wcs = "world"
         psfmeasure.display = "no"
         psfmeasure.size = "GFWHM"
-        psfmeasure.radius = 20
+        psfmeasure.radius = 15
+        psfmeasure.sbuffer = 5 
+        psfmeasure.swidth = 5
         psfmeasure.iterations = 3
         psfmeasure.saturation = "INDEF"
         psfmeasure.ignore_sat = "no"
         psfmeasure.imagecur = coord_file
-        psfmeasure.graphcur = '/dev/null' #file that is empty by definition
+        #psfmeasure.graphcur = 'q.txt' #'myfile.mc' #'/dev/null' #file that is empty by definition
         psfmeasure.logfile = log_file
         res = psfmeasure(images, Stdout=1)[-1] # get last linet of output
         numMatch = re.compile(r'(\d+(\.\d+)?)')
@@ -78,7 +80,7 @@ if __name__ == "__main__":
                   help="Coordinates file listing the x,y coordiantes of stars in input images.")
     
     parser.add_option("-o", "--output_log",
-                  action="store", dest="log_file",default="pfmeasure.log", 
+                  action="store", dest="log_file",default="psfmeasure.log", 
                   help="Output log file generated [default: %default]")
     
     (options, args) = parser.parse_args()

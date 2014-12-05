@@ -162,7 +162,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         
     if not is_science:
         log.info("Frame %s is not a science frame"%filename)
-        return filename + ".not_science"
+        #return filename + ".not_science"
         
     logging.debug("Starting to solve-field for: %s  Scale=%s  RA= %s Dec= %s \
     INSTRUMENT= %s"%(filename, scale, ra , dec, instrument))
@@ -220,7 +220,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     
     if len(solve_out)>1:
         logging.info("Solve-field output:")
-        print solve_out
+        #print solve_out
     #
     # Look for filename.solved to know if field was solved
     #
@@ -230,7 +230,8 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     if os.path.exists(solved_file):
         logging.info("Field solved !")
         new_file = os.path.join(tmp_dir, os.path.splitext(os.path.basename(filename))[0] + ".new")
-        shutil.move(new_file, new_file+".fits")
+        out_file = new_file.replace(".new", ".ast.fits")
+        shutil.move(new_file, out_file)
         
         # Get rotation angle
         # Extract rotation angle from a line like the following one:
@@ -246,7 +247,11 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
                 
         log.info("ROT_ANGLE = %s"%ROT_ANGLE)
         
-        return new_file + ".fits"
+        # Write value into fits header
+        fits.setval(out_file, keyword="ROTANGLE", value=ROT_ANGLE, comment="degrees E of N", ext=0)
+        
+        
+        return out_file
     else:
         log.error("Field was not solved.")
         raise Exception("Field was not solved.")
@@ -347,7 +352,8 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
     
     parser.add_option("-e", "--extension",
                   action="store", dest="extension", type=float, 
-                  help="If file is a MEF, extension to be used for solving the field.")
+                  help="If file is a MEF, extension to be used for solving the field ("
+                  "1=SG4, 2=SG1, 3=SG3, 4=SG2)")
                   
     parser.add_option("-r", "--recursive",
                   action="store_true", dest="recursive", default=False,
