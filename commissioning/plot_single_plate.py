@@ -28,7 +28,7 @@ if __name__ == "__main__":
     all_points = []
     for nplate in range(1, 5):
         path = './data/plate{0}'.format(nplate)
-        points = [list(x) for x in np.loadtxt(path)]
+        points = [list(x) for x in np.loadtxt(path, ndmin=2)]
 
         all_points += points
         x, y, fwhm = zip(*points)

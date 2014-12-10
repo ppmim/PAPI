@@ -960,7 +960,8 @@ class DataSet(object):
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
                     if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
-                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    elif str(fits[7]).count("SKY_FLAT"): my_type = "SKY_FLAT"
+                    elif str(fits[7]).count("SKY"): my_type = "SCIENCE"
                     else: my_type = str(fits[7])
                     seq_types.append(my_type)
                     group = []
@@ -972,7 +973,7 @@ class DataSet(object):
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
                     if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
-                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    elif str(fits[7]).count("SKY_FLAT"): my_type = "SKY_FLAT"
                     elif str(fits[7]).count("SKY"): my_type = "SCIENCE"
                     else: my_type = str(fits[7])
                     seq_types.append(my_type)

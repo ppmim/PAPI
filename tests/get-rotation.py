@@ -142,7 +142,7 @@ def astrometry_net(path, ra = None, dec = None, radius = 1):
 
         sys.stdout.flush()
         sys.stderr.flush()
-
+        
         # .solved file must exist and contain a binary one
         with open(solved_file, 'rb') as fd:
             if ord(fd.read()) != 1:

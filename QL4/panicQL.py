@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/panic/DEVELOP/papi/QL4/panicQL.ui'
+# Form implementation generated from reading ui file '/home/staff1/papi/QL4/panicQL.ui'
 #
 # Created by: PyQt4 UI code generator 4.10.3
 #
@@ -407,6 +407,15 @@ class Ui_panicQL(object):
         self.textLabel1_5.setGeometry(QtCore.QRect(160, 10, 91, 20))
         self.textLabel1_5.setWordWrap(False)
         self.textLabel1_5.setObjectName(_fromUtf8("textLabel1_5"))
+        self.checkBox_currentNight = QtGui.QCheckBox(self.tab)
+        self.checkBox_currentNight.setGeometry(QtCore.QRect(275, 10, 20, 20))
+        self.checkBox_currentNight.setText(_fromUtf8(""))
+        self.checkBox_currentNight.setChecked(False)
+        self.checkBox_currentNight.setObjectName(_fromUtf8("checkBox_currentNight"))
+        self.textLabel1_6 = QtGui.QLabel(self.tab)
+        self.textLabel1_6.setGeometry(QtCore.QRect(295, 10, 101, 20))
+        self.textLabel1_6.setWordWrap(False)
+        self.textLabel1_6.setObjectName(_fromUtf8("textLabel1_6"))
         self.tabWidget3.addTab(self.tab, _fromUtf8(""))
         self.TabPage = QtGui.QWidget()
         self.TabPage.setObjectName(_fromUtf8("TabPage"))
@@ -905,6 +914,13 @@ class Ui_panicQL(object):
         self.toolBar.setObjectName(_fromUtf8("toolBar"))
         panicQL.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
         self.Toolbar = QtGui.QToolBar(panicQL)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.Toolbar.sizePolicy().hasHeightForWidth())
+        self.Toolbar.setSizePolicy(sizePolicy)
+        self.Toolbar.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.Toolbar.setAllowedAreas(QtCore.Qt.RightToolBarArea)
         self.Toolbar.setObjectName(_fromUtf8("Toolbar"))
         panicQL.addToolBar(QtCore.Qt.TopToolBarArea, self.Toolbar)
         self.MenuBar = QtGui.QMenuBar(panicQL)
@@ -937,7 +953,7 @@ class Ui_panicQL(object):
         self.fileDirAction.setObjectName(_fromUtf8("fileDirAction"))
         self.fileShow = QtGui.QAction(panicQL)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(_fromUtf8("../../../../../../../../../../../../../../usr/share/icons/hicolor/16x16/apps/eyes.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8("../../../../../../../../../../../../../../home/staff1/papi/QL4/images/ds9.gif")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.fileShow.setIcon(icon3)
         self.fileShow.setProperty("name", _fromUtf8("fileShow"))
         self.fileShow.setObjectName(_fromUtf8("fileShow"))
@@ -1022,7 +1038,7 @@ class Ui_panicQL(object):
         self.actionAbout.setObjectName(_fromUtf8("actionAbout"))
         self.actionAladin = QtGui.QAction(panicQL)
         icon12 = QtGui.QIcon()
-        icon12.addPixmap(QtGui.QPixmap(_fromUtf8("../../../.designer/backup/images/aladin_large.gif")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon12.addPixmap(QtGui.QPixmap(_fromUtf8("images/aladin_large.gif")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionAladin.setIcon(icon12)
         self.actionAladin.setObjectName(_fromUtf8("actionAladin"))
         self.toolBar.addAction(self.fileOpenAction)
@@ -1105,6 +1121,7 @@ class Ui_panicQL(object):
         QtCore.QObject.connect(self.pushButton_tempD, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.setTempDir_slot)
         QtCore.QObject.connect(self.checkBox_geirsFile, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.setGEIRS_Input_slot)
         QtCore.QObject.connect(self.pushButton_master_nlc, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.pushB_sel_masterNLC_slot)
+        QtCore.QObject.connect(self.checkBox_currentNight, QtCore.SIGNAL(_fromUtf8("clicked()")), panicQL.setCurrentNight_Input_slot)
         QtCore.QMetaObject.connectSlotsByName(panicQL)
 
     def retranslateUi(self, panicQL):
@@ -1166,6 +1183,9 @@ class Ui_panicQL(object):
         self.checkBox_geirsFile.setToolTip(_translate("panicQL", "Auto-select GEIRS log file ~/tmp/fitsGeirsWritten", None))
         self.textLabel1_5.setStatusTip(_translate("panicQL", "Read input files from GEIRS log file ~/tmp/fitsGeirsWritten", None))
         self.textLabel1_5.setText(_translate("panicQL", "Use GEIRS file", None))
+        self.checkBox_currentNight.setToolTip(_translate("panicQL", "Auto-select current night directory", None))
+        self.textLabel1_6.setStatusTip(_translate("panicQL", "Read input files from GEIRS log file ~/tmp/fitsGeirsWritten", None))
+        self.textLabel1_6.setText(_translate("panicQL", "Current night", None))
         self.tabWidget3.setTabText(self.tabWidget3.indexOf(self.tab), _translate("panicQL", "Main", None))
         self.groupBox.setTitle(_translate("panicQL", "Common Settings", None))
         self.checkBox.setText(_translate("panicQL", "Check header", None))

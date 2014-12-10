@@ -1332,7 +1332,48 @@ class ReductionSet(object):
             log.error("Observing mode not supported")
             raise
                   
-        if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
+        # Prueba
+        for item in fileinput.input(list_file):
+            print "LINE=",item
+        
+        print "SKY_FILTER_CMD=",skyfilter_cmd
+        
+        args = [self.m_irdr_path + '/skyfilter',
+                list_file,
+                gain_file,
+                str(halfnsky),
+                mask,
+                destripe,
+                skymodel]
+        #skyfilter_cmd = args 
+        
+        print "ARGS",args
+        
+        try:
+            with tempfile.NamedTemporaryFile() as cmd_output:
+                p = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE)
+                while True:
+                    line = p.stdout.readline()
+                    if not line and p.poll() is not None:
+                        break
+                    if line:
+                        print "MY_LINE=",line.strip()
+                        cmd_output.write(line)
+
+                cmd_output.seek(0)
+                output_lines = cmd_output.readlines()
+
+            sys.stdout.flush()
+            sys.stderr.flush()
+            
+        except subprocess.CalledProcessError, e:
+            log.debug("Error running skyfilter")
+            raise Exception("Error running skyfilter")
+        
+        print "OUTPUT=",output_lines
+        
+        if 1:
+        #if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
             
             # Rename output sky-subtracted files
             """for file in glob.glob(self.out_dir+'/*.fits.skysub'):
@@ -1343,11 +1384,13 @@ class ReductionSet(object):
             files = [line.split(" ")[0].replace("\n","") 
                      for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
             for file in files:
+                print "FILE======",file
                 if os.path.exists(file+".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
+                    print "EXISTS !!!!"
                     shutil.move(file.replace(".fits", ".fits.skysub"), 
                                 file.replace(".fits", ".skysub.fits"))
                     out_files.append(file.replace(".fits", ".skysub.fits"))
-            
+            print "OUTFILE======",out_files
             ## Compose the output file list
             #if obs_mode=='dither':
             #   out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
@@ -4043,7 +4086,7 @@ class ReductionSet(object):
         self.offsets_mode = 'wcs'
         #self.offsets_mode = 'cross-correlation'
         if self.offsets_mode=='wcs':
-            log.info("Computing dither offset using astrometric calibration")
+            log.info("Computing dither offsets using astrometric calibration")
             try:
                 offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
                                                         out_dir+'/offsets1.pap')                
@@ -4051,7 +4094,7 @@ class ReductionSet(object):
                 log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
                 raise e
         else:
-            log.info("Computing dither offset using cross-correlation")
+            log.info("Computing dither offsets using cross-correlation")
             misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
             try:
                 offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
@@ -4065,8 +4108,8 @@ class ReductionSet(object):
         # 6 - Preliminary coaddition and registering of the stack.
         #     We use SCAMP + SWARP
         ########################################################################
-        if self.obs_mode!='dither' or self.red_mode=="quick":
-            if self.coadd_mode=='swarp':
+        if 1: #self.obs_mode!='dither' or self.red_mode=="quick":
+            if 0:#self.coadd_mode=='swarp':
                 log.info("**** Doing 1st Stack Coaddition (swarp)****")
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
                             coadded_file=output_file, config_dict=self.config_dict)
@@ -4145,7 +4188,8 @@ class ReductionSet(object):
             log.info("##### End of QUICK  data reduction ######")
             log.info("#########################################")
             
-            return output_file
+            if self.obs_mode!='dither' or self.red_mode=="quick":
+                return output_file
         
                
             
@@ -4159,7 +4203,7 @@ class ReductionSet(object):
         #############
         # Build coadd 
         #############
-        log.info("**** Initial coaddition of sky subtracted frames ****")
+        """log.info("**** Initial coaddition of sky subtracted frames ****")
 
         fo = open(out_dir+'/offsets1.pap', "r")
         fs = open(out_dir+'/stack1.pap','w+')
@@ -4171,14 +4215,16 @@ class ReductionSet(object):
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
                               out_dir+'/coadd1.fits','average')
 
+        """
         #####################
         # Create object mask 
         #####################
         
         log.info("**** Master object mask creation ****")
-        obj_mask  = self.__createMasterObjMask(out_dir+'/coadd1.fits', 
-                                               out_dir+'/masterObjMask.fits') 
-
+        obj_mask  = self.__createMasterObjMask(output_file, #out_dir+'/coadd1.fits', 
+                                               out_dir+'/masterObjMask.fits')
+	
+      
         ########################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
         ########################################################################
@@ -4215,11 +4261,13 @@ class ReductionSet(object):
             elif self.obs_mode=='dither':
                 j = j+1
             i = i+1
-        
+            
+        fs.flush()
         fs.close()
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
-                                           'mask', self.obs_mode)      
-    
+                                           'mask', self.obs_mode)
+        
+        print "2nd sky_filter, LAST_FILES=",self.m_LAST_FILES
         ########################################################################
         # 9.1 - Remove crosstalk - (only if bright stars are present)    
         ########################################################################
@@ -4243,8 +4291,46 @@ class ReductionSet(object):
                 self.m_LAST_FILES = res
             except Exception,e:
                 raise e
+	
+    
+        #######################################################################
+        # 9.3 - Divide by the master flat after sky subtraction ! (see notes above)
+        # (the same task as above 4.2) --> HAS NO SENSE !!! only for a test ??? or a.l.a. O2k 
+        #######################################################################
+        if self.apply_dark_flat==2 and master_flat!=None:
+            log.info("**** Applying Flat AFTER sky subtraction ****")
+            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
+                                       None,  
+                                       master_flat,
+                                       None, 
+                                       out_dir)
+            self.m_LAST_FILES = res.apply()
+
+	########################################################################
+        # Preliminary Astrometric calibration of sky-subtracted frames.
+        # ######################################################################
+        log.info("**** Preliminary Astrometric calibatrion ****")
+        new_files = []
+        for my_file in self.m_LAST_FILES:
+            print "my_file=",my_file
+            # Run astrometric calibration
+            try:
+                solved = reduce.solveAstrometry.solveField(my_file, 
+                               out_dir, # self.temp_dir produces collision
+                               self.config_dict['general']['pix_scale'])
+            except Exception,e:
+                raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+            else:
+                # Rename the file
+                out_filename = my_file.replace(".fits", ".ast.fits")
+                new_files.append(out_filename)
+                shutil.move(solved, out_filename)
+                log.debug("New file calibrated: %s"%out_filename)
+        
+        self.m_LAST_FILES = new_files
+        
         ########################################################################
-        # 9.3 - LEMON connection - End here for LEMON processing    
+        # 9.4 - LEMON connection - End here for LEMON processing    
         ########################################################################
         
         if self.red_mode=='lemon':
@@ -4257,20 +4343,7 @@ class ReductionSet(object):
             log.info("End of sequence LEMON-reduction. # %s # files created. ",
                      len(self.m_LAST_FILES))
             return papi_output
-    
-        #######################################################################
-        # 9.4 - Divide by the master flat after sky subtraction ! (see notes above)
-        # (the same task as above 4.2) --> HAS NO SENSE !!! only for a test ??? or a.l.a. O2k 
-        #######################################################################
-        if self.apply_dark_flat==2 and master_flat!=None:
-            log.info("**** Applying Flat AFTER sky subtraction ****")
-            res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
-                                       None,  
-                                       master_flat,
-                                       None, 
-                                       out_dir)
-            self.m_LAST_FILES = res.apply()
-            
+        
         #######################################################################
         # 10 - Compute field distortion and make final stack:
         #       1-Remove field distortion from individual images (SCAMP+SWARP)
@@ -4278,6 +4351,7 @@ class ReductionSet(object):
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         #######################################################################
         if self.coadd_mode=='swarp':
+            print "LAST_FILES=",self.m_LAST_FILES
             log.info("**** Doing Final Stack Coaddition (swarp)****")
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
                          coadded_file=output_file, config_dict=self.config_dict,
@@ -4311,17 +4385,17 @@ class ReductionSet(object):
                                      subtract_back=True)
                 except Exception,e:
                     raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
-                else:
-                    try:
-                        solved = reduce.solveAstrometry.solveField(out_dir+'/coadd2.fits', 
-                                         out_dir, # self.temp_dir produces collision
-                                         self.config_dict['general']['pix_scale'])
+            else:
+                try:
+                    solved = reduce.solveAstrometry.solveField(out_dir+'/coadd2.fits', 
+                                       out_dir, # self.temp_dir produces collision
+                                       self.config_dict['general']['pix_scale'])
 
-                    except Exception,e:
-                        raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
-                    else:
-                        # Rename the file
-                        shutil.move(solved, output_file)
+                except Exception,e:
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
+                else:
+		  # Rename the file
+                  shutil.move(solved, output_file)
         
 
         log.info("Generated output file ==>%s", output_file)

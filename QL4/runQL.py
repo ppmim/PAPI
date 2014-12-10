@@ -57,8 +57,11 @@ from misc.paLog import log
 from PyQt4 import QtCore, QtGui
 
 # If tmp/focus_seq.txt exists, QL fails because it try to launch iraf.obsutil.starfocus() 
-if os.path.exists("/tmp/focus_seq.txt"):
-    os.unlink("/tmp/focus_seq.txt")
+try:
+    if os.path.exists("/tmp/focus_seq_staff1.txt"):
+        os.unlink("/tmp/focus_seq_staff1.txt")
+except Exception,e:
+    log.warning("Cannot delete /tmp/focus_seq_staff1.txt")
 
 import mainGUI
 import misc.config
