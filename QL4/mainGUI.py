@@ -311,6 +311,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         elif os.path.basename(self.m_sourcedir)=='fitsGeirsWritten': s_mode = 'geirs-file2'
         else: s_mode = 'dir'
         
+        self.dc = None
         self.dc = datahandler.DataCollector(s_mode, self.m_sourcedir, 
                                             self.file_pattern , self.new_file_func)
         # Data collector for output files
@@ -787,8 +788,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.lineEdit_sourceD.setText(dir)
                 self.m_sourcedir = str(dir)
                 self.checkBox_geirsFile.setChecked(False)
+                self.checkBox_currentNight.setChecked(False)
                 ## Create DataCollector for a path     
                 self.file_pattern = str(self.lineEdit_filename_filter.text())
+                if self.dc!=None: del self.dc
                 if os.path.isfile(dir) and os.path.basename(dir)=="save_CA2.2m.log":
                     self.dc = datahandler.DataCollector("geirs-file", str(dir), 
                                                         self.file_pattern , 
@@ -838,11 +841,33 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.checkBox_geirsFile.isChecked():
             self.lineEdit_sourceD.setText(self._fitsGeirsWritten_)
             self.m_sourcedir = self._fitsGeirsWritten_
+            if self.dc!=None: del self.dc
+            self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
+                                                       self.file_pattern , 
+                                                       self.new_file_func)
         else:
             self.lineEdit_sourceD.setText("")
             self.m_sourcedir = ""
 
-
+    def setCurrentNight_Input_slot(self):
+        """Called when check-button for Input checkBox_currentNight is clicked"""
+        
+        ## Activate or deactivate the autochecking of new files
+        if self.checkBox_currentNight.isChecked():
+            if datetime.datetime.utcnow().hour>0 and datetime.datetime.utcnow().hour<8:
+                currentDate = (datetime.datetime.utcnow()-datetime.timedelta(days=1)).isoformat().split('T')[0]
+            else:
+                currentDate = datetime.datetime.today().isoformat().split('T')[0]
+            self.m_sourcedir = "/data1/PANIC/" + currentDate
+            self.lineEdit_sourceD.setText(self.m_sourcedir)
+            if self.dc!=None: del self.dc
+            self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
+                                                       self.file_pattern , 
+                                                       self.new_file_func)
+        else:
+            self.lineEdit_sourceD.setText("")
+            self.m_sourcedir = ""
+            
     def autocheck_slot(self):
         """Called when check-button for Input dir is clicked"""
         
@@ -1404,10 +1429,20 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Remove all files from ListView, DataCollector and DB (source and OUTS !).
         """
-         
+        
+        self.checkBox_geirsFile.setChecked(False)
+        self.checkBox_currentNight.setChecked(False)
+        self.checkBox_autocheck.setChecked(False)
+        self.checkBox_outDir_autocheck.setChecked(False)
+        # Deactivate timers
+        self.autocheck_slot()
+        
         self.listView_dataS.clear()
-        if self.dc!=None: self.dc.Clear()
-        if self.dc_outdir!=None: self.dc_outdir.Clear()
+        if self.dc!=None: 
+            self.dc.Clear()
+        if self.dc_outdir!=None: 
+            self.dc_outdir.Clear()
+
         self.inputsDB.clearDB()
         self.outputsDB.clearDB()
 
@@ -1474,6 +1509,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if ok and not new_filter.isEmpty():
             self.lineEdit_filename_filter.setText( str(new_filter) )
             self.dc.SetFileFilter( str(new_filter) )
+            self.dc_outdir.SetFileFilter( str(new_filter) )
 
     def slot_classFilter(self):
         """ Filter files on main ListView"""
@@ -3092,8 +3128,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             text_file = self.focus_tmp_file
             iraf_logfile = self.m_tempdir + "/starfocus.log"
-            # if file exists, overwrite
-            self.genFileList(self.m_popup_l_sel, text_file)
+            # copy the list and switch cetner first and center position
+            my_list = list(self.m_popup_l_sel)
+            my_list[0], my_list[len(my_list)/2] = my_list[len(my_list)/2], my_list[0]    
+            # copy list to file; if file exists, overwrite
+            self.genFileList(my_list, text_file)
             try:
                 # if not started, launch DS9
                 display.startDisplay()
