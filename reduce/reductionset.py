@@ -4109,7 +4109,7 @@ class ReductionSet(object):
         #     We use SCAMP + SWARP
         ########################################################################
         if 1: #self.obs_mode!='dither' or self.red_mode=="quick":
-            if 0:#self.coadd_mode=='swarp':
+            if self.coadd_mode=='swarp':
                 log.info("**** Doing 1st Stack Coaddition (swarp)****")
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
                             coadded_file=output_file, config_dict=self.config_dict)
