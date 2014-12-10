@@ -138,7 +138,7 @@ def runCmd( str_cmd, p_shell=True ):
            
     log.debug("Running command : %s \n", str_cmd)
     try:
-        p = subprocess.Popen(str_cmd, bufsize=0, shell=p_shell, stdin=subprocess.PIPE, 
+        p = subprocess.Popen(str_cmd, bufsize=0, shell=True, stdin=subprocess.PIPE, 
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
                              close_fds=True)
     except:

@@ -178,7 +178,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ## Init member variables
         self.timer_dc = None
         # File used to run the iraf.obsutil.starfocus task
-        self.focus_tmp_file = "/tmp/focus_seq.txt"
+        self.focus_tmp_file = "/tmp/focus_seq_staff1.txt"
         
         # Init main directories
         if source_dir!= None:
@@ -1520,11 +1520,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 for file in seq:
                     (date, ut_time, type, filter, texp, detector_id, run_id, 
                      ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
+		    #nCoadd = fits.getval(file, "NCOADDS", ext=0)
                     if file==seq[0]:
+			nCoadd = fits.getval(file, "NCOADDS", ext=0)
                         #the first time, fill the "tittle" of the group 
                         elem.setText(0, "TYPE="+str(seq_types[k]) + 
                                      "  ** FILTER="+str(filter) + 
                                      "  ** TEXP="+str(texp) + 
+                                     "  ** NCOADDS="+str(nCoadd) + 
                                      " ** #imgs="+str(len(seq)))
                         
                     e_child = QTreeWidgetItem(elem)
@@ -2277,14 +2280,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Slot called when button 'Subtract-Last2' is clicked.
         
-        The two newest SCIENCE frames received (MJD) will be subtracted
+        The two newest frames received (MJD) will be subtracted
         """
         
         #(type , filter) = self.inputsDB.GetFileInfo(self.last_filename)[2:4]
         #if type != 'SCIENCE':
         #only SCIENCE frames are processed
         #pass
-        ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
+        #ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
+        
+        ltemp = self.inputsDB.GetFilesT('ANY') # (mjd sorter)
         if len(ltemp)>1:
             #get the  last 2 files (included the current one)
             last2_files = ltemp[-2:]
@@ -2304,8 +2309,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 log.warning("Last two frames have different FILTER. Cannot subtract each other")
                 return
         else:
-            self.logConsole.info("Not enough SCIENCE files for subtraction")
-            log.debug("Not enough SCIENCE files for subtraction")
+            self.logConsole.info("Not enough files for subtraction")
+            log.debug("Not enough files for subtraction")
             return
         
         

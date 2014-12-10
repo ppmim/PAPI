@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
     /* Read the initial sliding window */
     for (i = 0; i < (2 * hwid + 1); i++)  {
-	    /* printf("Nplanes: %d  i: %d \n", nplanes, i);*/
+	    printf("Nplanes: %d  i: %d \n", nplanes, i);
 	    if (i<nplanes) readdata(i, usemask);
 	}
 
