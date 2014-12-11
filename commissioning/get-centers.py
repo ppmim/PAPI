@@ -11,6 +11,7 @@ import os.path
 import numpy as np
 import shutil
 import sys
+import collections
 
 
 def get_stars_regions_centers(path):
@@ -118,6 +119,9 @@ def get_stars_regions_centers(path):
                 'SG3-1': 10,'SG3-2':14,'SG3-3':13, 'SG3-4':9,
                 'SG4-1': 2,'SG4-2':6,'SG4-3':5, 'SG4-4':1
             }
+    
+    # Sort the dictionary by key
+    reg2sg = collections.OrderedDict(sorted(reg2sg.items()))
     
     # Compute the mean of each region
     for r in reg2sg:

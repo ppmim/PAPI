@@ -430,9 +430,10 @@ class MEF (object):
 
             # Taking into account the gap (167pix), we set the new CRPIXi values
             # for each extension, refered to the center of the focal plane.
-            new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132], 
+            
+            new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81], 
                                         [-81, -81] ], numpy.float_)
-
+            
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading %d-quadrant ..." % (i + j))

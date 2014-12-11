@@ -1806,7 +1806,7 @@ class ReductionSet(object):
             log.debug("New Object mask created : %s", output_master_obj_mask)
 
         # STEP 2: dilate mask (NOT DONE)
-        dilate = False                                                     
+        dilate = True                                                     
         if dilate:
             log.info("Dilating image ....")
             prog = self.m_irdr_path+"/dilate "
@@ -4116,7 +4116,7 @@ class ReductionSet(object):
                 try:
                     aw.run(engine=self.config_dict['astrometry']['engine'])
                 except Exception,e:
-                    log.error("Some error while running Astrowarp....")
+                    log.error("Some error while running Astrowarp: %s"%str(e))
                     raise e
             else:
                 log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")

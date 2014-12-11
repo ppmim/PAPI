@@ -61,7 +61,11 @@ if __name__ == "__main__":
     all_points = []
     for nplate in range(1, 5):
         path = './data/plate{0}'.format(nplate)
-        points = [list(x) for x in np.loadtxt(path)]
+        points = [list(x) for x in np.loadtxt(path, ndmin=2)]
+        
+        #print("len(points)={0}".format(len(points))) 
+	if len(points)==0:
+            continue
         
         # To take into account the gap (167px)
         #print("----Original POINTS {0}".format(points))
