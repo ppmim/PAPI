@@ -4047,7 +4047,7 @@ class ReductionSet(object):
         ########################################################################
         # Preliminary Astrometric calibration of sky-subtracted frames.
         # ######################################################################
-        log.info("**** Preliminary Astrometric calibatrion ****")
+        log.info("**** Preliminary Astrometric calibration ****")
         new_files = []
         for my_file in self.m_LAST_FILES:
             # Run astrometric calibration
