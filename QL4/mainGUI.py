@@ -178,7 +178,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ## Init member variables
         self.timer_dc = None
         # File used to run the iraf.obsutil.starfocus task
-        self.focus_tmp_file = "/tmp/focus_seq_staff2.txt"
+        self.focus_tmp_file = "/tmp/focus_seq.txt"
         
         # Init main directories
         if source_dir!= None:

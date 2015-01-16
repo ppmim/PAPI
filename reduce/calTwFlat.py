@@ -280,12 +280,13 @@ class MasterTwilightFlat (object):
         # Prepare input list on IRAF string format
             
         log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark)   
-        #Read Master Dark Model
+        # Read Master Dark Model
         try:
-            cdark = datahandler.ClFits ( self.__master_dark )
+            cdark = datahandler.ClFits( self.__master_dark )
             mdark = fits.open(self.__master_dark, ignore_missing_end=True)
-            #MASTER_DARK_MODEL is required !!!
-            if not cdark.isMasterDarkModel():
+            mdark_textp = cdark.expTime()
+            # MASTER_DARK_MODEL is required !!!
+            if not cdark.isMasterDarkModel() and (mdark_textp < f_expt-0.05 or mdark_textp>mdark_textp+0.05):
                 log.error("File %s does not look a Master Dark Model"%self.__master_dark)
                 raise Exception("Cannot find a scaled dark to apply")
         except Exception, e:
@@ -316,7 +317,13 @@ class MasterTwilightFlat (object):
             #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
             if next>0:
                 for i in range(1,next+1):
-                    scaled_dark = mdark[i].data[1]*t_flat + mdark[i].data[0]
+                    if cdark.isMasterDarkModel():
+                        log.info("Scaling MASTER_DARK_MODEL")
+                        scaled_dark = mdark[i].data[1]*t_flat + mdark[i].data[0]
+                    else:
+                        log.info("Scaling MASTER_DARK")
+                        scaled_dark = (mdark[i].data / mdark_textp ) * t_flat
+                        
                     log.info("AVG(scaled_dark)=%s"%numpy.mean(scaled_dark))
                     f[i].data = f[i].data - scaled_dark
                     #f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
@@ -396,7 +403,9 @@ class MasterTwilightFlat (object):
         if self.__normal:
             f = fits.open(comb_flat_frame, ignore_missing_end=True)
             if next>0:
-                chip = 1 # normalize wrt to mode of chip 1
+                ##chip = 1 # normalize wrt to mode of chip 1
+                # Because PANIC Chip1 is bad (>25% bad pixels), we use chip 2 for normalization
+                chip = 2 # normalize wrt to mode of chip 1
                 naxis1 = f[chip].header['NAXIS1']
                 naxis2 = f[chip].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
@@ -408,7 +417,7 @@ class MasterTwilightFlat (object):
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
-                median = numpy.median(f[0].data[200:2048-200,200:2048-200])
+                median = numpy.median(f[0].data[2048-200:4096-200,200:2048-200])
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
             else:
                 # Not MEF, not PANIC full-frame, but could be a PANIC subwindow

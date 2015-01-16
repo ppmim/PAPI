@@ -934,6 +934,7 @@ class ReductionSet(object):
             log.debug("Second DARK candidate: %s"%r_dark)            
         else: 
             r_dark = None
+        
         if len(master_flat)>0:
             r_flat = master_flat[-1]
             log.debug("First FLAT candidate: %s"%r_flat)            
@@ -941,6 +942,7 @@ class ReductionSet(object):
             log.debug("Second FLAT candidate: %s"%r_flat)            
         else: 
             r_flat = None
+        
         if len(master_bpm)>0: 
             r_bpm = master_bpm[-1]
             log.debug("First BPM candidate: %s"%r_bpm)            
@@ -2722,7 +2724,7 @@ class ReductionSet(object):
                 # If no calibrations are found, the reduction continues
                 # without dark subtraction and/or flat-fielding and/or BPM.
                 dark, flat, bpm = None, None, None
-                if self.red_mode == "quick":
+                if self.red_mode == 'quick' or self.red_mode == 'quick-lemon':
                     # Quick-Mode: optionally calibrations are used.
                     if self.apply_dark_flat==1 or self.apply_dark_flat==2: 
                         dark, flat, bpm = self.getCalibFor(sequence)
@@ -2752,9 +2754,9 @@ class ReductionSet(object):
                     if q!=-1:
                         obj_ext = [obj_ext[q]]
                         if cext==next:
-                            dark_ext = [dark_ext[q]]
-                            flat_ext = [flat_ext[q]]
-                            bpm_ext = [bpm_ext[q]]
+                            if len(dark_ext)>0: dark_ext = [dark_ext[q]]
+                            if len(flat_ext)>0: flat_ext = [flat_ext[q]]
+                            if len(bpm_ext)>0: bpm_ext = [bpm_ext[q]]
                         next = 1
                     else:
                         # Nothing to do, all detectors will be processed
