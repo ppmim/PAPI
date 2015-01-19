@@ -371,18 +371,25 @@ class MEF (object):
         n_ext = 4 # number of extension expected
 
         # Iterate over the whole input file list
-        for file in self.input_files:        
+        for file in self.input_files:
             try:
                 in_hdulist = fits.open(file)
             except IOError:
                 log.error('Error, can not open file %s', file)
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
+            # Compose the ouputfilename
+            new_filename = file.replace(".fits", out_filename_suffix)
+            if out_dir != None: 
+                new_filename = new_filename.replace (os.path.dirname(new_filename), out_dir) 
+            
+            
             # Check if is a MEF file 
             if len(in_hdulist)>1:
-                log.error("Found a MEF file with %d extensions.\
-                 Cannot convert to MEF file", len(in_hdulist)-1)
-                raise MEF_Exception("Cannot convert an already MEF to MEF file")
+                log.info("File %s is already a MEF file. No conversion required"%file)
+                os.rename(file, new_filename)
+                out_filenames.append(new_filename)
+                continue
             
 
             # Check if is a cube 
@@ -394,7 +401,7 @@ class MEF (object):
                 log.error('Error, file %s is not a full frame image', file)
                 raise MEF_Exception("Error, file %s is not a full frame image" % file)
 
-
+          
             # copy primary header from input file
             primaryHeader = in_hdulist[0].header.copy()
             out_hdulist = fits.HDUList()
@@ -418,12 +425,7 @@ class MEF (object):
             #prihdu.header.update ('DEC', new_pix_center[0][1])
                         
             out_hdulist.append (prihdu)
-            
-            new_filename = file.replace(".fits", out_filename_suffix)
-            if out_dir != None: 
-                new_filename = new_filename.replace (os.path.dirname (new_filename), out_dir) 
-            out_filenames.append (new_filename)
-            
+                        
             # Read all image sections (n_ext frames) and create the associated HDU
             pix_centers = numpy.array ([[1024, 1024], [1024, 3072], [3072, 1024], 
                                         [3072, 3072] ], numpy.float_)
@@ -664,6 +666,7 @@ class MEF (object):
                                 clobber=True)
             out_hdulist.close(output_verify = 'ignore')
             del out_hdulist
+            out_filenames.append(new_filename)
             log.info("MEF file %s created" % (out_filenames[n]))
             n += 1
         

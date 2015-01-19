@@ -39,7 +39,8 @@ def collapse(frame_list, out_dir="/tmp"):
     Collapse (add them up arithmetically) a (list) of data cubes into a single 
     2D image.
 
-    Return a list with the new collapsed  frames.
+    Return a list with the new collapsed frames. If no collapse is required, file
+    will be renamed as well.
     """
 
     log.debug("Starting collapse() method ....")
@@ -52,22 +53,24 @@ def collapse(frame_list, out_dir="/tmp"):
 
     for frame_i in frame_list:
         f = fits.open(frame_i)
+        t_filename = out_dir + "/" + os.path.basename(frame_i).replace(".fits", "_coadd.fits")
         # First, we need to check if we have MEF files
         if len(f)>1 and len(f[1].data.shape)==3:
             try:
                 log.info("Collapsing a MEF cube %s"%frame_i)
-                outfile = out_dir + "/" + os.path.basename(frame_i).replace(".fits", "_coadd.fits")
-                out = collapse_mef_cube(frame_i, outfile)
+                out = collapse_mef_cube(frame_i, t_filename)
                 new_frame_list.append(out)
             except Exception,e:
                 log.error("Some error collapsing MEF cube: %s"%str(e))
                 raise e
         elif len(f)>1 and len(f[1].data.shape)==2:
-            log.debug("MEF file has no cubes, no collapse required.")
-            new_frame_list.append(frame_i)
+            log.debug("MEF file has no cubes, no collapse required, but file is renamed.")
+            os.rename(frame_i, t_filename)
+            new_frame_list.append(t_filename)
         elif len(f[0].data.shape)!=3: # 2D !
-            log.debug("It is not a FITS-cube image, no collapse required.")
-            new_frame_list.append(frame_i)
+            log.debug("It is not a FITS-cube image, no collapse required, but file is renamed.")
+            os.rename(frame_i, t_filename)
+            new_frame_list.append(t_filename)
         else:            
             # Suppose we have single CUBE file ...
             out_hdulist = fits.HDUList()               
@@ -81,8 +84,7 @@ def collapse(frame_list, out_dir="/tmp"):
             out_hdulist.append(prihdu)    
             #out_hdulist.verify ('ignore')
             # Now, write the new collapsed file
-            t_filename = out_dir + "/" + os.path.basename(frame_i).replace(".fits", "_coadd.fits")
-            out_hdulist.writeto (t_filename, output_verify = 'ignore', 
+            out_hdulist.writeto(t_filename, output_verify = 'ignore', 
                                  clobber=True)
             
             out_hdulist.close(output_verify = 'ignore')
@@ -133,7 +135,7 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
 
     Return the name of the output file created.
     
-    Curretly not used from PAPI, **only** from command-line
+    Curretly not used from PAPI, **only** from command-line.
     """
 
     log.debug("Starting collapse_distinguish() method ....")
@@ -208,11 +210,15 @@ if __name__ == "__main__":
     
     parser.add_option("-i", "--input_image",
                   action="store", dest="input_image", 
-                  help="input cube image to collapse into a 2D image")
-
-    parser.add_option("-l", "--input_image_list",
+                  help="input FITS cube image (MEF or non MEF) to collapse into a 2D coadded image")
+    
+    parser.add_option("-L", "--input_image_list",
                   action="store", dest="input_image_list", 
-                  help="input image list to collapse into a single 2D image")
+                  help="input list of FITS (MEF or non MEF) to be collapsed individually into a 2D coadded image")
+    
+    parser.add_option("-l", "--input_single_image_list",
+                  action="store", dest="input_single_image_list", 
+                  help="input image list (text file) of a set of single images (non MEF) to be collapsed into a single 2D coadded image")
 
     parser.add_option("-o", "--output_file",
                   action="store", dest="output_file", 
@@ -231,12 +237,12 @@ if __name__ == "__main__":
        sys.exit(0)
 
     if (not options.input_image and not options.input_image_list) or len(args)!=0: 
-    # args is the leftover positional arguments after all options have been processed
+        # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("Wrong number of arguments " )
     
-    if options.input_image and options.input_image_list:
-    # only one option can be executed 
+    if options.input_image and options.input_single_image_list:
+        # only one option can be executed 
         parser.print_help()
         parser.error("Only one option can be used")
         
@@ -254,13 +260,30 @@ if __name__ == "__main__":
         except Exception, e:
             log.info("Some error while collapsing image to 2D: %s"%str(e))
             sys.exit(0)
+    
     elif options.input_image_list:
+        if not os.path.exists(options.input_image_list):
+            log.error("Input file %s does not exist", options.input_image_list)
+            sys.exit(0)
+        if not options.output_dir or not os.path.exists(options.output_dir):
+            parser.print_help()
+            parser.error("Wrong number of arguments " )
+
         try:
             frames = [line.replace("\n", "") for line in 
                       fileinput.input(options.input_image_list)]
+            print collapse(frames, options.output_dir)
+        except Exception, e:
+            log.info("Some error while collapsing images: %s"%str(e))
+            sys.exit(0)
+            
+    elif options.input_single_image_list:
+        try:
+            frames = [line.replace("\n", "") for line in 
+                      fileinput.input(options.input_single_image_list)]
             print collapse_distinguish(frames, options.output_file)
         except Exception, e:
-            log.info("Some error while collapsing image to 2D: %s"%str(e))
+            log.info("Some error while collapsing set of images to single image: %s"%str(e))
             sys.exit(0)
         
     log.info("End-of-collapse")
