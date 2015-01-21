@@ -62,7 +62,7 @@ class NonLinearityCorrection(object):
     algorithm described by Bernhard Dorner at PANIC-DEC-TN-02_0_1.pdf.
     """
     def __init__(self, model, input_files, out_dir='/tmp', 
-                suffix='_LC', force=False):
+                suffix='_LC', force=False, coadd_correction=False):
         """
         Init the object.
         
@@ -93,6 +93,10 @@ class NonLinearityCorrection(object):
         force: bool
             If true, no check of input raw header is done (NCOADDS, DETROT90, 
             INSTRUME,...)
+            
+        coadd_correction: bool
+            If true and NCOADDS>1, divide the data by NCOADDS, apply NLC and then 
+            multiply by NCOADDS.
 
         Returns
         -------
@@ -107,6 +111,7 @@ class NonLinearityCorrection(object):
         self.suffix = suffix
         self.out_dir = out_dir
         self.force = force
+        self.coadd_correction = coadd_correction
         
         if not os.access(self.out_dir, os.F_OK):
             try:
@@ -148,8 +153,10 @@ class NonLinearityCorrection(object):
             raise ValueError('Wrong type of nonlinearity correction file')
 
         # Check input files are non-integrated files (NCOADDS)
-        if dataHeader['NCOADDS']>1:
-            raise ValueError('Wrong type of file. Only non-integrated files (NCOADDS=1) allowed.')
+        # It is done on applyModel, where can be skipped.
+        #if dataHeader['NCOADDS']>1:
+        #    log.info("Found a wrong type of source file. Use -F to user ncoadd correction")
+        #    raise ValueError('Wrong type of file. Only non-integrated files (NCOADDS=1) allowed.')
 
         # Check NLC model is used with newer data (USE_AFTER->USE_AFT)
         datadate = dateutil.parser.parse(dataHeader['DATE-OBS'])
@@ -251,12 +258,24 @@ class NonLinearityCorrection(object):
             if datadetid != nldetid:
                 raise ValueError('Mismatch of detector IDs for extension' %extname)
 
-            # load file data
-            data = hdulist[extname].data
+            # Work around to correct data when NCOADDS>1
+            if hdulist[0].header['NCOADDS']>1:
+                if self.coadd_correction:
+                    n_coadd = hdulist[0].header['NCOADDS']
+                else:
+                    log.info("Found a wrong type of source file. Use -c to user ncoadd correction")
+                    raise ValueError('Cannot apply model, found NCOADDS > 1.')
+            else:
+                n_coadd = 1
+                
+            # load file data (and fix coadded images => coadd_correction)
+            data = hdulist[extname].data / n_coadd
             nlmaxs = nlhdulist['LINMAX%i' %iSG].data
             nlpolys = np.rollaxis(nlhdulist['LINPOLY%i' %iSG].data, 0, 3)
+
             # calculate linear corrected data
             lindata = self.polyval_map(nlpolys, data)
+            
             # mask saturated inputs - to use nan it has to be a float array
             lindata[data > nlmaxs] = np.nan
             # mask where max range is nan
@@ -269,6 +288,9 @@ class NonLinearityCorrection(object):
                 # we have a single 2D image
                 lindata[np.isnan(nlmaxs)] = np.nan
 
+            # Undo the coadd_correction
+            lindata = lindata * n_coadd
+            
             exthdu = fits.ImageHDU(lindata.astype('float32'), header=hdulist[extname].header.copy())
             # this may rearrange the MEF extensions, otherwise loop over extensions
             hdus.append(exthdu)
@@ -411,6 +433,9 @@ using the proper NL-Model (FITS file).
                   help="Force Non-linearity correction with no check of header"
                   "values (NCOADD, DATE-OBS, DETROT90, ...")
     
+    parser.add_option("-c", "--coadd_correction",
+                  action="store_true", dest="coadd_correction", default=False, 
+                  help="Force NCOADDS correction and apply NLC")
     
     (options, args) = parser.parse_args()
     
@@ -434,7 +459,8 @@ using the proper NL-Model (FITS file).
         parser.error("incorrect number of arguments " )
 
     NLC = NonLinearityCorrection(options.model, filelist, options.out_dir, 
-                                   options.suffix, options.force)
+                                   options.suffix, options.force,
+                                   options.coadd_correction)
 
     try:
         corr = NLC.runMultiNLC()

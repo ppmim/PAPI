@@ -175,6 +175,9 @@ class MEF (object):
         """ 
         Method used to split a MEF into single FITS frames, 
         copying all the header information required.
+        
+        Splitted images now are as follow: Q01=SG1, Q02=SG2, Q03=SG3, Q04=SG4.
+        
         """
         log.info("Starting SplitMEF")
         
@@ -341,6 +344,8 @@ class MEF (object):
 
         Notes
         -----
+        - Only for the case DETROT90=2 and DETXYFLIP=0 the DET_ID is well defined !!! 
+
         - For an image of the sky, the coordinate system representation 
         might be something like: 
 
@@ -361,7 +366,7 @@ class MEF (object):
         
         Todo
         ----
-        - Header is not well formed.
+        - Only for the case DETROT90=2 and DETXYFLIP=0 the DET_ID is well defined !!! 
 
         
         """
@@ -585,24 +590,27 @@ class MEF (object):
                                 elif detflipxy==1: det_id = 2
                                 elif detflipxy==2: det_id = 4
                                 elif detflipxy==3: det_id = 3                               
-                        elif primaryHeader['DETROT90']==2:
+                        elif primaryHeader['DETROT90']==2: # Default mode for PANIC
+                            #
+                            # Default mode for PANIC
+                            #
                             if (i*2+j)==0:
-                                if detflipxy==0: det_id = 4
+                                if detflipxy==0: det_id = 4 # default
                                 elif detflipxy==1: det_id = 1 
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2                               
                             elif (i*2+j)==1:
-                                if detflipxy==0: det_id = 3
-                                elif detflipxy==1: det_id = 2 
-                                elif detflipxy==2: det_id = 4
-                                elif detflipxy==3: det_id = 1                               
-                            elif (i*2+j)==2:
-                                if detflipxy==0: det_id = 1
+                                if detflipxy==0: det_id = 1 # default
                                 elif detflipxy==1: det_id = 4 
                                 elif detflipxy==2: det_id = 2
-                                elif detflipxy==3: det_id = 3                              
+                                elif detflipxy==3: det_id = 3                               
+                            elif (i*2+j)==2:
+                                if detflipxy==0: det_id = 3 # default
+                                elif detflipxy==1: det_id = 2 
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 1                              
                             elif (i*2+j)==3: 
-                                if detflipxy==0: det_id = 2
+                                if detflipxy==0: det_id = 2 # default
                                 elif detflipxy==1: det_id = 3 
                                 elif detflipxy==2: det_id = 1
                                 elif detflipxy==3: det_id = 4
