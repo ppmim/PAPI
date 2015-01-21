@@ -388,7 +388,11 @@ using the proper NL-Model (FITS file).
     # Basic inputs
     parser.add_option("-m", "--model",
                   action="store", dest="model",
-                  help="FITS MEF-cube file of polinomial coeffs (c4, c3, c2, c1).")
+                  help="FITS MEF-cube file of polinomial coeffs (c4, c3, c2, c1) of the NL model.")
+    
+    parser.add_option("-i", "--input_file",
+                  action="store", dest="input_file",
+                  help="FITS file file to be corrected.")
     
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
@@ -400,7 +404,7 @@ using the proper NL-Model (FITS file).
     
     parser.add_option("-S", "--suffix", type="str",
                   action="store", dest="suffix", default="_NLC", 
-                  help="Suffix to use for new corrected files.")
+                  help="Suffix to use for new corrected files (default=%default)")
 
     parser.add_option("-f", "--force",
                   action="store_true", dest="force", default=False, 
@@ -415,16 +419,23 @@ using the proper NL-Model (FITS file).
        sys.exit(0)
 
     # Check required parameters
-    if (not options.source_file_list or not options.out_dir 
+    if ((not options.source_file_list and not options.input_file) or not options.out_dir 
         or not options.model  or len(args)!=0): # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     
-    # Read the source file list     
-    filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    if options.input_file and os.path.isfile(options.input_file): 
+        filelist = [options.input_file]
+    elif options.source_file_list and os.path.isfile(options.source_file_list):
+        # Read the source file list     
+        filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    else:
+        parser.print_help()
+        parser.error("incorrect number of arguments " )
+
     NLC = NonLinearityCorrection(options.model, filelist, options.out_dir, 
-                                    options.suffix, options.force)
-    
+                                   options.suffix, options.force)
+
     try:
         corr = NLC.runMultiNLC()
     except Exception,e:

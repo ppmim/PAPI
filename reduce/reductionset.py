@@ -2446,7 +2446,7 @@ class ReductionSet(object):
         
         #
         # First of all, let see whether Non-linearity correction must be done
-        # Note2: we do not need to 'split the extensions', they are processed 
+        # Note1: we do not need to 'split the extensions', they are processed 
         # one by one (serial) by NonLinearityCorrection(). However, due to
         # NonLinearityCorrection() need MEF files as input, it does the 
         # conversion to MEF if needed. 

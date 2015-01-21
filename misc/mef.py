@@ -204,8 +204,9 @@ class MEF (object):
                 log.error("Found a simple FITS file, not a MEF file")
                 raise MEF_Exception("File %s is not a MEF" % file)
             
-            for i in range (1, n_ext+1):
-                suffix = out_filename_suffix % i # number from 1 to 4
+            for iSG in range (1, n_ext+1):
+                extname = 'SG%i_1' %iSG
+                suffix = out_filename_suffix % iSG # number from 1 to 4
                 new_filename = file.replace(".fits", suffix)
                 if out_dir != None: 
                     new_filename = new_filename.replace( 
@@ -213,14 +214,14 @@ class MEF (object):
                                     ) 
                 out_filenames.append(new_filename)
                 out_hdulist = fits.HDUList( [fits.PrimaryHDU( 
-                                header = hdulist[i].header,
-                                data = hdulist[i].data)]
+                                header = hdulist[extname].header,
+                                data = hdulist[extname].data)]
                                              )
                 
                 out_hdulist.verify('silentfix')
                 
                 #
-                # Copy all keywords of header[0] and not included at header[i>0]
+                # Copy all keywords of header[0] and not included at header[extname]
                 # TODO 
                 #keywords  = [if key not in hdulist[1].header for key in hdulist[0].header.cards
 

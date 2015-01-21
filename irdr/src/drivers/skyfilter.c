@@ -158,11 +158,11 @@ int main(int argc, char *argv[])
                 sky = cube_median_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);
                  
             /*DEBUG*/
-            /*
-            strcpy(aux,"/tmp/sky_");
+            
+            strcpy(aux,"/data2/tmp/sky_");
             strcat(aux, basename(fn[i]));
             writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
-            */
+            
             /* END_DEBUG */
             fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
                                    argv[5]);
