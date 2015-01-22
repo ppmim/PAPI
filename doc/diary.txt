@@ -5661,11 +5661,12 @@ No obstante, al hacer el skyfilter, algunos NaN desaparecen !!!
 
 TODOs - urgentes
 ================
+- re-convertir ficheros para Herve (conversion MEF tenia mal el DET_ID !!)
 - añadir EXTNAME a los ficheros BPM para que funcione el split()
 - 2nd. round of skyfilter !
-- que la NLC no modifique (rearrange) los cuadrantes !!!
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
-- rutina para crear BPM a partir de los NLC de BD.
+- ver que hace en general PAPI con los NaN de la NLC y BPM !!!
+- rutina para crear BPM a partir de los NLC de BD
 
 
 TODO:

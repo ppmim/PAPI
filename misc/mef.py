@@ -344,7 +344,7 @@ class MEF (object):
 
         Notes
         -----
-        - Only for the case DETROT90=2 and DETXYFLIP=0 the DET_ID is well defined !!! 
+        - Only for the case DETROT90=2 and DETXYFLI=0 the DET_ID is well defined !!! 
 
         - For an image of the sky, the coordinate system representation 
         might be something like: 
@@ -366,7 +366,7 @@ class MEF (object):
         
         Todo
         ----
-        - Only for the case DETROT90=2 and DETXYFLIP=0 the DET_ID is well defined !!! 
+        - Only for the case DETROT90=2 and DETXYFLI=0 the DET_ID is well defined !!! 
 
         
         """
@@ -444,7 +444,7 @@ class MEF (object):
             
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
-                    log.debug("Reading %d-quadrant ..." % (i + j))
+                    log.debug("Reading quadrant-%d ..." % (i*2 + j))
                     # Check if we have a cube of data
                     if len(in_hdulist[0].data.shape)==2:
                         hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
@@ -532,12 +532,12 @@ class MEF (object):
                     # Force BITPIX=-32
                     prihdu.scale('float32')
 
-                    if 'DETXYFLIP' in primaryHeader:
-                        # When DETXYFLIP=0, no flip; default
-                        # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
-                        # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
-                        detflipxy = primaryHeader['DETXYFLIP']
-                        log.debug("Found DETXYFLIP in header =%s"%detflipxy)
+                    if 'DETXYFLI' in primaryHeader:
+                        # When DETXYFLI=0, no flip; default
+                        # When DETXYFLI=1, Flip Horizontally (interchanges the left and the right) 
+                        # When DETXYFLI=2, Flip Vertically (turns the image upside down) 
+                        detflipxy = primaryHeader['DETXYFLI']
+                        log.debug("Found DETXYFLI in header =%s"%detflipxy)
                     else: 
                         detflipxy = 0
 
@@ -636,8 +636,8 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 2
                                 elif detflipxy==3: det_id = 1
                     else:
-                        # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
-                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
+                        # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
+                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
                         if (i*2+j)==0: det_id = 4
                         elif (i*2+j)==1: det_id = 3
                         elif (i*2+j)==2: det_id = 1
@@ -793,7 +793,7 @@ class MEF (object):
                                         [-81, -81] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
-                    log.debug("Reading %d-quadrant ..." % (i*2 + j))
+                    log.debug("Reading quadrant-%d ..." % (i*2 + j))
                     # Check if we have a cube, then copy all the planes
                     if len(in_hdulist[0].data.shape)==2: 
                         hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
@@ -899,12 +899,12 @@ class MEF (object):
                         prihdu.header.add_history("[MEF.splitGEIRSToSimple] File created from %s"%file)
                         
                     
-                    if 'DETXYFLIP' in primaryHeader:
-                        # When DETXYFLIP=0, no flip; default
-                        # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
-                        # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
-                        detflipxy = primaryHeader['DETXYFLIP']
-                        log.debug("Found DETXYFLIP in header =%s"%detflipxy)
+                    if 'DETXYFLI' in primaryHeader:
+                        # When DETXYFLI=0, no flip; default
+                        # When DETXYFLI=1, Flip Horizontally (interchanges the left and the right) 
+                        # When DETXYFLI=2, Flip Vertically (turns the image upside down) 
+                        detflipxy = primaryHeader['DETXYFLI']
+                        log.debug("Found DETXYFLI in header =%s"%detflipxy)
                     else: 
                         detflipxy = 0
 
@@ -958,22 +958,22 @@ class MEF (object):
                                 elif detflipxy==1: det_id = 2
                                 elif detflipxy==2: det_id = 4
                                 elif detflipxy==3: det_id = 3                               
-                        elif primaryHeader['DETROT90']==2:
+                        elif primaryHeader['DETROT90']==2: # default
                             if (i*2+j)==0:
                                 if detflipxy==0: det_id = 4
                                 elif detflipxy==1: det_id = 1 
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2                               
                             elif (i*2+j)==1:
-                                if detflipxy==0: det_id = 3
+                                if detflipxy==0: det_id = 1
                                 elif detflipxy==1: det_id = 2 
                                 elif detflipxy==2: det_id = 4
-                                elif detflipxy==3: det_id = 1                               
+                                elif detflipxy==3: det_id = 3                               
                             elif (i*2+j)==2:
-                                if detflipxy==0: det_id = 1
+                                if detflipxy==0: det_id = 3
                                 elif detflipxy==1: det_id = 4 
                                 elif detflipxy==2: det_id = 2
-                                elif detflipxy==3: det_id = 3                              
+                                elif detflipxy==3: det_id = 1                              
                             elif (i*2+j)==3: 
                                 if detflipxy==0: det_id = 2
                                 elif detflipxy==1: det_id = 3 
@@ -1001,8 +1001,8 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 2
                                 elif detflipxy==3: det_id = 1
                     else:
-                        # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
-                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
+                        # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
+                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
                         if (i*2+j)==0: det_id = 4
                         elif (i*2+j)==1: det_id = 3
                         elif (i*2+j)==2: det_id = 1
