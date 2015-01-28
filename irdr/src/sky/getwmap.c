@@ -39,25 +39,31 @@ extern float *getmask(float *wmap, int nx, int ny, char *objmfn,
                       float xoff, float yoff)
 {
     int i, j, ixoff, iyoff;
-    int nxobj, nyobj, border;
+    int nxobj, nyobj, border_x, border_y;
     float *mask, *objmask;         /* mask is merged weight map and objmask */
 
     mask = (float *) emalloc(nx * ny * sizeof(float));
 
     objmask = readobjm(objmfn, &nxobj, &nyobj);
 
-    border = (nxobj - nx) / 2;       /* objmask is from coadded dither set */
-
+    border_x = (nxobj - nx) / 2;       /* objmask is from coadded dither set */
+    border_y = (nyobj - ny) / 2;
+    
     /* offset of current frame into dither set objmask */
 
-    ixoff = (int)(border - xoff);
-    iyoff = (int)(border - yoff);
-
+    ixoff = (int)(border_x - xoff);
+    iyoff = (int)(border_y - yoff);
+    
+    /* Prueba */
+    ixoff = -xoff;
+    iyoff = -yoff;
+    printf("\nixoff = %d  iyoff = %d\n", ixoff, iyoff);
     for (i = 0; i < ny; i++) {
+        /* printf("\n DEBUG ny=%d , I=%d\n", ny, i); */
         float *maskrow = mask + (i * nx);
         float *wmaprow = wmap + (i * nx);
         float *objrow = objmask + ((i + iyoff) * nxobj + ixoff);
-
+        
         for (j = 0; j < nx; j++)
             if (objrow[j] > 0)                 /* if object pixel... */
                 maskrow[j] = 0.0;           /* mask out weightmap pixel */
@@ -65,7 +71,7 @@ extern float *getmask(float *wmap, int nx, int ny, char *objmfn,
                 maskrow[j] = wmaprow[j];
     }
 
-    printf("  getmask: %d %d %d\n", border, ixoff, iyoff);
+    printf("  getmask: %d %d %d %d\n", border_x, border_y, ixoff, iyoff);
 
     return mask;
 }

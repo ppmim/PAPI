@@ -704,7 +704,7 @@ class AstroWarp(object):
         
         root, ext = os.path.splitext(os.path.basename(self.coadded_file))
         # Path to the temporary FITS file containing the WCS header
-        kwargs = dict(prefix = '%s_coadd_' % root, suffix = ext)
+        kwargs = dict(prefix = '%s_coadd_' % root, suffix = ext, dir=self.temp_dir)
         with tempfile.NamedTemporaryFile(**kwargs) as fd:
             output_path = fd.name
         
@@ -718,7 +718,10 @@ class AstroWarp(object):
         
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
         swarp.ext_config['IMAGEOUT_NAME'] = output_path
-        #"Projected" weight-maps are created only if weight-maps were given in input.
+        swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
+                                                                 
+        # "Projected" weight-maps are created only if weight-maps were given in input.
+        # That is not true !!!
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
@@ -762,8 +765,12 @@ class AstroWarp(object):
                     raise Exception("[runWithAstrometryNet] Error doing Astrometric calibration: %s"%str(e))
             else:
                 shutil.move(solved, self.coadded_file)
+                shutil.move(output_path.replace(".fits", ".weight.fits"), 
+                        self.coadded_file.replace(".fits", ".weight.fits"))
         else:
             shutil.move(output_path, self.coadded_file)
+            shutil.move(output_path.replace(".fits", ".weight.fits"), 
+                        self.coadded_file.replace(".fits", ".weight.fits"))
         
         log.info("Lucky you ! file %s created", self.coadded_file)
 

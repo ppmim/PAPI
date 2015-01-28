@@ -1343,33 +1343,41 @@ class ReductionSet(object):
         args = [self.m_irdr_path + '/skyfilter',
                 list_file,
                 gain_file,
-                str(halfnsky),
+                str(halfnsky), 
                 mask,
                 destripe,
                 skymodel]
         #skyfilter_cmd = args 
         
+        # Una prueba
+        #args = [self.m_irdr_path + '/skyfilter']
         print "ARGS",args
-        
+        # 
+        output_lines = []
         try:
-            with tempfile.NamedTemporaryFile() as cmd_output:
-                p = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE)
-                while True:
-                    line = p.stdout.readline()
-                    if not line and p.poll() is not None:
-                        break
-                    if line:
-                        print "MY_LINE=",line.strip()
-                        cmd_output.write(line)
+            output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, shell=False, bufsize=-1)
+            #output_line = subprocess.call(args)
+            log.critical("irdr::skyfilter command executed ...")
+            #with tempfile.NamedTemporaryFile() as cmd_output:
+            #    p = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE)
+            #    log.critical("irdr::skyfilter command executed ...")
+            #    while True:
+            #        line = p.stdout.readline()
+            #        if not line and p.poll() is not None:
+            #            break
+            #        if line:
+            #            print "MY_LINE=",line.strip()
+            #            cmd_output.write(line)
 
-                cmd_output.seek(0)
-                output_lines = cmd_output.readlines()
+            #    cmd_output.seek(0)
+            #    output_lines = cmd_output.readlines()
 
             sys.stdout.flush()
             sys.stderr.flush()
             
         except subprocess.CalledProcessError, e:
-            log.debug("Error running skyfilter")
+            log.debug("Error running skyfilter: %s"%output_lines)
+            log.debug("Exception: %s"%str(e))
             raise Exception("Error running skyfilter")
         
         print "OUTPUT=",output_lines
@@ -1574,7 +1582,7 @@ class ReductionSet(object):
             w0 = wcs.WCS(h0)
             ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
             dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
-            log.debug("RA0= %s DEC0= %s"%(ra0,dec0))
+            log.debug("Ref. image: %s RA0= %s DEC0= %s"%(ref_image, ra0,dec0))
       except Exception,e:
           raise e
         
@@ -1585,7 +1593,7 @@ class ReductionSet(object):
               w = wcs.WCS(h)
               ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
               dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
-              log.debug("RA[%d]= %s DEC[%d]= %s"%(i,ra, i, dec))
+              log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
               # Assummed that North is up and East is left
               offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
               offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
@@ -1650,7 +1658,7 @@ class ReductionSet(object):
             mask_maxarea = self.config_dict['offsets']['mask_maxarea']
             mask_thresh = self.config_dict['offsets']['mask_thresh']
             satur_level = self.config_dict['offsets']['satur_level']
-            single_p= self.config_dict['offsets']['single_point']
+            single_p = self.config_dict['offsets']['single_point']
         else:
             mask_minarea = 5
             mask_maxarea = 200
@@ -1719,7 +1727,7 @@ class ReductionSet(object):
         
         INPUTS:
             input: file listing the file to coadd and the offsets between
-                   each one
+                   each one.
                       
             gain: gain map file to use for the coaddition (it take into account 
                   the BPM)
@@ -1783,12 +1791,14 @@ class ReductionSet(object):
             mask_maxarea = self.config_dict['skysub']['mask_maxarea']
             mask_thresh = self.config_dict['skysub']['mask_thresh']
             satur_level = self.config_dict['skysub']['satur_level']
+            single_p = False # we cannot use single point, skyfilter need the whole object!
         else:
             print "Program should never enter here !!!"
             mask_minarea = 5
             mask_maxarea = 0 # unlimited
             mask_thresh = 1.5
             satur_level = 55000
+            single_p = False
         
         # In order to set a real value for satur_level, we have to check the
         # number of coadds of the images (NCOADDS or NDIT keywords).
@@ -1799,16 +1809,16 @@ class ReductionSet(object):
             log.warning("Error read NCOADDS value. Taken default value (=1)")
             satur_level = satur_level
 
-
-        # BUG ! -> input_file+"*" as first parameter to makeObjMask ! (2011-09-23)                                                               
-        makeObjMask( input_file, mask_minarea, mask_maxarea, mask_thresh, satur_level,
-                    outputfile=self.out_dir+"/objmask_file.txt", single_point=False)
+        # Call module makeObjMask
+        makeObjMask(input_file, mask_minarea, mask_maxarea, mask_thresh, satur_level,
+                   outputfile=self.out_dir+"/objmask_file.txt", single_point=single_p)
+        
         if os.path.exists(input_file+".objs"): 
             shutil.move(input_file+".objs", output_master_obj_mask)
             log.debug("New Object mask created : %s", output_master_obj_mask)
 
         # STEP 2: dilate mask (NOT DONE)
-        dilate = True                                                     
+        dilate = False                                                     
         if dilate:
             log.info("Dilating image ....")
             prog = self.m_irdr_path+"/dilate "
@@ -2605,14 +2615,19 @@ class ReductionSet(object):
                 # Look for the required MasterDark (any ExpTime);first in the 
                 # local DB (current RS), and if anyone found, then in the 
                 # external DB. 
-                # Local (ExpTime is not a constraint)
+                # Local (Initially, EXPTIME is not a constraint for MASTER_DARK_MODEL)
                 master_dark = self.db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
                 
-                #External (ExpTime is not a constraint)
+                # External (ExpTime is not a constraint)
                 if len(master_dark)==0 and self.ext_db!=None:
                     log.debug("No MasterDarkModel in current local DB. Trying in external (historic) DB...")
                     master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
                 
+                # Last oportunity, look for a simple MASTER_DARK with >= EXPTIME
+                if len(master_dark)==0:
+                    # master_dark = self.db.GetFilesT('MASTER_DARK', 999999)
+                    master_dark = [self.master_dark]
+                    
                 # if required, master_dark will be scaled in MasterTwilightFlat class
                 if len(master_dark)>0:
                     log.debug("[reduceSeq] MASTER_DARK_MODEL found --> %s"%master_dark[-1])
@@ -2974,7 +2989,9 @@ class ReductionSet(object):
                 
             elif len(out_ext)==1:
                 shutil.move(out_ext[0], seq_result_outfile)
-                
+                if os.path.isfile(out_ext[0].replace(".fits", ".weight.fits")):
+                    shutil.move(out_ext[0].replace(".fits", ".weight.fits"), 
+                                seq_result_outfile.replace(".fits", ".weight.fits"))
                 files_created.append(seq_result_outfile)
                 log.info("*** Obs. Sequence reduced. File %s created.  ***", 
                          seq_result_outfile)
@@ -2999,7 +3016,7 @@ class ReductionSet(object):
             # if source image was a science one, then products should be also 
             # science images.
             if cfits.isScience():
-                # input image is overwritten
+                # input image (and weight map) is overwritten
                 misc.imtrim.imgTrim(file)
             if file!=None and os.path.splitext(file)[1]=='.fits':
                 self.db.insert(file)
@@ -3454,7 +3471,7 @@ class ReductionSet(object):
             n_line = line.replace(".fits.objs", ".fits") 
             fs.write(n_line)
         fo.close()
-        fs.close()    
+        fs.close()
         self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
                               out_dir+'/coadd1.fits','average')
          
@@ -4082,8 +4099,8 @@ class ReductionSet(object):
          
         ########################################################################
         # 5 - Compute dither offsets:
-        #        - using astrometric calibration
-        #        - using cross-correlation
+        #        - using astrometric calibration (wcs)
+        #        - using cross-correlation (irdr.offsets)
         ########################################################################
         self.offsets_mode = 'wcs'
         #self.offsets_mode = 'cross-correlation'
@@ -4223,10 +4240,21 @@ class ReductionSet(object):
         #####################
         
         log.info("**** Master object mask creation ****")
-        obj_mask  = self.__createMasterObjMask(output_file, #out_dir+'/coadd1.fits', 
+        obj_mask  = self.__createMasterObjMask(output_file, 
                                                out_dir+'/masterObjMask.fits')
-	
-      
+                                              
+
+        ########################################################################
+        # Re-compute dither offsets taking into account the object mask
+        ########################################################################
+        try:
+            temp_list = [obj_mask] + self.m_LAST_FILES
+            offset_mat = self.getWCSPointingOffsets(temp_list, 
+                                                        out_dir+'/offsets1.pap')
+        except Exception,e:
+            log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
+            raise e
+        
         ########################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
         ########################################################################
@@ -4239,8 +4267,9 @@ class ReductionSet(object):
         # 9.1 Compound masked sky file list as input to IRDR::skyfilter()
         fs = open(out_dir+"/skylist2.pap","w+")
         i = 0
-        j = 0
-        
+        # (j=1) Due to the offsets were computed with the obj_mask, the first 
+        # offset (=0,0) is skipped.
+        j = 1 
         for file in self.m_rawFiles:
             if self.apply_dark_flat==1 and master_flat!=None and master_dark!=None:
                 line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
@@ -4265,6 +4294,7 @@ class ReductionSet(object):
             i = i+1
             
         fs.flush()
+        os.fsync(fs.fileno())
         fs.close()
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)

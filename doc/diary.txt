@@ -5540,7 +5540,7 @@ Disk[2-6] : RAID 5 - /data1 (2TB) y /data1 (~13 TB)
 
 18-Nov-2014 
 -----------
-- Parece que ds9v7.3.2 no funciona con IRAF !! 
+- Parece que ds9v7.3.2 no funciona con IRAF !! --> resulto el problema, ver 2015-01-28!
 (P)- Me pongo a procesar la serie de foco del 10-Nov; observo diferencias entre
 los valores que da iraf.imexam y iraf.psfmeasure, a pesar de tener aparentemente
 la misma configuracion.
@@ -5656,22 +5656,249 @@ además pone a NaN los valores > LINMAXi y los propios puestos a NaN en dicha ma
 No obstante, al hacer el skyfilter, algunos NaN desaparecen !!!
 
 
+22-Enero-2015 
+-------------
+- Encuentro problemas con la definicion de DETSEC y DATASEC que se crea
+en mef.py, lo que causa problemas al aplicar la NLC pues esta comprueba que 
+las secciones son correctas.
+
+Puede ayudar:
+
+https://github.com/saltastro/pysalt/blob/master/salthrs/hrsprepare.py
+http://iraf.noao.edu/projects/ccdmosaic/imagedef/imagedef.html
+DETSEC[x1,x2,y1,y2]
+
+NLC_files:
+DETSEC  = '[2049:4096,1:2048]'                                                  
+DET_ID  = 'SG1     '
+(geirs) DETSEC  = '[2049:4096,1:2048]' / [px] section of DETSIZE 
+
+
+DETSEC  = '[2049:4096,2049:4096]'                                               
+DET_ID  = 'SG2     '
+(g) DETSEC  = '[2049:4096,2049:4096]'
+
+DETSEC  = '[1:2048,2049:4096]'                                                  
+DET_ID  = 'SG3     '
+(g) DETSEC  = '[1:2048,2049:4096]'
+
+DETSEC  = '[1:2048,1:2048]'                                                     
+DET_ID  = 'SG4     '
+(g) DETSEC  = '[1:2048,1:2048]'
+
+- en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
+pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
+
+23-Enero-2015 
+-------------
+- Para avitar más lios, decido modificar correctNonLinearity de forma que no
+modifique la distribuciones de los detectores (SGi) y mantenga el forma original
+con el que los crea GEIRS, es decir:
+
+ext_1 = SG4
+ext_2 = SG1
+ext_3 = SG3
+ext_4 = SG2 
+
+No obstante, si vamos a mantener que en el split de los MEF tengamos:
+
+Q1 = SG1
+Q2 = SG2
+Q3 = SG3
+Q4 = SG4
+
+- Me pongo a implementar el 2nd. round de skyfilter, recalculado los
+offsets teniendo en cuenta el masterObjectMask calculado con swarp.
+Me encuentro con el mismo problema tan extraño que había visto en alguna
+ocasión en CAHA, y que misteriosamente la llamanda con subprocess.Popen()
+no se ejecuta, sin que haya aparentemente ningún errrro !! y además el
+primer round de skyfilter se ejecuta sin problema !!! es extrañisimoooooo
+Por sospechar:
+
+- http://stackoverflow.com/questions/9811413/python-reading-subprocess-output-in-threads?rq=1
+- http://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them
+
+Cambio subprocess.Popen por subprocess.check_output y obtengo lo mismo, pero al menos
+veo el error que devuelve:
+
+Exception: Command '['/home/panic/DEVELOP/papi/irdr/bin/skyfilter', '/data2/out/Q01/skylist2.pap', '/data2/out/Q01/gain_KS.fits', '2', 'mask', 'none', 'median']' returned non-zero exit status -11
+
+Sin embargo, si ejecuto el comando a mano desde la linea de comandos no da ningún problema !!!
+
+Pruebo a ejecutarlo en con Parallel=False en el fichero de configuración para no usar 
+nada de multiprocessing y obtengo el mismo resultado !!! por tanto, parece que no es problema del 
+multiprocesing ...;
+Añado un traza al principio de skyfilter a ver si entra o no ....y no parece que ni siquiera entre !!!!!
+
+Que demonios pasa !!!
+
+
+26-Enero-2015 
+-------------
+- Por fin encontré el error; no es nada de Python, el problema está en la lectura y
+alineamiento del objectMask que hace IRDR !!! --> getwmap.c  !!!
+
+- Hablando con Matilde sobre la reducción de los Skyflat, quedamos que la rutina debe
+recibir una seria de flats y una seríe de darks para restarles. Lo del modelo de DARK_MODEL
+o un sólo dark, no es lo mejor.
+
+- Ahora, la imagen obtenida en la segunda vuelta, no tiene el cielo bien sustraido;
+en prinicipio pienso con con el dilate se podría arreglar...pero al poner dilate=True,
+ahora falla getPointingOffsets !!!!
+
+
+27-Enero-2015 
+-------------
+- Matilde comprueba que efectivamente los NaN en IRAF los muestra como <0 y que los
+trata como 0s, pues ella calculó la media en una ventanita con NaNs y efectivamente 
+los trataba como Os.
+
+- El problema que tengo ahora es la segunda sustracción de cielo, pues no se enmascaran
+correctamente todos los objectos, y por tanto al crear el cielo a restar están todos 
+los objectos enmascarados correctamente; se ven claramente "manchas" negras en las 
+imágenes sustraidas.
+
+- Modifico caTwFlat.py para que acepte una lista de master darks o un dark model;
+esto lo decidimos hablando con Matilde sobre como reducir los skyFlats.
+
+- Parece que ya se por donde pueden venir los problemas de la segunda vuelta
+de la sustracción de cielo; el problema está en que el coadd creado con SWARP
+hace un registrado para solucionar los problemas de la distorsion del campo,
+por lo que el enmascaramiento de los pixeles de "objetos" no se hace correctamente
+en los imagenes raw; quizás una solución sería registrarlas/calibrarlar astrometrícamente
+y pasarles también swarp....pero no me gusta mucho.
+Si en lugar de usar SWARP uso irdr.dithercubemean con los offsets calculados
+a partir de la WCS, entonces el coadd que obtengo no es bueno, tiene estrellas
+"duplicadas" pues el alineamiento no es correcto debido a que los offsets no son
+correctos !!!
+TODO esto está por confirmar !! pero tiene toda la pinta de que sea así ....
+
+28-Enero-2015 
+-------------
+- Encuentro la solución al error en IRAF "Warning: Pixels out of bound" al usar
+MEF con imexam/display. Segun stackoverflow, es un bug de la versión 7.2 de DS9,
+que está resuelto en la 7.3.2; Al probarlo, me acordé que tuve otros problemas
+con IRAF y la ds9_v7.3.5  y no puede abrir las imagenes. Sin embargo eso se 
+soluciona como siguie:
+
+IRAF Users: DS9 7.3.2 has a bug with unix sockets 
+"Cannot open device (node!imtool,,512,512)" 
+Instead use inet: 
+$ setenv IMTDEV inet:5137:localhost
+
+
+Pero podemos tener problemas si hay más de un ds9 abierto; para ello habría
+que abrir el ds9 en otro puerto:
+
+$ds9 -port 5138
+$ setenv IMTDEV inet:5138:localhost
+
+Una cosa muy interesante es que podemos también usar un DS9 local corriendo
+en otra máquina diferente a la que corre IRAF !! con lo cual ganamos en velocidad
+de refresco !!
+
+Para más información:
+http://iraf.noao.edu/docs/src/pcix/unixsmg-N-4.4.html
+ftp://iraf.noao.edu/ftp/web/projects/sitemail.2003/2301.html
+
+- Pruebo las nuevas rutinas de BD para el tilt y funcionan sin problemas; 
+le enseño a Conchi e Irene como funcionan.
+
+
+- Continuando con el problema importante de PAPI y la 2da. skyfilter, 
+pruebo PAPI con datos de O2k en modo science y aparentemente funciona bien,
+con lo cual el método de getWCSOffsets + SWARP parece que puede estár bien.
+
+- Reduzco NormalField_004X.fits (un campo muy poco poblado) y la cosa 
+parece que también va bien; en modo quick se reducen los 4 detec. 
+y se crea el mosaico sin problemas, pero en modo science no se crea 
+el mosaico, aunque se reducen los 4 det. aparentenmente bien.
+
+
+
+
+
+
+Posibles causas del problema del Transito WASP:
+==============================================
+1-fueron reducidas con modo quick
+2-no tiene ni Dark y Flat
+3-(creo) que fueron reducidas con el dxtalk activado
+4-no están bien muestreadas, y habría que hacer un ditheting más 
+pequeño y razonable y con más puntos.
+
+
 
 
 
 TODOs - urgentes
 ================
+- en astrowarp: parece que shutil.move no borrar la src !! noooo! no que pasa es que
+If the destination is on the current filesystem, then os.rename()
+
+y como el PANIC_SEQ_Q01.fits suele existir de una reducción anterior, pues no borra el src, 
+sólo renombra el PANIC_SEQ_Q01.fits.
+
+- Reducir imagenes para Conchi
+- mejorar rutina de logsheet para ver los ficheros que tenemos y su tipo.
+- bug en imtrim.py: 
+ERROR (808, "Pixel subscript out of bounds (/data2/out/PANIC.2014-12-10T19:10:01.3242.weight.fits[91:3190,92:3192])") 
+(más o menos resuelto)
+
+- Resolver el problema del llenado del / a causa de la escritura en el /tmp, 
+lo cual deja la máquina sin recursos. Habría que haber creado la partición / 
+más grande. Ahora sólo queda intentar crear un link para el /tmp, pero
+eso hay que hacerlo arrancando con un disco de sistema, pues en el /tmp
+hay muchos ficheros temporales que usa el propio sistem...
+
+- Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF; hay que configurar el IMTDEV también !!
+- instalar PAPI en panic35 y cambiar permisos en /data1 y data2 para usuario obs35.
+- copiar nuevos scripts de BD y panic_status al repositorio de PAPI y prepararlos para la instalación !!
+- actualizar el documento de calculo del Tilt con las rutinas de BD !!
+
 - re-convertir ficheros para Herve (conversion MEF tenia mal el DET_ID !!)
-- añadir EXTNAME a los ficheros BPM para que funcione el split()
-- 2nd. round of skyfilter !
+- Ojo, el fichero offsets1.pap se crea en /data2/out/ en lugar de /data2/out/Q0X) !!!! conflicto entre detectores en reducción paralelo !!
+nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
+
+- Quitar todos los debugs (ficheros temporales) de skyfilter.c
+- Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
+- ¿ para qué demonios sirven lo MEF ?? podríamos trabajar sólo con joins ???
+- conversion de MEF-cubes to singles(join)-cubes !!
+- adaptar Nuevo interfaz de calTwFlat en PAPI !! 
+- limpiar fichero de configuración de variables que no usamos.
+- reductionset.py (1812), dilate=False !!! (revisar)
+- 2nd. round of skyfilter ! --> re-calculo de offsets de mascara de objetos
+- ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...
+- en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
+pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
+
+- iraf.imcombine: los NaN los "cambia" por 0s !!! --> estudiar !!
+- Unificar/distinguir el fichero temporal "/tmp/focus_seq_XXXX.txt" 
+(donde XXX=usuario) del que hace uso el QL para la Focus-evaluation;
+actualemente eso afecta a :
+   
+    .iraf/login.cl
+    .iraf/papi_ql_user.cl
+    papi/QL4/mainGUI.py
+    papi/QL4/runQL.py
+
+    SOLUCION: grabar el fichero temporal en /home/user/.iraf/focus_seq.txt
+    
+- re-convertir ficheros para Herve (conversion MEF tenia mal el DET_ID !!)
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
 - rutina para crear BPM a partir de los NLC de BD
+- añadir EXTNAME a los ficheros BPM para que funcione el split()
 
 
 TODO:
 ====
-
+- ojo, serial data reduction !!
+- verificar que dilate=True tiene sentido en RS::__createMasterObjMask
+- Eliminar los /data2/tmp/sky_XXX.fits que se crean para debug en skyfilter !!!
+- Eliminar el primer coadd que se crea en: /tmp/PANIC_SEQ_Q01_coadd_RADMON.fits 
+- Modificar calTwFlat.py para que acepte una lista de darks en lugar de un DARK_MODEL.
+- Escribir a RM para que modifique? EXTEND=F en los single !!! para identificarlos bien de los MEF.
 - Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
 hacer una propia en Python.
 - Buscar otra forma mas robusta de calcular los offsets --->cfr LEMON !!

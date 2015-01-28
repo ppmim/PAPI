@@ -62,7 +62,7 @@ class NonLinearityCorrection(object):
     algorithm described by Bernhard Dorner at PANIC-DEC-TN-02_0_1.pdf.
     """
     def __init__(self, model, input_files, out_dir='/tmp', 
-                suffix='_LC', force=False, coadd_correction=False):
+                suffix='_LC', force=False, coadd_correction=True):
         """
         Init the object.
         
@@ -103,8 +103,6 @@ class NonLinearityCorrection(object):
         outfitsname: list
             The list of new corrected FITS files created.
         
-        TODO
-        ----
         """
         self.input_files = input_files
         self.model = model
@@ -244,7 +242,8 @@ class NonLinearityCorrection(object):
         hdus = []
 
         # loop over detectors
-        for iSG in range(1, 5):
+        # To avoid the re-arrange of the MEF extensions
+        for iSG in (4,1,3,2):
             extname = 'SG%i_1' %iSG
             # check detector sections
             # another way would be to loop until the correct one is found
@@ -261,6 +260,7 @@ class NonLinearityCorrection(object):
             # Work around to correct data when NCOADDS>1
             if hdulist[0].header['NCOADDS']>1:
                 if self.coadd_correction:
+                    log.info("NCOADDS>1; Doing ncoadd correction...")
                     n_coadd = hdulist[0].header['NCOADDS']
                 else:
                     log.info("Found a wrong type of source file. Use -c to user ncoadd correction")
@@ -434,7 +434,7 @@ using the proper NL-Model (FITS file).
                   "values (NCOADD, DATE-OBS, DETROT90, ...")
     
     parser.add_option("-c", "--coadd_correction",
-                  action="store_true", dest="coadd_correction", default=False, 
+                  action="store_true", dest="coadd_correction", default=True, 
                   help="Force NCOADDS correction and apply NLC")
     
     (options, args) = parser.parse_args()

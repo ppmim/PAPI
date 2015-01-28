@@ -59,6 +59,8 @@ cp $PAPI_HOME/scripts/start_ql.sh $PAPI_BIN/start_ql
 chmod a+x $PAPI_BIN/start_ql
 cp $PAPI_HOME/scripts/start_iraf.sh $PAPI_BIN/start_iraf
 chmod $PAPI_BIN/start_iraf
+cp -av $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/
+chmod a+x $PAPI_HOME/commissining/getDarks.py
 
 chmod a+x $PAPI_HOME/papi.py
 ln -s $PAPI_HOME/papi.py $PAPI_BIN/papi

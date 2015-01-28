@@ -25,6 +25,7 @@
 from optparse import OptionParser
 import sys
 import os
+import shutil
 import astropy.io.fits as fits
 import fileinput
 import numpy
@@ -40,7 +41,7 @@ def collapse(frame_list, out_dir="/tmp"):
     2D image.
 
     Return a list with the new collapsed frames. If no collapse is required, file
-    will be renamed as well.
+    will be created as well.
     """
 
     log.debug("Starting collapse() method ....")
@@ -64,12 +65,12 @@ def collapse(frame_list, out_dir="/tmp"):
                 log.error("Some error collapsing MEF cube: %s"%str(e))
                 raise e
         elif len(f)>1 and len(f[1].data.shape)==2:
-            log.debug("MEF file has no cubes, no collapse required, but file is renamed.")
-            os.rename(frame_i, t_filename)
+            log.debug("MEF file has no cubes, no collapse required, but new file is created.")
+            shutil.copyfile(frame_i, t_filename)
             new_frame_list.append(t_filename)
         elif len(f[0].data.shape)!=3: # 2D !
             log.debug("It is not a FITS-cube image, no collapse required, but file is renamed.")
-            os.rename(frame_i, t_filename)
+            shutil.copyfile(frame_i, t_filename)
             new_frame_list.append(t_filename)
         else:            
             # Suppose we have single CUBE file ...

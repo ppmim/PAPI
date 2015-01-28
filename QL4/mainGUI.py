@@ -649,7 +649,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if len(master_dark)==0 and self.outputsDB!=None:
             master_dark = self.outputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
             if len(master_dark)==0:
-                master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime) 
+                master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime)
         
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
@@ -2564,9 +2564,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if not outfileName.isEmpty():
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calDomeFlat.MasterDomeFlat(self.m_popup_l_sel, 
-                                                                   self.m_tempdir, 
-                                                                str(outfileName))
+                    self._task = reduce.calDomeFlat.MasterDomeFlat(
+                                        self.m_popup_l_sel, 
+                                        self.m_tempdir, 
+                                        str(outfileName))
                     thread=reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
                     thread.start()
@@ -2593,13 +2594,28 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                       self.m_outputdir+"/master_twflat.fits", 
                                                       "*.fits") 
             if not outfileName.isEmpty():
-                # Look for master Dark
-                mDark, mFlat, mBPM = self.getCalibFor(self.m_popup_l_sel)
+                # Look for master Darks and DarkModel
+                dark_model = []
+                darks = []
+                
+                result = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
+                if len(result) == 0 and self.outputsDB != None:
+                    result = self.outputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
+                
+                if len(result) >0: dark_model = result[0]
+                else: dark_model = None
+                
+                darks = self.inputsDB.GetFilesT('DARK', -1)
+                if self.outputsDB != None:
+                    darks += self.outputsDB.GetFilesT('MASTER_DARK', -1)
+
                 try:
+                    dm = dark_model[0]
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calTwFlat.MasterTwilightFlat (self.m_popup_l_sel,
-                                                                      mDark, 
-                                                                      str(outfileName))
+                    self._task = reduce.calTwFlat.MasterTwilightFlat(flat_files=self.m_popup_l_sel,
+                                                                      master_dark_model=dark_model,
+                                                                      master_dark_list=darks,
+                                                                      output_filename=str(outfileName))
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
                     thread.start()
@@ -2614,7 +2630,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """ 
         Create a gain-map using the own science files selected on the main list view
         
-        TODO: Check the selected images are SCIENCE frames with same filter !!! and expTime, .....
+        TODO: Check the selected images are SCIENCE frames with same filter !!! 
+        and expTime, .....
          
         """
         

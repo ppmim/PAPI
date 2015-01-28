@@ -156,7 +156,7 @@ def main(arguments = None):
                       choices=['Q1', 'Q2', 'Q3', 'Q4', 'all'],
                       default='all',
                       help="Specify which detector to process:"
-                      "Q1(SG4), Q2(SG1), Q3(SG3), Q4(SG2), all [default: %default]")
+                      "Q1(SG1), Q2(SG2), Q3(SG3), Q4(SG4), all [default: %default]")
     
     # file calibration options
     

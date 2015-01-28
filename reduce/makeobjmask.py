@@ -153,8 +153,10 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
             else: 
                 next = 1
             for ext in range(next):
-                if next==1: data = myfits[0].data
-                else: data = myfits[ext+1].data
+                if next==1: 
+                    data = myfits[0].data
+                else: 
+                    data = myfits[ext+1].data
                 data[:] = 0 # set to 0 all pixels
                 x_size = len(data[0])
                 y_size = len(data)
@@ -173,7 +175,12 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
                     print "X_IMAGE=",star['X_IMAGE']
                     myfits.close(output_verify='ignore')
                     raise Exception("Error while creating single point object mask :%s"%str(e))
+                if next==1:
+                    myfits[0].scale('int16')
+                else:
+                    myfits[ext+1].scale('int16')
                 
+            myfits.flush(output_verify="fix+warn")
             myfits.close(output_verify='ignore')
             log.debug("Object mask (single_point) file created for file : %s"%fn)
         else:

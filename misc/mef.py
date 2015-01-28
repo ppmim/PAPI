@@ -79,8 +79,6 @@ class MEF (object):
         """
         Method used to join a MEF into a single FITS frames, copying all the 
         header information required.
-        Basically used to run test with HAWK-I images, converting them to PANIC 
-        format.
         
         Parameters
         ----------
@@ -115,22 +113,30 @@ class MEF (object):
         for file in self.input_files:        
             if output_dir == None:
                 output_dir = os.path.dirname(file)
+                print "OUT_DIR=",output_dir
+                if output_dir == "": output_dir = "."
             try:
                 hdulist = fits.open(file)
-            except IOError:
-                print 'Error, can not open file %s' % (file)
-                return 0
+            except IOError, ex:
+                log.error("Cannot open  file %s" % file)
+                raise ex
             
-            #Check if is a MEF file 
+            # Check if is a MEF file 
             if len(hdulist)>1:
                 n_ext = len(hdulist)-1
                 log.debug("Found a MEF file with %d extensions", n_ext)
             else:
                 n_ext = 1
-                log.error("Found a simple FITS file. Join operation only\
-                 supported for MEF files")
+                msg = "Found a simple FITS file. Join operation only\
+                           supported to MEF files"
+                log.error(msg)
+                raise Exception(msg)
                 
-                         
+            if len(hdulist[1].data.shape) !=2:
+                msg = "MEF cube conversion not yet implemented !"
+                log.error(msg)
+                raise Exception(msg)
+                
             out_filename = output_dir + "/" + \
                 os.path.basename(file).replace(".fits", output_filename_suffix)
             width = 2048
@@ -139,13 +145,13 @@ class MEF (object):
             temp34 = numpy.zeros((height, width*2), dtype = numpy.float32)
             for i in range(0, height):
                 # Q1 i-row
-                temp12[i, 0 : width] = hdulist[1].data[i, 0 : width]
+                temp12[i, 0 : width] = hdulist['SG4_1'].data[i, 0 : width]
                 # Q2 i-row
-                temp12[i, width: 2*width] = hdulist[2].data[i, 0 : width]
+                temp12[i, width: 2*width] = hdulist['SG1_1'].data[i, 0 : width]
                 # Q3 i-row
-                temp34[i, 0 : width] = hdulist[3].data[i, 0 : width]
+                temp34[i, 0 : width] = hdulist['SG3_1'].data[i, 0 : width]
                 # Q4 i-row
-                temp34[i, width : 2*width] = hdulist[4].data[i, 0 : width]
+                temp34[i, width : 2*width] = hdulist['SG2_1'].data[i, 0 : width]
 
             joined_data = numpy.append(temp12, temp34).reshape(4096, 4096)
             hdu = fits.HDUList([fits.PrimaryHDU(header=hdulist[0].header, 
@@ -459,7 +465,7 @@ class MEF (object):
                             "shape."%file)
 
                     hdu_i = fits.ImageHDU (data = hdu_data_i)
-                    log.debug("Data size of %d-quadrant = %s" % (i, hdu_data_i.shape))
+                    log.debug("Data size of %d-quadrant = %s" % (i*2+j, hdu_data_i.shape))
                     
                     # Create the new WCS
                     try:
@@ -532,6 +538,7 @@ class MEF (object):
                     # Force BITPIX=-32
                     prihdu.scale('float32')
 
+                    # Determination of DET_ID(=SGi) and DETSEC;
                     if 'DETXYFLI' in primaryHeader:
                         # When DETXYFLI=0, no flip; default
                         # When DETXYFLI=1, Flip Horizontally (interchanges the left and the right) 
@@ -646,8 +653,17 @@ class MEF (object):
                     hdu_i.header.set('DET_ID', "SG%i"%det_id, 
                                         "PANIC Detector id SGi [i=1..4]")
                     hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
-                    hdu_i.header.set('DETSEC',
-                        "[%i:%i,%i:%i]"%(2048*i+1, 2048*(i+1), 2048*j+1, 2048*(j+1) ))
+                    
+                    # DETSEC
+                    if det_id==1: # SG1
+                        det_sec = '[%i:%i,%i:%i]' % (2049,4096,1,2048)
+                    elif det_id==2: # SG2
+                        det_sec = '[%i:%i,%i:%i]' % (2049,4096,2049,4096)
+                    elif det_id==3: # SG3
+                        det_sec = '[%i:%i,%i:%i]' % (1,2048,2049,4096)
+                    elif det_id==4: # SG4
+                        det_sec = '[%i:%i,%i:%i]' % (1,2048,1,2048)
+                    hdu_i.header.set('DETSEC', det_sec)
 
                         
                     # now, copy extra keywords required
@@ -722,13 +738,14 @@ class MEF (object):
         -------
 
         n_ext,out_filenames: The number of files and the list of output files 
-        created. The numbering may not match with DET_ID numbering (SGi).
+        created. The numbering **must** match with DET_ID numbering (SGi),
+        not matter the rotation or flip done by GEIRS.
 
                     DETROT90=2     DETROT90=0
-        .Q01.fits --> SG4             SG2
-        .Q02.fits --> SG3             SG1
-        .Q03.fits --> SG1             SG3
-        .Q04.fits --> SG2             SG4
+        .Q01.fits --> SG1             SG1
+        .Q02.fits --> SG2             SG2
+        .Q03.fits --> SG3             SG3
+        .Q04.fits --> SG4             SG4
 
         (DETROT90=2=180dec clockwise)
         
@@ -1016,13 +1033,13 @@ class MEF (object):
                     out_hdulist.verify('ignore')
                 
                     new_filename = file.replace(".fits", 
-                                                out_filename_suffix % (i*2+j+1)) # number from 1 to 4
+                                                out_filename_suffix % det_id) # number from 1 to 4
                     if out_dir != None: 
                         new_filename = new_filename.replace(os.path.dirname(new_filename), 
                                                             out_dir) 
                     out_filenames.append (new_filename)
      
-                    # Now, write the new MEF file
+                    # Now, write the new simple FITS file
                     out_hdulist.writeto (new_filename, 
                                          output_verify = 'ignore', clobber=True)
                     out_hdulist.close (output_verify = 'ignore')
@@ -1052,7 +1069,7 @@ if __name__ == "__main__":
     
     parser.add_option ("-s", "--suffix",
                   action = "store", dest = "out_suffix", \
-                  help = "suffix to out files (default .%02d.fits)")
+                  help = "suffix to out files (default .Q%02d.fits)")
     
     parser.add_option ("-J", "--join",
                   action = "store_true", dest = "join", \
@@ -1102,7 +1119,7 @@ if __name__ == "__main__":
         
     elif options.split:
         if not options.out_suffix: 
-            options.out_suffix = ".%02d.fits"
+            options.out_suffix = ".Q%02d.fits"
         myMEF.doSplit( options.out_suffix )
     
     elif options.create:
