@@ -44,7 +44,7 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
         starfocus.wcs = "world" 
         starfocus.size = "GFWHM"
         starfocus.scale = 1
-        starfocus.radius = 5
+        starfocus.radius = 10
         starfocus.sbuffer = 10 
         starfocus.swidth= 10
         starfocus.saturation = "INDEF"
@@ -66,7 +66,6 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
 
 
 if __name__ == "__main__":
-
     
     usage = "usage: %prog [options] "
     desc = """Run IRAF.starfocus for a focus sequecen and return the best focus"""
@@ -86,6 +85,16 @@ if __name__ == "__main__":
                   action="store", dest="log_file",default="starfocus.log", 
                   help="Output log file generated [default: %default]")
     
+    ############### Insert start
+    parser.add_option("-d", "--data_file",
+                  action="store", dest="data_file",
+                  help="Output data file for analysis")
+    
+    parser.add_option("-t", "--target",
+                  action="store", dest="target",
+                  help="Object name for output data")
+    ############### Insert end
+
     (options, args) = parser.parse_args()
     
     if len(sys.argv[1:])<1:
@@ -98,4 +107,35 @@ if __name__ == "__main__":
         
     best_focus = getBestFocusfromStarfocus("@"+options.source_file, options.coord_file, options.log_file)
     print "Best Focus = ",best_focus
+    
+    ############### Insert start
+    if options.data_file:
+        # write log output to data file
+        # parse backwards: look for best focus line and block with single results
+        with open(options.log_file, "r") as f:
+            f.seek (0, 2)           # Seek @ EOF
+            fsize = f.tell()        # Get Size
+            f.seek (max (fsize-2**15, 0), 0) # Set pos @ last chars
+            lines = f.readlines()       # Read to end
+        lines.reverse()
+        fo = open(options.data_file, 'w')
+        if options.target:
+            obj = options.target
+        else:
+            print 'WARNING: Object name not provided'
+            obj = 'Unknowm'
+        fo.write('# Object: %s\n' %obj)
+        while not lines[0].strip().startswith('Average'):
+            lines.pop(0)
+        line = lines.pop(0)
+        fo.write('#%s' %line)
+        while not lines[0].strip().startswith('Best'):
+            lines.pop(0)
+        k = lines.index('\n')
+        for i in range(k):
+            fo.write(lines[k - i - 1])
+        fo.close()
+        print 'Data file written: %s' %options.data_file
+    ############### Insert end
+    
     sys.exit()
