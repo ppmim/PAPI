@@ -61,7 +61,7 @@ try:
     if os.path.exists("/tmp/focus_seq.txt"):
         os.unlink("/tmp/focus_seq.txt")
 except Exception,e:
-    log.warning("Cannot delete /tmp/focus_seq_staff1.txt")
+    log.warning("Cannot delete /tmp/focus_seq.txt")
 
 import mainGUI
 import misc.config

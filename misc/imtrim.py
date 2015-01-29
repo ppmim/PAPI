@@ -95,6 +95,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     try:
         nx = indata[0].header['NAXIS1']
         ny = indata[0].header['NAXIS2']
+        log.debug("NX=%d  NY=%d"%(nx,ny))
     except Exception,e:
         raise e
     

@@ -700,20 +700,32 @@ class AstroWarp(object):
         ## STEP 3: Make the coadding with SWARP, and using .head files created by SCAMP
         # It requires the files are overlapped, i.e., have an common sky-area
         log.debug("*** Coadding overlapped files (SWARP)....")
+        
+        
+        root, ext = os.path.splitext(os.path.basename(self.coadded_file))
+        # Path to the temporary FITS file containing the WCS header
+        kwargs = dict(prefix = '%s_coadd_' % root, suffix = ext, dir=self.temp_dir)
+        with tempfile.NamedTemporaryFile(**kwargs) as fd:
+            output_path = fd.name
+        
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf']
         basename, extension = os.path.splitext(solved_files[0])
         swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"  # very important !
         if not os.path.isfile(solved_files[0]+".head"):
             raise Exception ("Cannot find required .head file")
-            
+        
+        
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
-        swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
-        #"Projected" weight-maps are created only if weight-maps were given in input.
+        swarp.ext_config['IMAGEOUT_NAME'] = output_path
+        swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
+                                                                 
+        # "Projected" weight-maps are created only if weight-maps were given in input.
+        # That is not true !!!
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
-            swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
+            swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
         
         if not self.resample:
             swarp.ext_config['RESAMPLE'] = 'N' # then, no field distortion removing is done
@@ -746,16 +758,19 @@ class AstroWarp(object):
             log.debug("*** Doing final astrometric calibration....")
             try:
                 solved = reduce.solveAstrometry.solveField(
-                            os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+                            output_path, 
                             self.temp_dir,
                             self.config_dict['general']['pix_scale'])
             except Exception,e:
                     raise Exception("[runWithAstrometryNet] Error doing Astrometric calibration: %s"%str(e))
             else:
                 shutil.move(solved, self.coadded_file)
+                shutil.move(output_path.replace(".fits", ".weight.fits"), 
+                        self.coadded_file.replace(".fits", ".weight.fits"))
         else:
-            shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
-                        self.coadded_file)
+            shutil.move(output_path, self.coadded_file)
+            shutil.move(output_path.replace(".fits", ".weight.fits"), 
+                        self.coadded_file.replace(".fits", ".weight.fits"))
         
         log.info("Lucky you ! file %s created", self.coadded_file)
 

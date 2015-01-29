@@ -48,7 +48,8 @@ int main(int argc, char *argv[])
     float *sky = NULL, *skyw = NULL, *fimg;
     char aux[256];
     
-
+    fprintf(stderr, "\nStart of skyfilter...\b");
+    
     if (argc < 6)
         usage();
 
@@ -110,7 +111,7 @@ int main(int argc, char *argv[])
 
         for (j = skybeg; j <= skyend; j++) {  /* collect adjacent frame ptrs */
             if (j != i) {                             /* skip current frame */
-		        printf (" %d", j);
+		printf (" %d", j);
                 dbuf[nsky] = data[j];
 
                 if (usemask)
@@ -142,11 +143,16 @@ int main(int argc, char *argv[])
                 sky = cube_mean_min_w(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1, nsky/2);
 
             /* DEBUG */
-            /*
-            strcpy(aux,"/tmp/sky_");
+            
+            strcpy(aux,"/data2/tmp/sky_");
             strcat(aux, basename(fn[i]));
             writefits(aux, fn[i], (char*)sky, -32, nx, ny);
-            */
+            
+            strcpy(aux,"/data2/tmp/skyw_");
+            strcat(aux, basename(fn[i]));
+            writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
+            
+            
             /* END_DEBUG */
             fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
                             wdata[i], argv[5]);
@@ -158,11 +164,11 @@ int main(int argc, char *argv[])
                 sky = cube_median_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);
                  
             /*DEBUG*/
-            /*
-            strcpy(aux,"/tmp/sky_");
+            
+            strcpy(aux,"/data2/tmp/sky_");
             strcat(aux, basename(fn[i]));
             writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
-            */
+            
             /* END_DEBUG */
             fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
                                    argv[5]);
@@ -207,7 +213,8 @@ int main(int argc, char *argv[])
 static void readdata(int i, int usemask)
 {
     int nx, ny;
-
+    char aux[128];
+    
     data[i] = readfits(fn[i], &nx, &ny, &bkgs[i], &sigs[i]);  /* image plane */
 
     if (bkgs[i] <= 0 || sigs[i] <= 0)
@@ -216,6 +223,10 @@ static void readdata(int i, int usemask)
     if (usemask) {
         float *wmap = getwmap(fn[i], nx, ny, gainmap, sigs[i]);
         wdata[i] = getmask(wmap, nx, ny, mfn[i], xshift[i], yshift[i]);
+        /* DEBUG */
+        sprintf(aux, "/data2/tmp/wmask_%d.fits", i);
+        writefits(aux, fn[i], (char*)wdata[i], -32, nx, ny);
+        /* DEBUG */
         free(wmap);
     }
 

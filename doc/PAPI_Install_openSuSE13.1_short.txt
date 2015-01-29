@@ -1171,7 +1171,7 @@ rpm -qa |grep x11vnc
 3) Lo podemos lanzar simplemente con:
 > x11vnc -display :0
 o mejor
-> /usr/bin/x11vnc -forever -rfbport 5900 -rfbauth /home/panic/.vnc/passwd -o /home/panic/.vnc/x11vnc.log -display :0
+> /usr/bin/x11vnc -forever -auth guess -rfbport 5900 -rfbauth /home/panic/.vnc/passwd -o /home/panic/.vnc/x11vnc.log -display :0
 
 
 y para que arranque cada vez que entra el usuario panic,

@@ -354,44 +354,44 @@ class DataSet(object):
                 s_run_id = "run_id=?"
             
             #Type: The type of the image (ANY, DARK, FLAT,SCIENCE, ....)
-            if type=='ANY':
-                s_type="type>=?"
+            if type == 'ANY':
+                s_type = "type>=?"
                 type = ""
-            elif type=='DOME_FLAT':
-                s_type="type like 'DOME_FLAT%' or type=?"
+            elif type == 'DOME_FLAT':
+                s_type = "type like 'DOME_FLAT%' or type=?"
                 type = ""
-            elif type=='SKY_FLAT':
-                s_type="type like 'TW_FLAT%' or type like 'SKY_FLAT%' or type=?"
+            elif type == 'SKY_FLAT':
+                s_type = "type like 'TW_FLAT%' or type like 'SKY_FLAT%' or type=?"
                 type = ""
             else:
-                s_type="type=?"
+                s_type = "type=?"
                 
-            #DetectorID: Detector identifier
-            if detectorId=='ANY':
-                s_detectorId="detector_id>=?"
-                detectorId=""
+            # DetectorID: Detector identifier
+            if detectorId == 'ANY':
+                s_detectorId = "detector_id>=?"
+                detectorId = ""
             else:
-                s_detectorId="detector_id=?"
+                s_detectorId = "detector_id=?"
                 
-            #TEXP: Any 'texp' requirement 
-            if  texp==-1:
+            # TEXP: Any 'texp' requirement 
+            if  texp == -1:
                 s_texp = "texp>=%f" %(texp)
             else:
                 ROUND = 0.5  # We do not need an accurate value !
                 s_texp = "texp>%f and texp<%f" %(texp-ROUND, texp+ROUND)
 
-            #FILTER: The master dark does not have a 'filter' requirement
-            if type=='MASTER_DARK' or filter=="ANY":
+            # FILTER: The master dark does not have a 'filter' requirement
+            if type == 'MASTER_DARK' or filter == "ANY":
                 s_filter = "filter>=?"
                 filter = ""
             else:
                 s_filter = "filter=?"
 
-            #AR
+            # AR
             s_ar = "ra>%s and ra<%s" %(ra-delta_pos, ra+delta_pos)
-            #DEC
+            # DEC
             s_dec = "dec>%s and dec<%s" %(dec-delta_pos, dec+delta_pos)
-            #MJD
+            # MJD
             s_mjd = "mjd>%s and mjd<%s" %(mjd-delta_time, mjd+delta_time)
             
             s_select = "select filename from dataset where %s and %s and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd)

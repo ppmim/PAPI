@@ -31,3 +31,18 @@ class clock:
         lap=time.time()-self.start
         return "Elapsed time(s): %f" %lap
     
+
+def makemasterframe(list_or_array):
+#from http://www.astro.ucla.edu/~ianc/python/_modules/ir.html#baseObject
+    """
+    If an array is passed, return it.  Otherwise, return a
+    median stack of the input filename list.
+    """
+        
+    if hasattr(list_or_array, 'shape') and len(list_or_array.shape)>1:
+        masterframe = np.array(list_or_array, copy=False)
+    else:
+        masterframe = np.median(map(fits.getdata, list_or_array), axis=0)
+
+    return masterframe
+        
