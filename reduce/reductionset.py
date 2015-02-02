@@ -387,10 +387,10 @@ class ReductionSet(object):
         self.m_readmode = ""     
         
         
-        ##Local DataBase (in memory)
+        ## Local DataBase (in memory)
         self.db = None
         
-        ##External DataBase (in memory) - optional
+        ## External DataBase (in memory) - optional
         # It is an optional external database provided when creating a ReductionSet 
         # instance and mainly can have calibration files required for the reduction 
         # of the current data set. It will be used during the on-line QL 
@@ -403,7 +403,7 @@ class ReductionSet(object):
         # of a list of files, we can have problems because SQLite3 does not 
         # support access from multiple  threads, and the RS.reduceSet() can 
         # be executed from other thread than it was created.
-        # --> If can be a <list of files> or a <directory name> having the files
+        # --> It can be a <list of files> or a <directory name> having the files
         # Further info: http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency  
         #               http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         self.ext_db_files = []
@@ -2616,25 +2616,38 @@ class ReductionSet(object):
                 # local DB (current RS), and if anyone found, then in the 
                 # external DB. 
                 # Local (Initially, EXPTIME is not a constraint for MASTER_DARK_MODEL)
-                master_dark = self.db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                master_dark_model = self.db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
                 
                 # External (ExpTime is not a constraint)
-                if len(master_dark)==0 and self.ext_db!=None:
+                if len(master_dark_model) == 0 and self.ext_db != None:
                     log.debug("No MasterDarkModel in current local DB. Trying in external (historic) DB...")
-                    master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                    master_dark_model = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
                 
                 # Last oportunity, look for a simple MASTER_DARK with >= EXPTIME
-                if len(master_dark)==0:
-                    # master_dark = self.db.GetFilesT('MASTER_DARK', 999999)
-                    master_dark = [self.master_dark]
+                if len(master_dark_model) == 0:
+                    master_dark_model = None
+                    master_darks = self.db.GetFilesT('MASTER_DARK', -1)
+                    if self.ext_db != None:
+                        master_darks += self.ext_db.GetFilesT('MASTER_DARK', -1)
+                    if self.master_dark !=None: master_darks += [self.master_dark]
+                else:
+                    master_dark_model = master_dark_model[-1]
+                    master_darks = []
                     
-                # if required, master_dark will be scaled in MasterTwilightFlat class
-                if len(master_dark)>0:
-                    log.debug("[reduceSeq] MASTER_DARK_MODEL found --> %s"%master_dark[-1])
+                # If some kind of master darks were found, then go to MasterTwilightFlat
+                if len(master_darks) > 0 or len(master_dark_model) > 0:
+                    log.debug("MASTER_DARKs = %s"%master_darks)
+                    log.debug("MASTER_DARK_MODEL = %s"%master_dark_model)
+                    
+                    # Get filter name for filename
+                    with fits.open(sequence[0]) as f_hdu:
+                        filter_name = f_hdu[0].header['FILTER']
+                        
                     # generate a random filename for the masterTw, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
-                                                          prefix='mTwFlat_', 
+                                                          prefix='mTwFlat_' + filter_name + '_', 
                                                           dir=self.out_dir)
+                        
                     os.close(output_fd)
                     os.unlink(outfile) # we only need the name
 
@@ -2644,7 +2657,8 @@ class ReductionSet(object):
                     m_smooth = self.config_dict['twflats']['median_smooth']
                     
                     task = reduce.calTwFlat.MasterTwilightFlat(sequence, 
-                                                               master_dark[-1], 
+                                                               master_dark_model,
+                                                               master_darks,
                                                                outfile, 
                                                                lthr=1000, 
                                                                hthr=100000, 

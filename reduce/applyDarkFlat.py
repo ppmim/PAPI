@@ -238,9 +238,10 @@ class ApplyDarkFlat(object):
                 median = numpy.median(dat)
                 mean = numpy.mean(dat)
                 mode = 3*median-2*mean
-                log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
+                log.debug("Flat stats: MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
                            median, mean, mode)
-                log.debug("Flat-field will be normalized by MEDIAN ( %f ) value", median)
+                if self.__norm: 
+                    log.debug("Flat-field will be normalized by MEDIAN ( %f ) value", median)
                 out_suffix = out_suffix.replace(".fits","_F.fits")
                 log.debug("Found master FLAT to divide by: %s"%self.__mflat)
         else:
@@ -282,7 +283,7 @@ class ApplyDarkFlat(object):
             # Check FILTER
             if (not self.__force_apply and flat_filter != None 
                 and cf.getFilter() != flat_filter):
-                log.error("Error: Task 'applyDarkFlat' found a frame with" 
+                log.error("Error: Task 'applyDarkFlat' found a frame with " 
                 "different FILTER. Skipping frame...")
                 f.close()
                 n_removed = n_removed+1
@@ -367,6 +368,7 @@ class ApplyDarkFlat(object):
                                 log.debug("Normalizing FF...")
                                 flat_data = flat[0].data/median  # normalization
                             else:
+                                log.debug("No normalization will be done to FlatField.")
                                 # we suppose it's already normalized
                                 flat_data = flat[0].data
 

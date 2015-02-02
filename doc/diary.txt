@@ -5833,6 +5833,10 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
+en QL y demás candidatas.
+- ver que se puede hacer para forzar NCOADD, ITIME, EXPTIME en applyDark y applyDarkFlat
+- que collapse no renombre con sufijo coadd aunque no haga el collapse, pues confunde !!
 - en astrowarp: parece que shutil.move no borrar la src !! noooo! no que pasa es que
 If the destination is on the current filesystem, then os.rename()
 

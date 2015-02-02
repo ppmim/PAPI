@@ -167,7 +167,7 @@ class MasterTwilightFlat(object):
         self.m_MIN_N_GOOD = 3
         self.m_lthr = lthr
         self.m_hthr = hthr
-        self.m_min_flats = 5
+        self.m_min_flats = 3
         
     
     def createMaster(self):
@@ -301,8 +301,8 @@ class MasterTwilightFlat(object):
                 raise e
         elif self.__master_dark_model_model_list:
             # read TEXP of all master darks
-            if (type(self.__master_dark_model_model_list)==type([]) and
-               len(self.__master_dark_model_model_list)!=len(framelist)):
+            if (type(self.__master_dark_model_model_list) == type([]) and
+               len(self.__master_dark_model_model_list) < len(framelist)):
                 log.error("Not enough number of master darks found.")
                 raise Exception("Not enough number of master darks found")
             
@@ -335,7 +335,7 @@ class MasterTwilightFlat(object):
             my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits","_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
-            log.debug("Scaling master dark (master dark model or simple master dark")
+            log.debug("Scaling master dark (master dark model or simple master dark)")
             # Build master dark with proper (scaled) EXPTIME and subtract ( I don't know how good is this method of scaling !!!)
             f = fits.open(iframe, ignore_missing_end=True)
             t_flat = datahandler.ClFits ( iframe ).expTime()
@@ -367,20 +367,17 @@ class MasterTwilightFlat(object):
                     scaled_dark = mdark[0].data
                     
                 log.info("AVG(dark)=%s"%robust.mean(scaled_dark)) 
-                log.info("Subtracting DARK...")
                 f[0].data = f[0].data - scaled_dark
-                f[0].header.add_history('Dark subtracted %s (scaled)' 
-                                        %os.path.basename(self.__master_dark_model))    
-                log.debug("Dark subtraction (scaled) done")
+                log.info("Dark Subtraction done")
             
             # Write history
             if use_dark_model:
                 log.info("DARK_MODEL subtracted: %s"%self.__master_dark_model)
-                f[i].header.add_history('DarkMod subtracted %s (scaled)'
+                f[0].header.add_history('DarkMod subtracted %s (scaled)'
                         %os.path.basename(self.__master_dark_model))
             else:
                 log.info("MASTER DARK subtracted: %s"%n_dark)
-                f[i].header.add_history('Dark subtracted %s'
+                f[0].header.add_history('Dark subtracted %s'
                         %os.path.basename(n_dark))
                                              
             mdark.close()
@@ -461,7 +458,7 @@ class MasterTwilightFlat(object):
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
-                median = numpy.median(f[0].data[2048-200:4096-200,200:2048-200])
+                median = numpy.median(f[0].data[2048+200:4096-200,200:2048-200])
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
             else:
                 # Not MEF, not PANIC full-frame, but could be a PANIC subwindow

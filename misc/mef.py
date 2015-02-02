@@ -172,7 +172,7 @@ class MEF (object):
             del hdu
             print "File %s created " % (out_filename)
         
-        log.info("End of JoinMEF. %d files created", n_ext)
+        log.info("End of JoinMEF. %d extensions joined", n_ext)
         
         return n_ext, out_filename
             
