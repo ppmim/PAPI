@@ -1,8 +1,23 @@
-#!/usr/bin/env python
-"""Module to do some useful operations with Multi-Extension FITS files"""
+#! /usr/bin/env python
+#encoding:UTF-8
 
-__version__ = "$Revision: 64bda015861d $"
-# $Source$
+# Copyright (c) 2010-2015 Jose M. Ibanez All rights reserved.
+# Institute of Astrophysics of Andalusia, IAA-CSIC
+#
+# This file is part of PAPI
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ################################################################################
 #
@@ -11,7 +26,7 @@ __version__ = "$Revision: 64bda015861d $"
 #
 # mef.py
 #
-# Multi Extension FITS file basic operations
+# Multi Extension FITS file basic operations.
 #
 # Created    : 27/10/2010    jmiguel@iaa.es -
 # Last update: 21/Jun/2013   jmiguel@iaa.es - some header improvements in
@@ -71,9 +86,10 @@ class MEF (object):
     def __init__(self,  input_files , *a, **k):
         """ class initialization """
                  
-        super (MEF, self).__init__ (*a,**k)         
+        super(MEF, self).__init__ (*a,**k)         
         
         self.input_files = input_files
+        
             
     def doJoin(self, output_filename_suffix = ".join.fits", output_dir = None):
         """
@@ -177,13 +193,16 @@ class MEF (object):
         return n_ext, out_filename
             
     def doSplit( self , out_filename_suffix = ".Q%02d.fits", out_dir = None, 
-                 copy_keyword = None):
+                 copy_keyword = None, instrument='panic'):
         """ 
         Method used to split a MEF into single FITS frames, 
         copying all the header information required.
         
         Splitted images now are as follow: Q01=SG1, Q02=SG2, Q03=SG3, Q04=SG4.
         
+
+        2015-02-08: Added support for HAWKI MEF files.
+
         """
         log.info("Starting SplitMEF")
         
@@ -214,13 +233,18 @@ class MEF (object):
                 raise MEF_Exception("File %s is not a MEF" % file)
             
             for iSG in range (1, n_ext+1):
-                extname = 'SG%i_1' %iSG
+                if instrument.lower() == 'panic':
+                    extname = 'SG%i_1' %iSG
+                else:
+                    # We suppose HAWKI MEF file
+                    extname = 'CHIP%i.INT1' %iSG 
                 suffix = out_filename_suffix % iSG # number from 1 to 4
                 new_filename = file.replace(".fits", suffix)
                 if out_dir != None: 
                     new_filename = new_filename.replace( 
                                     os.path.dirname(new_filename), out_dir
-                                    ) 
+                                    )
+                    
                 out_filenames.append(new_filename)
                 out_hdulist = fits.HDUList( [fits.PrimaryHDU( 
                                 header = hdulist[extname].header,
@@ -239,14 +263,14 @@ class MEF (object):
                     try:
                         value = hdulist[0].header.cards[key].value
                         comment = hdulist[0].header.cards[key].comment
-                        if key=='HIERARCH ESO DET NDIT':
+                        if key == 'HIERARCH ESO DET NDIT':
                             out_hdulist[0].header.set('NDIT', value, comment)
                         else:
-                            out_hdulist[0].header.set(key, value,comment)
+                            out_hdulist[0].header.set(key, value, comment)
                         # We DON'T need to update RA, DEC (pointing coordinates), because each 
                         # extension should have CRVAL/CRPIX values!!
                     except KeyError:
-                        log.warning("Key %s cannot be copied, is not in the header"%(key))
+                        log.debug("Key %s cannot be copied, is not in the header"%(key))
                 
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
@@ -262,24 +286,27 @@ class MEF (object):
         log.info("End of SplitMEF. %d files created", n)
         return n_ext, out_filenames
                     
-    def createMEF (self, output_file = os.getcwd()+"/mef.fits" ,
+    def createMEF (self, output_file = "mef.fits" , out_dir = None,
                    primaryHeader = None):
         """ 
-        Method used to create a MEF from a set of n>0 FITS frames.                          
+        Method used to create a MEF from a set of n>0 simple FITS frames.
         """
-        
         log.info("Starting createMEF")
-         
-        
+
+        # Compound the output filename
+        if out_dir == None:
+            output_file = os.getcwd() + "/" + output_file
+        else:
+            output_file = out_dir + "/" + output_file
+            
         # Add primary header to output file...
-        #prihdr = myflat[0].header.copy()
         fo = fits.HDUList()
         prihdu = fits.PrimaryHDU (data = None, header = primaryHeader)
         # Start by updating PRIMARY header keywords...
         prihdu.header.set('EXTEND', True, after = 'NAXIS')
         prihdu.header.set('NEXTEND', 0)
         prihdu.header.set('FILENAME', output_file)
-        
+
         fo.append(prihdu)
         n_ext = 0
         for file in self.input_files:        
@@ -288,7 +315,7 @@ class MEF (object):
             except IOError:
                 print 'Error, can not open file %s' %(file)
                 raise MEF_Exception ("Error, can not open file %s"%file)
-            
+
             #Check if is a MEF file 
             if len(f)>1:
                 mef = True
@@ -393,7 +420,7 @@ class MEF (object):
             # Compose the ouputfilename
             new_filename = file.replace(".fits", out_filename_suffix)
             if out_dir != None: 
-                new_filename = new_filename.replace (os.path.dirname(new_filename), out_dir) 
+                new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
             
             
             # Check if is a MEF file 
@@ -803,10 +830,10 @@ class MEF (object):
 
             # Taking into account the gap (167pix), we set the new CRPIXi values
             # for each extension, refered to the center of the focal plane.
-            #new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132], 
+            #new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
             #                            [-81, -81] ], numpy.float_)
 	    
-	    new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81], 
+	    new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
                                         [-81, -81] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
@@ -816,16 +843,16 @@ class MEF (object):
                         hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
                                                         2048*j:2048*(j+1)]
                         log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
-                                                              hdu_data_i.shape))    
+                                                              hdu_data_i.shape))
                     elif len(in_hdulist[0].data.shape)>2:
-                        hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1), 
+                        hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1),
                                                         2048*j:2048*(j+1)]
-                        log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
+                        log.debug("Data size of %d-quadrant = %s" % (i*2+j,
                                                               hdu_data_i.shape))
                     else:
                         log.error("Wrong frame shape found, that's why" 
                         "cannot convert file %"%file)
-                        raise MEF_Exception("Error, file %s has wrong image" 
+                        raise MEF_Exception("Error, file %s has wrong image"
                             "shape."%file)
 
                     # Create primary HDU (data + header)
@@ -1096,7 +1123,11 @@ if __name__ == "__main__":
                   action = "store_true", dest = "geirs_convert", \
                   help = "convert a GEIRS-v0 file (with 1 extension) to a \
                   MEF FITS file with 4 extensions", default = False)
-                  
+    
+    parser.add_option ("-d", "--output_dir",
+                  action = "store", dest = "output_dir",
+                  help = "Directory where output files will be saves.",
+                  default = None)
     
     (options, args) = parser.parse_args()
     
@@ -1115,21 +1146,21 @@ if __name__ == "__main__":
     if options.join:
         if not options.out_suffix: 
             options.out_suffix = ".join.fits"
-        myMEF.doJoin (options.out_suffix)
+        myMEF.doJoin( options.out_suffix , output_dir=options.output_dir)
         
     elif options.split:
         if not options.out_suffix: 
             options.out_suffix = ".Q%02d.fits"
-        myMEF.doSplit( options.out_suffix )
+        myMEF.doSplit( options.out_suffix, out_dir=options.output_dir)
     
     elif options.create:
-        myMEF.createMEF(os.getcwd()+"/mef.fits")
+        myMEF.createMEF(out_dir=options.output_dir)
     
     elif options.geirs_split:
-        myMEF.splitGEIRSToSimple()
+        myMEF.splitGEIRSToSimple(out_dir=options.output_dir)
     
     elif options.geirs_convert:
-        myMEF.convertGEIRSToMEF()
+        myMEF.convertGEIRSToMEF(out_dir=options.output_dir)
         
               
         

@@ -48,7 +48,7 @@ import numpy
 import astropy.io.fits as fits
 from astropy import wcs
 
-#Log
+# Log
 import misc.paLog
 from misc.paLog import log    
 from misc.version import __version__
@@ -199,7 +199,7 @@ class ReductionSet(object):
             dictionary containing the configuration parameters
 
         external_db_files : str or list
-            File list or Directory used as an external calibration database.
+            File list used as an external calibration database.
             Then, if during the reduction of a ReductionSet(RS) no calibration 
             (dark, flat) are found in the current RS, then PAPI will look for 
             them into this directory.
@@ -398,10 +398,10 @@ class ReductionSet(object):
         # in other RS. Mainly used in Quick-Look !!    
         self.ext_db = None
         
-        # (optional) file list to build the external DB. We proceed this way, 
-        # because if we give a DB connection to the ReductionSet class instead 
-        # of a list of files, we can have problems because SQLite3 does not 
-        # support access from multiple  threads, and the RS.reduceSet() can 
+        # (optional) file list to build the external DB. We proceed this way,
+        # because if we give a DB connection to the ReductionSet class instead
+        # of a list of files, we can have problems because SQLite3 does not
+        # support access from multiple  threads, and the RS.reduceSet() can
         # be executed from other thread than it was created.
         # --> It can be a <list of files> or a <directory name> having the files
         # Further info: http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency  
@@ -411,11 +411,11 @@ class ReductionSet(object):
             if self.config_dict !=None:
                 cal_dir = self.config_dict['general']['ext_calibration_db']
                 if os.path.isdir(cal_dir):
-                    for file in dircache.listdir(cal_dir):
-                        if file.endswith(".fits") or file.endswith(".fit"):
-                            self.ext_db_files.append((cal_dir+"/"+file).replace('//','/'))
+                    for ifile in dircache.listdir(cal_dir):
+                        if ifile.endswith(".fits") or ifile.endswith(".fit"):
+                            self.ext_db_files.append((cal_dir + "/" + ifile).replace('//','/'))
         else:
-            self.ext_db_files = external_db_files  
+            self.ext_db_files = external_db_files
 
 
         # Print config_dictonary values in log file for debugging
@@ -440,6 +440,7 @@ class ReductionSet(object):
         http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         
         """
+        
         # Local DataBase (in memory)
         log.info("Initializing Local DataBase")
         instrument = self.config_dict['general']['instrument'].lower()
@@ -458,7 +459,7 @@ class ReductionSet(object):
         if self.master_flat!=None: self.db.insert(self.master_flat)
         if self.master_bpm !=None: self.db.insert(self.master_bpm)
         
-        self.db.ListDataSet()
+        # self.db.ListDataSet()
         
         # External DataBase (in memory)
         if len(self.ext_db_files)>0:
@@ -472,7 +473,7 @@ class ReductionSet(object):
                 log.error("Error while EXTERNAL data base initialization: \n %s"%str(e))
                 raise Exception("Error while EXTERNAL data base initialization")
 
-            self.ext_db.ListDataSet()
+            # self.ext_db.ListDataSet()
         else:
             self.ext_db = None
                 
@@ -544,6 +545,9 @@ class ReductionSet(object):
         readmode_0 = f.getReadMode()
         shape_0 = f.shape
         instrument_0 = f.getInstrument().lower()
+        
+        log.info("Values to check: FILTER=%s TYPE=%s EXPT=%s ITIME=%s NCOADD=%s READMODE=%s SHAPE=%s INST=%s",
+                 filter_0, type_0, expt_0, itime_0, ncoadd_0, readmode_0, shape_0, instrument_0)
         
         self.m_filter = filter_0
         self.m_type = type_0
@@ -641,15 +645,13 @@ class ReductionSet(object):
             
     def checkFilter(self):
         """
-        Return true is all files in file have the same filter type, false otherwise
-        
-        \return True or False
+        Return true is all files in file have the same filter type, otherwise False.
         """
         f = datahandler.ClFits(self.m_LAST_FILES[0])
         filter_0 = f.getFilter()
         self.m_filter = filter_0
         for file in self.m_LAST_FILES:
-            fi=datahandler.ClFits( file )
+            fi = datahandler.ClFits( file )
             if fi.getFilter() != filter_0:
                 log.debug("File %s does not match file filter", file)
                 return False
@@ -740,12 +742,14 @@ class ReductionSet(object):
                 new_frame_list.append(frame_list)
         # 2) Suppose we have MEF files ...
         else:
-            if first_img.getInstrument()=="hawki":
-                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
+            if first_img.getInstrument() == "hawki":
+                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','RADECSYS','UTC','LST',
 		          'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
 		          'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", 
-                  'HIERARCH ESO TPL NEXP','NCOADDS','HIERARCH ESO DET NDIT','NDIT'
-                ]   
+                  'HIERARCH ESO TPL NEXP','NCOADDS','HIERARCH ESO DET NDIT', 'NDIT',
+                  'HIERARCH ESO INS FILT1 NAME', 'HIERARCH ESO INS FILT2 NAME'
+                ]
+                instr = 'hawki'  
             else: # PANIC
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
                    'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
@@ -754,12 +758,13 @@ class ReductionSet(object):
                    'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
                    'PAPITYPE','PAPIVERS','OBSERVER','ORIGIN'
                 ]
-            
+                instr = 'panic'
             try:
                 mef = misc.mef.MEF(frame_list)
                 (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
                                                     out_dir=self.temp_dir, 
-                                                    copy_keyword=kws_to_cp)
+                                                    copy_keyword=kws_to_cp,
+                                                    instrument=instr)
             except Exception,e:
                 log.debug("Some error while splitting data set. %s",str(e))
                 raise e
@@ -767,7 +772,9 @@ class ReductionSet(object):
         # now, generate the new output filenames        
         # In principle, it is not needed; we could use [sp_frame_list]
         for n in range(1,nExt+1):
-            new_frame_list.append([self.temp_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
+            new_frame_list.append([self.temp_dir + "/" + 
+                                   os.path.basename(file.replace(".fits", ".Q%02d.fits"%n)) 
+                                   for file in frame_list])
             """
             for f in new_file_names:
                 #if re.search(".*(\.Q01)(.fits)$", f):
@@ -1334,9 +1341,6 @@ class ReductionSet(object):
             log.error("Observing mode not supported")
             raise
                   
-        # Prueba
-        for item in fileinput.input(list_file):
-            print "LINE=",item
         
         print "SKY_FILTER_CMD=",skyfilter_cmd
         
@@ -1351,7 +1355,7 @@ class ReductionSet(object):
         
         # Una prueba
         #args = [self.m_irdr_path + '/skyfilter']
-        print "ARGS",args
+        #print "ARGS",args
         # 
         output_lines = []
         try:
@@ -1394,13 +1398,10 @@ class ReductionSet(object):
             files = [line.split(" ")[0].replace("\n","") 
                      for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
             for file in files:
-                print "FILE======",file
                 if os.path.exists(file+".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
-                    print "EXISTS !!!!"
                     shutil.move(file.replace(".fits", ".fits.skysub"), 
                                 file.replace(".fits", ".skysub.fits"))
                     out_files.append(file.replace(".fits", ".skysub.fits"))
-            print "OUTFILE======",out_files
             ## Compose the output file list
             #if obs_mode=='dither':
             #   out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
@@ -1462,7 +1463,7 @@ class ReductionSet(object):
         # 0.1 Get the gain map
         if not self.master_flat or not os.path.exists( self.master_flat ):
             #raise Exception("Error, gain map file <%s> not found"%gain)
-            #TODO: --> DONE try to compute GainMap using the given images !!!
+            # TODO: --> DONE try to compute GainMap using the given images !!!
             log.debug("---> creating gain map <----")
             output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', 
                                                     dir=self.out_dir)
@@ -1523,7 +1524,7 @@ class ReductionSet(object):
             mef = misc.mef.MEF(out_ext)
             mef.createMEF(out_filename)
         elif len(out_ext)==1:
-            shutil.move(out_ext[0], out_filename) 
+            shutil.move(out_ext[0], out_filename)
         else:
             log.error("Some error while subtracting sky. No output produced.")
             
@@ -1644,7 +1645,7 @@ class ReductionSet(object):
         offsets_mat = None
            
         # STEP 1: Create SExtractor OBJECTS images
-        suffix = '_' + self.m_filter+'.skysub.fits'
+        suffix = '_' + self.m_filter + '.skysub.fits'
         #output_list_file=self.out_dir+"/gpo_objs.pap"
         output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', 
                                                        dir=self.out_dir)
@@ -1745,17 +1746,17 @@ class ReductionSet(object):
         log.info("Start coaddStackImages ...")                                          
         # STEP 1: Define parameters                                          
         input_file = input
-        if input_file==None:
+        if input_file == None:
             log.error("Bad input file provided !")
             return
         
-        if gain==None:
-            gain_file = self.out_dir+"/gain_"+self.m_filter+".fits"
+        if gain == None:
+            gain_file = self.out_dir + "/gain_" + self.m_filter + ".fits"
         else:
             gain_file = gain
         
         if output==None:
-            output_file = self.out_dir+"/coadd_"+self.m_filter+".fits"     
+            output_file = self.out_dir + "/coadd_" + self.m_filter + ".fits"     
         else:
             output_file = output
             
@@ -2615,33 +2616,35 @@ class ReductionSet(object):
                 # Look for the required MasterDark (any ExpTime);first in the 
                 # local DB (current RS), and if anyone found, then in the 
                 # external DB. 
-                # Local (Initially, EXPTIME is not a constraint for MASTER_DARK_MODEL)
-                master_dark_model = self.db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                # Local (Initially, EXPTIME is not a constraint for MASTER_DARK_MODEL);
+                master_dark_model = self.db.GetFilesT('MASTER_DARK_MODEL') 
                 
                 # External (ExpTime is not a constraint)
                 if len(master_dark_model) == 0 and self.ext_db != None:
                     log.debug("No MasterDarkModel in current local DB. Trying in external (historic) DB...")
-                    master_dark_model = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                    master_dark_model = self.ext_db.GetFilesT('MASTER_DARK_MODEL') 
                 
-                # Last oportunity, look for a simple MASTER_DARK with >= EXPTIME
+                # If no dark_model, look for MASTER_DARKs with any EXPTIME
                 if len(master_dark_model) == 0:
                     master_dark_model = None
+                    # Look for recently created MASTER_DARKs (PAPI outputs are added to 'db')
                     master_darks = self.db.GetFilesT('MASTER_DARK', -1)
+                    # Look for historic/old created MASTER_DARKs (set in config file) 
                     if self.ext_db != None:
                         master_darks += self.ext_db.GetFilesT('MASTER_DARK', -1)
                     if self.master_dark !=None: master_darks += [self.master_dark]
                 else:
+                    # could there be > 1 master darks, then use the last (mjd sorted)
                     master_dark_model = master_dark_model[-1]
                     master_darks = []
-                    
+
                 # If some kind of master darks were found, then go to MasterTwilightFlat
-                if len(master_darks) > 0 or len(master_dark_model) > 0:
+                if len(master_darks) > 0 or master_dark_model != None:
                     log.debug("MASTER_DARKs = %s"%master_darks)
                     log.debug("MASTER_DARK_MODEL = %s"%master_dark_model)
                     
                     # Get filter name for filename
-                    with fits.open(sequence[0]) as f_hdu:
-                        filter_name = f_hdu[0].header['FILTER']
+                    filter_name = cfits.getFilter()
                         
                     # generate a random filename for the masterTw, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
@@ -2679,8 +2682,9 @@ class ReductionSet(object):
                     if out!=None: files_created.append(out) # out must be equal to outfile
                 else:
                     # should we create master dark ??
-                    log.error("[reduceSeq] MASTER_DARK_MODEL not found. Cannot build master TwFlat")
-                    raise Exception("[reduceSeq] MASTER_DARK_MODEL not found")
+                    msg = "No MASTER_DARK or MASTER_DARK_MODEL found. Cannot build Master TwFlat" 
+                    log.error(msg)
+                    raise Exception(msg)
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
@@ -2771,7 +2775,7 @@ class ReductionSet(object):
                 bpm_ext, cext = self.split([bpm])
                 parallel = self.config_dict['general']['parallel']
                 
-                # Select the detector to process (Q1,Q2,Q3,Q4,all)
+                # Select the detector to process (Q1, Q2, Q3, Q4, All)
                 detector = self.config_dict['general']['detector']
                 q = -1
                 if next==4:
@@ -2782,10 +2786,10 @@ class ReductionSet(object):
                     else: q = -1 # all detectors
                     if q!=-1:
                         obj_ext = [obj_ext[q]]
-                        if cext==next:
-                            if len(dark_ext)>0: dark_ext = [dark_ext[q]]
-                            if len(flat_ext)>0: flat_ext = [flat_ext[q]]
-                            if len(bpm_ext)>0: bpm_ext = [bpm_ext[q]]
+                        if len(dark_ext) == next: dark_ext = [dark_ext[q]]
+                        if len(flat_ext) == next: flat_ext = [flat_ext[q]]
+                        if len(bpm_ext) == next: bpm_ext = [bpm_ext[q]]
+                        # Reset to 1 the number of extensions
                         next = 1
                     else:
                         # Nothing to do, all detectors will be processed
@@ -2807,14 +2811,8 @@ class ReductionSet(object):
                         results = []
                           
                         for n in range(next):
-                            ## only a test to reduce Q01
-                            #log.critical("only a test to reduce Q01")
-                            #if n!=0: continue
-                            #if n!=0 and n!=1: continue
-                            ## end-of-test
-
                             if next==1 and q!=-1: # single detector processing
-                                q_ext = q +1
+                                q_ext = q + 1
                             else:
                                 q_ext = n + 1
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", q_ext)
@@ -2822,13 +2820,13 @@ class ReductionSet(object):
                             #
                             # For the moment, we have the first calibration file 
                             # for each extension; what rule could we follow ?
-                            #                            
+                            #
                             if dark_ext==[]: mdark = None
                             else: mdark = dark_ext[n][0] 
                             if flat_ext==[]: mflat = None
                             else: mflat = flat_ext[n][0]
                             if bpm_ext==[]: mbpm = None
-                            else: mbpm = bpm_ext[n][0] 
+                            else: mbpm = bpm_ext[n][0]
                             
                             l_out_dir = self.out_dir + "/Q%02d" % q_ext
                             if not os.path.isdir(l_out_dir):
@@ -3033,6 +3031,7 @@ class ReductionSet(object):
                 # input image (and weight map) is overwritten
                 misc.imtrim.imgTrim(file)
             if file!=None and os.path.splitext(file)[1]=='.fits':
+                log.debug("Inserting result in DB: %s",file)
                 self.db.insert(file)
         
         # not sure if is better to do here ??? 
@@ -3138,7 +3137,7 @@ class ReductionSet(object):
         log.info("**** Data Validation ****")
         if self.check_data:
             if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, 
-                               chk_expt=True, chk_itime=True, chk_ncoadd=True, 
+                               chk_expt=True, chk_itime=True, chk_ncoadd=False, 
                                chk_readmode=True, chk_instrument=True)[0]==True):
                 log.debug("Data checking was OK !")
             else:
@@ -3244,7 +3243,7 @@ class ReductionSet(object):
         # 3 - Compute Gain map and apply BPM
         ########################################################################
         log.info("**** Computing gain-map from ****")
-        gainmap = out_dir+'/gain_'+self.m_filter+'.fits'
+        gainmap = out_dir + '/gain_' + self.m_filter + '.fits'
         # get gainmap parameters
         if self.config_dict:
             mingain = self.config_dict['gainmap']['mingain']
@@ -3790,13 +3789,13 @@ class ReductionSet(object):
         
         """
         
+        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
         log.info("#########################################")
         log.info("#### Starting Object Data Reduction #####")
         log.info("#### MODE = %s  ", self.red_mode)
         log.info("#### OUT_DIR = %s ",out_dir)
         log.info("#### OUT_FILE = %s ", output_file)
         log.info(" ----------------------------------")
-        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
         log.info("#### FILTER = %s", c_filter)
         log.info("#### MASTER_DARK = %s ", master_dark)
         log.info("#### MASTER_FLAT = %s ", master_flat)
@@ -3830,7 +3829,7 @@ class ReductionSet(object):
         log.info("**** Data Validation ****")
         if self.check_data:
             if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, 
-                               chk_expt=True, chk_itime=True, chk_ncoadd=True, 
+                               chk_expt=True, chk_itime=True, chk_ncoadd=False, 
                                chk_readmode=True, chk_instrument=True)[0]==True):
                 log.debug("Data checking was OK !")
             else:
@@ -3936,7 +3935,7 @@ class ReductionSet(object):
         # 3 - Compute Gain map and apply BPM
         ########################################################################
         log.info("**** Computing gain-map from ****")
-        gainmap = out_dir+'/gain_'+self.m_filter+'.fits'
+        gainmap = out_dir + '/gain_' + self.m_filter + '.fits'
         # get gainmap parameters
         if self.config_dict:
             mingain = self.config_dict['gainmap']['mingain']
@@ -3959,7 +3958,7 @@ class ReductionSet(object):
         # normalized.
         g = reduce.calGainMap.GainMap(local_master_flat, gainmap, 
                                     bpm=master_bpm_4gain, 
-                                    do_normalization=False,  
+                                    do_normalization=False,
                                     mingain=mingain, maxgain=maxgain,
                                     nxblock=nxblock, nyblock=nyblock,
                                     nsigma=nsigma)

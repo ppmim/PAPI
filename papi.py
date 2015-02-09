@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2009-2015 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -81,11 +81,9 @@ def main(arguments = None):
     "This is PAPI, the PANIC PIpeline data reduction system "\
     "- IAA-CSIC - Version %s"%__version__
 
-    #wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
     parser = OptionParser(description = description, 
-                          #formatter = wider_format, 
                           usage = "%prog [OPTION]... DIRECTORY...", 
-                          version = "%%prog %s"%__version__)
+                          version = "%%prog version %s"%__version__)
     # general options
 
     parser.add_option("-c", "--config", type = "str",
@@ -93,16 +91,15 @@ def main(arguments = None):
                       help = "Config file for the PANIC Pipeline application."
                        "If not specified, '%s' is used."
                        % misc.config.default_config_file())
-    
-    parser.add_option("-C", "--Check",
-                      action = "store_true", dest = "check_modules",
-                      help = "Check if versions of PAPI modules are right.",
-                       default = False)
-                  
+
     parser.add_option("-s", "--source", type = "str",
                   action = "store", dest = "source",
                   help = "Source file list of data frames. It can be a file" 
                   "or directory name.")
+    
+    parser.add_option("-d", "--out_dir", type = "str",
+                  action = "store", dest = "output_dir", 
+                  help = "Output dir for product files")
     
     parser.add_option("-o", "--output_file", type = "str",
                   action = "store", dest = "output_file", 
@@ -111,11 +108,7 @@ def main(arguments = None):
     parser.add_option("-t", "--temp_dir", type = "str",
                   action = "store", dest = "temp_dir",
                   help = "Directory for temporal files")              
-    
-    parser.add_option("-d", "--out_dir", type = "str",
-                  action = "store", dest = "output_dir", 
-                  help = "Output dir for product files")
-    
+   
     parser.add_option("-r", "--rows", nargs=2,
                   action="store", dest="rows", type=int,
                   help="Use _only_ files of the source file-list in the range" 
@@ -158,7 +151,15 @@ def main(arguments = None):
                       help="Specify which detector to process:"
                       "Q1(SG1), Q2(SG2), Q3(SG3), Q4(SG4), all [default: %default]")
     
+    
+    
     # file calibration options
+    
+    parser.add_option("-C", "--ext_calibration_db", type = "str",
+                  action = "store", dest = "ext_calib_dir", 
+                  default = None, 
+                  help = "External calibration directory "
+                  "(library of Dark & Flat calibrations)")
     
     parser.add_option("-D", "--master_dark",
                   action = "store", dest = "master_dark",
@@ -181,6 +182,11 @@ def main(arguments = None):
                   action = "store_true", dest = "check_data", 
                   help = "if true, check data properties matching (type, expt, "
                   "filter, ncoadd, mjd)")
+    
+    parser.add_option("-e", "--Check",
+                      action = "store_true", dest = "check_modules",
+                      help = "Check if versions of PAPI modules are right.",
+                       default = False)
     
         
     (init_options, i_args) = parser.parse_args(args = arguments)
@@ -282,6 +288,7 @@ def main(arguments = None):
     log.debug("   + Master Dark : %s",general_opts['master_dark'])
     log.debug("   + Master Flat : %s",general_opts['master_flat'])
     log.debug("   + Master BPM  : %s",options['bpm']['bpm_file'])
+    log.debug("   + Calibration library: %s",general_opts['ext_calibration_db'])
     log.debug("   + Reduction_mode: %s",general_opts['reduction_mode'])
     log.debug("   + Astrometric catalog: %s", options['astrometry']['catalog'])
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
@@ -302,12 +309,10 @@ def main(arguments = None):
         if init_options.print_seq:
             rs.getSequences()
         else:
-            print "seq_to_reduce=",init_options.seq_to_reduce
             if init_options.seq_to_reduce==-1: #all
                 rs.reduceSet(red_mode=general_opts['reduction_mode'])
             else:
                 m_seqs_to_reduce = []
-                print "SEQS=", init_options.seq_to_reduce
                 m_seqs_to_reduce = range(init_options.seq_to_reduce[0], 
                                          init_options.seq_to_reduce[1]+1)
                 #for elem in init_options.seq_to_reduce: 

@@ -5816,6 +5816,82 @@ el mosaico, aunque se reducen los 4 det. aparentenmente bien.
 
 
 
+2-Feb-2015
+----------
+- re-converto los ficheros del 10-Dic-2014 para Herve,
+pues había un error en la conversion MEF y los mef creados tenian
+mal el DET_ID and EXTNAME (sg3-sg1 swap !!); los copio al FTP del IAA
+y le digo a Hervé que se los puede descargar de nuevo.
+
+
+- Compruebo que restando un simple dark y luego dividiendo por un SkyFlat
+a secas (sin combinar mas masterflat) se obtienen también las mismas estructuras
+que se ven en las imagenes que de Tilt xxxx_D_F.fits que le pasé
+a Conchi y de las que BD decía que no entendía las estructuras
+que aparecian a pesar del dividir por el masterFlat. Por tanto, 
+en principio parece que las pre-reducción está bien.
+Más o menos lo mismo se observa con los DomeFlats !
+
+- Unifico el fichero temporal "/tmp/focus_seq_XXXX.txt" 
+(donde XXX=usuario) del que hace uso el QL para la Focus-evaluation;
+actualemente eso afecta a los siguentes ficheros fuente:
+   
+    .iraf/login.cl
+    .iraf/papi_ql_user.cl
+    papi/QL4/mainGUI.py
+    papi/QL4/runQL.py
+
+La SOLUCION ha sido crear (focus_eval) y borrar posteriormente dicho 
+fichero temporal en /home/user/.iraf/focus_seq.txt.
+
+
+
+
+
+3-Feb-2015
+----------
+- actualizo el documento de calculo del Tilt con las rutinas de BD y lo envío al grupo.
+- modifico RS.py y mainGUI.py para que se pueda leer y acceder a las
+calibraciones externas que se indican en el fichero de configuración en 'ext_calibration_db'.
+Ahora en el QL:MasterTwFlat se consultan los masters de dicho directorio, además
+de las que se hayan creado durante la sesión actual del QL.
+Internamente tenemos:
+
+- QL:
+ + inputsDB = ficheros detectados (nuevos de GEIRS)
+ + outputsDB = ficheros generados por QL + los de ext_calibration_db 
+- PAPI
+ + db = static MD, MF, MBPM + static input files (list or directory)
+ + ext_db = ficheros del directorio configurado en ext_calibration_db
+   o bien una lista pasada desde el QL (caso especial).
+
+- Obtenemos respuesta de Hervé sobre la astrometría de PANIC; nos
+dice que ha encontrado bastante problemas con los BadPixels y 
+ha obtenido residuos del orden de 30mas, y de 10-12mas en el mejor
+de los casos.
+
+- Reduzco NGC1647 de Dark, Flat y BPM para Z, Y, Ks para Conchi e Irene,
+pues las secuencias que había reducido no eran las que querían.
+
+>applyDarkFlat.py -s /data2/Tilt_NGC1647/Z/files.txt -d /data2/Masters/joins/mDark_oi06dX_20_2.fits -f /data2/Masters/TwFlats/mTwFlat_Z_xPXlTj.fits -b /data1/Calibs/master_bpm_lir_ones.join.fits -a grab -o /data2/Tilt_NGC1647/Z/
+
+
+4-Feb-2015
+----------
+
+
+9-Feb-2015
+----------
+- Me pongo a reducir las imagenesd WASP-19p de HAWKI; en dicho
+proceso encuentro varios bugs para reconocer los datos de HAWKI;
+Encuentro un bug importante en las reducción de un cuadrante independiente,
+pues no seleccionaba correctamente el Qx correspondiente de 
+las calibraciones !!
+- Finalmente consigo reducir la secuencia completa de 188 imagenes 
+de WASP19 con Dark, TwFlat y skysub usando las astrometría para el
+cálculo de los offsets.
+(P) - Habría que reducir tb WASP19: en todos los cuadrantes, sin D ni F, con irdr:offsets, ...
+y ver que dice LEMON
 
 
 
@@ -5833,6 +5909,16 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- comparar los Flat/Dark de HAWKI y de PANIC
+- Reducir WASP19: todos los cuadrantes, sin D ni F, con irdr:offsets, ...
+- revisar/mejorar ApplyDarkFlat en QL
+- Añadir NCOADD, ITIME, MEF ? a la ListView del QL
+- DUDA: cómo se usa el ext_calibration_db en el QL ???
+- añadir opcion de crear "solo" calibrationes desde CL de PAPI
+- añadir ext_db a las opciones de CL de PAPI
+- adaptar Nuevo interfaz de calTwFlat en PAPI !!
+- Sacar algún mapa de distorsión decence !! (datos Tilt y/o 10-Dic-2014)
+- ver acceso a extensiones por nombre en lugar de por número !! (mail BD)
 - aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
 en QL y demás candidatas.
 - ver que se puede hacer para forzar NCOADD, ITIME, EXPTIME en applyDark y applyDarkFlat
@@ -5843,7 +5929,6 @@ If the destination is on the current filesystem, then os.rename()
 y como el PANIC_SEQ_Q01.fits suele existir de una reducción anterior, pues no borra el src, 
 sólo renombra el PANIC_SEQ_Q01.fits.
 
-- Reducir imagenes para Conchi
 - mejorar rutina de logsheet para ver los ficheros que tenemos y su tipo.
 - bug en imtrim.py: 
 ERROR (808, "Pixel subscript out of bounds (/data2/out/PANIC.2014-12-10T19:10:01.3242.weight.fits[91:3190,92:3192])") 
@@ -5856,11 +5941,7 @@ eso hay que hacerlo arrancando con un disco de sistema, pues en el /tmp
 hay muchos ficheros temporales que usa el propio sistem...
 
 - Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF; hay que configurar el IMTDEV también !!
-- instalar PAPI en panic35 y cambiar permisos en /data1 y data2 para usuario obs35.
-- copiar nuevos scripts de BD y panic_status al repositorio de PAPI y prepararlos para la instalación !!
-- actualizar el documento de calculo del Tilt con las rutinas de BD !!
 
-- re-convertir ficheros para Herve (conversion MEF tenia mal el DET_ID !!)
 - Ojo, el fichero offsets1.pap se crea en /data2/out/ en lugar de /data2/out/Q0X) !!!! conflicto entre detectores en reducción paralelo !!
 nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 
@@ -5868,7 +5949,7 @@ nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 - Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
 - ¿ para qué demonios sirven lo MEF ?? podríamos trabajar sólo con joins ???
 - conversion de MEF-cubes to singles(join)-cubes !!
-- adaptar Nuevo interfaz de calTwFlat en PAPI !! 
+ 
 - limpiar fichero de configuración de variables que no usamos.
 - reductionset.py (1812), dilate=False !!! (revisar)
 - 2nd. round of skyfilter ! --> re-calculo de offsets de mascara de objetos
@@ -5877,18 +5958,7 @@ nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
 
 - iraf.imcombine: los NaN los "cambia" por 0s !!! --> estudiar !!
-- Unificar/distinguir el fichero temporal "/tmp/focus_seq_XXXX.txt" 
-(donde XXX=usuario) del que hace uso el QL para la Focus-evaluation;
-actualemente eso afecta a :
-   
-    .iraf/login.cl
-    .iraf/papi_ql_user.cl
-    papi/QL4/mainGUI.py
-    papi/QL4/runQL.py
-
-    SOLUCION: grabar el fichero temporal en /home/user/.iraf/focus_seq.txt
     
-- re-convertir ficheros para Herve (conversion MEF tenia mal el DET_ID !!)
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
 - rutina para crear BPM a partir de los NLC de BD
@@ -6795,8 +6865,13 @@ TODO @ CAHA
 *- config NTP sync
 - Create obs22 account and install software (GEIRS/OT/PAPI)
 - DOME control from OT: Dome Flat-Fields
-- Absolute focus at CA2.2m
-- t_posit ar dec epoch
-- Movimientos relativos telescopio: verificar que se ejecutan correctamente (eg. +100,+100)
 - Pruebas archivo CAHA: definir configuración FTP server y usuario, etc...
-- Simulación observación remota desde Biblioteca !
+
+
+
+COSAS MODIFICADAS PARA PRUEBA EN PAPI
+-------------------------------------
+- check_ncoadd=False en RS
+- calSuperFlat(c_ncoadds=False)
+- Modificar collapse para que no renombre los que no son cubos (line 68 collapse.py)
+- Limpiar RS::skyFilter

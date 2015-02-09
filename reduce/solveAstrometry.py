@@ -36,7 +36,6 @@ from distutils import spawn
 
 import astropy.io.fits as fits
 import sys
-import logging as log
 import time
 import re
 

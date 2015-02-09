@@ -61,7 +61,7 @@ class DataSet(object):
         ----------
         source : str
             Can be a 'directory' name, a 'filename' containing the
-            list file or python list havind the files of the DataSet
+            list file or python list having the files of the DataSet
 
         instrument: str
             Name of the source instrument of the data files. It must match
@@ -138,7 +138,7 @@ class DataSet(object):
         True if all was successful, otherwise False
         """
 
-        log.debug("Inserting file %s into dataset" % filename)
+        #log.debug("Inserting file %s into dataset" % filename)
         if filename==None: return False
         
         try:
@@ -161,7 +161,7 @@ class DataSet(object):
                 fitsf.filter, fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object,
                 fitsf.detectorID)
         
-        print "dataDB_tuple = ", data
+        #print "dataDB_tuple = ", data
          
         cur = self.con.cursor()
 
@@ -179,6 +179,8 @@ class DataSet(object):
                 raise e
     
             self.id+=1
+            #log.debug("File %s inserted correctly in DB:"%filename)
+            
             return True
             
         else:
@@ -342,7 +344,10 @@ class DataSet(object):
         A MJD ascending sorted list with the filenames that match the 
         specified fields, otherwise an empty list []
         """
-
+        
+        # only for debug
+        #self.ListDataSet()
+        # 
         res_list = []
         try:
             # NOT USED !!! RUN_ID !!! NOT USED 
@@ -405,8 +410,10 @@ class DataSet(object):
             res_list = []
             if len(rows)>0:
                 res_list = [str(f[0]) for f in rows] # important to apply str() !!
+            
             #print "Total rows selected:  %d" %(len(res_list))
             #print "Files found :\n ", res_list
+            
             return res_list
                              
         except sqlite.DatabaseError,e:

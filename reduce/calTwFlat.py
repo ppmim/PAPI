@@ -125,7 +125,7 @@ class MasterTwilightFlat(object):
         flat_files: list
             list of raw sky/dome flats frames
         
-        master_dark_model : string
+        master_dark_model : string or list
             Master dark model to subtract (required, exclusive with master_dark_list) 
         
         master_dark_list : list
@@ -157,7 +157,7 @@ class MasterTwilightFlat(object):
         
         self.__input_files = flat_files
         self.__master_dark_model = master_dark_model # if fact, it is a dark model
-        self.__master_dark_model_model_list = master_dark_list
+        self.__master_dark_list = master_dark_list
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__bpm = bpm
         self.__normal = normal
@@ -185,10 +185,14 @@ class MasterTwilightFlat(object):
         framelist = self.__input_files
         
         # Check exists master DARK
-        if self.__master_dark_model and not os.path.exists(self.__master_dark_model):
-            log.error("Cannot find frame : %s"%self.__master_dark_model)
-            raise Exception("Master Dark Model not found")
-            
+        if self.__master_dark_model:
+            if (type(self.__master_dark_model) == type([]) and 
+                len(self.__master_dark_model) > 0):
+                self.__master_dark_model = self.__master_dark_mode[-1]
+            if not os.path.exists(self.__master_dark_model):
+                log.error("Cannot find frame : %s"%self.__master_dark_model)
+                raise Exception("Master Dark Model not found")
+
         # Determine the number of Flats frames to combine
         nframes = len(framelist)
         if nframes < self.m_min_flats:
@@ -216,10 +220,12 @@ class MasterTwilightFlat(object):
         f_type = ''
         f_filter = ''
         f_readmode = ''
+        f_instrument = 'Unknown'
         good_frames = []
         
         for iframe in framelist:
             f = datahandler.ClFits(iframe)
+            f_instrument = f.getInstrument()
             log.debug("Checking data compatibility (filter, texp, type)")
             log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" 
                 %(iframe, f.expTime(), f.getType(), f.getFilter()))
@@ -262,7 +268,7 @@ class MasterTwilightFlat(object):
             
             # STEP 1.1: Check either over or under exposed frames
             log.debug("Flat frame '%s' - FILTER=%s EXPTIME= %f TYPE= %s Mean= %f" %(iframe, f_filter, f_expt, f_type, mean))
-            if mean>self.m_lthr and mean<self.m_hthr:
+            if mean > self.m_lthr and mean < self.m_hthr:
                 good_frames.append(iframe)
             else:
                 log.error("Frame %s skipped, either over or under exposed" %(iframe))
@@ -283,7 +289,7 @@ class MasterTwilightFlat(object):
         # FLATS because they might have diff EXPTIMEs
         # Prepare input list on IRAF string format
             
-        log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark_model)   
+        log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark_model)
         # We have two option, use a DARK_MODEL or a MASTER_DARK for each skyflat (=TEXP)
         # 1- Try to read Master Dark Model
         use_dark_model = False
@@ -299,15 +305,15 @@ class MasterTwilightFlat(object):
                 log.error("Error reading MASTER_DARK_MODEL: %s"%self.__master_dark_model)
                 log.error(str(e))
                 raise e
-        elif self.__master_dark_model_model_list:
+        elif self.__master_dark_list:
             # read TEXP of all master darks
-            if (type(self.__master_dark_model_model_list) == type([]) and
-               len(self.__master_dark_model_model_list) < len(framelist)):
+            if (type(self.__master_dark_list) == type([]) and
+                len(self.__master_dark_list) < 1 ):
                 log.error("Not enough number of master darks found.")
                 raise Exception("Not enough number of master darks found")
             
             t_darks = {}
-            for idark in self.__master_dark_model_model_list:
+            for idark in self.__master_dark_list:
                 try:
                     cdark = datahandler.ClFits(idark)
                     if not cdark.isDark() and not cdark.isMasterDark():
@@ -346,13 +352,13 @@ class MasterTwilightFlat(object):
                         log.info("Scaling MASTER_DARK_MODEL")
                         scaled_dark = mdark[i].data[1]*t_flat + mdark[i].data[0]
                     else:
-                        log.info("Use own MASTER_DARK")
+                        log.info("Using proper MASTER_DARK")
                         # Get filename of the master dark to use
                         n_dark = t_darks[round(t_flat, 1)] 
                         mdark = fits.open(n_dark)
                         scaled_dark = mdark[i].data
                         
-                    log.info("AVG(dark)=%s"%robust.mean(scaled_dark))
+                    #log.info("AVG(dark)=%s"%robust.mean(scaled_dark))
                     # At least, do the subtraction !
                     f[i].data = f[i].data - scaled_dark
             
@@ -451,9 +457,12 @@ class MasterTwilightFlat(object):
                 naxis2 = f[chip].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                median = numpy.median(f['SG2_1'].data[offset1:naxis1-offset1,
+                if f_instrument == 'panic': ext_name = 'SG2_1'
+                elif f_instrument == 'hawki': ext_name = 'CHIP2.INT1'
+                    
+                median = numpy.median(f[ext_name].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
-                msg = "Normalization of MEF master flat frame wrt chip SG2_1. (MEDIAN=%d)"%median
+                msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)"%(ext_name,median)
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower()=='panic'
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 

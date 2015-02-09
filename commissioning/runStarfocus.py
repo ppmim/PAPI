@@ -6,9 +6,17 @@
 # Email: jmiguel@iaa.es
 # License: GNU GPLv3
 
+import os
+# To avoid conflict with QL-Focus_Evaluation
+try:
+    if os.path.exists(os.path.expanduser("~") + "/iraf/focus_seq.txt"):
+        os.unlink(os.path.expanduser("~") + "/iraf/focus_seq.txt")
+        print("Deleted file ~/iraf/focus_seq.txt")
+except Exception,e:
+    print("Error, cannot delete ~/iraf/focus_seq.txt")
+
+    
 from pyraf import iraf
-#import pyraf.iraf as iraf
-#from iraf import obsutil
 import re
 
 from optparse import OptionParser
@@ -133,7 +141,7 @@ if __name__ == "__main__":
             lines.pop(0)
         k = lines.index('\n')
         for i in range(k):
-            if lines[k -i -1].startswith('Best'):
+            if lines[k -i -1].strip().startswith('Best'):
                 fo.write(lines[k - i - 1])
         fo.close()
         print 'Data file written: %s' %options.data_file

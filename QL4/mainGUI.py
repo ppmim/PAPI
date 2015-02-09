@@ -48,6 +48,7 @@ import math
 import tempfile
 from optparse import OptionParser
 import datetime
+import dircache
 
 # Tell PyRAF to skip all graphics initialization and run in terminal-only mode.
 # Otherwise we will get annoying warning messages (such as "could not open
@@ -178,7 +179,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ## Init member variables
         self.timer_dc = None
         # File used to run the iraf.obsutil.starfocus task
-        self.focus_tmp_file = "/tmp/focus_seq.txt"
+        self.focus_tmp_file = os.path.expanduser("~") + "/iraf/focus_seq.txt"
         
         # Init main directories
         if source_dir!= None:
@@ -186,7 +187,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:      
             self.m_default_data_dir = os.environ['PANIC_DATA']
             
-        self._fitsGeirsWritten_ = os.environ['HOME'] + "/tmp/fitsGeirsWritten"
+        self._fitsGeirsWritten_ = os.path.expanduser("~") + "/tmp/fitsGeirsWritten"
         if not os.path.exists(self._fitsGeirsWritten_):
             self._fitsGeirsWritten_ = "Error: Cannot find ~/tmp/fitsGeirsWritten"
 
@@ -209,7 +210,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Create LoggingConsole
         self.logConsole = LoggingConsole(self.textEdit_log, self.textEdit_log_2)
         
-        # check we have R/W access to temp and out directories
+        # Check we have R/W access to temp and out directories
         if not os.access(self.m_tempdir,os.R_OK|os.W_OK):
             log.error("Directory %s has not R/W access",self.m_tempdir)
             self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access")
@@ -227,8 +228,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.m_masterFlat = ''
         self.m_masterMask = ''
         self.m_masterNLC = ''
-        
-
         self.m_popup_l_sel = []
 
         # Stuff to detect end of an observation sequence to know if data reduction could start
@@ -256,8 +255,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.read_error_files = {} # a dictionary to track the error while reading/detecting FITS files
         
         
+        # Load external calibrations files
+        self.ext_calib_dir = self.config_opts['general']['ext_calibration_db']
+
         # Default run mode
-        if  self.config_opts['quicklook']['run_mode']=="None": 
+        if self.config_opts['quicklook']['run_mode']=="None": 
             self.comboBox_QL_Mode.setCurrentIndex(0)
         elif self.config_opts['quicklook']['run_mode']=="Lazy": 
             self.comboBox_QL_Mode.setCurrentIndex(1)
@@ -291,29 +293,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.__initializeGUI()
         self.createActions()
 
-        ## Init in memory Database
-        ## -----------------------
-        #datahandler.dataset.initDB()
-        #DataBase for input files (in memory)
+        # Init in memory Database
+        # -----------------------
+        # DataBase for input files (in memory)
         self.inputsDB = None
-        #DataBase for output files (in memory)
+
+        # DataBase for output files (in memory)
         self.outputsDB = None
+        # Init DBs
         self.__initDBs()
         
-        ## Data Collectors initialization
-        ## ------------------------------
+        # Data Collectors initialization
+        # ------------------------------
         self.file_pattern = str(self.lineEdit_filename_filter.text())
-        # Data collector for input files
-        #self.dc = datahandler.DataCollector("geirs-file2", self.m_sourcedir, 
-        #                                    self.file_pattern , self.new_file_func)
         
-        if os.path.basename(self.m_sourcedir)=='save_CA2.2m.log': s_mode = 'geirs-file'
-        elif os.path.basename(self.m_sourcedir)=='fitsGeirsWritten': s_mode = 'geirs-file2'
-        else: s_mode = 'dir'
+        if os.path.basename(self.m_sourcedir) == 'save_CA2.2m.log': 
+            s_mode = 'geirs-file'
+        elif os.path.basename(self.m_sourcedir) == 'fitsGeirsWritten': 
+            s_mode = 'geirs-file2'
+        else: 
+            s_mode = 'dir'
         
         self.dc = None
         self.dc = datahandler.DataCollector(s_mode, self.m_sourcedir, 
-                                            self.file_pattern , self.new_file_func)
+                                            self.file_pattern , 
+                                            self.new_file_func)
         # Data collector for output files
         self.dc_outdir = None # Initialized in checkOutDir_slot()
         #datahandler.DataCollector("dir", self.m_outputdir, self.file_pattern, self.new_file_func_out)
@@ -385,24 +389,35 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Read the instrument for DB creation
         instrument = self.config_opts['general']['instrument'].lower()
         
-        # Inputs DB
+        # Create Inputs-DB
         try:
             self.inputsDB = datahandler.dataset.DataSet(None, instrument)
             self.inputsDB.createDB()
-            #self.inputsDB.load()
         except Exception,e:
             log.error("Error while INPUT data base initialization: \n %s"%str(e))
             raise Exception("Error while INPUT data base initialization")
         
-        # Outputs DB
+        # Create Outputs-DB
         try:
             self.outputsDB = datahandler.dataset.DataSet(None, instrument)
             self.outputsDB.createDB()
-            #self.outputsDB.load()
+            # Insert/load the external calibration files
+            self.load_extenal_calibs(self.ext_calib_dir)
         except Exception,e:
-            log.error("Error while OUTPUT data base initialization: \n %s"%str(e))
-            raise Exception("Error while OUTPUT data base initialization")    
+            log.error("Error during OUTPUT data base initialization: \n %s"%str(e))
+            raise Exception("Error during OUTPUT data base initialization")    
         
+    def load_extenal_calibs(self, calib_dir):
+        """
+        Load all the calibration files found in the specified path.
+        """
+        
+        if os.path.isdir(calib_dir):
+            for ifile in dircache.listdir(calib_dir):
+                if ifile.endswith(".fits") or ifile.endswith(".fit"):
+                    log.debug("Inserting file %s"%(calib_dir + "/" + ifile))
+                    self.outputsDB.insert(calib_dir + "/" + ifile)
+                    
     def new_file_func_out(self, filename):
         """
         Callback used when a new file is detected in output directory.
@@ -445,7 +460,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ######################
         ## Insert into DB
         ######################
-        #datahandler.dataset.initDB()
         inserted = False
         try:
             if fromOutput: inserted = self.outputsDB.insert(filename)
@@ -460,11 +474,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.logConsole.warning("Error inserting file [%s]"%filename) 
             return
             
-        ## Query DB
-        #(date, ut_time, type, filter, texp, detector_id, run_id, ra, dec, object, mjd)=self.inputsDB.GetFileInfo(filename)
-        #fileinfo=self.inputsDB.GetFileInfo(str(dir)+"/"+filename)
-        #print "FILEINFO= ", fileinfo
-        
         #########################
         # An alternative method to update the ListView; it allows keep the view 
         # filtered.
@@ -940,7 +949,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                 #display.showFrame(file)
                                 str_list+=" +File: " + str(i_file)+"\n"
                                 #!!! keep up-date the out DB for future calibrations !!!
-                                # Because some science sequences could neen the
+                                # Because some science sequences could need the
                                 # master calibration created by a former reduction,
                                 # and only if apply_master_dark flat is activated,
                                 # the last produced file is inserted into the output DB
@@ -1012,7 +1021,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                     #display.showFrame(file)
                                     str_list+=str(file)+"\n"
                                     #!!! keep up-date the out DB for future calibrations !!!
-                                    # Because some science sequences could neen the
+                                    # Because some science sequences could need the
                                     # master calibration created by a former reduction,
                                     # and only if apply_master_dark flat is activated,
                                     # the last produced file is inserted into the output DB
@@ -1021,7 +1030,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                     # problem), if the checkBox for the outputs is 
                                     # activated on the GUI, the DB insertion will be 
                                     # done there (I hope), and not here !
-                                    if not self.checkBox_outDir_autocheck.isChecked():   
+                                    if not self.checkBox_outDir_autocheck.isChecked():
                                         log.debug("Updating DB...")
                                         if (os.path.isfile(file) and
                                             file.endswith(".fits") or 
@@ -1434,6 +1443,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.checkBox_currentNight.setChecked(False)
         self.checkBox_autocheck.setChecked(False)
         self.checkBox_outDir_autocheck.setChecked(False)
+        
         # Deactivate timers
         self.autocheck_slot()
         
@@ -1445,8 +1455,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
         self.inputsDB.clearDB()
         self.outputsDB.clearDB()
-
-
+        
+        # But keep the external calibration files on outputsDB
+        self.load_extenal_calibs(self.ext_calib_dir)
+        
     def add_slot(self):
         """
         Add a new file to the main list panel, but not to the DataCollector 
@@ -2590,32 +2602,28 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         if len(self.m_popup_l_sel)>2:
             outfileName = QFileDialog.getSaveFileName(self,
-                                                      "Choose a filename to save under",
-                                                      self.m_outputdir+"/master_twflat.fits", 
-                                                      "*.fits") 
+                           "Choose a filename to save under",
+                           self.m_outputdir+"/master_twflat.fits", 
+                           "*.fits")
+            
             if not outfileName.isEmpty():
-                # Look for master Darks and DarkModel
+                # Look for MasterDarks and MasterDarkModel
                 dark_model = []
                 darks = []
+                dark_model = self.outputsDB.GetFilesT('MASTER_DARK_MODEL')
+                # If no files, returns an empy list
+                darks = self.outputsDB.GetFilesT('MASTER_DARK', -1)
                 
-                result = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
-                if len(result) == 0 and self.outputsDB != None:
-                    result = self.outputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
-                
-                if len(result) >0: dark_model = result[0]
-                else: dark_model = None
-                
-                darks = self.inputsDB.GetFilesT('DARK', -1)
-                if self.outputsDB != None:
-                    darks += self.outputsDB.GetFilesT('MASTER_DARK', -1)
-
                 try:
                     dm = dark_model[0]
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calTwFlat.MasterTwilightFlat(flat_files=self.m_popup_l_sel,
-                                                                      master_dark_model=dark_model,
-                                                                      master_dark_list=darks,
-                                                                      output_filename=str(outfileName))
+                    
+                    self._task = reduce.calTwFlat.MasterTwilightFlat(
+                        flat_files=self.m_popup_l_sel,
+                        master_dark_model=dark_model,
+                        master_dark_list=darks,
+                        output_filename=str(outfileName))
+                    
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
                     thread.start()
@@ -3557,7 +3565,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def createCalibs_slot(self):
         
         """
-        Given the current dataset files, compute the whole master calibration 
+        Given the current dataset files, compute all the master calibration 
         files found in the DB dataset.
         """
         

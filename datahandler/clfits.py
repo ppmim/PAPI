@@ -323,7 +323,7 @@ class ClFits (object):
 
     def recognize(self, retries=5):
      
-        log.info("Recognizing file %s" %self.filename)
+        #log.info("Recognizing file %s" %self.filename)
 
         # Check the file exists
         if not os.path.exists( self.pathname ):
@@ -354,7 +354,7 @@ class ClFits (object):
 
             warnings.simplefilter('error', UserWarning)
             while True:
-                log.debug("FITS integrity check. FILE=%s ITER=%d"%(self.pathname,nTry))
+                #log.debug("FITS integrity check. FILE=%s ITER=%d"%(self.pathname,nTry))
                 try:
                     # First level of checking
                     #found_size = fits_simple_verify(self.pathname)
@@ -391,7 +391,7 @@ class ClFits (object):
         if len(myfits)>1:
             self.mef = True
             self.next = len(myfits)-1
-            log.debug("Found a MEF file with %d extensions", self.next)
+            ###log.debug("Found a MEF file with %d extensions", self.next)
         else:
             self.mef = False
             self.next = 1
@@ -463,6 +463,8 @@ class ClFits (object):
                 keyword_with_frame_type = 'IMAGETYP'
             elif self.instrument=='hawki' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
+            elif self.instrument=='omegacass_mpia' and 'OBJECT' in myfits[0].header:
+                keyword_with_frame_type = 'OBJECT'
             elif self.instrument=='panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
                     keyword_with_frame_type = 'IMAGETYP'
@@ -519,7 +521,13 @@ class ClFits (object):
                 self.type = 'UNKNOW'
         elif self.instrument=='hawki':
             try:
-                if myfits[0].header[keyword_with_frame_type].lower().count('dark') :
+                # Self-typed file, created by PAPI (master calibrations)
+                if 'PAPITYPE' in myfits[0].header:
+                    self.type = myfits[0].header['PAPITYPE']
+                # rest of raw images
+                elif myfits[0].header[keyword_with_frame_type].lower().count('master'):
+                    self.type = myfits[0].header[keyword_with_frame_type]
+                elif myfits[0].header[keyword_with_frame_type].lower().count('dark'):
                     self.type = "DARK"
                 elif myfits[0].header[keyword_with_frame_type].lower().count('lamp off'):
                     self.type = "DOME_FLAT_LAMP_OFF"
@@ -543,7 +551,7 @@ class ClFits (object):
                 log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
                 
-        else: #o2000, Roper or  ??
+        else: #o2000, Omegacass, Roper, etc
             try:
                 if myfits[0].header[keyword_with_frame_type].lower().count('master'):
                     self.type = myfits[0].header[keyword_with_frame_type]
@@ -579,40 +587,45 @@ class ClFits (object):
                 log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
         
-        #Is pre-reduced the image ? by default, isn't
+        # Is pre-reduced the image ? by default, isn't
         self.processed = False
         
-        #print "File :"+ self.pathname
-        #FILTER
+        # FILTER
         try:
             if self.instrument=='hawki':
-                if 'ESO INS FILT1 NAME' in myfits[0].header: 
-                    self.filter = myfits[0].header['ESO INS FILT1 NAME']
+                if 'HIERARCH ESO INS FILT1 NAME' in myfits[0].header: 
+                    self.filter = myfits[0].header['HIERARCH ESO INS FILT1 NAME']
+                elif 'HIERARCH ESO INS FILT2 NAME' in myfits[0].header: 
+                    self.filter = myfits[0].header['HIERARCH ESO INS FILT2 NAME']
                 elif 'FILTER1' in myfits[0].header:
                     self.filter = myfits[0].header['FILTER1']
                 elif 'FILTER2' in myfits[0].header:
                     self.filter = myfits[0].header['FILTER2']
+                else:
+                    log.warning("Cannot find out FILTER")
+                    self.filter = 'UNKNOWN'
             else: # PANIC, O2000, Roper, ...
                 self.filter  = myfits[0].header['FILTER']
         except KeyError:
-            log.warning('FILTER keyword not found')
+            log.warning('Cannot find out FILTER')
             self.filter  = 'UNKNOWN'
         
-        #Exposition Time
+        # Exposition Time
         try:
-            self.exptime=myfits[0].header['EXPTIME']
+            self.exptime = myfits[0].header['EXPTIME']
         except KeyError:
             log.warning('EXPTIME keyword not found')
             self.exptime  = -1
 
-        #Integration Time
+        # Integration Time
         try:
             self.itime = myfits[0].header['ITIME']
         except KeyError:
-            log.warning('ITIME keyword not found')
+            if self.instrument=='panic':
+                log.warning('ITIME keyword not found')
             self.itime  = -1
             
-        #Number of coadds
+        # Number of coadds
         try:
             if 'NCOADDS' in myfits[0].header:
                 self.ncoadds = myfits[0].header['NCOADDS']
@@ -626,14 +639,17 @@ class ClFits (object):
             log.warning('NCOADDS keyword not found. Taken default value (=1)')
             self.ncoadds  = 1
                  
-        #Read-Mode
+        # Read-Mode
         try:
-            self.readmode = myfits[0].header['READMODE']
+            if self.instrument == 'panic':
+                self.readmode = myfits[0].header['READMODE']
+            elif self.instrument == 'hawki':
+                self.readmode = myfits[0].header['HIERARCH ESO DET NCORRS NAME']
         except KeyError:
             log.warning('READMODE keyword not found')
             self.readmode  = ""
                      
-        #UT-date of observation
+        # UT-date of observation
         try:
             self.datetime_obs = myfits[0].header['DATE-OBS']
             if self.datetime_obs.count('T'):
@@ -706,36 +722,36 @@ class ClFits (object):
             #log.debug("DEC = %s"%str(self._dec))
             pass
 
+        # EQUINOX
         try:
             self.equinox = myfits[0].header['EQUINOX']
         except KeyError:
-            log.warning("EQUINOX keyword not found")
+            log.debug("EQUINOX keyword not found")
             self.equinox = -1
             
-        #MJD-Modified julian date 'days' of observation
+        # MJD-Modified julian date 'days' of observation
         try:
             self.mjd = myfits[0].header['MJD-OBS']
         except KeyError:
             log.warning('MJD-OBS keyword not found')
             self.mjd  = -1
            
-        #OBJECT
+        # OBJECT
         try:
             self.object = myfits[0].header['OBJECT']
         except KeyError:
             log.warning('OBJECT keyword not found')
             self.object  = ''   
         
-        #CHIPCODE
+        # CHIPCODE
         try:
             self.chipcode = myfits[0].header['CHIPCODE']
         except KeyError:
-            ###log.warning('CHIPCODE keyword not found, setting default (1)')
             self.chipcode  = 1  # default
         
-        #DetectorID
+        # DetectorID
         try:
-            if self.instrument=='hawki': 
+            if self.instrument=='hawki' and 'HIERARCH ESO DET CHIP NAME' in myfits[0].header:
                 self.detectorID = myfits[0].header['HIERARCH ESO DET CHIP NAME']
             elif self.instrument=='panic':
                 self.detectorID = 'HAWAII-2RG'
@@ -745,12 +761,12 @@ class ClFits (object):
             log.warning("Cannot find HIERARCH ESO DET CHIP NAME")
             self.detectorID='unknown'
                
-        #RunID
+        # RunID
         self.runID=-1
         
-        #OB_ID : Observation Block Id
+        # OB_ID : Observation Block Id
         try:
-            if self.instrument=='hawki':
+            if self.instrument=='hawki' and 'HIERARCH ESO OBS ID' in myfits[0].header:
                 self.obID = myfits[0].header['HIERARCH ESO OBS ID']
             elif self.instrument=='omega2000':
                 self.obID = myfits[0].header['POINT_NO'] # for O2000
@@ -766,7 +782,7 @@ class ClFits (object):
             log.warning("Cannot find OB_ID keyword : %s:",str(e))
             self.obID = -1
                
-        #OB_PAT : Observation Block Pattern
+        # OB_PAT : Observation Block Pattern
         try:
             if self.instrument=='hawki':
                 self.obPat = myfits[0].header['HIERARCH ESO TPL ID']
@@ -869,7 +885,7 @@ class ClFits (object):
             log.error("Error while closing FITS file %s   : %s",
                       self.pathname, str(e))
         
-        log.debug("End of FITS recognition: %s"%self.pathname)
+        #log.debug("End of FITS recognition: %s"%self.pathname)
         
 
     def print_info(self):

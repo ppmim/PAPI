@@ -65,13 +65,13 @@ def collapse(frame_list, out_dir="/tmp"):
                 log.error("Some error collapsing MEF cube: %s"%str(e))
                 raise e
         elif len(f)>1 and len(f[1].data.shape)==2:
-            log.debug("MEF file has no cubes, no collapse required, but new file is created.")
-            shutil.copyfile(frame_i, t_filename)
-            new_frame_list.append(t_filename)
+            log.debug("MEF file has no cubes, no collapse required.")
+            #shutil.copyfile(frame_i, t_filename)
+            new_frame_list.append(frame_i)
         elif len(f[0].data.shape)!=3: # 2D !
-            log.debug("It is not a FITS-cube image, no collapse required, but file is renamed.")
-            shutil.copyfile(frame_i, t_filename)
-            new_frame_list.append(t_filename)
+            log.debug("It is not a FITS-cube image, no collapse required")
+            #shutil.copyfile(frame_i, t_filename)
+            new_frame_list.append(frame_i)
         else:            
             # Suppose we have single CUBE file ...
             out_hdulist = fits.HDUList()               

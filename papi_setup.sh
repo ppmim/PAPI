@@ -62,6 +62,10 @@ chmod $PAPI_BIN/start_iraf
 cp -av $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/
 chmod a+x $PAPI_HOME/commissining/getDarks.py
 
+# To check the PANIC temperatures and press
+cp -av $PAPI_HOME/scripts/panic_status $PAPI_BIN/
+
+
 chmod a+x $PAPI_HOME/papi.py
 ln -s $PAPI_HOME/papi.py $PAPI_BIN/papi
 
@@ -94,6 +98,11 @@ ln -s $PAPI_HOME/misc/modFITS.py $PAPI_BIN/modFITS
 
 chmod a+x $PAPI_HOME/photo/photometry.py
 ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
+
+# Some tools for commissioning
+ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus
+ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck
+
 
 
 # ---------------------------------------
