@@ -27,8 +27,9 @@ int main(int argc, char *argv[])
 
     dilate(mask, nx, ny, scale);
 
-    writefits(argv[1], argv[1], (char*)shortint(mask, nx, ny), 16, nx, ny);
-
+    /*writefits(argv[1], argv[1], (char*)shortint(mask, nx, ny), 16, nx, ny);*/
+    writefits(argv[1], argv[1], (char*)mask, -32, nx, ny);
+    
     return 0;
 }
 

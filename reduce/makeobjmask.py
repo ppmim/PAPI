@@ -121,13 +121,13 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
         sex.config['CHECKIMAGE_NAME'] = fn + ".objs"
         sex.config['SATUR_LEVEL'] = saturlevel
         if os.path.exists(fn.replace(".fits",".weight.fits")):
-            sex.config['WEIGHT_TYPE']="MAP_WEIGHT"
-            sex.config['WEIGHT_IMAGE']=fn.replace(".fits",".weight.fits")
+            sex.config['WEIGHT_TYPE'] = "MAP_WEIGHT"
+            sex.config['WEIGHT_IMAGE'] = fn.replace(".fits",".weight.fits")
         
-        # Run SExtractor     
+        # Run SExtractor
         try:
             sex.run(fn, updateconfig=True, clean=False)
-        except Exception,e: 
+        except Exception,e:
             log.debug("Some error while running SExtractor : %s", str(e))
             raise Exception("Some error while running SExtractor : %s"%str(e))          
         

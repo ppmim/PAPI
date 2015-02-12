@@ -5894,6 +5894,94 @@ cálculo de los offsets.
 y ver que dice LEMON
 
 
+10-Feb-2015
+----------
+- La teleconf que teniamos prevista con Hervé se suspende pues no 
+podemos contactar con él.
+Las cosas que yo tenía previsto preguntarle son: (ver papel mi libreta)
+- Le mando a Hervé las secuencias de Taurus(F1 y F2) que tenemos del 10-Dic-2014,
+pues el nos decía en un mensaje que no tenian dithering. Yo compruebo
+que si lo tienen, y que quizás el sólo se descargó la secuencia de foco.
+
+- Encuentro la forma de aumentar la resolución de los gráficas que
+genera SCAMP. Para ello modifico el fichero de configuración:
+
+/home/panic/DEVELOP/papi/config_files/scamp.conf
+
+con
+
+CHECKPLOT_RES          1600,1200
+
+Pero sigo sin entender por qué la gráfica de distorisión no muestra
+todo el campo de PANIC, sino la mitad !! (15'x15')
+
+
+- Víctor nos manda la primera curva de luz de WASP10, y no se ve para nada 
+el tránsito !!!
+Lanzo segunda reducción de WASP-19 con 9+9 para el skybackground, D, F y modo=science
+
+./papi.py -c config_files/papi_panic1_hawki.cfg -s /data1/HAWK-I_WASP19/ -S 2 2 -M science -W Q2
+
+El resultado está en /data2/out_wasp19 y /data/tmp_wasp19;
+
+- Me pongo a reducir las secuencias de Taurus(F1 y F2) para sacer los mapas de distorsion:
+
+# SEQ       Resultado
+------      ---------
+[59-63]     Q4 no astrometría; no se ve nada en el coadd !!
+[64-68]     Q4 no astrometría
+
+(PROBLEMA-skifilter??): Encuentro que reduciendo Q4 en las secuencias anteriores
+y en modo science, el resultado es muuucho peor o incluso podríamos decir
+que no da nada sensato. En cambio, en modo quick si da un resultado sensato.
+La única explicación es que en el modo ciencia se usa la máscara de objetos,
+y esta produce un skybackground de acuerdo a dicha máscara+gainmap, y en el
+caso del modo quick, sólo se usa el gainmap.
+Esto sólo ocurre para el detector malooo!!! para el resto parece que está bien.
+No obstante, hay que revisar y buscarle explicación a esto por si hubiese
+algún error!!
+
+
+- Cambio el catálogo GSC-2.3 al USNO-B1 en las llamadas a Astrowarp desde RS.
+
+11-Feb-2015
+----------
+- (BUG) Encuentro un problema en skyfilter.c, pues al llamarlo con 
+skymodel=2 (min), da un SFault ! ese método ha sido muy poco usado...
+Los datos eran de TaurusF1[59-63] para el SG4.
+
+- Soluciono bug en dilate.c (creaba imágenes de 16 bits, pero mal !);
+lo modificoo para que las imagenes sean de bitpix=-32.
+
+- Investigando sobre el problema detectado el día anterior con skyfilter
+en segunda vuelta con SG4, me doy cuenta de que la segunda vuelta de skysub
+no parace "tan buena" como debería; la diferencia básica, además de usar
+wmaps y las mascara de objetos, es que usa la "mean" ponderada en lugar
+de "median" a secas.
+
+- Además, confirmo que la mascara de objetos no se "posiciona"/enmascara 
+correctamente todos los objetos debido a la distorsión del campo (supongo!),
+pues el offset está calculado para el centro del campo y en las esquinas el 
+offset debido a la distorsión no es el mismo !!!!
+Pruebo también con irdr.offsets, y el problema persiste.
+SOLUCION "rápida"==> usar dilate>0 para cubrir más campo con la mascara de objetos;
+se nota una clara mejoría!!
+Sin embargo, la solución ideal sería "registrar" la mascara de objetos (masterObjMask.fits)
+correctamente teniendo en cuenta la distorsión !!! --->NOOO, precisamente al crear
+la máscara con el coadd1 generado por swarp ya tenemos la distorisión tenida en cuenta,
+y precisamente por eso luego al aplicar la máscara sobre las imágenes raw no
+corregidas de distorsión pues no coinciden bien los puntos de las máscara !!
+Sin embargo, si uso un dithercubemean, la máscara tampoco coindide bien en los bordes !!
+Todo indica que es problema de la máscara de objetos, que para algunas posiciones (bordes)
+no se posiciona bien, pero no se como arreglarlo !!! 
+Con dilate=1.2, mejora bastante, pero aún quedan algunos puntos "negros" en las 
+imágenes skysub.
+Otra opción, sería tener una máscara para cada imagen, con la consiguiente pérdida de 
+profundidad de campo y de CPU.
+
+
+
+
 
 Posibles causas del problema del Transito WASP:
 ==============================================
@@ -5909,6 +5997,11 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Revisar/permitir D+F+BPM en QL de modo automatico
+- incluir método de cálculo de offsets en config-file
+- incluir dilate en config-file.
+- refactorizar la astrometría en RS
+- cambiar directorio temporal de astrometry.net (/tmp/) para los /tmp/tmp.sanitized.ZDkbmU !!
 - comparar los Flat/Dark de HAWKI y de PANIC
 - Reducir WASP19: todos los cuadrantes, sin D ni F, con irdr:offsets, ...
 - revisar/mejorar ApplyDarkFlat en QL

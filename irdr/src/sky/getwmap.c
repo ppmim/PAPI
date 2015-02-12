@@ -29,7 +29,7 @@ extern float *getwmap(char *fn, int nx, int ny, float *gain, float sigma)
     for (i = 0; i < nx * ny; i++)
         wmap[i] = scale * gain[i];
 
-    printf("  getwmap: %s %f %f %f\n", fn, ncombine, exptime, variance);
+    printf("  getwmap: %s N=%f EXTIME=%f VAR=%f\n", fn, ncombine, exptime, variance);
 
     return wmap;
 }

@@ -54,7 +54,7 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
 
 /* sky subtraction and image destriping, no object masking */
 /* NOTE: in order to preserve the original count level, a constant (mode)
-   representing the median sky level is added to all pixels
+   representing the median sky level is added to all pixels.
 */
 extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
                             float *sky, char *type)

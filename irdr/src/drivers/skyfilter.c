@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
                 nsky++;
             }
         }
-	    printf (" \n");
+	printf (" \n");
 
         if (nsky==0) {
             eprintf("[skyfilter] Error: not enought number of sky frames");
@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
                 sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
             else 
                 /*sky = cube_mean_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);*/
+                /* OJO, no funciona bien cube_median_min(), SF !! */
                 sky = cube_median_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);
                  
             /*DEBUG*/
@@ -230,7 +231,7 @@ static void readdata(int i, int usemask)
         free(wmap);
     }
 
-    fprintf(stderr, " Reading %s %f %f\n", fn[i], bkgs[i], sigs[i]);
+    fprintf(stderr, " Reading %s bkg=%f sigs=%f\n", fn[i], bkgs[i], sigs[i]);
 }
 
 /* freedata: free data for image plane i */

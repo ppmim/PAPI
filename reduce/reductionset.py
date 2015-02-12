@@ -1534,13 +1534,14 @@ class ReductionSet(object):
                               p_offsets_file="/tmp/offsets.pap"):
       """
       Derive pointing offsets of each image taking as reference the first one and
-      using WCS astrometric calibration of the images. 
+      using WCS astrometric calibration of the images. Note that is **very** 
+      important that the images are astrometrically calibrated.
       
         Parameters
         ----------
                 
         images_in: str
-            list of filename 
+            list of filename of images astrometrically calibrated
         p_offsets_file: str
             filename of file where offset will be saved (it can be used
             later by dithercubemean). The format of the file will be:
@@ -1812,18 +1813,18 @@ class ReductionSet(object):
 
         # Call module makeObjMask
         makeObjMask(input_file, mask_minarea, mask_maxarea, mask_thresh, satur_level,
-                   outputfile=self.out_dir+"/objmask_file.txt", single_point=single_p)
+                   outputfile=self.out_dir + "/objmask_file.txt", single_point=single_p)
         
         if os.path.exists(input_file+".objs"): 
             shutil.move(input_file+".objs", output_master_obj_mask)
             log.debug("New Object mask created : %s", output_master_obj_mask)
 
         # STEP 2: dilate mask (NOT DONE)
-        dilate = False                                                     
+        dilate = True                                                     
         if dilate:
             log.info("Dilating image ....")
             prog = self.m_irdr_path+"/dilate "
-            scale = 1.5 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
+            scale = 1.2 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
             cmd  = prog + " " + output_master_obj_mask + " " + str(scale)
             # dilate will overwrite the master object mask
 
@@ -3362,7 +3363,7 @@ class ReductionSet(object):
                             [True]*len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
             except Exception,e:
-                raise e      
+                raise e
 
         ########################################################################
         # 4.2 - Divide by the master flat after sky subtraction ! 
@@ -3418,7 +3419,7 @@ class ReductionSet(object):
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
-                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                               coadded_file=output_file, config_dict=self.config_dict)
                 try:
                     aw.run(engine=self.config_dict['astrometry']['engine'])
@@ -4115,7 +4116,7 @@ class ReductionSet(object):
         #        - using astrometric calibration (wcs)
         #        - using cross-correlation (irdr.offsets)
         ########################################################################
-        self.offsets_mode = 'wcs'
+        self.offsets_mode = 'wcs-NO'
         #self.offsets_mode = 'cross-correlation'
         if self.offsets_mode=='wcs':
             log.info("Computing dither offsets using astrometric calibration")
@@ -4137,94 +4138,95 @@ class ReductionSet(object):
         
         ########################################################################
         # End of first cycle: SINGLE REDUCTION (quick mode or extended object !)    
-        # 6 - Preliminary coaddition and registering of the stack.
-        #     We use SCAMP + SWARP
+        # 6 - Preliminary coaddition and registering of the stack. Two options:
+        #     (1) We use SCAMP + SWARP
+        #     (2) We use irdr:dithercubemean() + SCAMP/Astrometry.net
         ########################################################################
-        if 1: #self.obs_mode!='dither' or self.red_mode=="quick":
-            if self.coadd_mode=='swarp':
-                log.info("**** Doing 1st Stack Coaddition (swarp)****")
-                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
-                            coadded_file=output_file, config_dict=self.config_dict)
+        if self.coadd_mode=='swarp':
+            log.info("**** Doing 1st Stack Coaddition (swarp)****")
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
+                        coadded_file=output_file, config_dict=self.config_dict)
+            try:
+                aw.run(engine=self.config_dict['astrometry']['engine'])
+            except Exception,e:
+                log.error("Some error while running Astrowarp: %s"%str(e))
+                raise e
+        else:
+            log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")
+            # create input file for dithercubemean
+            fo = open(out_dir+'/offsets1.pap', "r")
+            fs = open(out_dir+'/stack1.pap','w+')
+            for line in fo:
+                n_line = line.replace(".fits.objs", ".fits") 
+                fs.write(n_line)
+            fo.close()
+            fs.close()
+            # Dithercubemean
+            self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
+                                  out_dir+'/coadd1.fits','average')
+            
+            log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
+            # Astrometry of coadd
+            if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
-                    aw.run(engine=self.config_dict['astrometry']['engine'])
+                    reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
+                                          self.config_dict['astrometry']['catalog'], 
+                                          do_votable=False)
                 except Exception,e:
-                    log.error("Some error while running Astrowarp: %s"%str(e))
-                    raise e
+                    raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
             else:
-                log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")
-                # create input file for dithercubemean
-                fo = open(out_dir+'/offsets1.pap', "r")
-                fs = open(out_dir+'/stack1.pap','w+')
-                for line in fo:
-                    n_line = line.replace(".fits.objs", ".fits") 
-                    fs.write(n_line)
-                fo.close()
-                fs.close()    
-                self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
-                                      out_dir+'/coadd1.fits','average')
-                
-                log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
-                if self.config_dict['astrometry']['engine']=='SCAMP':
-                    try:
-                        reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
-                                              self.config_dict['astrometry']['catalog'], 
-                                              config_dict=self.config_dict, 
-                                              do_votable=False)
-                    except Exception,e:
-                        raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
-                else:
-                    try:
-                        solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
-                                                        out_dir, # self.temp_dir produces collision
-                                                        self.config_dict['general']['pix_scale'])
+                try:
+                    solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
+                                                    out_dir, # self.temp_dir produces collision
+                                                    self.config_dict['general']['pix_scale'])
 
-                    except Exception,e:
-                        raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
-                    else:
-                        # Rename the file
-                        shutil.move(solved, output_file)
-                        
-            # ###########################
-            # Data quality estimation
-            # ###########################
-            if self.config_dict['general']['estimate_fwhm']:
-                log.info("**** FWHM estimation of coadded_1 result frame ****")
-                satur_level = self.config_dict['astrometry']['satur_level']
-                pix_scale = self.config_dict['general']['pix_scale']
-                
-                try:
-                    pf = datahandler.ClFits(output_file)
-                    satur_level = int(satur_level) * int(pf.getNcoadds())
-                except:
-                    log.warning("Cannot get NCOADDS. Taken default (=1)")
-                    satur_level = satur_level
-                    
-                cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
-                    ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
-                    gain=4.15, sat_level=satur_level)
-                try:
-                    (fwhm, std, k, k) = cq.estimateFWHM()
-                    if fwhm>0 and fwhm<20:
-                        log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
-                    elif fwhm<0 or fwhm>20:
-                        log.error("Wrong estimation of FWHM of file %s"%output_file)
-                        log.error("Please, review your data.")           
-                    else:
-                        log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
                 except Exception,e:
-                    log.error("ERROR: something wrong while computing FWHM")
-                    raise e
-                            
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
+                else:
+                    # Rename the file
+                    shutil.move(solved, output_file)
+                    
+        # ###########################
+        # Data quality estimation
+        # ###########################
+        if self.config_dict['general']['estimate_fwhm']:
+            log.info("**** FWHM estimation of coadded_1 result frame ****")
+            satur_level = self.config_dict['astrometry']['satur_level']
+            pix_scale = self.config_dict['general']['pix_scale']
+            
+            try:
+                pf = datahandler.ClFits(output_file)
+                satur_level = int(satur_level) * int(pf.getNcoadds())
+            except:
+                log.warning("Cannot get NCOADDS. Taken default (=1)")
+                satur_level = satur_level
+                
+            cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
+                ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
+                gain=4.15, sat_level=satur_level)
+            try:
+                (fwhm, std, k, k) = cq.estimateFWHM()
+                if fwhm>0 and fwhm<20:
+                    log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
+                elif fwhm<0 or fwhm>20:
+                    log.error("Wrong estimation of FWHM of file %s"%output_file)
+                    log.error("Please, review your data.")           
+                else:
+                    log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
+            except Exception,e:
+                log.error("ERROR: something wrong while computing FWHM")
+                raise e
+
+        ########################################################################
+        # End of QUICK reduction
+        ########################################################################
+        if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
             log.info("##### End of QUICK  data reduction ######")
             log.info("#########################################")
-            
-            if self.obs_mode!='dither' or self.red_mode=="quick":
-                return output_file
-        
-               
-            
+            return output_file
+       
         ########################################################################
         # 8 - Create master object mask of the 1st stack coadd.
         ########################################################################
@@ -4253,6 +4255,7 @@ class ReductionSet(object):
         #####################
         
         log.info("**** Master object mask creation ****")
+        # Build masterObjMask of the first coadded stack
         obj_mask  = self.__createMasterObjMask(output_file, 
                                                out_dir+'/masterObjMask.fits')
                                               
@@ -4261,9 +4264,11 @@ class ReductionSet(object):
         # Re-compute dither offsets taking into account the object mask
         ########################################################################
         try:
+            # All the files (sky-subtrated and first coadd) are already 
+            # astrometrically calibrated.
             temp_list = [obj_mask] + self.m_LAST_FILES
             offset_mat = self.getWCSPointingOffsets(temp_list, 
-                                                        out_dir+'/offsets1.pap')
+                                                        out_dir + '/offsets1.pap')
         except Exception,e:
             log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
             raise e
@@ -4278,7 +4283,7 @@ class ReductionSet(object):
         ########################################################################
         log.info("**** Sky subtraction with 2nd object mask ****")
         # 9.1 Compound masked sky file list as input to IRDR::skyfilter()
-        fs = open(out_dir+"/skylist2.pap","w+")
+        fs = open(out_dir + "/skylist2.pap", "w+")
         i = 0
         # (j=1) Due to the offsets were computed with the obj_mask, the first 
         # offset (=0,0) is skipped.
@@ -4312,7 +4317,6 @@ class ReductionSet(object):
         self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)
         
-        print "2nd sky_filter, LAST_FILES=",self.m_LAST_FILES
         ########################################################################
         # 9.1 - Remove crosstalk - (only if bright stars are present)    
         ########################################################################
@@ -4354,10 +4358,9 @@ class ReductionSet(object):
 	########################################################################
         # Preliminary Astrometric calibration of sky-subtracted frames.
         # ######################################################################
-        log.info("**** Preliminary Astrometric calibatrion ****")
+        log.info("**** Preliminary Astrometric calibatrion (2nd sky) ****")
         new_files = []
         for my_file in self.m_LAST_FILES:
-            print "my_file=",my_file
             # Run astrometric calibration
             try:
                 solved = reduce.solveAstrometry.solveField(my_file, 
@@ -4396,9 +4399,8 @@ class ReductionSet(object):
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         #######################################################################
         if self.coadd_mode=='swarp':
-            print "LAST_FILES=",self.m_LAST_FILES
             log.info("**** Doing Final Stack Coaddition (swarp)****")
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                          coadded_file=output_file, config_dict=self.config_dict,
                          resample=True, subtract_back=True)
             try:
@@ -4419,7 +4421,7 @@ class ReductionSet(object):
             self.coaddStackImages(out_dir+'/stack2.pap', gainmap, 
                                     out_dir+'/coadd2.fits','average')
                 
-            log.info("**** Doing Astrometric calibration of Final coadd stack ****")
+            log.info("**** Doing Astrometric calibration of Final coadded stack ****")
             if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
                     reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
