@@ -1315,25 +1315,25 @@ class ReductionSet(object):
         out_files = []
         
         # get the skymodel
-        if skymodel==None:
+        if skymodel == None:
             skymodel = self.config_dict['skysub']['skymodel']
             
-        if obs_mode=='dither':
+        if obs_mode == 'dither':
             # It comprises any dithering pattern for point-like objects
             skyfilter_cmd = self.m_irdr_path + '/skyfilter '+ list_file + \
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' +  \
             destripe + '  ' + skymodel
-        elif obs_mode=='other':
+        elif obs_mode == 'other':
             # It comprises nodding pattern for extended objects 
             # The detection of SKY/TARGET frames is done in 'skyfilter_general' based
             # on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
-            skyfilter_cmd = self.m_irdr_path+'/skyfilter_general '+ list_file \
+            skyfilter_cmd = self.m_irdr_path + '/skyfilter_general ' + list_file \
             + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
-        elif obs_mode=='dither_on_off': 
+        elif obs_mode == 'dither_on_off': 
             # actually not used
             skyfilter_cmd = self.m_irdr_path + '/skyfilteronoff ' + list_file + \
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe 
-        elif obs_mode=='dither_off_on':
+        elif obs_mode == 'dither_off_on':
             # actually not used 
             skyfilter_cmd = self.m_irdr_path + '/skyfilteroffon ' + list_file +\
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe
@@ -1342,15 +1342,15 @@ class ReductionSet(object):
             raise
                   
         
-        print "SKY_FILTER_CMD=",skyfilter_cmd
+        print "SKY_FILTER_CMD=", skyfilter_cmd
         
-        args = [self.m_irdr_path + '/skyfilter',
+        args = [self.m_irdr_path + '/skyfilter_general',
                 list_file,
                 gain_file,
                 str(halfnsky), 
                 mask,
-                destripe,
-                skymodel]
+                destripe]
+                #,skymodel]
         #skyfilter_cmd = args 
         
         # Una prueba
@@ -1359,7 +1359,8 @@ class ReductionSet(object):
         # 
         output_lines = []
         try:
-            output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, shell=False, bufsize=-1)
+            output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, 
+                                                    shell=False, bufsize=-1)
             #output_line = subprocess.call(args)
             log.critical("irdr::skyfilter command executed ...")
             #with tempfile.NamedTemporaryFile() as cmd_output:
@@ -1398,7 +1399,7 @@ class ReductionSet(object):
             files = [line.split(" ")[0].replace("\n","") 
                      for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
             for file in files:
-                if os.path.exists(file+".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
+                if os.path.exists(file + ".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
                     shutil.move(file.replace(".fits", ".fits.skysub"), 
                                 file.replace(".fits", ".skysub.fits"))
                     out_files.append(file.replace(".fits", ".skysub.fits"))
@@ -1683,7 +1684,7 @@ class ReductionSet(object):
 
         if images_in==None:
             # we use the images ending with suffing in the output directory
-            my_input =  self.out_dir+'*'+suffix
+            my_input =  self.out_dir + '*' + suffix
         elif os.path.isfile(images_in): 
             # we use the given list of images
             my_input = images_in
@@ -1756,7 +1757,7 @@ class ReductionSet(object):
         else:
             gain_file = gain
         
-        if output==None:
+        if output == None:
             output_file = self.out_dir + "/coadd_" + self.m_filter + ".fits"     
         else:
             output_file = output
@@ -1765,7 +1766,7 @@ class ReductionSet(object):
         
         # STEP 2: Run the coadd                                           
         if type_comb=='average': # (use IRDR::dithercubemean)
-            prog = self.m_irdr_path+"/dithercubemean "
+            prog = self.m_irdr_path + "/dithercubemean "
             cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
             e = misc.utils.runCmd( cmd )
             if e==0:
@@ -1794,13 +1795,14 @@ class ReductionSet(object):
             mask_thresh = self.config_dict['skysub']['mask_thresh']
             satur_level = self.config_dict['skysub']['satur_level']
             single_p = False # we cannot use single point, skyfilter need the whole object!
+            dilate = self.config_dict['general']['dilate']
         else:
-            print "Program should never enter here !!!"
             mask_minarea = 5
             mask_maxarea = 0 # unlimited
             mask_thresh = 1.5
             satur_level = 55000
             single_p = False
+            dilate = 0.5
         
         # In order to set a real value for satur_level, we have to check the
         # number of coadds of the images (NCOADDS or NDIT keywords).
@@ -1815,21 +1817,21 @@ class ReductionSet(object):
         makeObjMask(input_file, mask_minarea, mask_maxarea, mask_thresh, satur_level,
                    outputfile=self.out_dir + "/objmask_file.txt", single_point=single_p)
         
-        if os.path.exists(input_file+".objs"): 
-            shutil.move(input_file+".objs", output_master_obj_mask)
+        if os.path.exists(input_file + ".objs"): 
+            shutil.move(input_file + ".objs", output_master_obj_mask)
             log.debug("New Object mask created : %s", output_master_obj_mask)
 
-        # STEP 2: dilate mask (NOT DONE)
-        dilate = True                                                     
-        if dilate:
+        # STEP 2: dilate mask
+        # mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
+        # For wide-fields with distortion, a dilate > 0.5 is recommended.
+        if dilate > 0:
             log.info("Dilating image ....")
-            prog = self.m_irdr_path+"/dilate "
-            scale = 1.2 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
-            cmd  = prog + " " + output_master_obj_mask + " " + str(scale)
+            prog = self.m_irdr_path + "/dilate "
+            cmd  = prog + " " + output_master_obj_mask + " " + str(dilate)
             # dilate will overwrite the master object mask
 
             e = misc.utils.runCmd( cmd )
-            if e==0:
+            if e == 0:
                 log.debug("Some error while running command %s", cmd)
             else:
                 log.debug("Successful ending of createMasterObjMask")
@@ -3899,12 +3901,12 @@ class ReductionSet(object):
         #      can come from the 'master_flat' provided by the user or from the 
         #      just created 'super_flat' with sci images 
         ########################################################################
-        if master_flat==None:
+        if master_flat == None:
             try:
                 # - Find out what kind of observing mode we have (dither, ext_dither, ...)
                 log.info('**** Computing Super-Sky Flat-Field (local_master_flat) ****')
                 local_master_flat = out_dir+"/superFlat.fits"
-                if self.obs_mode=="dither":
+                if self.obs_mode == "dither":
                     log.debug("---> dither sequece <----")
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
@@ -3912,9 +3914,9 @@ class ReductionSet(object):
                                                     norm=True, 
                                                     temp_dir=self.temp_dir)
                     superflat.create()
-                elif (self.obs_mode=="dither_on_off" or
-                      self.obs_mode=="dither_off_on" or
-                      self.obs_mode=="other"):
+                elif (self.obs_mode == "dither_on_off" or
+                      self.obs_mode == "dither_off_on" or
+                      self.obs_mode == "other"):
                     log.debug("----> EXTENDED SOURCE !!! <----")
                     sky_list = self.getSkyFrames()
                     misc.utils.listToFile(sky_list, out_dir+"/files.list")
@@ -3927,7 +3929,7 @@ class ReductionSet(object):
                     log.error("Dither mode not supported")
                     raise Exception("Error, dither mode not supported")
             except Exception,e:
-                raise e    
+                raise e
         else:
             local_master_flat = master_flat 
             log.info("Using the given (dome or twlight) master flat")
@@ -3971,7 +3973,7 @@ class ReductionSet(object):
         # GainMap ===> Bad pixels <=0, Good pixels = 1
         # Later, in skyfilter procedure bad pixels are set to bkg level.
         ########################################################################
-        if master_bpm_4gain !=None:
+        if master_bpm_4gain != None:
             log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm_4gain, gainmap))
             if not os.path.exists( master_bpm_4gain ):
                 log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
@@ -3988,7 +3990,7 @@ class ReductionSet(object):
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
         #      each raw frame.
         ########################################################################
-        if self.red_mode=='lab':
+        if self.red_mode == 'lab':
             log.info("**** Computing FWHM of each pre-reduced image ****")
             # First, get input parameter for FWHM estimation
             satur_level = self.config_dict['astrometry']['satur_level']
@@ -4035,11 +4037,11 @@ class ReductionSet(object):
         #     (and set bad pixels to bkg lvl)
         ########################################################################
         log.info("**** 1st Sky subtraction (without object mask) ****")
-        misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
+        misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/skylist1.list")
         # Return only filtered images; in extended-sources, sky frames  are not 
         # included.
         #  
-        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
+        self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist1.list",
                                            gainmap, 'nomask', self.obs_mode)
         
         ########################################################################
@@ -4101,7 +4103,7 @@ class ReductionSet(object):
         ########################################################################
         # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
         ########################################################################
-        if self.red_mode=='quick-lemon':
+        if self.red_mode == 'quick-lemon':
             output_fd, papi_output = \
                 tempfile.mkstemp(prefix = out_dir,
                                  suffix = '.papi_output', text = True)
@@ -4116,9 +4118,8 @@ class ReductionSet(object):
         #        - using astrometric calibration (wcs)
         #        - using cross-correlation (irdr.offsets)
         ########################################################################
-        self.offsets_mode = 'wcs-NO'
-        #self.offsets_mode = 'cross-correlation'
-        if self.offsets_mode=='wcs':
+        self.offsets_method = self.config_dict['offsets']['method']
+        if self.offsets_method == 'wcs':
             log.info("Computing dither offsets using astrometric calibration")
             try:
                 offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
@@ -4142,8 +4143,15 @@ class ReductionSet(object):
         #     (1) We use SCAMP + SWARP
         #     (2) We use irdr:dithercubemean() + SCAMP/Astrometry.net
         ########################################################################
-        if self.coadd_mode=='swarp':
+        # In case of 'science' reduction (ie. 2-skysubtraction passes), 
+        ## 'swarp' cannnot be used to build the 1st-coadd due to field distorion.
+        # We need to keep the distortion in order to have a good objectMask registering
+        # for the 2nd-skysubtraction. In addition, for wide fields, the matching
+        # is not perfect, but can be improved dilating (0.5) the objectMask.
+        if self.coadd_mode == 'swarp' and (self.red_mode == "quick" or 
+                                           self.obs_mode != 'dither'):
             log.info("**** Doing 1st Stack Coaddition (swarp)****")
+            # astrometric calibration + coadd
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                         coadded_file=output_file, config_dict=self.config_dict)
             try:
@@ -4155,18 +4163,19 @@ class ReductionSet(object):
             log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")
             # create input file for dithercubemean
             fo = open(out_dir+'/offsets1.pap', "r")
-            fs = open(out_dir+'/stack1.pap','w+')
+            fs = open(out_dir+'/stack1.pap', 'w+')
             for line in fo:
                 n_line = line.replace(".fits.objs", ".fits") 
                 fs.write(n_line)
             fo.close()
             fs.close()
+            
             # Dithercubemean
             self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
                                   out_dir+'/coadd1.fits','average')
             
+            # Astrometry of coadded stack
             log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
-            # Astrometry of coadd
             if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
                     reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
@@ -4233,32 +4242,11 @@ class ReductionSet(object):
         log.info("************************")
         log.info(" START SECOND PASS      ")
         log.info("************************")
-        
-        #############
-        # Build coadd 
-        #############
-        """log.info("**** Initial coaddition of sky subtracted frames ****")
 
-        fo = open(out_dir+'/offsets1.pap', "r")
-        fs = open(out_dir+'/stack1.pap','w+')
-        for line in fo:
-            n_line = line.replace(".fits.objs", ".fits") 
-            fs.write(n_line)
-        fo.close()
-        fs.close()    
-        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
-                              out_dir+'/coadd1.fits','average')
-
-        """
-        #####################
-        # Create object mask 
-        #####################
-        
-        log.info("**** Master object mask creation ****")
         # Build masterObjMask of the first coadded stack
-        obj_mask  = self.__createMasterObjMask(output_file, 
-                                               out_dir+'/masterObjMask.fits')
-                                              
+        log.info("**** Master object mask creation ****")
+        obj_mask = self.__createMasterObjMask(output_file, 
+                                               out_dir + '/masterObjMask.fits')
 
         ########################################################################
         # Re-compute dither offsets taking into account the object mask
@@ -4270,13 +4258,14 @@ class ReductionSet(object):
             offset_mat = self.getWCSPointingOffsets(temp_list, 
                                                         out_dir + '/offsets1.pap')
         except Exception,e:
-            log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
+            log.error("Error while computing WCS pointing offsets. "
+                "Cannot continue with data reduction...")
             raise e
         
         ########################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
         ########################################################################
-        # TODO ???
+        # TODO ? In principle, it is not necessary.
         
         ########################################################################
         # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK
@@ -4302,19 +4291,19 @@ class ReductionSet(object):
                 line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
                 " " + str(offset_mat[j][1])
             
-            fs.write(line+"\n")
+            fs.write(line + "\n")
             
             if (self.obs_mode=='dither_on_off' or 
                 self.obs_mode=='dither_off_on') and i%2:
-                j = j+1
+                j = j + 1
             elif self.obs_mode=='dither':
-                j = j+1
-            i = i+1
+                j = j + 1
+            i = i + 1
             
         fs.flush()
         os.fsync(fs.fileno())
         fs.close()
-        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
+        self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)
         
         ########################################################################
@@ -4398,8 +4387,9 @@ class ReductionSet(object):
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         #######################################################################
-        if self.coadd_mode=='swarp':
+        if self.coadd_mode == 'swarp':
             log.info("**** Doing Final Stack Coaddition (swarp)****")
+            # Build stack using SWARP
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                          coadded_file=output_file, config_dict=self.config_dict,
                          resample=True, subtract_back=True)
@@ -4410,21 +4400,25 @@ class ReductionSet(object):
                 raise e
         else:
             log.info("**** Doing Final Stack Coaddition (dithercubemean) ****")
+            
             # create input file for dithercubemean
-            fo = open(out_dir+'/offsets1.pap', "r")
-            fs = open(out_dir+'/stack2.pap','w+')
+            fo = open(out_dir + '/offsets1.pap', "r")
+            fs = open(out_dir + '/stack2.pap', 'w+')
             for line in fo:
-                n_line = line.replace(".fits.objs", ".fits") 
-                fs.write(n_line)
+                if ".skysub." in line:
+                    fs.write(line)
             fo.close()
-            fs.close()    
-            self.coaddStackImages(out_dir+'/stack2.pap', gainmap, 
-                                    out_dir+'/coadd2.fits','average')
+            fs.close()
+            
+            # Dithercubemean
+            self.coaddStackImages(out_dir + '/stack2.pap', gainmap, 
+                                    out_dir + '/coadd2.fits', 'average')
                 
+            # Final Astrometric calibration
             log.info("**** Doing Astrometric calibration of Final coadded stack ****")
             if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
-                    reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
+                    reduce.astrowarp.doAstrometry(out_dir + '/coadd2.fits', output_file, 
                                      self.config_dict['astrometry']['catalog'], 
                                      config_dict=self.config_dict, 
                                      do_votable=False,

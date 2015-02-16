@@ -5949,6 +5949,8 @@ algún error!!
 - (BUG) Encuentro un problema en skyfilter.c, pues al llamarlo con 
 skymodel=2 (min), da un SFault ! ese método ha sido muy poco usado...
 Los datos eran de TaurusF1[59-63] para el SG4.
+Parcialmente solucionado (bug encontrado, pero falta mejorar el 
+cálculo de la weight_map en irdr::cube_mean_min_w()).
 
 - Soluciono bug en dilate.c (creaba imágenes de 16 bits, pero mal !);
 lo modificoo para que las imagenes sean de bitpix=-32.
@@ -5980,8 +5982,43 @@ Otra opción, sería tener una máscara para cada imagen, con la consiguiente p�
 profundidad de campo y de CPU.
 
 
+12-Feb-2015
+----------
++ Continuo con el problema de los "puntos" en los skysub de segunda vuelta causados
+por el mal registrado de la masterObjectMask.
+Encuentro que la mejor solución es la siguiente:
+    - dilate = 0.5
+    - calcular los offsets con WCS (skysub1 calibrados astrometricamente)
+    - crear stack de los skysub con dithercubemean y los offsets anteriores
+    - crear ObjectMask del stack y dilatar (0.5) -- aún quedarán algunos puntos en los bordes, pero pocos....
+    - calcular nuevos offsets (vía WCS) con la objectMask
+    - calcular skysub2 
+    - construir nuevo coadd con skysub2: lo más recomendable es con SWARP, pues dithercubemean no
+    resuelve bien en los bordes por la distorisión del campo, aunque si el campo es pequeño se podría
+    usar.
+
+- Continuando con el problema/bug del día 11-Feb en el método irdr::cube_mean_min_w,
+lo resuelvo (aunque queda mejorar el weight_map) que para el SG4 se obtienen 
+mucho mejores resultados skymodel=min. Esto implica que quizás habría que incluir
+el caso especial de reducción del detector SG4 en la segunda pasada del sky_subtraction.
+(PENDIENTE CONFIRMAR)
+Otra opción sería usar skymode=median, pero con más de 5 imágenes de dithering (>7),
+con la esperanza de que l método irdr::mean() use el clipping y se calcule una media
+robusta rechazando los puntos malos.
+
+13-Feb-2015
+----------
+- Videoconf PANIC (ver cosas todo en panic35)
+- Comienzo implementación de suma de planos de un cubo recentrando ===> align_stack_cube.py
+   - imcombine + offset file funciona sólo in integer pixel offsets
+   - irdr.offsets no calcula bien los offsets...probar con varias configuraciones
+   pero quizás mejor usar getWCSOffsets...
+   
+- Encuentro una rutina que podría hacerlo, pero no funciona...
+https://github.com/viyh/fits-process
 
 
+   
 
 Posibles causas del problema del Transito WASP:
 ==============================================
@@ -5997,9 +6034,12 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- arreglar/poner bien RS::skyFilter, ahora no funciona los modos onoff, etc, etc...
+- ver si removeXTalk debería hacerse siempre en en la primera pasada de skysub aunque
+el modo sea science !!
+- reducir datos de OmegaCass
+- Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)!
 - Revisar/permitir D+F+BPM en QL de modo automatico
-- incluir método de cálculo de offsets en config-file
-- incluir dilate en config-file.
 - refactorizar la astrometría en RS
 - cambiar directorio temporal de astrometry.net (/tmp/) para los /tmp/tmp.sanitized.ZDkbmU !!
 - comparar los Flat/Dark de HAWKI y de PANIC
@@ -6015,10 +6055,8 @@ TODOs - urgentes
 - aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
 en QL y demás candidatas.
 - ver que se puede hacer para forzar NCOADD, ITIME, EXPTIME en applyDark y applyDarkFlat
-- que collapse no renombre con sufijo coadd aunque no haga el collapse, pues confunde !!
 - en astrowarp: parece que shutil.move no borrar la src !! noooo! no que pasa es que
 If the destination is on the current filesystem, then os.rename()
-
 y como el PANIC_SEQ_Q01.fits suele existir de una reducción anterior, pues no borra el src, 
 sólo renombra el PANIC_SEQ_Q01.fits.
 
@@ -6040,17 +6078,13 @@ nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 
 - Quitar todos los debugs (ficheros temporales) de skyfilter.c
 - Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
-- ¿ para qué demonios sirven lo MEF ?? podríamos trabajar sólo con joins ???
 - conversion de MEF-cubes to singles(join)-cubes !!
- 
 - limpiar fichero de configuración de variables que no usamos.
-- reductionset.py (1812), dilate=False !!! (revisar)
-- 2nd. round of skyfilter ! --> re-calculo de offsets de mascara de objetos
 - ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...
 - en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
 pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
 
-- iraf.imcombine: los NaN los "cambia" por 0s !!! --> estudiar !!
+- iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado ==> estudiar como puede afectar !!!
     
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
@@ -6060,15 +6094,10 @@ pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
 
 TODO:
 ====
-- ojo, serial data reduction !!
-- verificar que dilate=True tiene sentido en RS::__createMasterObjMask
-- Eliminar los /data2/tmp/sky_XXX.fits que se crean para debug en skyfilter !!!
 - Eliminar el primer coadd que se crea en: /tmp/PANIC_SEQ_Q01_coadd_RADMON.fits 
-- Modificar calTwFlat.py para que acepte una lista de darks en lugar de un DARK_MODEL.
 - Escribir a RM para que modifique? EXTEND=F en los single !!! para identificarlos bien de los MEF.
 - Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
 hacer una propia en Python.
-- Buscar otra forma mas robusta de calcular los offsets --->cfr LEMON !!
 - Propagar T_FOCUS al hacer split para reducción en parelelo ! y donde haga falta !
 - ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'
 - (P) Habría que revisar dicha rutina (cube_median) !!
@@ -6077,16 +6106,13 @@ están comentados, pero ver si realmente son necesarios y que diferencia hay en 
 Tal y como estaba implementado parece que no funciona (probar con HAWKI)
 
 - Ver como reducir todos los cuandrantes de NGC752_focus000[1-5].fits !!
-- Analizar secuencias de foco y enviar datos a BD y CC.
 (bug)- Astrowarp no genera el .weight.fits con el mismo nombre que coadd_tmp.fits, sino coadd.weight.fits !!! pero
 luego para construir todo el mosaico si lo necesita !!!
-- Añadir relojo de busy a la rutina MEF2Single.
+- Añadir reloj de busy a la rutina MEF2Single.
 - Añadir MEF2Single a la serie de foco para que haga automaticamente en caso necesario.
-
-
-(P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
+- crear instalación en obs22 del control de PANIC, de forma que no pueda
 modificar ficheros sensibles ni los fuentes del software de PANIC.
-(P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
+- Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
 
 
 

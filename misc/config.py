@@ -438,6 +438,7 @@ def read_config_file(config_file = default_config_file()):
     general["pattern"] = read_parameter(config, "general", "pattern", str, False, config_file)
     general["parallel"] = read_parameter(config, "general", "parallel", bool, True, config_file)
     general["ncpus"] = read_parameter(config, "general", "ncpus", int, True, config_file)
+    general["dilate"] = read_parameter(config, "general", "dilate", float, True, config_file)
     general["verbose"] = read_parameter(config, "general", "verbose", bool, False, config_file)
     
     filter_prefix = "filter_name_"
@@ -583,6 +584,7 @@ def read_config_file(config_file = default_config_file()):
     offsets["min_corr_frac"] = read_parameter(config, "offsets", "min_corr_frac", float, False, config_file)
     offsets["satur_level"] = read_parameter(config, "offsets", "satur_level", long, False, config_file)
     offsets["single_point"] = read_parameter(config, "offsets", "single_point", bool, False, config_file)
+    offsets["method"] = read_parameter(config, "offsets", "method", str, False, config_file)
     
     
     options["offsets"] = offsets     

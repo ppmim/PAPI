@@ -484,6 +484,37 @@ extern int get_wcs(char *fn, double *ra, double *dec, double *scale, double *pos
 	    fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang); 
 
 	}
+    /* ---------------- OMEGA2000 ----------------- */
+      else if (strcasecmp(instrument,"OmegaCass_MPIA", 14)==0){
+        
+            fprintf(stderr, "\nOmegaCass_MPIA\n");
+              
+            if (! hgetra(hdr, "RA", ra)) {
+                fprintf(stderr, "get_wcs: unable to read RA in: %s\n", fn);
+                return -1; 
+            }
+        
+            if (! hgetdec(hdr, "DEC", dec)) {
+                fprintf(stderr, "get_wcs: unable to read DEC in: %s\n", fn);
+                return -1; 
+            }
+        
+            if (hgetr8(hdr, "PIXSCALE", scale)==0) {
+                fprintf(stderr, "get_wcs: unable to read SCALE in: %s\n", fn);
+                free(hdr);
+                return -1; 
+            }
+
+
+            if (hgetr8(hdr, "ROT-RTA" /*"POSANG"*/, posang)==0) {
+                fprintf(stderr, "get_wcs: unable to read POSANG in: %s\n", fn);
+                free(hdr);
+                return -1; 
+            }  
+
+            fprintf(stderr, "Read RA=%g  DEC=%g  SC=%g  ANG=%g\n", *ra, *dec, *scale, *posang); 
+
+        }
     else if (strcasecmp(instrument,"PANIC",5)==0 )  { 
 
         fprintf (stderr, "\nPANIC instrument: Reading RA,Dec coordinates.  \n");

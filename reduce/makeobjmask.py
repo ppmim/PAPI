@@ -63,8 +63,8 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
       Create an object mask of the inputfile/s based on SExtractor
        
     INPUTS
-      inputfile    it can be a regular expresion or a filename 
-                          containing a filelist
+      inputfile    It can be a regular expresion or a filename 
+                   containing a filelist.
             
     OPTIONAL INPUTS
             
@@ -92,16 +92,17 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
     files = []       
     # Check if inputfile is FITS file 
     if datahandler.isaFITS(inputfile)==True:
-        files=[inputfile]
+        files = [inputfile]
     # or a text file having the list of files to be masked
     elif os.path.isfile(inputfile):
-        files=[line.replace( "\n", "") for line in fileinput.input(inputfile)]
+        files = [line.replace( "\n", "") for line in fileinput.input(inputfile)]
+        print "FILES=", file
     # or must be a regular expresion
     else:
         files = glob.glob(inputfile)
         files.sort()
     
-    f_out = open(outputfile,"w")
+    f_out = open(outputfile, "w")
     
     sex = astromatic.SExtractor()
     n = 0

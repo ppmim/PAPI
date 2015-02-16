@@ -191,6 +191,18 @@ In the Expert Settings dialog, configure the operation mode of the FTP server, S
 
 Press Finish to save the configurations.
 
+sshd config
+===========
+To enable the keep alive system-wide (root access required), edit /etc/ssh/ssh_config; to set the settings for just your user, edit ~/.ssh/config (create the file if it doesn't exist). Insert the following:
+
+Host *
+    ServerAliveInterval 300
+    ServerAliveCountMax 2
+You can also make your OpenSSH server keep alive all connections with clients by adding the following to /etc/ssh/sshd_config:
+
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
 
 *************************
 ** Telescope Interface **

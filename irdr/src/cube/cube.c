@@ -313,6 +313,7 @@ cube_mean_min_w(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES], int np,
     if (offset) {                          /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
         for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
             mean = 0;
+            nval = 0;
             for (j = 0; j < np; j++)
                 if ((wval = *(wplanes[j] + i)) > 0.0) {     /* if not masked */
                     buf[nval] = *(planes[j] + i) + scale[j];
@@ -320,13 +321,17 @@ cube_mean_min_w(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES], int np,
                 }
             
             for (n=0; n< N; n++){
+                /*fprintf(stderr, "NVAL=%d -----", nval);*/
                 buf2[n] = kselect(buf, nval, n );   /* take the n-smallest values */
                 mean += buf2[n];
                 /* Here, we should get the concerning weights of the n-smallest 
                 values in order to compute the weighted mean
-                */    
+                */
+                /*fprintf(stderr, "MEAN=%f", mean);*/
             }                
             meanplane[i] = mean/N; /* not weighted mean ! */
+            sumwplanes[i] = 1.0;
+            /*fprintf(stderr, "I=%d !!", i);*/
         }
     } else {
         for (i = 0; i < nx * ny; i++) {   /* mult. scale to normalize */
@@ -342,11 +347,12 @@ cube_mean_min_w(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES], int np,
                 */    
             }                
             meanplane[i] = mean/N; /* not weighted mean ! */
-
+            sumwplanes[i] = 1.0;
 
         }
     }
-
+    
+    *wplanesum = sumwplanes;
     return meanplane;
 
 

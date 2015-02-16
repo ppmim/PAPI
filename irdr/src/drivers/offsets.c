@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 
     scale = readwcs(fn[0], NULL, NULL);              /* arcsec per pixel */
   
-    /*fprintf(stderr, "\nDEBUGGIN ....\n->offsets_SCALE=%f", scale);*/
+    fprintf(stderr, "\nDEBUGING ....\n->offsets_SCALE=%f", scale);
 
     /* Initial half-width of cross-corr search box, in pixels, but the argv value is given in arcsec*/
     hwid = (argc == 3) ? (atof(argv[2]) / scale + 0.5) : (HWID / scale + 0.5);

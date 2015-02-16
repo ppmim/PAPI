@@ -189,14 +189,15 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         logging.debug("RA, Dec are unknown but scale is")
         str_cmd = "%s/solve-field -O -p --scale-units arcsecperpix --scale-low %s \
         --scale-high %s -D %s %s %s\
-        "%(path_astrometry, scale-0.1, scale+0.1, tmp_dir, filename, ext_str)
+        "%(path_astrometry, scale - 0.1, scale + 0.1, tmp_dir, filename, ext_str)
     # 3) None is known -- blind calibration
     if (ra==-1 or dec==-1) and scale==-1:
         logging.debug("Nothing is known")
         str_cmd = "%s/solve-field -O -p -D %s %s %s\
         "%(path_astrometry, tmp_dir, filename, ext_str)
     
-    logging.debug("CMD="+str_cmd)
+    logging.debug("CMD=" + str_cmd)
+    print "CMD_Astrometry.net =", str_cmd
     
     try:
         p = subprocess.Popen(str_cmd, bufsize=0, shell=True, 

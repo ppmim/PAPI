@@ -926,7 +926,8 @@ in principle previously reduced, but not mandatory.
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
-                  help="Source file list of data frames. It can be a file or directory name.")
+                  help="Source input file. It can be a FITS file or"
+                  "text file with a list of FITS files.")
     
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 
