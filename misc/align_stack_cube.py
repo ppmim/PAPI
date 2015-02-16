@@ -1,4 +1,4 @@
-# #! /usr/bin/env python
+#! /usr/bin/env python
 #encoding:UTF-8
 
 # Copyright (c) 2015 Jose M. Ibanez All rights reserved.
@@ -29,11 +29,16 @@ from optparse import OptionParser
 import fileinput
 import astropy.io.fits as fits
 import numpy
+from astropy import wcs
+import math
+import subprocess
+
 
 # PAPI modules
 import astromatic
 import datahandler
 from reduce.makeobjmask import *
+import reduce.solveAstrometry
 
 # Logging
 from misc.paLog import log
@@ -63,21 +68,47 @@ def align_stack_cube(input_file, output_file=None):
     """
     
     log.debug("Start align_stack_cube...")
+    
     # Split planes into temporal fits files
     sp_files = split_fits_cube(input_file, os.path.split(output_file)[0])
     
+    # Remove some unnecesary keywords
+    for i_file in sp_files:
+        with fits.open(i_file, "update") as f:
+            if 'CTYPE3' in f[0].header: f[0].header.remove("CTYPE3")
+            if 'CRPIX3' in f[0].header: f[0].header.remove("CRPIX3")
+            if 'CRVAL3' in f[0].header: f[0].header.remove("CRVAL3")
+            if 'CDELT3' in f[0].header: f[0].header.remove("CDELT3")
+            
+            
     log.debug("Lets get offsets....")
     # Get offsets
-    offsets = getPointingOffsets(sp_files)
+    # offsets = getPointingOffsets(sp_files)
+    offsets = getWCSPointingOffsets(sp_files, "/tmp/offsets.txt", 0.2)
     
-    print "OFFSETS: \n %s", offsets
+        
+    # Aling and coadd (sum) the images
+    out_file = sp_files[0].replace(".fits", "_coadd.fits")
+    naxis1 = 1024
+    naxis2 = 1024
+    dummy_gain = "/tmp/dummy_gain.fits"
+    if os.path.exists(dummy_gain):
+        os.remove(dummy_gain)
+    ones_array = numpy.ones([naxis1, naxis2], dtype=numpy.float32)
+    bpm = numpy.loadtxt("/data1/OmegaCass/badpixels.omegac", dtype=numpy.int16)
+    ones_array[bpm[:,1]-1, bpm[:,0]-1] = 0.0
+    ghdu = fits.PrimaryHDU( data=ones_array )
+    ghdu.writeto(dummy_gain)
+    coaddImages(sp_files, "/tmp/offsets.txt", dummy_gain,
+                out_file, "/tmp/dummy.fits", ctype='sum')
     
-    # Aling and coadd the images
-    # TODO
+    log.info("Congrats !, coadd file generated %s"%out_file)
     
+    return out_file
+
 def split_fits_cube(filename, out_path, overwrite=True):
     """
-    Split up the slices of a FITS cube into individual files
+    Split up the slices of a FITS cube into individual files.
     
     Parameters
     ----------
@@ -93,9 +124,7 @@ def split_fits_cube(filename, out_path, overwrite=True):
     
     """
     
-    print "OUT_PATH",out_path
     imfiledir = os.path.join( out_path, os.path.splitext(os.path.split(filename)[1])[0] )
-    print "IMFILEDIR",imfiledir
     mkdir_p( imfiledir )
     
     out_filenames = []
@@ -106,19 +135,20 @@ def split_fits_cube(filename, out_path, overwrite=True):
             raise Exception(msg)
         
         numslices = fcube[0].data.shape[0]
-        print "FILE", filename
         for i in range(numslices):
             imfileout = os.path.join( imfiledir, os.path.splitext(os.path.split(filename)[1])[0] + \
-                '_' + ( "%05d" % i ) + '.fits' )
+                '_' + ( "%05d" % i ) + '.ast.fits' )
+            """
             if overwrite and (os.path.exists(imfileout) or os.path.islink(imfileout)):
                 os.remove(imfileout)
             hdu = fits.PrimaryHDU( header=fcube[0].header, data=fcube[0].data[i] )
             hdu.writeto(imfileout)
+            """
             out_filenames.append(imfileout)
-    
+            
     return out_filenames
 
-def getPointingOffsets (image_list, 
+def getPointingOffsets(image_list, 
                             p_offsets_file='/tmp/offsets.pap',
                             out_path='/tmp'):
         """
@@ -206,7 +236,162 @@ def getPointingOffsets (image_list,
         log.debug("END of getPointingOffsets")                        
         return offsets_mat
 
+
+def getWCSPointingOffsets(images_in,
+                              p_offsets_file="/tmp/offsets.pap",
+                              pix_scale=0.45):
+      """
+      Derive pointing offsets of each image taking as reference the first one and
+      using WCS astrometric calibration of the images. Note that is **very** 
+      important that the images are astrometrically calibrated.
+      
+        Parameters
+        ----------
+                
+        images_in: str
+            list of filename of images astrometrically calibrated
+        p_offsets_file: str
+            filename of file where offset will be saved (it can be used
+            later by dithercubemean). The format of the file will be:
+            
+            /path/to/filename00   offsetX00   offsetY00
+            /path/to/filename01   offsetX01   offsetY01
+            ...
+            /path/to/filename0N   offsetX0N   offsetY0N
+            
+        Returns
+        -------    
+        offsets: narray          
+                two dimensional array (Nx2) with offsets (in pixles),
+                where N=number of files.
+                
+        Notes:
+            It assumed that the input images have a good enough astrometric
+            calibration (hopefully obtained with Astrometry.net), and North
+            is up and East is left, and no rotation angle exists.
+            
+        
+      """
+      
+      log.info("Starting getWCSPointingOffsets....")
+      
+      # First, we need the astrometic calibration
+      # cal_images = doAstroCalib(images_in, pix_scale)
+      # only a test !!
+      cal_images = images_in
+      
+      if len(cal_images) != len(images_in):
+          msg = "Error, cannot calibrate all the images"
+          log.error(msg)
+          raise Exception(msg)
+          
+      # Init variables
+      i = 0 
+      offsets_mat = None
+      ra0 = -1
+      dec0 = -1
+      x_pix = 512.0
+      y_pix = 512.0
+      offsets = numpy.zeros([len(cal_images), 2] , dtype=numpy.float32)
+      
+      # Reference image
+      ref_image = cal_images[0]
+      try:
+            h0 = fits.getheader(ref_image)
+            w0 = wcs.WCS(h0)
+            ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
+            dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
+            log.debug("Ref. image: %s RA0= %s DEC0= %s"%(ref_image, ra0,dec0))
+      except Exception,e:
+          raise e
+        
+      offset_txt_file = open(p_offsets_file, "w")
+      for my_image in cal_images:
+        try:
+              h = fits.getheader(my_image)
+              w = wcs.WCS(h)
+              ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
+              dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
+              log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
+              # Assummed that North is up and East is left
+              offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
+              offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
+              
+              log.debug("offset_ra  = %s"%offsets[i][0])
+              log.debug("offset_dec = %s"%offsets[i][1])
+              
+              offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
+              i+=1
+        except Exception,e:
+          raise e
+        
+      offset_txt_file.close()
+      
+      # Write out offsets to file
+      # numpy.savetxt(p_offsets_file, offsets, fmt='%.6f')
+      log.debug("(WCS) Image Offsets (pixels): ")
+      log.debug(offsets)
+      
+      return offsets
+  
+def doAstroCalib( image_list, pix_scale ):
+    """
+    Performs an preliminarty astrometric calibration to the
+    given list of files.
+    """
+    
+    log.info("**** Preliminary Astrometric calibration ****")
+    new_files = []
+    out_dir = "/data2/out_omegac"
+    for my_file in image_list:
+        # Run astrometric calibration
+        try:
+            solved = reduce.solveAstrometry.solveField(my_file, 
+                            out_dir, # self.temp_dir produces collision
+                            pix_scale)
+        except Exception,e:
+            raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+        else:
+            # Rename the file
+            out_filename = my_file.replace(".fits", ".ast.fits")
+            new_files.append(out_filename)
+            shutil.move(solved, out_filename)
+    
+    return new_files
+
+
+def coaddImages(images_in, list_file, gain_file, 
+                out_file, weight_file, ctype='sum'):
+    """
+    Coadd the list of images taking into account the offsets
+    """
+    
+    m_irdr_path = '/home/panic/DEVELOP/papi/irdr/bin'
+    args = [m_irdr_path + '/dithercubemean',
+                list_file,
+                gain_file,
+                out_file, 
+                weight_file,
+                ctype]
+        
+    output_lines = []
+    try:
+        output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, 
+                                              shell=False, bufsize=-1)
+        sys.stdout.flush()
+        sys.stderr.flush()
+            
+    except subprocess.CalledProcessError, e:
+        log.debug("Error running dithercubemean: %s"%output_lines)
+        log.debug("Exception: %s"%str(e))
+        raise Exception("Error running dithercubemean")
+        
+    print "OUTPUT=", output_lines
+    
 def mkdir_p(path):
+    """
+    Create directory 'path'
+    """
     try:
         os.makedirs(path)
     except OSError as exc:
@@ -278,8 +463,8 @@ in principle, with small drift of the planes. No resampling is done.
         
         for ifile in filelist:
             try:
-                align_stack_cube(ifile, options.output_filename)
-                sys.exit(0)
+                r = align_stack_cube(ifile, options.output_filename)
+                log.info("COADD of %s  ---> %s"%(ifile, r))
             except Exception,e:
                 msg = "Error processing file %s - %s"%(ifile,str(e))
                 log.error(msg)

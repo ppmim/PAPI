@@ -154,20 +154,19 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         scale = pix_scale
     
     # Extension paramter
-    if extension>0:
+    if extension > 0 :
         ext_str = "--extension %d"%int(extension)
     else:
         ext_str = ""
         
     if not is_science:
         logging.info("Frame %s is not a science frame"%filename)
-        #return filename + ".not_science"
         
     logging.debug("Starting to solve-field for: %s  Scale=%s  RA= %s Dec= %s \
     INSTRUMENT= %s"%(filename, scale, ra , dec, instrument))
     
     path_astrometry = os.path.dirname(spawn.find_executable("solve-field"))  
-    if not os.path.exists(path_astrometry+"/solve-field"):
+    if not os.path.exists(path_astrometry + "/solve-field"):
         raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s"%path_astrometry)
 
 
@@ -188,12 +187,12 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     elif ra == -1 or dec ==-1 :
         logging.debug("RA, Dec are unknown but scale is")
         str_cmd = "%s/solve-field -O -p --scale-units arcsecperpix --scale-low %s \
-        --scale-high %s -D %s %s %s\
+        --scale-high %s -D %s %s %s --downsample 2\
         "%(path_astrometry, scale - 0.1, scale + 0.1, tmp_dir, filename, ext_str)
     # 3) None is known -- blind calibration
     if (ra==-1 or dec==-1) and scale==-1:
         logging.debug("Nothing is known")
-        str_cmd = "%s/solve-field -O -p -D %s %s %s\
+        str_cmd = "%s/solve-field -O -p -D %s %s %s --downsample 2\
         "%(path_astrometry, tmp_dir, filename, ext_str)
     
     logging.debug("CMD=" + str_cmd)

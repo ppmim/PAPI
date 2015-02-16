@@ -1351,12 +1351,9 @@ class ReductionSet(object):
                 mask,
                 destripe]
                 #,skymodel]
+        
         #skyfilter_cmd = args 
         
-        # Una prueba
-        #args = [self.m_irdr_path + '/skyfilter']
-        #print "ARGS",args
-        # 
         output_lines = []
         try:
             output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, 
@@ -3459,7 +3456,7 @@ class ReductionSet(object):
             self.m_LAST_FILES = new_files
             try:
                 offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
-                                                    out_dir+'/offsets1.pap')                
+                                                    out_dir + '/offsets1.pap')                
             except Exception,e:
                 log.error("Error while getting WCS pointing offsets. Cannot continue with data reduction...")
                 raise e

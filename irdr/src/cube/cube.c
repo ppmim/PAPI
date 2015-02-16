@@ -93,6 +93,28 @@ cube_median(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
     return medplane;
 }
 
+/* 
+ * cube_sum: find out the sum image plane of image cube 
+ * Added by jmiguel 16-Feb-2015;
+ */
+
+extern float *
+cube_sum(float *planes[MAXNPLANES], int np, int nx, int ny)
+{
+    int i, j, is_even = !(np & 1);
+    static float buf[MAXNPLANES];      /* values of a pixel in all planes */
+    float *sumplane;
+
+    sumplane = (float *) emalloc(nx * ny * sizeof(float));
+
+    for (i = 0; i < nx * ny; i++) {    /* sum combine cube to plane */
+        sumplane[i] = 0;    
+        for (j = 0; j < np; j++)
+            sumplane[i] += (*(planes[j] + i));
+    }
+
+    return sumplane;
+}
 
 /* 
  * cube_mean_nw: find clipped mean image plane of image cube (no weights) 

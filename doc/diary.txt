@@ -6018,6 +6018,24 @@ robusta rechazando los puntos malos.
 https://github.com/viyh/fits-process
 
 
+16-Feb-2015
+----------
+- Definitivamente no entiendo que hace iraf.imcombine con la opción
+de los offsets !!! el resultado no es bueno !! así que opto por 
+usar dithercubemean para la suma del cubo.
+
+- Los offsets que me data irdr.offsets no me convencen, de hecho son muy
+pequeños. Por este motivo, decido usar/probar con getWCSOffsets. Compruebo
+que los offsets que me da son mucho más precisos, y practicamente iguales
+a los que obtengo con imaxam de forma manual.
+
+- modifico cube.c para añadir cube_sum para la suma aritmética simple
+de cubos. Esto se traslada a dithercubemean, que le añador un parámetro/flag
+para indicar si se quiere hacer simplemente la suma aritmética.
+Auque necesita un gainmap como entrada, luego no lo usa para nada. Mantengo
+el interfaz simplemente por comodidad.
+
+
    
 
 Posibles causas del problema del Transito WASP:
