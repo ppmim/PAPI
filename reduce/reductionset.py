@@ -749,16 +749,19 @@ class ReductionSet(object):
 		          'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
 		          'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", 
                   'HIERARCH ESO TPL NEXP','NCOADDS','HIERARCH ESO DET NDIT', 'NDIT',
-                  'HIERARCH ESO INS FILT1 NAME', 'HIERARCH ESO INS FILT2 NAME'
+                  'HIERARCH ESO INS FILT1 NAME', 'HIERARCH ESO INS FILT2 NAME',
+                  'BSCALE', 'BZERO',
                 ]
                 instr = 'hawki'  
             else: # PANIC
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
-                   'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+                   'UT','AIRMASS','IMAGETYP','TELESCOP','INSTRUME','MJD-OBS',
+                   'BSCALE', 'BZERO',
+                   'CTIME','ITIME','NCOADDS','EXPTIME',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
-                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
-                   'PAPITYPE','PAPIVERS','OBSERVER','ORIGIN'
+                   'CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
+                   'PAPITYPE', 'PAPIVERS','OBSERVER', 'ORIGIN'
                 ]
                 instr = 'panic'
             try:

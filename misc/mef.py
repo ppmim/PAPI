@@ -32,8 +32,9 @@
 # Last update: 21/Jun/2013   jmiguel@iaa.es - some header improvements in
 #                                             copy_keywords.
 #              06/Jun/2014   jmiguel@iaa.es - 
-# TODO
-#    - identificar SGi en MEF y 4kx4k
+# 
+#              24/Feb/2015   jmiguel@iaa.es - New File naming for MEFs
+#                            based on document PANIC-GEN-SP-02.
 #      
 ################################################################################
 
@@ -156,9 +157,30 @@ class MEF (object):
             out_filename = output_dir + "/" + \
                 os.path.basename(file).replace(".fits", output_filename_suffix)
             width = 2048
-            height =  2048
+            height = 2048
             temp12 = numpy.zeros((height, width*2), dtype = numpy.float32)
             temp34 = numpy.zeros((height, width*2), dtype = numpy.float32)
+            
+            # Since GEIRS-r731M-18 version, new MEF extension naming:
+            #    EXTNAME = 'Qi_j'
+            #    DET_ID = 'SGi_j'
+            # and the order in the MEF file shall be Q1,Q2,Q3,Q4
+            try:
+                hdulist['Q1_1'].header
+                ext_name = 'Q%i_1'
+            except KeyError:
+                ext_name = 'SG%i_1'
+                
+            for i in range(0, height):
+                # Q1 i-row
+                temp12[i, 0 : width] = hdulist[ext_name%4].data[i, 0 : width]
+                # Q2 i-row
+                temp12[i, width: 2*width] = hdulist[ext_name%1].data[i, 0 : width]
+                # Q3 i-row
+                temp34[i, 0 : width] = hdulist[ext_name%3].data[i, 0 : width]
+                # Q4 i-row
+                temp34[i, width : 2*width] = hdulist[ext_name%2].data[i, 0 : width]
+            """
             for i in range(0, height):
                 # Q1 i-row
                 temp12[i, 0 : width] = hdulist['SG4_1'].data[i, 0 : width]
@@ -168,7 +190,7 @@ class MEF (object):
                 temp34[i, 0 : width] = hdulist['SG3_1'].data[i, 0 : width]
                 # Q4 i-row
                 temp34[i, width : 2*width] = hdulist['SG2_1'].data[i, 0 : width]
-
+            """
             joined_data = numpy.append(temp12, temp34).reshape(4096, 4096)
             hdu = fits.HDUList([fits.PrimaryHDU(header=hdulist[0].header, 
                                                     data=joined_data)])
@@ -208,11 +230,15 @@ class MEF (object):
         
         if copy_keyword == None:
             # Default set of keywords whether None were given.
-            copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX', 
+            copy_keyword = ['DATE', 'OBJECT', 'DATE-OBS', 'RA', 'DEC', 'EQUINOX',
+                    'BSCALE', 'BZERO',
                     'RADECSYS', 'UTC', 'LST', 'UT', 'ST', 'AIRMASS', 'IMAGETYP', 
-                    'EXPTIME', 'TELESCOP', 'INSTRUME', 'MJD-OBS', 'NCOADDS',
+                    'TELESCOP', 'INSTRUME', 'MJD-OBS', 'CTIME','ITIME','NCOADDS','EXPTIME',
                     'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT',
-                    'CASSPOS','PIXSCALE','PAPITYPE', 'PAPIVERS','OBSERVER','ORIGIN']
+                    'CASSPOS','PIXSCALE','PAPITYPE', 'PAPIVERS','OBSERVER','ORIGIN',
+                    'DETROT90', 'DETXYFLI',
+                    'OBS_TOOL', 'PROG_ID', 'OB_ID', 
+                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP']
                 
         out_filenames = []
         n = 0 
@@ -232,11 +258,19 @@ class MEF (object):
                 log.error("Found a simple FITS file, not a MEF file")
                 raise MEF_Exception("File %s is not a MEF" % file)
             
-            for iSG in range (1, n_ext+1):
+            for iSG in range (1, n_ext + 1):
                 if instrument.lower() == 'panic':
-                    extname = 'SG%i_1' %iSG
+                    # Since GEIRS-r731M-18 version, new MEF extension naming:
+                    #    EXTNAME = 'Qi_j'
+                    #    DET_ID = 'SGi_j'
+                    # and the order in the MEF file shall be Q1,Q2,Q3,Q4
+                    extname = 'Q%i_1' %iSG
+                    try:
+                        hdulist[extname].header
+                    except KeyError, e:
+                        extname = 'SG%i_1' %iSG
                 else:
-                    # We suppose HAWKI MEF file
+                    # We suppose a HAWKI MEF file
                     extname = 'CHIP%i.INT1' %iSG 
                 suffix = out_filename_suffix % iSG # number from 1 to 4
                 new_filename = file.replace(".fits", suffix)
@@ -282,7 +316,7 @@ class MEF (object):
                         output_verify = 'ignore', clobber = True)
                 out_hdulist.close(output_verify = 'ignore')
                 del out_hdulist
-                log.debug("File %s created"%(out_filenames[n]))
+                log.info("File %s created"%(out_filenames[n]))
                 n += 1
                 
             
@@ -447,6 +481,7 @@ class MEF (object):
             # copy primary header from input file
             primaryHeader = in_hdulist[0].header.copy()
             out_hdulist = fits.HDUList()
+            tmp_hdus = []
             
             # Create primary HDU (without data, only the common header)
             prihdu = fits.PrimaryHDU(data=None, header = primaryHeader)
@@ -466,7 +501,7 @@ class MEF (object):
             #prihdu.header.update ('RA', new_pix_center[0][0])
             #prihdu.header.update ('DEC', new_pix_center[0][1])
                         
-            out_hdulist.append (prihdu)
+            out_hdulist.append(prihdu)
                         
             # Read all image sections (n_ext frames) and create the associated HDU
             pix_centers = numpy.array ([[1024, 1024], [1024, 3072], [3072, 1024], 
@@ -574,13 +609,13 @@ class MEF (object):
                         # When DETXYFLI=1, Flip Horizontally (interchanges the left and the right) 
                         # When DETXYFLI=2, Flip Vertically (turns the image upside down) 
                         detflipxy = primaryHeader['DETXYFLI']
-                        log.debug("Found DETXYFLI in header =%s"%detflipxy)
+                        log.debug("Found DETXYFLI = %s in header."%detflipxy)
                     else: 
                         detflipxy = 0
 
                 
                     if 'DETROT90' in primaryHeader:
-                        log.debug("Found DETROT90 in header")
+                        log.debug("Found DETROT90 = %s in header"%primaryHeader['DETROT90'])
                         # When DETROT90=0, no rotation;
                         # When DETROT90=1, 90deg clockwise rotation
                         # When DETROT90=2, 180deg clockwise rotation (default
@@ -680,22 +715,29 @@ class MEF (object):
                         elif (i*2+j)==2: det_id = 1
                         elif (i*2+j)==3: det_id = 2                       
 
+                    # Since GEIRS-r731M-18 version, new MEF extension naming:
+                    #    EXTNAME = 'Qi_j'
+                    #    DET_ID = 'SGi_j'
+                    # and the order in the MEF file shall be Q1,Q2,Q3,Q4
                     hdu_i.header.set('DET_ID', "SG%i"%det_id, 
                                         "PANIC Detector id SGi [i=1..4]")
-                    hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
+                    #hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
+                    hdu_i.header.set('EXTNAME', "Q%i_1"%det_id)
                     
-                    # DETSEC
+                    # DETSEC and DATASEC
+                    data_sec = '[%i:%i,%i:%i]' % (5, 2044, 5, 2044)
                     if det_id==1: # SG1
-                        det_sec = '[%i:%i,%i:%i]' % (2049,4096,1,2048)
+                        det_sec = '[%i:%i,%i:%i]'  % (2049, 4096, 1, 2048)
                     elif det_id==2: # SG2
-                        det_sec = '[%i:%i,%i:%i]' % (2049,4096,2049,4096)
+                        det_sec = '[%i:%i,%i:%i]'  % (2049, 4096, 2049, 4096)
                     elif det_id==3: # SG3
-                        det_sec = '[%i:%i,%i:%i]' % (1,2048,2049,4096)
+                        det_sec = '[%i:%i,%i:%i]'  % (1, 2048, 2049, 4096)
                     elif det_id==4: # SG4
-                        det_sec = '[%i:%i,%i:%i]' % (1,2048,1,2048)
+                        det_sec = '[%i:%i,%i:%i]'  % (1, 2048, 1, 2048)
+                    
                     hdu_i.header.set('DETSEC', det_sec)
+                    hdu_i.header.set('DATASEC', data_sec)
 
-                        
                     # now, copy extra keywords required
                     for key in copy_keyword:
                         try:
@@ -712,11 +754,15 @@ class MEF (object):
                     # Append new HDU to MEF
                     # Force BITPIX=-32
                     hdu_i.scale('float32')
-                    out_hdulist.append(hdu_i)
-                    out_hdulist.verify('ignore')
+                    tmp_hdus.append(hdu_i)
+                    ##out_hdulist.append(hdu_i)
+                    ##out_hdulist.verify('ignore')
             
-            # Now, write the new MEF file
-            #out_hdulist[0].header.update('NEXTEND', 4)
+            # Now, write the new MEF file in the right order (Q1,Q2,Q3,Q4)
+            # This order is since GEIRS-r731M-18 (see. doc. PANIC-GEN-SP-02)
+            tmp_hdus.sort(key=lambda my_hdu: my_hdu.header['EXTNAME'])
+            for h in tmp_hdus: out_hdulist.append(h)
+            
             out_hdulist.writeto(new_filename, output_verify = 'ignore', 
                                 clobber=True)
             out_hdulist.close(output_verify = 'ignore')
@@ -738,11 +784,16 @@ class MEF (object):
         With FITS extensions (MEF) is easy to identify each detector, i.e.,  
         for rotation=2=180deg (DETROT90=2) we have:
 
-        ext1 - [0:2048, 0:2048]      - SG4
-        ext2 - [2048:4096, 0:2048]   - SG1
-        ext3 - [0:2048, 2048:4096]   - SG3
-        ext4 - [2048:4096,2048:4096] - SG2
-
+        ext1 - [0:2048, 0:2048]      - SG4  --- after r731M-18 --> ext1=Q1(SG1)
+        ext2 - [2048:4096, 0:2048]   - SG1  --- after r731M-18 --> ext2=Q2(SG2) 
+        ext3 - [0:2048, 2048:4096]   - SG3  --- after r731M-18 --> ext3=Q3(SG3)
+        ext4 - [2048:4096,2048:4096] - SG2  --- after r731M-18 --> ext4=Q4(SG4)
+    
+    
+        Since GEIRS-r731M-18 version, new MEF extension naming:
+           EXTNAME = 'Qi_j'
+           DET_ID = 'SGi_j' (same ids as before)
+        and the order in the MEF file shall be Q1,Q2,Q3,Q4
 
         But, for single FITS files, I don't know how to identify the detectors 
         on the 4kx4k image; I did not find any keyword (DETROT90) about it. 
@@ -751,9 +802,9 @@ class MEF (object):
 
         or much more clearly (for DETROT90=2)
 
-        CHIP_SG1 = '[2048:4096, 0:2048]'
+        CHIP_SG1 = '[2048:4096, 0:2048]'  
         CHIP_SG2 = '[2048:4096,2048:4096]'
-        CHIP_SG3 = '[0:2048, 2048:4096]'
+        CHIP_SG3 = '[0:2048, 2048:4096]'  
         CHIP_SG4 = '[0:2048,0:2048]' 
 
         Where SG = science grade detector (Hw id of the detector).
@@ -767,7 +818,7 @@ class MEF (object):
         Returns
         -------
 
-        n_ext,out_filenames: The number of files and the list of output files 
+        n_ext, out_filenames: The number of files and the list of output files 
         created. The numbering **must** match with DET_ID numbering (SGi),
         not matter the rotation or flip done by GEIRS.
 
@@ -833,11 +884,11 @@ class MEF (object):
 
             # Taking into account the gap (167pix), we set the new CRPIXi values
             # for each extension, refered to the center of the focal plane.
-            #new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
-            #                            [-81, -81] ], numpy.float_)
-	    
-	    new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
+            new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
                                         [-81, -81] ], numpy.float_)
+	    
+	    #new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
+            #                            [-81, -81] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading quadrant-%d ..." % (i*2 + j))
@@ -902,7 +953,6 @@ class MEF (object):
                             pix_scale = primaryHeader['PIXSCALE']
                         except Exception,e:
                             raise Exception("Cannot find PIXSCALE keyword")
-                            #pix_scale = 0.45 # arcsec per pixel
 
                         # We suppose no rotation, and North is up and East at left.
                         # CD matrix (the CDi_j elements) encode the sky position angle,
@@ -957,8 +1007,9 @@ class MEF (object):
 
                     # Force BITPIX=-32
                     prihdu.scale('float32')
+                    # Default --> DETROT90=2, DETXYFLI=0
                     if 'DETROT90' in primaryHeader:
-                        log.debug("Found DETROT90 in header")
+                        log.debug("Found DETROT90=%s in header"%primaryHeader['DETROT90'])
                         # When DETROT90=0, no rotation;
                         # When DETROT90=1, 90deg clockwise rotation
                         # When DETROT90=2, 180deg clockwise rotation (default
@@ -1012,15 +1063,15 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2                               
                             elif (i*2+j)==1:
-                                if detflipxy==0: det_id = 1
+                                if detflipxy==0: det_id = 3
                                 elif detflipxy==1: det_id = 2 
                                 elif detflipxy==2: det_id = 4
-                                elif detflipxy==3: det_id = 3                               
+                                elif detflipxy==3: det_id = 1                               
                             elif (i*2+j)==2:
-                                if detflipxy==0: det_id = 3
+                                if detflipxy==0: det_id = 1
                                 elif detflipxy==1: det_id = 4 
                                 elif detflipxy==2: det_id = 2
-                                elif detflipxy==3: det_id = 1                              
+                                elif detflipxy==3: det_id = 3                              
                             elif (i*2+j)==3: 
                                 if detflipxy==0: det_id = 2
                                 elif detflipxy==1: det_id = 3 
@@ -1055,7 +1106,19 @@ class MEF (object):
                         elif (i*2+j)==2: det_id = 1
                         elif (i*2+j)==3: det_id = 2
 
-                            
+                    # DETSEC and DATASEC
+                    data_sec = '[%i:%i,%i:%i]' % (5, 2044, 5, 2044)
+                    if det_id==1: # SG1
+                        det_sec = '[%i:%i,%i:%i]'  % (2049, 4096, 1, 2048)
+                    elif det_id==2: # SG2
+                        det_sec = '[%i:%i,%i:%i]'  % (2049, 4096, 2049, 4096)
+                    elif det_id==3: # SG3
+                        det_sec = '[%i:%i,%i:%i]'  % (1, 2048, 2049, 4096)
+                    elif det_id==4: # SG4
+                        det_sec = '[%i:%i,%i:%i]'  % (1, 2048, 1, 2048)
+                    
+                    prihdu.header.set('DETSEC', det_sec)
+                    prihdu.header.set('DATASEC', data_sec)        
                     prihdu.header.set('DET_ID', 'SG%s'%det_id, 
                                           "PANIC Detector id SGi [i=1..4]")
                     

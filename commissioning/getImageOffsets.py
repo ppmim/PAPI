@@ -85,14 +85,20 @@ def getWCSPointingOffsets(images_in,
       ref_image = images_in[0]
       try:
             h0 = fits.getheader(ref_image)
-            # We use the center of the image as reference to get the offsets
-            x_pix = h0['NAXIS1']/2.0
-            y_pix = h0['NAXIS2']/2.0
             # If present, pix_scale in header is prefered
+            # Actually, it is not needed, because offsets are given in arcsecs
             if 'PIXSCALE' in h0: pix_scale = h0['PIXSCALE']
-            w0 = wcs.WCS(h0)
-            ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
-            dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
+            if 'RA' in h0 and 'DEC' in h0:
+               ra0 = h0['RA']
+               dec0 = h0['DEC']
+            else:
+                # We use the center of the image as reference to get the offsets
+                x_pix = h0['NAXIS1']/2.0
+                y_pix = h0['NAXIS2']/2.0
+                w0 = wcs.WCS(h0)
+                ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
+                dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
+                
             print "RA",ra0
             print "DEC",dec0
             log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
@@ -103,14 +109,19 @@ def getWCSPointingOffsets(images_in,
       for my_image in images_in:
         try:
               h = fits.getheader(my_image)
-              w = wcs.WCS(h)
-              ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
-              dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
+              if 'RA' in h0 and 'DEC' in h0:
+                  ra = h['RA']
+                  dec = h['DEC']
+              else:
+                  w = wcs.WCS(h)
+                  ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
+                  dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
+                  
               log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
-              pix_scale = 1.0 # to gives the offsets in arcsec scale
+              pix_scale = 1.0 # to give the offsets in arcsec scale
               # Assummed that North is up and East is left
-              offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
-              offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
+              offsets[i][0] = ((ra - ra0)*3600.0*math.cos(dec0/57.296)) / float(pix_scale)
+              offsets[i][1] = ((dec0 - dec)*3600.0) / float(pix_scale)
               
               log.debug("offset_ra  = %s"%offsets[i][0])
               log.debug("offset_dec = %s"%offsets[i][1])
@@ -124,7 +135,7 @@ def getWCSPointingOffsets(images_in,
       
       # Write out offsets to file
       # numpy.savetxt(p_offsets_file, offsets, fmt='%.6f')
-      log.debug("(WCS) Image Offsets (pixels): ")
+      log.debug("(WCS) Image Offsets (arcsecs): ")
       log.debug(offsets)
       
       return offsets
@@ -136,7 +147,7 @@ def getWCSPointingOffsets(images_in,
 if __name__ == "__main__":
     
     usage = "usage: %prog [options]"
-    desc = """Gives the image offsets (in based on the WCS of the image headers."""
+    desc = """Gives the image offsets (arcsecs) in based on the WCS of the image headers."""
     
     parser = OptionParser(usage, description=desc)
     
@@ -166,9 +177,12 @@ if __name__ == "__main__":
     else:
         print "Error, cannot read file : ", options.source_file
         sys.exit(0)
-        
-    offsets = getWCSPointingOffsets(files, options.output_filename)
+    try:    
+        offsets = getWCSPointingOffsets(files, options.output_filename)
+    except Exception,e:
+        log.error("Error, cannot find out the image offsets. %s",str(e))
     
+    # Print out the offset matrix
     numpy.set_printoptions(suppress=True)
-    print "\nOffset Matrix: \n"
+    print "\nOffsets Matrix (arcsecs): \n"
     print(offsets)

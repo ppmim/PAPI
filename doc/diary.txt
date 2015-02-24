@@ -6232,6 +6232,19 @@ darks que crea ESOREX), y lo peor es que no se que hacer con ellos.
 
 24-Feb-2015
 -----------
+- Compruebo si en el código de PAPI está hard-coded la pixel scale del 2.2m (0.45),
+de cara al commisioning en el 3.5m. En pricipio todo está basado en el valor del fichero
+de configuración o el leido de la cabecera.
+- Hago todas las modificaciones en mef.py (y similares, ie: correctNonLinearity, ...) para la nueva
+ordenación de los MEF (Q1, Q2, Q3, Q4) siguiendo el documento PANIC-GEN-SP-02 de BD.
+En principio ahora todo es compatible con la versión anterior de los MEFs (la original,
+en el que el orden en los MEFs era SG4,1,3,2), salvo en la funcioń convertGEIRSToMEF(),
+que crea directamente los MEF en el nuevo formato sugerido; esto lo hago así
+por que no se cómo distinguir en el código si crear los MEF en versión antigua o
+en la nueva (sólo se me ocurre mirar la versión del GEIRS que creó el FITS original).
+
+Aunque he hecho bastantes pruebas, hay que probar con una reducción de PANIC y con
+el QL (que también queda por actualizar algo en la GUI).
 
 
 
@@ -6253,6 +6266,18 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Revisar RS:getWCSPointingOffsets() para que pueda funcionar incluso 
+si no tuviesemos WCS o fuese un MEF (caso con AGS); es algo raro que pase en RS,
+pues sólo va a trabajar con Singles !!
+- ver si el pix_scale que tiene el config del RS se puede actualizar
+con el que realmente tienen los ficheros en la cabecera para así evitar 
+olvidar actualizar el fichero de configuración.
+
+- Incluir limites foco y fwhm en nueva rutina BEST_FOCUS
+- Nuevo esquema de MEF en GEIRS---> PAPI::split() etc, etc ....
+- Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)!
+- reducir datos de OmegaCass para VT
+- ver si dilate crea buenas objectMask dilatadas adecuadamente...ala ESOREX
 - Tratamiento de BP en PAPI (Skyfilter) y "anular" BP detection en GainMap !!!
 - BD me sugiere que incluya en el QL-focus evaluation, el nuevo método
 para calcular el BestFocus.
@@ -6268,16 +6293,36 @@ imágenes, y no sólo las SCIENCE como hace ahora mismo !!!!
 pero, ¿ qué sentido tiene entonces pasarle la máscara de objectos ?
 ¿ no sería entoces mejor llamar a skyfilter simplemente con la mascara y los SCIENCE ???
 La verdad es que esto es algo no resuelto aún !!!
+--
+JM: No tiene sentido, pues la objectMask sólo tiene sentido para patrones
+de dithering "clasicos", y no cuando seguimos un patrón T-S (en cualquiera de sus variantes),
+pues el cielo se calcula de los SKY-frames (que deben tener dithering para una buena estimación del cielo),
+pero no se usa nunguna mascara de objetos.
+El origen de la máscara de objectos (objectMask) es para cuando calculamos el skybackground
+con las propias imágenes del dithering principal (OBJECT-frames), pues queremos
+hacer una segunda pasada de skyfilter pero evitando los objetos detectados en la primera pasada.
+Sin embargo, si podría tener sentido hacer una segunda pasada para el caso de 
+objetos extensos calculando una máscara de objetos para los SKY-frames una vez que le hayamos
+restado a dichos frames el skybackground y le calcularamos una mascara de objetos, es decir,
+hacerle una psudo reducción independiente a los SKY-frames para calcular una skybackground
+más refinado para luego restarlo a los OBJECT-frames, pero eso no se si merece la pena
+hacerlo ahora mismo...implicararía cambiar el esquema de reducción para objectos extensos y no
+es trivial...
+--
+
 
 - Modificar dataset::GetFilterFiles() para que agrupe correctamente las SKY + SCIENCE en
 el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un apaño
 en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
 si se detecta bien los SKY de los SCIENCE
+
 - arreglar/poner bien RS::skyFilter, ahora no funciona los modos onoff, etc, etc...
+JM:Creo que si funciona con datos del OT; el problema era que probé con datos de OmegaCass que no tienen
+dicha información, y habría que modificar  dataset::GetFilterFiles() para que agrupe
+correctamente las secuencias SKY+SCIENCE.
+
 - ver si removeXTalk debería hacerse siempre en en la primera pasada de skysub aunque
 el modo sea science !!
-- reducir datos de OmegaCass
-- Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)!
 - Revisar/permitir D+F+BPM en QL de modo automatico
 - refactorizar la astrometría en RS
 - cambiar directorio temporal de astrometry.net (/tmp/) para los /tmp/tmp.sanitized.ZDkbmU !!

@@ -307,7 +307,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     log.debug("[doAstrometry] *** Start Astrometric calibration ***")
     
     if not config_dict:
-            raise Exception("Config dictionary not provided ...")
+        raise Exception("Config dictionary not provided ...")
             
     # Save the resulting image to a temporary file if no path was specified
     if output_image is None:

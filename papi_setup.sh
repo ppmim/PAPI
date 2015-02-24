@@ -14,7 +14,7 @@ export PAPI_PROD=${HOME}/DataProd
 # Settings
 #------------------------------------------------------------------------------
 # path to PAPI reference files
-export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg
+export PAPI_CONFIG=${PAPI_HOME}/config_files/papi.cfg
 export PATH=${PATH}:${PAPI_BIN}
 export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}
 
@@ -102,7 +102,7 @@ ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 # Some tools for commissioning
 ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus
 ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck
-ln -s $PAPI_HOME/commissioning/getImageOffsets $PAPI_BIN/getImageOffsets
+ln -s $PAPI_HOME/commissioning/getImageOffsets.py $PAPI_BIN/getImageOffsets
 
 
 
