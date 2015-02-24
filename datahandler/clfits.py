@@ -463,6 +463,8 @@ class ClFits (object):
                 keyword_with_frame_type = 'IMAGETYP'
             elif self.instrument=='hawki' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
+            elif self.instrument=='omegacass_mpia' and 'IMAGETYP' in myfits[0].header:
+                keyword_with_frame_type = 'IMAGETYP'    
             elif self.instrument=='omegacass_mpia' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
             elif self.instrument=='panic': # current ID in GEIRS for PANIC
@@ -553,7 +555,10 @@ class ClFits (object):
                 
         else: #o2000, Omegacass, Roper, etc
             try:
-                if myfits[0].header[keyword_with_frame_type].lower().count('master'):
+                # Self-typed file, created by PAPI (master calibrations)
+                if 'PAPITYPE' in myfits[0].header:
+                    self.type = myfits[0].header['PAPITYPE']
+                elif myfits[0].header[keyword_with_frame_type].lower().count('master'):
                     self.type = myfits[0].header[keyword_with_frame_type]
                 elif myfits[0].header[keyword_with_frame_type].lower().count('bias'):
                     self.type = "BIAS"
@@ -571,7 +576,7 @@ class ClFits (object):
                      myfits[0].header[keyword_with_frame_type].lower().count('flat'): 
                     self.type = "SKY_FLAT"
                 elif myfits[0].header[keyword_with_frame_type].lower().count('sky'):
-                    self.type = "SKY"
+                    self.type = "SCIENCE" #"SKY" # because we cannot group correctly; however it will be correctly detected in skyfilter
                 elif myfits[0].header[keyword_with_frame_type].lower().count('focus'):
                     self.type = "FOCUS"  
                 elif myfits[0].header[keyword_with_frame_type].lower().count('science'):
@@ -726,7 +731,7 @@ class ClFits (object):
         try:
             self.equinox = myfits[0].header['EQUINOX']
         except KeyError:
-            log.debug("EQUINOX keyword not found")
+            #log.debug("EQUINOX keyword not found")
             self.equinox = -1
             
         # MJD-Modified julian date 'days' of observation

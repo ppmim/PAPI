@@ -133,7 +133,7 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
             raise Exception("Some error while running SExtractor : %s"%str(e))          
         
         # Check an output file was generated, otherwise an error happened !
-        if not os.path.exists(fn+".objs"):
+        if not os.path.exists(fn + ".objs"):
             log.error("Some error while running SExtractor, no object mask file found and expected %s"%(fn+".objs"))
             raise Exception("Some error while running SExtractor, no object mask file found")
 
@@ -148,9 +148,9 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
         if single_point==True:
             log.debug("Single point mask reduction")
             # NOTE we update/overwrite the image and don't create a new one
-            myfits = fits.open(fn+".objs", mode="update")
+            myfits = fits.open(fn + ".objs", mode="update")
             if len(myfits)>1: # is a MEF file
-                next = len(myfits)-1
+                next = len(myfits) - 1
             else: 
                 next = 1
             for ext in range(next):
@@ -163,10 +163,10 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
                 y_size = len(data)
                 #stars = read_stars(fn + ".ldac")
                 try:
-                    cat = astromatic.ldac.openObjectFile(fn+".ldac", 
+                    cat = astromatic.ldac.openObjectFile(fn + ".ldac", 
                                                          table='LDAC_OBJECTS')
                     if len(cat)<=0:
-                      log.warning("No object found in catalog %s"%(fn+".ldac")) 
+                      log.warning("No object found in catalog %s"%(fn + ".ldac")) 
                       continue
                     for star in cat:
                         if round(star['X_IMAGE'])<x_size and round(star['Y_IMAGE'])<y_size:
@@ -189,7 +189,7 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
 
         n+=1
         log.debug("Adding file: %s"%fn)
-        f_out.write(fn+".objs"+"\n")
+        f_out.write(fn + ".objs" + "\n")
             
     sex.clean(config=False, catalog=True, check=False)
 

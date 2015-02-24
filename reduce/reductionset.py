@@ -301,7 +301,7 @@ class ReductionSet(object):
         # Bad Pixel Maks
         # 
         self.bpm_mode = self.config_dict['bpm']['mode']
-        if self.bpm_mode!='none':
+        if self.bpm_mode != 'none':
             self.master_bpm  = self.config_dict['bpm']['bpm_file']
         else:
             self.master_bpm  = bpm  
@@ -462,13 +462,15 @@ class ReductionSet(object):
         # self.db.ListDataSet()
         
         # External DataBase (in memory)
-        if len(self.ext_db_files)>0:
+        if len(self.ext_db_files) > 0:
             log.info("Initializing External DataBase")
             try:
                 self.ext_db = datahandler.dataset.DataSet(self.ext_db_files,
                                                           instrument)
                 self.ext_db.createDB()
                 self.ext_db.load()
+                log.info("Calibration files found in External DB:")
+                self.ext_db.ListDataSet()
             except Exception,e:
                 log.error("Error while EXTERNAL data base initialization: \n %s"%str(e))
                 raise Exception("Error while EXTERNAL data base initialization")
@@ -809,28 +811,28 @@ class ReductionSet(object):
             mode = 'dither_off_on'
             # Then, we are going to suppose the sequence S-T-S-T-S- .... (dither_off_on)
             for file in self.m_LAST_FILES:
-                if not i%2: #even
+                if not i%2: # even (par)
                     fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
-                elif i%2: #odd
+                elif i%2: # odd
                     fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
-                i = i+1         
+                i = i + 1         
         elif fits_0.isObject() and fits_1.isSky():
             # Then, we are going to suppose the sequence T-S-T-S-T- .... (dither_on_off)
             mode = 'dither_on_off'
             for file in self.m_LAST_FILES:
-                if not i%2: #even
+                if not i%2: # even (par)
                     fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
-                elif i%2: #odd
+                elif i%2: # odd
                     fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
-                i = i+1                 
+                i = i + 1
         elif fits_0.isObject() and fits_1.isObject():
             # check if all are objects ...
             # and if are, then, we are going to suppose the sequence T-T-T-T-T- .... (dither)
@@ -1342,78 +1344,47 @@ class ReductionSet(object):
             raise
                   
         
-        print "SKY_FILTER_CMD=", skyfilter_cmd
+        print "SKY_FILTER_CMD = ", skyfilter_cmd
+        print "CMD_ARGS = ", skyfilter_cmd.split()
+        args = skyfilter_cmd.split()
         
-        args = [self.m_irdr_path + '/skyfilter_general',
+        """
+        args = [self.m_irdr_path + '/skyfilter',
                 list_file,
                 gain_file,
                 str(halfnsky), 
                 mask,
-                destripe]
-                #,skymodel]
-        
-        #skyfilter_cmd = args 
+                destripe
+                ,skymodel]
+        """
         
         output_lines = []
         try:
             output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, 
-                                                    shell=False, bufsize=-1)
-            #output_line = subprocess.call(args)
-            log.critical("irdr::skyfilter command executed ...")
-            #with tempfile.NamedTemporaryFile() as cmd_output:
-            #    p = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE)
-            #    log.critical("irdr::skyfilter command executed ...")
-            #    while True:
-            #        line = p.stdout.readline()
-            #        if not line and p.poll() is not None:
-            #            break
-            #        if line:
-            #            print "MY_LINE=",line.strip()
-            #            cmd_output.write(line)
-
-            #    cmd_output.seek(0)
-            #    output_lines = cmd_output.readlines()
-
+                                                    shell=False, bufsize=0)
+            log.debug("irdr::skyfilter command executed ...")
             sys.stdout.flush()
             sys.stderr.flush()
-            
         except subprocess.CalledProcessError, e:
-            log.debug("Error running skyfilter: %s"%output_lines)
+            log.critical("Error running skyfilter: %s"%output_lines)
             log.debug("Exception: %s"%str(e))
             raise Exception("Error running skyfilter")
         
-        print "OUTPUT=",output_lines
         
-        if 1:
-        #if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
-            
-            # Rename output sky-subtracted files
-            """for file in glob.glob(self.out_dir+'/*.fits.skysub'):
-                shutil.move(file, file.replace('.fits.skysub', '.skysub.fits'))
-                out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
-            """
-            # look for sky subtracted images created by irdr::skyfilter            
-            files = [line.split(" ")[0].replace("\n","") 
-                     for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
-            for file in files:
-                if os.path.exists(file + ".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
-                    shutil.move(file.replace(".fits", ".fits.skysub"), 
+        # look for sky subtracted images created by irdr::skyfilter            
+        files = [line.split(" ")[0].replace("\n","") 
+                    for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
+        for file in files:
+            # it takes into acount dither_on_off and other extended obs. patterns
+            if os.path.exists(file + ".skysub"): 
+                shutil.move(file.replace(".fits", ".fits.skysub"), 
                                 file.replace(".fits", ".skysub.fits"))
-                    out_files.append(file.replace(".fits", ".skysub.fits"))
-            ## Compose the output file list
-            #if obs_mode=='dither':
-            #   out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
-            #elif (obs_mode=='dither_on_off' or obs_mode=='dither_off_on' or obs_mode=='other'):
-            #    out_files=glob.glob(self.out_dir+'/*.skysub.fits')
-            ##
+                out_files.append(file.replace(".fits", ".skysub.fits"))
             
-            # Sort-out data files by obs-data (actually not required when obs_mode='dither')
-            out_files = self.sortOutData(out_files) 
+        # Sort-out data files by obs-data (actually, not required when obs_mode='dither')
+        out_files = self.sortOutData(out_files) 
             
-            return out_files
-        else:
-            log.error("Some problem while running command %s", skyfilter_cmd) 
-            return []
+        return out_files
                                   
     
     def subtractNearSky(self, near_list=None, file_pos=0, out_filename=None):
@@ -1564,25 +1535,30 @@ class ReductionSet(object):
       """
       
       log.info("Starting getWCSPointingOffsets....")
+
       
+      # Very important the pixel scale in order to find out good offsets values !!
+      pix_scale = self.config_dict['general']['pix_scale']
       # Init variables
       i = 0 
       offsets_mat = None
-      pix_scale = self.config_dict['general']['pix_scale']
       ra0 = -1
       dec0 = -1
-      x_pix = 1024.0
-      y_pix = 1024.0
-      offsets = numpy.zeros([len(images_in),2] , dtype=numpy.float32)
+      offsets = numpy.zeros([len(images_in), 2] , dtype=numpy.float32)
       
       # Reference image
       ref_image = images_in[0]
       try:
             h0 = fits.getheader(ref_image)
+            # We use the center of the image as reference to get the offsets
+            x_pix = h0['NAXIS1']/2.0
+            y_pix = h0['NAXIS2']/2.0
+            # If present, pix_scale in header is prefered
+            if 'PIXSCALE' in h0: pix_scale = h0['PIXSCALE']
             w0 = wcs.WCS(h0)
             ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
             dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
-            log.debug("Ref. image: %s RA0= %s DEC0= %s"%(ref_image, ra0,dec0))
+            log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
       except Exception,e:
           raise e
         
@@ -1619,7 +1595,33 @@ class ReductionSet(object):
                             p_offsets_file='/tmp/offsets.pap'):
         """
         Derive pointing offsets between each image using SExtractor OBJECTS 
-        (makeObjMask) and offsets (IRDR)
+        (makeObjMask) and offsets (IRDR).
+        
+        Note: (from Infrared Imaging Data Reduction Software and Techniques, C.N.Sabbey)
+        The approximate dither offsets stored inthe FITS header WCS information are 
+        refined using cross-correlation analysis(offsets.c). 
+        The non-zero (object) pixels of the reference frame object mask
+        (SExtractor OBJECTS image) are stored in a pixel list (x, y, brightness), and
+        this list is cross-correlated against the object mask images of the following frames
+        in the dither set. The SExtractor OBJECTS image conveniently removes the
+        background (important for cross-correlation methods) and identifies the object
+        pixels more reliably than a simple thresholding algorithm (e.g., especially in
+        images with a non-flat background, large noise, and cosmic rays). Using an
+        object list in the cross-correlation focuses on the pixels that contribute to the
+        cross-correlation signal and is faster than cross-correlating two images.
+        The cross-correlation technique uses coordinate, magnitude, and shape information,
+        and was found to be more reliable than matching object coordinate
+        lists (the improvement was noticed in extreme cases, like Galactic center images
+        and nearly empty fields with an extended galaxy). A subpixel offset measurement
+        accuracy of about 0.1 pixels is obtained by fitting a parabola to the peak
+        of the cross-correlation image. In terms of speed, this cross-correlation method
+        was found to be around 10 times faster (for typical survey data and a relatively large
+        search box of 100 pixels) than IRAF STSDAS crosscor.
+        
+        Although the success of irdr:offsets rate is aprox. 100%, failure is indicated 
+        by an offset measurement corresponding exactly to the border of the search 
+        area, or a small fraction of object pixels overlapping in the aligned data 
+        images.
         
         Parameters
         ----------
@@ -3041,7 +3043,7 @@ class ReductionSet(object):
         return files_created
  
         
-    def reduceSingleObj_OLD(self, obj_frames, master_dark, master_flat, master_bpm, 
+    def reduceSingleObj_NOT_USED_(self, obj_frames, master_dark, master_flat, master_bpm, 
                   red_mode, out_dir, output_file):
         
         """ 
@@ -3252,8 +3254,8 @@ class ReductionSet(object):
             nyblock = self.config_dict['gainmap']['nyblock']
             nsigma = self.config_dict['gainmap']['nsigma']
         else:
-            mingain = 0.5
-            maxgain = 1.5
+            mingain = 0.2
+            maxgain = 1.8
             nxblock = 16
             nyblock = 16
             nsigma = 5
@@ -3872,7 +3874,7 @@ class ReductionSet(object):
         elif self.config_dict['bpm']['mode'].lower()=='fix':
             master_bpm_4gain = None
             master_bpm_4fix = master_bpm
-        elif self.config_dict['bpm']['mode'].lower()=='gain':
+        elif self.config_dict['bpm']['mode'].lower()=='grab':
             master_bpm_4gain = master_bpm
             master_bpm_4fix = None
         else:
@@ -4120,16 +4122,16 @@ class ReductionSet(object):
             log.info("Computing dither offsets using astrometric calibration")
             try:
                 offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
-                                                        out_dir+'/offsets1.pap')                
+                                                        out_dir + '/offsets1.pap')                
             except Exception,e:
                 log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
                 raise e
         else:
             log.info("Computing dither offsets using cross-correlation")
-            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+            misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/files_skysub.list")
             try:
-                offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
-                                                    out_dir+'/offsets1.pap')                
+                offset_mat = self.getPointingOffsets(out_dir + "/files_skysub.list", 
+                                                    out_dir + '/offsets1.pap')                
             except Exception,e:
                 log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
                 raise e
@@ -4159,8 +4161,8 @@ class ReductionSet(object):
         else:
             log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")
             # create input file for dithercubemean
-            fo = open(out_dir+'/offsets1.pap', "r")
-            fs = open(out_dir+'/stack1.pap', 'w+')
+            fo = open(out_dir + '/offsets1.pap', "r")
+            fs = open(out_dir + '/stack1.pap', 'w+')
             for line in fo:
                 n_line = line.replace(".fits.objs", ".fits") 
                 fs.write(n_line)
@@ -4168,14 +4170,14 @@ class ReductionSet(object):
             fs.close()
             
             # Dithercubemean
-            self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
-                                  out_dir+'/coadd1.fits','average')
+            self.coaddStackImages(out_dir + '/stack1.pap', gainmap, 
+                                  out_dir + '/coadd1.fits','average')
             
             # Astrometry of coadded stack
             log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
             if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
-                    reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
+                    reduce.astrowarp.doAstrometry(out_dir + '/coadd1.fits', output_file, 
                                           self.config_dict['astrometry']['catalog'], 
                                           do_votable=False)
                 except Exception,e:
@@ -4275,6 +4277,11 @@ class ReductionSet(object):
         # offset (=0,0) is skipped.
         j = 1 
         for file in self.m_rawFiles:
+            # In case of whatever T-S-T-S-... sequence, only T frames should be used;
+            # however, the second pass of skyfilter (with object mask)
+            # has no sense for this type of sequences.
+            # if datahandler.ClFits(file).isSky():
+            #    continue
             if self.apply_dark_flat==1 and master_flat!=None and master_dark!=None:
                 line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
@@ -4289,7 +4296,6 @@ class ReductionSet(object):
                 " " + str(offset_mat[j][1])
             
             fs.write(line + "\n")
-            
             if (self.obs_mode=='dither_on_off' or 
                 self.obs_mode=='dither_off_on') and i%2:
                 j = j + 1
@@ -4297,6 +4303,7 @@ class ReductionSet(object):
                 j = j + 1
             i = i + 1
             
+        # Close file
         fs.flush()
         os.fsync(fs.fileno())
         fs.close()

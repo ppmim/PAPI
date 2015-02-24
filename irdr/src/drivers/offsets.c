@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         frac = correlate(x, y, p, n, img, nx, ny, ixoff, iyoff, 
                             &xoff, &yoff, hwid);
     
-	    fprintf(stderr, "\n[iter_0] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d\n",
+	    fprintf(stderr, "\n[iter_0] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d (px)\n",
             	   frac, n, nx, ny, ixoff, iyoff, xoff, yoff, hwid);
         
         /*fprintf(stderr, "-->First correlation overlap computed is : %f", frac);*/
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
             frac = correlate(x, y, p, n, img, nx, ny, 0, 0, /* no estimation are given this time */
                                 &xoff, &yoff, maxhwid);
             
-            fprintf(stderr, "\n[iter_1] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d\n",
+            fprintf(stderr, "\n[iter_1] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d (px)\n",
                 	   frac, n, nx, ny, ixoff, iyoff, xoff, yoff, maxhwid);
         
             /*fprintf(stderr, "-->Second correlation overlap computed is : %f", frac);*/

@@ -548,7 +548,7 @@ class DataSet(object):
         # Concatenate the two list (dome_flat, the rest)
         par_list = par_list + par_list2
         
-        print "PAR_LIST=",par_list
+        #print "PAR_LIST=",par_list
         # Finally, look for files of each Filter
         for par in par_list:
             cur = self.con.cursor()

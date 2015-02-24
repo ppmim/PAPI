@@ -6036,10 +6036,211 @@ Auque necesita un gainmap como entrada, luego no lo usa para nada. Mantengo
 el interfaz simplemente por comodidad.
 
 
-   
+
+17-Feb-2015
+----------
+- Una vez terminado align_stack_cube.py para alinear y sumar los
+cubos de OmegaCass, me doy cuenta de que los offsets no siempre
+se calcula bien, aunque el mejor resultado es con getWCSOffsets, 
+pues irdr (como dice en el paper) no está pensada para offsets
+muy pequeños. Por más pruebas que hice, no encontré buenos
+offsets con irdr (sólo da offsets en torno a 0.0).
+Sin embargo, y a pesar de usar getWCSOffsets, dithercubemean no 
+termina de dar buenos coadd...pero decido seguir.
+NOTA: la imagen 38 tiene una deriva grande del telescopio que
+se aprecia en el plano-6 del cubo.
+Bueno, con todo eso decido continuar con PAPI, y ver que obtengo,
+pero me encuentro con otro problema, ahora no todas las imágenes
+tienen el mismo tamaño (shape), pues dithercubemean crea los
+coadd en función del offset que ha calculado....y eso no hay
+manera de resolverlo....al menos de momento...
+
+- Decido hacer la reducción con la suma simple de los cubos,
+sin alinearlos...y a ver que sale...
+
+- TODO: la segunda pasada de skyfilter para objetos extensos no está
+resuelto; si llamo a skyfilter_general, tendría que pasarle todos las
+imágenes, y no sólo las SCIENCE como hace ahora mismo !!!! 
+pero, ¿ qué sentido tiene entonces pasarle la máscara de objectos ?
+¿ no sería entoces mejor llamar a skyfilter simplemente con la mascara y los SCIENCE ???
+La verdad es que esto es algo no resuelto aún !!!
+
+18-Feb-2015
+-----------
+- Reduzco los datos de OmegaCass con Flat de Matilde y con la BPM que construyo a partir del txt
+que me pasó. El resultado está en : /data2/out_omegac/Q01/jun21_0XXX_coadd_F.skysub.ast.fits
+./papi.py -c config_files/papi_panic1_omegacass.cfg -s /data2/tmp_omegac/omega_coadd_simple.txt -S 1 1
+
+(P) reducir los datos con un FF creado por PAPI
+
+- Continuo con las reduccioń de datos de WASP-19 (HAWKI) con el pipeline
+de ESO. Los resutados están en /data2/esorex/products/hawki_step_subtract_bkg_0NNN.fits
+Sólo le hago la primera pasada de la sustracción de cielo, pues para seguir tendría
+que hacer máscara, etc...
+
+ cd /data2/esorex
+ 1081  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof 
+ 1085  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof 
+ 1095  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark1 darks.sof 
+ 1096  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  -h
+ 1097  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  --help
+ 1098  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  --?
+ 1099  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  -h
+ 1100  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  
+ 1102  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  -h
+ 1103  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark1 darks.sof  -h
+ 1104  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  --help
+ 1135  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks2.sof  
+ 1136  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark dark2.sof  
+ 1143  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks2.sof  
+ 1151  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  
+ 1152  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_flat flat.sof  
+ 1153  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_flat flats.sof  
+ 1157  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_sci_jitter science.sof  
+ 1159  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_sci_jitter science.sof  
+ 1172  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib sof/science.sof  
+ 1173  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib science.sof  
+ 1182  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib science.sof  
+ 1183  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib science_calib.sof 
+ 1195  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_compute_bkg science_D_F.sof 
+ 1197  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_compute_bkg science_D_F.sof 
+ 1211  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_subtract_bkg science_bkg.sof 
+ 1213  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_subtract_bkg science_bkg.sof
+
+- Me pongo a comparar los resultados con los que obtuve con PAPI:
+/data2/out_wasp19/Q02/HAWKI.2009-*.Q02_D_F.skysub.ast.fits
+La primera diferencia es que los datos que produce ESOREX tienen
+restado el background "residual", que en IRDR se le suma después de restar 
+el cielo...eso fue algo que ya comenté con Matilde, y que ella me dijo 
+que estaba bien, que era para evitar valores negativos en el cielo...
+
+- Decido hacer hacer una prueba y modificar skyfilter y lanzar una reducción 
+sin sumar ese background para poder comparar con ESOREX....
+Al hacer eso, me doy cuenta (más que nada por que se amplifica el efecto), 
+que el gainmap que se calcula (calGainMap) para el Q2 tiene unas "estrias" en diagonal
+muy marcadas (curiosamente sólo aparecen en el Q2 !)
+y que se quedan marcadas en el gainmap como BP!!! y son muuuchas, lo cual
+luego afecta a la sustracción de cielo (skyFilter).
+Compruebo que irdr.gainmap produce el mismo resultado, y por tanto no es que
+haya  un error en calGainMap.py, si no que el algorimo no es del todo "bueno".
+Para solucionar eso se me ocurren las siguientes opciones:
+
+    1) llamar a calGainMap con un valor NSIG grande >8, para evitar falsos BP,
+    o lo que es lo mismo, que en la segunda pasada no saque muchos píxeles.
+    2) directamente anular calGainMap, es decir, que gainmap=flatfield normalizado
+    y "mezclado" con el BPM si lo hay.
+    3) Refinar el cálculo de los BP en la actual rutina de calGainMap--> Matilde ???
+    
+
+
+- Comienzo la instalación de la version trunk-r731M-4 de GEIRS en panic1.
+
+19-Feb-2015
+-----------
+- Termina la reducción de WASP-19 con PAPI (modo science) tras las modificaciones
+en PAPI (básicamente en torno a usar dithercubemean para el primer coadd y 
+en en calGainMap con NSIG=8 para evitar falsos BP). 
+Comparando con los resultados de ESORES, a simple vista (salvo el background que ESOREX resta)
+tienen una pinta parecida. No obstante, si veo cláramente que PAPI marca
+aún BP con el background level, y que se ven cláramente en algunas estrellas.
+Sin embargo, ESOREX no hace nada de eso, y las estrellas (las mismas) aparecen 
+límpias...no se como los trata ESOREX, pero lo que está claro es que hay que
+definir muy bien cómo tratar los BP en skysub.c, pues ahora mismo los pone al bkg level,
+lo cual es bastante problemático cuando el pixel cae en una estrella !!
+Implemento una modificacioń para que en lugar del bkg_level, asigne el valor
+del pixel anterior y posterior, para así evitar tener puntos...el resultado no es muy bueno,
+en las estrellas desaparece los BP, pero aparecen mucho 'artefactos' en la imagen...
+Creo que aún habría que subir el NSIG en calGainMap...
+
+- Continuo con ESOREX, para hacer la segunda skysubtraction:
+
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_combine sub_1st_bkg.sof --> hawki_step_combine.fits, hawki_step_combine_contrib_map.fits
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_detect_obj stack_1.sof
+Detecting objects on chip number 1
+[ INFO  ] hawki_step_detect_obj:     Load the input data
+[ INFO  ] hawki_step_detect_obj:     Background:       -0.209869
+[ INFO  ] hawki_step_detect_obj:     Background noise: 0.670953
+[ INFO  ] hawki_step_detect_obj:     Mask creation with threshold: 3.815850
+[ INFO  ] hawki_step_detect_obj:     Removing single pixel detections
+[ INFO  ] hawki_step_detect_obj:     Growing the mask with radius 5
+[ INFO  ] hawki_step_detect_obj:     Labelise mask
+[ INFO  ] hawki_step_detect_obj:     Number of objects detected: 442
+[ INFO  ] hawki_step_detect_obj:     Create apertures
+[ INFO  ] hawki_step_detect_obj: Writing FITS propertylist product(OBJ_MASK): hawki_step_detect_obj_mask.fits 
+[ INFO  ] hawki_step_detect_obj: Writing FITS table product(OBJ_PARAM): hawki_step_detect_obj_stars.fits
+
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_compute_bkg science_D_F_Mask.sof
+[...]
+Computing backgrounds
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 1
+[ INFO  ] hawki_step_compute_bkg:         Number of pixels with no background available: 12229 
+[WARNING] hawki_step_compute_bkg:         Substituting pixels with no bkg with median of image 498.912659
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 2
+[ INFO  ] hawki_step_compute_bkg:         Number of pixels with no background available: 951 
+[WARNING] hawki_step_compute_bkg:         Substituting pixels with no bkg with median of image 490.153778
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 3
+[ INFO  ] hawki_step_compute_bkg:         Number of pixels with no background available: 15 
+[WARNING] hawki_step_compute_bkg:         Substituting pixels with no bkg with median of image 488.946350
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 4
+[...]
+
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_subtract_bkg science_bkg.sof
+
+
+- Terminar la instalación de GEIRS nuevo y ver cambios en PAPI y QL !!! 
+[...]
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0175.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0176.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0177.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0178.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0179.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0180.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0181.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0182.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0183.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0184.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0185.fits
+[ INFO  ] esorex: 185 products created
+[ INFO  ] esorex: Recipe operation(s) took            149 seconds to complete.
+[ INFO  ] esorex: Total size of 370 raw input frames  = 24857.78 MB
+
+[ INFO  ] esorex: => processing rate of   166.61 MB/sec
+
+
+La lástima ha sido que he perdido los ficheros de la primera pasada y ahora no puedo comparar...bueno,
+lanzo de nuevo la primera sky_subtraction pero con --output-dir=products1 !! para poder comparar.
+
+20-Feb-2015
+-----------
+- Implementación de las sugerencias de BD para el runStarfocus.py
+
+
+
+23-Feb-2015
+-----------
+- Envio los datos reducidos con ESOREX de WASP a MF y VT.
+- BD me sugiere que incluya en el QL-focus evaluation, el nuevo método
+para calcular el BestFocus.
+- BD también me dice que modifique runStarfocus para que escriba los nuevos
+valores en el fichero SGi_j.txt
+- Reduzco WASP19 con PAPI y con valores altos en GainMap para
+que se detecten muy pocos BPs, pero observo que aun hay BP distintos 
+a los que marca ESOREX (aunque algunos si aparecen en la BPM de flat or 
+darks que crea ESOREX), y lo peor es que no se que hacer con ellos.
+./papi.py -c config_files/papi_panic1_hawki.cfg -s /data1/HAWK-I_WASP19/ -g filter -M lemon -W Q2 -S 2 2
+
+
+24-Feb-2015
+-----------
+
+
+
+
 
 Posibles causas del problema del Transito WASP:
 ==============================================
+0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
+¿ que hacer con los BP ????
 1-fueron reducidas con modo quick
 2-no tiene ni Dark y Flat
 3-(creo) que fueron reducidas con el dxtalk activado
@@ -6052,6 +6253,26 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Tratamiento de BP en PAPI (Skyfilter) y "anular" BP detection en GainMap !!!
+- BD me sugiere que incluya en el QL-focus evaluation, el nuevo método
+para calcular el BestFocus.
+- BD también me dice que modifique runStarfocus para que escriba los nuevos
+valores en el fichero SGi_j.txt
+- (IMPORTANTE) Solucionar el tema del GAINMAP-->estimación erronea de BP !!!!
+- ver si hay manera de chequear el valor de PIX_SCALE en PAPI, es muy importante
+por ejemplo para el calculo de los offsets cuando usamos getWCSOffsets !!!! y en el 3.5m difiere !!
+
+- TODO: la segunda pasada de skyfilter para objetos extensos no está
+resuelto; si llamo a skyfilter_general, tendría que pasarle todos las
+imágenes, y no sólo las SCIENCE como hace ahora mismo !!!! 
+pero, ¿ qué sentido tiene entonces pasarle la máscara de objectos ?
+¿ no sería entoces mejor llamar a skyfilter simplemente con la mascara y los SCIENCE ???
+La verdad es que esto es algo no resuelto aún !!!
+
+- Modificar dataset::GetFilterFiles() para que agrupe correctamente las SKY + SCIENCE en
+el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un apaño
+en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
+si se detecta bien los SKY de los SCIENCE
 - arreglar/poner bien RS::skyFilter, ahora no funciona los modos onoff, etc, etc...
 - ver si removeXTalk debería hacerse siempre en en la primera pasada de skysub aunque
 el modo sea science !!
@@ -7012,3 +7233,26 @@ COSAS MODIFICADAS PARA PRUEBA EN PAPI
 - calSuperFlat(c_ncoadds=False)
 - Modificar collapse para que no renombre los que no son cubos (line 68 collapse.py)
 - Limpiar RS::skyFilter
+
+
+
+"""
+>>> import re
+>>> re.findall("\d+.\d+", "Current Level: 13.4 db.")
+['13.4']
+may suffice.
+
+A more robust version would be:
+
+>>> re.findall(r"[-+]?\d*\.\d+|\d+", "Current Level: -13.2 db or 14.2 or 3")
+['-13.2', '14.2', '3']
+If you want to validate user input, you could alternatively also check for a float by stepping to it directly:
+
+user_input = "Current Level: 1e100 db"
+for token in user_input.split():
+    try:
+        # if this succeeds, you have your (first) float
+        print float(token), "is a float"
+    except ValueError:
+        print token, "is something else"
+"""

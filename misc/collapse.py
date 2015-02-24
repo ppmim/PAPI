@@ -81,7 +81,12 @@ def collapse(frame_list, out_dir="/tmp"):
             prihdu.header.set('NCOADDS', f[0].data.shape[0])
             prihdu.header.set('EXPTIME', f[0].header['EXPTIME']*f[0].data.shape[0])
             prihdu.header.set('PAPIVERS', __version__, "PANIC Pipeline version")
-
+            # Weird case (OmegaCass), but it produce a fail with WCS lib
+            if 'CTYPE3' in prihdu.header: prihdu.header.remove("CTYPE3")
+            if 'CRPIX3' in prihdu.header: prihdu.header.remove("CRPIX3")
+            if 'CRVAL3' in prihdu.header: prihdu.header.remove("CRVAL3")
+            if 'CDELT3' in prihdu.header: prihdu.header.remove("CDELT3")
+            
             out_hdulist.append(prihdu)    
             #out_hdulist.verify ('ignore')
             # Now, write the new collapsed file

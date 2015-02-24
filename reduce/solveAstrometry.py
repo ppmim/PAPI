@@ -173,7 +173,11 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     #
     # We must distinguish different cases
     #
-
+    
+    # I do not way, but sometimes it only solve a field with no coordinates !
+    #ra = -1
+    #dec = -1
+    
     # 1) RA, Dec and Scale are known
     if ra != -1 and dec != -1 and scale != -1:
         logging.debug("RA, Dec and Scale are known")

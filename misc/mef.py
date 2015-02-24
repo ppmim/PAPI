@@ -265,6 +265,9 @@ class MEF (object):
                         comment = hdulist[0].header.cards[key].comment
                         if key == 'HIERARCH ESO DET NDIT':
                             out_hdulist[0].header.set('NDIT', value, comment)
+                        
+                        elif key == 'HIERARCH ESO INS FILT1 NAME' or key== 'HIERARCH ESO INS FILT2 NAME':
+                                out_hdulist[0].header.set('FILTER', value, comment)
                         else:
                             out_hdulist[0].header.set(key, value, comment)
                         # We DON'T need to update RA, DEC (pointing coordinates), because each 

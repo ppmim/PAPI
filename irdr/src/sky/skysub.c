@@ -19,9 +19,10 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
                      float *sky, float *skyw, float *mask, char *type)
 {
     int i;
-    float skybkg, *imgout = (float *) emalloc(nx * ny * sizeof(float));
+    float skybkg, l_sky, *imgout = (float *) emalloc(nx * ny * sizeof(float));
 
     skybkg = histcalcf(sky, nx, ny, -1, -1, NULL);
+    
     
     /*printf ("\nSKYSUB ---skybkg== %f\n", skybkg);*/
 
@@ -31,6 +32,16 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
     {
         if (bpm[i] <= 0)
             imgout[i] = bkg;  /* set bad pixels to bkg lvl */
+            /* JMIM: I thik bad pixels should be set to __local__ bkg level to take into account when the pixel is in a star !! */
+            /* compute local bkg, but probably only valid for isolated badpixels. !!*/
+            /* TBC --> next probably only works fine for isolated pixels !!
+            if ( (i-1) > 0 && (i+1) < nx * ny){
+                l_sky = skybkg - (sky[i-1] + sky[i+1]) / 2.0 ;
+                imgout[i] = (img[i-1] + img[i+1]) / 2.0 + l_sky ;  
+            }
+            else 
+                imgout[i] = bkg;
+            */
         else
         {    
             if (skyw[i] > 0)
@@ -38,17 +49,12 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
             else
                 imgout[i] = img[i];
         }
-	}
+    }
 	
     /* do image destriping, mask indicates bad pix and object pix */
 
     destripe(imgout, mask, nx, ny, bkg, type);
 
-    /*
-    for (i = 0; i < nx * ny; i++)              
-        if (bpm[i] <= 0)
-            imgout[i] = bkg;
-    */
     return imgout;
 }
 
@@ -65,7 +71,7 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
     imgout = (float *) emalloc(nx * ny * sizeof(float));
 
     skybkg = histcalcf(sky, nx, ny, -1, -1, NULL);
-
+    
     for (i = 0; i < nx * ny; i++)
     {	
     	if (bpm[i] <= 0)
@@ -74,10 +80,6 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
     	else{
             imgout[i] = img[i] + (skybkg - sky[i]); /* add constant (skybkg) to preserve original count level */
                 
-    	    /* only for debug !
-    	    if (skybkg-sky[i]<0)
-    	       printf("\n IMG= %f  skbkg= %f SKY= %f (d=%f)", img[i],  skybkg, sky[i], skybkg-sky[i]);
-    	    */
     	}
     }
     

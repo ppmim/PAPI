@@ -75,22 +75,21 @@ def align_stack_cube(input_file, output_file=None):
     # Remove some unnecesary keywords
     for i_file in sp_files:
         with fits.open(i_file, "update") as f:
+            naxis1 = f[0].header['NAXIS1']
+            naxis2 = f[0].header['NAXIS2']
             if 'CTYPE3' in f[0].header: f[0].header.remove("CTYPE3")
             if 'CRPIX3' in f[0].header: f[0].header.remove("CRPIX3")
             if 'CRVAL3' in f[0].header: f[0].header.remove("CRVAL3")
             if 'CDELT3' in f[0].header: f[0].header.remove("CDELT3")
             
-            
+    return
+
     log.debug("Lets get offsets....")
     # Get offsets
-    # offsets = getPointingOffsets(sp_files)
+    #offsets = getPointingOffsets(sp_files, '/tmp/offsets.txt')
     offsets = getWCSPointingOffsets(sp_files, "/tmp/offsets.txt", 0.2)
     
-        
-    # Aling and coadd (sum) the images
-    out_file = sp_files[0].replace(".fits", "_coadd.fits")
-    naxis1 = 1024
-    naxis2 = 1024
+    # Build BPM from text file
     dummy_gain = "/tmp/dummy_gain.fits"
     if os.path.exists(dummy_gain):
         os.remove(dummy_gain)
@@ -99,7 +98,17 @@ def align_stack_cube(input_file, output_file=None):
     ones_array[bpm[:,1]-1, bpm[:,0]-1] = 0.0
     ghdu = fits.PrimaryHDU( data=ones_array )
     ghdu.writeto(dummy_gain)
-    coaddImages(sp_files, "/tmp/offsets.txt", dummy_gain,
+    # Aling and coadd (sum) the images
+    out_file = sp_files[0].replace(".fits", "_coadd.fits")
+    # Create input file for dithercubemean
+    fo = open('/tmp/offsets.txt', "r")
+    fs = open('/tmp/stack.txt', 'w+')
+    for line in fo:
+        n_line = line.replace(".fits.objs", ".fits") 
+        fs.write(n_line)
+    fo.close()
+    fs.close()
+    coaddImages(sp_files, '/tmp/stack.txt', dummy_gain,
                 out_file, "/tmp/dummy.fits", ctype='sum')
     
     log.info("Congrats !, coadd file generated %s"%out_file)
@@ -149,11 +158,16 @@ def split_fits_cube(filename, out_path, overwrite=True):
     return out_filenames
 
 def getPointingOffsets(image_list, 
-                            p_offsets_file='/tmp/offsets.pap',
+                            p_offsets_file='/tmp/offsets.txt',
                             out_path='/tmp'):
         """
         Derive pointing offsets between each image using SExtractor OBJECTS 
-        (makeObjMask) and offsets (IRDR)
+        (makeObjMask) and offsets (IRDR).
+        
+        Although the success of irdr:offsets rate is ≈ 100%, failure is indicated 
+        by an offset measurement corresponding exactly to the border of the search 
+        area, or a small fraction of object pixels overlapping in the aligned data 
+        images.
         
         Parameters
         ----------
@@ -187,11 +201,11 @@ def getPointingOffsets(image_list,
         
         log.debug("Creating OBJECTS images (SExtractor)....")
         
-        mask_minarea = 5
+        mask_minarea = 10
         mask_maxarea = 200
-        mask_thresh = 1.5
+        mask_thresh = 3.5
         satur_level = 300000
-        single_p = False
+        single_p = True
         MIN_CORR_FRAC = 0.1
             
         # In order to set a real value for satur_level, we have to check the
@@ -217,7 +231,7 @@ def getPointingOffsets(image_list,
         # STEP 2: Compute dither offsets (in pixles) using cross-correlation technique ==> offsets
         #>mosaic objfiles.nip $off_err > offsets1.nip
         search_box = 10 # half_width of search box in arcsec (default 10)
-        offsets_cmd = m_irdr_path + '/offsets '+ output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
+        offsets_cmd = m_irdr_path + '/offsets ' + output_list_file + '  ' + str(search_box) + ' >' + p_offsets_file
         if misc.utils.runCmd( offsets_cmd ) == 0:
             log.critical("Some error while computing dither offsets")
             raise Exception("Some error while computing dither offsets")
@@ -233,7 +247,10 @@ def getPointingOffsets(image_list,
                 log.critical("No offsets read. There may be some problem while computing translation offsets ....")
                 raise Exception("No offsets read")
         
+        
+        log.debug("OFFSETS= \n%s",offsets_mat)
         log.debug("END of getPointingOffsets")                        
+        
         return offsets_mat
 
 
