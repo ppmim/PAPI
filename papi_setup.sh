@@ -102,6 +102,7 @@ ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 # Some tools for commissioning
 ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus
 ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck
+ln -s $PAPI_HOME/commissioning/getImageOffsets $PAPI_BIN/getImageOffsets
 
 
 
