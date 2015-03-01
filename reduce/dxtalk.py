@@ -322,6 +322,18 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
         
     where each quadrant (Qn) is 2kx2k and has 32 horizontal stripes of 64 pixels
     of height. So, all the quadrant are processed in the same way.  
+    
+    Parameters:
+    ----------
+    in_image: str
+        Filename of the FITS image to remove the xtalk. It must be a single FITS,
+        MEF are not supported yet.
+
+    out_image: str
+        Filaname of the output dxtalked image.
+
+    overwrite: bool
+        Flag to indicate if the out_image can be overwritten. 
     """
     
     log.debug("Start remove_crosstalk (PANIC)")
@@ -488,10 +500,10 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     same orientation of the stipes. So, no matter which detector we are proceesing !
     
     
-    DET_ID = SG1 -- Q2 - vertical stripes
-    DET_ID = SG2 -- Q4 - vertical stripes
+    DET_ID = SG1 -- Q1 - vertical stripes
+    DET_ID = SG2 -- Q2 - vertical stripes
     DET_ID = SG3 -- Q3 - vertical stripes
-    DET_ID = SG4 -- Q1 - vertical stripes
+    DET_ID = SG4 -- Q4 - vertical stripes
     
     """
     

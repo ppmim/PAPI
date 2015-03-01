@@ -92,6 +92,7 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
     TODO
     ----
      - Implement the use of data_range and kappa for clipping -->cubemean
+    
     """
     
     # First, some checks
@@ -131,7 +132,7 @@ def stack_frames(file_of_frames, type_comb, f_from, f_to, outframe, sigmaframe,
 
 
     # (use IRDR::cubemean)
-    prog = irdr_path+"/cubemean "
+    prog = irdr_path + "/cubemean "
     cmd  = prog + " " + new_file_of_frames + " " + outframe + " " + outweight + \
             " " + "offset " + mode + " noweight float"
     e = runCmd( cmd )
@@ -171,6 +172,14 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
         File number inside the packet where end the computation
     window: str
         Window in frame (Q1, Q2, Q3, Q4, full-detector, central)
+        Following the next convention:
+        
+        |------------|
+        |  Q3  | Q4  |
+        | ---- |-----|
+        |  Q1  | Q2  |
+        |----- |-----|
+        
     out_filename: str
         filename where results will be saved
 
@@ -189,6 +198,7 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
       - Do dark subtraction to input files (flat-fields)
       - Do computations per channel and/or detector
       - Allow a custom coordinates for window definition
+      - Support for MEF files.
       
     """
     
@@ -199,6 +209,7 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
     else:
         raise Exception("Input file %s does not exist"%input_file)
     
+    # See above the convention used for naming the windows.
     if window == 'Q1':
         x1, y1, x2, y2 = 10, 10, 2030, 2030
     elif window == 'Q2':

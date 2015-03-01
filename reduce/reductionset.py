@@ -757,7 +757,7 @@ class ReductionSet(object):
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
                    'UT','AIRMASS','IMAGETYP','TELESCOP','INSTRUME','MJD-OBS',
                    'BSCALE', 'BZERO',
-                   'CTIME','ITIME','NCOADDS','EXPTIME',
+                   'CTIME','ITIME','NCOADDS','EXPTIME','T_FOCUS',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
                    'CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
@@ -2784,10 +2784,10 @@ class ReductionSet(object):
                 detector = self.config_dict['general']['detector']
                 q = -1
                 if next==4:
-                    if detector=='Q1': q = 0   # SG4
-                    elif detector=='Q2': q = 1 # SG1
+                    if detector=='Q1': q = 0   # SG1
+                    elif detector=='Q2': q = 1 # SG2
                     elif detector=='Q3': q = 2 # SG3
-                    elif detector=='Q4': q = 3 # SG2
+                    elif detector=='Q4': q = 3 # SG4
                     else: q = -1 # all detectors
                     if q!=-1:
                         obj_ext = [obj_ext[q]]

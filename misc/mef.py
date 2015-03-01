@@ -219,6 +219,8 @@ class MEF (object):
         """ 
         Method used to split a MEF into single FITS frames, 
         copying all the header information required.
+           
+        **This is the mail method used by PAPI for the parallel reduction**
         
         Splitted images now are as follow: Q01=SG1, Q02=SG2, Q03=SG3, Q04=SG4.
         
@@ -236,7 +238,7 @@ class MEF (object):
                     'TELESCOP', 'INSTRUME', 'MJD-OBS', 'CTIME','ITIME','NCOADDS','EXPTIME',
                     'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT',
                     'CASSPOS','PIXSCALE','PAPITYPE', 'PAPIVERS','OBSERVER','ORIGIN',
-                    'DETROT90', 'DETXYFLI',
+                    'DETROT90', 'DETXYFLI','T_FOCUS',
                     'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                     'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP']
                 

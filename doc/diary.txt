@@ -5793,6 +5793,8 @@ que abrir el ds9 en otro puerto:
 $ds9 -port 5138
 $ setenv IMTDEV inet:5138:localhost
 
+$export IMTDEV=inet:5137 (puerto por defecto !!!)
+
 Una cosa muy interesante es que podemos también usar un DS9 local corriendo
 en otra máquina diferente a la que corre IRAF !! con lo cual ganamos en velocidad
 de refresco !!
@@ -6235,7 +6237,8 @@ darks que crea ESOREX), y lo peor es que no se que hacer con ellos.
 - Compruebo si en el código de PAPI está hard-coded la pixel scale del 2.2m (0.45),
 de cara al commisioning en el 3.5m. En pricipio todo está basado en el valor del fichero
 de configuración o el leido de la cabecera.
-- Hago todas las modificaciones en mef.py (y similares, ie: correctNonLinearity, ...) para la nueva
+- Hago todas las modificaciones en mef.py (y similares, ie: correctNonLinearity,
+checkQuality, eval_focus_serie.py, mainGUI.py) para la nueva
 ordenación de los MEF (Q1, Q2, Q3, Q4) siguiendo el documento PANIC-GEN-SP-02 de BD.
 En principio ahora todo es compatible con la versión anterior de los MEFs (la original,
 en el que el orden en los MEFs era SG4,1,3,2), salvo en la funcioń convertGEIRSToMEF(),
@@ -6246,10 +6249,144 @@ en la nueva (sólo se me ocurre mirar la versión del GEIRS que creó el FITS or
 Aunque he hecho bastantes pruebas, hay que probar con una reducción de PANIC y con
 el QL (que también queda por actualizar algo en la GUI).
 
+25-Feb-2015
+-----------
+- Modifico QL para el nuevo esquema de MEFs (Q1-4=SGi);
+- IMPORTANTE: 
+    ****
+    Ahora, todos los splits que se hagan en PAPI&QL se hacen
+    tendiendo en cuenta el EXTNAME, y se hacen tal: Qi=SGi
+    ****
+- Encuentro el problema que causaba el bloqueo/crash en runStarfocus.py al
+ejecutar starfocus(pyraf) y matplotlib. Se soluciona configurando otro
+backend distinto al TkAgg, es decir:
+
+# Next is needed in order to avoid a crash/deadlock when running 
+# pyraf graphs and matplotlib.pyplot graphs
+# For 'TkAgg' backend (default) produces the crash.
+matplotlib.use('QT4Agg')
+
+Teleconf con Herve Bouy sobre la Astrometría de PANIC
+-----------------------------------------------------
++ En cuanto a si son resultados definitivos, HB dice que si, y
+que no cree que se puedan mejorar.
++ En cuanto a la pregunta 6)
+    6.- Seria posible extraer de estos datos las posiciones relativas de 
+    los cuatro cuadrantes de forma que se pueda "acelerar" la astrometria 
+    en el futuro? O para que se pueda dar una primera astrometria aproximada 
+    de cara a los mosaicos, por ejemplo en los 'surveys'. 
+  HB no ve la necesidad ni la utilidad.
+  
++ Las imágenes las ha reducido de  DARK, FLAT y cielo; los BP
+los detecta a partir de los FF, y les pone un peso=0 para que 
+en el ajuste de PSF no se tengan en cuenta.
+PSFEx por defecto descarta los objetos que tengan pixeles malos,
+pero se le puede decir que los considere dichos objetos pero 
+sin tener en cuenta los pixeles malos, sin ningún tipo de interpolación.
+HB no es partidario de sustituir los BP por interpolación ni nada parecido.
+
++ Los valores que nos obtiene Hervé son de Astrometría interna,
+y son los que nos da SCAMP en la salida por pantalla en
+Astrometric stats (internal) para high S/N (dAXIS1  dAXIS2).
+Esos valores también se pueden obtener del .head que produce
+SCAMP, de las keywords ASTIRMS1/ASTIRMS2, que vienen
+expresados en grados. Si los multiplicamos por 3600 obtengo
+la dispersión de la astrometría interna en arcsec, que coincide
+con (dAXIS1  dAXIS2), es decir:
+ASTIRMS1 = dAXIS1 * 3600.0
+ASTIRMS2 = dAXIS2 * 3600.0
+
++ Para el modelo de la PSF, HB ha usado PSFEx, que nos calcula
+un modelo de PSF para la imagen. Eso modelo es el que luego se le
+pasa a SExtractor (PSF_NAME) y SCAMP. No obtante, aunquel la fotometría
+con PSF es muy buena (o mejor que la de apertura) para cuando 
+tenemos baja S/N o muchos pixeles malos como en este caso;
+sin embargo un inconveniente es que si tenemos un campo
+con galaxias de tamaño importante (>5arcs) entonces, la PSF no quedará 
+bien modelizada. Sin embargo, para solventar ese problema, HB lo que hace
+es decirle a luego a SExtractor que use el modelo "Sersic", pero no se
+exactamente como lo hace (ver http://arxiv.org/pdf/1203.1831v1.pdf).
+
++ Los valores de 30mas y 10-12 mas son valores globales excluyendo el
+detector malo, y no cree que se puedan mejorar.
+
++ En cuanto al mapa de distorsión, HB no lo ha estudiado en detalle, pero
+vió algo de desplazamiento, pero no sabe si puede ser debido al Tilt u a 
+otra cosa, pues no conoce el telescopio. Comenta que con el mapa de PSFs 
+que genera PSFEx también se podría estimar el Tilt y la calidad de la imagen.
+
++ Si le dicimos a SCAMP que haga la astometría de ORDE=1, entonces lo que nos
+da son los offsets ??? JM: no a si se refiere a los offsets de dithering o a que.
+
++ Le pregunto si SCAMP no puede dar una matriz de distorsión, y me comenta
+que nos la da en forma de Polinomio  en el fichero .head ! --> Esto puede ser muy
+útil para hacer una pre-calibración estática sin ejecutar SCAMP.
+
++ No cree que se pueda mejorar la astometría. Se podría llegar a 15mas, pero para
+ello tendríamos que tener muchas posiciones de dithering para muestrear bien y evitar
+los BP; el sugiere al menos 50-60 posiciones **unicas** y aleatorias. El nos eviará
+un patrón muy usado de 36 puntos que podemos scalar a PANIC de forma que la separación
+máxima de los puntos (amplitud del dithering) sea de 4-5arcmin.
+
++ HB cree que una dispersión de 30mas PANIC no es tan mala, y es comparable
+a otros surveys y que se puede trabajar.
+
++ No le importaría decirnos como ha hecho el la astrometría, pero ahora mismo 
+está muy liado y hasta Mayo-Junio no tendrá mucho tiempo. Tb nos dice que 
+por email o remoto no lo ve muy factible (???).
+
+
+26-Feb-2015
+-----------
+- Me paso todo el día intentando invocar desde PQL a la nueva rutina runStarfocus::runFocusEvaluation(),
+pero no hay manera, pues da muchos conflictos pyraf con la GUI del QL:
+   0- Usar el backend Qt4Agg para evitar cuelgue al finalizar runStarfocus por algún conflicto
+   con pyraf que usa Tkinter (ver código de stsci.pyraf.
+   1- tuve que quitar todas las definiciones de PYRAF_NO_DISPLAY en el QL, pues si
+   no la rutina no funciona se queja con un mensaje tq:
+   "Cannot run this command without graphics"
+   2- Tras solucionar lo anterior, me encuentro con otro problema con el siguiente mensaje:
+     bad screen distance "2.0"
+     Investigando parece que tiene que ver con el LOCALE, que parece que puede dar un
+     conflicto con TKinter, y que no es thread-safe. Se soluciona haciendo lo siguiente:
+     
+     import locale
+     # Localize the application using the system locale
+     # numpy seems to have problems with decimal separator in some locales
+     # (catalan, german...) so C locale is always used for numbers.
+     locale.setlocale(locale.LC_ALL, '')
+     locale.setlocale(locale.LC_NUMERIC, 'C')
+     
+     Refs:
+      - https://docs.python.org/2/library/locale.html
+      - http://matplotlib.1069221.n5.nabble.com/quot-bad-screen-distance-quot-tkinter-error-with-German-locale-td4769.html
+     
+    3- Tras solucionar también eso, me encuentro con otro problema, y es un mensaje tq:
+    "runtimeerror maximum recursion depth exceeded in cmp python"
+    Pero ese se solucionó misteriosamente ....
+    
+    4-Otro problema no resuelto aun, es que cuando se llama a runStarfocus la paleta 
+    de colores que muestra DS9 para las imágenes es horrible, y no se ven bien las imágenes....
+    Sin embargo, lanzandolo a mano desde la linea de comando no hay problema !!! 
+    Parece de nuevo un coflicto de recursos entre PyQT+matplotlib  y PyRAF....
+    
+27-Feb-2015
+-----------
+- Como no encuentro solución al conflicto de Pyraf_GUI  + PQL, opto por implementar
+la nueva focus_evaluation como lo hacía antes, invocando a iraf desde un system y cargando
+el fichero papi_ql_user.cl, que ahora después de ejecutar la tarea de iraf, llamará al
+script de python tal que:
+
+!/home/panic/bin/runStarfocus.py -o starfocus.log
+
+Siguie siendo un poco chapuza, pero no encuentro otra manera de hacerlo !!!!
 
 
 
 
+
+
+     
 Posibles causas del problema del Transito WASP:
 ==============================================
 0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
@@ -6274,7 +6411,6 @@ con el que realmente tienen los ficheros en la cabecera para así evitar
 olvidar actualizar el fichero de configuración.
 
 - Incluir limites foco y fwhm en nueva rutina BEST_FOCUS
-- Nuevo esquema de MEF en GEIRS---> PAPI::split() etc, etc ....
 - Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)!
 - reducir datos de OmegaCass para VT
 - ver si dilate crea buenas objectMask dilatadas adecuadamente...ala ESOREX

@@ -129,8 +129,10 @@ def refPixelCorrection(in_image, out_image=None, overwrite=False):
         raise e
     
     
-    #Set the lines to be used as reference pixels, those at the top and bottom of
-    #the image.
+    # Set the lines to be used as reference pixels, those at the top and bottom of
+    # the image. Here we name Q1 and Q2 the quadrants that are at the bottom and 
+    # and Q3 and Q4 the quadrants at the top (left and right respectively).
+
     lineQ12 = [0,1,2,3,    # top Q1 and Q2
             2044,2045,2046,2047] # bottom Q1 and Q2
     lineQ34 = [2048,2049,2050,2051, # top Q3 y Q4
@@ -141,15 +143,14 @@ def refPixelCorrection(in_image, out_image=None, overwrite=False):
     med = numpy.zeros([len(lineQ12), nquads], dtype=numpy.float)
     im = imraw
     
-    #Try to correct the small slope seen in the reference pixels themselves, i.e.
-    #from line 0 to 3 and from 2047 to 2044 by subtracting the median horizontal 
-    #value from itself.
+    # Try to correct the small slope seen in the reference pixels themselves, i.e.
+    # from line 0 to 3 and from 2047 to 2044 by subtracting the median horizontal 
+    # value from itself.
     reflines = numpy.zeros([len(lineQ12), 2048, nquads], dtype=numpy.float)
 
-    #import pdb; pdb.set_trace()
 
     for i in range(len(lineQ12)):
-        #Determine offset = median of each line
+        # Determine offset = median of each line
         #med[i] = numpy.median(im[line[i], :])
         med[i, 0] = numpy.median(im[lineQ12[i], 0:2048])
         med[i, 1] = numpy.median(im[lineQ12[i], 2048:4096])
@@ -166,28 +167,27 @@ def refPixelCorrection(in_image, out_image=None, overwrite=False):
         reflines[i,:,3] = im[lineQ34[i], 2048:4096] - med[i, 3]
 
 
-    #Now, for each column, use the median of the 8 reference pixels available.
-    #Crunch 8 lines into 1. This is a vector of 2048 reference columns.
+    # Now, for each column, use the median of the 8 reference pixels available.
+    # Crunch 8 lines into 1. This is a vector of 2048 reference columns.
     averagecolumn = numpy.median(reflines, axis=0)
-    #Smooth that column with box of 9. This is to prevent introducing noise but 
-    #it also means that column to column variations on shorter timescales can not
-    #be corrected for.
+    # Smooth that column with box of 9. This is to prevent introducing noise but 
+    # it also means that column to column variations on shorter timescales can not
+    # be corrected for.
     box = 9
     #averagecolumn = smooth(averagecolumn, box)
     averagecolumn[:,0] = scipy.ndimage.filters.median_filter(averagecolumn[:,0], size=box)
     averagecolumn[:,1] = scipy.ndimage.filters.median_filter(averagecolumn[:,1], size=box)
     averagecolumn[:,2] = scipy.ndimage.filters.median_filter(averagecolumn[:,2], size=box)
     averagecolumn[:,3] = scipy.ndimage.filters.median_filter(averagecolumn[:,3], size=box)
-    #Subtract the average, smoothed column from each data column
+    # Subtract the average, smoothed column from each data column
 
-    #import pdb; pdb.set_trace()
 
-    #Q1 and Q2
+    # Q1 and Q2
     for i in range(4, 2044):
         im[i,0:2048] = imraw[i,0:2048] - averagecolumn[:,0]
         im[i,2048:4096] = imraw[i,2048:4096] - averagecolumn[:,1]
 
-    #Q3 and Q4
+    # Q3 and Q4
     for i in range(2052, 4096):
         im[i,0:2048] = imraw[i,0:2048] - averagecolumn[:,2]
         im[i,2048:4096] = imraw[i,2048:4096] - averagecolumn[:,3]
