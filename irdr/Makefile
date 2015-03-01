@@ -37,7 +37,7 @@ irdr: cleanirdr irdrlib  \
 	./bin/dithercubemean ./bin/offsets ./bin/cubemean \
 	./bin/skyfilter ./bin/skyfilteronoff ./bin/skyfilteroffon ./bin/skyfilter_general \
 	./bin/skyfilter_single \
-	./bin/my_mode
+	./bin/my_mode ./bin/dilate ./bin/gainmap
 
 OBJ_FITSIO = src/fitsIO/fitsIO.o
 
@@ -139,3 +139,9 @@ irdrlib: ./lib/libirdr.a
 	$(CC) $(COMPFLAGS) src/drivers/my_mode.c \
 		-o bin/my_mode $(LINKFLAGS)
 
+./bin/dilate: src/drivers/dilate.c
+	$(CC) $(COMPFLAGS) src/drivers/dilate.c \
+		-o bin/dilate $(LINKFLAGS)
+./bin/gainmap: src/drivers/gainmap.c
+	$(CC) $(COMPFLAGS) src/drivers/gainmap.c \
+		-o bin/gainmap $(LINKFLAGS)

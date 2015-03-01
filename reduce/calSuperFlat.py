@@ -157,7 +157,7 @@ class SuperSkyFlat(object):
         # Check data integrity (all have the same properties)
         m_filelist = self.filelist
             
-        if not datahandler.checkDataProperties( m_filelist ):
+        if not datahandler.checkDataProperties( m_filelist , c_ncoadds=False):
             log.error("Data integrity ERROR, some files not having same properties (FILTER, EXPTIME, NCOADDS or READMODE)")
             raise Exception("Found a data integrity error")
         

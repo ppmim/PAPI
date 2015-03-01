@@ -61,7 +61,7 @@ class DataSet(object):
         ----------
         source : str
             Can be a 'directory' name, a 'filename' containing the
-            list file or python list havind the files of the DataSet
+            list file or python list having the files of the DataSet
 
         instrument: str
             Name of the source instrument of the data files. It must match
@@ -138,7 +138,7 @@ class DataSet(object):
         True if all was successful, otherwise False
         """
 
-        log.debug("Inserting file %s into dataset" % filename)
+        #log.debug("Inserting file %s into dataset" % filename)
         if filename==None: return False
         
         try:
@@ -161,7 +161,7 @@ class DataSet(object):
                 fitsf.filter, fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object,
                 fitsf.detectorID)
         
-        print "dataDB_tuple = ", data
+        #print "dataDB_tuple = ", data
          
         cur = self.con.cursor()
 
@@ -179,6 +179,8 @@ class DataSet(object):
                 raise e
     
             self.id+=1
+            #log.debug("File %s inserted correctly in DB:"%filename)
+            
             return True
             
         else:
@@ -342,7 +344,10 @@ class DataSet(object):
         A MJD ascending sorted list with the filenames that match the 
         specified fields, otherwise an empty list []
         """
-
+        
+        # only for debug
+        #self.ListDataSet()
+        # 
         res_list = []
         try:
             # NOT USED !!! RUN_ID !!! NOT USED 
@@ -354,44 +359,44 @@ class DataSet(object):
                 s_run_id = "run_id=?"
             
             #Type: The type of the image (ANY, DARK, FLAT,SCIENCE, ....)
-            if type=='ANY':
-                s_type="type>=?"
+            if type == 'ANY':
+                s_type = "type>=?"
                 type = ""
-            elif type=='DOME_FLAT':
-                s_type="type like 'DOME_FLAT%' or type=?"
+            elif type == 'DOME_FLAT':
+                s_type = "type like 'DOME_FLAT%' or type=?"
                 type = ""
-            elif type=='SKY_FLAT':
-                s_type="type like 'TW_FLAT%' or type like 'SKY_FLAT%' or type=?"
+            elif type == 'SKY_FLAT':
+                s_type = "type like 'TW_FLAT%' or type like 'SKY_FLAT%' or type=?"
                 type = ""
             else:
-                s_type="type=?"
+                s_type = "type=?"
                 
-            #DetectorID: Detector identifier
-            if detectorId=='ANY':
-                s_detectorId="detector_id>=?"
-                detectorId=""
+            # DetectorID: Detector identifier
+            if detectorId == 'ANY':
+                s_detectorId = "detector_id>=?"
+                detectorId = ""
             else:
-                s_detectorId="detector_id=?"
+                s_detectorId = "detector_id=?"
                 
-            #TEXP: Any 'texp' requirement 
-            if  texp==-1:
+            # TEXP: Any 'texp' requirement 
+            if  texp == -1:
                 s_texp = "texp>=%f" %(texp)
             else:
                 ROUND = 0.5  # We do not need an accurate value !
                 s_texp = "texp>%f and texp<%f" %(texp-ROUND, texp+ROUND)
 
-            #FILTER: The master dark does not have a 'filter' requirement
-            if type=='MASTER_DARK' or filter=="ANY":
+            # FILTER: The master dark does not have a 'filter' requirement
+            if type == 'MASTER_DARK' or filter == "ANY":
                 s_filter = "filter>=?"
                 filter = ""
             else:
                 s_filter = "filter=?"
 
-            #AR
+            # AR
             s_ar = "ra>%s and ra<%s" %(ra-delta_pos, ra+delta_pos)
-            #DEC
+            # DEC
             s_dec = "dec>%s and dec<%s" %(dec-delta_pos, dec+delta_pos)
-            #MJD
+            # MJD
             s_mjd = "mjd>%s and mjd<%s" %(mjd-delta_time, mjd+delta_time)
             
             s_select = "select filename from dataset where %s and %s and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd)
@@ -405,8 +410,10 @@ class DataSet(object):
             res_list = []
             if len(rows)>0:
                 res_list = [str(f[0]) for f in rows] # important to apply str() !!
+            
             #print "Total rows selected:  %d" %(len(res_list))
             #print "Files found :\n ", res_list
+            
             return res_list
                              
         except sqlite.DatabaseError,e:
@@ -541,7 +548,7 @@ class DataSet(object):
         # Concatenate the two list (dome_flat, the rest)
         par_list = par_list + par_list2
         
-        print "PAR_LIST=",par_list
+        #print "PAR_LIST=",par_list
         # Finally, look for files of each Filter
         for par in par_list:
             cur = self.con.cursor()
@@ -898,7 +905,7 @@ class DataSet(object):
         INPUTS
         @param filter:  filter can be specified to restrict the search
           
-        @param type: it can be SCIENCE, DARKs,FLATs  (None=any type)
+        @param type: it can be SCIENCE, DARKs, FLATs  (None=any type)
           
         @note: this method is thought to work fine for SCIENCE sequences;
         for calibration sequences need improvements
@@ -960,7 +967,8 @@ class DataSet(object):
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
                     if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
-                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    elif str(fits[7]).count("SKY_FLAT"): my_type = "SKY_FLAT"
+                    elif str(fits[7]).count("SKY"): my_type = "SCIENCE"
                     else: my_type = str(fits[7])
                     seq_types.append(my_type)
                     group = []
@@ -972,7 +980,8 @@ class DataSet(object):
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
                     if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
-                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
+                    elif str(fits[7]).count("SKY_FLAT"): my_type = "SKY_FLAT"
+                    elif str(fits[7]).count("SKY"): my_type = "SCIENCE"
                     else: my_type = str(fits[7])
                     seq_types.append(my_type)
                     group = []

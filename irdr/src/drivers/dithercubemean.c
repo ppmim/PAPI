@@ -34,9 +34,15 @@ int main(int argc, char *argv[])
     /* int xbelow=10, xabove=10, ybelow=10, yabove=10; */
     float *plane, *meanplane, *wplane, *sumwplanes, *gainmap;
     float bkg, sig = 0.0, avgscale = 0.0;
-
-    if (argc != 5)
+    int sum_flag = 0; /* if =1, compute the simple arithmetic sum of the planes */
+    
+    if (argc < 5)
         usage();
+    
+    if (argc == 6)
+        /*read gainmap, altought it is not required !*/
+        sum_flag = 1;
+     
 
     nplanes = readlist(argv[1], fn, NULL, xshift, yshift, MAXNPLANES);
 
@@ -92,21 +98,29 @@ int main(int argc, char *argv[])
     ny = ny + yabove - ybelow;      * image size of coadded dither set *
     */
 
-    meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1); /*ORIGINAL */
-    /* prueba
-    meanplane = cube_median(data, nplanes, nx, ny, scale, 1); 
-    */
-    /* 0:jmim */
-    /*meanplane = cube_median(data, nplanes, nx, ny, scale, 1);*/
-    /* 1:jmim */
+    if (!sum_flag)
+        meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1); /*ORIGINAL */
+    else
+        /* simple arithmetic sum of planes, no gainmap is used. */
+        meanplane = cube_sum(data, nplanes, nx, ny);
+   
+    printf("Lets write the sum ...\n");
     
     writefits(argv[3], fn[0], (char*)meanplane, -32, nx, ny);
     
+    if (sum_flag)
+    {
+        float i_time = 1.0;
+        if (get_key_float(fn[0], "ITIME", &i_time) < 0) {
+            fprintf(stderr, "get_wcs: unable to read ITIME in: %s\n", fn);
+        }
+        put_key_float(argv[3], "EXPTIME", nplanes*i_time);
+    }
     put_key_int(argv[3], "NCOMBINE", nplanes);          /* update FITS hdr */
     put_key_float(argv[3], "DATAMODE", avgscale);
 
     /* write weight map */
-    writefits(argv[4], argv[3], (char*)sumwplanes, -32, nx, ny);
+    if (!sum_flag) writefits(argv[4], argv[3], (char*)sumwplanes, -32, nx, ny);
     
     return 0;
 }
@@ -121,6 +135,7 @@ static void usage(void)
     "      gainfn - filename of FITS gainmap (normalized flat field)\n"
     "      outfn  - filename for output coadded FITS image\n"
     "      outwfn - filename for output coadded FITS weight image\n\n"
+    "      sum    - (optional) flag to indicate to perform simple arithmetic sum of planes"
     "example: dithercubemean filelist gain.fits coadd.fits weight.fits\n\n";
 
     printf("%s", usage);

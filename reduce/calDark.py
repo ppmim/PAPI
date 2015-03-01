@@ -209,7 +209,7 @@ class MasterDark(object):
         tmp1 = self.__temp_dir + "/dark_tmp.fits"
         misc.fileUtils.removefiles(tmp1)
         
-        #Add TEXP and NCOADD to master filename
+        # Add TEXP and NCOADD to master filename
         if f_ncoadds==-1: f_ncoadds=1
         self.__output_filename = self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt, f_ncoadds))
         

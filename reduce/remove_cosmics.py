@@ -103,7 +103,7 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
         if len(f_in)==1:
             data_in = f_in[0].data
         else:
-            log.errro("MEF files currently not supported !")
+            log.error("MEF files currently not supported !")
             raise Exception("MEF files currently not supported !")
             
     except Exception,e:

@@ -226,8 +226,8 @@ class GainMap(object):
         nyblock: int (16)
             Y-size (pixels) of box used to compute local bkg (even)
         
-        nsigma: int (5)
-            Number of (+|-) stddev from local bkg to be bad pixel (default=5)
+        nsigma: int (10)
+            Number of (+|-) stddev from local bkg to be bad pixel (default=10)
             
         """
          
@@ -291,10 +291,12 @@ class GainMap(object):
         else: extN = 0
         if np.median(myflat[extN].data)> 100:
             self.do_norm = True
+            log.info("Normalization will be done !")
         else:
             self.do_norm = False
+            log.info("**No** normalization will be done !")
             
-        for chip in range(0,nExt):
+        for chip in range(0, nExt):
             log.debug("Operating in CHIP %d", chip+1)
             if isMEF:
                 #flatM=np.reshape(myflat[chip+1].data, naxis1*naxis2)
@@ -324,30 +326,30 @@ class GainMap(object):
                 
             # To avoid zero-division
             __epsilon = 1.0e-20
-            if np.fabs(median)>__epsilon:
+            if np.fabs(median) > __epsilon:
                 flatM = flatM/median
             else:
                 flatM = flatM
                 
             # Check for bad pixel 
-            gain[chip] = np.where( (flatM<self.m_MINGAIN) | (flatM>self.m_MAXGAIN), 0.0, flatM)
-            m_bpm = np.where(gain[chip]==0.0, 1, 0) # bad pixel set to 1
-            nbad = (m_bpm==1).sum()
+            gain[chip] = np.where( (flatM < self.m_MINGAIN) | (flatM > self.m_MAXGAIN), 0.0, flatM)
+            m_bpm = np.where(gain[chip] == 0.0, 1, 0) # bad pixel set to 1
+            nbad = (m_bpm == 1).sum()
             log.debug("Initial number of Bad Pixels : %d ", nbad)
                         
             # local dev map to find out pixel deviating > NSIGMA from local median
-            dev = np.zeros((naxis1,naxis2), dtype=np.float32)
-            buf = np.zeros((self.m_NXBLOCK,self.m_NYBLOCK), dtype=np.float32)
+            dev = np.zeros((naxis1, naxis2), dtype=np.float32)
+            buf = np.zeros((self.m_NXBLOCK, self.m_NYBLOCK), dtype=np.float32)
             
             # Foreach image block
             for i in range(0, naxis1, self.m_NYBLOCK):
                 for j in range(0, naxis2, self.m_NXBLOCK):
-                    box = gain[chip][i:i+self.m_NXBLOCK, j:j+self.m_NYBLOCK]
-                    p = np.where(box>0.0)
+                    box = gain[chip][i: i + self.m_NXBLOCK, j: j + self.m_NYBLOCK]
+                    p = np.where(box > 0.0)
                     buf = box[p]
-                    if len(buf)>0: med = np.median(buf)
+                    if len(buf) > 0: med = np.median(buf)
                     else: med = 0.0
-                    dev[i:i+self.m_NXBLOCK, j:j+self.m_NYBLOCK] = np.where(box>0, (box - med), 0)
+                    dev[i:i + self.m_NXBLOCK, j: j + self.m_NYBLOCK] = np.where(box > 0, (box - med), 0)
                             
             """                
             # Foreach image block
@@ -371,7 +373,7 @@ class GainMap(object):
                                 dev[k*naxis1+l] = 0.0                       # already known badpix
             """                    
             med = np.median(dev)
-            sig = np.median(np.abs(dev-med)) / 0.6745
+            sig = np.median(np.abs(dev - med)) / 0.6745
             lo  = med - self.m_NSIG * sig
             hi  = med + self.m_NSIG * sig
                                 
@@ -395,7 +397,7 @@ class GainMap(object):
         
         fo = fits.HDUList()
         # Add primary header to output file...
-        if isMEF: 
+        if isMEF:
             prihdu = fits.PrimaryHDU(None,prihdr)
             fo.append(prihdu)
             # Add each extension
@@ -415,21 +417,21 @@ class GainMap(object):
                 
         return output
                                     
-################################################################################
+#############################################################################
 # main
+# ###########################################################################
 if __name__ == "__main__":
     # Get and check command-line options
     
     usage = "usage: %prog [options]"
-    desc = """Creates a master gain map from a master flat field (dome, twilight or superflat)
-NOT normalized and previously created. The flatfield will be normalized to make 
-a gainmap and set bad pixels to 0."""
+    desc = """Creates a master gain map from a given master flat field (dome, twilight or superflat)
+optionally normalized. The bad pixels are set to 0"""
     
     parser = OptionParser(usage, description=desc)
     
     parser.add_option("-s", "--source", type="str",
                   action="store", dest="source_file",
-                  help="Flat Field image NOT normalized. It has to be a fullpath file name (required)")
+                  help="Flat Field image optionally normalized. It has to be a fullpath file name (required)")
                   
     parser.add_option("-o", "--output", type="str",
                   action="store", dest="output_filename", 
@@ -456,9 +458,9 @@ a gainmap and set bad pixels to 0."""
                   action="store", dest="nyblock", 
                   help="Y dimen. (pixels) to compute local bkg (even) (default=16)")
                   
-    parser.add_option("-n", "--nsigma", type="int", default=5,
+    parser.add_option("-n", "--nsigma", type="int", default=10,
                   action="store", dest="nsigma", 
-                  help="number of (+|-)stddev from local bkg to be bad pixel (default=5)")
+                  help="number of (+|-)stddev from local bkg to be bad pixel (default=10)")
     
     parser.add_option("-N", "--normal",  default=True,
                   action="store_true", dest="normal", 
@@ -466,7 +468,7 @@ a gainmap and set bad pixels to 0."""
                   
     (options, args) = parser.parse_args()
     
-    if len(sys.argv[1:])<1:
+    if len(sys.argv[1:]) < 1:
        parser.print_help()
        sys.exit(0)
         

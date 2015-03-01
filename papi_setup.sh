@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #------------------------------------------------------------------------------
 # User Configurable Settings
 #------------------------------------------------------------------------------
@@ -23,8 +25,22 @@ mkdir $HOME/.iraf
 ln -s $HOME/.iraf $HOME/iraf
 cd $HOME/.iraf
 mkiraf 
+# Copy custom iraf scripts
+cp ${PAPI_HOME}/scripts/login.cl ${HOME}/iraf
+cp ${PAPI_HOME}/scripts/papi_ql_user.cl ${HOME}/iraf
+user=$(whoami)
+sed -i "s/panic/$user/g" ${HOME}/iraf/login.cl
+
 
 # comment-out chkupdate on login.cl
+# and add the next:
+# set stdimage        = imt4096
+# set imtype          = "fits"
+#if (access ("home$papi_ql_user.cl"))
+#   if (access ("/tmp/focus_seq.txt"))
+#      cl < "home$papi_ql_user.cl"
+#;
+ 
 ## To be done
 
 #-------------------------------
@@ -43,6 +59,12 @@ cp $PAPI_HOME/scripts/start_ql.sh $PAPI_BIN/start_ql
 chmod a+x $PAPI_BIN/start_ql
 cp $PAPI_HOME/scripts/start_iraf.sh $PAPI_BIN/start_iraf
 chmod $PAPI_BIN/start_iraf
+cp -av $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/
+chmod a+x $PAPI_HOME/commissining/getDarks.py
+
+# To check the PANIC temperatures and press
+cp -av $PAPI_HOME/scripts/panic_status $PAPI_BIN/
+
 
 chmod a+x $PAPI_HOME/papi.py
 ln -s $PAPI_HOME/papi.py $PAPI_BIN/papi
@@ -77,16 +99,24 @@ ln -s $PAPI_HOME/misc/modFITS.py $PAPI_BIN/modFITS
 chmod a+x $PAPI_HOME/photo/photometry.py
 ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 
+# Some tools for commissioning
+ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus
+ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck
+ln -s $PAPI_HOME/commissioning/getImageOffsets $PAPI_BIN/getImageOffsets
+
+
 
 # ---------------------------------------
 # Add Environment Variables to bash shell
 # ---------------------------------------
-echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
-echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
-echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc
-echo "export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg" >> ~/.bashrc
-echo "export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}" >> ~/.bashrc
-echo "export PATH=\$PATH:${PAPI_BIN}" >> ~/.bashrc
+cp ${PAPI_HOME}/scripts/bashrc ${HOME}/.bashrc
+
+#echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
+#echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
+#echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc
+#echo "export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg" >> ~/.bashrc
+#echo "export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}" >> ~/.bashrc
+#echo "export PATH=\$PATH:${PAPI_BIN}" >> ~/.bashrc
 
 source ~/.bashrc
 

@@ -1,6 +1,6 @@
 /* correlate.h -- header file for correlate.c */
 
-#define MAXNCC 1024      /* max dimension of cross-correlation image [pixels] */
+#define MAXNCC 512     /* max dimension of cross-correlation image [pixels] */
 /*#define MAXNCC 6000 */ /*jmiguel test */
 
 extern float

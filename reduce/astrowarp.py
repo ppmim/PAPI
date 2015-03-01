@@ -244,7 +244,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
                   config_dict=None, do_votable=False,
                   resample=True, subtract_back=True):
     
-    """ Do the astrometric calibration to the input image (only one)
+    """ Do the astrometric calibration to an input image using SCAMP
       
     The method does astrometry on the image entirely using Emmanuel Bertin's
     tools, namely SExtractor, SCAMP and SWarp. First, SExtractor is run on the
@@ -386,8 +386,9 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     #but, "ext_config" parameters will be used in any case
     try:
         scamp.run(cat_file, updateconfig=False, clean=False)
-    except:
-        raise
+    except Exception,e:
+        log.error("Error running SCAMP: %s"%str(e))
+        raise e
     
     ## STEP 3: Merge and Warp the astrometric parameters (.head keywords) with 
     ## SWARP, and using .head files created by SCAMP. Therefore, a field distortion
@@ -398,6 +399,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     swarp.ext_config['IMAGEOUT_NAME'] = output_image
     swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
     basename_o, extension_o = os.path.splitext(output_image)
+    #"Projected" weight-maps are created too, even if no weight-maps were given in input.
     swarp.ext_config['WEIGHTOUT_NAME'] = basename_o + ".weight" + extension_o
     basename, extension = os.path.splitext(input_image)
     swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"
@@ -537,6 +539,7 @@ class AstroWarp(object):
     """ 
     Astrometric warping, and in principle, taking into account field distortion
     during the coadding/warping.
+    MEF files are not supported (at least with Astrometry.net)
     """
 
     def __init__(self, input_files, catalog=None, 
@@ -633,17 +636,23 @@ class AstroWarp(object):
         # http://stackoverflow.com/questions/6974695/python-process-pool-non-daemonic
         # Then, we solve sequentially.
         solved_files = []
+        
+        # Check if input images have already been astrometically calibrated.
         for file in self.input_files:
-            try:
-                solved = reduce.solveAstrometry.solveField( 
-                                        file,
-                                        self.temp_dir,
-                                        self.config_dict['general']['pix_scale'])
-            except Exception,e:
-                raise Exception("[runWithAstrometryNet] Cannot solve Astrometry for file: %s"%(file,str(e)))
+            solved_msg = "--Start of Astrometry.net WCS solution--"
+            if not solved_msg in fits.getheader(file)['COMMENT']:
+                try:
+                    solved = reduce.solveAstrometry.solveField( 
+                                            file,
+                                            self.temp_dir,
+                                            self.config_dict['general']['pix_scale'])
+                except Exception,e:
+                    raise Exception("[runWithAstrometryNet] Cannot solve Astrometry for file: %s"%(file,str(e)))
+                else:
+                    solved_files.append(solved)
             else:
-                solved_files.append(solved)
-
+                log.warning("Image %s already astrometrically solved by Astrometry.net"%file)
+                solved_files.append(file)
 
         ## STEP 1: Create SExtractor catalogs (.ldac)
         log.debug("*** Creating objects catalog (SExtractor)....")
@@ -662,9 +671,8 @@ class AstroWarp(object):
             except:
                 log.warning("Cannot read NCOADDS. Taken default (=1)")
                 nc = 1
-        
-            sex.config['SATUR_LEVEL'] = int(nc) * int(self.config_dict['astrometry']['satur_level'])
 
+            sex.config['SATUR_LEVEL'] = int(nc) * int(self.config_dict['astrometry']['satur_level'])
             
             try:
                 sex.run(file, updateconfig=True, clean=False)
@@ -683,7 +691,6 @@ class AstroWarp(object):
         cat_files = [(f + ".ldac") for f in solved_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         
-        print "CATFILES = ",cat_files
         try:
             scamp.run(cat_files, updateconfig=False, clean=False)
         except Exception,e:
@@ -693,20 +700,39 @@ class AstroWarp(object):
         ## STEP 3: Make the coadding with SWARP, and using .head files created by SCAMP
         # It requires the files are overlapped, i.e., have an common sky-area
         log.debug("*** Coadding overlapped files (SWARP)....")
+        
+        
+        root, ext = os.path.splitext(os.path.basename(self.coadded_file))
+        # Path to the temporary FITS file containing the WCS header
+        kwargs = dict(prefix = '%s_coadd_' % root, suffix = ext, dir=self.temp_dir)
+        with tempfile.NamedTemporaryFile(**kwargs) as fd:
+            output_path = fd.name
+        
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf']
         basename, extension = os.path.splitext(solved_files[0])
         swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"  # very important !
         if not os.path.isfile(solved_files[0]+".head"):
             raise Exception ("Cannot find required .head file")
-            
+        
+        
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
-        swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
+        swarp.ext_config['IMAGEOUT_NAME'] = output_path
+        swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
+                                                                 
+        # "Projected" weight-maps are created only if weight-maps were given in input.
+        # That is not true !!!
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
-            swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
+            swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
         
+        if not self.resample:
+            swarp.ext_config['RESAMPLE'] = 'N' # then, no field distortion removing is done
+  
+        if not self.subtract_back:
+            swarp.ext_config['SUBTRACT_BACK'] = 'N'
+            
         # To avoid any problem concerning SWARP because by chance could exist
         # a old file about IMAGEOUT_NAME.head what would cause a bad resampling
         # and combination of files, we remove any IMAGEOUT_NAME.head
@@ -732,16 +758,19 @@ class AstroWarp(object):
             log.debug("*** Doing final astrometric calibration....")
             try:
                 solved = reduce.solveAstrometry.solveField(
-                            os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+                            output_path, 
                             self.temp_dir,
                             self.config_dict['general']['pix_scale'])
             except Exception,e:
                     raise Exception("[runWithAstrometryNet] Error doing Astrometric calibration: %s"%str(e))
             else:
                 shutil.move(solved, self.coadded_file)
+                shutil.move(output_path.replace(".fits", ".weight.fits"), 
+                        self.coadded_file.replace(".fits", ".weight.fits"))
         else:
-            shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
-                        self.coadded_file)
+            shutil.move(output_path, self.coadded_file)
+            shutil.move(output_path.replace(".fits", ".weight.fits"), 
+                        self.coadded_file.replace(".fits", ".weight.fits"))
         
         log.info("Lucky you ! file %s created", self.coadded_file)
 
@@ -812,7 +841,6 @@ class AstroWarp(object):
         cat_files = [(f + ".ldac") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         
-        print "CATFILES = ",cat_files
         try:
             scamp.run(cat_files, updateconfig=False, clean=False)
         except Exception,e:
@@ -831,11 +859,18 @@ class AstroWarp(object):
             
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
         swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
+        #"Projected" weight-maps are created only if weight-maps were given in input.
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
             swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
         
+        if not self.resample:
+            swarp.ext_config['RESAMPLE'] = 'N' # then, no field distortion removing is done
+  
+        if not self.subtract_back:
+            swarp.ext_config['SUBTRACT_BACK'] = 'N'
+
         #To avoid any problem concerning SWARP because by chance could exist
         #a old file about IMAGEOUT_NAME.head what would cause a bad resampling
         #and combination of files, we remove any IMAGEOUT_NAME.head
@@ -854,6 +889,7 @@ class AstroWarp(object):
         except Exception,e:    
             raise e
         
+        
         ## STEP 4: Make again the final astrometric calibration (only 
         ## if we coadded more that one file) to the final coadd)
         ## TODO: I am not sure if it is needed to do again ?????
@@ -861,7 +897,8 @@ class AstroWarp(object):
             log.debug("*** Doing final astrometric calibration....")
             doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
                          self.coadded_file, self.catalog, 
-                         self.config_dict, self.do_votable)
+                         self.config_dict, self.do_votable,
+                         self.resample, self.subtract_back)
         else:
             shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
                         self.coadded_file)
@@ -889,7 +926,8 @@ in principle previously reduced, but not mandatory.
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
-                  help="Source file list of data frames. It can be a file or directory name.")
+                  help="Source input file. It can be a FITS file or"
+                  "text file with a list of FITS files.")
     
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 

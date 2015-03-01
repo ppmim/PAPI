@@ -62,7 +62,7 @@ class NonLinearityCorrection(object):
     algorithm described by Bernhard Dorner at PANIC-DEC-TN-02_0_1.pdf.
     """
     def __init__(self, model, input_files, out_dir='/tmp', 
-                suffix='_LC', force=False):
+                suffix='_LC', force=False, coadd_correction=True):
         """
         Init the object.
         
@@ -93,20 +93,23 @@ class NonLinearityCorrection(object):
         force: bool
             If true, no check of input raw header is done (NCOADDS, DETROT90, 
             INSTRUME,...)
+            
+        coadd_correction: bool
+            If true and NCOADDS>1, divide the data by NCOADDS, apply NLC and then 
+            multiply by NCOADDS.
 
         Returns
         -------
         outfitsname: list
             The list of new corrected FITS files created.
         
-        TODO
-        ----
         """
         self.input_files = input_files
         self.model = model
         self.suffix = suffix
         self.out_dir = out_dir
         self.force = force
+        self.coadd_correction = coadd_correction
         
         if not os.access(self.out_dir, os.F_OK):
             try:
@@ -148,8 +151,10 @@ class NonLinearityCorrection(object):
             raise ValueError('Wrong type of nonlinearity correction file')
 
         # Check input files are non-integrated files (NCOADDS)
-        if dataHeader['NCOADDS']>1:
-            raise ValueError('Wrong type of file. Only non-integrated files (NCOADDS=1) allowed.')
+        # It is done on applyModel, where can be skipped.
+        #if dataHeader['NCOADDS']>1:
+        #    log.info("Found a wrong type of source file. Use -F to user ncoadd correction")
+        #    raise ValueError('Wrong type of file. Only non-integrated files (NCOADDS=1) allowed.')
 
         # Check NLC model is used with newer data (USE_AFTER->USE_AFT)
         datadate = dateutil.parser.parse(dataHeader['DATE-OBS'])
@@ -237,7 +242,8 @@ class NonLinearityCorrection(object):
         hdus = []
 
         # loop over detectors
-        for iSG in range(1, 5):
+        # To avoid the re-arrange of the MEF extensions
+        for iSG in (4,1,3,2):
             extname = 'SG%i_1' %iSG
             # check detector sections
             # another way would be to loop until the correct one is found
@@ -251,12 +257,25 @@ class NonLinearityCorrection(object):
             if datadetid != nldetid:
                 raise ValueError('Mismatch of detector IDs for extension' %extname)
 
-            # load file data
-            data = hdulist[extname].data
+            # Work around to correct data when NCOADDS>1
+            if hdulist[0].header['NCOADDS']>1:
+                if self.coadd_correction:
+                    log.info("NCOADDS>1; Doing ncoadd correction...")
+                    n_coadd = hdulist[0].header['NCOADDS']
+                else:
+                    log.info("Found a wrong type of source file. Use -c to user ncoadd correction")
+                    raise ValueError('Cannot apply model, found NCOADDS > 1.')
+            else:
+                n_coadd = 1
+                
+            # load file data (and fix coadded images => coadd_correction)
+            data = hdulist[extname].data / n_coadd
             nlmaxs = nlhdulist['LINMAX%i' %iSG].data
             nlpolys = np.rollaxis(nlhdulist['LINPOLY%i' %iSG].data, 0, 3)
+
             # calculate linear corrected data
             lindata = self.polyval_map(nlpolys, data)
+            
             # mask saturated inputs - to use nan it has to be a float array
             lindata[data > nlmaxs] = np.nan
             # mask where max range is nan
@@ -269,6 +288,9 @@ class NonLinearityCorrection(object):
                 # we have a single 2D image
                 lindata[np.isnan(nlmaxs)] = np.nan
 
+            # Undo the coadd_correction
+            lindata = lindata * n_coadd
+            
             exthdu = fits.ImageHDU(lindata.astype('float32'), header=hdulist[extname].header.copy())
             # this may rearrange the MEF extensions, otherwise loop over extensions
             hdus.append(exthdu)
@@ -388,7 +410,11 @@ using the proper NL-Model (FITS file).
     # Basic inputs
     parser.add_option("-m", "--model",
                   action="store", dest="model",
-                  help="FITS MEF-cube file of polinomial coeffs (c4, c3, c2, c1).")
+                  help="FITS MEF-cube file of polinomial coeffs (c4, c3, c2, c1) of the NL model.")
+    
+    parser.add_option("-i", "--input_file",
+                  action="store", dest="input_file",
+                  help="FITS file file to be corrected.")
     
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",
@@ -400,13 +426,16 @@ using the proper NL-Model (FITS file).
     
     parser.add_option("-S", "--suffix", type="str",
                   action="store", dest="suffix", default="_NLC", 
-                  help="Suffix to use for new corrected files.")
+                  help="Suffix to use for new corrected files (default=%default)")
 
     parser.add_option("-f", "--force",
                   action="store_true", dest="force", default=False, 
                   help="Force Non-linearity correction with no check of header"
                   "values (NCOADD, DATE-OBS, DETROT90, ...")
     
+    parser.add_option("-c", "--coadd_correction",
+                  action="store_true", dest="coadd_correction", default=True, 
+                  help="Force NCOADDS correction and apply NLC")
     
     (options, args) = parser.parse_args()
     
@@ -415,16 +444,24 @@ using the proper NL-Model (FITS file).
        sys.exit(0)
 
     # Check required parameters
-    if (not options.source_file_list or not options.out_dir 
+    if ((not options.source_file_list and not options.input_file) or not options.out_dir 
         or not options.model  or len(args)!=0): # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("incorrect number of arguments " )
     
-    # Read the source file list     
-    filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    if options.input_file and os.path.isfile(options.input_file): 
+        filelist = [options.input_file]
+    elif options.source_file_list and os.path.isfile(options.source_file_list):
+        # Read the source file list     
+        filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    else:
+        parser.print_help()
+        parser.error("incorrect number of arguments " )
+
     NLC = NonLinearityCorrection(options.model, filelist, options.out_dir, 
-                                    options.suffix, options.force)
-    
+                                   options.suffix, options.force,
+                                   options.coadd_correction)
+
     try:
         corr = NLC.runMultiNLC()
     except Exception,e:

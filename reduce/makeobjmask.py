@@ -55,22 +55,25 @@ import datahandler
 
 
 #-----------------------------------------------------------------------
-def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000, 
-                 outputfile="/tmp/out.txt", single_point=False):
+def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0, 
+                 saturlevel=300000, outputfile="/tmp/out.txt", 
+                 single_point=False):
     """
     DESCRIPTION
       Create an object mask of the inputfile/s based on SExtractor
        
     INPUTS
-      inputfile    it can be a regular expresion or a filename 
-                          containing a filelist
+      inputfile    It can be a regular expresion or a filename 
+                   containing a filelist.
             
     OPTIONAL INPUTS
             
       outputfile   filename of file list with the object file/s 
                    created by SExtractor
             
-      minarea      SExtractor DETECT_MINAREA (minimun object area)
+      minarea      SExtractor DETECT_MINAREA (min. # of pixels above threshold)
+      
+      maxarea      SExtractor DETECT_MAXAREA (max. # of pixels above threshold, 0=unlimited)
                        
       threshold    SExtractor DETECT_THRESH
             
@@ -83,35 +86,23 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
     OUTPUTS
       n             Number of object mask created        
     """
-         
-    """
-    # Some pathname settings and check
-    irdr_basedir=''
-    try:
-        irdr_basedir=os.environ['IRDR_BASEDIR']
-    except KeyError:
-        log.error("Please, setenv IRDR_BASEDIR")
-        sys.exit(0)
-        
-    sex_config=irdr_basedir+"/src/config/default.sex"        
-    if not os.path.exists(sex_config):      # check whether input file exists
-        log.error( 'File %s does not exist', sex_config)
-        raise Exception("Files %s does not exists"%sex_config) 
-    """
+       
+    log.debug("Start of [makeObjMask]")
     
     files = []       
     # Check if inputfile is FITS file 
     if datahandler.isaFITS(inputfile)==True:
-        files=[inputfile]
+        files = [inputfile]
     # or a text file having the list of files to be masked
     elif os.path.isfile(inputfile):
-        files=[line.replace( "\n", "") for line in fileinput.input(inputfile)]
+        files = [line.replace( "\n", "") for line in fileinput.input(inputfile)]
+        print "FILES=", file
     # or must be a regular expresion
     else:
         files = glob.glob(inputfile)
         files.sort()
     
-    f_out = open(outputfile,"w")
+    f_out = open(outputfile, "w")
     
     sex = astromatic.SExtractor()
     n = 0
@@ -125,24 +116,24 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         sex.config['CATALOG_TYPE'] = "FITS_LDAC"
         sex.config['CATALOG_NAME'] = fn + ".ldac"
         sex.config['DETECT_MINAREA'] = minarea
-        sex.config['DETECT_MAXAREA'] = 200
+        sex.config['DETECT_MAXAREA'] = maxarea
         sex.config['DETECT_THRESH'] = threshold
         sex.config['CHECKIMAGE_TYPE'] = "OBJECTS"
         sex.config['CHECKIMAGE_NAME'] = fn + ".objs"
         sex.config['SATUR_LEVEL'] = saturlevel
         if os.path.exists(fn.replace(".fits",".weight.fits")):
-            sex.config['WEIGHT_TYPE']="MAP_WEIGHT"
-            sex.config['WEIGHT_IMAGE']=fn.replace(".fits",".weight.fits")
+            sex.config['WEIGHT_TYPE'] = "MAP_WEIGHT"
+            sex.config['WEIGHT_IMAGE'] = fn.replace(".fits",".weight.fits")
         
-        # Run SExtractor     
+        # Run SExtractor
         try:
             sex.run(fn, updateconfig=True, clean=False)
-        except Exception,e: 
+        except Exception,e:
             log.debug("Some error while running SExtractor : %s", str(e))
             raise Exception("Some error while running SExtractor : %s"%str(e))          
         
         # Check an output file was generated, otherwise an error happened !
-        if not os.path.exists(fn+".objs"):
+        if not os.path.exists(fn + ".objs"):
             log.error("Some error while running SExtractor, no object mask file found and expected %s"%(fn+".objs"))
             raise Exception("Some error while running SExtractor, no object mask file found")
 
@@ -157,23 +148,25 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
         if single_point==True:
             log.debug("Single point mask reduction")
             # NOTE we update/overwrite the image and don't create a new one
-            myfits = fits.open(fn+".objs", mode="update")
+            myfits = fits.open(fn + ".objs", mode="update")
             if len(myfits)>1: # is a MEF file
-                next = len(myfits)-1
+                next = len(myfits) - 1
             else: 
                 next = 1
             for ext in range(next):
-                if next==1: data = myfits[0].data
-                else: data = myfits[ext+1].data
+                if next==1: 
+                    data = myfits[0].data
+                else: 
+                    data = myfits[ext+1].data
                 data[:] = 0 # set to 0 all pixels
                 x_size = len(data[0])
                 y_size = len(data)
                 #stars = read_stars(fn + ".ldac")
                 try:
-                    cat = astromatic.ldac.openObjectFile(fn+".ldac", 
+                    cat = astromatic.ldac.openObjectFile(fn + ".ldac", 
                                                          table='LDAC_OBJECTS')
                     if len(cat)<=0:
-                      log.warning("No object found in catalog %s"%(fn+".ldac")) 
+                      log.warning("No object found in catalog %s"%(fn + ".ldac")) 
                       continue
                     for star in cat:
                         if round(star['X_IMAGE'])<x_size and round(star['Y_IMAGE'])<y_size:
@@ -183,7 +176,12 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
                     print "X_IMAGE=",star['X_IMAGE']
                     myfits.close(output_verify='ignore')
                     raise Exception("Error while creating single point object mask :%s"%str(e))
+                if next==1:
+                    myfits[0].scale('int16')
+                else:
+                    myfits[ext+1].scale('int16')
                 
+            myfits.flush(output_verify="fix+warn")
             myfits.close(output_verify='ignore')
             log.debug("Object mask (single_point) file created for file : %s"%fn)
         else:
@@ -191,7 +189,7 @@ def makeObjMask (inputfile, minarea=5,  threshold=2.0, saturlevel=300000,
 
         n+=1
         log.debug("Adding file: %s"%fn)
-        f_out.write(fn+".objs"+"\n")
+        f_out.write(fn + ".objs" + "\n")
             
     sex.clean(config=False, catalog=True, check=False)
 

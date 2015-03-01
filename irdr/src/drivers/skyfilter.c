@@ -38,6 +38,7 @@ static void readdata(int i, int usemask);
 static void freedata(int i, int usemask);
 
 static void usage(void);
+static debug = 1;
 
 int main(int argc, char *argv[])
 {
@@ -48,7 +49,8 @@ int main(int argc, char *argv[])
     float *sky = NULL, *skyw = NULL, *fimg;
     char aux[256];
     
-
+    fprintf(stderr, "\nStart of skyfilter...\b");
+    
     if (argc < 6)
         usage();
 
@@ -60,7 +62,7 @@ int main(int argc, char *argv[])
         usage();
 
     if (argc==7) /* skymodel is an optional argument */
-        if (!strcmp(argv[6], "median"))
+        if (!strcmp(argv[6], "median") || !strcmp(argv[6], "mean"))
             skymodel = 1;
         else if (!strcmp(argv[6], "min"))
             skymodel = 2;
@@ -96,7 +98,7 @@ int main(int argc, char *argv[])
 
     /* Read the initial sliding window */
     for (i = 0; i < (2 * hwid + 1); i++)  {
-	    /* printf("Nplanes: %d  i: %d \n", nplanes, i);*/
+	    printf("Nplanes: %d  i: %d \n", nplanes, i);
 	    if (i<nplanes) readdata(i, usemask);
 	}
 
@@ -110,7 +112,7 @@ int main(int argc, char *argv[])
 
         for (j = skybeg; j <= skyend; j++) {  /* collect adjacent frame ptrs */
             if (j != i) {                             /* skip current frame */
-		        printf (" %d", j);
+		printf (" %d", j);
                 dbuf[nsky] = data[j];
 
                 if (usemask)
@@ -120,7 +122,7 @@ int main(int argc, char *argv[])
                 nsky++;
             }
         }
-	    printf (" \n");
+	printf (" \n");
 
         if (nsky==0) {
             eprintf("[skyfilter] Error: not enought number of sky frames");
@@ -136,41 +138,53 @@ int main(int argc, char *argv[])
         
         if (usemask) {
             if (skymodel==1)
-                /* NOTE: mean provide a higher S/N ratio than median */
+                /* NOTE: (clipped) mean provide a higher S/N ratio than median */
                 sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
             else
                 sky = cube_mean_min_w(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1, nsky/2);
 
             /* DEBUG */
-            /*
-            strcpy(aux,"/tmp/sky_");
-            strcat(aux, basename(fn[i]));
-            writefits(aux, fn[i], (char*)sky, -32, nx, ny);
-            */
+            if (debug)
+            {
+                strcpy(aux,"/data2/tmp/sky_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)sky, -32, nx, ny);
+                
+                strcpy(aux,"/data2/tmp/skyw_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
+                
+            }
             /* END_DEBUG */
+            
             fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
                             wdata[i], argv[5]);
         } else {
             if (skymodel==1) 
                 sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
             else 
-                /*sky = cube_mean_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);*/
+                /* find mean value of the nsky/2-smallest values */
+                /* sky = cube_mean_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);*/
+                
+                /* find median value of the nsky/2-smallest values */
                 sky = cube_median_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);
                  
             /*DEBUG*/
-            /*
-            strcpy(aux,"/tmp/sky_");
-            strcat(aux, basename(fn[i]));
-            writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
-            */
+            if (debug)
+            {
+                strcpy(aux,"/data2/tmp/sky_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
+            }
             /* END_DEBUG */
+            
             fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
                                    argv[5]);
         }
 
         /* UNA PRUEBA !!!! Apply master flat: divide by gainmap ===>NO DA BUEN RESULTADO !!!!!!*/
-        int flat=0;
-        int ind=0;
+        int flat = 0;
+        int ind = 0;
         if (flat)
         {
             for (ind = 0; ind< nx*ny; ind++)
@@ -207,7 +221,8 @@ int main(int argc, char *argv[])
 static void readdata(int i, int usemask)
 {
     int nx, ny;
-
+    char aux[128];
+    
     data[i] = readfits(fn[i], &nx, &ny, &bkgs[i], &sigs[i]);  /* image plane */
 
     if (bkgs[i] <= 0 || sigs[i] <= 0)
@@ -216,10 +231,17 @@ static void readdata(int i, int usemask)
     if (usemask) {
         float *wmap = getwmap(fn[i], nx, ny, gainmap, sigs[i]);
         wdata[i] = getmask(wmap, nx, ny, mfn[i], xshift[i], yshift[i]);
+        /* DEBUG */
+        if (debug)
+        {
+            sprintf(aux, "/data2/tmp/wmask_%d.fits", i);
+            writefits(aux, fn[i], (char*)wdata[i], -32, nx, ny);
+        }
+        /* DEBUG */
         free(wmap);
     }
 
-    fprintf(stderr, " Reading %s %f %f\n", fn[i], bkgs[i], sigs[i]);
+    fprintf(stderr, " Reading %s bkg=%f sigs=%f\n", fn[i], bkgs[i], sigs[i]);
 }
 
 /* freedata: free data for image plane i */
@@ -273,9 +295,9 @@ static void usage(void)
     "               rowcol for row offsets then column offsets,\n"
     "               colrow for column offsets then row offsets,\n"
     "               none for no correction\n\n"
-    "     skymodel- sky background model to use (optional, defaul=mean)"
-    "               median/mean for normal/sparse fields"
-    "               min for crowded fields"   
+    "     skymodel- sky background model to use (optional, defaul=median"
+    "               'median'/'mean' for normal/sparse fields"
+    "               'min' for crowded fields"   
     "example: skyfilter filelist gain.fits 4 mask rowcol\n\n";
 
     printf("%s", usage);

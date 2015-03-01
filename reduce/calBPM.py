@@ -43,6 +43,7 @@ import os
 import sys
 import fileinput
 from optparse import OptionParser
+from scipy import interpolate, ndimage
 
 
 # Pyraf modules
@@ -69,7 +70,7 @@ class BadPixelMask(object):
         dome flat images.
         (extracted from VIRCAM pipeline, vircam_genbpm)
     
-        A list of dark corrected dome flat images is given. A master flat 
+        A list of DARK corrected dome FLAT images is given. A master flat 
         is created from all the input flats in the list. Each input flat is 
         then divided by the master. Bad  pixels are marked on the new image as 
         those that are above or below the threshold (in sigma) in the new image. 
@@ -87,6 +88,8 @@ class BadPixelMask(object):
         self.lthr = float(lthr)
         self.hthr = float(hthr)
         self.temp_dir = temp_dir
+        
+        # If true, neither check image type or readout mode
         self.raw_flag = raw_flag
 
         if outputfile==None:
@@ -124,7 +127,7 @@ class BadPixelMask(object):
         # Here we could check if each frame is a good dome flat !!!
         good_flats = []
         f_readmode = -1
-        if self.raw_flag:
+        if not self.raw_flag:
             for iframe in filelist:
                 fits = datahandler.ClFits(iframe)
                 log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
@@ -366,7 +369,7 @@ class BadPixelMask(object):
             # Here we could check if each frame is a good dome flat !!!
             good_flats = []
             f_readmode = -1
-            if self.raw_flag:
+            if not self.raw_flag:
                 for iframe in filelist:
                     fits = datahandler.ClFits(iframe)
                     log.debug("Frame %s EXPTIME= %f TYPE= %s " %(iframe, fits.exptime, fits.type)) 
@@ -558,18 +561,20 @@ class BadPixelMask(object):
 #-------------------------------------------------------------------------------
 # Some util routines
 # ------------------------------------------------------------------------------
-def fixPix(image, mask):
-    """
-    Return an image with masked values replaced with a bi-linear
-    interpolation from nearby pixels.  Probably only good for isolated
-    badpixels.
+def fixPix(im, mask, iraf=False):
+    """ 
+    Applies a bad-pixel mask to the input image (im), creating an image with 
+    masked values replaced with a bi-linear interpolation from nearby pixels.  
+    Probably only good for isolated badpixels.
 
     Usage:
       fixed = fixpix(im, mask, [iraf=])
 
     Inputs:
-      image = the image 2D array
-      mask = an array that is True where im contains bad pixels
+      im = the image array
+      mask = an array that is True (or >0) where im contains bad pixels
+      iraf = True use IRAF.fixpix; False use numpy and a loop over 
+             all pixels (extremelly low)
 
     Outputs:
       fixed = the corrected image
@@ -578,14 +583,22 @@ def fixPix(image, mask):
 
     v1.1.0 Added the option to use IRAF's fixpix.  MSK, UMD, 25 Apr
            2011
+
+    Notes
+    -----
+    - Non-IRAF algorithm is extremelly slow.
+
     """
+
+    log.info("Fixpix - Bad pixel mask interpolation (iraf=%s)"%iraf)
     if iraf:
         # importing globally is causing trouble
         from pyraf import iraf as IRAF
+        import tempfile
 
-        badfits = os.tmpnam() + '.fits'
-        outfits = os.tmpnam() + '.fits'
-        fits.writeto(badfits, mask.astype(np.int16))
+        badfits = tempfile.NamedTemporaryFile(suffix=".fits").name
+        outfits = tempfile.NamedTemporaryFile(suffix=".fits").name
+        fits.writeto(badfits, mask.astype(numpy.int16))
         fits.writeto(outfits, im)
         IRAF.fixpix(outfits, badfits)
         cleaned = fits.getdata(outfits)
@@ -593,47 +606,55 @@ def fixPix(image, mask):
         os.remove(outfits)
         return cleaned
 
-    interp2d = interpolate.interp2d
-    #     x = xarray(im.shape)
-    #     y = yarray(im.shape)
-    #     z = im.copy()
-    #     good = (mask == False)
-    #     interp = interpolate.bisplrep(x[good], y[good],
-    #                                         z[good], kx=1, ky=1)
-    #     z[mask] = interp(x[mask], y[mask])
+    
+    #
+    # Next approach is too slow !!!
+    #
 
+    # interp2d = interpolate.interp2d
+    # x = numpy.array(im.shape)
+    # y = numpy.array(im.shape)
+    # z = im.copy()
+    # good = (mask == False)
+    # interp = interpolate.bisplrep(x[good], y[good],
+    #                            z[good], kx=1, ky=1)
+    # z[mask] = interp(x[mask], y[mask])
+
+    # return z
+  
     # create domains around masked pixels
     dilated = ndimage.binary_dilation(mask)
     domains, n = ndimage.label(dilated)
 
     # loop through each domain, replace bad pixels with the average
     # from nearest neigboors
-    x = xarray(image.shape)
-    y = yarray(image.shape)
-    cleaned = image.copy()
-    for d in (np.arange(n) + 1):
+    y, x = numpy.indices(im.shape, dtype=numpy.int)[-2:]
+    #x = xarray(im.shape)
+    #y = yarray(im.shape)
+    cleaned = im.copy()
+    for d in (numpy.arange(n) + 1):
         # find the current domain
         i = (domains == d)
 
         # extract the sub-image
         x0, x1 = x[i].min(), x[i].max() + 1
         y0, y1 = y[i].min(), y[i].max() + 1
-        subim = image[y0:y1, x0:x1]
+        subim = im[y0:y1, x0:x1]
         submask = mask[y0:y1, x0:x1]
         subgood = (submask == False)
 
         cleaned[i * mask] = subim[subgood].mean()
 
-    return cleaned
+    return cleaned 
 
 def applyBPM(filename, master_bpm, output_filename, overwrite=False):
     """
-    Apply a BPM to a input file setting to NaN bad pixels
+    Apply a BPM to a input file setting to NaN the bad pixels.
 
     Parameters:
     -----------
     filename: str
-        Input file to apply the BPM.
+        Input file to apply the BPM. MEF files are not supported yet.
     
     master_bpm: str
         The master BPM to be applied to the input file. Bad pixels are masked
@@ -652,8 +673,17 @@ def applyBPM(filename, master_bpm, output_filename, overwrite=False):
      output_filename: str
         If success, the output filename with the masked pixels.
 
-
+    TODO
+    ----
+    - add support for MEF files
+    
     """
+    
+    # Check input filename is non-MEF
+    with fits.open(filename) as myfits:
+        if len(myfits)>1:
+            raise Exception("MEF files are not supported yet.")
+    
     try:
         # Load Bad Pixels mask (BP=1's)
         bpm_data, bh = fits.getdata(master_bpm, header=True)
@@ -749,8 +779,16 @@ parser.add_option("-H", "--hthr",
 
 parser.add_option("-r", "--raw",
               action="store_true", dest="raw_flag", default=False,
-              help="Neither check FLAT type nor Readout-mode [default=%default]")    
+              help="Neither check FLAT type nor Readout-mode [default=%default]")
 
+parser.add_option("-a", "--apply_bpm",
+              action="store", dest="apply_bpm",
+              help="Apply (set to NaN) the given BPM to the source files.")
+
+parser.add_option("-f", "--fix_bp",
+              action="store", dest="fix_bp",
+              help="Fix (replaced with a bi-linear interpolation from nearby pixels)"
+              "the given BPM to the source files")
 
 
 ################################################################################
@@ -780,17 +818,41 @@ def main(arguments=None):
         print "Error. The output file '%s' already exists."  % \
               (options.output_filename)
         return 1
-    #if options.master_dark:
-    #    print "Sorry, dark subtraction not yet implemented."
-    #    return 1
+
+    # Now, check how the routine will work:
+    #  1) apply a BPM to source files
+    #  2) fix the BP on source files
+    #  3) computer a BPM from the source files
     
-    try:
-        bpm = BadPixelMask(options.source_file_list, options.output_filename, 
-                       options.lthr, options.hthr, raw_flag=options.raw_flag)
-        bpm.create()
-    except Exception, e:
-        log.error("Error running BPM: %s"%str(e))
-        return 0
+    # 1 - Apply the given BPM to the source files
+    if options.fix_bp:
+        filelist = [line.replace( "\n", "") 
+                    for line in fileinput.input(options.source_file_list)]
+        bpm_data = fits.getdata(options.fix_bp, header=False)
+        for myfile in filelist:
+            my_data = fits.getdata(myfile, header=False)  
+            new_data = fixPix(my_data, bpm_data, iraf=True)
+            new_file = myfile.replace(".fits",".bpm.fits")
+            fits.writeto(new_file, new_data)
+            log.info("New file created: %s"%new_file)
+            
+    # 2 - Fix the BPs on source files
+    elif options.apply_bpm:
+        filelist = [line.replace( "\n", "") 
+                    for line in fileinput.input(options.source_file_list)]
+        for myfile in filelist:
+            new_file = myfile.replace(".fits",".bpm.fits")
+            applyBPM(myfile, options.apply_bpm, new_file)
+    
+    # 3 - Compute the BPM from source files
+    else:     
+        try:
+            bpm = BadPixelMask(options.source_file_list, options.output_filename, 
+                          options.lthr, options.hthr, raw_flag=options.raw_flag)
+            bpm.create()
+        except Exception, e:
+            log.error("Error running BPM: %s"%str(e))
+            return 0
         
 ###############################################################################
 if __name__ == "__main__":

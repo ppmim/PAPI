@@ -406,7 +406,7 @@ class SCAMP:
         """
         Look for SCAMP program ('scamp').
         If a full path is provided, only this path is checked.
-        Raise a SCAMPException if it failed.
+        Raise a SCAMP_Exception if it failed.
         Return program and version if it succeed.
         """
 
@@ -434,7 +434,7 @@ class SCAMP:
                 continue
                 
         if not(selected):
-            raise SCAMPException, \
+            raise SCAMP_Exception, \
                   """
                   Cannot find SCAMP program. Check your PATH,
                   or provide the SCAMP program path in the constructor.
@@ -445,12 +445,12 @@ class SCAMP:
         #print versionline
         _version_match = re.search("[Vv]ersion ([0-9\.])+", versionline)
         if not _version_match:
-            raise SCAMPException, \
+            raise SCAMP_Exception, \
                   "Cannot determine SCAMP version."
 
         _version = _version_match.group()[8:]
         if not _version:
-            raise SCAMPException, \
+            raise SCAMP_Exception, \
                   "Cannot determine SCAMP version."
 
         # print "Use " + self.program + " [" + self.version + "]"
@@ -643,7 +643,7 @@ if __name__ == "__main__":
 
     scamp = SCAMP()
     # Using a specific config file (updateconfig=False)
-    scamp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/scamp.conf"
+    scamp.config['CONFIG_FILE']="scamp.conf"
     scamp.config['ASTREF_CATALOG']="2MASS"
     cat_files = [line.replace( "\n", "") for line in fileinput.input(sys.argv[1])]
     scamp.run(cat_files, updateconfig=False, clean=False)

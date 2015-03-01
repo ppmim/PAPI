@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2009-2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2009-2015 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
 # This file is part of PAPI (PANIC Pipeline)
 #
-# This program is free software: you can redistribute it and/or modify
+# PAPI is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
@@ -39,6 +39,8 @@
 #              27/03/2012    jmiguel@iaa.es  - Fixed bug wrt chip 1 normalization
 #              03/12/2012    jmiguel@iaa.es  - Modified normalization by median instead of mode
 #              05/08/2014    jmiguel@iaa.es  - Added support for DOME_FLAT series (not lamp on/off)
+#              27/01/2015    jmiguel@iaa.es  - Added new way for dark subtraction with 
+#                                              multiple master darks
 #
 # TODO:
 #   - take into account BPM !!!
@@ -59,14 +61,13 @@ import shutil
 from optparse import OptionParser
 
 import misc.fileUtils
-import misc.utils as utils
+import misc.utils
 from misc.version import __version__
 import datahandler
-
+import misc.robust as robust
 
 # Pyraf modules
 from pyraf import iraf
-from iraf import noao
 from iraf import mscred
 
 import numpy
@@ -80,7 +81,7 @@ from misc.paLog import log
 class ExError(Exception):
     pass
 
-class MasterTwilightFlat (object):
+class MasterTwilightFlat(object):
     """
     Description:
     ------------
@@ -111,7 +112,7 @@ class MasterTwilightFlat (object):
         JMIbannez, IAA-CSIC
   
     """
-    def __init__(self, flat_files, master_dark_model,
+    def __init__(self, flat_files, master_dark_model, master_dark_list, 
                  output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000,
                  bpm=None, normal=True, temp_dir="/tmp/", median_smooth=False):
         
@@ -122,21 +123,32 @@ class MasterTwilightFlat (object):
         ----------
         
         flat_files: list
+            list of raw sky/dome flats frames
         
-        master_dark_model : string
-            Master dark model to subtract (required) 
+        master_dark_model : string or list
+            Master dark model to subtract (required, exclusive with master_dark_list) 
+        
+        master_dark_list : list
+            List of master dark to subtract (required, exclusive with master_dark_model) 
+        
         output_filename: string
             Filename of the output master tw-flat to build
+        
         lthr: int
             Low threshold to identify good twilight flats (default 100)
+        
         hthr: int
             High threshold to identify good twilight flats (default 100000)
+        
         bpm: string
             Bad Pixel mask to use (optional)
+        
         normal: bool
             If true, the normalization will be done.
+        
         temp_dir: string
             Temporal directory for temporal files needed.
+        
         median_smooth: bool
             If true, median smooth filter is applied to the combined Flat-Field
             
@@ -144,7 +156,8 @@ class MasterTwilightFlat (object):
         """
         
         self.__input_files = flat_files
-        self.__master_dark = master_dark_model # if fact, it is a dark model
+        self.__master_dark_model = master_dark_model # if fact, it is a dark model
+        self.__master_dark_list = master_dark_list
         self.__output_filename = output_filename  # full filename (path+filename)
         self.__bpm = bpm
         self.__normal = normal
@@ -154,19 +167,15 @@ class MasterTwilightFlat (object):
         self.m_MIN_N_GOOD = 3
         self.m_lthr = lthr
         self.m_hthr = hthr
-        self.m_min_flats = 5
+        self.m_min_flats = 3
         
     
     def createMaster(self):
       
         """
         Create a master Tw FLAT from the flat file list
-        """   
-        log.debug("Start createMasterTwilightFlat")
-        
-        start_time = time.time()
-        t=utils.clock()
-        t.tic()
+        """
+        log.debug("Start createMasterTwilightFlat")       
     
         # Cleanup old files
         
@@ -175,22 +184,21 @@ class MasterTwilightFlat (object):
         # Get the user-defined list of flat frames
         framelist = self.__input_files
         
-        # Check exist master DARK
-        if not os.path.exists( self.__master_dark  ):
-            log.error('Cannot find frame : "%s"' % self.__master_dark)
-            raise Exception("Master Dark not found")
-        
+        # Check exists master DARK
+        if self.__master_dark_model:
+            if (type(self.__master_dark_model) == type([]) and 
+                len(self.__master_dark_model) > 0):
+                self.__master_dark_model = self.__master_dark_mode[-1]
+            if not os.path.exists(self.__master_dark_model):
+                log.error("Cannot find frame : %s"%self.__master_dark_model)
+                raise Exception("Master Dark Model not found")
+
         # Determine the number of Flats frames to combine
-        try:
-            nframes = len(framelist[0])
-        except IndExError:
-            log.error("No FLAT frames defined")
-            raise ExError('No FLAT frames defined')
-        
-        if nframes<self.m_min_flats:
+        nframes = len(framelist)
+        if nframes < self.m_min_flats:
             log.error("Not enough number (%s) of flat frames (>%s) to compute \
             master tw-flat",nframes, self.m_min_flats)
-            raise Error("Flat sequence is too short, at least %s frames are required"%self.m_min_flats)
+            raise ExError("Flat sequence is too short, at least %s frames are required"%self.m_min_flats)
         
         if not os.path.exists(os.path.dirname(self.__output_filename)):
             log.error('Directory of combined FLAT frame does not exist')
@@ -201,7 +209,7 @@ class MasterTwilightFlat (object):
     
         
         # Change to the source directory
-        base, infile   = os.path.split(self.__output_filename)
+        base = os.path.split(self.__output_filename)[0]
         iraf.chdir(base)
     
         
@@ -211,34 +219,36 @@ class MasterTwilightFlat (object):
         f_expt = -1
         f_type = ''
         f_filter = ''
-        f_ncoadds = -1
         f_readmode = ''
+        f_instrument = 'Unknown'
         good_frames = []
         
         for iframe in framelist:
             f = datahandler.ClFits(iframe)
+            f_instrument = f.getInstrument()
             log.debug("Checking data compatibility (filter, texp, type)")
-            log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" %(iframe, f.expTime(),f.getType(), f.getFilter()))
-            #Compute the mean count value in chip to find out good frames (enough check ??)
+            log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" 
+                %(iframe, f.expTime(), f.getType(), f.getFilter()))
+            # Compute the mean count value in chip to find out good frames (good enough ??)
             mean = 0
             myfits = fits.open(iframe, ignore_missing_end=True)
             if f.mef==True:
                 log.debug("Found a MEF file")
-                #log.error("Sorry, MEF files are not supported yet !")
-                #raise Exception('Sorry, MEF files are not supported yet !')
                 try:
                     for i in range(1,f.next+1):
-                        mean+=numpy.mean(myfits[i].data)
-                    mean/=f.next
-                    log.debug("MEAN value of MEF = %d", mean)
+                        mean+=robust.mean(myfits[i].data)
+                    mean = float(mean / f.next)
+                    log.debug("MEAN value of MEF = %f", mean)
                 except Exception,e:
+                    log.error("Error computing MEAN of image")
                     raise e
             else:
                 myfits = fits.open(iframe, ignore_missing_end=True)
-                mean = numpy.mean(myfits[0].data)
+                mean = robust.mean(myfits[0].data)
                 log.debug("MEAN value of MEF = %d", mean)
                 
             myfits.close()            
+            
             if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type or f.getReadMode()!=f_readmode)) :
                 log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE.")
                 raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
@@ -258,13 +268,13 @@ class MasterTwilightFlat (object):
             
             # STEP 1.1: Check either over or under exposed frames
             log.debug("Flat frame '%s' - FILTER=%s EXPTIME= %f TYPE= %s Mean= %f" %(iframe, f_filter, f_expt, f_type, mean))
-            if mean>self.m_lthr and mean<self.m_hthr:
+            if mean > self.m_lthr and mean < self.m_hthr:
                 good_frames.append(iframe)
             else:
                 log.error("Frame %s skipped, either over or under exposed" %(iframe))
             
             
-        if len(good_frames)>self.m_MIN_N_GOOD:
+        if len(good_frames) > self.m_MIN_N_GOOD:
             log.info('Found %d flat frames with same filter [%s] and type:\n', len(good_frames), f_filter)
             for e in good_frames:
                 log.info("--->%s",e)            
@@ -279,61 +289,104 @@ class MasterTwilightFlat (object):
         # FLATS because they might have diff EXPTIMEs
         # Prepare input list on IRAF string format
             
-        log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark)   
-        #Read Master Dark Model
-        try:
-            cdark = datahandler.ClFits ( self.__master_dark )
-            mdark = fits.open(self.__master_dark, ignore_missing_end=True)
-            #MASTER_DARK_MODEL is required !!!
-            if not cdark.isMasterDarkModel():
-                log.error("File %s does not look a Master Dark Model"%self.__master_dark)
-                raise Exception("Cannot find a scaled dark to apply")
-        except Exception, e:
-            mdark.close()
-            raise e
-        
-        #Check MEF compatibility
-        if not f.mef==cdark.mef:
+        log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark_model)
+        # We have two option, use a DARK_MODEL or a MASTER_DARK for each skyflat (=TEXP)
+        # 1- Try to read Master Dark Model
+        use_dark_model = False
+        if self.__master_dark_model:
+            try:
+                cdark = datahandler.ClFits(self.__master_dark_model)
+                if not cdark.isMasterDarkModel(): 
+                    log.error("File %s does not look a MASTER_DARK_MODEL"%self.__master_dark_model)
+                    raise Exception("Cannot find the MASTER_DARK_MODEL to apply.")
+                else:
+                    use_dark_model = True
+            except Exception, e:
+                log.error("Error reading MASTER_DARK_MODEL: %s"%self.__master_dark_model)
+                log.error(str(e))
+                raise e
+        elif self.__master_dark_list:
+            # read TEXP of all master darks
+            if (type(self.__master_dark_list) == type([]) and
+                len(self.__master_dark_list) < 1 ):
+                log.error("Not enough number of master darks found.")
+                raise Exception("Not enough number of master darks found")
+            
+            t_darks = {}
+            for idark in self.__master_dark_list:
+                try:
+                    cdark = datahandler.ClFits(idark)
+                    if not cdark.isDark() and not cdark.isMasterDark():
+                        log.error("File %s is neither a Dark nor a Master Dark."%idark)
+                        raise Exception("File %s is neither a Dark nor a Master Dark."%idark) 
+                    t_darks[round(cdark.expTime(), 1)] = idark
+                except Exception,e:
+                    log.error("Error reading Master Dark: %s"%idark)
+                    raise Exception("Error reading Master Dark: %s"%idark)
+            
+            
+        # Check MEF compatibility  - TO FIX !
+        if not f.mef == cdark.mef:
             log.error("Type mismatch with MEF files")
-            mdark.close()
+            del cdark
             raise Exception("Type mismatch with MEF files")
         if f.mef:
             next = f.next # number of extension
         else:
             next = 0
                 
-        #t_dark = cdark.expTime()
         fileList = []
         for iframe in good_frames:
             # Remove old dark subtracted flat frames
             my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits","_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
-            log.debug("Scaling master dark")
+            log.debug("Scaling master dark (master dark model or simple master dark)")
             # Build master dark with proper (scaled) EXPTIME and subtract ( I don't know how good is this method of scaling !!!)
             f = fits.open(iframe, ignore_missing_end=True)
             t_flat = datahandler.ClFits ( iframe ).expTime()
-            #pr_mdark = (numpy.array(mdark[0].data, dtype=numpy.double)/float(mdark[0].header['EXPTIME']))*float(f[0].header['EXPTIME'])
-            if next>0:
-                for i in range(1,next+1):
-                    scaled_dark = mdark[i].data[1]*t_flat + mdark[i].data[0]
-                    log.info("AVG(scaled_dark)=%s"%numpy.mean(scaled_dark))
+            if next > 0:
+                for i in range(1, next+1):
+                    if use_dark_model:
+                        mdark = fits.open(self.__master_dark_model)
+                        log.info("Scaling MASTER_DARK_MODEL")
+                        scaled_dark = mdark[i].data[1]*t_flat + mdark[i].data[0]
+                    else:
+                        log.info("Using proper MASTER_DARK")
+                        # Get filename of the master dark to use
+                        n_dark = t_darks[round(t_flat, 1)] 
+                        mdark = fits.open(n_dark)
+                        scaled_dark = mdark[i].data
+                        
+                    #log.info("AVG(dark)=%s"%robust.mean(scaled_dark))
+                    # At least, do the subtraction !
                     f[i].data = f[i].data - scaled_dark
-                    #f[i].data = f[i].data - mdark[i].data*float(t_flat/t_dark)
-                    f[i].header.add_history('Dark subtracted %s (scaled)'
-                                             %os.path.basename(self.__master_dark))
+            
+            # not a MEFs
             else:
-                scaled_dark = mdark[0].data[1]*t_flat + mdark[0].data[0]
-                log.info("AVG(scaled_dark)=%s"%numpy.mean(scaled_dark))
+                if use_dark_model:
+                    mdark = fits.open(self.__master_dark_model)
+                    scaled_dark = mdark[0].data[1]*t_flat + mdark[0].data[0]
+                else:
+                    n_dark = t_darks[round(t_flat, 1)]
+                    mdark = fits.open(n_dark)
+                    scaled_dark = mdark[0].data
+                    
+                log.info("AVG(dark)=%s"%robust.mean(scaled_dark)) 
                 f[0].data = f[0].data - scaled_dark
-                #f[0].data = f[0].data - mdark[0].data*float(t_flat/t_dark)
-                f[0].header.add_history('Dark subtracted %s (scaled)' 
-                                        %os.path.basename(self.__master_dark))    
-                log.debug("Dark subtraction (scaled) done")
-                
-            #a=numpy.reshape(f[0].data, (2048*2048,))
-            #print "MODE=", 3*numpy.median(a)-2*numpy.mean(a)
-            #print "MEAN=" , numpy.mean(a)
+                log.info("Dark Subtraction done")
+            
+            # Write history
+            if use_dark_model:
+                log.info("DARK_MODEL subtracted: %s"%self.__master_dark_model)
+                f[0].header.add_history('DarkMod subtracted %s (scaled)'
+                        %os.path.basename(self.__master_dark_model))
+            else:
+                log.info("MASTER DARK subtracted: %s"%n_dark)
+                f[0].header.add_history('Dark subtracted %s'
+                        %os.path.basename(n_dark))
+                                             
+            mdark.close()
             
             # Write output to outframe (data object actually still points to input data)
             try:
@@ -370,14 +423,15 @@ class MasterTwilightFlat (object):
                         #ParList = _getparlistname ('flatcombine')
                         #)
         log.debug("Dark subtracted Twilight flat frames COMBINED")
+        
         # Remove the dark subtracted frames
         for ftr in fileList: misc.fileUtils.removefiles(ftr)
         
         # STEP 3b (optional)
-        #Median smooth the master flat
+        # Median smooth the master flat
         if self.__median_smooth:
             log.debug("Doing Median smooth of FF ...")
-            iraf.mscmedian(
+            iraf.mscred.mscmedian(
                     input=comb_flat_frame,
                     output=comb_flat_frame.replace(".fits","_smooth.fits"),
                     xwindow=20,
@@ -387,28 +441,33 @@ class MasterTwilightFlat (object):
             shutil.move(comb_flat_frame.replace(".fits","_smooth.fits"), 
                         comb_flat_frame)
             
-        #Or using scipy ( a bit slower then iraf...)
+        # Or using scipy (a bit slower than iraf...)
         #from scipy import ndimage
         #filtered = ndimage.gaussian_filter(f[0].data, 20)
         
-        # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip 1)
+        # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip SG2)
         # Compute the mean of the image
         if self.__normal:
             f = fits.open(comb_flat_frame, ignore_missing_end=True)
-            if next>0:
-                chip = 1 # normalize wrt to mode of chip 1
+            if next > 0:
+                ##chip = 1 # normalize wrt to mode of chip 1
+                # Because PANIC Chip1 is bad (>25% bad pixels), we use chip 2 for normalization
+                chip = 2 # normalize wrt to mode of chip 1
                 naxis1 = f[chip].header['NAXIS1']
                 naxis2 = f[chip].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                median = numpy.median(f[chip].data[offset1:naxis1-offset1,
+                if f_instrument == 'panic': ext_name = 'SG2_1'
+                elif f_instrument == 'hawki': ext_name = 'CHIP2.INT1'
+                    
+                median = numpy.median(f[ext_name].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
-                msg = "Normalization of MEF master flat frame wrt chip 1. (MEDIAN=%d)"%median
+                msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)"%(ext_name,median)
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower()=='panic'
                   and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default)
-                median = numpy.median(f[0].data[200:2048-200,200:2048-200])
+                median = numpy.median(f[0].data[2048+200:4096-200,200:2048-200])
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
             else:
                 # Not MEF, not PANIC full-frame, but could be a PANIC subwindow
@@ -439,7 +498,7 @@ class MasterTwilightFlat (object):
         # Change back to the original working directory
         iraf.chdir()
         
-        flatframe = fits.open(self.__output_filename,'update', 
+        flatframe = fits.open(self.__output_filename, 'update', 
                                 ignore_missing_end=True)
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master twilight flat')
@@ -466,35 +525,16 @@ class MasterTwilightFlat (object):
                                    'Number of positions into the current dither pattern')
         flatframe.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
         
-        log.debug(t.tac())
         log.debug('Saved master TW_FLAT to %s', self.__output_filename )
     
         return self.__output_filename
         
         
-
-
-def makemasterframe(list_or_array):
-#from http://www.astro.ucla.edu/~ianc/python/_modules/ir.html#baseObject
-    """
-    If an array is passed, return it.  Otherwise, return a
-    median stack of the input filename list.
-    """
-        
-    if hasattr(list_or_array, 'shape') and len(list_or_array.shape)>1:
-        masterframe = np.array(list_or_array, copy=False)
-    else:
-        masterframe = np.median(map(fits.getdata, list_or_array), axis=0)
-
-    return masterframe
-        
-        
-
 ################################################################################
 # main
 if __name__ == "__main__":
     # Get and check command-line options
-    usage = "usage: %prog [options]"  
+    usage = "usage: %prog [options]"
     desc = """This module receives a series of Twilight Flats and
 and a Master Dark Model and then creates a Master Twilight Flat-Field.
 Note: Dome Flats series (not lamp ON/OFF) are also supported.
@@ -504,13 +544,18 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list", type='str',
-                  help="Source file list of data frames."
+                  help="Source file list of data *Sky Flat* frames."
                   " It can be a file or directory name.")
     
-    parser.add_option("-d", "--master_dark_model", type='str',
-                  action="store", dest="master_dark",
+    parser.add_option("-D", "--master_dark_model", type='str',
+                  action="store", dest="master_dark_model",
                   help="Master dark model to subtract each raw flat"
                   " (it will be scaled by TEXP)")
+    
+    parser.add_option("-d", "--master_dark_list", type='str',
+                  action="store", dest="master_dark_list",
+                  help="List of Master darks to subtract each raw flat"
+                  " (they must have the same TEXP)")
     
     parser.add_option("-o", "--output", type='str',
                   action="store", dest="output_filename", 
@@ -546,20 +591,26 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
     
     
     if len(sys.argv[1:])<1:
-       parser.print_help()
-       sys.exit(0)
+        parser.print_help()
+        sys.exit(0)
        
-    if not options.source_file_list or not options.output_filename or not options.master_dark:
+    if not options.source_file_list or not options.output_filename:
         parser.print_help()
         parser.error("incorrect number of arguments.")
     
-    
+    if ((options.master_dark_model and options.master_dark_list) or 
+        (not options.master_dark_model and not options.master_dark_list)):
+        parser.print_help()
+        parser.error("incorrect number of arguments.")
+        
     # Start proceduce
     
-    filelist=[line.replace( "\n", "") 
-              for line in fileinput.input(options.source_file_list )]
+    filelist = [line.replace( "\n", "") 
+              for line in fileinput.input(options.source_file_list)]
     try:
-        mTwFlat = MasterTwilightFlat(filelist, options.master_dark,
+        mTwFlat = MasterTwilightFlat(filelist, 
+                                     options.master_dark_model,
+                                     options.master_dark_list,
                                      options.output_filename, options.minlevel,
                                      options.maxlevel,
                                      options.master_bpm,
@@ -567,8 +618,8 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
                                      "/tmp",
                                      median_smooth=options.median_smooth)
         mTwFlat.createMaster()
-    except Exception,e:
-        log.error("Unexpected error: %s", str(e))
+    except Exception, ex:
+        log.error("Unexpected error: %s", str(ex))
         sys.exit(1)
     
         

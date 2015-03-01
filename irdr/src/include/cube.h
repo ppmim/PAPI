@@ -8,6 +8,8 @@ extern float * cube_median_cl(float *planes[MAXNPLANES], int np, int nx, int ny,
 extern float * cube_median(float *planes[MAXNPLANES], int np, int nx, int ny,
                            float *scale, int offset);
 
+extern float * cube_sum(float *planes[MAXNPLANES], int np, int nx, int ny);
+                           
 extern float * cube_mean_nw(float *planes[MAXNPLANES], int np, int nx, int ny,
                             float *scale, int offset);
 

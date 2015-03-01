@@ -1,8 +1,23 @@
-#!/usr/bin/env python
-"""Module to do some useful operations with Multi-Extension FITS files"""
+#! /usr/bin/env python
+#encoding:UTF-8
 
-__version__ = "$Revision: 64bda015861d $"
-# $Source$
+# Copyright (c) 2010-2015 Jose M. Ibanez All rights reserved.
+# Institute of Astrophysics of Andalusia, IAA-CSIC
+#
+# This file is part of PAPI
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ################################################################################
 #
@@ -11,7 +26,7 @@ __version__ = "$Revision: 64bda015861d $"
 #
 # mef.py
 #
-# Multi Extension FITS file basic operations
+# Multi Extension FITS file basic operations.
 #
 # Created    : 27/10/2010    jmiguel@iaa.es -
 # Last update: 21/Jun/2013   jmiguel@iaa.es - some header improvements in
@@ -71,16 +86,15 @@ class MEF (object):
     def __init__(self,  input_files , *a, **k):
         """ class initialization """
                  
-        super (MEF, self).__init__ (*a,**k)         
+        super(MEF, self).__init__ (*a,**k)         
         
         self.input_files = input_files
+        
             
     def doJoin(self, output_filename_suffix = ".join.fits", output_dir = None):
         """
         Method used to join a MEF into a single FITS frames, copying all the 
         header information required.
-        Basically used to run test with HAWK-I images, converting them to PANIC 
-        format.
         
         Parameters
         ----------
@@ -115,22 +129,30 @@ class MEF (object):
         for file in self.input_files:        
             if output_dir == None:
                 output_dir = os.path.dirname(file)
+                print "OUT_DIR=",output_dir
+                if output_dir == "": output_dir = "."
             try:
                 hdulist = fits.open(file)
-            except IOError:
-                print 'Error, can not open file %s' % (file)
-                return 0
+            except IOError, ex:
+                log.error("Cannot open  file %s" % file)
+                raise ex
             
-            #Check if is a MEF file 
+            # Check if is a MEF file 
             if len(hdulist)>1:
                 n_ext = len(hdulist)-1
                 log.debug("Found a MEF file with %d extensions", n_ext)
             else:
                 n_ext = 1
-                log.error("Found a simple FITS file. Join operation only\
-                 supported for MEF files")
+                msg = "Found a simple FITS file. Join operation only\
+                           supported to MEF files"
+                log.error(msg)
+                raise Exception(msg)
                 
-                         
+            if len(hdulist[1].data.shape) !=2:
+                msg = "MEF cube conversion not yet implemented !"
+                log.error(msg)
+                raise Exception(msg)
+                
             out_filename = output_dir + "/" + \
                 os.path.basename(file).replace(".fits", output_filename_suffix)
             width = 2048
@@ -139,13 +161,13 @@ class MEF (object):
             temp34 = numpy.zeros((height, width*2), dtype = numpy.float32)
             for i in range(0, height):
                 # Q1 i-row
-                temp12[i, 0 : width] = hdulist[1].data[i, 0 : width]
+                temp12[i, 0 : width] = hdulist['SG4_1'].data[i, 0 : width]
                 # Q2 i-row
-                temp12[i, width: 2*width] = hdulist[2].data[i, 0 : width]
+                temp12[i, width: 2*width] = hdulist['SG1_1'].data[i, 0 : width]
                 # Q3 i-row
-                temp34[i, 0 : width] = hdulist[3].data[i, 0 : width]
+                temp34[i, 0 : width] = hdulist['SG3_1'].data[i, 0 : width]
                 # Q4 i-row
-                temp34[i, width : 2*width] = hdulist[4].data[i, 0 : width]
+                temp34[i, width : 2*width] = hdulist['SG2_1'].data[i, 0 : width]
 
             joined_data = numpy.append(temp12, temp34).reshape(4096, 4096)
             hdu = fits.HDUList([fits.PrimaryHDU(header=hdulist[0].header, 
@@ -153,9 +175,9 @@ class MEF (object):
             #hdu.verify('silentfix')
             # now, copy extra keywords required
             try:
-                hdu[0].header.update("BITPIX", -32)
-                hdu[0].header.update("NAXIS1", 4096)
-                hdu[0].header.update("NAXIS2", 4096)
+                hdu[0].header.set("BITPIX", -32)
+                hdu[0].header.set("NAXIS1", 4096)
+                hdu[0].header.set("NAXIS2", 4096)
                 # TODO: deduce RA,DEC pointing coordinates 
             except KeyError:
                 log.warning("Some key cannot be copied into header")
@@ -166,15 +188,21 @@ class MEF (object):
             del hdu
             print "File %s created " % (out_filename)
         
-        log.info("End of JoinMEF. %d files created", n_ext)
+        log.info("End of JoinMEF. %d extensions joined", n_ext)
         
         return n_ext, out_filename
             
     def doSplit( self , out_filename_suffix = ".Q%02d.fits", out_dir = None, 
-                 copy_keyword = None):
+                 copy_keyword = None, instrument='panic'):
         """ 
         Method used to split a MEF into single FITS frames, 
-        copying all the header information required.                           
+        copying all the header information required.
+        
+        Splitted images now are as follow: Q01=SG1, Q02=SG2, Q03=SG3, Q04=SG4.
+        
+
+        2015-02-08: Added support for HAWKI MEF files.
+
         """
         log.info("Starting SplitMEF")
         
@@ -204,23 +232,29 @@ class MEF (object):
                 log.error("Found a simple FITS file, not a MEF file")
                 raise MEF_Exception("File %s is not a MEF" % file)
             
-            for i in range (1, n_ext+1):
-                suffix = out_filename_suffix % i # number from 1 to 4
+            for iSG in range (1, n_ext+1):
+                if instrument.lower() == 'panic':
+                    extname = 'SG%i_1' %iSG
+                else:
+                    # We suppose HAWKI MEF file
+                    extname = 'CHIP%i.INT1' %iSG 
+                suffix = out_filename_suffix % iSG # number from 1 to 4
                 new_filename = file.replace(".fits", suffix)
                 if out_dir != None: 
                     new_filename = new_filename.replace( 
                                     os.path.dirname(new_filename), out_dir
-                                    ) 
+                                    )
+                    
                 out_filenames.append(new_filename)
                 out_hdulist = fits.HDUList( [fits.PrimaryHDU( 
-                                header = hdulist[i].header,
-                                data = hdulist[i].data)]
+                                header = hdulist[extname].header,
+                                data = hdulist[extname].data)]
                                              )
                 
                 out_hdulist.verify('silentfix')
                 
                 #
-                # Copy all keywords of header[0] and not included at header[i>0]
+                # Copy all keywords of header[0] and not included at header[extname]
                 # TODO 
                 #keywords  = [if key not in hdulist[1].header for key in hdulist[0].header.cards
 
@@ -229,14 +263,17 @@ class MEF (object):
                     try:
                         value = hdulist[0].header.cards[key].value
                         comment = hdulist[0].header.cards[key].comment
-                        if key=='HIERARCH ESO DET NDIT':
+                        if key == 'HIERARCH ESO DET NDIT':
                             out_hdulist[0].header.set('NDIT', value, comment)
+                        
+                        elif key == 'HIERARCH ESO INS FILT1 NAME' or key== 'HIERARCH ESO INS FILT2 NAME':
+                                out_hdulist[0].header.set('FILTER', value, comment)
                         else:
-                            out_hdulist[0].header.set(key, value,comment)
+                            out_hdulist[0].header.set(key, value, comment)
                         # We DON'T need to update RA, DEC (pointing coordinates), because each 
                         # extension should have CRVAL/CRPIX values!!
                     except KeyError:
-                        log.warning("Key %s cannot be copied, is not in the header"%(key))
+                        log.debug("Key %s cannot be copied, is not in the header"%(key))
                 
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
@@ -250,26 +287,29 @@ class MEF (object):
                 
             
         log.info("End of SplitMEF. %d files created", n)
-        return n_ext , out_filenames
+        return n_ext, out_filenames
                     
-    def createMEF (self, output_file = os.getcwd()+"/mef.fits" ,
+    def createMEF (self, output_file = "mef.fits" , out_dir = None,
                    primaryHeader = None):
         """ 
-        Method used to create a MEF from a set of n>0 FITS frames.                          
+        Method used to create a MEF from a set of n>0 simple FITS frames.
         """
-        
         log.info("Starting createMEF")
-         
-        
+
+        # Compound the output filename
+        if out_dir == None:
+            output_file = os.getcwd() + "/" + output_file
+        else:
+            output_file = out_dir + "/" + output_file
+            
         # Add primary header to output file...
-        #prihdr = myflat[0].header.copy()
         fo = fits.HDUList()
         prihdu = fits.PrimaryHDU (data = None, header = primaryHeader)
         # Start by updating PRIMARY header keywords...
         prihdu.header.set('EXTEND', True, after = 'NAXIS')
         prihdu.header.set('NEXTEND', 0)
         prihdu.header.set('FILENAME', output_file)
-        
+
         fo.append(prihdu)
         n_ext = 0
         for file in self.input_files:        
@@ -278,7 +318,7 @@ class MEF (object):
             except IOError:
                 print 'Error, can not open file %s' %(file)
                 raise MEF_Exception ("Error, can not open file %s"%file)
-            
+
             #Check if is a MEF file 
             if len(f)>1:
                 mef = True
@@ -340,6 +380,8 @@ class MEF (object):
 
         Notes
         -----
+        - Only for the case DETROT90=2 and DETXYFLI=0 the DET_ID is well defined !!! 
+
         - For an image of the sky, the coordinate system representation 
         might be something like: 
 
@@ -360,7 +402,7 @@ class MEF (object):
         
         Todo
         ----
-        - Header is not well formed.
+        - Only for the case DETROT90=2 and DETXYFLI=0 the DET_ID is well defined !!! 
 
         
         """
@@ -371,18 +413,25 @@ class MEF (object):
         n_ext = 4 # number of extension expected
 
         # Iterate over the whole input file list
-        for file in self.input_files:        
+        for file in self.input_files:
             try:
                 in_hdulist = fits.open(file)
             except IOError:
                 log.error('Error, can not open file %s', file)
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
+            # Compose the ouputfilename
+            new_filename = file.replace(".fits", out_filename_suffix)
+            if out_dir != None: 
+                new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
+            
+            
             # Check if is a MEF file 
             if len(in_hdulist)>1:
-                log.error("Found a MEF file with %d extensions.\
-                 Cannot convert to MEF file", len(in_hdulist)-1)
-                raise MEF_Exception("Cannot convert an already MEF to MEF file")
+                log.info("File %s is already a MEF file. No conversion required"%file)
+                os.rename(file, new_filename)
+                out_filenames.append(new_filename)
+                continue
             
 
             # Check if is a cube 
@@ -394,7 +443,7 @@ class MEF (object):
                 log.error('Error, file %s is not a full frame image', file)
                 raise MEF_Exception("Error, file %s is not a full frame image" % file)
 
-
+          
             # copy primary header from input file
             primaryHeader = in_hdulist[0].header.copy()
             out_hdulist = fits.HDUList()
@@ -418,24 +467,20 @@ class MEF (object):
             #prihdu.header.update ('DEC', new_pix_center[0][1])
                         
             out_hdulist.append (prihdu)
-            
-            new_filename = file.replace(".fits", out_filename_suffix)
-            if out_dir != None: 
-                new_filename = new_filename.replace (os.path.dirname (new_filename), out_dir) 
-            out_filenames.append (new_filename)
-            
+                        
             # Read all image sections (n_ext frames) and create the associated HDU
             pix_centers = numpy.array ([[1024, 1024], [1024, 3072], [3072, 1024], 
                                         [3072, 3072] ], numpy.float_)
 
             # Taking into account the gap (167pix), we set the new CRPIXi values
             # for each extension, refered to the center of the focal plane.
-            new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132], 
+            
+            new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81], 
                                         [-81, -81] ], numpy.float_)
-
+            
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
-                    log.debug("Reading %d-quadrant ..." % (i + j))
+                    log.debug("Reading quadrant-%d ..." % (i*2 + j))
                     # Check if we have a cube of data
                     if len(in_hdulist[0].data.shape)==2:
                         hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
@@ -450,7 +495,7 @@ class MEF (object):
                             "shape."%file)
 
                     hdu_i = fits.ImageHDU (data = hdu_data_i)
-                    log.debug("Data size of %d-quadrant = %s" % (i, hdu_data_i.shape))
+                    log.debug("Data size of %d-quadrant = %s" % (i*2+j, hdu_data_i.shape))
                     
                     # Create the new WCS
                     try:
@@ -523,12 +568,13 @@ class MEF (object):
                     # Force BITPIX=-32
                     prihdu.scale('float32')
 
-                    if 'DETXYFLIP' in primaryHeader:
-                        # When DETXYFLIP=0, no flip; default
-                        # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
-                        # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
-                        detflipxy = primaryHeader['DETXYFLIP']
-                        log.debug("Found DETXYFLIP in header =%s"%detflipxy)
+                    # Determination of DET_ID(=SGi) and DETSEC;
+                    if 'DETXYFLI' in primaryHeader:
+                        # When DETXYFLI=0, no flip; default
+                        # When DETXYFLI=1, Flip Horizontally (interchanges the left and the right) 
+                        # When DETXYFLI=2, Flip Vertically (turns the image upside down) 
+                        detflipxy = primaryHeader['DETXYFLI']
+                        log.debug("Found DETXYFLI in header =%s"%detflipxy)
                     else: 
                         detflipxy = 0
 
@@ -581,24 +627,27 @@ class MEF (object):
                                 elif detflipxy==1: det_id = 2
                                 elif detflipxy==2: det_id = 4
                                 elif detflipxy==3: det_id = 3                               
-                        elif primaryHeader['DETROT90']==2:
+                        elif primaryHeader['DETROT90']==2: # Default mode for PANIC
+                            #
+                            # Default mode for PANIC
+                            #
                             if (i*2+j)==0:
-                                if detflipxy==0: det_id = 4
+                                if detflipxy==0: det_id = 4 # default
                                 elif detflipxy==1: det_id = 1 
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2                               
                             elif (i*2+j)==1:
-                                if detflipxy==0: det_id = 3
-                                elif detflipxy==1: det_id = 2 
-                                elif detflipxy==2: det_id = 4
-                                elif detflipxy==3: det_id = 1                               
-                            elif (i*2+j)==2:
-                                if detflipxy==0: det_id = 1
+                                if detflipxy==0: det_id = 1 # default
                                 elif detflipxy==1: det_id = 4 
                                 elif detflipxy==2: det_id = 2
-                                elif detflipxy==3: det_id = 3                              
+                                elif detflipxy==3: det_id = 3                               
+                            elif (i*2+j)==2:
+                                if detflipxy==0: det_id = 3 # default
+                                elif detflipxy==1: det_id = 2 
+                                elif detflipxy==2: det_id = 4
+                                elif detflipxy==3: det_id = 1                              
                             elif (i*2+j)==3: 
-                                if detflipxy==0: det_id = 2
+                                if detflipxy==0: det_id = 2 # default
                                 elif detflipxy==1: det_id = 3 
                                 elif detflipxy==2: det_id = 1
                                 elif detflipxy==3: det_id = 4
@@ -624,8 +673,8 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 2
                                 elif detflipxy==3: det_id = 1
                     else:
-                        # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
-                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
+                        # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
+                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
                         if (i*2+j)==0: det_id = 4
                         elif (i*2+j)==1: det_id = 3
                         elif (i*2+j)==2: det_id = 1
@@ -634,8 +683,17 @@ class MEF (object):
                     hdu_i.header.set('DET_ID', "SG%i"%det_id, 
                                         "PANIC Detector id SGi [i=1..4]")
                     hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
-                    hdu_i.header.set('DETSEC',
-                        "[%i:%i,%i:%i]"%(2048*i+1, 2048*(i+1), 2048*j+1, 2048*(j+1) ))
+                    
+                    # DETSEC
+                    if det_id==1: # SG1
+                        det_sec = '[%i:%i,%i:%i]' % (2049,4096,1,2048)
+                    elif det_id==2: # SG2
+                        det_sec = '[%i:%i,%i:%i]' % (2049,4096,2049,4096)
+                    elif det_id==3: # SG3
+                        det_sec = '[%i:%i,%i:%i]' % (1,2048,2049,4096)
+                    elif det_id==4: # SG4
+                        det_sec = '[%i:%i,%i:%i]' % (1,2048,1,2048)
+                    hdu_i.header.set('DETSEC', det_sec)
 
                         
                     # now, copy extra keywords required
@@ -663,6 +721,7 @@ class MEF (object):
                                 clobber=True)
             out_hdulist.close(output_verify = 'ignore')
             del out_hdulist
+            out_filenames.append(new_filename)
             log.info("MEF file %s created" % (out_filenames[n]))
             n += 1
         
@@ -709,13 +768,14 @@ class MEF (object):
         -------
 
         n_ext,out_filenames: The number of files and the list of output files 
-        created. The numbering may not match with DET_ID numbering (SGi).
+        created. The numbering **must** match with DET_ID numbering (SGi),
+        not matter the rotation or flip done by GEIRS.
 
                     DETROT90=2     DETROT90=0
-        .Q01.fits --> SG4             SG2
-        .Q02.fits --> SG3             SG1
-        .Q03.fits --> SG1             SG3
-        .Q04.fits --> SG2             SG4
+        .Q01.fits --> SG1             SG1
+        .Q02.fits --> SG2             SG2
+        .Q03.fits --> SG3             SG3
+        .Q04.fits --> SG4             SG4
 
         (DETROT90=2=180dec clockwise)
         
@@ -773,26 +833,29 @@ class MEF (object):
 
             # Taking into account the gap (167pix), we set the new CRPIXi values
             # for each extension, refered to the center of the focal plane.
-            new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132], 
+            #new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
+            #                            [-81, -81] ], numpy.float_)
+	    
+	    new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
                                         [-81, -81] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
-                    log.debug("Reading %d-quadrant ..." % (i*2 + j))
+                    log.debug("Reading quadrant-%d ..." % (i*2 + j))
                     # Check if we have a cube, then copy all the planes
                     if len(in_hdulist[0].data.shape)==2: 
                         hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
                                                         2048*j:2048*(j+1)]
                         log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
-                                                              hdu_data_i.shape))    
+                                                              hdu_data_i.shape))
                     elif len(in_hdulist[0].data.shape)>2:
-                        hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1), 
+                        hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1),
                                                         2048*j:2048*(j+1)]
-                        log.debug("Data size of %d-quadrant = %s" % (i*2+j, 
+                        log.debug("Data size of %d-quadrant = %s" % (i*2+j,
                                                               hdu_data_i.shape))
                     else:
                         log.error("Wrong frame shape found, that's why" 
                         "cannot convert file %"%file)
-                        raise MEF_Exception("Error, file %s has wrong image" 
+                        raise MEF_Exception("Error, file %s has wrong image"
                             "shape."%file)
 
                     # Create primary HDU (data + header)
@@ -883,12 +946,12 @@ class MEF (object):
                         prihdu.header.add_history("[MEF.splitGEIRSToSimple] File created from %s"%file)
                         
                     
-                    if 'DETXYFLIP' in primaryHeader:
-                        # When DETXYFLIP=0, no flip; default
-                        # When DETXYFLIP=1, Flip Horizontally (interchanges the left and the right) 
-                        # When DETXYFLIP=2, Flip Vertically (turns the image upside down) 
-                        detflipxy = primaryHeader['DETXYFLIP']
-                        log.debug("Found DETXYFLIP in header =%s"%detflipxy)
+                    if 'DETXYFLI' in primaryHeader:
+                        # When DETXYFLI=0, no flip; default
+                        # When DETXYFLI=1, Flip Horizontally (interchanges the left and the right) 
+                        # When DETXYFLI=2, Flip Vertically (turns the image upside down) 
+                        detflipxy = primaryHeader['DETXYFLI']
+                        log.debug("Found DETXYFLI in header =%s"%detflipxy)
                     else: 
                         detflipxy = 0
 
@@ -942,22 +1005,22 @@ class MEF (object):
                                 elif detflipxy==1: det_id = 2
                                 elif detflipxy==2: det_id = 4
                                 elif detflipxy==3: det_id = 3                               
-                        elif primaryHeader['DETROT90']==2:
+                        elif primaryHeader['DETROT90']==2: # default
                             if (i*2+j)==0:
                                 if detflipxy==0: det_id = 4
                                 elif detflipxy==1: det_id = 1 
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2                               
                             elif (i*2+j)==1:
-                                if detflipxy==0: det_id = 3
+                                if detflipxy==0: det_id = 1
                                 elif detflipxy==1: det_id = 2 
                                 elif detflipxy==2: det_id = 4
-                                elif detflipxy==3: det_id = 1                               
+                                elif detflipxy==3: det_id = 3                               
                             elif (i*2+j)==2:
-                                if detflipxy==0: det_id = 1
+                                if detflipxy==0: det_id = 3
                                 elif detflipxy==1: det_id = 4 
                                 elif detflipxy==2: det_id = 2
-                                elif detflipxy==3: det_id = 3                              
+                                elif detflipxy==3: det_id = 1                              
                             elif (i*2+j)==3: 
                                 if detflipxy==0: det_id = 2
                                 elif detflipxy==1: det_id = 3 
@@ -985,8 +1048,8 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 2
                                 elif detflipxy==3: det_id = 1
                     else:
-                        # Then, we suppose DETROT90=2, DETXYFLIP=0, and default for PANIC !
-                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLIP=0")
+                        # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
+                        log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
                         if (i*2+j)==0: det_id = 4
                         elif (i*2+j)==1: det_id = 3
                         elif (i*2+j)==2: det_id = 1
@@ -1000,13 +1063,13 @@ class MEF (object):
                     out_hdulist.verify('ignore')
                 
                     new_filename = file.replace(".fits", 
-                                                out_filename_suffix % (i*2+j+1)) # number from 1 to 4
+                                                out_filename_suffix % det_id) # number from 1 to 4
                     if out_dir != None: 
                         new_filename = new_filename.replace(os.path.dirname(new_filename), 
                                                             out_dir) 
                     out_filenames.append (new_filename)
      
-                    # Now, write the new MEF file
+                    # Now, write the new simple FITS file
                     out_hdulist.writeto (new_filename, 
                                          output_verify = 'ignore', clobber=True)
                     out_hdulist.close (output_verify = 'ignore')
@@ -1036,7 +1099,7 @@ if __name__ == "__main__":
     
     parser.add_option ("-s", "--suffix",
                   action = "store", dest = "out_suffix", \
-                  help = "suffix to out files (default .%02d.fits)")
+                  help = "suffix to out files (default .Q%02d.fits)")
     
     parser.add_option ("-J", "--join",
                   action = "store_true", dest = "join", \
@@ -1063,7 +1126,11 @@ if __name__ == "__main__":
                   action = "store_true", dest = "geirs_convert", \
                   help = "convert a GEIRS-v0 file (with 1 extension) to a \
                   MEF FITS file with 4 extensions", default = False)
-                  
+    
+    parser.add_option ("-d", "--output_dir",
+                  action = "store", dest = "output_dir",
+                  help = "Directory where output files will be saves.",
+                  default = None)
     
     (options, args) = parser.parse_args()
     
@@ -1082,21 +1149,21 @@ if __name__ == "__main__":
     if options.join:
         if not options.out_suffix: 
             options.out_suffix = ".join.fits"
-        myMEF.doJoin (options.out_suffix)
+        myMEF.doJoin( options.out_suffix , output_dir=options.output_dir)
         
     elif options.split:
         if not options.out_suffix: 
-            options.out_suffix = ".%02d.fits"
-        myMEF.doSplit( options.out_suffix )
+            options.out_suffix = ".Q%02d.fits"
+        myMEF.doSplit( options.out_suffix, out_dir=options.output_dir)
     
     elif options.create:
-        myMEF.createMEF(os.getcwd()+"/mef.fits")
+        myMEF.createMEF(out_dir=options.output_dir)
     
     elif options.geirs_split:
-        myMEF.splitGEIRSToSimple()
+        myMEF.splitGEIRSToSimple(out_dir=options.output_dir)
     
     elif options.geirs_convert:
-        myMEF.convertGEIRSToMEF()
+        myMEF.convertGEIRSToMEF(out_dir=options.output_dir)
         
               
         

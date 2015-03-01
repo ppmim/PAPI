@@ -24,7 +24,7 @@
 #include "fitsIO.h"
 #include "listIO.h"
 
-#define HWID 30.0     /* default half-width of cross-corr search box, arcsec */
+#define HWID 60.0     /* default half-width of cross-corr search box, arcsec */
 #define MAXNFILES 999
 #define MAXNLIST 999999L
 #define MINFRAC  0.1      /* 0.15; correlation failed if overlap < MINFRAC */
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 
     scale = readwcs(fn[0], NULL, NULL);              /* arcsec per pixel */
   
-    /*fprintf(stderr, "\nDEBUGGIN ....\n->offsets_SCALE=%f", scale);*/
+    fprintf(stderr, "\nDEBUGING ....\n->offsets_SCALE=%f", scale);
 
     /* Initial half-width of cross-corr search box, in pixels, but the argv value is given in arcsec*/
     hwid = (argc == 3) ? (atof(argv[2]) / scale + 0.5) : (HWID / scale + 0.5);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         frac = correlate(x, y, p, n, img, nx, ny, ixoff, iyoff, 
                             &xoff, &yoff, hwid);
     
-	    fprintf(stderr, "\n[iter_0] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d\n",
+	    fprintf(stderr, "\n[iter_0] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d (px)\n",
             	   frac, n, nx, ny, ixoff, iyoff, xoff, yoff, hwid);
         
         /*fprintf(stderr, "-->First correlation overlap computed is : %f", frac);*/
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
             frac = correlate(x, y, p, n, img, nx, ny, 0, 0, /* no estimation are given this time */
                                 &xoff, &yoff, maxhwid);
             
-            fprintf(stderr, "\n[iter_1] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d\n",
+            fprintf(stderr, "\n[iter_1] corr_frac=%f, n=%d, nx=%d, ny=%d, ixoff=%d, iyoff=%d, xoff=%f, yoff=%f, hwid=%d (px)\n",
                 	   frac, n, nx, ny, ixoff, iyoff, xoff, yoff, maxhwid);
         
             /*fprintf(stderr, "-->Second correlation overlap computed is : %f", frac);*/
