@@ -128,6 +128,15 @@ def getBestFocus(data, output_file):
         Filename of out plot with the fitting computed.
     """
     
+    import socket
+    hostname = socket.gethostname()
+    if hostname == 'panic22':
+        foclimits = [-1, 27]
+    elif hostname == 'panic35':
+        foclimits = [10, 60]
+    else:
+        foclimits = None 
+        
     d = np.array(data, dtype=np.float32)
     good_focus_values = d[:, 3] # focus
     fwhm_values = d[:, 4] # PSF-value (MFWHM, GFWHM, FWHM, ...)
@@ -153,16 +162,19 @@ def getBestFocus(data, output_file):
     if pol[2] < 0:
         print "ERROR: Parabola fit unusable!"
     best_focus = - pol[1] / (2. * pol[2])
-    if best_focus + m_foc < 10 or best_focus + m_foc > 30:
+    min_fwhm = pol([best_focus])
+    
+    if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
         print "ERROR: Best focus out of range!"
-    print "BEST_FOCUS=", best_focus + m_foc
+    print "BEST_FOCUS = ", best_focus + m_foc
+    print "MIN_FWHM = ", min_fwhm
     
     # Plotting
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
     plt.plot(xp + m_foc, pol(xp), '-')
     plt.axvline(best_focus + m_foc, ls='--', c='r')
-    plt.title("Focus serie - Fit: %f X^2 + %f X + %f\n Best Focus=%6.3f mm" 
-        %(pol[2], pol[1], pol[0], best_focus + m_foc))
+    plt.title("Focus serie - Fit: %f X^2 + %f X + %f\n Best Focus=%6.3f mm; FWHM=%6.3f (px)" 
+        %(pol[2], pol[1], pol[0], best_focus + m_foc, min_fwhm))
     
     plt.xlabel("T-FOCUS (mm)")
     plt.ylabel("FWHM (pixels)")
@@ -170,7 +182,7 @@ def getBestFocus(data, output_file):
     plt.ylim(np.min(fwhm_values) - 1, np.max(fwhm_values) + 1 )
     if pol[2] < 0:
     	plt.figtext(0.5, 0.5, 'ERROR: Parabola fit unusable!', size='x-large', color='r', weight='bold', ha='center', va='bottom')
-    if best_focus + m_foc < 10 or best_focus + m_foc > 30:
+    if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
     	plt.figtext(0.5, 0.5, 'ERROR: Best focus out of range!', size='x-large', color='r', weight='bold', ha='center', va='top')
     plt.grid()
     

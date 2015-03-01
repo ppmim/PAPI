@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright (c) 2008-2014 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2008-2015 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -25,8 +25,6 @@
 #
 # mainGUI.py
 #
-# Last update 21/Jul/2014
-#
 ################################################################################
 
 
@@ -38,6 +36,17 @@
     ####################################################################
 
 # system modules
+import locale
+locale.setlocale(locale.LC_ALL, '')
+locale.setlocale(locale.LC_NUMERIC, 'C')
+print "LC_NUMERIC =", locale.getlocale(locale.LC_NUMERIC) 
+
+import matplotlib
+# Next is needed in order to avoid a crash/deadlock when running 
+# pyraf graphs and matplotlib.pyplot graphs
+# For 'TkAgg' backend (default) produces the crash.
+matplotlib.use('QT4Agg')
+
 import sys
 import os
 import os.path
@@ -50,14 +59,15 @@ from optparse import OptionParser
 import datetime
 import dircache
 
-# Tell PyRAF to skip all graphics initialization and run in terminal-only mode.
-# Otherwise we will get annoying warning messages (such as "could not open
+# Tell PyRAF to skip all graphics initialization and run in terminal-only mode (=1).
+# Otherwise (=0) we will get annoying warning messages (such as "could not open
 # XWindow display" or "No graphics display available for this session") when
 # working at a remote terminal or at a terminal without any X Windows support.
 # Any tasks which attempt to display graphics will fail, of course, but we are
 # not going to make use of any of them, anyway.
 
-os.environ['PYRAF_NO_DISPLAY'] = '0'
+# What is check is if 'PYRAF_NO_DISPLAY' in os.environ:, so no definition !!
+#os.environ['PYRAF_NO_DISPLAY'] = '0'
 
 # PANIC modules
 import reduce
@@ -108,6 +118,9 @@ from PyQt4.QtGui import QTreeWidgetItemIterator
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtGui import *
+
+
+import commissioning.runStarfocus as focus
 
 
 from misc.version import __version__
@@ -3151,18 +3164,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     QMessageBox.critical(self, "Error", msg)
                     return
             
-            text_file = self.focus_tmp_file
+            text_file = self.focus_tmp_file  # ~/iraf/focus_seq.txt
             iraf_logfile = self.m_tempdir + "/starfocus.log"
-            # copy the list and switch cetner first and center position
+            # copy the list and swap first and center position
             my_list = list(self.m_popup_l_sel)
             my_list[0], my_list[len(my_list)/2] = my_list[len(my_list)/2], my_list[0]    
             # copy list to file; if file exists, overwrite
             self.genFileList(my_list, text_file)
             try:
+                ## New approach
+                #os.system("/home/panic/DEVELOP/papi/commissioning/runStarfocus.py -s %s &"%text_file)
+                #focus.runFocusEvaluation(text_file, "", iraf_logfile)
                 # if not started, launch DS9
                 display.startDisplay()
                 # Launch IRAF; note that next call is asynchronous, that is,
-                # it retutns inmediately after launch IRAF.
+                # it returns inmediately after launch IRAF.
                 self.iraf_console_slot(True)
             except Exception,e:
                 os.unlink(text_file)
@@ -3202,18 +3218,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 msgBox.setText("Detector selection:")
                 msgBox.setInformativeText("Do you want to use <ALL> detectors or <SELECT> one ?")
                 button_all = msgBox.addButton("ALL", QMessageBox.ActionRole)
-                button_sg1 = msgBox.addButton("SG1", QMessageBox.ActionRole)
-                button_sg2 = msgBox.addButton("SG2", QMessageBox.ActionRole)
-                button_sg3 = msgBox.addButton("SG3", QMessageBox.ActionRole)
-                button_sg4 = msgBox.addButton("SG4", QMessageBox.ActionRole)
+                button_sg1 = msgBox.addButton("SG1/Q1", QMessageBox.ActionRole)
+                button_sg2 = msgBox.addButton("SG2/Q2", QMessageBox.ActionRole)
+                button_sg3 = msgBox.addButton("SG3/Q3", QMessageBox.ActionRole)
+                button_sg4 = msgBox.addButton("SG4/Q4", QMessageBox.ActionRole)
                 msgBox.setDefaultButton(button_sg2)
                 msgBox.exec_()
         
                 if msgBox.clickedButton()== button_all: detector = 'all'
-                elif msgBox.clickedButton()==button_sg1: detector = 'Q2'
-                elif msgBox.clickedButton()==button_sg2: detector = 'Q4'
+                elif msgBox.clickedButton()==button_sg1: detector = 'Q1'
+                elif msgBox.clickedButton()==button_sg2: detector = 'Q2'
                 elif msgBox.clickedButton()==button_sg3: detector = 'Q3'
-                elif msgBox.clickedButton()==button_sg4: detector = 'Q1'
+                elif msgBox.clickedButton()==button_sg4: detector = 'Q4'
                 else: detector = 'all'
                     
                 #
@@ -3295,18 +3311,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
         msgBox.setText("Detector selection:")
         msgBox.setInformativeText("Do you want to use <ALL> detectors or <SELECT> one ?")
         button_all = msgBox.addButton("ALL", QMessageBox.ActionRole)
-        button_sg1 = msgBox.addButton("SG1", QMessageBox.ActionRole)
-        button_sg2 = msgBox.addButton("SG2", QMessageBox.ActionRole)
-        button_sg3 = msgBox.addButton("SG3", QMessageBox.ActionRole)
-        button_sg4 = msgBox.addButton("SG4", QMessageBox.ActionRole)
+        button_sg1 = msgBox.addButton("SG1/Q1", QMessageBox.ActionRole)
+        button_sg2 = msgBox.addButton("SG2/Q2", QMessageBox.ActionRole)
+        button_sg3 = msgBox.addButton("SG3/Q3", QMessageBox.ActionRole)
+        button_sg4 = msgBox.addButton("SG4/Q4", QMessageBox.ActionRole)
         msgBox.setDefaultButton(button_sg2)
         msgBox.exec_()
         
         if msgBox.clickedButton()== button_all: detector = 'all'
-        elif msgBox.clickedButton()==button_sg1: detector = 'Q2'
-        elif msgBox.clickedButton()==button_sg2: detector = 'Q4'
+        elif msgBox.clickedButton()==button_sg1: detector = 'Q1'
+        elif msgBox.clickedButton()==button_sg2: detector = 'Q2'
         elif msgBox.clickedButton()==button_sg3: detector = 'Q3'
-        elif msgBox.clickedButton()==button_sg4: detector = 'Q1'
+        elif msgBox.clickedButton()==button_sg4: detector = 'Q4'
         else: detector = 'all'
         #
         
@@ -3808,10 +3824,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             # Select detector (map SGi to Qi)
             if self.comboBox_detector.currentText()=="All": detector = 'all'
-            elif self.comboBox_detector.currentText()=="SG1": detector = 'Q2'
-            elif self.comboBox_detector.currentText()=="SG2": detector = 'Q4'
+            elif self.comboBox_detector.currentText()=="SG1": detector = 'Q1'
+            elif self.comboBox_detector.currentText()=="SG2": detector = 'Q2'
             elif self.comboBox_detector.currentText()=="SG3": detector = 'Q3'
-            elif self.comboBox_detector.currentText()=="SG4": detector = 'Q1'
+            elif self.comboBox_detector.currentText()=="SG4": detector = 'Q4'
             else: detector = 'all'
             self.config_opts['general']['detector'] = detector
 

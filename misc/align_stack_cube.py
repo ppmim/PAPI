@@ -77,17 +77,22 @@ def align_stack_cube(input_file, output_file=None):
         with fits.open(i_file, "update") as f:
             naxis1 = f[0].header['NAXIS1']
             naxis2 = f[0].header['NAXIS2']
+            # Get pix_scale
+            if 'PIXSCALE' in f[0].header:
+                pix_scale = f[0].header['PIXSCALE']
+            else:
+                print "Cannot find PIXSCALE, assuming PIXSCALE = 1.0"
+                pix_scale = 1.0
             if 'CTYPE3' in f[0].header: f[0].header.remove("CTYPE3")
             if 'CRPIX3' in f[0].header: f[0].header.remove("CRPIX3")
             if 'CRVAL3' in f[0].header: f[0].header.remove("CRVAL3")
             if 'CDELT3' in f[0].header: f[0].header.remove("CDELT3")
             
-    return
 
     log.debug("Lets get offsets....")
     # Get offsets
     #offsets = getPointingOffsets(sp_files, '/tmp/offsets.txt')
-    offsets = getWCSPointingOffsets(sp_files, "/tmp/offsets.txt", 0.2)
+    offsets = getWCSPointingOffsets(sp_files, "/tmp/offsets.txt", pix_scale)
     
     # Build BPM from text file
     dummy_gain = "/tmp/dummy_gain.fits"
@@ -293,10 +298,7 @@ def getWCSPointingOffsets(images_in,
       log.info("Starting getWCSPointingOffsets....")
       
       # First, we need the astrometic calibration
-      # cal_images = doAstroCalib(images_in, pix_scale)
-      # only a test !!
-      cal_images = images_in
-      
+      cal_images = doAstroCalib(images_in, pix_scale)
       if len(cal_images) != len(images_in):
           msg = "Error, cannot calibrate all the images"
           log.error(msg)

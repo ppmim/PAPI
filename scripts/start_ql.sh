@@ -8,8 +8,4 @@ QL_DIR=$PAPI_HOME/QL4
 cd $QL_DIR
 pyuic4 $QL_DIR/panicQL.ui > $QL_DIR/panicQL.py
 
-if [[ `hostname -s` = udit22* ]]; then
-	python $QL_DIR/runQL.py  -c $QL_DIR/../config_files/papi.cfg
-else
-	python $QL_DIR/runQL.py  -c $QL_DIR/../config_files/papi_panic2_PANIC.cfg
-fi
+$QL_DIR/runQL.py  -c $QL_DIR/../config_files/papi.cfg

@@ -2,7 +2,7 @@
 
 """ Run IRAF.starfocus, get the best Focus for a focus sequence. """
 
-# Author: Jose M. Ibanez (c) 2014
+# Author: Jose M. Ibanez (c) 2015
 # Email: jmiguel@iaa.es
 # License: GNU GPLv3
 
@@ -11,6 +11,7 @@ import re
 from optparse import OptionParser
 import sys
 import fileinput
+import locale
 
 # To avoid conflict with QL-Focus_Evaluation
 try:
@@ -24,10 +25,20 @@ except Exception,e:
 
 import astropy.io.fits as fits
 import numpy as np
+import matplotlib
+# Next is needed in order to avoid a crash/deadlock when running 
+# pyraf graphs and matplotlib.pyplot graphs
+# For 'TkAgg' backend (default) produces the crash.
+matplotlib.use('QT4Agg')
+
+
 import matplotlib.pyplot as plt
 from pyraf import iraf
+import misc.display as display
 
 
+# Global variable !
+telescope = ""
 
 class IrafError(StandardError):
     """ Raised if some IRAF error happens """
@@ -47,11 +58,13 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
     coord_file: str
         Filename of the file with the coordinages (x, y) of the stars to be
         analyzed by iraf.starfocus.
+        If coord_file == "", then the routine will lauch ds9 and the user must
+        select the stars for the focus evaluation.
     
     log_file: str
         Filename of the log file where iraf.starfocus will write the results.
        
-      
+
     The coordinates in coord_file should be in the same world coordiantes
     as the WCS applied to the image.
     
@@ -66,6 +79,11 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
     
     """
     
+    locale.setlocale(locale.LC_ALL, '')
+    locale.setlocale(locale.LC_NUMERIC, 'C')
+
+    global telescope
+    
     # Read NCOADDS of the images to set the SATURATION limit
     if os.path.isfile(images[1:]):
         files = [line.replace("\n", "").replace('//','/')
@@ -75,9 +93,36 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
                 satur_level = hdu[0].header['NCOADDS'] * 50000
             else:
                 satur_level = 50000
+            if 'TELESCOP' in hdu[0].header:
+                telescope = hdu[0].header['TELESCOP']
+            else:
+                telescope = ""
                 
     print "SATUR_LEVEL =", satur_level
     
+    if coord_file == "" or coord_file == None: idisplay = "yes"
+    else: idisplay = "no"
+    print "IDISPLAY=",idisplay
+    print "COORD_FILE=",coord_file
+    print "IMAGES_FILE", images
+    import stsci.tools.capable
+    print "OF_GRAPHICS=", stsci.tools.capable.OF_GRAPHICS
+    print "LC_NUMERIC =", locale.getlocale(locale.LC_NUMERIC)
+    
+    if 'IMTDEV' in os.environ:
+        print "IMTDEV=", os.environ['IMTDEV']
+    
+    if 'PYRAF_NO_DISPLAY' in os.environ:
+        print "QUE PASAAAAAAAAAAAAA -- PYRAF_NO_DISPLAY=",os.environ['PYRAF_NO_DISPLAY']
+    if 'PYTOOLS_NO_DISPLAY' in os.environ:
+        print "QUE PASAAAAAAAAAAAAA -- PYTOOLS_NO_DISPLAY=", os.environ['PYTOOLS_NO_DISPLAY']
+    
+    #try :
+    #    import Tkinter
+    #except ImportError :
+    #    print "CANNOT IMPORT TKINTER !!!"
+        
+        
     # Config and launch the iraf.starfocus task
     try:
         iraf.noao(_doprint=0)
@@ -99,19 +144,24 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
         #starfocus.saturation = "INDEF"
         starfocus.ignore_sat = "no"
         starfocus.imagecur = coord_file
-        starfocus.display = "no"
+        starfocus.display = idisplay
         starfocus.frame = 1
-        #starfocus.graphcur = "/dev/null" 
+        starfocus.graphcur = "" #"/dev/null" 
         starfocus.logfile = log_file
         res = starfocus(images, Stdout=1)[-1] # get last linet of output
         numMatch = re.compile(r'(\d+(\.\d+)?)')
         match = numMatch.search(res)
         
-        return float (match.group(1))
+        best_focus = float (match.group(1))
+        print "\n\nBest Focus (IRAF)= ", best_focus
+        return best_focus
     
-    except Exception,e:
+    except Exception, e:
         print "Error running IRAF.starfocus: %s"%str(e)
-        
+        raise e
+    
+    
+    
 def writeDataFile(log_file, data_file, target):
     """
     Read iraf.starfocus log file and write a data file to be used
@@ -149,7 +199,7 @@ def writeDataFile(log_file, data_file, target):
     else:
         print 'Error, no data file given'
         
-def readStarfocus(log_file):
+def readStarfocusLog(log_file):
     """
     Read the results from the iraf.starfocus log file and compute
     the best focus for that execution. Only non-saturated data
@@ -215,6 +265,15 @@ def getBestFocus(data, output_file):
     
     """
     
+    if telescope == 'CA-2.2':
+        foclimits = [-1, 27]
+        print "Assuming CA-2.2 TELESCOPE"
+    elif telescope == 'CA-3.5':
+        foclimits = [10, 60]
+        print "Assuming CA-3.5 TELESCOPE"
+    else:
+        foclimits = None
+        
     d = np.array(data, dtype=np.float32)
     good_focus_values = d[:, 3] # focus
     fwhm_values = d[:, 4] # PSF-value (MFWHM, GFWHM, FWHM, ...)
@@ -240,9 +299,12 @@ def getBestFocus(data, output_file):
     if pol[2] < 0:
         print "ERROR: Parabola fit unusable!"
     best_focus = - pol[1] / (2. * pol[2])
-    if best_focus + m_foc < 10 or best_focus + m_foc > 30:
+    min_fwhm = pol([best_focus])
+    print "BEST_FOCUS (OWN) = ", best_focus + m_foc
+    print "MIN_FWHM (OWN) = ", min_fwhm
+    
+    if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
         print "ERROR: Best focus out of range!"
-    #print "BEST_FOCUS=", best_focus + m_foc
     
     # Plotting
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
@@ -257,7 +319,7 @@ def getBestFocus(data, output_file):
     plt.ylim(np.min(fwhm_values) - 1, np.max(fwhm_values) + 1 )
     if pol[2] < 0:
         plt.figtext(0.5, 0.5, 'ERROR: Parabola fit unusable!', size='x-large', color='r', weight='bold', ha='center', va='bottom')
-    if best_focus + m_foc < 10 or best_focus + m_foc > 30:
+    if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
         plt.figtext(0.5, 0.5, 'ERROR: Best focus out of range!', size='x-large', color='r', weight='bold', ha='center', va='top')
     plt.grid()
     
@@ -275,6 +337,33 @@ def getBestFocus(data, output_file):
     
     return (best_focus + m_foc)
 
+def runFocusEvaluation(source_file, coord_file, log_file):
+    """
+    Run the complete procedure for focus evaluation.
+    """
+    
+    # First, check if ds9 is launched; if not, launch it.
+    if not os.path.exists(coord_file):
+        display.startDisplay()
+        
+    if not os.path.exists(source_file):
+        msg = "ERROR, file source_file does not exists"
+        print msg
+        raise Exception(msg)
+    
+    try:
+        best_focus = getBestFocusfromStarfocus("@" + source_file, 
+                                           coord_file, 
+                                           log_file)
+    
+    except Exception,e:
+        raise e
+    
+    # Compute our own BEST_FOCUS value and plot the fittting
+    print "Now, our own fitting...\n"
+    data = readStarfocusLog("/home/panic/iraf/starfocus.log")
+    my_best_focus = getBestFocus(data, "starfocus.pdf")
+    
 if __name__ == "__main__":
     
     usage = "usage: %prog [options] "
@@ -289,10 +378,11 @@ if __name__ == "__main__":
     
     parser.add_option("-c", "--coordiantes",
                   action="store", dest="coord_file",
-                  help="Coordinates file listing the x,y coordiantes of stars in input images.")
+                  help="Coordinates file listing the x,y coordiantes "
+                  "of stars in input images")
     
     parser.add_option("-o", "--output_log",
-                  action="store", dest="log_file",default="starfocus.log", 
+                  action="store", dest="log_file", default="starfocus.log", 
                   help="Output log file generated [default: %default]")
     
     parser.add_option("-d", "--data_file",
@@ -303,33 +393,45 @@ if __name__ == "__main__":
                   action="store", dest="target",
                   help="Object name for output data")
 
+    
     (options, args) = parser.parse_args()
     
     if len(sys.argv[1:])<1:
        parser.print_help()
        sys.exit(0)
-
-    if not options.source_file or not options.coord_file:
+    # Choose the right execution
+    if not options.source_file and not options.coord_file and not options.log_file:
         parser.print_help()
         parser.error("incorrent number of arguments")
+    # only read current log and compute BestFocus
+    elif not options.source_file and not options.coord_file and options.log_file:
+        data = readStarfocusLog(options.log_file)
+        my_best_focus = getBestFocus(data, "starfocus.pdf")
+    # run iraf.starfocus and compute our own BestFocus
+    elif options.source_file and options.coord_file and not options.data_file:
+        try:
+            bf = runFocusEvaluation(options.source_file, 
+                            options.coord_file, 
+                            options.log_file)
+        except Exception, e:
+            print "ERROR running focus evaluation"
+            raise e
+    # Complete execution
+    else:
+        display.startDisplay()
+        # Run iraf.starfocus
+        best_focus = getBestFocusfromStarfocus("@" + options.source_file, 
+                                            options.coord_file, 
+                                            options.log_file)
         
-    best_focus = getBestFocusfromStarfocus("@" + options.source_file, 
-                                           options.coord_file, 
-                                           options.log_file)
-    print "\n\nBest Focus (IRAF)= ",best_focus
-    
-    # Read log file and write values into data file for the Tilt analysis.
-    writeDataFile(options.log_file, options.data_file, options.target)
-    
-    # Compute our own BEST_FOCUS value and plot the fittting
-    print "Now, our own fitting...\n"
-    data = readStarfocus(options.log_file)
-    
-    # I do not know why if IRF window is open, then matplotlib crash with a SF !!!
-    print "Please, close IRAF window and press any key to continue..."
-    raw_input('')
-    my_best_focus = getBestFocus(data, "starfocus.pdf")
-    print "\n\nBest Focus (OWN):", my_best_focus
-    
-    print 'The end !'
+        # Read log file and write values into data file for the Tilt analysis.
+        writeDataFile(options.log_file, options.data_file, options.target)
+        
+        # Compute our own BEST_FOCUS value and plot the fittting
+        print "Now, our own fitting...\n"
+        data = readStarfocusLog(options.log_file)
+        
+        # I do not know why if IRF window is open, then matplotlib crash with a SF !!!
+        my_best_focus = getBestFocus(data, "starfocus.pdf")
+        
     sys.exit(0)
