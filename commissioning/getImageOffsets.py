@@ -32,7 +32,32 @@ import numpy
 import astropy.io.fits as fits
 from astropy import wcs
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
+def draw_offsets(offsets, pix_scale = 0.23, scale_factor=0.1):
+    
+    fig2 = plt.figure()
+    ax2 = fig2.add_subplot(111, aspect='equal')
+    max_x = numpy.abs(offsets[: , 0]).max()
+    max_y = numpy.abs(offsets[: , 1]).max()
+    i = 0
+    r_width = (4096 + 167) / 1.0 * pix_scale * scale_factor
+    plt.xlim(offsets[: , 0].min()-(4096+167)/2.0*pix_scale, offsets[: , 0].max()+(4096+167)/2.0*pix_scale)
+    plt.ylim(offsets[: , 1].min()-(4096+167)/2.0*pix_scale, offsets[: , 1].max()+(4096+167)/2.0*pix_scale)
+    for x,y in offsets:
+        print "X=%s , Y=%s"%(x, y)
+        ax2.add_patch(
+            patches.Rectangle(
+                (x-r_width/2.0, y-r_width/2.0),
+                r_width,
+                r_width,
+                fill=False # remove background
+            )
+        )
+        ax2.annotate('%s'%i, xy=(x,y), xytext=(x,y))
+        i+=1
+    fig2.savefig('offsets.png', dpi=90, bbox_inches='tight')
 
 def getWCSPointingOffsets(images_in,
                               p_offsets_file="/tmp/offsets.txt"):
@@ -138,6 +163,8 @@ def getWCSPointingOffsets(images_in,
       log.debug("(WCS) Image Offsets (arcsecs): ")
       log.debug(offsets)
       
+      
+      
       return offsets
   
 
@@ -147,7 +174,8 @@ def getWCSPointingOffsets(images_in,
 if __name__ == "__main__":
     
     usage = "usage: %prog [options]"
-    desc = """Gives the image offsets (arcsecs) in based on the WCS of the image headers."""
+    desc = """Gives the image offsets (arcsecs) in based on the WCS of the image headers.""" 
+    """ A plot of the dither pattern is also saved as offsets.png"""
     
     parser = OptionParser(usage, description=desc)
     
@@ -156,8 +184,16 @@ if __name__ == "__main__":
                   help="Input text file with the list of FITS file to be analized.")
                   
     parser.add_option("-o", "--output", type="str",
-                  action="store", dest="output_filename", 
+                  action="store", dest="output_filename", default="offsets.txt",
                   help="Output file to write the offset matrix")
+    
+    parser.add_option("-p", "--pix_scale", type=float,
+                  action="store", dest="pix_scale", default=0.23,
+                  help="Pixel scale")
+    
+    parser.add_option("-d", "--draw_scale", type=float,
+                  action="store", dest="draw_scale", default=0.1,
+                  help="Draw scale of detector")
     
     (options, args) = parser.parse_args()
     
@@ -182,7 +218,14 @@ if __name__ == "__main__":
     except Exception,e:
         log.error("Error, cannot find out the image offsets. %s",str(e))
     
+    # Draw plot with dither pathern
+    draw_offsets(offsets, options.pix_scale, options.draw_scale)
+    
     # Print out the offset matrix
     numpy.set_printoptions(suppress=True)
     print "\nOffsets Matrix (arcsecs): \n"
     print(offsets)
+    
+    sys.exit(0)
+    
+    

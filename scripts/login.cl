@@ -125,7 +125,7 @@ else
     delete uparm$mt?.lok,uparm$*.wcs verify-
 
 if (access ("home$papi_ql_user.cl"))
-   if (access ("/tmp/focus_seq.txt"))
+   if (access ("home$focus_seq.txt"))
       cl < "home$papi_ql_user.cl"
 ;
 keep

@@ -757,7 +757,7 @@ class ReductionSet(object):
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
                    'UT','AIRMASS','IMAGETYP','TELESCOP','INSTRUME','MJD-OBS',
                    'BSCALE', 'BZERO',
-                   'CTIME','ITIME','NCOADDS','EXPTIME','T_FOCUS',
+                   'CTIME','ITIME','NCOADDS','EXPTIME','T_FOCUS','READMODE',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
                    'CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',

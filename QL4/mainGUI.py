@@ -425,6 +425,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Load all the calibration files found in the specified path.
         """
         
+        log.info("Loading External Calibrations into DB from: %s "%calib_dir)
+        
         if os.path.isdir(calib_dir):
             for ifile in dircache.listdir(calib_dir):
                 if ifile.endswith(".fits") or ifile.endswith(".fit"):
@@ -683,8 +685,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 master_flat = self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
 
         # BPM: it is read from config file
-        if self.config_opts['bpm']['mode']!='none':
-            master_bpm.append(self.config_opts['bpm']['bpm_file'])
+        #if self.config_opts['bpm']['mode']!='none':
+        master_bpm.append(self.config_opts['bpm']['bpm_file'])
+        
         """
         master_bpm = self.inputsDB.GetFilesT('MASTER_BPM')
         if len(master_bpm)==0 and self.outputsDB!=None:
@@ -700,7 +703,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             r_dark = master_dark[-1]
             log.debug("First DARK candidate: %s"%r_dark)            
             r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
-            log.debug("Second DARK candidate: %s"%r_dark)            
+            log.debug("Final DARK candidate: %s"%r_dark)            
         else: 
             r_dark = None
         
@@ -708,7 +711,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             r_flat = master_flat[-1]
             log.debug("First FLAT candidate: %s"%r_flat)            
             r_flat = self.getBestShapedFrame(master_flat, sci_obj_list[0])
-            log.debug("Second FLAT candidate: %s"%r_flat)            
+            log.debug("Final FLAT candidate: %s"%r_flat)            
         else: 
             r_flat = None
             
@@ -716,7 +719,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             r_bpm = master_bpm[-1]
             log.debug("First BPM candidate: %s"%r_bpm)            
             r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
-            log.debug("Second BPM candidate: %s"%r_bpm)            
+            log.debug("Final BPM candidate: %s"%r_bpm)            
         else: 
             r_bpm = None
         
@@ -2627,8 +2630,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # If no files, returns an empy list
                 darks = self.outputsDB.GetFilesT('MASTER_DARK', -1)
                 
+                print "DARKS=", darks
+                print "DM=",dark_model
                 try:
-                    dm = dark_model[0]
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     
                     self._task = reduce.calTwFlat.MasterTwilightFlat(
@@ -2640,9 +2644,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
                     thread.start()
-                except:
+                except Exception,e:
                     QApplication.restoreOverrideCursor()
-                    log.error("Error creating master Twilight Flat file")
+                    msg = "Error creating master Twilight Flat file: %s"%str(e)
+                    log.error(msg)
+                    self.logConsole.error(msg)
+                    QMessageBox.critical(self, "Error",  msg)
         else:
             QMessageBox.information(self,"Info","Error, not enough frames (>2) !")
     
@@ -2945,18 +2952,20 @@ class MainGUI(QtGui.QMainWindow, form_class):
         msgBox.exec_()
         
         calibrations = dict(dark='', flat='', bpm='', nlc='')
-        if msgBox.clickedButton()== button_defaults or msgBox.clickedButton()==button_autosearch:
-            if msgBox.clickedButton()== button_defaults and self.checkBox_use_defCalibs.isChecked():
+        auto_search = False
+        if msgBox.clickedButton() == button_defaults or msgBox.clickedButton()==button_autosearch:
+            if msgBox.clickedButton() == button_defaults and self.checkBox_use_defCalibs.isChecked():
                 calibrations['dark'] = self.m_masterDark
                 calibrations['flat'] = self.m_masterFlat
                 calibrations['bpm'] = self.m_masterMask
                 calibrations['nlc'] = self.m_masterNLC
-                force_apply = True
+                force_apply = False
                 
             elif msgBox.clickedButton()== button_defaults and not self.checkBox_use_defCalibs.isChecked():
                 # Select master DARK
                 # In this case, a 'simple' file (whatever) could be used as a MASTER_DARK/MASTER_FLAT
-                force_apply = True
+                # Nooo, I do not think so !
+                force_apply = False 
                 filenames = QFileDialog.getOpenFileNames(self,
                                                 "Select master DARK to use",
                                                 self.m_outputdir,
@@ -2981,6 +2990,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # We will look for default cailbration for each file
                 # Default calibration files must be a MASTER_DARK/MASTER_FLAT
                 force_apply = False
+                auto_search = True
         else:
             # Cancel button pressed
             return
@@ -3017,7 +3027,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #elif self.comboBox_bpm_action.currentText()=="Fix":
                     #    bpm_mode = 'fix'
                     
-                    if msgBox.clickedButton()== button_autosearch:
+                    if auto_search:
                         # Look for (last received) calibration files
                         mDark, mFlat, mBPM = self.getCalibFor([filename])
                     else:
@@ -3159,18 +3169,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if len(self.m_popup_l_sel)>3:
             with fits.open(self.m_popup_l_sel[0]) as myfits:
                 if len(myfits)>1:
-                    msg = "Found a MEF file, but this routine only works for single FITS. Run FITS->MEF2Single."
-                    self.logConsole.error(msg)
-                    QMessageBox.critical(self, "Error", msg)
-                    return
+                    # Convert MEF-files to join-files (iraf.starfocus only support that kind of files)
+                    try:
+                        mef = misc.mef.MEF(self.m_popup_l_sel)
+                        my_files = mef.doJoin(".join.fits", output_dir=self.m_outputdir)[1]
+                    except Exception,e:
+                        log.debug("Cannot convert MEF to Single file %s. Maybe it's not a MEF file", str(e))
+                        QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file"%(file))
+                    else:
+                        line = "Files generated: \n%s\n"%my_files
+                        self.logConsole.info(QString(str(line)))
+                    
+                    #msg = "Found a MEF file, but this routine only works for single FITS. Run FITS->MEF2Single."
+                    #self.logConsole.error(msg)
+                    #QMessageBox.critical(self, "Error", msg)
+                    #return
+                else:
+                    # We have non-MEF files
+                    my_files = list(self.m_popup_l_sel)
             
             text_file = self.focus_tmp_file  # ~/iraf/focus_seq.txt
             iraf_logfile = self.m_tempdir + "/starfocus.log"
             # copy the list and swap first and center position
-            my_list = list(self.m_popup_l_sel)
-            my_list[0], my_list[len(my_list)/2] = my_list[len(my_list)/2], my_list[0]    
+            my_files[0], my_files[len(my_files)/2] = my_files[len(my_files)/2], my_files[0]    
             # copy list to file; if file exists, overwrite
-            self.genFileList(my_list, text_file)
+            self.genFileList(my_files, text_file)
             try:
                 ## New approach
                 #os.system("/home/panic/DEVELOP/papi/commissioning/runStarfocus.py -s %s &"%text_file)

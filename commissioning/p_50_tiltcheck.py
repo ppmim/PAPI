@@ -130,8 +130,8 @@ def loadfiledata(filter):
 				focus[dataindex(iSG, iq)] = float(tokens[5])
 				# read table data
 				convfunc = lambda s: s.strip('(),:m=')
-				data = np.loadtxt(os.path.join(inputpath, datafilename), usecols=[4, 5, 7], converters={4: convfunc, 5: convfunc, 7: convfunc})		
-				# calculate relative flux and weighted pixel positions	
+				data = np.loadtxt(os.path.join(inputpath, datafilename), ndmin=2, usecols=[4, 5, 7], converters={4: convfunc, 5: convfunc, 7: convfunc})		
+				# calculate relative flux and weighted pixel positions
 				flux = 10**(data[:, 2] / -2.5)
 				pxi[dataindex(iSG, iq)] = (data[:, 0] * flux).sum() / flux.sum()
 				pxj[dataindex(iSG, iq)] = (data[:, 1] * flux).sum() / flux.sum()

@@ -1,4 +1,2 @@
 #!/bin/bash
-OT_HOME=$HOME/OT
-java -jar $OT_HOME/dist/PANIC_OT.jar
-
+java -d64 -Xms128m -Xmx1g -jar $HOME/OT/dist/PANIC_OT.jar $@

@@ -108,7 +108,7 @@ class MEF (object):
         
         Returns
         -------
-        Number of extensions and filename of new joined file created.
+        Number of extensions and list of filenames of new joined file created.
                 
         Notes
         -----
@@ -126,7 +126,7 @@ class MEF (object):
            
         log.info("Starting JoinMEF")
         
-            
+        new_files = []    
         for file in self.input_files:        
             if output_dir == None:
                 output_dir = os.path.dirname(file)
@@ -208,11 +208,12 @@ class MEF (object):
             hdu.writeto(out_filename, output_verify = 'ignore', clobber = True)
             hdu.close(output_verify = 'ignore')
             del hdu
-            print "File %s created " % (out_filename)
+            new_files.append(out_filename)
+            print "New File %s created " % (out_filename)
         
         log.info("End of JoinMEF. %d extensions joined", n_ext)
         
-        return n_ext, out_filename
+        return n_ext, new_files
             
     def doSplit( self , out_filename_suffix = ".Q%02d.fits", out_dir = None, 
                  copy_keyword = None, instrument='panic'):
@@ -238,7 +239,7 @@ class MEF (object):
                     'TELESCOP', 'INSTRUME', 'MJD-OBS', 'CTIME','ITIME','NCOADDS','EXPTIME',
                     'FILTER', 'FILTER1','FILTER2', 'HIERARCH ESO DET NDIT','NDIT',
                     'CASSPOS','PIXSCALE','PAPITYPE', 'PAPIVERS','OBSERVER','ORIGIN',
-                    'DETROT90', 'DETXYFLI','T_FOCUS',
+                    'DETROT90', 'DETXYFLI','T_FOCUS', 'READMODE',
                     'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                     'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP']
                 

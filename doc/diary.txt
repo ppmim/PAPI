@@ -6381,9 +6381,23 @@ script de python tal que:
 
 Siguie siendo un poco chapuza, pero no encuentro otra manera de hacerlo !!!!
 
+02-Marzo-2015
+-------------
++ Commissioning @ 3.5m telescope
+
+- modifico el script de login.cl y papi_ql_user.cl de obs35@panic35
+- parece que hay que meter un pequeño retardo en start_iraf para que de
+tiempo al DS9 a lanzarse.
+- modifico runStarfocus.py para añadir al plot el FWHM.
 
 
-
+03-Marzo-2015
+-------------
+- Reducción de datos de M3 para Conchi.
+- Modificación en PQL para auto-conversion de MEF2Join en la rutina de focus_evaluation.
+- Modificación en PQL para que en ApplyDarkFlat funcione la búscqueda automática
+de Masters de calibración a partir del directorio indicado en el fich. de config. ext_calibration_db.
+- Modifico QL:applyDarkFlat() para que force_apply=False !! no se porque había puesto que True !!!
 
 
      
@@ -6391,10 +6405,10 @@ Posibles causas del problema del Transito WASP:
 ==============================================
 0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
 ¿ que hacer con los BP ????
-1-fueron reducidas con modo quick
-2-no tiene ni Dark y Flat
-3-(creo) que fueron reducidas con el dxtalk activado
-4-no están bien muestreadas, y habría que hacer un ditheting más 
+1- fueron reducidas con modo quick
+2- no tiene ni Dark y Flat
+3- (creo) que fueron reducidas con el dxtalk activado
+4- no están bien muestreadas, y habría que hacer un ditheting más 
 pequeño y razonable y con más puntos.
 
 
@@ -6403,6 +6417,11 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Mejorar (tiene bugs) el papi_setup.sh para que el fichero scripts/papi_ql_user.cl se copie bien con
+el path del usuario correcto y que el logic.cl sea correcto.
+- Añadir al papi_setup.sh la distinción de los ficheros bashrc para el 35 y el 22 
+
+- Ver como permitir mod. parámetros del iraf.starfocus para el focus_evaluation.
 - Revisar RS:getWCSPointingOffsets() para que pueda funcionar incluso 
 si no tuviesemos WCS o fuese un MEF (caso con AGS); es algo raro que pase en RS,
 pues sólo va a trabajar con Singles !!
@@ -6410,15 +6429,12 @@ pues sólo va a trabajar con Singles !!
 con el que realmente tienen los ficheros en la cabecera para así evitar 
 olvidar actualizar el fichero de configuración.
 
-- Incluir limites foco y fwhm en nueva rutina BEST_FOCUS
-- Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)!
+- Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)! -- no veo problemas !
 - reducir datos de OmegaCass para VT
 - ver si dilate crea buenas objectMask dilatadas adecuadamente...ala ESOREX
 - Tratamiento de BP en PAPI (Skyfilter) y "anular" BP detection en GainMap !!!
 - BD me sugiere que incluya en el QL-focus evaluation, el nuevo método
 para calcular el BestFocus.
-- BD también me dice que modifique runStarfocus para que escriba los nuevos
-valores en el fichero SGi_j.txt
 - (IMPORTANTE) Solucionar el tema del GAINMAP-->estimación erronea de BP !!!!
 - ver si hay manera de chequear el valor de PIX_SCALE en PAPI, es muy importante
 por ejemplo para el calculo de los offsets cuando usamos getWCSOffsets !!!! y en el 3.5m difiere !!
