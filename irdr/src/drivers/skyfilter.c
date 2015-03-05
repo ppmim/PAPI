@@ -17,7 +17,7 @@
 #include <string.h>
 #include "irdr.h"
 
-#define MAXHWID 10                     /* max hwidth in frames of sky filter */
+#define MAXHWID 20                     /* max hwidth in frames of sky filter */
 
 static char *fn [MAXNPLANES];          /* FITS image file per image plane */
 static char *mfn [MAXNPLANES];         /* FITS objmask file per image plane */

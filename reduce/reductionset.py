@@ -1421,16 +1421,18 @@ class ReductionSet(object):
             out_filename = self.out_file
         
         
-        # Some previus checks
-        if file_pos<0 or file_pos>len(near_list):
+        # Some previous checks
+        if file_pos < 0 or file_pos > len(near_list):
             log.error("Wrong frame number selected in near-sky subtraction")
             return None
         
-        if len(near_list)<(self.HWIDTH+1):
+        if len(near_list) < (self.HWIDTH+1):
             log.error("Wrong number of sky frames provided. Min number of sky frame is %d", 
                       self.MIN_SKY_FRAMES)
             return None
 
+        # 0.0 Check and collapse if required (cube images)
+        near_list = misc.collapse.collapse(near_list, out_dir=self.temp_dir)
         
         # 0.1 Get the gain map
         if not self.master_flat or not os.path.exists( self.master_flat ):
@@ -1458,10 +1460,9 @@ class ReductionSet(object):
         else: l_gainMap = self.master_flat
 
         
-        #0.2 Check if GainMap need to be split
+        # 0.2 Check if GainMap need to be split
         gain_ext, g_next = self.split([l_gainMap])
         if g_next==1: gain_ext*=4
-        #print "\nGAINEXT=",gain_ext
         
         # 1. Split MEF file (into the self.out_dir)
         obj_ext, next = self.split(near_list)
@@ -1473,19 +1474,19 @@ class ReductionSet(object):
             log.debug("===> Processing extension %d", n+1)
             # Create the temp list file of nearest (ar,dec,mjd) from current 
             # selected science file
-            listfile = self.out_dir+"/nearfiles.list"
+            listfile = self.out_dir + "/nearfiles.list"
             misc.utils.listToFile(obj_ext[n], listfile)
             print "NEAR_FILES=", obj_ext[n]
-            print "GAIN_EXT_N=",gain_ext[n][0]
-            #Call external app skyfilter (irdr)
+            print "GAIN_EXT_N=", gain_ext[n][0]
+            # Call external app skyfilter (irdr)
             hwidth = self.HWIDTH
             
-            cmd = self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d %s"\
+            cmd = self.m_irdr_path + "/skyfilter_single %s %s %d nomask none %d %s"\
                         %(listfile, gain_ext[n][0], hwidth, file_pos, self.out_dir)
             print "CMD=",cmd
             e = misc.utils.runCmd( cmd )
             if e==1: # success
-                fname = self.out_dir+"/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
+                fname = self.out_dir + "/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
                 out_ext.append(fname)  
             else:
                 log.error("Some error while subtracting sky in extension #%d# ", n+1)
@@ -2782,14 +2783,17 @@ class ReductionSet(object):
                 
                 # Select the detector to process (Q1, Q2, Q3, Q4, All)
                 detector = self.config_dict['general']['detector']
-                q = -1
+                q = -1 # all
                 if next==4:
                     if detector=='Q1': q = 0   # SG1
                     elif detector=='Q2': q = 1 # SG2
                     elif detector=='Q3': q = 2 # SG3
-                    elif detector=='Q4': q = 3 # SG4
+                    elif detector=='Q4': q = 4 # SG4
+                    elif detector=='Q123': q = -4 # all except SG4
                     else: q = -1 # all detectors
-                    if q!=-1:
+                    if q >=0 :
+                    #if q!=-1:
+                        # A single detector will be reduced.
                         obj_ext = [obj_ext[q]]
                         if len(dark_ext) == next: dark_ext = [dark_ext[q]]
                         if len(flat_ext) == next: flat_ext = [flat_ext[q]]
@@ -2797,7 +2801,7 @@ class ReductionSet(object):
                         # Reset to 1 the number of extensions
                         next = 1
                     else:
-                        # Nothing to do, all detectors will be processed
+                        # Nothing to do, **all** detectors will be processed
                         pass
 
                 if parallel==True:
@@ -2816,11 +2820,16 @@ class ReductionSet(object):
                         results = []
                           
                         for n in range(next):
-                            if next==1 and q!=-1: # single detector processing
+                            if next==1 and q>=0:
+                            #if next==1 and q!=-1: # single detector processing
                                 q_ext = q + 1
                             else:
                                 q_ext = n + 1
-                            log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", q_ext)
+                            log.info("[reduceSeq] ===> (PARALLEL) Reducting detector %d", q_ext)
+                            
+                            if q==-4 and q_ext==4:
+                                # skip detector SG4
+                                continue
                             
                             #
                             # For the moment, we have the first calibration file 
@@ -2891,10 +2900,14 @@ class ReductionSet(object):
                 else:
                     ######## Serial #########
                     for n in range(next):
-                        if next==1 and q!=-1: # single detector processing
+                        if next == 1 and q >=0 : # single detector processing
                             q_ext = q + 1
                         else:
                             q_ext = n + 1
+                        
+                        if q == -4 and q_ext == 4:
+                            # skip detector SG4
+                            continue
 
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
                         log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", q_ext)
@@ -2911,11 +2924,6 @@ class ReductionSet(object):
                         
                         if bpm_ext==[]: mbpm = None
                         else: mbpm = bpm_ext[n][0]
-                        
-                        # Debug&Test
-                        #if n==1: return None,None# only for a TEST !!!
-                        #if n!=1: continue
-                        # 
                         
                         l_out_dir = self.out_dir + "/Q%02d" % q_ext
                         if not os.path.isdir(l_out_dir):
@@ -4084,23 +4092,24 @@ class ReductionSet(object):
         ########################################################################
         # Preliminary Astrometric calibration of sky-subtracted frames.
         # ######################################################################
-        log.info("**** Preliminary Astrometric calibration ****")
-        new_files = []
-        for my_file in self.m_LAST_FILES:
-            # Run astrometric calibration
-            try:
-                solved = reduce.solveAstrometry.solveField(my_file, 
-                               out_dir, # self.temp_dir produces collision
-                               self.config_dict['general']['pix_scale'])
-            except Exception,e:
-                raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
-            else:
-                # Rename the file
-                out_filename = my_file.replace(".fits", ".ast.fits")
-                new_files.append(out_filename)
-                shutil.move(solved, out_filename)
-        
-        self.m_LAST_FILES = new_files
+        if self.config_dict['offsets']['method'] == 'wcs':
+            log.info("**** Preliminary Astrometric calibration ****")
+            new_files = []
+            for my_file in self.m_LAST_FILES:
+                # Run astrometric calibration
+                try:
+                    solved = reduce.solveAstrometry.solveField(my_file, 
+                                out_dir, # self.temp_dir produces collision
+                                self.config_dict['general']['pix_scale'])
+                except Exception,e:
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+                else:
+                    # Rename the file
+                    out_filename = my_file.replace(".fits", ".ast.fits")
+                    new_files.append(out_filename)
+                    shutil.move(solved, out_filename)
+            
+            self.m_LAST_FILES = new_files
         
         ########################################################################
         # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    

@@ -22,7 +22,7 @@
 #include <libgen.h>
 #include "irdr.h"
 
-#define MAXHWID 10                     /* max hwidth in frames of sky filter */
+#define MAXHWID 20                     /* max hwidth in frames of sky filter */
 
 static char *fn [MAXNPLANES];          /* FITS image file per image plane */
 static char *mfn [MAXNPLANES];         /* FITS objmask file per image plane */
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     /* if (hwid > MAXHWID || (2 * hwid + 1) > nplanes)
       eprintf("hwid %d, MAXHWID %d, nplanes %d\n", hwid, MAXHWID, nplanes); */
 
-
+    /* Read the initial sliding window */
     for (i = 0; i < (2 * hwid + 1); i++)  {
 	    /* printf("Nplanes: %d  i: %d \n", nplanes, i);*/
 	    if (i<nplanes) readdata(i, usemask);
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 
         for (j = skybeg; j <= skyend; j++) {  /* collect adjacent frame ptrs */
             if (j != i) {                             /* skip current frame */
-		        printf (" %d", j);
+		printf (" %d", j);
                 dbuf[nsky] = data[j];
 
                 if (usemask)
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
                 nsky++;
             }
         }
-	    printf (" \n");
+        printf (" \n");
 
         avgscale /= (float) nsky;
 
@@ -141,7 +141,6 @@ int main(int argc, char *argv[])
         
         /* 15-4-2009: single image sky filtering mode */
         if ( filen<=0 || (filen>0 && i==filen-1) ) {
-        
             if (usemask) {
                 sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
                 /*DEBUG writefits("/tmp/sky_2nd.fits", fn[i], (char*)sky, -32, nx, ny);*/

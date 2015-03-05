@@ -290,7 +290,7 @@ def getBestFocus(data, output_file):
         
     Returns
     -------
-    If success, returns the best focus computed.
+    If success, returns the best focus (in mm) computed and the min FWHM (pix).
     
     """
     
@@ -329,8 +329,9 @@ def getBestFocus(data, output_file):
         print "ERROR: Parabola fit unusable!"
     best_focus = - pol[1] / (2. * pol[2])
     min_fwhm = pol([best_focus])
-    print "BEST_FOCUS (OWN) = ", best_focus + m_foc
-    print "MIN_FWHM (OWN) = ", min_fwhm
+    # Next message can be useful for IRAF console
+    print "QL_BEST_FOCUS (um) = %6.0f"%((best_focus + m_foc)*1000)
+    print "QL_MIN_FWHM (pix) = ", min_fwhm
     
     if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
         print "ERROR: Best focus out of range!"
@@ -339,10 +340,10 @@ def getBestFocus(data, output_file):
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
     plt.plot(xp + m_foc, pol(xp), '-')
     plt.axvline(best_focus + m_foc, ls='--', c='r')
-    plt.title("Best Focus=%6.3f mm - FWHM=%6.3f pix" 
-        %((best_focus + m_foc), min_fwhm ))
+    plt.title("Best Focus=%6.0f um - FWHM=%4.2f pix" 
+        %((best_focus + m_foc)*1000, min_fwhm ))
     
-    plt.xlabel("T-FOCUS (mm)")
+    plt.xlabel("T-FOCUS (um)")
     plt.ylabel("FWHM (pixels)")
     plt.xlim(np.min(good_focus_values + m_foc) - 0.1, np.max(good_focus_values + m_foc) + 0.1)
     plt.ylim(np.min(fwhm_values) - 1, np.max(fwhm_values) + 1 )

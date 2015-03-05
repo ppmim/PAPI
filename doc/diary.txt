@@ -6399,6 +6399,29 @@ tiempo al DS9 a lanzarse.
 de Masters de calibración a partir del directorio indicado en el fich. de config. ext_calibration_db.
 - Modifico QL:applyDarkFlat() para que force_apply=False !! no se porque había puesto que True !!!
 
+04-Marzo-2015
+-------------
+- Noche regular; detectado fallo en QL:subtract_nearSky.
+- Nuevo reboot de panic35 sobre las 5am; instalo en el
+crontab un script para monitorizar la memoria de GEIRS y JAVA.
+- Reducción de imágenes de Jupiter: para que se puedan reducir, hay
+que usar una configuración especial de PAPI (papi_jupiter.cnf) 
+para que los offsets los calcule con irdr:offsets en lugar de usar
+la WCS pues no es posible hacer astrometría, no hay estrellas !!!
+Además, el primer stack lo hago con dithercubemean por esa misma razón,
+ie, SWARP necesita astrometría.
+
+
+05-Marzo-2015
+-------------
+- Soluciono problema con QL:subtract_nearSky; el problema era debido
+a que eran cubos de datos y había antes que colapsarlos. Añado a
+RS:nearSkySubtraction el collapse del cubo.
+- También encuentro un bug en mef.createMEF al intentat borrar el fichero;
+de paso le añado algunas keywords.
+- Implemento la opción de reducir Q123 (todos menos el 4) en la CL de PAPI;
+también lo añado al menú de configuración del QL.
+
 
      
 Posibles causas del problema del Transito WASP:
@@ -6417,6 +6440,13 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Añadir opción de BuildCalibs to PAPI-CL
+- Que pregunte que Qi reducir en el PQL
+- Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
+de objetos no hace bien su función, pues en la imagen final salen manchas negras....
+Ejemplo: /data1/PANIC/2015-03-03/EPerez_UGC9128_March3_0026-50.fits
+Además la segunda pasada con el Q2 casca !!! el skyfilter da un SF !!!
+
 - Mejorar (tiene bugs) el papi_setup.sh para que el fichero scripts/papi_ql_user.cl se copie bien con
 el path del usuario correcto y que el logic.cl sea correcto.
 - Añadir al papi_setup.sh la distinción de los ficheros bashrc para el 35 y el 22 

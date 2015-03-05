@@ -1828,6 +1828,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Split single file into 4-single files.", 
             triggered=self.splitSingle_slot)
         
+        self.collapseCubeAct = QtGui.QAction("Collapse Cube", self,
+            #shortcut="Ctrl+j",
+            statusTip="Collapse FITS with a cube of N layers.", 
+            triggered=self.collapseCube_slot)
+        
         # Group-menu actions
         self.redSeqAct = QtGui.QAction("Reduce Sequence", self,
             shortcut="Ctrl+R",
@@ -1922,6 +1927,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             subMenu_fits.addAction(self.single2mefAct)
             subMenu_fits.addAction(self.splitMEFAct)
             subMenu_fits.addAction(self.splitSingleAct)
+            subMenu_fits.addAction(self.collapseCubeAct)
+            
             newAction.setMenu(subMenu_fits)
             
 
@@ -2139,15 +2146,38 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 mef = misc.mef.MEF([file])
                 res = mef.splitGEIRSToSimple(out_dir=self.m_outputdir)[1]
             except Exception,e:
-                log.debug("Cannot split file %s. Maybe it's not a 4kx4k Single file", str(e))
-                QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a 4kx4k single file"%(file))
-                #self.logConsole.info(QString(str(line)))
+                msg = "Cannot split file %s. Maybe it's not a 4kx4k Single file"%(file, str(e))
+                log.debug(msg)
+                QMessageBox.critical(self, "Error", msg)
+                self.logConsole.info(QString(str(msg)))
             else:
                 line = "File generated: %s"%res
                 self.logConsole.info(QString(str(line)))
         
         QApplication.restoreOverrideCursor()
+    
+    def collapseCube_slot(self):
+        """
+        Collapse a FITS cube of N layers or planes. No recentering or layers 
+        is done. FITS can be MEF or SEF.
+        """
         
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
+        for file in self.m_popup_l_sel:
+            try:
+                new_file = misc.collapse.collapse([file], out_dir=self.m_outputdir)[0]
+            except Exception,e:
+                msg = "Cannot split file %s. Maybe it's not a Cube file"%(file, str(e))
+                log.debug(msg)
+                QMessageBox.critical(self, "Error", msg)
+                self.logConsole.info(QString(str(msg)))
+            else:
+                line = "File generated: %s"%new_file
+                self.logConsole.info(QString(str(line)))
+        
+        QApplication.restoreOverrideCursor()
+    
     def selected_file_slot(self, listItem):
         """
         To know which item is selected 
@@ -2871,7 +2901,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             self._task = RS.ReductionSet( [str(item) for item in near_list], 
                                           self.m_outputdir,
-                                          out_file=self.m_outputdir+"/skysub.fits",
+                                          out_file=self.m_outputdir + "/skysub.fits",
                                           obs_mode="dither", dark=None, 
                                           flat=self.m_masterFlat,
                                           bpm=None, red_mode="quick",
@@ -3851,6 +3881,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elif self.comboBox_detector.currentText()=="SG2": detector = 'Q2'
             elif self.comboBox_detector.currentText()=="SG3": detector = 'Q3'
             elif self.comboBox_detector.currentText()=="SG4": detector = 'Q4'
+            elif self.comboBox_detector.currentText()=="SG123": detector = 'Q123'
             else: detector = 'all'
             self.config_opts['general']['detector'] = detector
 

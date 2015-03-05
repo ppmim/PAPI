@@ -2099,6 +2099,11 @@
          <string>SG4</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>SG123</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="textLabel3_3">
        <property name="geometry">

@@ -334,11 +334,10 @@ class MEF (object):
         log.info("Starting createMEF")
 
         # Compound the output filename
-        if out_dir == None:
-            output_file = os.getcwd() + "/" + output_file
-        else:
+        if out_dir != None:
             output_file = out_dir + "/" + output_file
-            
+        
+        
         # Add primary header to output file...
         fo = fits.HDUList()
         prihdu = fits.PrimaryHDU (data = None, header = primaryHeader)
@@ -356,7 +355,7 @@ class MEF (object):
                 print 'Error, can not open file %s' %(file)
                 raise MEF_Exception ("Error, can not open file %s"%file)
 
-            #Check if is a MEF file 
+            # Check if is a MEF file 
             if len(f)>1:
                 mef = True
                 n_ext = len(f)-1
@@ -369,8 +368,15 @@ class MEF (object):
             else:
                 mef = False
                 n_ext = 1
-                log.debug("Simple FITS file")
-                                        
+                orig_instrument = orig_telescope = orig_exptime = orig_filter = ''
+                try:
+                    orig_instrument = f[0].header['INSTRUME']
+                    orig_telescope = f[0].header['TELESCOP']
+                    orig_exptime = f[0].header['EXPTIME']
+                    orig_filter = f[0].header['FILTER']
+                except KeyError:
+                    log.error("Some keyword cannot be found in header")
+                    
             hdu = fits.ImageHDU(data = f[0].data, header = f[0].header)
             #hdu.header.update('EXTVER',1)
             fo.append(hdu)
@@ -378,10 +384,15 @@ class MEF (object):
             n_ext += 1
        
         prihdu.header.set('NEXTEND', n_ext)
+        prihdu.header.set('INSTRUME', orig_instrument)
+        prihdu.header.set('TELESCOP', orig_telescope)
+        prihdu.header.set('EXPTIME', orig_exptime)
+        prihdu.header.set('FILTER', orig_filter)
+        
         prihdu.header.add_history("[MEF.createMEF] MEF created with files %s"%str(self.input_files))
-        misc.fileUtils.removefiles (output_file)
-        fo.writeto (output_file, output_verify ='ignore')
-        fo.close (output_verify = 'ignore')
+        if os.path.exists(output_file): os.unlink(output_file)
+        fo.writeto(output_file, output_verify ='ignore')
+        fo.close(output_verify = 'ignore')
         del fo            
         
         log.info ("MEF file %s created" % (output_file))
