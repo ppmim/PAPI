@@ -343,7 +343,7 @@ def getBestFocus(data, output_file):
     plt.title("Best Focus=%6.0f um - FWHM=%4.2f pix" 
         %((best_focus + m_foc)*1000, min_fwhm ))
     
-    plt.xlabel("T-FOCUS (um)")
+    plt.xlabel("T-FOCUS (mm)")
     plt.ylabel("FWHM (pixels)")
     plt.xlim(np.min(good_focus_values + m_foc) - 0.1, np.max(good_focus_values + m_foc) + 0.1)
     plt.ylim(np.min(fwhm_values) - 1, np.max(fwhm_values) + 1 )

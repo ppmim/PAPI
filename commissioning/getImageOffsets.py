@@ -43,8 +43,13 @@ def draw_offsets(offsets, pix_scale = 0.23, scale_factor=0.1):
     max_y = numpy.abs(offsets[: , 1]).max()
     i = 0
     r_width = (4096 + 167) / 1.0 * pix_scale * scale_factor
-    plt.xlim(offsets[: , 0].min()-(4096+167)/2.0*pix_scale, offsets[: , 0].max()+(4096+167)/2.0*pix_scale)
-    plt.ylim(offsets[: , 1].min()-(4096+167)/2.0*pix_scale, offsets[: , 1].max()+(4096+167)/2.0*pix_scale)
+    plt.xlim(offsets[: , 0].min()-(4096+167)/2.0*pix_scale - 100, offsets[: , 0].max()+(4096+167)/2.0*pix_scale + 100)
+    plt.ylim(offsets[: , 1].min()-(4096+167)/2.0*pix_scale - 100, offsets[: , 1].max()+(4096+167)/2.0*pix_scale + 100)
+    plt.xlabel("RA (arcsec)")
+    plt.ylabel("Dec (arcsec)")
+    plt.title("Ditther offsets (magnification = %02.1f)"%scale_factor)
+    plt.grid()
+    
     for x,y in offsets:
         print "X=%s , Y=%s"%(x, y)
         ax2.add_patch(
@@ -52,12 +57,14 @@ def draw_offsets(offsets, pix_scale = 0.23, scale_factor=0.1):
                 (x-r_width/2.0, y-r_width/2.0),
                 r_width,
                 r_width,
-                fill=False # remove background
+                fill=True, alpha=0.3  # remove background
             )
         )
-        ax2.annotate('%s'%i, xy=(x,y), xytext=(x,y))
+        ax2.annotate('%s'%i, xy=(x,y), xytext=(x,y), size=8)
         i+=1
-    fig2.savefig('offsets.png', dpi=90, bbox_inches='tight')
+        
+    plt.show(block=True)
+    fig2.savefig('offsets.png', dpi=360, bbox_inches='tight')
 
 def getWCSPointingOffsets(images_in,
                               p_offsets_file="/tmp/offsets.txt"):
@@ -193,7 +200,7 @@ if __name__ == "__main__":
     
     parser.add_option("-d", "--draw_scale", type=float,
                   action="store", dest="draw_scale", default=0.1,
-                  help="Draw scale of detector")
+                  help="Draw scale of detector (0.0-1.0) [default=%default]")
     
     (options, args) = parser.parse_args()
     

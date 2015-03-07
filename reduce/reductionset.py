@@ -1486,7 +1486,7 @@ class ReductionSet(object):
             print "CMD=",cmd
             e = misc.utils.runCmd( cmd )
             if e==1: # success
-                fname = self.out_dir + "/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
+                fname = self.out_dir + "/" + os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
                 out_ext.append(fname)  
             else:
                 log.error("Some error while subtracting sky in extension #%d# ", n+1)

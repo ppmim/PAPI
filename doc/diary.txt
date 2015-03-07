@@ -6421,6 +6421,20 @@ RS:nearSkySubtraction el collapse del cubo.
 de paso le añado algunas keywords.
 - Implemento la opción de reducir Q123 (todos menos el 4) en la CL de PAPI;
 también lo añado al menú de configuración del QL.
+- Añado opción de BuildCalibs to PAPI-CL (-b)
+
+06-Marzo-2015
+-------------
+- Añado al QL la visualización de RA y DEC en formato hms y dms.
+- Pongo por defecto en QL reducción de SG1
+- Añado al pop-up del QL la opción de mostrar el patrón de dithering
+de un conjunto de imágenes.
+- Añado en applyDarkFlat, en modo autosearch, que muestre las
+calibraciones que va a usar y pregunte confirmación. Idem para
+reduceSequence.
+
+
+
 
 
      
@@ -6440,7 +6454,11 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
-- Añadir opción de BuildCalibs to PAPI-CL
+- ver si CreateCalibs puede incluso hacer la NLC !!
+- Añadir al Filtro del PQL la opción de FOCUS y MASTERS
+- Añadir OBJECT en el PQL para la vista de Grupos
+- Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
+- Que muestre el los ficheros encontrados para la calibración y pida confirmación.
 - Que pregunte que Qi reducir en el PQL
 - Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
 de objetos no hace bien su función, pues en la imagen final salen manchas negras....

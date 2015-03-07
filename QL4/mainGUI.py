@@ -91,7 +91,8 @@ import misc.paLog
 from misc.paLog import log
 # Fits
 import astropy.io.fits as fits
-
+from astropy import coordinates as coord
+from astropy import units as u
 
 # IRAF packages
 
@@ -121,6 +122,8 @@ from PyQt4.QtGui import *
 
 
 import commissioning.runStarfocus as focus
+import commissioning.getImageOffsets as off
+
 
 
 from misc.version import __version__
@@ -1587,12 +1590,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
 		    #nCoadd = fits.getval(file, "NCOADDS", ext=0)
                     if file==seq[0]:
 			nCoadd = fits.getval(file, "NCOADDS", ext=0)
+			nObject = fits.getval(file,"OBJECT", ext=0) 
                         #the first time, fill the "tittle" of the group 
                         elem.setText(0, "TYPE="+str(seq_types[k]) + 
-                                     "  ** FILTER="+str(filter) + 
-                                     "  ** TEXP="+str(texp) + 
-                                     "  ** NCOADDS="+str(nCoadd) + 
-                                     " ** #imgs="+str(len(seq)))
+                                     "  ** FILTER=" + str(filter) + 
+                                     "  ** TEXP=" + str(texp) + 
+                                     "  ** OBJ=" + str(nObject) + 
+                                     " ** #imgs=" + str(len(seq)))
                         
                     e_child = QTreeWidgetItem(elem)
                     e_child.setText (0, str(file))
@@ -1601,8 +1605,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     e_child.setText (3, str(texp))
                     e_child.setText (4, str(date)+"::"+str(ut_time))
                     e_child.setText (5, str(object))
-                    e_child.setText (6, str(ra))
-                    e_child.setText (7, str(dec))
+                    c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                    str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                    e_child.setText (6, str(str_ra))
+                    e_child.setText (7, str(str_dec))
                 k+=1
         else:
             #############################################    
@@ -1640,8 +1647,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem.setText (3, str(texp))
                 elem.setText (4, str(date)+"::"+str(ut_time))
                 elem.setText (5, str(object))
-                elem.setText (6, str(ra))
-                elem.setText (7, str(dec))
+                c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                elem.setText (6, str(str_ra))
+                elem.setText (7, str(str_dec))
             
             # In addition, if "ALL" is selected, we show the OUTS as well
             if str(self.comboBox_classFilter.currentText())=="ALL":
@@ -1658,8 +1668,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     elem.setText (3, str(texp))
                     elem.setText (4, str(date)+"::"+str(ut_time))
                     elem.setText (5, str(object))
-                    elem.setText (6, str(ra))
-                    elem.setText (7, str(dec))
+                    c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                    str_ra =  "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                    elem.setText (6, str(str_ra))
+                    elem.setText (7, str(str_dec))
             
             if elem:
                 self.listView_dataS.setCurrentItem(elem)
@@ -1699,6 +1712,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             shortcut="Ctrl+C",
             statusTip="Copy current selected files to clipboard", 
             triggered=self.copy_sel_files_slot)
+        
+        self.ditherAct = QtGui.QAction("&Show Dither pattern", self,
+            shortcut="Ctrl+p",
+            statusTip="Show plot with dithter pattern of selected files.", 
+            triggered=self.show_dither_pattern_slot)
         
         self.toTextFileAct = QtGui.QAction("&Copy files to text file", self,
             shortcut="Shift+T",
@@ -1892,6 +1910,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.dispAct)
             popUpMenu.addAction(self.copyAct)
             popUpMenu.addAction(self.toTextFileAct)
+            popUpMenu.addAction(self.ditherAct)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.mDarkAct)
             popUpMenu.addAction(self.mDFlatAct)
@@ -1941,6 +1960,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Restore default values, because an former call could have changed
             # the state.
             self.dispAct.setEnabled(True)
+            self.ditherAct.setEnabled(True)
             self.mDarkAct.setEnabled(True)
             self.mDFlatAct.setEnabled(True)
             self.mDTwFlatAct.setEnabled(True)
@@ -1963,6 +1983,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             if len(self.m_popup_l_sel)==1:
                 #print "#SEL_1=",len(self.m_popup_l_sel)
+                self.dispAct.setEnabled(False)
                 self.mDarkAct.setEnabled(False)
                 self.mDFlatAct.setEnabled(False)
                 self.mDTwFlatAct.setEnabled(False)
@@ -1994,12 +2015,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
             if len(self.m_popup_l_sel)<5:
                 pass
-                #print "#SEL_5-",len(self.m_popup_l_sel)
-                #self.subNearSkyAct.setEnabled(False)
-                #self.quickRedAct.setEnabled(False)
-        
-        print "self.m_popup_l_sel=",self.m_popup_l_sel
-        
+                
         ## Finally, execute the popup
         popUpMenu.exec_(event.globalPos())
         
@@ -2019,7 +2035,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 group_files.append(str(father.child(ic).text(0)))
         
         try:
-            self.processFiles(group_files)
+            self.processFiles(group_files, interactive=True)
         except Exception,e:
             QMessageBox.critical(self, "Error", 
                                  "Error while group data reduction: \n%s"%str(e))
@@ -2038,7 +2054,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
-
+    
     def copy_sel_files_slot(self):
         """
         Copy the selected file list fullnames to the clipboard in order to 
@@ -2068,6 +2084,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
             clipboard = QApplication.clipboard()
             clipboard.setText(textFile)
             QMessageBox.information(self, "Info", "Text file %s created and copied to clipboard"%(textFile))
+
+    def show_dither_pattern_slot(self):
+        """
+        Show plot with the dither pattern followed by selected files.
+        """
+        
+        try:    
+            offsets = off.getWCSPointingOffsets(self.m_popup_l_sel, "/dev/null")
+        except Exception,e:
+            msg = "Error, cannot find out the image offsets. %s"%str(e)
+            log.error(msg)
+            QMessageBox.information(self, "Info", msg)
+        else:
+            # Draw plot with dither pathern
+            off.draw_offsets(offsets, self.config_opts['general']['pix_scale'], 1.0)
 
     def MEF2Single_slot(self):
         """
@@ -3068,6 +3099,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         if bpm_mode!='none':
                             mBPM = self.config_opts['bpm']['bpm_file']
 
+                    # Show message with calibrations found
+                    # Ask for confirmation
+                    msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(mDark, mFlat, mBPM)
+                    resp = QMessageBox.information(self, "Info", 
+                        QString("Calibrations found are: \n %1").arg(str(msg)),
+                                     QMessageBox.Ok, QMessageBox.Cancel)
+                    if resp==QMessageBox.Cancel:
+                        return
+                    
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
                     self.logConsole.info("Calibrations to use:")
@@ -3640,7 +3680,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         fileList = self.inputsDB.GetFilesT("ANY")
         
-        if len(fileList)>1:
+        if len(fileList) > 1:
+            # Ask for confirmation
+            resp = QMessageBox.information(self, "Info", 
+                                         QString("All calibrations will be built into OutDir using files of InputDir"),
+                                         QMessageBox.Ok, QMessageBox.Cancel)
+            if resp==QMessageBox.Cancel:
+                return
             
             # Create the RS            
             try:
@@ -3771,7 +3817,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             print "ARGS=", args
             output.put(RS.ReductionSet(args).func())
             
-    def processFiles(self, files=None, group_by=None, outfilename=None):
+    def processFiles(self, files=None, group_by=None, outfilename=None,
+                     interactive=False):
         """
         Process the files provided; if any files were given, all the files 
         in the current Source List View (but not the output files) will be
@@ -3899,7 +3946,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
             # Show the calibration to be used
             if self.config_opts['general']['apply_dark_flat']!=0:
+                # Look for calibs
                 md, mf, mb = self.getCalibFor(files)
+                
+                # Show message with calibrations found
+                # and ask for confirmation.
+                if interactive:
+                    msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(md, mf, mb)
+                    resp = QMessageBox.information(self, "Info", 
+                            QString("Calibrations found are: \n %1").arg(str(msg)),
+                                        QMessageBox.Ok, QMessageBox.Cancel)
+                    if resp==QMessageBox.Cancel:
+                        return
+                
                 self.logConsole.info("Calibrations to use:")
                 self.logConsole.info("+ Dark=%s"%md)
                 self.logConsole.info("+ Flat=%s"%mf)

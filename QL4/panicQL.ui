@@ -447,6 +447,11 @@
       </item>
       <item>
        <property name="text">
+        <string>FOCUS</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>SKY_FLAT</string>
        </property>
       </item>
@@ -2076,11 +2081,6 @@
        </property>
        <item>
         <property name="text">
-         <string>All</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
          <string>SG1</string>
         </property>
        </item>
@@ -2102,6 +2102,11 @@
        <item>
         <property name="text">
          <string>SG123</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All</string>
         </property>
        </item>
       </widget>
@@ -2171,7 +2176,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Display</string>
+       <string>Display (ds9)</string>
       </property>
       <widget class="QComboBox" name="comboBox_show_imgs">
        <property name="geometry">

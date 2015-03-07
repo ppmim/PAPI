@@ -735,8 +735,10 @@ class MEF (object):
                     # and the order in the MEF file shall be Q1,Q2,Q3,Q4
                     hdu_i.header.set('DET_ID', "SG%i"%det_id, 
                                         "PANIC Detector id SGi [i=1..4]")
-                    #hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
-                    hdu_i.header.set('EXTNAME', "Q%i_1"%det_id)
+                    hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
+                    ### TODO: suspend until new version of GEIRS (see bellow)
+                    #####hdu_i.header.set('EXTNAME', "Q%i_1"%det_id)
+                    ### end_suspend
                     
                     # DETSEC and DATASEC
                     data_sec = '[%i:%i,%i:%i]' % (5, 2044, 5, 2044)
@@ -774,7 +776,9 @@ class MEF (object):
             
             # Now, write the new MEF file in the right order (Q1,Q2,Q3,Q4)
             # This order is since GEIRS-r731M-18 (see. doc. PANIC-GEN-SP-02)
-            tmp_hdus.sort(key=lambda my_hdu: my_hdu.header['EXTNAME'])
+            ### suspend until new version of GEIRS (see above)
+            #####tmp_hdus.sort(key=lambda my_hdu: my_hdu.header['EXTNAME'])
+            ### end_suspend
             for h in tmp_hdus: out_hdulist.append(h)
             
             out_hdulist.writeto(new_filename, output_verify = 'ignore', 

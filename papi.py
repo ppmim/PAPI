@@ -311,6 +311,8 @@ def main(arguments = None):
 
         if init_options.print_seq:
             rs.getSequences()
+        elif init_options.build_calibrations:
+            rs.buildCalibrations()
         else:
             if init_options.seq_to_reduce==-1: #all
                 rs.reduceSet(red_mode=general_opts['reduction_mode'])
