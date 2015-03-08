@@ -138,8 +138,8 @@ class MEF (object):
                 log.error("Cannot open  file %s" % file)
                 raise ex
             
-            # Check if is a MEF file 
-            if len(hdulist)>1:
+            # Check if it is a MEF file 
+            if len(hdulist) > 1:
                 n_ext = len(hdulist)-1
                 log.debug("Found a MEF file with %d extensions", n_ext)
             else:
@@ -149,18 +149,23 @@ class MEF (object):
                 log.error(msg)
                 raise Exception(msg)
                 
-            if len(hdulist[1].data.shape) !=2:
-                msg = "MEF cube conversion not yet implemented !"
-                log.error(msg)
-                raise Exception(msg)
-                
+            if len(hdulist[1].data.shape) >2:
+                msg = "Found a MEF cube to join as to SEF."
+                log.debug(msg)
+                n_planes = hdulist[1].data.shape[0]
+            else: n_planes = 1
+            
             out_filename = output_dir + "/" + \
                 os.path.basename(file).replace(".fits", output_filename_suffix)
-            width = 2048
-            height = 2048
-            temp12 = numpy.zeros((height, width*2), dtype = numpy.float32)
-            temp34 = numpy.zeros((height, width*2), dtype = numpy.float32)
             
+            width = fits.getval(file, "NAXIS1", ext=1) # 2048
+            height = fits.getval(file, "NAXIS2", ext=1) # 2048
+            
+            if n_planes > 1:
+                temp = numpy.zeros((n_planes, height*2, width*2), dtype = numpy.float32)
+            else: #n_planes==1:
+                temp = numpy.zeros((height*2, width*2), dtype = numpy.float32)
+                
             # Since GEIRS-r731M-18 version, new MEF extension naming:
             #    EXTNAME = 'Qi_j'
             #    DET_ID = 'SGi_j'
@@ -170,37 +175,35 @@ class MEF (object):
                 ext_name = 'Q%i_1'
             except KeyError:
                 ext_name = 'SG%i_1'
-                
-            for i in range(0, height):
-                # Q1 i-row
-                temp12[i, 0 : width] = hdulist[ext_name%4].data[i, 0 : width]
-                # Q2 i-row
-                temp12[i, width: 2*width] = hdulist[ext_name%1].data[i, 0 : width]
-                # Q3 i-row
-                temp34[i, 0 : width] = hdulist[ext_name%3].data[i, 0 : width]
-                # Q4 i-row
-                temp34[i, width : 2*width] = hdulist[ext_name%2].data[i, 0 : width]
-            """
-            for i in range(0, height):
-                # Q1 i-row
-                temp12[i, 0 : width] = hdulist['SG4_1'].data[i, 0 : width]
-                # Q2 i-row
-                temp12[i, width: 2*width] = hdulist['SG1_1'].data[i, 0 : width]
-                # Q3 i-row
-                temp34[i, 0 : width] = hdulist['SG3_1'].data[i, 0 : width]
-                # Q4 i-row
-                temp34[i, width : 2*width] = hdulist['SG2_1'].data[i, 0 : width]
-            """
-            joined_data = numpy.append(temp12, temp34).reshape(4096, 4096)
+            
+            if n_planes > 1:
+                for i in range(0, height*2):
+                    if i < height: # Q4 & Q1
+                        temp[:, i , 0: width] = hdulist[ext_name%4].data[:, i, 0 : width]
+                        temp[:, i , width: 2*width] = hdulist[ext_name%1].data[:, i, 0 : width]
+                    else: # Q3 & Q2
+                        temp[:, i , 0: width] = hdulist[ext_name%3].data[:, i%2048, 0 : width]
+                        temp[:, i , width: 2*width] = hdulist[ext_name%2].data[:, i%2048, 0 : width]
+            else:
+                for i in range(0, height*2):
+                    if i < height: # Q4 & Q1
+                        temp[ i , 0: width] = hdulist[ext_name%4].data[i, 0 : width]
+                        temp[ i , width: 2*width] = hdulist[ext_name%1].data[i, 0 : width]
+                    else:  # Q3 & Q2
+                        temp[i , 0: width] = hdulist[ext_name%3].data[ i%2048, 0 : width]
+                        temp[i , width: 2*width] = hdulist[ext_name%2].data[ i%2048, 0 : width]
+                        
             hdu = fits.HDUList([fits.PrimaryHDU(header=hdulist[0].header, 
-                                                    data=joined_data)])
+                                                    data=temp)])
             #hdu.verify('silentfix')
             # now, copy extra keywords required
             try:
                 hdu[0].header.set("BITPIX", -32)
-                hdu[0].header.set("NAXIS1", 4096)
-                hdu[0].header.set("NAXIS2", 4096)
-                # TODO: deduce RA,DEC pointing coordinates 
+                hdu[0].header.set("NAXIS1", width*2)
+                hdu[0].header.set("NAXIS2", height*2)
+                #if n_planes > 1: 
+                #    hdu[0].header.set("NAXIS", 3)
+                #    hdu[0].header.set("NAXIS3", n_planes)
             except KeyError:
                 log.warning("Some key cannot be copied into header")
             

@@ -6422,6 +6422,7 @@ de paso le añado algunas keywords.
 - Implemento la opción de reducir Q123 (todos menos el 4) en la CL de PAPI;
 también lo añado al menú de configuración del QL.
 - Añado opción de BuildCalibs to PAPI-CL (-b)
+- Añado OBJECT en el PQL para la vista de Grupos
 
 06-Marzo-2015
 -------------
@@ -6433,7 +6434,20 @@ de un conjunto de imágenes.
 calibraciones que va a usar y pregunte confirmación. Idem para
 reduceSequence.
 
-
+07-Marzo-2015
+-------------
+- Añado al Filtro del PQL la opción de FOCUS y MASTERS
+- Modifico RS:getWCSPointingOffsets() para que pueda funcionar incluso 
+si no tuviesemos WCS o fuese un MEF; es algo raro que pase en RS,
+pues sólo va a trabajar con Singles, pero por si acaso!
+- Arreglo el "bug" en getWCSImageOffsets para que los ficheros se ordenen
+por MJD y así en el QL se puedan mostrar correctamente los offsets del
+patrón de dithering.
+- Modifico rutina  mef.doJoin() para que acepte cubos MEF.
+- Cambio colores fondo del ListView del PQL (sugerencia de MF).
+- Actualizo el script login.cl de scripts
+- Elimino bug en papi_ql_user.cl referente al $HOME de script runStarfocus.
+- Añado distinción entre panic22 y panic35 en script .bashrc
 
 
 
@@ -6454,25 +6468,18 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
 - ver si CreateCalibs puede incluso hacer la NLC !!
-- Añadir al Filtro del PQL la opción de FOCUS y MASTERS
-- Añadir OBJECT en el PQL para la vista de Grupos
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
-- Que muestre el los ficheros encontrados para la calibración y pida confirmación.
+- Que muestre el/los ficheros encontrados para la calibración y pida confirmación.
 - Que pregunte que Qi reducir en el PQL
 - Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
 de objetos no hace bien su función, pues en la imagen final salen manchas negras....
 Ejemplo: /data1/PANIC/2015-03-03/EPerez_UGC9128_March3_0026-50.fits
 Además la segunda pasada con el Q2 casca !!! el skyfilter da un SF !!!
 
-- Mejorar (tiene bugs) el papi_setup.sh para que el fichero scripts/papi_ql_user.cl se copie bien con
-el path del usuario correcto y que el logic.cl sea correcto.
-- Añadir al papi_setup.sh la distinción de los ficheros bashrc para el 35 y el 22 
 
 - Ver como permitir mod. parámetros del iraf.starfocus para el focus_evaluation.
-- Revisar RS:getWCSPointingOffsets() para que pueda funcionar incluso 
-si no tuviesemos WCS o fuese un MEF (caso con AGS); es algo raro que pase en RS,
-pues sólo va a trabajar con Singles !!
 - ver si el pix_scale que tiene el config del RS se puede actualizar
 con el que realmente tienen los ficheros en la cabecera para así evitar 
 olvidar actualizar el fichero de configuración.
@@ -6481,11 +6488,7 @@ olvidar actualizar el fichero de configuración.
 - reducir datos de OmegaCass para VT
 - ver si dilate crea buenas objectMask dilatadas adecuadamente...ala ESOREX
 - Tratamiento de BP en PAPI (Skyfilter) y "anular" BP detection en GainMap !!!
-- BD me sugiere que incluya en el QL-focus evaluation, el nuevo método
-para calcular el BestFocus.
 - (IMPORTANTE) Solucionar el tema del GAINMAP-->estimación erronea de BP !!!!
-- ver si hay manera de chequear el valor de PIX_SCALE en PAPI, es muy importante
-por ejemplo para el calculo de los offsets cuando usamos getWCSOffsets !!!! y en el 3.5m difiere !!
 
 - TODO: la segunda pasada de skyfilter para objetos extensos no está
 resuelto; si llamo a skyfilter_general, tendría que pasarle todos las
@@ -6516,11 +6519,6 @@ el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un 
 en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
 si se detecta bien los SKY de los SCIENCE
 
-- arreglar/poner bien RS::skyFilter, ahora no funciona los modos onoff, etc, etc...
-JM:Creo que si funciona con datos del OT; el problema era que probé con datos de OmegaCass que no tienen
-dicha información, y habría que modificar  dataset::GetFilterFiles() para que agrupe
-correctamente las secuencias SKY+SCIENCE.
-
 - ver si removeXTalk debería hacerse siempre en en la primera pasada de skysub aunque
 el modo sea science !!
 - Revisar/permitir D+F+BPM en QL de modo automatico
@@ -6535,7 +6533,6 @@ el modo sea science !!
 - añadir ext_db a las opciones de CL de PAPI
 - adaptar Nuevo interfaz de calTwFlat en PAPI !!
 - Sacar algún mapa de distorsión decence !! (datos Tilt y/o 10-Dic-2014)
-- ver acceso a extensiones por nombre en lugar de por número !! (mail BD)
 - aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
 en QL y demás candidatas.
 - ver que se puede hacer para forzar NCOADD, ITIME, EXPTIME en applyDark y applyDarkFlat
@@ -6545,9 +6542,6 @@ y como el PANIC_SEQ_Q01.fits suele existir de una reducción anterior, pues no b
 sólo renombra el PANIC_SEQ_Q01.fits.
 
 - mejorar rutina de logsheet para ver los ficheros que tenemos y su tipo.
-- bug en imtrim.py: 
-ERROR (808, "Pixel subscript out of bounds (/data2/out/PANIC.2014-12-10T19:10:01.3242.weight.fits[91:3190,92:3192])") 
-(más o menos resuelto)
 
 - Resolver el problema del llenado del / a causa de la escritura en el /tmp, 
 lo cual deja la máquina sin recursos. Habría que haber creado la partición / 
@@ -6555,14 +6549,13 @@ más grande. Ahora sólo queda intentar crear un link para el /tmp, pero
 eso hay que hacerlo arrancando con un disco de sistema, pues en el /tmp
 hay muchos ficheros temporales que usa el propio sistem...
 
-- Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF; hay que configurar el IMTDEV también !!
+- Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF desde IRAF.display; hay que configurar el IMTDEV también !!
 
 - Ojo, el fichero offsets1.pap se crea en /data2/out/ en lugar de /data2/out/Q0X) !!!! conflicto entre detectores en reducción paralelo !!
 nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 
 - Quitar todos los debugs (ficheros temporales) de skyfilter.c
 - Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
-- conversion de MEF-cubes to singles(join)-cubes !!
 - limpiar fichero de configuración de variables que no usamos.
 - ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...
 - en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
@@ -6573,7 +6566,8 @@ pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
 - rutina para crear BPM a partir de los NLC de BD
-- añadir EXTNAME a los ficheros BPM para que funcione el split()
+- añadir EXTNAME a los ficheros BPM para que funcione el split() --> crear rutina para crear BPM 
+a partir de los master NLC de BD.
 
 
 TODO:
@@ -6582,7 +6576,6 @@ TODO:
 - Escribir a RM para que modifique? EXTEND=F en los single !!! para identificarlos bien de los MEF.
 - Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
 hacer una propia en Python.
-- Propagar T_FOCUS al hacer split para reducción en parelelo ! y donde haga falta !
 - ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'
 - (P) Habría que revisar dicha rutina (cube_median) !!
 - ver el tema de los WEIGHT_MAPS, al construir el mosaico final; ahora
@@ -6593,7 +6586,6 @@ Tal y como estaba implementado parece que no funciona (probar con HAWKI)
 (bug)- Astrowarp no genera el .weight.fits con el mismo nombre que coadd_tmp.fits, sino coadd.weight.fits !!! pero
 luego para construir todo el mosaico si lo necesita !!!
 - Añadir reloj de busy a la rutina MEF2Single.
-- Añadir MEF2Single a la serie de foco para que haga automaticamente en caso necesario.
 - crear instalación en obs22 del control de PANIC, de forma que no pueda
 modificar ficheros sensibles ni los fuentes del software de PANIC.
 - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.

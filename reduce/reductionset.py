@@ -1554,37 +1554,47 @@ class ReductionSet(object):
       ref_image = images_in[0]
       try:
             h0 = fits.getheader(ref_image)
-            # We use the center of the image as reference to get the offsets
-            x_pix = h0['NAXIS1']/2.0
-            y_pix = h0['NAXIS2']/2.0
             # If present, pix_scale in header is prefered
             if 'PIXSCALE' in h0: pix_scale = h0['PIXSCALE']
-            w0 = wcs.WCS(h0)
-            ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
-            dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
+            if 'RA' in h0 and 'DEC' in h0:
+               ra0 = h0['RA']
+               dec0 = h0['DEC']
+            else:
+                # We use the center of the image as reference to get the offsets
+                x_pix = h0['NAXIS1']/2.0
+                y_pix = h0['NAXIS2']/2.0
+                w0 = wcs.WCS(h0)
+                ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
+                dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
+            
             log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
       except Exception,e:
           raise e
         
       offset_txt_file = open(p_offsets_file, "w")
       for my_image in images_in:
-        try:
-              h = fits.getheader(my_image)
-              w = wcs.WCS(h)
-              ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
-              dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
-              log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
-              # Assummed that North is up and East is left
-              offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
-              offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
-              
-              log.debug("offset_ra  = %s"%offsets[i][0])
-              log.debug("offset_dec = %s"%offsets[i][1])
-              
-              offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
-              i+=1
-        except Exception,e:
-          raise e
+            try:
+                h = fits.getheader(my_image)
+                if 'RA' in h0 and 'DEC' in h0:
+                    ra = h['RA']
+                    dec = h['DEC']
+                else:
+                    w = wcs.WCS(h)
+                    ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
+                    dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
+                
+                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
+                # Assummed that North is up and East is left
+                offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
+                offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
+                
+                log.debug("offset_ra  = %s"%offsets[i][0])
+                log.debug("offset_dec = %s"%offsets[i][1])
+                
+                offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
+                i+=1
+            except Exception,e:
+                raise e
         
       offset_txt_file.close()
       
@@ -1902,8 +1912,9 @@ class ReductionSet(object):
         
         log.debug("Start builing the whole calibration files ...")
         # If not initialized, Init DB
-        if self.db==None: self.__initDB()
+        if self.db == None: self.__initDB()
         master_files = []
+        
         try:
             master_files += self.reduceSet(self.red_mode, seqs_to_reduce=None, 
                                            types_to_reduce=['DARK','DOME_FLAT',
@@ -2027,7 +2038,7 @@ class ReductionSet(object):
                     nyblock = 16
                     nsigma = 5    
                 
-                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, 
+                task = reduce.calGainMap.GainMap(group[0], outfile, bpm=None, 
                                                do_normalization=True,
                                                mingain=mingain, maxgain=maxgain, 
                                                nxblock=nxblock,nyblock=nyblock, 

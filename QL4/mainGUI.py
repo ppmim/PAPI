@@ -1631,6 +1631,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elif str(self.comboBox_classFilter.currentText())=="SKY_FLAT":
                 fileList = self.inputsDB.GetFilesT("SKY_FLAT")
                 db = self.inputsDB
+            elif str(self.comboBox_classFilter.currentText())=="FOCUS":
+                fileList = self.inputsDB.GetFilesT("FOCUS")
+                db = self.inputsDB
+            elif str(self.comboBox_classFilter.currentText())=="MASTERS":
+                fileList = self.outputsDB.GetFilesT("MASTER_DARK")
+                fileList += self.outputsDB.GetFilesT("MASTER_DARK_MODEL")
+                fileList += self.outputsDB.GetFilesT("MASTER_TW_FLAT")
+                fileList += self.outputsDB.GetFilesT("MASTER_DOME_FLAT")
+                fileList += self.outputsDB.GetFilesT("MASTER_SKY_FLAT")
+                db = self.outputsDB
             else:
                 type = str(self.comboBox_classFilter.currentText())
                 fileList = self.inputsDB.GetFilesT(type)
@@ -1677,21 +1687,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if elem:
                 self.listView_dataS.setCurrentItem(elem)
                 
-            # filtering
-            """
-            self.listView_dataS.clearSelection()
-            it = QListViewItemIterator (self.listView_dataS)
-            listViewItem = it.current()
-            while listViewItem:
-                if listViewItem.text(1).contains(self.comboBox_classFilter.currentText()) or self.comboBox_classFilter.currentText()=="ALL":
-                    listViewItem.setVisible(True)
-                    listViewItem.setSelectable(True)
-                else:
-                    listViewItem.setVisible(False)
-                    listViewItem.setSelectable(False)
-                it+=1
-                listViewItem = it.current() 
-            """           
+                      
 #########################################################################
 ###### Pop-Up ###########################################################
 #########################################################################
@@ -1983,7 +1979,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             if len(self.m_popup_l_sel)==1:
                 #print "#SEL_1=",len(self.m_popup_l_sel)
-                self.dispAct.setEnabled(False)
+                #self.dispAct.setEnabled(False)
                 self.mDarkAct.setEnabled(False)
                 self.mDFlatAct.setEnabled(False)
                 self.mDTwFlatAct.setEnabled(False)
@@ -2090,6 +2086,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Show plot with the dither pattern followed by selected files.
         """
         
+        # The sort out of the files by MJD is done 
+        # in getWCSPointingOffsets().
         try:    
             offsets = off.getWCSPointingOffsets(self.m_popup_l_sel, "/dev/null")
         except Exception,e:

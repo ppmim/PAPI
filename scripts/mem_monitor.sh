@@ -20,3 +20,7 @@ echo "---" >> /tmp/mem_ps.txt
 echo `date --iso-8601=seconds` "JAVA_OT :"  >> /tmp/mem_ps.txt
 ps uax|grep java | grep -v grep | awk '{print $5, $6, $11}' >> /tmp/mem_ps.txt
 
+memory=`free |grep Mem`
+cache=`free |grep cache:`
+echo `date --iso-8601=seconds` "MEMORY  : " $memory >> /tmp/mem_monitor.txt
+echo `date --iso-8601=seconds` "CACHE  : " $cache >> /tmp/mem_monitor.txt

@@ -113,8 +113,22 @@ def getWCSPointingOffsets(images_in,
       dec0 = -1
       offsets = numpy.zeros([len(images_in), 2] , dtype=numpy.float32)
       
+      # First, we must sort out the files by MJD
+      dataset = []
+      sorted_files = []
+      for ifile in images_in:
+        mjd = fits.getval(ifile, "MJD-OBS", ext=0)
+        dataset.append((ifile, mjd))
+      # Sort out the files
+      dataset = sorted(dataset, key=lambda data_file: data_file[1])
+      # Created sorted list
+      for l_tuple in dataset:
+        sorted_files.append(l_tuple[0])
+      
+      print "SORTED",sorted_files
+      
       # Reference image
-      ref_image = images_in[0]
+      ref_image = sorted_files[0]
       try:
             h0 = fits.getheader(ref_image)
             # If present, pix_scale in header is prefered
@@ -138,7 +152,7 @@ def getWCSPointingOffsets(images_in,
           raise e
         
       offset_txt_file = open(p_offsets_file, "w")
-      for my_image in images_in:
+      for my_image in sorted_files:
         try:
               h = fits.getheader(my_image)
               if 'RA' in h0 and 'DEC' in h0:

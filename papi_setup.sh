@@ -111,6 +111,7 @@ ln -s $PAPI_HOME/commissioning/getImageOffsets.py $PAPI_BIN/getImageOffsets
 # ---------------------------------------
 cp ${PAPI_HOME}/scripts/bashrc ${HOME}/.bashrc
 
+
 #echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
 #echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
 #echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc

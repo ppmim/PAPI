@@ -8,7 +8,7 @@ if (access("home$focus_seq.txt"))
              logfile = "starfocus.log")
 
     delete("home$focus_seq.txt", yes, verify=no)
-    !/home/obs35/bin/runStarfocus -o starfocus.log
+    !$HOME/bin/runStarfocus -o starfocus.log
 }
 else
 {
