@@ -6451,7 +6451,37 @@ patrón de dithering.
 
 
 
-     
+
+08-Marzo-2015
+-------------
+- cloudy al principio de la noche.
+- Modifico en el algoritmo de reducción el paso 4.1,
+de forma que remove_crosstalk se haga siempre, pues puede
+ayudar a la astrometría preliminar y al primer coadd, etc...No
+veo razones para no hacerlo, salvo por CPU time.
+
+- Compruebo que la NLC hace que un campo super poblado no sea resuelto
+por Astrometry.net !!!! debe ser por los NaNs
+
+- Observo que si no hacemos el purgeOutput() (=False en el config file),
+entonces el dithercubemean confunde los .weight.fits de reducciones
+anteriores, por eso lo mejor es limpiar!!!
+
+- Modifico getWCSImageOffsets() para que use ClFits, para cubrir más
+casos en la obtención de RA y DEC.
+
+- Viendo el problema de Astrometry_M67_0026-30 del 7-Marzo con el dithercubemean,
+veo que los offsets que ha calculado getWCSImageOffsets() no coinciden con
+los que yo calculo a mano, y que eso debe ser una razón de que no funcione bien
+del dithercubemean. Intento calcular los offsets con irdr.offsets, pero no hay manera,
+quizás por que son muy grandes ???  (625, -312), 
+Sigo si entender por que no funcionaaaaa! la mascara de objetos, que está mal creada
+por que el dithercube mean hace mal el coadd, problablemente por unos offsets no 
+exactos y/o muy grandes....
+
+
+
+
 Posibles causas del problema del Transito WASP:
 ==============================================
 0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
@@ -6468,6 +6498,11 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- DITHERCUBEMEAN no funciona bien para offsets grandes (>300 o >600) !!! o eso me parece, pues
+con /Astrometry_M67_0026-30 del 7-Marzo no hay manera !!! (en la segunda pasada de PAPI).
+- bug en current_night en PQL
+- En declinaciones negativas, en el QL se muestran tambien los minutos y segundos negativos.
+
 - Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
 - ver si CreateCalibs puede incluso hacer la NLC !!
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits

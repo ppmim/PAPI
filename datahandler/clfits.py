@@ -267,7 +267,7 @@ class ClFits (object):
     
     @property
     def pixScale(self):
-        return pix_scale
+        return self.pix_scale
 
     @property
     def Telescope(self):
@@ -678,8 +678,9 @@ class ClFits (object):
                 m_wcs = wcs.WCS(myfits[0].header)
                 #self._ra, self._dec = wcs.image2sky( self.naxis1/2, self.naxis2/2, True)
                 # No SIP or Paper IV table lookup distortion correction is applied.
+                # Take as reference the coordinates of the center of the detector
                 self._ra = m_wcs.wcs_pix2world([[self.naxis1/2, self.naxis2/2]], 1)[0][0]
-                #log.debug("Read RA-WCS coordinate =%s", self._ra)
+                log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA'] # degrees supposed
             elif 'OBJCTRA' in myfits[0].header:
@@ -867,15 +868,15 @@ class ClFits (object):
         if 'PIXSCALE' in myfits[0].header:
             self.pix_scale = float(myfits[0].header['PIXSCALE']) * self.binning
         else:
-            if self.instrument=='omega2000':
+            if self.instrument == 'omega2000':
                 self.pix_scale = 0.45 * self.binning
-            elif self.instrument=='panic':
+            elif self.instrument == 'panic':
                 self.pix_scale = 0.45 * self.binning
-            elif self.instrument=='roper':  # roperT150
+            elif self.instrument == 'roper':  # roperT150
                 self.pix_scale = 0.23 * self.binning
-            elif self.instrument=='ropert90':
+            elif self.instrument == 'ropert90':
                 self.pix_scale = 0.386 * self.binning
-            elif self.instrument=='hawki':
+            elif self.instrument == 'hawki':
                 self.pix_scale = 0.106 * self.binning
             else:
                 # default scale ?

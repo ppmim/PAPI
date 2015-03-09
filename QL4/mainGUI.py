@@ -1605,9 +1605,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     e_child.setText (3, str(texp))
                     e_child.setText (4, str(date)+"::"+str(ut_time))
                     e_child.setText (5, str(object))
+                    if dec<0: sign = -1;
+                    else: sign = 1;
                     c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
                     str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
-                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1]*sign, c.dec.dms[2]*sign)
                     e_child.setText (6, str(str_ra))
                     e_child.setText (7, str(str_dec))
                 k+=1
@@ -3230,8 +3232,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Run the focus evaluation procedure of a set of files of focus serie.
         It is run **interactively**.
-
-        NOTE: it only works for non-MEF files !!!
         """
         
         if len(self.m_popup_l_sel)>3:
@@ -3247,11 +3247,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     else:
                         line = "Files generated: \n%s\n"%my_files
                         self.logConsole.info(QString(str(line)))
-                    
-                    #msg = "Found a MEF file, but this routine only works for single FITS. Run FITS->MEF2Single."
-                    #self.logConsole.error(msg)
-                    #QMessageBox.critical(self, "Error", msg)
-                    #return
                 else:
                     # We have non-MEF files
                     my_files = list(self.m_popup_l_sel)

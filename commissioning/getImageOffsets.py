@@ -35,6 +35,9 @@ from astropy import wcs
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+import datahandler
+
+
 def draw_offsets(offsets, pix_scale = 0.23, scale_factor=0.1):
     
     fig2 = plt.figure()
@@ -130,52 +133,39 @@ def getWCSPointingOffsets(images_in,
       # Reference image
       ref_image = sorted_files[0]
       try:
-            h0 = fits.getheader(ref_image)
+            ref = datahandler.ClFits(ref_image)
             # If present, pix_scale in header is prefered
-            # Actually, it is not needed, because offsets are given in arcsecs
-            if 'PIXSCALE' in h0: pix_scale = h0['PIXSCALE']
-            if 'RA' in h0 and 'DEC' in h0:
-               ra0 = h0['RA']
-               dec0 = h0['DEC']
-            else:
-                # We use the center of the image as reference to get the offsets
-                x_pix = h0['NAXIS1']/2.0
-                y_pix = h0['NAXIS2']/2.0
-                w0 = wcs.WCS(h0)
-                ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
-                dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
-                
-            print "RA",ra0
-            print "DEC",dec0
+            pix_scale = ref.pixScale
+            ra0 = ref.ra    
+            dec0 = ref.dec
             log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
       except Exception,e:
+          log.error("Cannot get reference RA_0,Dec_0 coordinates: %s"%str(e))
           raise e
         
       offset_txt_file = open(p_offsets_file, "w")
       for my_image in sorted_files:
-        try:
-              h = fits.getheader(my_image)
-              if 'RA' in h0 and 'DEC' in h0:
-                  ra = h['RA']
-                  dec = h['DEC']
-              else:
-                  w = wcs.WCS(h)
-                  ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
-                  dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
-                  
-              log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
-              pix_scale = 1.0 # to give the offsets in arcsec scale
-              # Assummed that North is up and East is left
-              offsets[i][0] = ((ra - ra0)*3600.0*math.cos(dec0/57.296)) / float(pix_scale)
-              offsets[i][1] = ((dec0 - dec)*3600.0) / float(pix_scale)
-              
-              log.debug("offset_ra  = %s"%offsets[i][0])
-              log.debug("offset_dec = %s"%offsets[i][1])
-              
-              offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
-              i+=1
-        except Exception,e:
-          raise e
+            try:
+                ref = datahandler.ClFits(my_image)
+                ra = ref.ra
+                dec = ref.dec
+                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i, ra, i, dec))
+                
+                # Assummed that North is up and East is left
+                # To give the results in arcsec, set pix_scale=1.0
+                pix_scale = 1.0
+                #offsets[i][0] = ((ra - ra0)*3600) / float(pix_scale)
+                offsets[i][0] = ((ra - ra0)*3600 * math.cos(dec/57.29578)) / float(pix_scale)
+                offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
+                
+                log.debug("offset_ra  = %s"%offsets[i][0])
+                log.debug("offset_dec = %s"%offsets[i][1])
+                
+                offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
+                i+=1
+            except Exception,e:
+                log.error("Error computing the offsets for image %s. \n %s"%(my_image, str(e)))
+                raise e
         
       offset_txt_file.close()
       

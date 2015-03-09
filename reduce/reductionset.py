@@ -1553,39 +1553,26 @@ class ReductionSet(object):
       # Reference image
       ref_image = images_in[0]
       try:
-            h0 = fits.getheader(ref_image)
+            ref = datahandler.ClFits(ref_image)
             # If present, pix_scale in header is prefered
-            if 'PIXSCALE' in h0: pix_scale = h0['PIXSCALE']
-            if 'RA' in h0 and 'DEC' in h0:
-               ra0 = h0['RA']
-               dec0 = h0['DEC']
-            else:
-                # We use the center of the image as reference to get the offsets
-                x_pix = h0['NAXIS1']/2.0
-                y_pix = h0['NAXIS2']/2.0
-                w0 = wcs.WCS(h0)
-                ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
-                dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
-            
+            pix_scale = ref.pixScale
+            ra0 = ref.ra    
+            dec0 = ref.dec
             log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
       except Exception,e:
+          log.error("Cannot get reference RA_0,Dec_0 coordinates: %s"%str(e))
           raise e
         
       offset_txt_file = open(p_offsets_file, "w")
       for my_image in images_in:
             try:
-                h = fits.getheader(my_image)
-                if 'RA' in h0 and 'DEC' in h0:
-                    ra = h['RA']
-                    dec = h['DEC']
-                else:
-                    w = wcs.WCS(h)
-                    ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
-                    dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
+                ref = datahandler.ClFits(my_image)
+                ra = ref.ra
+                dec = ref.dec
+                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i, ra, i, dec))
                 
-                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
                 # Assummed that North is up and East is left
-                offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
+                offsets[i][0] = ((ra - ra0)*3600 * math.cos(dec/57.29578)) / float(pix_scale)
                 offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
                 
                 log.debug("offset_ra  = %s"%offsets[i][0])
@@ -1594,6 +1581,7 @@ class ReductionSet(object):
                 offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
                 i+=1
             except Exception,e:
+                log.error("Error computing the offsets for image %s. \n %s"%(my_image, str(e)))
                 raise e
         
       offset_txt_file.close()
@@ -1601,6 +1589,7 @@ class ReductionSet(object):
       # Write out offsets to file
       # numpy.savetxt(p_offsets_file, offsets, fmt='%.6f')
       log.debug("(WCS) Image Offsets (pixels): ")
+      numpy.set_printoptions(suppress=True)
       log.debug(offsets)
       
       return offsets
@@ -1861,14 +1850,16 @@ class ReductionSet(object):
         """
         
         for out_dir in list_dirs:
-            #misc.fileUtils.removefiles(out_dir+"/*.fits", out_dir+"/*.skysub*")
-            misc.fileUtils.removefiles(out_dir+"/c_*", out_dir+"/dc_*",
-                                       out_dir+"/*.nip", out_dir+"/*.pap" )
-            misc.fileUtils.removefiles(out_dir+"/coadd*", out_dir+"/*.objs",
-                                       out_dir+"/uparm*")
-            misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.list",
-                                       out_dir+"/*.xml", out_dir+"/*.ldac",
-                                       out_dir+"/*.png" )
+            # We cannot remove .fits neither .skysub.fits becasue could have 
+            # files of a previous reduction of a sequence, for example, when
+            # we want to reduce a several sequences of one night, etc.
+            misc.fileUtils.removefiles(out_dir + "/c_*", out_dir + "/dc_*",
+                                       out_dir + "/*.nip", out_dir + "/*.pap" )
+            misc.fileUtils.removefiles(out_dir + "/coadd*", out_dir + "/*.objs",
+                                       out_dir + "/uparm*")
+            misc.fileUtils.removefiles(out_dir + "/*.head", out_dir + "/*.list",
+                                       out_dir + "/*.xml", out_dir + "/*.ldac",
+                                       out_dir + "/*.png" )
 
     def purgeOutput(self):
         """
@@ -4069,8 +4060,9 @@ class ReductionSet(object):
         # 4.1 - Remove crosstalk - (only if bright stars are present)
         #       (if red_mode!=quick, then crosstalk will be done later)
         ########################################################################
-        if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
-            self.config_dict['general']['remove_crosstalk']):
+        if self.config_dict['general']['remove_crosstalk']:
+        #if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
+        #    self.config_dict['general']['remove_crosstalk']):
             log.info("**** Removing crosstalk ****")
             try:
                 res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
