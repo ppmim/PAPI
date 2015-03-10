@@ -882,13 +882,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_currentNight.isChecked():
-            if datetime.datetime.utcnow().hour>0 and datetime.datetime.utcnow().hour<8:
+            if datetime.datetime.utcnow().hour > 0 and datetime.datetime.utcnow().hour < 8:
                 currentDate = (datetime.datetime.utcnow()-datetime.timedelta(days=1)).isoformat().split('T')[0]
             else:
                 currentDate = datetime.datetime.today().isoformat().split('T')[0]
             self.m_sourcedir = "/data1/PANIC/" + currentDate
             self.lineEdit_sourceD.setText(self.m_sourcedir)
-            if self.dc!=None: del self.dc
+            if self.dc != None: del self.dc
             self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
                                                        self.file_pattern , 
                                                        self.new_file_func)

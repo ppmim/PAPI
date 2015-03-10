@@ -35,6 +35,8 @@ int main(int argc, char *argv[])
     float *plane, *meanplane, *wplane, *sumwplanes, *gainmap;
     float bkg, sig = 0.0, avgscale = 0.0;
     int sum_flag = 0; /* if =1, compute the simple arithmetic sum of the planes */
+    int debug = 1;
+    char aux[256];
     
     if (argc < 5)
         usage();
@@ -69,11 +71,19 @@ int main(int argc, char *argv[])
 
         avgscale += (scale[i] = bkg);              /* store scale factors */
 
+        /* getwmap: produce a weight map from exptime * gainmap / variance */
         wplane = getwmap(fn[i], nx, ny, gainmap, sig);
 
         data[i] = shift_image(plane, wplane, nx, ny, border, -xshift[i], 
                               -yshift[i], &wdata[i]); 
 
+        
+        if (debug)
+            {
+                strcpy(aux,"/data2/tmp/shift_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)data[i], -32, nx + 2*border, ny + 2*border); 
+            }
         /* per togliere i bordi inutili
 	    * data[i] = new_shift_image(plane, wplane, nx, ny, 
 			 xbelow, xabove, ybelow, yabove,

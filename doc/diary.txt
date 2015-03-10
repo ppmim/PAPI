@@ -6470,7 +6470,12 @@ anteriores, por eso lo mejor es limpiar!!!
 - Modifico getWCSImageOffsets() para que use ClFits, para cubrir más
 casos en la obtención de RA y DEC.
 
-- Viendo el problema de Astrometry_M67_0026-30 del 7-Marzo con el dithercubemean,
+- Viendo el problema de Astrometry_M67_0026-30 del 7-Marzo :
+
+./papi.py -s /data1/PANIC/2015-03-07/ -S 22 22 -W Q1 -M science
+
+con el dithercubemean,
+
 veo que los offsets que ha calculado getWCSImageOffsets() no coinciden con
 los que yo calculo a mano, y que eso debe ser una razón de que no funcione bien
 del dithercubemean. Intento calcular los offsets con irdr.offsets, pero no hay manera,
@@ -6479,7 +6484,43 @@ Sigo si entender por que no funcionaaaaa! la mascara de objetos, que está mal c
 por que el dithercube mean hace mal el coadd, problablemente por unos offsets no 
 exactos y/o muy grandes....
 
+09-Marzo-2015
+-------------
+- En irdr::getwmap() encuentro una modificación de prueba tq:
+    ixoff = -xoff;
+    iyoff = -yoff;
+    
+ que hace que falle (SF) sky_filter !!! 
+ 
+- Reducciendo Test_diff_photom_M3_March8_0136-144 
 
+./papi.py -s /data1/PANIC/2015-03-08/ -S 30 30 -W Q1 -M science
+
+veo que no hay manera de que no
+salgan "estrellas negras", y eso creo que es debido a que al ser un campo tan poblado,
+no hay manera de enmascarar todas las estrellas correctamente. Quizás lo mejor
+para ese tipo de campos hubiese sido usar patrones T-S-T-S...
+
+- Vuevo a mirar la reducción de Astrometry_M67_0026-30 del 7-Marzo :
+
+./papi.py -s /data1/PANIC/2015-03-07/ -S 22 22 -W Q1 -M science
+
+y tras arreglar el problema del irdr::getwmap() el resulto final es mejor,
+pero no del todo bueno. Sigue sin crearse bien el primer coadd que hace 
+dithercubemean, quizás por el tema de los offsets tan grandes (> 1/4 detector).
+No obstante, habría que revisar dithercubemean para que funcione con esos offsets !!!!
+
+Confirmo que en el coadd1.fits hay objetos que no aparecen (y no se por que??),
+y por tanto en la objectMask pues tampoco, y como consecuencia en la 2nd. sky_filter
+se hace la sustracción de cielo mal.
+Yo creo que el problema tiene que venir de dithercubemean para offsets grandes !!!
+Modifico dithercubemean para que escriba las imagenes una vez "shiftadas", para
+ver si coinciden...Definitivamente compruebo que en el coadd no aparecen, mientras
+que en las shifted, como era de suponer, si aparecen. ¿ sólo queda comprobar la wmap ?????
+
+
+
+(se me ocurre que podría ser tambien el dxtalk el que eliminara la estrellas ...)
 
 
 Posibles causas del problema del Transito WASP:
@@ -6498,6 +6539,11 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- OJO !!! --> los ficheros /data2/tmp/sky** y /data2/tmp/skyw* de depuración
+que se generan en skyfilter son creado por el usuario panic y si lanzaramos las misma
+reducción (modo science) como obs35 (o cualquier otro) no podrían sobreescribirlos y fallaría !!
+Por tanto hay que hacer algo para oborrarlos !!!
+
 - DITHERCUBEMEAN no funciona bien para offsets grandes (>300 o >600) !!! o eso me parece, pues
 con /Astrometry_M67_0026-30 del 7-Marzo no hay manera !!! (en la segunda pasada de PAPI).
 - bug en current_night en PQL

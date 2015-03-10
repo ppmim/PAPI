@@ -905,11 +905,14 @@ class MEF (object):
 
             # Taking into account the gap (167pix), we set the new CRPIXi values
             # for each extension, refered to the center of the focal plane.
-            new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
-                                        [-81, -81] ], numpy.float_)
-	    
-	    #new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
+            #new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
             #                            [-81, -81] ], numpy.float_)
+	    
+            # We must take into account that FITS(NAXISi) and Numpy arrays follow different convention:
+            # FITS : NAXIS1 = x = column; NAXIS2 = y = row
+            # Numpy arrays : [y,x]  y=row, x=column 
+	    new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
+                                        [-81, -81] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
                     log.debug("Reading quadrant-%d ..." % (i*2 + j))
@@ -1084,12 +1087,12 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2                               
                             elif (i*2+j)==1:
-                                if detflipxy==0: det_id = 3
+                                if detflipxy==0: det_id = 1
                                 elif detflipxy==1: det_id = 2 
                                 elif detflipxy==2: det_id = 4
                                 elif detflipxy==3: det_id = 1                               
                             elif (i*2+j)==2:
-                                if detflipxy==0: det_id = 1
+                                if detflipxy==0: det_id = 3
                                 elif detflipxy==1: det_id = 4 
                                 elif detflipxy==2: det_id = 2
                                 elif detflipxy==3: det_id = 3                              
@@ -1123,8 +1126,8 @@ class MEF (object):
                         # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
                         log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
                         if (i*2+j)==0: det_id = 4
-                        elif (i*2+j)==1: det_id = 3
-                        elif (i*2+j)==2: det_id = 1
+                        elif (i*2+j)==1: det_id = 1
+                        elif (i*2+j)==2: det_id = 3
                         elif (i*2+j)==3: det_id = 2
 
                     # DETSEC and DATASEC
