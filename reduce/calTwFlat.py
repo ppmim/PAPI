@@ -184,6 +184,10 @@ class MasterTwilightFlat(object):
         # Get the user-defined list of flat frames
         framelist = self.__input_files
         
+        if not self.__master_dark_model and not self.__master_dark_list:
+            log.error("Error, No master dark provided")
+            raise Exception("No master dark provided")
+        
         # Check exists master DARK
         if self.__master_dark_model:
             if (type(self.__master_dark_model) == type([]) and 
@@ -289,7 +293,9 @@ class MasterTwilightFlat(object):
         # FLATS because they might have diff EXPTIMEs
         # Prepare input list on IRAF string format
             
-        log.debug("Start Dark subtraction. Master Dark -> %s"%self.__master_dark_model)
+        log.debug("Start Dark subtraction")
+        log.debug("Master Dark Model: %s"%self.__master_dark_model)
+        log.debug("Master Dark list: %s"%self.__master_dark_list)
         # We have two option, use a DARK_MODEL or a MASTER_DARK for each skyflat (=TEXP)
         # 1- Try to read Master Dark Model
         use_dark_model = False
@@ -320,10 +326,14 @@ class MasterTwilightFlat(object):
                         log.error("File %s is neither a Dark nor a Master Dark."%idark)
                         raise Exception("File %s is neither a Dark nor a Master Dark."%idark) 
                     t_darks[round(cdark.expTime(), 1)] = idark
+                    log.debug("DARK - expTime=%f"%cdark.expTime())
                 except Exception,e:
                     log.error("Error reading Master Dark: %s"%idark)
                     raise Exception("Error reading Master Dark: %s"%idark)
-            
+        else:
+            log.error("Cannot find any Master Dark")
+            raise Exception("Cannot find any Master Dark")
+        
             
         # Check MEF compatibility  - TO FIX !
         if not f.mef == cdark.mef:
@@ -337,6 +347,7 @@ class MasterTwilightFlat(object):
                 
         fileList = []
         for iframe in good_frames:
+            print "GOOD=",good_frames
             # Remove old dark subtracted flat frames
             my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits","_D.fits"))
             misc.fileUtils.removefiles(my_frame)
@@ -344,17 +355,22 @@ class MasterTwilightFlat(object):
             log.debug("Scaling master dark (master dark model or simple master dark)")
             # Build master dark with proper (scaled) EXPTIME and subtract ( I don't know how good is this method of scaling !!!)
             f = fits.open(iframe, ignore_missing_end=True)
-            t_flat = datahandler.ClFits ( iframe ).expTime()
+            t_flat = datahandler.ClFits( iframe ).expTime()
             if next > 0:
                 for i in range(1, next+1):
                     if use_dark_model:
                         mdark = fits.open(self.__master_dark_model)
                         log.info("Scaling MASTER_DARK_MODEL")
-                        scaled_dark = mdark[i].data[1]*t_flat + mdark[i].data[0]
+                        scaled_dark = mdark[i].data[1] * t_flat + mdark[i].data[0]
                     else:
                         log.info("Using proper MASTER_DARK")
                         # Get filename of the master dark to use
-                        n_dark = t_darks[round(t_flat, 1)] 
+                        try:
+                            n_dark = t_darks[round(t_flat, 1)] 
+                        except KeyError:
+                            log.error("Cannot find proper master DARK for FLAT with expTime=%f"%t_flat)
+                            raise Exception("Cannot find dark for flat")
+                    
                         mdark = fits.open(n_dark)
                         scaled_dark = mdark[i].data
                         
@@ -368,7 +384,13 @@ class MasterTwilightFlat(object):
                     mdark = fits.open(self.__master_dark_model)
                     scaled_dark = mdark[0].data[1]*t_flat + mdark[0].data[0]
                 else:
-                    n_dark = t_darks[round(t_flat, 1)]
+                    print "T_DARKS=",t_darks
+                    print "T_FLATS",t_flat
+                    try:
+                        n_dark = t_darks[round(t_flat, 1)]
+                    except KeyError:
+                        log.error("Cannot find proper master DARK for FLAT with expTime=%f"%t_flat)
+                        raise Exception("Cannot find dark for flat")
                     mdark = fits.open(n_dark)
                     scaled_dark = mdark[0].data
                     
@@ -445,21 +467,26 @@ class MasterTwilightFlat(object):
         #from scipy import ndimage
         #filtered = ndimage.gaussian_filter(f[0].data, 20)
         
-        # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip SG2)
+        # STEP 4: Normalize the flat-field (if MEF, normalize wrt chip SG1)
         # Compute the mean of the image
         if self.__normal:
             f = fits.open(comb_flat_frame, ignore_missing_end=True)
             if next > 0:
-                ##chip = 1 # normalize wrt to mode of chip 1
-                # Because PANIC Chip1 is bad (>25% bad pixels), we use chip 2 for normalization
-                chip = 2 # normalize wrt to mode of chip 1
-                naxis1 = f[chip].header['NAXIS1']
-                naxis2 = f[chip].header['NAXIS2']
+                ##chip = 1 # normalize wrt to mode of chip SG1_1
+                if f_instrument == 'panic': 
+                    ext_name = 'SG1_1'
+                    try:
+                        f[ext_name].header
+                    except KeyError:
+                        ext_name = 'Q1_1'
+                elif f_instrument == 'hawki': 
+                    ext_name = 'CHIP2.INT1'
+                
+                naxis1 = f[ext_name].header['NAXIS1']
+                naxis2 = f[ext_name].header['NAXIS2']
                 offset1 = int(naxis1*0.1)
                 offset2 = int(naxis2*0.1)
-                if f_instrument == 'panic': ext_name = 'SG2_1'
-                elif f_instrument == 'hawki': ext_name = 'CHIP2.INT1'
-                    
+                
                 median = numpy.median(f[ext_name].data[offset1:naxis1-offset1,
                                                     offset2:naxis2-offset2])
                 msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)"%(ext_name,median)
@@ -607,10 +634,15 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
     
     filelist = [line.replace( "\n", "") 
               for line in fileinput.input(options.source_file_list)]
+    
+    if options.master_dark_list and os.path.exists(options.master_dark_list):
+        dark_list = [line.replace( "\n", "") 
+              for line in fileinput.input(options.master_dark_list)]
+    else: dark_list = []
     try:
         mTwFlat = MasterTwilightFlat(filelist, 
                                      options.master_dark_model,
-                                     options.master_dark_list,
+                                     dark_list,
                                      options.output_filename, options.minlevel,
                                      options.maxlevel,
                                      options.master_bpm,

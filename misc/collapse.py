@@ -38,7 +38,7 @@ from misc.version import __version__
 def collapse(frame_list, out_dir="/tmp"):
     """
     Collapse (add them up arithmetically) a (list) of data cubes into a single 
-    2D image.
+    2D image. Files can be MEF or Single.
 
     Return a list with the new collapsed frames. If no collapse is required, file
     will be created as well.

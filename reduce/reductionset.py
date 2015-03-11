@@ -757,7 +757,7 @@ class ReductionSet(object):
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
                    'UT','AIRMASS','IMAGETYP','TELESCOP','INSTRUME','MJD-OBS',
                    'BSCALE', 'BZERO',
-                   'CTIME','ITIME','NCOADDS','EXPTIME','T_FOCUS',
+                   'CTIME','ITIME','NCOADDS','EXPTIME','T_FOCUS','READMODE',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
                    'CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
@@ -1421,16 +1421,18 @@ class ReductionSet(object):
             out_filename = self.out_file
         
         
-        # Some previus checks
-        if file_pos<0 or file_pos>len(near_list):
+        # Some previous checks
+        if file_pos < 0 or file_pos > len(near_list):
             log.error("Wrong frame number selected in near-sky subtraction")
             return None
         
-        if len(near_list)<(self.HWIDTH+1):
+        if len(near_list) < (self.HWIDTH+1):
             log.error("Wrong number of sky frames provided. Min number of sky frame is %d", 
                       self.MIN_SKY_FRAMES)
             return None
 
+        # 0.0 Check and collapse if required (cube images)
+        near_list = misc.collapse.collapse(near_list, out_dir=self.temp_dir)
         
         # 0.1 Get the gain map
         if not self.master_flat or not os.path.exists( self.master_flat ):
@@ -1458,10 +1460,9 @@ class ReductionSet(object):
         else: l_gainMap = self.master_flat
 
         
-        #0.2 Check if GainMap need to be split
+        # 0.2 Check if GainMap need to be split
         gain_ext, g_next = self.split([l_gainMap])
         if g_next==1: gain_ext*=4
-        #print "\nGAINEXT=",gain_ext
         
         # 1. Split MEF file (into the self.out_dir)
         obj_ext, next = self.split(near_list)
@@ -1473,19 +1474,19 @@ class ReductionSet(object):
             log.debug("===> Processing extension %d", n+1)
             # Create the temp list file of nearest (ar,dec,mjd) from current 
             # selected science file
-            listfile = self.out_dir+"/nearfiles.list"
+            listfile = self.out_dir + "/nearfiles.list"
             misc.utils.listToFile(obj_ext[n], listfile)
             print "NEAR_FILES=", obj_ext[n]
-            print "GAIN_EXT_N=",gain_ext[n][0]
-            #Call external app skyfilter (irdr)
+            print "GAIN_EXT_N=", gain_ext[n][0]
+            # Call external app skyfilter (irdr)
             hwidth = self.HWIDTH
             
-            cmd = self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d %s"\
+            cmd = self.m_irdr_path + "/skyfilter_single %s %s %d nomask none %d %s"\
                         %(listfile, gain_ext[n][0], hwidth, file_pos, self.out_dir)
             print "CMD=",cmd
             e = misc.utils.runCmd( cmd )
             if e==1: # success
-                fname = self.out_dir+"/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
+                fname = self.out_dir + "/" + os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
                 out_ext.append(fname)  
             else:
                 log.error("Some error while subtracting sky in extension #%d# ", n+1)
@@ -1552,44 +1553,43 @@ class ReductionSet(object):
       # Reference image
       ref_image = images_in[0]
       try:
-            h0 = fits.getheader(ref_image)
-            # We use the center of the image as reference to get the offsets
-            x_pix = h0['NAXIS1']/2.0
-            y_pix = h0['NAXIS2']/2.0
+            ref = datahandler.ClFits(ref_image)
             # If present, pix_scale in header is prefered
-            if 'PIXSCALE' in h0: pix_scale = h0['PIXSCALE']
-            w0 = wcs.WCS(h0)
-            ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
-            dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
+            pix_scale = ref.pixScale
+            ra0 = ref.ra    
+            dec0 = ref.dec
             log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
       except Exception,e:
+          log.error("Cannot get reference RA_0,Dec_0 coordinates: %s"%str(e))
           raise e
         
       offset_txt_file = open(p_offsets_file, "w")
       for my_image in images_in:
-        try:
-              h = fits.getheader(my_image)
-              w = wcs.WCS(h)
-              ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
-              dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
-              log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
-              # Assummed that North is up and East is left
-              offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
-              offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
-              
-              log.debug("offset_ra  = %s"%offsets[i][0])
-              log.debug("offset_dec = %s"%offsets[i][1])
-              
-              offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
-              i+=1
-        except Exception,e:
-          raise e
+            try:
+                ref = datahandler.ClFits(my_image)
+                ra = ref.ra
+                dec = ref.dec
+                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i, ra, i, dec))
+                
+                # Assummed that North is up and East is left
+                offsets[i][0] = ((ra - ra0)*3600 * math.cos(dec/57.29578)) / float(pix_scale)
+                offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
+                
+                log.debug("offset_ra  = %s"%offsets[i][0])
+                log.debug("offset_dec = %s"%offsets[i][1])
+                
+                offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
+                i+=1
+            except Exception,e:
+                log.error("Error computing the offsets for image %s. \n %s"%(my_image, str(e)))
+                raise e
         
       offset_txt_file.close()
       
       # Write out offsets to file
       # numpy.savetxt(p_offsets_file, offsets, fmt='%.6f')
       log.debug("(WCS) Image Offsets (pixels): ")
+      numpy.set_printoptions(suppress=True)
       log.debug(offsets)
       
       return offsets
@@ -1850,14 +1850,16 @@ class ReductionSet(object):
         """
         
         for out_dir in list_dirs:
-            #misc.fileUtils.removefiles(out_dir+"/*.fits", out_dir+"/*.skysub*")
-            misc.fileUtils.removefiles(out_dir+"/c_*", out_dir+"/dc_*",
-                                       out_dir+"/*.nip", out_dir+"/*.pap" )
-            misc.fileUtils.removefiles(out_dir+"/coadd*", out_dir+"/*.objs",
-                                       out_dir+"/uparm*")
-            misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.list",
-                                       out_dir+"/*.xml", out_dir+"/*.ldac",
-                                       out_dir+"/*.png" )
+            # We cannot remove .fits neither .skysub.fits becasue could have 
+            # files of a previous reduction of a sequence, for example, when
+            # we want to reduce a several sequences of one night, etc.
+            misc.fileUtils.removefiles(out_dir + "/c_*", out_dir + "/dc_*",
+                                       out_dir + "/*.nip", out_dir + "/*.pap" )
+            misc.fileUtils.removefiles(out_dir + "/coadd*", out_dir + "/*.objs",
+                                       out_dir + "/uparm*")
+            misc.fileUtils.removefiles(out_dir + "/*.head", out_dir + "/*.list",
+                                       out_dir + "/*.xml", out_dir + "/*.ldac",
+                                       out_dir + "/*.png" )
 
     def purgeOutput(self):
         """
@@ -1901,8 +1903,9 @@ class ReductionSet(object):
         
         log.debug("Start builing the whole calibration files ...")
         # If not initialized, Init DB
-        if self.db==None: self.__initDB()
+        if self.db == None: self.__initDB()
         master_files = []
+        
         try:
             master_files += self.reduceSet(self.red_mode, seqs_to_reduce=None, 
                                            types_to_reduce=['DARK','DOME_FLAT',
@@ -2026,7 +2029,7 @@ class ReductionSet(object):
                     nyblock = 16
                     nsigma = 5    
                 
-                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, 
+                task = reduce.calGainMap.GainMap(group[0], outfile, bpm=None, 
                                                do_normalization=True,
                                                mingain=mingain, maxgain=maxgain, 
                                                nxblock=nxblock,nyblock=nyblock, 
@@ -2782,14 +2785,17 @@ class ReductionSet(object):
                 
                 # Select the detector to process (Q1, Q2, Q3, Q4, All)
                 detector = self.config_dict['general']['detector']
-                q = -1
+                q = -1 # all
                 if next==4:
                     if detector=='Q1': q = 0   # SG1
                     elif detector=='Q2': q = 1 # SG2
                     elif detector=='Q3': q = 2 # SG3
-                    elif detector=='Q4': q = 3 # SG4
+                    elif detector=='Q4': q = 4 # SG4
+                    elif detector=='Q123': q = -4 # all except SG4
                     else: q = -1 # all detectors
-                    if q!=-1:
+                    if q >=0 :
+                    #if q!=-1:
+                        # A single detector will be reduced.
                         obj_ext = [obj_ext[q]]
                         if len(dark_ext) == next: dark_ext = [dark_ext[q]]
                         if len(flat_ext) == next: flat_ext = [flat_ext[q]]
@@ -2797,7 +2803,7 @@ class ReductionSet(object):
                         # Reset to 1 the number of extensions
                         next = 1
                     else:
-                        # Nothing to do, all detectors will be processed
+                        # Nothing to do, **all** detectors will be processed
                         pass
 
                 if parallel==True:
@@ -2816,11 +2822,16 @@ class ReductionSet(object):
                         results = []
                           
                         for n in range(next):
-                            if next==1 and q!=-1: # single detector processing
+                            if next==1 and q>=0:
+                            #if next==1 and q!=-1: # single detector processing
                                 q_ext = q + 1
                             else:
                                 q_ext = n + 1
-                            log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", q_ext)
+                            log.info("[reduceSeq] ===> (PARALLEL) Reducting detector %d", q_ext)
+                            
+                            if q==-4 and q_ext==4:
+                                # skip detector SG4
+                                continue
                             
                             #
                             # For the moment, we have the first calibration file 
@@ -2891,10 +2902,14 @@ class ReductionSet(object):
                 else:
                     ######## Serial #########
                     for n in range(next):
-                        if next==1 and q!=-1: # single detector processing
+                        if next == 1 and q >=0 : # single detector processing
                             q_ext = q + 1
                         else:
                             q_ext = n + 1
+                        
+                        if q == -4 and q_ext == 4:
+                            # skip detector SG4
+                            continue
 
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
                         log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", q_ext)
@@ -2911,11 +2926,6 @@ class ReductionSet(object):
                         
                         if bpm_ext==[]: mbpm = None
                         else: mbpm = bpm_ext[n][0]
-                        
-                        # Debug&Test
-                        #if n==1: return None,None# only for a TEST !!!
-                        #if n!=1: continue
-                        # 
                         
                         l_out_dir = self.out_dir + "/Q%02d" % q_ext
                         if not os.path.isdir(l_out_dir):
@@ -4050,8 +4060,9 @@ class ReductionSet(object):
         # 4.1 - Remove crosstalk - (only if bright stars are present)
         #       (if red_mode!=quick, then crosstalk will be done later)
         ########################################################################
-        if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
-            self.config_dict['general']['remove_crosstalk']):
+        if self.config_dict['general']['remove_crosstalk']:
+        #if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
+        #    self.config_dict['general']['remove_crosstalk']):
             log.info("**** Removing crosstalk ****")
             try:
                 res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
@@ -4084,23 +4095,24 @@ class ReductionSet(object):
         ########################################################################
         # Preliminary Astrometric calibration of sky-subtracted frames.
         # ######################################################################
-        log.info("**** Preliminary Astrometric calibration ****")
-        new_files = []
-        for my_file in self.m_LAST_FILES:
-            # Run astrometric calibration
-            try:
-                solved = reduce.solveAstrometry.solveField(my_file, 
-                               out_dir, # self.temp_dir produces collision
-                               self.config_dict['general']['pix_scale'])
-            except Exception,e:
-                raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
-            else:
-                # Rename the file
-                out_filename = my_file.replace(".fits", ".ast.fits")
-                new_files.append(out_filename)
-                shutil.move(solved, out_filename)
-        
-        self.m_LAST_FILES = new_files
+        if self.config_dict['offsets']['method'] == 'wcs':
+            log.info("**** Preliminary Astrometric calibration ****")
+            new_files = []
+            for my_file in self.m_LAST_FILES:
+                # Run astrometric calibration
+                try:
+                    solved = reduce.solveAstrometry.solveField(my_file, 
+                                out_dir, # self.temp_dir produces collision
+                                self.config_dict['general']['pix_scale'])
+                except Exception,e:
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+                else:
+                    # Rename the file
+                    out_filename = my_file.replace(".fits", ".ast.fits")
+                    new_files.append(out_filename)
+                    shutil.move(solved, out_filename)
+            
+            self.m_LAST_FILES = new_files
         
         ########################################################################
         # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    

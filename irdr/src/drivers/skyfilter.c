@@ -17,7 +17,7 @@
 #include <string.h>
 #include "irdr.h"
 
-#define MAXHWID 10                     /* max hwidth in frames of sky filter */
+#define MAXHWID 20                     /* max hwidth in frames of sky filter */
 
 static char *fn [MAXNPLANES];          /* FITS image file per image plane */
 static char *mfn [MAXNPLANES];         /* FITS objmask file per image plane */
@@ -229,7 +229,9 @@ static void readdata(int i, int usemask)
         eprintf("[skyfilter::readdata] Error: file %s, bkg %f, sig %f\n", fn[i], bkgs[i], sigs[i]);
 
     if (usemask) {
+        /* getwmap: produce a weight map from exptime * gainmap / variance */
         float *wmap = getwmap(fn[i], nx, ny, gainmap, sigs[i]);
+        /* getmask: mask object pixels in a weight map taking into account offsets */
         wdata[i] = getmask(wmap, nx, ny, mfn[i], xshift[i], yshift[i]);
         /* DEBUG */
         if (debug)

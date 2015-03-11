@@ -133,10 +133,7 @@ def main(arguments = None):
                   default = "dither", 
                   help = "Observing mode (dither|ext_dither|other)")
     
-    parser.add_option("-p", "--print",
-                  action = "store_true", dest = "print_seq", default = False,
-                  help = "Print detected sequences in the Data Set")
-
+    
     parser.add_option("-S", "--seq_to_reduce", type=int, nargs=2,
                   action = "store", dest = "seq_to_reduce",
                   default = -1, help = "Sequence number to reduce. By default, " 
@@ -146,12 +143,18 @@ def main(arguments = None):
                       type='choice',
                       action='store',
                       dest='detector',
-                      choices=['Q1', 'Q2', 'Q3', 'Q4', 'all'],
+                      choices=['Q1', 'Q2', 'Q3', 'Q4', 'Q123', 'all'],
                       default='all',
                       help="Specify which detector to process:"
-                      "Q1(SG1), Q2(SG2), Q3(SG3), Q4(SG4), all [default: %default]")
+                      "Q1(SG1), Q2(SG2), Q3(SG3), Q4(SG4), Q123(all except SG4), all [default: %default]")
     
+    parser.add_option("-p", "--print",
+                  action = "store_true", dest = "print_seq", default = False,
+                  help = "Print detected sequences in the Data Set")
     
+    parser.add_option("-b", "--build_calibrations",
+                  action = "store_true", dest = "build_calibrations", default = False,
+                  help = "Build all the master calibrations files")
     
     # file calibration options
     
@@ -308,6 +311,8 @@ def main(arguments = None):
 
         if init_options.print_seq:
             rs.getSequences()
+        elif init_options.build_calibrations:
+            rs.buildCalibrations()
         else:
             if init_options.seq_to_reduce==-1: #all
                 rs.reduceSet(red_mode=general_opts['reduction_mode'])

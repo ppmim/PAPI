@@ -91,7 +91,8 @@ import misc.paLog
 from misc.paLog import log
 # Fits
 import astropy.io.fits as fits
-
+from astropy import coordinates as coord
+from astropy import units as u
 
 # IRAF packages
 
@@ -121,6 +122,8 @@ from PyQt4.QtGui import *
 
 
 import commissioning.runStarfocus as focus
+import commissioning.getImageOffsets as off
+
 
 
 from misc.version import __version__
@@ -425,6 +428,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Load all the calibration files found in the specified path.
         """
         
+        log.info("Loading External Calibrations into DB from: %s "%calib_dir)
+        
         if os.path.isdir(calib_dir):
             for ifile in dircache.listdir(calib_dir):
                 if ifile.endswith(".fits") or ifile.endswith(".fit"):
@@ -683,8 +688,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 master_flat = self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
 
         # BPM: it is read from config file
-        if self.config_opts['bpm']['mode']!='none':
-            master_bpm.append(self.config_opts['bpm']['bpm_file'])
+        #if self.config_opts['bpm']['mode']!='none':
+        master_bpm.append(self.config_opts['bpm']['bpm_file'])
+        
         """
         master_bpm = self.inputsDB.GetFilesT('MASTER_BPM')
         if len(master_bpm)==0 and self.outputsDB!=None:
@@ -700,7 +706,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             r_dark = master_dark[-1]
             log.debug("First DARK candidate: %s"%r_dark)            
             r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
-            log.debug("Second DARK candidate: %s"%r_dark)            
+            log.debug("Final DARK candidate: %s"%r_dark)            
         else: 
             r_dark = None
         
@@ -708,7 +714,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             r_flat = master_flat[-1]
             log.debug("First FLAT candidate: %s"%r_flat)            
             r_flat = self.getBestShapedFrame(master_flat, sci_obj_list[0])
-            log.debug("Second FLAT candidate: %s"%r_flat)            
+            log.debug("Final FLAT candidate: %s"%r_flat)            
         else: 
             r_flat = None
             
@@ -716,7 +722,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             r_bpm = master_bpm[-1]
             log.debug("First BPM candidate: %s"%r_bpm)            
             r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
-            log.debug("Second BPM candidate: %s"%r_bpm)            
+            log.debug("Final BPM candidate: %s"%r_bpm)            
         else: 
             r_bpm = None
         
@@ -876,13 +882,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_currentNight.isChecked():
-            if datetime.datetime.utcnow().hour>0 and datetime.datetime.utcnow().hour<8:
+            if datetime.datetime.utcnow().hour > 0 and datetime.datetime.utcnow().hour < 8:
                 currentDate = (datetime.datetime.utcnow()-datetime.timedelta(days=1)).isoformat().split('T')[0]
             else:
                 currentDate = datetime.datetime.today().isoformat().split('T')[0]
             self.m_sourcedir = "/data1/PANIC/" + currentDate
             self.lineEdit_sourceD.setText(self.m_sourcedir)
-            if self.dc!=None: del self.dc
+            if self.dc != None: del self.dc
             self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
                                                        self.file_pattern , 
                                                        self.new_file_func)
@@ -1584,12 +1590,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
 		    #nCoadd = fits.getval(file, "NCOADDS", ext=0)
                     if file==seq[0]:
 			nCoadd = fits.getval(file, "NCOADDS", ext=0)
+			nObject = fits.getval(file,"OBJECT", ext=0) 
                         #the first time, fill the "tittle" of the group 
                         elem.setText(0, "TYPE="+str(seq_types[k]) + 
-                                     "  ** FILTER="+str(filter) + 
-                                     "  ** TEXP="+str(texp) + 
-                                     "  ** NCOADDS="+str(nCoadd) + 
-                                     " ** #imgs="+str(len(seq)))
+                                     "  ** FILTER=" + str(filter) + 
+                                     "  ** TEXP=" + str(texp) + 
+                                     "  ** OBJ=" + str(nObject) + 
+                                     " ** #imgs=" + str(len(seq)))
                         
                     e_child = QTreeWidgetItem(elem)
                     e_child.setText (0, str(file))
@@ -1598,8 +1605,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     e_child.setText (3, str(texp))
                     e_child.setText (4, str(date)+"::"+str(ut_time))
                     e_child.setText (5, str(object))
-                    e_child.setText (6, str(ra))
-                    e_child.setText (7, str(dec))
+                    if dec<0: sign = -1;
+                    else: sign = 1;
+                    c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                    str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1]*sign, c.dec.dms[2]*sign)
+                    e_child.setText (6, str(str_ra))
+                    e_child.setText (7, str(str_dec))
                 k+=1
         else:
             #############################################    
@@ -1621,6 +1633,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elif str(self.comboBox_classFilter.currentText())=="SKY_FLAT":
                 fileList = self.inputsDB.GetFilesT("SKY_FLAT")
                 db = self.inputsDB
+            elif str(self.comboBox_classFilter.currentText())=="FOCUS":
+                fileList = self.inputsDB.GetFilesT("FOCUS")
+                db = self.inputsDB
+            elif str(self.comboBox_classFilter.currentText())=="MASTERS":
+                fileList = self.outputsDB.GetFilesT("MASTER_DARK")
+                fileList += self.outputsDB.GetFilesT("MASTER_DARK_MODEL")
+                fileList += self.outputsDB.GetFilesT("MASTER_TW_FLAT")
+                fileList += self.outputsDB.GetFilesT("MASTER_DOME_FLAT")
+                fileList += self.outputsDB.GetFilesT("MASTER_SKY_FLAT")
+                db = self.outputsDB
             else:
                 type = str(self.comboBox_classFilter.currentText())
                 fileList = self.inputsDB.GetFilesT(type)
@@ -1637,8 +1659,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem.setText (3, str(texp))
                 elem.setText (4, str(date)+"::"+str(ut_time))
                 elem.setText (5, str(object))
-                elem.setText (6, str(ra))
-                elem.setText (7, str(dec))
+                c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                elem.setText (6, str(str_ra))
+                elem.setText (7, str(str_dec))
             
             # In addition, if "ALL" is selected, we show the OUTS as well
             if str(self.comboBox_classFilter.currentText())=="ALL":
@@ -1655,27 +1680,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     elem.setText (3, str(texp))
                     elem.setText (4, str(date)+"::"+str(ut_time))
                     elem.setText (5, str(object))
-                    elem.setText (6, str(ra))
-                    elem.setText (7, str(dec))
+                    c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                    str_ra =  "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                    elem.setText (6, str(str_ra))
+                    elem.setText (7, str(str_dec))
             
             if elem:
                 self.listView_dataS.setCurrentItem(elem)
                 
-            # filtering
-            """
-            self.listView_dataS.clearSelection()
-            it = QListViewItemIterator (self.listView_dataS)
-            listViewItem = it.current()
-            while listViewItem:
-                if listViewItem.text(1).contains(self.comboBox_classFilter.currentText()) or self.comboBox_classFilter.currentText()=="ALL":
-                    listViewItem.setVisible(True)
-                    listViewItem.setSelectable(True)
-                else:
-                    listViewItem.setVisible(False)
-                    listViewItem.setSelectable(False)
-                it+=1
-                listViewItem = it.current() 
-            """           
+                      
 #########################################################################
 ###### Pop-Up ###########################################################
 #########################################################################
@@ -1696,6 +1710,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             shortcut="Ctrl+C",
             statusTip="Copy current selected files to clipboard", 
             triggered=self.copy_sel_files_slot)
+        
+        self.ditherAct = QtGui.QAction("&Show Dither pattern", self,
+            shortcut="Ctrl+p",
+            statusTip="Show plot with dithter pattern of selected files.", 
+            triggered=self.show_dither_pattern_slot)
         
         self.toTextFileAct = QtGui.QAction("&Copy files to text file", self,
             shortcut="Shift+T",
@@ -1825,6 +1844,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Split single file into 4-single files.", 
             triggered=self.splitSingle_slot)
         
+        self.collapseCubeAct = QtGui.QAction("Collapse Cube", self,
+            #shortcut="Ctrl+j",
+            statusTip="Collapse FITS with a cube of N layers.", 
+            triggered=self.collapseCube_slot)
+        
         # Group-menu actions
         self.redSeqAct = QtGui.QAction("Reduce Sequence", self,
             shortcut="Ctrl+R",
@@ -1884,6 +1908,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.dispAct)
             popUpMenu.addAction(self.copyAct)
             popUpMenu.addAction(self.toTextFileAct)
+            popUpMenu.addAction(self.ditherAct)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.mDarkAct)
             popUpMenu.addAction(self.mDFlatAct)
@@ -1919,6 +1944,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             subMenu_fits.addAction(self.single2mefAct)
             subMenu_fits.addAction(self.splitMEFAct)
             subMenu_fits.addAction(self.splitSingleAct)
+            subMenu_fits.addAction(self.collapseCubeAct)
+            
             newAction.setMenu(subMenu_fits)
             
 
@@ -1931,6 +1958,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Restore default values, because an former call could have changed
             # the state.
             self.dispAct.setEnabled(True)
+            self.ditherAct.setEnabled(True)
             self.mDarkAct.setEnabled(True)
             self.mDFlatAct.setEnabled(True)
             self.mDTwFlatAct.setEnabled(True)
@@ -1953,6 +1981,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             if len(self.m_popup_l_sel)==1:
                 #print "#SEL_1=",len(self.m_popup_l_sel)
+                #self.dispAct.setEnabled(False)
                 self.mDarkAct.setEnabled(False)
                 self.mDFlatAct.setEnabled(False)
                 self.mDTwFlatAct.setEnabled(False)
@@ -1984,12 +2013,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
             if len(self.m_popup_l_sel)<5:
                 pass
-                #print "#SEL_5-",len(self.m_popup_l_sel)
-                #self.subNearSkyAct.setEnabled(False)
-                #self.quickRedAct.setEnabled(False)
-        
-        print "self.m_popup_l_sel=",self.m_popup_l_sel
-        
+                
         ## Finally, execute the popup
         popUpMenu.exec_(event.globalPos())
         
@@ -2009,7 +2033,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 group_files.append(str(father.child(ic).text(0)))
         
         try:
-            self.processFiles(group_files)
+            self.processFiles(group_files, interactive=True)
         except Exception,e:
             QMessageBox.critical(self, "Error", 
                                  "Error while group data reduction: \n%s"%str(e))
@@ -2028,7 +2052,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
-
+    
     def copy_sel_files_slot(self):
         """
         Copy the selected file list fullnames to the clipboard in order to 
@@ -2058,6 +2082,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
             clipboard = QApplication.clipboard()
             clipboard.setText(textFile)
             QMessageBox.information(self, "Info", "Text file %s created and copied to clipboard"%(textFile))
+
+    def show_dither_pattern_slot(self):
+        """
+        Show plot with the dither pattern followed by selected files.
+        """
+        
+        # The sort out of the files by MJD is done 
+        # in getWCSPointingOffsets().
+        try:    
+            offsets = off.getWCSPointingOffsets(self.m_popup_l_sel, "/dev/null")
+        except Exception,e:
+            msg = "Error, cannot find out the image offsets. %s"%str(e)
+            log.error(msg)
+            QMessageBox.information(self, "Info", msg)
+        else:
+            # Draw plot with dither pathern
+            off.draw_offsets(offsets, self.config_opts['general']['pix_scale'], 1.0)
 
     def MEF2Single_slot(self):
         """
@@ -2136,15 +2177,38 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 mef = misc.mef.MEF([file])
                 res = mef.splitGEIRSToSimple(out_dir=self.m_outputdir)[1]
             except Exception,e:
-                log.debug("Cannot split file %s. Maybe it's not a 4kx4k Single file", str(e))
-                QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a 4kx4k single file"%(file))
-                #self.logConsole.info(QString(str(line)))
+                msg = "Cannot split file %s. Maybe it's not a 4kx4k Single file"%(file, str(e))
+                log.debug(msg)
+                QMessageBox.critical(self, "Error", msg)
+                self.logConsole.info(QString(str(msg)))
             else:
                 line = "File generated: %s"%res
                 self.logConsole.info(QString(str(line)))
         
         QApplication.restoreOverrideCursor()
+    
+    def collapseCube_slot(self):
+        """
+        Collapse a FITS cube of N layers or planes. No recentering or layers 
+        is done. FITS can be MEF or SEF.
+        """
         
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
+        for file in self.m_popup_l_sel:
+            try:
+                new_file = misc.collapse.collapse([file], out_dir=self.m_outputdir)[0]
+            except Exception,e:
+                msg = "Cannot split file %s. Maybe it's not a Cube file"%(file, str(e))
+                log.debug(msg)
+                QMessageBox.critical(self, "Error", msg)
+                self.logConsole.info(QString(str(msg)))
+            else:
+                line = "File generated: %s"%new_file
+                self.logConsole.info(QString(str(line)))
+        
+        QApplication.restoreOverrideCursor()
+    
     def selected_file_slot(self, listItem):
         """
         To know which item is selected 
@@ -2627,8 +2691,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # If no files, returns an empy list
                 darks = self.outputsDB.GetFilesT('MASTER_DARK', -1)
                 
+                print "DARKS=", darks
+                print "DM=",dark_model
                 try:
-                    dm = dark_model[0]
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     
                     self._task = reduce.calTwFlat.MasterTwilightFlat(
@@ -2640,9 +2705,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
                     thread.start()
-                except:
+                except Exception,e:
                     QApplication.restoreOverrideCursor()
-                    log.error("Error creating master Twilight Flat file")
+                    msg = "Error creating master Twilight Flat file: %s"%str(e)
+                    log.error(msg)
+                    self.logConsole.error(msg)
+                    QMessageBox.critical(self, "Error",  msg)
         else:
             QMessageBox.information(self,"Info","Error, not enough frames (>2) !")
     
@@ -2864,7 +2932,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             self._task = RS.ReductionSet( [str(item) for item in near_list], 
                                           self.m_outputdir,
-                                          out_file=self.m_outputdir+"/skysub.fits",
+                                          out_file=self.m_outputdir + "/skysub.fits",
                                           obs_mode="dither", dark=None, 
                                           flat=self.m_masterFlat,
                                           bpm=None, red_mode="quick",
@@ -2945,18 +3013,20 @@ class MainGUI(QtGui.QMainWindow, form_class):
         msgBox.exec_()
         
         calibrations = dict(dark='', flat='', bpm='', nlc='')
-        if msgBox.clickedButton()== button_defaults or msgBox.clickedButton()==button_autosearch:
-            if msgBox.clickedButton()== button_defaults and self.checkBox_use_defCalibs.isChecked():
+        auto_search = False
+        if msgBox.clickedButton() == button_defaults or msgBox.clickedButton()==button_autosearch:
+            if msgBox.clickedButton() == button_defaults and self.checkBox_use_defCalibs.isChecked():
                 calibrations['dark'] = self.m_masterDark
                 calibrations['flat'] = self.m_masterFlat
                 calibrations['bpm'] = self.m_masterMask
                 calibrations['nlc'] = self.m_masterNLC
-                force_apply = True
+                force_apply = False
                 
             elif msgBox.clickedButton()== button_defaults and not self.checkBox_use_defCalibs.isChecked():
                 # Select master DARK
                 # In this case, a 'simple' file (whatever) could be used as a MASTER_DARK/MASTER_FLAT
-                force_apply = True
+                # Nooo, I do not think so !
+                force_apply = False 
                 filenames = QFileDialog.getOpenFileNames(self,
                                                 "Select master DARK to use",
                                                 self.m_outputdir,
@@ -2981,6 +3051,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # We will look for default cailbration for each file
                 # Default calibration files must be a MASTER_DARK/MASTER_FLAT
                 force_apply = False
+                auto_search = True
         else:
             # Cancel button pressed
             return
@@ -3017,7 +3088,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #elif self.comboBox_bpm_action.currentText()=="Fix":
                     #    bpm_mode = 'fix'
                     
-                    if msgBox.clickedButton()== button_autosearch:
+                    if auto_search:
                         # Look for (last received) calibration files
                         mDark, mFlat, mBPM = self.getCalibFor([filename])
                     else:
@@ -3028,6 +3099,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         if bpm_mode!='none':
                             mBPM = self.config_opts['bpm']['bpm_file']
 
+                    # Show message with calibrations found
+                    # Ask for confirmation
+                    msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(mDark, mFlat, mBPM)
+                    resp = QMessageBox.information(self, "Info", 
+                        QString("Calibrations found are: \n %1").arg(str(msg)),
+                                     QMessageBox.Ok, QMessageBox.Cancel)
+                    if resp==QMessageBox.Cancel:
+                        return
+                    
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
                     self.logConsole.info("Calibrations to use:")
@@ -3152,25 +3232,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         Run the focus evaluation procedure of a set of files of focus serie.
         It is run **interactively**.
-
-        NOTE: it only works for non-MEF files !!!
         """
         
         if len(self.m_popup_l_sel)>3:
             with fits.open(self.m_popup_l_sel[0]) as myfits:
                 if len(myfits)>1:
-                    msg = "Found a MEF file, but this routine only works for single FITS. Run FITS->MEF2Single."
-                    self.logConsole.error(msg)
-                    QMessageBox.critical(self, "Error", msg)
-                    return
+                    # Convert MEF-files to join-files (iraf.starfocus only support that kind of files)
+                    try:
+                        mef = misc.mef.MEF(self.m_popup_l_sel)
+                        my_files = mef.doJoin(".join.fits", output_dir=self.m_outputdir)[1]
+                    except Exception,e:
+                        log.debug("Cannot convert MEF to Single file %s. Maybe it's not a MEF file", str(e))
+                        QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file"%(file))
+                    else:
+                        line = "Files generated: \n%s\n"%my_files
+                        self.logConsole.info(QString(str(line)))
+                else:
+                    # We have non-MEF files
+                    my_files = list(self.m_popup_l_sel)
             
             text_file = self.focus_tmp_file  # ~/iraf/focus_seq.txt
             iraf_logfile = self.m_tempdir + "/starfocus.log"
             # copy the list and swap first and center position
-            my_list = list(self.m_popup_l_sel)
-            my_list[0], my_list[len(my_list)/2] = my_list[len(my_list)/2], my_list[0]    
+            my_files[0], my_files[len(my_files)/2] = my_files[len(my_files)/2], my_files[0]    
             # copy list to file; if file exists, overwrite
-            self.genFileList(my_list, text_file)
+            self.genFileList(my_files, text_file)
             try:
                 ## New approach
                 #os.system("/home/panic/DEVELOP/papi/commissioning/runStarfocus.py -s %s &"%text_file)
@@ -3587,7 +3673,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         fileList = self.inputsDB.GetFilesT("ANY")
         
-        if len(fileList)>1:
+        if len(fileList) > 1:
+            # Ask for confirmation
+            resp = QMessageBox.information(self, "Info", 
+                                         QString("All calibrations will be built into OutDir using files of InputDir"),
+                                         QMessageBox.Ok, QMessageBox.Cancel)
+            if resp==QMessageBox.Cancel:
+                return
             
             # Create the RS            
             try:
@@ -3718,7 +3810,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             print "ARGS=", args
             output.put(RS.ReductionSet(args).func())
             
-    def processFiles(self, files=None, group_by=None, outfilename=None):
+    def processFiles(self, files=None, group_by=None, outfilename=None,
+                     interactive=False):
         """
         Process the files provided; if any files were given, all the files 
         in the current Source List View (but not the output files) will be
@@ -3828,6 +3921,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elif self.comboBox_detector.currentText()=="SG2": detector = 'Q2'
             elif self.comboBox_detector.currentText()=="SG3": detector = 'Q3'
             elif self.comboBox_detector.currentText()=="SG4": detector = 'Q4'
+            elif self.comboBox_detector.currentText()=="SG123": detector = 'Q123'
             else: detector = 'all'
             self.config_opts['general']['detector'] = detector
 
@@ -3845,7 +3939,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
 
             # Show the calibration to be used
             if self.config_opts['general']['apply_dark_flat']!=0:
+                # Look for calibs
                 md, mf, mb = self.getCalibFor(files)
+                
+                # Show message with calibrations found
+                # and ask for confirmation.
+                if interactive:
+                    msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(md, mf, mb)
+                    resp = QMessageBox.information(self, "Info", 
+                            QString("Calibrations found are: \n %1").arg(str(msg)),
+                                        QMessageBox.Ok, QMessageBox.Cancel)
+                    if resp==QMessageBox.Cancel:
+                        return
+                
                 self.logConsole.info("Calibrations to use:")
                 self.logConsole.info("+ Dark=%s"%md)
                 self.logConsole.info("+ Flat=%s"%mf)

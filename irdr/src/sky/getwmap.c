@@ -55,8 +55,8 @@ extern float *getmask(float *wmap, int nx, int ny, char *objmfn,
     iyoff = (int)(border_y - yoff);
     
     /* Prueba */
-    ixoff = -xoff;
-    iyoff = -yoff;
+    /*ixoff = -xoff;
+    iyoff = -yoff;*/
     printf("\nixoff = %d  iyoff = %d\n", ixoff, iyoff);
     for (i = 0; i < ny; i++) {
         /* printf("\n DEBUG ny=%d , I=%d\n", ny, i); */

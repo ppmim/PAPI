@@ -71,14 +71,16 @@ cube_median(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
     int i, j, is_even = !(np & 1);
     static float buf[MAXNPLANES];      /* values of a pixel in all planes */
     float *medplane;
-
+    
     medplane = (float *) emalloc(nx * ny * sizeof(float));
 
     if (offset) {                          /* zero offset to normalize; it is much more "safe" than a multiplicative normalization */
         for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
             for (j = 0; j < np; j++)
+            {
                 buf[j] = *(planes[j] + i) + scale[j];
-
+            }
+            
             medplane[i] = kselect(buf, np, np/2 - is_even);
         }
     } else {

@@ -117,12 +117,16 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
     if 'PYTOOLS_NO_DISPLAY' in os.environ:
         print "QUE PASAAAAAAAAAAAAA -- PYTOOLS_NO_DISPLAY=", os.environ['PYTOOLS_NO_DISPLAY']
     
-    #try :
-    #    import Tkinter
-    #except ImportError :
-    #    print "CANNOT IMPORT TKINTER !!!"
+    print "LOG_FILE=",log_file
         
-        
+    # Be sure the logfile is writtable
+    try:
+        with open(log_file, "w") as f:
+            pass
+    except IOError,e:
+        print "Could not open log file: %s"%log_file
+        raise e
+                  
     # Config and launch the iraf.starfocus task
     try:
         iraf.noao(_doprint=0)
@@ -135,9 +139,9 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
         starfocus.nexposures = 1 
         starfocus.coords = "mark1"
         starfocus.wcs = "world" 
-        starfocus.size = "GFWHM"
+        starfocus.size = "MFWHM"
         starfocus.scale = 1
-        starfocus.radius = 10
+        starfocus.radius = 5
         starfocus.sbuffer = 10 
         starfocus.swidth= 10
         starfocus.saturation = satur_level
@@ -162,7 +166,7 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
     
     
     
-def writeDataFile(log_file, data_file, target):
+def writeDataFile_old(log_file, data_file, target):
     """
     Read iraf.starfocus log file and write a data file to be used
     later for the Tilt analysis (p_50_tiltcheck.py).
@@ -198,6 +202,31 @@ def writeDataFile(log_file, data_file, target):
         print 'Data file written: %s' %data_file
     else:
         print 'Error, no data file given'
+
+def writeDataFile(best_focus, min_fwhm, avg_x, avg_y, 
+                      data_file, target):
+    """
+    Write a data file to be used
+    later for the Tilt analysis (p_50_tiltcheck.py).
+    """
+    
+    if data:
+        fo = open(data_file, 'w')
+        if target:
+            obj = target
+        else:
+            print 'WARNING: Object name not provided'
+            obj = 'Unknowm'
+        fo.write('# Object: %s\n' %obj)
+        line = " Average best focus of %f with FWHM of %f\n"%(best_focus, min_fwhm)
+        fo.write('#%s' %line)
+        line = "  Best focus estimate @ (%f, %f): FWHM=%f, m=0.0, f=%f\n"%(avg_x, avg_y, min_fwhm, best_focus)
+        fo.write(line)
+        fo.close()
+        print 'Data file written: %s' %data_file
+    else:
+        print 'Error, no data file given'
+
         
 def readStarfocusLog(log_file):
     """
@@ -261,7 +290,7 @@ def getBestFocus(data, output_file):
         
     Returns
     -------
-    If success, returns the best focus computed.
+    If success, returns the best focus (in mm) computed and the min FWHM (pix).
     
     """
     
@@ -300,8 +329,9 @@ def getBestFocus(data, output_file):
         print "ERROR: Parabola fit unusable!"
     best_focus = - pol[1] / (2. * pol[2])
     min_fwhm = pol([best_focus])
-    print "BEST_FOCUS (OWN) = ", best_focus + m_foc
-    print "MIN_FWHM (OWN) = ", min_fwhm
+    # Next message can be useful for IRAF console
+    print "QL_BEST_FOCUS (um) = %6.0f"%((best_focus + m_foc)*1000)
+    print "QL_MIN_FWHM (pix) = ", min_fwhm
     
     if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
         print "ERROR: Best focus out of range!"
@@ -310,8 +340,8 @@ def getBestFocus(data, output_file):
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
     plt.plot(xp + m_foc, pol(xp), '-')
     plt.axvline(best_focus + m_foc, ls='--', c='r')
-    plt.title("Focus serie - Fit: %f X^2 + %f X + %f\n Best Focus=%6.3f mm" 
-        %(pol[2], pol[1], pol[0], best_focus + m_foc))
+    plt.title("Best Focus=%6.0f um - FWHM=%4.2f pix" 
+        %((best_focus + m_foc)*1000, min_fwhm ))
     
     plt.xlabel("T-FOCUS (mm)")
     plt.ylabel("FWHM (pixels)")
@@ -335,7 +365,7 @@ def getBestFocus(data, output_file):
     #for idx, foc_value in enumerate(good_focus_values):
     #    sys.stdout.write("\nFoc. value: %s   -->  FWHM: %s"%(foc_value, fwhm_values[idx]))
     
-    return (best_focus + m_foc)
+    return (best_focus + m_foc), min_fwhm
 
 def runFocusEvaluation(source_file, coord_file, log_file):
     """
@@ -362,7 +392,7 @@ def runFocusEvaluation(source_file, coord_file, log_file):
     # Compute our own BEST_FOCUS value and plot the fittting
     print "Now, our own fitting...\n"
     data = readStarfocusLog("/home/panic/iraf/starfocus.log")
-    my_best_focus = getBestFocus(data, "starfocus.pdf")
+    my_best_focus, min_fwhm  = getBestFocus(data, "starfocus.pdf")
     
 if __name__ == "__main__":
     
@@ -406,7 +436,7 @@ if __name__ == "__main__":
     # only read current log and compute BestFocus
     elif not options.source_file and not options.coord_file and options.log_file:
         data = readStarfocusLog(options.log_file)
-        my_best_focus = getBestFocus(data, "starfocus.pdf")
+        my_best_focus, min_fwhm = getBestFocus(data, "starfocus.pdf")
     # run iraf.starfocus and compute our own BestFocus
     elif options.source_file and options.coord_file and not options.data_file:
         try:
@@ -418,20 +448,25 @@ if __name__ == "__main__":
             raise e
     # Complete execution
     else:
-        display.startDisplay()
+        #display.startDisplay()
         # Run iraf.starfocus
         best_focus = getBestFocusfromStarfocus("@" + options.source_file, 
                                             options.coord_file, 
                                             options.log_file)
         
-        # Read log file and write values into data file for the Tilt analysis.
-        writeDataFile(options.log_file, options.data_file, options.target)
         
         # Compute our own BEST_FOCUS value and plot the fittting
         print "Now, our own fitting...\n"
         data = readStarfocusLog(options.log_file)
         
-        # I do not know why if IRF window is open, then matplotlib crash with a SF !!!
-        my_best_focus = getBestFocus(data, "starfocus.pdf")
+        plot_filename = os.path.splitext(options.data_file)[0] + ".pdf"
+        my_best_focus, min_fwhm = getBestFocus(data, plot_filename)
+        
+        d = np.array(data, dtype=np.float32)
+        avg_x = d[:,0].mean()
+        avg_y = d[:,1].mean()
+        # Write values into data file for the Tilt analysis.
+        writeDataFile(my_best_focus, min_fwhm, avg_x, avg_y, 
+                      options.data_file, options.target)
         
     sys.exit(0)

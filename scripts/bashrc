@@ -34,31 +34,29 @@ alias data='cd /data1/'
 ###
 # In case the operator has already set TELESCOPE in the shell,
 # GEIRS accept this. Otherwise, the operator must select on the
-# GEIRS init window the right telescope. Note: It does not move the cold stop.
-export TELESCOPE="CA2.2m"
+# GEIRS init window the right telescope. 
+# Note: It does not move the cold stop.
+if [[ $HOST =~ panic22 ]] ; then
+    export TELESCOPE="CA2.2m"
+elif [[ $HOST =~ panic35 ]] ; then
+    export TELESCOPE="CA3.5m"
+fi
+
 export CAMHOME=${HOME}/GEIRS
+TECS_SCRIPT=$HOME/TECS/scripts
 
 ### PAPI environment ###
 ##
 export PAPI_HOME=${HOME}/papi
 PYTHONPATH=$PYTHONPATH:$PAPI_HOME
-PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_PANIC.cfg
+PAPI_CONFIG=$PAPI_HOME/config_files/papi.cfg
 PAPI_PROD=/data2/out
-# Proxy required for cdsclient at MPIA
-http_proxy=derfel.caha.es:3128
 export QT_GRAPHICSSYSTEM=native
 export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy
-
-# PANIC-MIDAS PROCEDURES
-GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
-CA_FFLTEST=$PAPI_HOME/simu/caha/ffltest
-AUPLAY=/usr/bin/play
-GEIRS_DIR=/home/panic/GEIRS
-FLAT_COMMAND=$PAPI_HOME/simu/caha/flats
-TECS_SCRIPT=$HOME/TECS/scripts
-PANIC_UTIL=$PAPI_HOME/MIDAS
-PANIC_SCI=$PAPI_HOME/MIDAS
 ASTROMETRY=/usr/local/astrometry/bin
+# Proxy required for cdsclient at MPIA
+http_proxy=derfel.caha.es:3128
+
 
 PATH=$PATH:$HOME/GEIRS/scripts:$HOME/GEIRS/binrjm:$ASTROMETRY:$HOME/bin:$HOME/TECS/scripts
 export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
@@ -69,9 +67,14 @@ export QT_GRAPHICSSYSTEM=native
 
 ### OT environment ###
 export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'
+export TELE_REL_MAX_OFFSET='10000'
 ### end OT environment ###
 
-### Para enviar el sonido al SOR del 2.2
-export AUDIOSERVER="xt22:0"
+### Para enviar el sonido al SOR (terminal) del 2.2m/3.5m
+if [[ $HOST =~ panic22 ]] ; then
+    export AUDIOSERVER="xt22:0"
+elif [[ $HOST =~ panic35 ]] ; then
+    export AUDIOSERVER="xt32:0"
+fi
 ###
 

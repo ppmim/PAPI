@@ -267,6 +267,12 @@
         <height>23</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
       <property name="toolTip">
        <string>Select a directory or log file for received files location</string>
       </property>
@@ -335,6 +341,12 @@
         <width>110</width>
         <height>23</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
       </property>
       <property name="toolTip">
        <string>Browse the output processed files location</string>
@@ -447,12 +459,22 @@
       </item>
       <item>
        <property name="text">
+        <string>FOCUS</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>SKY_FLAT</string>
        </property>
       </item>
       <item>
        <property name="text">
         <string>SCIENCE</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>MASTERS</string>
        </property>
       </item>
       <item>
@@ -1134,6 +1156,43 @@
         <width>911</width>
         <height>211</height>
        </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>127</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>170</red>
+            <green>170</green>
+            <blue>127</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>250</red>
+            <green>250</green>
+            <blue>250</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
       </property>
       <property name="selectionMode">
        <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -2076,11 +2135,6 @@
        </property>
        <item>
         <property name="text">
-         <string>All</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
          <string>SG1</string>
         </property>
        </item>
@@ -2097,6 +2151,16 @@
        <item>
         <property name="text">
          <string>SG4</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SG123</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All</string>
         </property>
        </item>
       </widget>
@@ -2166,7 +2230,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Display</string>
+       <string>Display (ds9)</string>
       </property>
       <widget class="QComboBox" name="comboBox_show_imgs">
        <property name="geometry">
@@ -2796,6 +2860,43 @@
          <property name="enabled">
           <bool>false</bool>
          </property>
+         <property name="palette">
+          <palette>
+           <active>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>137</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </active>
+           <inactive>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>137</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </inactive>
+           <disabled>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>250</red>
+               <green>250</green>
+               <blue>250</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </disabled>
+          </palette>
+         </property>
          <property name="readOnly">
           <bool>true</bool>
          </property>
@@ -2805,6 +2906,43 @@
         <widget class="QLineEdit" name="lineEdit_masterFlat">
          <property name="enabled">
           <bool>false</bool>
+         </property>
+         <property name="palette">
+          <palette>
+           <active>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>137</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </active>
+           <inactive>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>137</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </inactive>
+           <disabled>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>250</red>
+               <green>250</green>
+               <blue>250</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </disabled>
+          </palette>
          </property>
          <property name="readOnly">
           <bool>true</bool>
@@ -2973,6 +3111,43 @@
       <width>941</width>
       <height>181</height>
      </rect>
+    </property>
+    <property name="palette">
+     <palette>
+      <active>
+       <colorrole role="Base">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>170</red>
+          <green>170</green>
+          <blue>127</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </active>
+      <inactive>
+       <colorrole role="Base">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>170</red>
+          <green>170</green>
+          <blue>127</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </inactive>
+      <disabled>
+       <colorrole role="Base">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>250</red>
+          <green>250</green>
+          <blue>250</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </disabled>
+     </palette>
     </property>
    </widget>
   </widget>
