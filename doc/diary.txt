@@ -5790,10 +5790,13 @@ $ setenv IMTDEV inet:5137:localhost
 Pero podemos tener problemas si hay más de un ds9 abierto; para ello habría
 que abrir el ds9 en otro puerto:
 
-$ds9 -port 5138
+$ ds9 -port 5138
 $ setenv IMTDEV inet:5138:localhost
 
 $export IMTDEV=inet:5137 (puerto por defecto !!!)
+
+$(lanzar_iraf) después de IMTDEV para que lea dicha variable.
+
 
 Una cosa muy interesante es que podemos también usar un DS9 local corriendo
 en otra máquina diferente a la que corre IRAF !! con lo cual ganamos en velocidad
@@ -6383,6 +6386,7 @@ Siguie siendo un poco chapuza, pero no encuentro otra manera de hacerlo !!!!
 
 02-Marzo-2015
 -------------
++ Viaje CAHA: salida a las 10:15h.
 + Commissioning @ 3.5m telescope
 
 - modifico el script de login.cl y papi_ql_user.cl de obs35@panic35
@@ -6520,7 +6524,180 @@ que en las shifted, como era de suponer, si aparecen. ¿ sólo queda comprobar l
 
 
 
-(se me ocurre que podría ser tambien el dxtalk el que eliminara la estrellas ...)
+(se me ocurre que podría ser tambien el dxtalk el que eliminara la estrellas ...) --> comprobado que no es por eso.
+
+- Bajo de CAHA sobre las 17:15h
+
+10-Marzo-2015
+-------------
+- Asistencia remota observaciones de CAHA.
+- Nuevo problema de Memory Buffer en GEIRS; parece que pudo verse disparado
+por el acceso masivo a disco, pues yo estaba moviendo datos de /data1 a /data2 para
+liberar espacio. BD sospecha de eso, y del Archivo de CAHA, pero yo creo que no es por eso,
+pues ha habido casos (GEIRS mem. buffer) en los que no había Archivo ni copia masiva de datos.
+
+- BD me pide que calcule el alineado de los detectores tras haber realizado un nuevo ajuste
+en PANIC-vs-Telescopio (ver email).
+
+- Encuetro y soluciono bug en mef.py en la conversion de SEF a individual (splitGEIRSToSimple);
+todo venía por la confusión columnas X filas que hay entre Numpy y FITS (naxis):
+
+    # We must take into account that FITS(NAXISi) and Numpy arrays follow different convention:
+    # FITS : NAXIS1 = x = column; NAXIS2 = y = row
+    # Numpy arrays : [y,x]  y=row, x=column 
+
+- Afortunadamente creo que no a afectado a ningún cálculo del commisioning.
+    
+11-Marzo-2015
+-------------
+- Descubro por fin el problema del mal enmascaramiento de ciertos objetos a partir
+de coadd1.fits que crea dithercubemean. El problema es debido a que para offsets grandes (~600px)
+la distorsión es considerable (12-8px) y los offsets calculados vía WCS no son válidos
+para todo el campo, sobre todo para ciertas áreas del detector; por esto
+al hacer el stack con dithercubemean, como se usa cube_mean() el cual hace una media 
+robusta con clipping  cuando >5 frames, entonces al no coincidir los puntos (estrellas), se
+"anulan" ciertos objetos. Esto lo pude demostrar al sumar yo directamente las imagenes
+"shifted" que crea shift_image en dithercubemean (modo debug), pues para un conjunto de 5 posiciones
+de dithering se veian en algunos casos 5 estrellas, esas misma son las que luego se anulan
+al hacer la media del stack, pues no coincide ninguna en el stack.
+La solución pasa por tanto por hacer en esos casos una suma "simple" para que siempre tengamos
+objetos, aunque sea 5 (N) objetos muy juntos. Para hay que llamar a dithercubemean con
+un argumento extra (en realidad da igual su valor) para que se ejecute cube_sum() en lugar
+de cube_mean().
+
+- Pruebo esa nueva forma de calcular el primer coadd con 'sum', pero no resulta bien pues
+la máscara de objetos no se crea bien, pues hay "demasiados" falsos positivos debido al
+alto background que hemos creado con la 'suma'; creo que la solución pasaría por :
+
+  - crear una máscara para cada skysub.fits y sumar las máscaras ....
+  - crear una máscara para cada skysub.fits y ver si skyFilter admite 
+  indicar una máscara para cada skysub.fits....
+
+- Avería grave en PANIC: se rompe el 'detector exhaust pipe'.
+
+
+12-Marzo-2015
+-------------
+- Implemento la 2nd. Sky subtraction para que se use una mascara de objetos por cada .skysub.fits
+y por tanto una matriz de offsets = 0; el resultado no parece malo, y se ve que en comparación con
+la misma imagen reducida en modo quick, hay alguna "sombras" menos creadas por la contribución de
+los objetos (no enmascarados en la single skysubtraction) en el background restado.
+Habrá que ver si merece la pena hacerlo así siempre, es decir, incluso para cuando tenemos
+offsets pequeños y en teoria el coadd1 y la mascara de objetos (única) se crea correctamente....
+
+
+
+16-Marzo-2015
+-------------
+- Videoconf de PANIC: básicamente sobre el accidende de PANIC y
+los datos obtenidos durante el commisioning.
+
+- Ver en MEGARA el tema de los cppunit y autotools.
+
+
+17-Marzo-2015
+-------------
+- PQL: En applyDarkFlat, elimino la ventana que muestra los ficheros
+de calibración a usar, pues es bastante molesta en el caso de que 
+hayamos seleccionado muchos ficheros.
+
+- Parece que ya se como doy con la tecla para configurar el comando /sbin/reboot
+para que lo pueda ejecutar el usuario panic:
+
+$visudo
+
+añadir la linea:
+
+panic   ALL=(root) /sbin/shutdown,/sbin/reboot,/bin/systemctl
+
+y comentar las líneas:
+
+Defaults targetpw   # ask for the password of the target user i.e. root
+ALL    ALL=(ALL) ALL   # WARNING! Only use this together with 'Defaults targetpw'!
+
+
+Esto funciona en openSuSE12.2 como siguie:
+
+sudo /sbin/reboot  (le damos el passwd del usuario panic)
+
+pero en openSuSE13.1 no lo he podido probar aún.
+
+- Creo el script clean_cache.sh que 'limpia' la cache y que parece que 
+recupera a GEIRS del problema con "Memory buffer allocation".
+sync
+echo 3 > /proc/sys/vm/drop_caches
+
+
+- fixbug en current_night en PQL; el problema era la comparación ">0", que
+debe ser ">=0".
+
+- ver si removeXTalk debería hacerse siempre en en la primera pasada de skysub aunque
+el modo sea science !! --> hecho, lo he cambiado para que se haga siempre.
+
+
+- Modifico calDomeFlat para que acepte cubos de datos, y que además permita
+que sólo le llegue un dome_on y un dome_off. Los datos de 2015-03-10 fueron
+tomados así (cubos y sóllo un flat de cada tipo).
+Además le modifico la normalización, para que sea más robusto y use SG1_1 o Q1_1.
+
+
+18-Marzo-2015
+-------------
+- Añado collpase a calTwFlat y a calDark.
+- Añado comprobación de TEXP (bug) y NCOADD (new) en applyDarkFlat. Además
+compruebo que no hay que hacer collapse, pues la el D y F se puede aplicar 
+a cubos de datos (MEF o SEF) sin problemas.
+- Modifico calTwFlat.py para que convierta todos los ficheros a MEF si es
+necesario, para así evitar problemas. Esto lo hago porque durante el último
+commisioning muchos de los skyflat ( y algunos darks) se tomaron como SEF.
+Añado tambien np.isclose() para la comparación de los tiempos de integración,
+pues puede suceder que el time_scale no sea exactamente = 1.0.
+Esto puede ser util hacerlo en más lugares de PAPI...
+
+- Modifico mef.py (convertGEIRSToMEF) para que no renombre un fichero si 
+ya es un MEF y no tiene que hacerle nada (si lo renombramos, "se borra" el original).
+
+
+
+19-Marzo-2015
+-------------
+- Matilde me envía un email informándome de un bug en el QL ( o mal comportamiento)
+cuando hace uso de la opción "Set Filename Filter" para que filtre los ficheros
+del InputPath. El problema está en que el DataCollector, para cada fichero que
+se filtra, se piensa que se ha borrado y llama a la función mainGUI::new_file_func(),
+y a su vez hace un reordena (__sortFilesMJD) de los ficheros, y el QL
+crea de nuevo la vista del ListView, etc, etc.. todo muuuuy lento.
+Quizás la solución pase por hacer que el DC envie la lista entera de ficheros
+"desaparecidos"/filtrados en lugar de uno a uno.
+Por tanto, todo pasa por depurar DC::findNewFiles() para el caso de filtrado de ficheros.
+
+- BD me pregunta (email) que hace el 'Background estimation'.
+
+
+20-Marzo-2015
+-------------
+- Soluciono el bug reportado por Matilde (ver 19-Marzo) en el filtrado de los
+ficheros del directorio de entrada. Finalemente opto por la solución de filtrar
+a nivel listView_dataS en la funcion slot_classFilter() usando fnmatch. De esta forma,
+los ficheros filtrados (excluidos) siguen en la BD y en el DC (se seguirán detectado),
+pero eso no creo que de problemas...
+Habia pensado también en hacer un Reset de todo (BD y DC) y leer de nuevo todo
+el directorio, pero eso es más lento.
+
+- Corrijo también (de nuevo !!) el bug en el signo (-) en la declinación para valores <0.
+
+
+
+
+Comentarios sobre reducción y datos tomados para Matilde
+--------------------------------------------------------
+- En la noche 2015-03-10, las secuencias de DomeFlat sólo tienen
+uno de cada tipo (1 ON, 1 OFF). ¿ es eso correcto ? Yo tenía
+un mínimo de 3 en la rutina de calDomeFlat.
+- En ese mismo día, los DomeFlat son también cubos; ¿ basta con sumarlos ?
+
+
+
 
 
 Posibles causas del problema del Transito WASP:
@@ -6539,20 +6716,29 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
-- OJO !!! --> los ficheros /data2/tmp/sky** y /data2/tmp/skyw* de depuración
-que se generan en skyfilter son creado por el usuario panic y si lanzaramos las misma
-reducción (modo science) como obs35 (o cualquier otro) no podrían sobreescribirlos y fallaría !!
-Por tanto hay que hacer algo para oborrarlos !!!
+- Añadir al PQL en la pestaña Calibrations la opción de selecionar un directorio
+con masterDarks y masterFF (ext_calibration_db) para que se lea y lo tenga disponible
+el QL para applyDark, reducciones, etc...
+- Añadir opcion de dar estimación del cielo de un conjunto de imagenes con dithering:
+básicamente es hacer un combine con un sigma reject de los objetos.
+
+- Resolver tratamiento BP en gainmap (level, etc...); ahora lo mejor es no detectarlos
+poniendo el umbral muy alto !!
+- Probar sugerencias de RM en el kernel y sistema.
+- Probar reboot como usuario panic
+- Quitar todos los debugs (ficheros temporales) de skyfilter.c
+   OJO !!! --> los ficheros /data2/tmp/sky** y /data2/tmp/skyw* de depuración
+   que se generan en skyfilter son creado por el usuario panic y si lanzaramos las misma
+   reducción (modo science) como obs35 (o cualquier otro) no podrían sobreescribirlos y fallaría !!
+   Por tanto hay que hacer algo para oborrarlos !!!
+- idem con dithercubemean con las imagenes shifted!
+
 
 - DITHERCUBEMEAN no funciona bien para offsets grandes (>300 o >600) !!! o eso me parece, pues
 con /Astrometry_M67_0026-30 del 7-Marzo no hay manera !!! (en la segunda pasada de PAPI).
-- bug en current_night en PQL
-- En declinaciones negativas, en el QL se muestran tambien los minutos y segundos negativos.
-
 - Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
 - ver si CreateCalibs puede incluso hacer la NLC !!
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
-- Que muestre el/los ficheros encontrados para la calibración y pida confirmación.
 - Que pregunte que Qi reducir en el PQL
 - Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
 de objetos no hace bien su función, pues en la imagen final salen manchas negras....
@@ -6600,8 +6786,7 @@ el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un 
 en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
 si se detecta bien los SKY de los SCIENCE
 
-- ver si removeXTalk debería hacerse siempre en en la primera pasada de skysub aunque
-el modo sea science !!
+
 - Revisar/permitir D+F+BPM en QL de modo automatico
 - refactorizar la astrometría en RS
 - cambiar directorio temporal de astrometry.net (/tmp/) para los /tmp/tmp.sanitized.ZDkbmU !!
@@ -6611,7 +6796,6 @@ el modo sea science !!
 - Añadir NCOADD, ITIME, MEF ? a la ListView del QL
 - DUDA: cómo se usa el ext_calibration_db en el QL ???
 - añadir opcion de crear "solo" calibrationes desde CL de PAPI
-- añadir ext_db a las opciones de CL de PAPI
 - adaptar Nuevo interfaz de calTwFlat en PAPI !!
 - Sacar algún mapa de distorsión decence !! (datos Tilt y/o 10-Dic-2014)
 - aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
@@ -6635,7 +6819,7 @@ hay muchos ficheros temporales que usa el propio sistem...
 - Ojo, el fichero offsets1.pap se crea en /data2/out/ en lugar de /data2/out/Q0X) !!!! conflicto entre detectores en reducción paralelo !!
 nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 
-- Quitar todos los debugs (ficheros temporales) de skyfilter.c
+
 - Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
 - limpiar fichero de configuración de variables que no usamos.
 - ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...

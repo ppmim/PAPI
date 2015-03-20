@@ -133,7 +133,7 @@ class DataCollector (object):
         """
         #a = [os.path.join(dirpath, s) for s in os.listdir(dirpath)
         #    if os.path.isfile(os.path.join(dirpath, s))]
-        a = [os.path.join(dirpath, s) for s in glob.glob(dirpath+"/"+self.filename_filter) \
+        a = [os.path.join(dirpath, s) for s in glob.glob(dirpath + "/" + self.filename_filter) \
               if os.path.isfile(os.path.join(dirpath, s))]
          
         a.sort(key=lambda s: os.path.getmtime(s))
@@ -303,14 +303,14 @@ class DataCollector (object):
         
         try:
             # To Read the directory contents
-            if self.mode=="dir":
+            if self.mode == "dir":
                 #contents = [os.path.join(self.source, file) for file in os.listdir(self.source)]
                 contents = self.__listFiles(self.source)
             # To Read a simple text file
-            elif self.mode=="file":
+            elif self.mode == "file":
                 contents = [line for line in fileinput.input(self.source)]
             # To read ~/GEIRS/log/save_CA2.2m.log
-            elif self.mode=="geirs-file":
+            elif self.mode == "geirs-file":
                 contents = self.read_GEIRS_fitsLog(type=1)
                 """
 	            # Read the file contents from a generated GEIRS file
@@ -348,7 +348,7 @@ class DataCollector (object):
                 # DISappeared from the directory. Adjust the lists accordingly
                 print '[DC] File %s disappeared from directory - updating lists' % file
                 self.dirlist.remove(file)
-                self.callback_func(file+"__deleted__")
+                self.callback_func(file + "__deleted__")
                 
                 # Do NOT swap the following two statements!
                 
@@ -368,11 +368,11 @@ class DataCollector (object):
         # ## 2011-09-12
         # Before adding to dirlist and process the new files, we sort out by MJD
         # Only when mode=dir, because it is supposed in 'file's-modes are already sorted
-        if self.mode=="dir":
+        if self.mode == "dir":
             # check of data integrity is also done at sortFilesMJD
             contents = self.__sortFilesMJD(contents)
             
-        # Now loop over the remaining files
+        # Now loop over the remaining files (the new files arrived !)
         for file in contents:
 
             # And append these to 'self.dirlist' for future reference
@@ -394,7 +394,7 @@ class DataCollector (object):
                 # Try-to-read the file (only for integrity check)
                 try:
                     # Now, try to read the file
-                    if self.mode!="dir": # for dir, it was already done above in __sortFilesMJD()
+                    if self.mode != "dir": # for dir, it was already done above in __sortFilesMJD()
                         fits = datahandler.ClFits(file, check_integrity=True)
                         del fits
                 except IOError,e:
@@ -422,8 +422,8 @@ class DataCollector (object):
         # It is done to avoid overloading the QL update of the ListView each time
         # when a long directory is loaded in one go. Howerver, last file is not 
         # inserted twice.
-        if len(contents)>0:
-            self.callback_func(contents[-1]+"__last__")
+        if len(contents) > 0:
+            self.callback_func(contents[-1] + "__last__")
 
 
     

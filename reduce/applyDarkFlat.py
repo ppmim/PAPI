@@ -33,6 +33,7 @@
 #              15/11/2010    jmiguel@iaa.es - Added normalization to flat-field
 #              16/11/2010    jmiguel@iaa.es - Added support for MEF files
 #              21/03/2014    jmiguel@iaa.es - Added support for BPM
+#              18/03/2015    jmiguel@iaa.es - Added checking of NCOADD
 ################################################################################
 
 ################################################################################
@@ -158,6 +159,8 @@ class ApplyDarkFlat(object):
         fmef = False # flag to indicate if flat is a MEF file or not
         n_ext = 1 # number of extension of the MEF file (1=simple FITS file)
         median = 1 # median of the flat frame (if mef, mode of chip 0) 
+        dark_time = None
+        dark_ncoadd = None
         # default value used if normalization is not done
         
         # #######################
@@ -171,19 +174,13 @@ class ApplyDarkFlat(object):
                 dark = fits.open(self.__mdark)
                 cdark = datahandler.ClFits (self.__mdark)
                 dark_time = cdark.expTime()
-                
-                if (not self.__force_apply and cdark.getType()!='MASTER_DARK' and 
-                    cdark.getType()!='MASTER_DARK_MODEL'):
+                dark_ncoadd = cdark.getNcoadds()
+                if (not self.__force_apply and cdark.getType() != 'MASTER_DARK' and 
+                    cdark.getType() != 'MASTER_DARK_MODEL'):
                     log.error("File %s does not look a neither MASTER_DARK nor MASTER_DARK_MODEL",self.__mdark)
                     raise Exception("File %sdoes not look a neither MASTER_DARK nor MASTER_DARK_MODEL"%self.__mdark)
                 
-                #dark_data=dark[0].data
                 n_ext = cdark.next  
-                """if len(dark)>1:
-                    dmef = True
-                    n_ext = len(dark)-1
-                    log.debug("Dark MEF file with %d extensions", n_ext)
-                """
                 out_suffix = out_suffix.replace(".fits","_D.fits")
                 log.debug("Master DARK to be subtracted : %s"%self.__mdark)
         # No master dark provided, then no dark to subtract
@@ -191,10 +188,11 @@ class ApplyDarkFlat(object):
             log.warning("No master dark to be subtracted !")
             dark_data = 0
             dark_time = None
+            dark_ncoadd = None
             
         # ######################
         # Master FLAT reading
-        if self.__mflat != None:    
+        if self.__mflat != None:
             if not os.path.exists(self.__mflat): # check whether input file exists
                 msg = "Master Flat '%s' does not exist"%self.__mflat
                 log.error(msg)
@@ -208,36 +206,35 @@ class ApplyDarkFlat(object):
                     raise Exception("File %s does not look MASTER_FLAT"%self.__mflat)
                 
                 flat_filter = cflat.getFilter()
-                #flat_data = flat[0].data
-                #MEF
-                ###fmef = True
-                if cdark!=None and cdark.next != cflat.next:
+                # check MEF compatibility
+                if cdark != None and cdark.next != cflat.next:
                     raise Exception("Number of extensions does not match "
                         "in Dark and Flat files!")
-                else: n_ext = cflat.next    
+                else: n_ext = cflat.next
                 log.debug("Flat MEF file with %d extensions", n_ext)
-                    
+                
+                # Flat Field Normalization (in principle, input Flat must be already normalized):
                 # compute mode for n_ext normalization (in case of MEF, we normalize 
                 # all extension wrt chip 0)
                 naxis1 = cflat.getNaxis1()
                 naxis2 = cflat.getNaxis2()
-                if cflat.next>1: 
+                if cflat.next > 1: 
                     ext = 1
                 else: 
                     ext = 0
                     
                 # Take the center of the image
-                off_naxis1 = int(naxis1*0.1)
-                off_naxis2 = int(naxis2*0.1)
-                dat = flat[ext].data[off_naxis1:naxis1-off_naxis1, 
-                                     off_naxis2:naxis2-off_naxis2]
+                off_naxis1 = int(naxis1 * 0.1)
+                off_naxis2 = int(naxis2 * 0.1)
+                dat = flat[ext].data[off_naxis2: naxis2 - off_naxis2, 
+                                     off_naxis1: naxis1 - off_naxis1]
                 # NaN values must not be replaced with 0.0 !!!
                 # dat[numpy.isnan(dat)]= 0.0 #
 
                 # Normalization is done with a robust estimator --> np.median()
                 median = numpy.median(dat)
                 mean = numpy.mean(dat)
-                mode = 3*median-2*mean
+                mode = 3 * median - 2 * mean
                 log.debug("Flat stats: MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
                            median, mean, mode)
                 if self.__norm: 
@@ -276,9 +273,10 @@ class ApplyDarkFlat(object):
                 log.error("File '%s' does not exist", iframe)
                 continue  
             f = fits.open(iframe)
-            cf = datahandler.ClFits (iframe)
-            log.debug("Science frame %s EXPTIME= %f TYPE= %s FILTER= %s"\
-                      %(iframe, cf.expTime(), cf.getType(), cf.getFilter()))
+            cf = datahandler.ClFits(iframe)
+            f_ncoadd = cf.getNcoadds()
+            log.debug("Science frame %s EXPTIME= %f TYPE= %s FILTER= %s NCOADD=%s"\
+                      %(iframe, cf.expTime(), cf.getType(), cf.getFilter(), f_ncoadd))
             
             # Check FILTER
             if (not self.__force_apply and flat_filter != None 
@@ -286,13 +284,13 @@ class ApplyDarkFlat(object):
                 log.error("Error: Task 'applyDarkFlat' found a frame with " 
                 "different FILTER. Skipping frame...")
                 f.close()
-                n_removed = n_removed+1
+                n_removed = n_removed + 1
             else:
                 # check Number of Extensions
-                if (len(f)>1 and (len(f)-1) != n_ext):
+                if (len(f) > 1 and (len(f) - 1) != n_ext):
                     raise Exception("File %s does not match the number of "
                     "extensions (%d)"%( iframe, n_ext))
-                elif len(f)==1 and n_ext!=1: 
+                elif len(f) == 1 and n_ext != 1: 
                     raise Exception("File %s does not match the number of "
                     "extensions (%d)"%( iframe, n_ext))
                 else:
@@ -306,64 +304,71 @@ class ApplyDarkFlat(object):
                 
                 # Scale master DARK
                 exp_time = float(cf.expTime()) # all extension have the same TEXP
-                if self.__mdark != None and dark_time!=None:
+                if self.__mdark != None and dark_time != None :
                     time_scale = float(exp_time / dark_time)
                 else: time_scale = 1.0
                 
-                for chip in range (0, n_ext):
+                for chip in range(0, n_ext):
                     dark_data = None
                     # MEF
                     if n_ext > 1: # it means, MEF
                         # Get DARK
                         if self.__mdark != None: 
-                            if time_scale != 1.0: # for dark_model time_scale==-1
+                            if (not self.__force_apply and 
+                                (not numpy.isclose(time_scale, 1.0, atol=1e-02) 
+                                 or f_ncoadd != dark_ncoadd)
+                                ): # for dark_model time_scale==-1
                                 log.debug("Dark EXPTIME mismatch ! looking for dark model ...")
+                                print "t_scale=", time_scale
                                 if not cdark.isMasterDarkModel():
                                     log.error("Cannot find out a scaled dark to apply")
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
                                     log.debug("Scaling dark with dark model...")
-                                    dark_data = dark[chip+1].data[1]*exp_time + dark[chip+1].data[0]
+                                    dark_data = dark[chip + 1].data[1] * exp_time + dark[chip + 1].data[0]
                             else:
-                                dark_data = dark[chip+1].data
+                                dark_data = dark[chip + 1].data
                         else: dark_data = 0
                     
                         # Get normalized FLAT
-                        if self.__mflat!=None: 
+                        if self.__mflat != None: 
                             if self.__norm:
                                 # normalization wrt chip 0
-                                flat_data = flat[chip+1].data/median
+                                flat_data = flat[chip + 1].data / median
                             else:
                                 # suppose it's already normalized
-                                flat_data = flat[chip+1].data 
+                                flat_data = flat[chip + 1].data 
                         else: 
                             flat_data = 1
-                        sci_data = f[chip+1].data
+                        sci_data = f[chip + 1].data
 
                         # Get BPM
-                        if self.__bpm!=None: 
-                            bpm_data = fits.getdata(self.__bpm, ext= chip+1, 
+                        if self.__bpm != None: 
+                            bpm_data = fits.getdata(self.__bpm, ext= chip + 1, 
                                                       header=False)
 
                     # Single
                     else:
                         # Get DARK
                         if self.__mdark != None: 
-                            if not self.__force_apply and time_scale != 1.0: # for dark_model time_scale==-1
+                            if (not self.__force_apply and 
+                                (not numpy.isclose(time_scale, 1.0, atol=1e-02) 
+                                 or f_ncoadd != dark_ncoadd)
+                                ): # for dark_model time_scale==-1
                                 log.debug("Dark EXPTIME mismatch ! checking if it is a dark model ...")
                                 if not cdark.isMasterDarkModel():
                                     log.error("Cannot find out a scaled dark to apply")
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
                                     log.debug("DarkModel found: Scaling dark with dark model...")
-                                    dark_data = dark[0].data[1]*exp_time + dark[0].data[0]
+                                    dark_data = dark[0].data[1] * exp_time + dark[0].data[0]
                                     log.info("AVG(scaled_dark)=%s"%numpy.mean(dark_data))
                             else:
                                 dark_data = dark[0].data
                         else: dark_data = 0
                         
                         # Get normalized FLAT
-                        if self.__mflat!=None: 
+                        if self.__mflat != None: 
                             if self.__norm:
                                 log.debug("Normalizing FF...")
                                 flat_data = flat[0].data/median  # normalization
@@ -379,12 +384,11 @@ class ApplyDarkFlat(object):
                         ## 
                         
                         # Get BPM
-                        if self.__bpm!=None:
+                        if self.__bpm != None:
                             # bpm_data: must be an array that is True or >0 
                             # where bad pixels
                             bpm_data = fits.getdata(self.__bpm, header=False)
                                                                
-                                                             
                     
                     # To avoid NaN values due to zero division by FLAT
                     __epsilon = 1.0e-20
@@ -598,7 +602,7 @@ same image size.
     
     (options, args) = parser.parse_args()
     
-    if len(sys.argv[1:])<1:
+    if len(sys.argv[1:]) < 1 :
        parser.print_help()
        sys.exit(0)
 

@@ -269,7 +269,7 @@ cube_sigma(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
 /* 
  * cube_mean_min: find mean value of the N-smallest values of the sorted plane 
- * of cube (no weights)  
+ * of cube (no weights). It is thought for sky background of crowded fields.
  * Implemented by jmiguel@iaa.es on 2011-Oct-20
  */
 
@@ -312,6 +312,59 @@ cube_mean_min(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
     return meanplane;
 }
+
+/* 
+ * cube_mean_min: find mean value of the N-biggest values of the sorted plane 
+ * of cube (no weights). It is thought to detect stars in to well aligned
+ * dithered images due to field distortion.
+ * Implemented by jmiguel@iaa.es on 2015-March-12.
+ */
+
+extern float *
+cube_mean_max(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale, 
+            int offset, int N)
+
+{
+    int i, j;
+    static float buf[MAXNPLANES];      /* values of a pixel in all planes */
+    float *meanplane, mean = 0;
+    int n = 0, st = 0;
+    int is_even = !(np & 1);
+    
+    meanplane = (float *) emalloc(nx * ny * sizeof(float));
+
+    if (offset) {                          /* zero offset to normalize, it is much more "safe" than a multiplicative normalization  */
+        for (i = 0; i < nx * ny; i++) {    /* median combine cube to plane */
+            mean = 0;
+            for (j = 0; j < np; j++)
+                buf[j] = *(planes[j] + i) + scale[j];
+            if (!is_even) st = N + 1;
+            else st = N;
+            for (n=N; n < np; n++)            /* take the n-biggest values */
+                mean+= kselect(buf, np, n );
+                            
+            meanplane[i] = mean/N;
+        }
+    } else {
+        for (i = 0; i < nx * ny; i++) {   /* mult. scale to normalize */
+            mean = 0;
+            for (j = 0; j < np; j++)      /* take the n-biggest values */
+                buf[j] = *(planes[j] + i) * scale[j];
+
+            if (!is_even) st = N + 1;
+            else st = N;
+            for (n=st; n < np; n++)            /* take the n-biggest values */
+                mean+= kselect(buf, np, n );
+                            
+            meanplane[i] = mean/N;
+
+        }
+    }
+
+    return meanplane;
+}
+
+
 
 /* 
  * cube_mean_min_w: find mean value of the N-smallest values of the sorted plane 
@@ -384,7 +437,7 @@ cube_mean_min_w(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES], int np,
 
 /* 
  * cube_median_min: find median value of the N-smallest values of the sorted plane 
- * of cube (no weights) 
+ * of cube (no weights). It is thought to compute sky background of crowded fields.
  * Implemented by jmiguel@iaa.es on 2011-Oct-25 
  */
 
@@ -427,4 +480,5 @@ cube_median_min(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
 
     return medianplane;
 }
+
 

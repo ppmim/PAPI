@@ -61,6 +61,7 @@ import misc.utils as utils
 from misc.version import __version__
 
 import datahandler
+import misc.collapse
 
 # Pyraf modules
 from pyraf import iraf
@@ -147,7 +148,7 @@ class MasterDark(object):
             log.error("No DARK frames defined")
             raise e
         
-        if nframes<self.m_min_ndarks:
+        if nframes < self.m_min_ndarks:
             log.error("Not enough number of dark frames (>%s) to compute master dark: %s",self.m_min_ndarks, framelist)
             raise Exception("Not enough number of dark frames (>=%s) to compute master dark" %(self.m_min_ndarks))
             
@@ -170,6 +171,7 @@ class MasterDark(object):
         f_readmode = -1
         good_frames = []
         
+        
         for iframe in framelist:
             f = datahandler.ClFits( iframe )
             log.debug("Frame %s EXPTIME= %f TYPE= %s NCOADDS= %s REAMODE= %s" 
@@ -181,11 +183,11 @@ class MasterDark(object):
                 #continue
             else:        
                 # Check EXPTIME, TYPE(dark) and READMODE
-                if ( not self.m_texp_scale and f_expt!=-1 and 
+                if (not self.m_texp_scale and f_expt != -1 and 
                      (int(f.expTime()) != int(f_expt) or  
-                      f.getType()!=f_type or 
-                      f.getNcoadds()!=f_ncoadds or 
-                      f.getReadMode()!=f_readmode)  ):
+                      f.getType() != f_type or 
+                      f.getNcoadds() != f_ncoadds or 
+                      f.getReadMode() != f_readmode)):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame (%s)with different EXPTIME, NCOADDS or READMODE",iframe)
                     #continue
                     raise Exception("Found a DARK frame with different EXPTIME or NCOADDS or READMODE") 
@@ -199,9 +201,9 @@ class MasterDark(object):
         log.debug('Right, dark frames with same type are: %s', good_frames)   
     
         if self.m_texp_scale:
-            scale_str='exposure'
+            scale_str = 'exposure'
         else:
-            scale_str='none'
+            scale_str = 'none'
         
         
         # Cleanup : Remove old masterdark
@@ -210,11 +212,15 @@ class MasterDark(object):
         misc.fileUtils.removefiles(tmp1)
         
         # Add TEXP and NCOADD to master filename
-        if f_ncoadds==-1: f_ncoadds=1
-        self.__output_filename = self.__output_filename.replace(".fits","_%d_%d.fits"%(f_expt, f_ncoadds))
+        if f_ncoadds == -1: f_ncoadds = 1
+        self.__output_filename = self.__output_filename.replace(".fits","_%d_%d.fits" % (f_expt, f_ncoadds))
         
     
-        misc.utils.listToFile(good_frames, self.__temp_dir+"/files.list")
+        # STEP 1.2: Check if images are cubes, then collapse them.
+        good_frames = misc.collapse.collapse(good_frames, out_dir=self.__temp_dir)
+        
+        # Write frames to txt file
+        misc.utils.listToFile(good_frames, self.__temp_dir + "/files.list")
         
         """
         NOTE: I don't know how darkcombine does the scaling with EXPTIME, in

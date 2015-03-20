@@ -69,6 +69,7 @@ from optparse import OptionParser
 import misc.fileUtils
 import misc.utils as utils
 import datahandler
+import misc.collapse
 
 # Pyraf modules
 from pyraf import iraf
@@ -143,7 +144,7 @@ class MasterDomeFlat(object):
         self.__normal = normal
         self.__median_smooth = median_smooth
         
-        self.MIN_FLATS = 3
+        self.MIN_FLATS = 1
         
     
     def createMaster(self):
@@ -244,14 +245,19 @@ class MasterDomeFlat(object):
         #Clobber existing output images
         iraf.clobber='yes'
         
-        # NOTE : We do not subtract any MASTER_DARK, it is not required for DOME FLATS (it is done implicitly)
+        # NOTE : We do not subtract any MASTER_DARK, it is not required for 
+        # DOME FLATS (it is done implicitly)
     
+        # STEP 1.2: Check if images are cubes, then collapse them.
+        domelist_lampon = misc.collapse.collapse(domelist_lampon, out_dir=self.__temp_dir)
+        domelist_lampoff = misc.collapse.collapse(domelist_lampoff, out_dir=self.__temp_dir)
+        
         # STEP 2: Make the combine of Flat LAMP-ON frames
         # - Build the frame list for IRAF
         log.debug("Combining Flat LAMP-ON frames...")
         flat_lampon = self.__temp_dir + "/flat_lampON.fits"
         misc.fileUtils.removefiles(flat_lampon)
-        misc.utils.listToFile(domelist_lampon, self.__temp_dir+"/files_on.list") 
+        misc.utils.listToFile(domelist_lampon, self.__temp_dir + "/files_on.list") 
         # - Call IRAF task
         # Combine the images to find out the median using sigma-clip algorithm;
         # the input images are scaled to a common mode, the pixels containing 
@@ -296,98 +302,78 @@ class MasterDomeFlat(object):
                         )
     
         # STEP 4 : Subtract lampON-lampOFF (implicit dark subtraction)
-        flat_diff = self.__temp_dir+"/flat_lampON_OFF.fits"
+        flat_diff = self.__temp_dir + "/flat_lampON_OFF.fits"
         log.debug("Subtracting Flat ON-OFF frames...%s", flat_diff) 
         # Remove an old masternormflat
         misc.fileUtils.removefiles(flat_diff)
         
-        # Handling of single FITS is not supported by mscred.mscarith
-        msg = ""
-        if f.mef:
-            log.debug("Subtracting (MEF) files...") 
-            iraf.mscred.mscarith(operand1 = flat_lampon,
+        # Single FITS are also supported by mscred.mscarith
+        log.debug("Subtracting files...") 
+        iraf.mscred.mscarith(operand1 = flat_lampon,
                     operand2 = flat_lampoff,
                     op = '-',
                     result = flat_diff
                     )
-            
-            # STEP 5: Normalize (if required) the flat-field wrt chip 0
-            # Compute the median of the image
-            # values has the array of median values for each extension
-            if self.__normal:
-                values = iraf.mscred.mscstat(
-                    images=flat_diff,
-                    fields='midpt', Stdout=1)
-            
-                #take the mean of all chips/extensions
-                #mean=0
-                #for i in range(1,len(values)):
-                #    mean+=float(values[i])
-                #mean=mean/i
-                median = values[1] # wrt chip 0
-                log.debug("Normalizing MEF master flat frame wrt chip 0...(MEDIAN=%s)"%median)
-                msg = "Normalization of MEF master flat frame wrt chip 0. (MEDIAN=%s)"%median 
+        
+        # STEP 5: Normalize the flat-field (if MEF, normalize wrt chip SG1)
+        # Compute the mean of the image
+        if self.__normal:
+            f = fits.open(flat_diff, ignore_missing_end=True)
+            f_instrument = f[0].header['INSTRUME'].lower()
+            if len(f) > 1:
+                ##chip = 1 # normalize wrt to mode of chip SG1_1
+                if f_instrument == 'panic': 
+                    ext_name = 'SG1_1'
+                    try:
+                        f[ext_name].header
+                    except KeyError:
+                        ext_name = 'Q1_1'
+                elif f_instrument == 'hawki': 
+                    ext_name = 'CHIP2.INT1'
                 
-                # Compute normalized flat wrt chip 0
-                self.__output_filename = self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
-                misc.fileUtils.removefiles(self.__output_filename)
-                iraf.mscred.mscarith(operand1=flat_diff,
-                        operand2=median,
-                        op='/',
-                        result=self.__output_filename,
-                        )
-
-            else: 
-                shutil.copy(flat_diff, self.__output_filename)
-            
-        #    
-        # Single FITS (not MEF)
-        #
-        else:
-            log.debug("Subtracting ON-OFF frames...") 
-            iraf.imarith(operand1 = flat_lampon,
-                    operand2 = flat_lampoff,
-                    op = '-',
-                    result = flat_diff
-                    )
-            
-            # STEP 5: Normalize the flat-field
-            # If is a full PANIC image, then nomalization wrt chip 1 is done
-            if self.__normal:
-                if (f.getInstrument()=='panic' and 
-                    f.getNaxis1()==4096 and f.getNaxis2()==4096):
-                    # It supposed to have a full frame of PANIC in one single 
-                    # extension (GEIRS default)
-                    median = np.median(f.getData()[200:f.getNaxis1()/2-200, 
-                                                 200:f.getNaxis2()/2-200])
-                    #mean = np.mean(f[0].data[200:2048-200, 200:2048-200])
-                    #mode = 3*median-2*mean
-                    #mode = median
-                    log.debug("Normalizing master flat frame wrt chip 1 ...(MEDIAN=%d)"%median)
-                    msg = "Normalization of (PANIC full-frame) master flat frame wrt chip 0. (MEDIAN=%d)"%median 
-
-                else:
-                    # mean has the array of mean values for each extension
-                    median = float(iraf.imstat (
-                        images=flat_diff,
-                        fields='midpt', Stdout=1)[1])
-                    log.debug("Normalizing master flat frame...(MEDIAN=%d)"%median)
-                    msg = "Normalization of (O2k?) master flat frame. (MEDIAN=%d)"%median
-
-            
-                # Compute normalized flat
-                self.__output_filename=self.__output_filename.replace(".fits","_%s.fits"%(f_filter))
-                misc.fileUtils.removefiles(self.__output_filename)
-                iraf.imarith(operand1=flat_diff,
-                            operand2=median,
-                            op='/',
-                            result=self.__output_filename,
-                            )
-                    
+                naxis1 = f[ext_name].header['NAXIS1']
+                naxis2 = f[ext_name].header['NAXIS2']
+                offset1 = int(naxis1 * 0.1)
+                offset2 = int(naxis2 * 0.1)
+                
+                median = np.median(f[ext_name].data[offset2:naxis2-offset2,
+                                                    offset1:naxis1-offset1])
+                msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)"%(ext_name,median)
+            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower() == 'panic'
+                  and f[0].header['NAXIS1'] == 4096 and f[0].header['NAXIS2'] == 4096):
+                # It supposed to have a full frame of PANIC in one single 
+                # extension (GEIRS default). Normalize wrt detector SG1_1
+                # Note that in Numpy, arrays are indexed as rows X columns (y, x),
+                # contrary to FITS standard (NAXIS1=columns, NAXIS2=rows).
+                median = np.median(f[0].data[200 : 2048-200, 2048+200 : 4096-200 ])
+                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
             else:
-                log.debug("Renaming file ...") 
-                shutil.copy(flat_diff, self.__output_filename)
-                
+                # Not MEF, not PANIC full-frame, but could be a PANIC subwindow
+                naxis1 = f[0].header['NAXIS1']
+                naxis2 = f[0].header['NAXIS2']
+                offset1 = int(naxis1 * 0.1)
+                offset2 = int(naxis2 * 0.1)
+                median = np.median(f[0].data[offset2:naxis2 - offset2,
+                                                    offset1:naxis1 - offset1])
+                msg = "Normalization of master flat frame. (MEDIAN=%d)"%median 
+ 
+
+            f.close()
+            log.debug(msg)
+            
+            # Cleanup: Remove temporary files
+            misc.fileUtils.removefiles(self.__output_filename)
+            # Compute normalized flat
+            iraf.mscred.mscarith(operand1=flat_diff,
+                    operand2=median,
+                    op='/',
+                    pixtype='real',
+                    result=self.__output_filename.replace("//","/"),
+                    )
+        else:
+            shutil.move(flat_diff, self.__output_filename)
+        
+                        
         ## STEP 6 ##: (optional) 
         ## Median smooth the master (normalized) flat
         if self.__median_smooth:
@@ -402,7 +388,7 @@ class MasterDomeFlat(object):
             shutil.move(self.__output_filename.replace(".fits", "_smooth.fits"),
                         self.__output_filename)
 
-        #Or using scipy ( a bit slower then iraf...)
+        #Or using scipy ( a bit slower than iraf...)
         #from scipy import ndimage
         #filtered = ndimage.gaussian_filter(f[0].data, 20)                      
         

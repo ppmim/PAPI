@@ -206,7 +206,7 @@ class NonLinearityCorrection(object):
         # Check if input files are in MEF format or saved as a full-frame with 
         # the 4 detectors 'stitched'.
         to_delete = None
-        if len(hdulist)==1:
+        if len(hdulist) == 1:
             # we need to convert to MEF
             log.warning("Mismatch in header data format. Converting to MEF file.")
             hdulist.close()
@@ -293,7 +293,7 @@ class NonLinearityCorrection(object):
             lindata[data > nlmaxs] = np.nan
             # mask where max range is nan
             # (first, take into account the option of cubes as input images) 
-            if len(lindata.shape)==3: 
+            if len(lindata.shape) == 3 : 
                 # we have a 3D image (cube)
                 for i in range(lindata.shape[0]):
                     lindata[i, np.isnan(nlmaxs)] = np.nan
@@ -416,7 +416,8 @@ if __name__ == "__main__":
     
     usage = "usage: %prog [options]"
     desc= """Performs the non-linearity correction of the PANIC raw data files
-using the proper NL-Model (FITS file).
+using the proper NL-Model (FITS file). Raw data files must be MEF files; if 
+MEF-cubes, each plane is corrected individually.
 """
     parser = OptionParser(usage, description=desc)
 

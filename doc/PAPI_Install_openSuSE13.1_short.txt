@@ -49,6 +49,12 @@ openSuSE 13.1-64 bit
 ************
 ** SYSTEM **
 ************
++) Service tags:
+
+$dmidecode -s system-serial-number
+panic22=BKNBWX1
+panic35=5KNBWX1
+
 +) Network interfaces
 
 The Dell Broadcom BCM5720 Quad-port 1 GB Network card of the PANIC computer is 

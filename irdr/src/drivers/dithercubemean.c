@@ -112,8 +112,9 @@ int main(int argc, char *argv[])
         meanplane = cube_mean(data, wdata, nplanes, nx, ny, &sumwplanes, scale, 1); /*ORIGINAL */
     else
         /* simple arithmetic sum of planes, no gainmap is used. */
-        meanplane = cube_sum(data, nplanes, nx, ny);
-   
+        /** meanplane = cube_sum(data, nplanes, nx, ny); **/
+        meanplane = cube_mean_max(data, nplanes, nx, ny, scale, 1, nplanes/2); 
+            
     printf("Lets write the sum ...\n");
     
     writefits(argv[3], fn[0], (char*)meanplane, -32, nx, ny);

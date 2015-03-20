@@ -477,20 +477,21 @@ class MEF (object):
                 new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
             
             
-            # Check if is a MEF file 
-            if len(in_hdulist)>1:
+            # Check if is a MEF file
+            if len(in_hdulist) > 1 :
                 log.info("File %s is already a MEF file. No conversion required"%file)
-                os.rename(file, new_filename)
+                # We copy, because if rename, then remove the original file.
+                shutil.copy(file, new_filename)
                 out_filenames.append(new_filename)
                 continue
             
 
             # Check if is a cube 
-            if len(in_hdulist[0].data.shape)!=2:
+            if len(in_hdulist[0].data.shape) != 2:
                 log.debug("Found a Cube of data.")
             
             # Check file is a 4kx4k full-frame  
-            if in_hdulist[0].header['NAXIS1']!=4096 or in_hdulist[0].header['NAXIS2']!=4096:
+            if in_hdulist[0].header['NAXIS1'] != 4096 or in_hdulist[0].header['NAXIS2'] != 4096:
                 log.error('Error, file %s is not a full frame image', file)
                 raise MEF_Exception("Error, file %s is not a full frame image" % file)
 

@@ -242,7 +242,7 @@ if __name__ == "__main__":
        parser.print_help()
        sys.exit(0)
 
-    if (not options.input_image and not options.input_image_list) or len(args)!=0: 
+    if (not options.input_image and not options.input_image_list and not options.input_single_image_list) or len(args)!=0: 
         # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("Wrong number of arguments " )

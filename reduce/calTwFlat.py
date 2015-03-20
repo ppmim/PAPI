@@ -41,6 +41,7 @@
 #              05/08/2014    jmiguel@iaa.es  - Added support for DOME_FLAT series (not lamp on/off)
 #              27/01/2015    jmiguel@iaa.es  - Added new way for dark subtraction with 
 #                                              multiple master darks
+#              18/03/2015    jmiguel@iaa.es  - Added collapse of flats if required.
 #
 # TODO:
 #   - take into account BPM !!!
@@ -65,6 +66,8 @@ import misc.utils
 from misc.version import __version__
 import datahandler
 import misc.robust as robust
+import misc.collapse
+import misc.mef
 
 # Pyraf modules
 from pyraf import iraf
@@ -216,7 +219,20 @@ class MasterTwilightFlat(object):
         base = os.path.split(self.__output_filename)[0]
         iraf.chdir(base)
     
-        
+        # STEP 0: Convert (if required) all files to MEF
+        # Darks
+        try:
+            mef = misc.mef.MEF(self.__master_dark_list)
+            self.__master_dark_list = mef.convertGEIRSToMEF(out_dir=self.__temp_dir)[1]
+        except Exception,e:
+            log.debug("Error converting Darks to MEF file: %s", str(e))
+        # Flats
+        try:
+            mef = misc.mef.MEF(framelist)
+            framelist = mef.convertGEIRSToMEF(out_dir=self.__temp_dir)[1]
+        except Exception,e:
+            log.debug("Error converting Flats to MEF file: %s", str(e))
+            
         # STEP 1: Check the  TYPE(twilight) and FILTER,READEMODE of each Flat frame
         # If any frame on list missmatch the FILTER, then the master twflat will be aborted
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
@@ -231,25 +247,25 @@ class MasterTwilightFlat(object):
             f = datahandler.ClFits(iframe)
             f_instrument = f.getInstrument()
             log.debug("Checking data compatibility (filter, texp, type)")
-            log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" 
-                %(iframe, f.expTime(), f.getType(), f.getFilter()))
+            #log.debug("Flat frame '%s' - EXPTIME= %f TYPE= %s FILTER= %s" 
+            #    %(iframe, f.expTime(), f.getType(), f.getFilter()))
             # Compute the mean count value in chip to find out good frames (good enough ??)
             mean = 0
             myfits = fits.open(iframe, ignore_missing_end=True)
             if f.mef==True:
                 log.debug("Found a MEF file")
                 try:
-                    for i in range(1,f.next+1):
+                    for i in range(1,f.next + 1):
                         mean+=robust.mean(myfits[i].data)
                     mean = float(mean / f.next)
-                    log.debug("MEAN value of MEF = %f", mean)
+                    log.debug("MEAN value of TwFlat (MEF) = %f", mean)
                 except Exception,e:
                     log.error("Error computing MEAN of image")
                     raise e
             else:
                 myfits = fits.open(iframe, ignore_missing_end=True)
                 mean = robust.mean(myfits[0].data)
-                log.debug("MEAN value of MEF = %d", mean)
+                log.debug("MEAN value of Twflat (SEF) = %d", mean)
                 
             myfits.close()            
             
@@ -341,23 +357,26 @@ class MasterTwilightFlat(object):
             del cdark
             raise Exception("Type mismatch with MEF files")
         if f.mef:
-            next = f.next # number of extension
+            nExt = f.next # number of extension
         else:
-            next = 0
+            nExt = 0
                 
         fileList = []
+        # STEP 2.2: Check if images are cubes, then collapse them.
+        good_frames = misc.collapse.collapse(good_frames, out_dir=self.__temp_dir)
+        
         for iframe in good_frames:
-            print "GOOD=",good_frames
             # Remove old dark subtracted flat frames
-            my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits","_D.fits"))
+            my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits", "_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
-            log.debug("Scaling master dark (master dark model or simple master dark)")
-            # Build master dark with proper (scaled) EXPTIME and subtract ( I don't know how good is this method of scaling !!!)
+            log.debug("Look for proper master dark (master dark model or simple master dark)")
+            # Build master dark with proper (scaled) EXPTIME and subtract 
+            # (I don't know how good is this method of scaling !!!)
             f = fits.open(iframe, ignore_missing_end=True)
             t_flat = datahandler.ClFits( iframe ).expTime()
-            if next > 0:
-                for i in range(1, next+1):
+            if nExt > 0:
+                for i in range(1, nExt + 1):
                     if use_dark_model:
                         mdark = fits.open(self.__master_dark_model)
                         log.info("Scaling MASTER_DARK_MODEL")
@@ -377,15 +396,15 @@ class MasterTwilightFlat(object):
                     #log.info("AVG(dark)=%s"%robust.mean(scaled_dark))
                     # At least, do the subtraction !
                     f[i].data = f[i].data - scaled_dark
-            
+                    log.info("Dark Subtraction done")
             # not a MEFs
             else:
                 if use_dark_model:
+                    log.info("Scaling MASTER_DARK_MODEL")
                     mdark = fits.open(self.__master_dark_model)
                     scaled_dark = mdark[0].data[1]*t_flat + mdark[0].data[0]
                 else:
-                    print "T_DARKS=",t_darks
-                    print "T_FLATS",t_flat
+                    log.info("Using proper MASTER_DARK")
                     try:
                         n_dark = t_darks[round(t_flat, 1)]
                     except KeyError:
@@ -471,7 +490,7 @@ class MasterTwilightFlat(object):
         # Compute the mean of the image
         if self.__normal:
             f = fits.open(comb_flat_frame, ignore_missing_end=True)
-            if next > 0:
+            if nExt > 0:
                 ##chip = 1 # normalize wrt to mode of chip SG1_1
                 if f_instrument == 'panic': 
                     ext_name = 'SG1_1'
@@ -484,26 +503,28 @@ class MasterTwilightFlat(object):
                 
                 naxis1 = f[ext_name].header['NAXIS1']
                 naxis2 = f[ext_name].header['NAXIS2']
-                offset1 = int(naxis1*0.1)
-                offset2 = int(naxis2*0.1)
+                offset1 = int(naxis1 * 0.1)
+                offset2 = int(naxis2 * 0.1)
                 
-                median = numpy.median(f[ext_name].data[offset1:naxis1-offset1,
-                                                    offset2:naxis2-offset2])
+                median = numpy.median(f[ext_name].data[offset2:naxis2-offset2,
+                                                    offset1:naxis1-offset1])
                 msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)"%(ext_name,median)
-            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower()=='panic'
-                  and f[0].header['NAXIS1']==4096 and f[0].header['NAXIS2']==4096):
+            elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower() == 'panic'
+                  and f[0].header['NAXIS1'] == 4096 and f[0].header['NAXIS2'] == 4096):
                 # It supposed to have a full frame of PANIC in one single 
-                # extension (GEIRS default)
-                median = numpy.median(f[0].data[2048+200:4096-200,200:2048-200])
+                # extension (GEIRS default). Normalize wrt detector SG1_1
+                # Note that in Numpy, arrays are indexed as rows X columns (y, x),
+                # contrary to FITS standard (NAXIS1=columns, NAXIS2=rows).
+                median = numpy.median(f[0].data[200 : 2048-200, 2048+200 : 4096-200 ])
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
             else:
                 # Not MEF, not PANIC full-frame, but could be a PANIC subwindow
                 naxis1 = f[0].header['NAXIS1']
                 naxis2 = f[0].header['NAXIS2']
-                offset1 = int(naxis1*0.1)
-                offset2 = int(naxis2*0.1)
-                median = numpy.median(f[0].data[offset1:naxis1-offset1,
-                                                    offset2:naxis2-offset2])
+                offset1 = int(naxis1 * 0.1)
+                offset2 = int(naxis2 * 0.1)
+                median = numpy.median(f[0].data[offset2:naxis2 - offset2,
+                                                    offset1:naxis1 - offset1])
                 msg = "Normalization of master (O2k?) flat frame. (MEDIAN=%d)"%median 
  
 

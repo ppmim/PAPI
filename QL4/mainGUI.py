@@ -389,6 +389,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.lineEdit_sourceD.setText(self.m_sourcedir)
         self.lineEdit_outputD.setText(self.m_outputdir)
         self.lineEdit_tempD.setText(self.m_tempdir)
+        self.lineEdit_calibsD.setText(self.ext_calib_dir)
         
         ## Init calibration files
         self.lineEdit_masterDark.setText(QString(self.m_masterDark))
@@ -466,7 +467,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ####################################################
         ### Check if deleted file is from source directory
         if filename.endswith("__deleted__"):
-            log.debug("File %s disappeared from source directory. Deleted from DB"%filename.replace("__deleted__",""))
+            log.debug("File %s disappeared (or filtered) from source directory. Deleted from DB"%filename.replace("__deleted__",""))
             try:
                 if fromOutput: self.outputsDB.delete(filename.replace("__deleted__",""))
                 else: self.inputsDB.delete(filename.replace("__deleted__",""))
@@ -747,8 +748,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             for iframe in framelist:
                 with fits.open(iframe) as ifd:
                     # not MEF
-                    if len(ifd)==len(src_fd) and len(ifd)==1:
-                        if ifd[0].data.shape==src_fd[0].shape:
+                    if len(ifd) == len(src_fd) and len(ifd) == 1:
+                        if ifd[0].data.shape == src_fd[0].shape:
+                            return iframe
+                        # If we have a cube of data (src_frame), master 
+                        # calibrations (framelist) can be used anyway.
+                        elif ifd[0].data.shape == src_fd[0].shape[1:]:
                             return iframe
                         elif datahandler.ClFits(iframe).isMasterDarkModel():
                             # Exception,  DarkModel will have always 2 layers 
@@ -757,10 +762,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         else: 
                             continue
                     # MEF 
-                    elif len(ifd)==len(src_fd) and len(ifd)>1:
+                    elif len(ifd) == len(src_fd) and len(ifd) > 1:
                         # We should check each extension, but it would be strange
                         # to have extension with different shapes.
-                        if ifd[1].data.shape==src_fd[1].shape:
+                        if ifd[1].data.shape == src_fd[1].shape:
+                            return iframe
+                        # If we have a cube of data (src_frame), master 
+                        # calibrations (framelist) can be used anyway.
+                        elif ifd[1].data.shape == src_fd[1].shape[1:]:
                             return iframe
                         elif datahandler.ClFits(iframe).isMasterDarkModel():
                             # Exception, DarkModel will have always 2 layers 
@@ -811,7 +820,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if dir==self.m_outputdir:
                 self.logConsole.error("Error, Input and Output directories cannot be the same.")
                 return
-            if (self.m_sourcedir != dir and self.m_outputdir!=dir):
+            if (self.m_sourcedir != dir and self.m_outputdir != dir):
                 self.logConsole.info("+Source : " + dir)
                 self.lineEdit_sourceD.setText(dir)
                 self.m_sourcedir = str(dir)
@@ -819,7 +828,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.checkBox_currentNight.setChecked(False)
                 ## Create DataCollector for a path     
                 self.file_pattern = str(self.lineEdit_filename_filter.text())
-                if self.dc!=None: del self.dc
+                if self.dc != None: del self.dc
                 if os.path.isfile(dir) and os.path.basename(dir)=="save_CA2.2m.log":
                     self.dc = datahandler.DataCollector("geirs-file", str(dir), 
                                                         self.file_pattern , 
@@ -882,7 +891,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_currentNight.isChecked():
-            if datetime.datetime.utcnow().hour > 0 and datetime.datetime.utcnow().hour < 8:
+            if datetime.datetime.utcnow().hour >= 0 and datetime.datetime.utcnow().hour <= 8:
                 currentDate = (datetime.datetime.utcnow()-datetime.timedelta(days=1)).isoformat().split('T')[0]
             else:
                 currentDate = datetime.datetime.today().isoformat().split('T')[0]
@@ -901,12 +910,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_autocheck.isChecked():
-            if self.timer_dc !=None and not self.timer_dc.isActive():
+            if self.timer_dc != None and not self.timer_dc.isActive():
                 # Already created in a former user action 
                 self.timer_dc.setSingleShot(False)
                 self.timer_dc.start(1500)
             else:
-                ##Create QTimer for the data collector
+                ## Create QTimer for the data collector
                 self.timer_dc = QTimer( self )
                 self.connect( self.timer_dc, QtCore.SIGNAL("timeout()"), 
                              self.checkFunc )
@@ -914,7 +923,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.timer_dc.start(1500) ## 1,5 seconds continuous timer
         else:
             self.checkBox_outDir_autocheck.setChecked(False)
-            #Stop the DataCollector timer
+            # Stop the DataCollector timer
             self.timer_dc.stop()
             print "*** Stopped DataCollector ***"
             
@@ -1382,12 +1391,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         
         # CAREFUL: <sourcedir> must be DISTINT  to <outputdir>, infinite loop
-        if dir and self.m_outputdir!=str(dir) and self.m_sourcedir!=str(dir):
+        if dir and self.m_outputdir != str(dir) and self.m_sourcedir != str(dir):
             self.lineEdit_outputD.setText(dir)
-            self.m_outputdir=str(dir)
+            self.m_outputdir = str(dir)
             self.logConsole.info("+Output dir : " + self.m_outputdir)
             
-            ##Create DataCollector for a path     
+            ## Create DataCollector for a path     
             self.file_pattern = str(self.lineEdit_filename_filter.text())
             if os.path.isdir(self.m_outputdir):
                 self.dc_outdir = datahandler.DataCollector("dir", 
@@ -1467,9 +1476,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.autocheck_slot()
         
         self.listView_dataS.clear()
-        if self.dc!=None: 
+        if self.dc != None: 
             self.dc.Clear()
-        if self.dc_outdir!=None: 
+        if self.dc_outdir != None: 
             self.dc_outdir.Clear()
 
         self.inputsDB.clearDB()
@@ -1489,7 +1498,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                 self.m_default_data_dir,
                                                 "FITS files (*.fit*)")
 
-        if self.comboBox_classFilter.currentText()=="OUTS":
+        if self.comboBox_classFilter.currentText() == "OUTS":
             ifFromOut = True
         else:
             ifFromOut = False
@@ -1533,19 +1542,45 @@ class MainGUI(QtGui.QMainWindow, form_class):
             print "Error, no file selected !"
             
     def filename_filter_slot(self):
-        """ Modify filename filter for the data collector"""
+        """ Modify filename filter for the data collector.
+            It is done both input_dir and output_dir.
+        """
 
         new_filter, ok = QInputDialog.getText(self, "New filter",
                                               "Enter filename filter:")
         if ok and not new_filter.isEmpty():
             self.lineEdit_filename_filter.setText( str(new_filter) )
-            self.dc.SetFileFilter( str(new_filter) )
-            self.dc_outdir.SetFileFilter( str(new_filter) )
+            self.file_pattern = str(self.lineEdit_filename_filter.text())
+            # Both input_dir and output_dir are filtered
+            #self.dc.SetFileFilter( str(new_filter) )
+            #self.dc_outdir.SetFileFilter( str(new_filter) )
+            self.slot_classFilter()
+    
+    def __resetInOutDB(self):
+        """
+        Reset input dir and output dir, but keep external_db_files on outputDB.
+        NOT USED YET !!
+        """
+        
+        # Deactivate timers
+        self.autocheck_slot()
+        
+        self.listView_dataS.clear()
+        if self.dc != None: 
+            self.dc.Clear()
+        if self.dc_outdir != None: 
+            self.dc_outdir.Clear()
 
+        self.inputsDB.clearDB()
+        self.outputsDB.clearDB()
+        
+        # But keep the external calibration files on outputsDB
+        self.load_extenal_calibs(self.ext_calib_dir)
+        
     def slot_classFilter(self):
         """ Filter files on main ListView"""
         
-        if self.comboBox_classFilter.currentText()=="GROUP":
+        if self.comboBox_classFilter.currentText() == "GROUP":
             self.listView_dataS.clear()
             sequences = []
             seq_types = []
@@ -1599,13 +1634,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                      " ** #imgs=" + str(len(seq)))
                         
                     e_child = QTreeWidgetItem(elem)
-                    e_child.setText (0, str(file))
-                    e_child.setText (1, str(type))
-                    e_child.setText (2, str(filter))
-                    e_child.setText (3, str(texp))
-                    e_child.setText (4, str(date)+"::"+str(ut_time))
-                    e_child.setText (5, str(object))
-                    if dec<0: sign = -1;
+                    e_child.setText(0, str(file))
+                    e_child.setText(1, str(type))
+                    e_child.setText(2, str(filter))
+                    e_child.setText(3, str(texp))
+                    e_child.setText(4, str(date) + "::" + str(ut_time))
+                    e_child.setText(5, str(object))
+                    if dec < 0: sign = -1;
                     else: sign = 1;
                     c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
                     str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
@@ -1619,24 +1654,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #############################################
             self.listView_dataS.clear()
             db = None
-            if str(self.comboBox_classFilter.currentText())=="INPUTS":
+            if str(self.comboBox_classFilter.currentText()) == "INPUTS":
                 fileList = self.inputsDB.GetFilesT("ANY")
                 db = self.inputsDB
-            elif str(self.comboBox_classFilter.currentText())=="ALL":
+            elif str(self.comboBox_classFilter.currentText()) == "ALL":
                 fileList = self.inputsDB.GetFilesT("ANY")
                 db = self.inputsDB
                 #db.ListDataSet()
-            elif str(self.comboBox_classFilter.currentText())=="OUTS":
+            elif str(self.comboBox_classFilter.currentText()) == "OUTS":
                 fileList = self.outputsDB.GetFilesT("ANY")
                 db = self.outputsDB
                 #db.ListDataSet()
-            elif str(self.comboBox_classFilter.currentText())=="SKY_FLAT":
+            elif str(self.comboBox_classFilter.currentText()) == "SKY_FLAT":
                 fileList = self.inputsDB.GetFilesT("SKY_FLAT")
                 db = self.inputsDB
-            elif str(self.comboBox_classFilter.currentText())=="FOCUS":
+            elif str(self.comboBox_classFilter.currentText()) == "FOCUS":
                 fileList = self.inputsDB.GetFilesT("FOCUS")
                 db = self.inputsDB
-            elif str(self.comboBox_classFilter.currentText())=="MASTERS":
+            elif str(self.comboBox_classFilter.currentText()) == "MASTERS":
                 fileList = self.outputsDB.GetFilesT("MASTER_DARK")
                 fileList += self.outputsDB.GetFilesT("MASTER_DARK_MODEL")
                 fileList += self.outputsDB.GetFilesT("MASTER_TW_FLAT")
@@ -1649,6 +1684,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 db = self.inputsDB
 
             elem = None
+            # filter the basename of files in input_dir
+            fileList = [i for i in fileList 
+                        if fnmatch.fnmatch(os.path.basename(i), self.file_pattern) ]
+            # show the file values
             for file in fileList:
                 elem = QTreeWidgetItem( self.listView_dataS )
                 (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
@@ -1657,16 +1696,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem.setText (1, str(type))
                 elem.setText (2, str(filter))
                 elem.setText (3, str(texp))
-                elem.setText (4, str(date)+"::"+str(ut_time))
+                elem.setText (4, str(date) + "::" + str(ut_time))
                 elem.setText (5, str(object))
                 c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                if dec < 0: sign = -1
+                else: sign = 1
                 str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
-                str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
                 elem.setText (6, str(str_ra))
                 elem.setText (7, str(str_dec))
             
             # In addition, if "ALL" is selected, we show the OUTS as well
-            if str(self.comboBox_classFilter.currentText())=="ALL":
+            if str(self.comboBox_classFilter.currentText()) == "ALL":
                 elem = None
                 fileList = self.outputsDB.GetFilesT("ANY")
                 db = self.outputsDB
@@ -1678,11 +1719,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     elem.setText (1, str(type))
                     elem.setText (2, str(filter))
                     elem.setText (3, str(texp))
-                    elem.setText (4, str(date)+"::"+str(ut_time))
+                    elem.setText (4, str(date) + "::" + str(ut_time))
                     elem.setText (5, str(object))
                     c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                    if dec < 0: sign = -1
+                    else: sign = 1
                     str_ra =  "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
-                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1], c.dec.dms[2])
+                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
                     elem.setText (6, str(str_ra))
                     elem.setText (7, str(str_dec))
             
@@ -2645,7 +2688,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #l_list = [ str(item.text()) for item in listItems]
 
         
-        if len(self.m_popup_l_sel)>2:
+        if len(self.m_popup_l_sel) > 1:
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename to save under",
                                                       self.m_outputdir + "/master_dflat.fits", 
@@ -2657,7 +2700,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                         self.m_popup_l_sel, 
                                         self.m_tempdir, 
                                         str(outfileName))
-                    thread=reduce.ExecTaskThread(self._task.createMaster, 
+                    thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
                     thread.start()
                 except:
@@ -3014,17 +3057,20 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         calibrations = dict(dark='', flat='', bpm='', nlc='')
         auto_search = False
-        if msgBox.clickedButton() == button_defaults or msgBox.clickedButton()==button_autosearch:
+        if msgBox.clickedButton() == button_defaults or msgBox.clickedButton() == button_autosearch:
+            # Use defaults from config file or previously selected
             if msgBox.clickedButton() == button_defaults and self.checkBox_use_defCalibs.isChecked():
                 calibrations['dark'] = self.m_masterDark
                 calibrations['flat'] = self.m_masterFlat
                 calibrations['bpm'] = self.m_masterMask
                 calibrations['nlc'] = self.m_masterNLC
                 force_apply = False
-                
-            elif msgBox.clickedButton()== button_defaults and not self.checkBox_use_defCalibs.isChecked():
+            
+            # Select manually calibration files (DARK, FLAT, BPM)  
+            elif msgBox.clickedButton() == button_defaults and not self.checkBox_use_defCalibs.isChecked():
                 # Select master DARK
-                # In this case, a 'simple' file (whatever) could be used as a MASTER_DARK/MASTER_FLAT
+                # In this case, a 'simple' file (whatever) could be used 
+                # as a MASTER_DARK/MASTER_FLAT
                 # Nooo, I do not think so !
                 force_apply = False 
                 filenames = QFileDialog.getOpenFileNames(self,
@@ -3046,7 +3092,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # Select master BPM: by the momment, it is read from config file.
                 if self.config_opts['bpm']['mode']!='none':
                     calibrations['bpm'] = self.config_opts['bpm']['bpm_file']
-      
+            
+            # Autosearch: look for calibs into outputDB
             elif msgBox.clickedButton()== button_autosearch:
                 # We will look for default cailbration for each file
                 # Default calibration files must be a MASTER_DARK/MASTER_FLAT
@@ -3056,7 +3103,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Cancel button pressed
             return
 
-        # Select BPM action
+        # Anycase, select BPM action
         msgBox = QMessageBox()
         msgBox.setText("        BPM Action to do")
         msgBox.setInformativeText("Do you want to <Set NaNs (=0)> or <Fix> BPM ?")
@@ -3065,15 +3112,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         button_cancel = msgBox.addButton("Cancel", QMessageBox.ActionRole)
         msgBox.setDefaultButton(button_nans)
         msgBox.exec_()
-        if msgBox.clickedButton()==button_nans:
+        if msgBox.clickedButton() == button_nans:
             bpm_mode = 'grab' # set NaNs
-        elif msgBox.clickedButton()==button_fix:
+        elif msgBox.clickedButton() == button_fix:
             bpm_mode = 'fix'
         else:
             bpm_mode = 'none'
-            
+        
+                    
         # Now, start dark subtraction and Flat-Fielding...
-        if len(self.m_popup_l_sel)>0:
+        if len(self.m_popup_l_sel) > 0 :
             for filename in self.m_popup_l_sel:
                 try:
                     mDark = None
@@ -3092,30 +3140,21 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         # Look for (last received) calibration files
                         mDark, mFlat, mBPM = self.getCalibFor([filename])
                     else:
-                        if calibrations['dark']!='':
+                        if calibrations['dark'] != '':
                             mDark = calibrations['dark']
-                        if calibrations['flat']!='':
+                        if calibrations['flat'] != '':
                             mFlat = calibrations['flat']
-                        if bpm_mode!='none':
+                        if bpm_mode != 'none':
                             mBPM = self.config_opts['bpm']['bpm_file']
 
-                    # Show message with calibrations found
-                    # Ask for confirmation
-                    msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(mDark, mFlat, mBPM)
-                    resp = QMessageBox.information(self, "Info", 
-                        QString("Calibrations found are: \n %1").arg(str(msg)),
-                                     QMessageBox.Ok, QMessageBox.Cancel)
-                    if resp==QMessageBox.Cancel:
-                        return
-                    
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
-                    self.logConsole.info("Calibrations to use:")
+                    self.logConsole.info("Calibrations to use for file [%s] : "%filename)
                     self.logConsole.info("+ Dark :%s"%mDark)
                     self.logConsole.info("+ Flat :%s"%mFlat)
-                    self.logConsole.info("+ BPM (mode=%s) :%s"%(bpm_mode,mBPM))
+                    self.logConsole.info("+ BPM (mode=%s) :%s"%(bpm_mode, mBPM))
                     
-                    # Both master_dark and master_flat and BPM are optional
+                    # Note that both master_dark and master_flat and BPM are OPTIONAL
                     if mDark or mFlat or mBPM:
                         # Put into the queue the task to be done
                         func_to_run = reduce.ApplyDarkFlat([filename], 

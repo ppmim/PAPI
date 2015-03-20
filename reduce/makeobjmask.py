@@ -106,6 +106,7 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
     
     sex = astromatic.SExtractor()
     n = 0
+    
     for fn in files:
         if not os.path.exists(fn):      # check whether input file exists
             log.error( 'File %s does not exist', fn)
@@ -222,7 +223,11 @@ with .weight.fits)."""
     parser.add_option("-m", "--minarea", type="int", default=5,
                   action="store", dest="minarea", 
                   help="SExtractor DETECT_MINAREA (default=%default)")
-                  
+    
+    parser.add_option("-M", "--maxarea", type="int", default=0,
+                  action="store", dest="maxarea", 
+                  help="SExtractor DETECT_MAXAREA (default=%default), 0=unlimited")
+    
     parser.add_option("-t", "--threshold", type="float", default=2.0,
                   action="store", dest="threshold", 
                   help="SExtractor DETECT_THRESH (default=%default)")
@@ -249,8 +254,8 @@ with .weight.fits)."""
         parser.error("Incorrect number of arguments " )
         
     try:
-        makeObjMask( options.inputfile, options.minarea, options.threshold, 
-                     options.saturlevel, options.outputfile, 
+        makeObjMask( options.inputfile, options.minarea, options.maxarea,
+                    options.threshold, options.saturlevel, options.outputfile, 
                      options.single_point)
     except Exception, e:
         log.error("Error while running 'makeobjectmask' %s"%str(e))

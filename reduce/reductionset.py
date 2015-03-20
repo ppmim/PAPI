@@ -1426,7 +1426,7 @@ class ReductionSet(object):
             log.error("Wrong frame number selected in near-sky subtraction")
             return None
         
-        if len(near_list) < (self.HWIDTH+1):
+        if len(near_list) < (self.HWIDTH + 1):
             log.error("Wrong number of sky frames provided. Min number of sky frame is %d", 
                       self.MIN_SKY_FRAMES)
             return None
@@ -1462,7 +1462,7 @@ class ReductionSet(object):
         
         # 0.2 Check if GainMap need to be split
         gain_ext, g_next = self.split([l_gainMap])
-        if g_next==1: gain_ext*=4
+        if g_next == 1: gain_ext*=4
         
         # 1. Split MEF file (into the self.out_dir)
         obj_ext, next = self.split(near_list)
@@ -1738,7 +1738,9 @@ class ReductionSet(object):
                   the BPM)
             
             type_comb : type of combination to use (currently, only average 
-                        available)
+                        available):
+                        - average: calculate robust mean of stack (using weights)
+                        - sum: arithmetic sum of the stack (without weights)
             
         OUTPUTS:
             output : coadded image (and the weight map .weight.fits)
@@ -1770,17 +1772,22 @@ class ReductionSet(object):
         if type_comb=='average': # (use IRDR::dithercubemean)
             prog = self.m_irdr_path + "/dithercubemean "
             cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
-            e = misc.utils.runCmd( cmd )
-            if e==0:
-                log.debug("Some error while running command %s", cmd)
-                return (None,None)
-            else:
-                log.debug("Successful ending of coaddStackImages")
-                return (output, weight_file)
+        elif type_comb=='sum':
+            # actually, weight_file is not used
+            prog = self.m_irdr_path + "/dithercubemean "
+            cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file + " sum " 
         #elif type_comb=='median': # (use IRAF::imcombine)
-                
-        else: return (None,None)
-    
+        else: 
+            return (None,None)
+        
+        e = misc.utils.runCmd( cmd )
+        if e==0:
+            log.debug("Some error while running command %s", cmd)
+            return (None,None)
+        else:
+            log.debug("Successful ending of coaddStackImages")
+            return (output, weight_file)
+        
                                               
     def __createMasterObjMask( self, input_file, output_master_obj_mask ):
         """
@@ -3707,8 +3714,8 @@ class ReductionSet(object):
         # sky subtracted frames (using the same offsets)
         #######################################################################
         log.info("**** Coadding image free distorion frames ****")
-        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
-                              out_dir+'/coadd2.fits')
+        self.coaddStackImages(out_dir + '/stack1.pap', gainmap, 
+                              out_dir + '/coadd2.fits')
         
         #        
         # Remove (trim or crop) any frame around the image due to the coadd process        
@@ -4060,6 +4067,7 @@ class ReductionSet(object):
         # 4.1 - Remove crosstalk - (only if bright stars are present)
         #       (if red_mode!=quick, then crosstalk will be done later)
         ########################################################################
+        # Always remove crosstalk if enabled in config.
         if self.config_dict['general']['remove_crosstalk']:
         #if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
         #    self.config_dict['general']['remove_crosstalk']):
@@ -4146,7 +4154,7 @@ class ReductionSet(object):
             misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/files_skysub.list")
             try:
                 offset_mat = self.getPointingOffsets(out_dir + "/files_skysub.list", 
-                                                    out_dir + '/offsets1.pap')                
+                                                    out_dir + '/offsets1.pap')
             except Exception,e:
                 log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
                 raise e
@@ -4186,7 +4194,7 @@ class ReductionSet(object):
             
             # Dithercubemean
             self.coaddStackImages(out_dir + '/stack1.pap', gainmap, 
-                                  out_dir + '/coadd1.fits','average')
+                                  out_dir + '/coadd1.fits', 'sum')
             
             # Astrometry of coadded stack
             log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
@@ -4199,7 +4207,7 @@ class ReductionSet(object):
                     raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
             else:
                 try:
-                    solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
+                    solved = reduce.solveAstrometry.solveField(out_dir + '/coadd1.fits', 
                                                     out_dir, # self.temp_dir produces collision
                                                     self.config_dict['general']['pix_scale'])
 
@@ -4261,7 +4269,14 @@ class ReductionSet(object):
         log.info("**** Master object mask creation ****")
         obj_mask = self.__createMasterObjMask(output_file, 
                                                out_dir + '/masterObjMask.fits')
-
+        # Prueba
+        # Create a object mask for each sky-subtracted file
+        obj_mask_skysub = []
+        for im in self.m_LAST_FILES:
+            res = self.__createMasterObjMask(im,
+                                            out_dir + "/" + os.path.basename(im).replace(".fits",".obj.fits"))
+            obj_mask_skysub.append(res)
+            
         ########################################################################
         # Re-compute dither offsets taking into account the object mask
         ########################################################################
@@ -4291,30 +4306,33 @@ class ReductionSet(object):
         # (j=1) Due to the offsets were computed with the obj_mask, the first 
         # offset (=0,0) is skipped.
         j = 1 
+        ########## PRUEBA ################
+        offset_mat.fill(0)
+        ### Fin prueba ###
         for file in self.m_rawFiles:
             # In case of whatever T-S-T-S-... sequence, only T frames should be used;
             # however, the second pass of skyfilter (with object mask)
             # has no sense for this type of sequences.
             # if datahandler.ClFits(file).isSky():
             #    continue
-            if self.apply_dark_flat==1 and master_flat!=None and master_dark!=None:
-                line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
+            if self.apply_dark_flat == 1 and master_flat != None and master_dark != None:
+                line = file.replace(".fits","_D_F.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
-            elif self.apply_dark_flat==1 and master_flat!=None:
-                line = file.replace(".fits","_F.fits") + " " + obj_mask + " "\
+            elif self.apply_dark_flat == 1 and master_flat != None:
+                line = file.replace(".fits","_F.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
-            elif self.apply_dark_flat==1 and master_dark!=None:
-                line = file.replace(".fits","_D.fits") + " " + obj_mask + " "\
+            elif self.apply_dark_flat == 1 and master_dark != None:
+                line = file.replace(".fits","_D.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             else:
-                line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
+                line = file + " " + obj_mask_skysub[i] + " " + str(offset_mat[j][0]) + \
                 " " + str(offset_mat[j][1])
             
             fs.write(line + "\n")
-            if (self.obs_mode=='dither_on_off' or 
-                self.obs_mode=='dither_off_on') and i%2:
+            if (self.obs_mode == 'dither_on_off' or 
+                self.obs_mode == 'dither_off_on') and i%2:
                 j = j + 1
-            elif self.obs_mode=='dither':
+            elif self.obs_mode == 'dither':
                 j = j + 1
             i = i + 1
             

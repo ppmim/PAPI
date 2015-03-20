@@ -277,7 +277,7 @@
        <string>Select a directory or log file for received files location</string>
       </property>
       <property name="text">
-       <string>Input Dir</string>
+       <string>Input Dir ...</string>
       </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_outputD">
@@ -352,7 +352,7 @@
        <string>Browse the output processed files location</string>
       </property>
       <property name="text">
-       <string>Output Dir</string>
+       <string>Output Dir ...</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_file_filter">
@@ -1136,7 +1136,7 @@
        </palette>
       </property>
       <property name="toolTip">
-       <string>Input data file extension</string>
+       <string>Input dir files basename filtering (outs are not filtered)</string>
       </property>
       <property name="text">
        <string>*.fits</string>
@@ -2275,9 +2275,9 @@
       <property name="geometry">
        <rect>
         <x>661</x>
-        <y>114</y>
+        <y>144</y>
         <width>51</width>
-        <height>22</height>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">
@@ -2291,9 +2291,9 @@
       <property name="geometry">
        <rect>
         <x>583</x>
-        <y>114</y>
+        <y>144</y>
         <width>70</width>
-        <height>21</height>
+        <height>19</height>
        </rect>
       </property>
       <property name="text">
@@ -2310,9 +2310,9 @@
       <property name="geometry">
        <rect>
         <x>34</x>
-        <y>36</y>
+        <y>66</y>
         <width>120</width>
-        <height>31</height>
+        <height>29</height>
        </rect>
       </property>
       <property name="palette">
@@ -2763,9 +2763,9 @@
       <property name="geometry">
        <rect>
         <x>172</x>
-        <y>43</y>
+        <y>73</y>
         <width>121</width>
-        <height>19</height>
+        <height>17</height>
        </rect>
       </property>
       <property name="font">
@@ -2785,9 +2785,9 @@
       <property name="geometry">
        <rect>
         <x>584</x>
-        <y>84</y>
+        <y>114</y>
         <width>70</width>
-        <height>21</height>
+        <height>19</height>
        </rect>
       </property>
       <property name="text">
@@ -2801,9 +2801,9 @@
       <property name="geometry">
        <rect>
         <x>661</x>
-        <y>86</y>
+        <y>116</y>
         <width>61</width>
-        <height>22</height>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">
@@ -2817,9 +2817,9 @@
       <property name="geometry">
        <rect>
         <x>583</x>
-        <y>174</y>
+        <y>204</y>
         <width>70</width>
-        <height>21</height>
+        <height>19</height>
        </rect>
       </property>
       <property name="text">
@@ -2833,9 +2833,9 @@
       <property name="geometry">
        <rect>
         <x>661</x>
-        <y>174</y>
+        <y>204</y>
         <width>111</width>
-        <height>22</height>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">
@@ -2849,9 +2849,9 @@
       <property name="geometry">
        <rect>
         <x>173</x>
-        <y>81</y>
+        <y>111</y>
         <width>401</width>
-        <height>121</height>
+        <height>119</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -2975,7 +2975,7 @@
       <property name="geometry">
        <rect>
         <x>23</x>
-        <y>79</y>
+        <y>109</y>
         <width>141</width>
         <height>125</height>
        </rect>
@@ -3027,9 +3027,9 @@
       <property name="geometry">
        <rect>
         <x>586</x>
-        <y>145</y>
+        <y>175</y>
         <width>90</width>
-        <height>21</height>
+        <height>19</height>
        </rect>
       </property>
       <item>
@@ -3052,9 +3052,9 @@
       <property name="geometry">
        <rect>
         <x>684</x>
-        <y>145</y>
+        <y>175</y>
         <width>51</width>
-        <height>20</height>
+        <height>18</height>
        </rect>
       </property>
       <property name="font">
@@ -3068,6 +3068,81 @@
       </property>
       <property name="wordWrap">
        <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_calibsD">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>17</y>
+        <width>290</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>255</red>
+            <green>255</green>
+            <blue>137</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Base">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>244</red>
+            <green>244</green>
+            <blue>244</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
+      <property name="toolTip">
+       <string>Input raw files location</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_calibsD">
+      <property name="geometry">
+       <rect>
+        <x>29</x>
+        <y>16</y>
+        <width>110</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>Select a directory or log file for received files location</string>
+      </property>
+      <property name="text">
+       <string>Calibs...</string>
       </property>
      </widget>
     </widget>
