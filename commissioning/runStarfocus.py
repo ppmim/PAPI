@@ -133,7 +133,7 @@ if __name__ == "__main__":
             lines.pop(0)
         k = lines.index('\n')
         for i in range(k):
-            if lines[k -i -1].startswith('Best'):
+            if lines[k -i -1].strip().startswith('Best'):
                 fo.write(lines[k - i - 1])
         fo.close()
         print 'Data file written: %s' %options.data_file
