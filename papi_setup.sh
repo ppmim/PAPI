@@ -14,7 +14,7 @@ export PAPI_PROD=${HOME}/DataProd
 # Settings
 #------------------------------------------------------------------------------
 # path to PAPI reference files
-export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg
+export PAPI_CONFIG=${PAPI_HOME}/config_files/papi.cfg
 export PATH=${PATH}:${PAPI_BIN}
 export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}
 
@@ -62,6 +62,10 @@ chmod $PAPI_BIN/start_iraf
 cp -av $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/
 chmod a+x $PAPI_HOME/commissining/getDarks.py
 
+# To check the PANIC temperatures and press
+cp -av $PAPI_HOME/scripts/panic_status $PAPI_BIN/
+
+
 chmod a+x $PAPI_HOME/papi.py
 ln -s $PAPI_HOME/papi.py $PAPI_BIN/papi
 
@@ -95,11 +99,18 @@ ln -s $PAPI_HOME/misc/modFITS.py $PAPI_BIN/modFITS
 chmod a+x $PAPI_HOME/photo/photometry.py
 ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 
+# Some tools for commissioning
+ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus
+ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck
+ln -s $PAPI_HOME/commissioning/getImageOffsets.py $PAPI_BIN/getImageOffsets
+
+
 
 # ---------------------------------------
 # Add Environment Variables to bash shell
 # ---------------------------------------
 cp ${PAPI_HOME}/scripts/bashrc ${HOME}/.bashrc
+
 
 #echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
 #echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 

@@ -34,7 +34,6 @@ extern float mean_nw(float *arr, int n, float nsig)
     hcut = med + nsig * sig;
 
     for (i = 0; i < n; i++) {
-        /*printf ("\nDEBUG- arr[%d]= %f ", i, arr[i]);*/
         if ((a = arr[i]) >= lcut && a <= hcut) {
             sum += a;
             count++;

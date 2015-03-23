@@ -49,6 +49,12 @@ openSuSE 13.1-64 bit
 ************
 ** SYSTEM **
 ************
++) Service tags:
+
+$dmidecode -s system-serial-number
+panic22=BKNBWX1
+panic35=5KNBWX1
+
 +) Network interfaces
 
 The Dell Broadcom BCM5720 Quad-port 1 GB Network card of the PANIC computer is 
@@ -148,12 +154,43 @@ channels of a LakeShore controller, the 8 temperature channels of a LakeShore
 monitor and of one Pfeier pressure in GEIRS(FITS output and GUI) the next lines
 are required in the crontab:
 
+from BD:
+> Hi Jose Miguel,
+>
+> I've organized the temperature logs as follows:
+> - obsXX have the cronjob to poll the data, write to panictemp.log
+> - obsXX have cronjob glogRotate to write daily files
+> - users panic and staff have a symbolic link to obsXX's panictemp.log
+> - panic cronjobs have still glogRotate, but 1h later than for obsXX 
+> that they don't change the panictemp.log any more, but all other log 
+> files
+> - old daily temperature filesfrom panic were copied to obsXX user, 
+> where now a continuous archive exists starting at the MPIA lab tests 
+> starting May 2014.
+>
+> Both done on panic22 and panic35.
+
+
+** On panic22, idem but**
+
+For obs22 user:
+
 10 12 * * * export CAMHOME=${HOME}/GEIRS ; cd $CAMHOME/log ; ./glogRotate.sh
 */3 * * * *  GEIRS/scripts/panictempress -i 192.168.70.10 >> GEIRS/log/panictemp.log 2> GEIRS/log/panictemp.err
 
-On panic35, idem but:
+For panic user:
+10 13 * * * export CAMHOME=${HOME}/GEIRS ; cd $CAMHOME/log ; ./glogRotate.sh ; rm panictemp.log ; ln -s /home/obs35/GEIRS/log/panictemp.log panictemp.log
+
+** On panic35, idem but**
+
++ For obs35 user:
+
 1-58/3 * * * * GEIRS/scripts/panictempress -i 192.168.70.10 >> GEIRS/log/panictemp.log 2> GEIRS/log/panictemp.err
 to prevent problems when polling at the same time from two machines
+
++ For panic user:
+10 13 * * * export CAMHOME=${HOME}/GEIRS ; cd $CAMHOME/log ; ./glogRotate.sh ; rm panictemp.log ; ln -s /home/obs35/GEIRS/log/panictemp.log panictemp.log
+
 
 +) FTP Config
 
@@ -190,6 +227,18 @@ In the Authentication dialog, set whether the FTP server should be available for
 In the Expert Settings dialog, configure the operation mode of the FTP server, SSL connections and firewall settings. For more information, see Section 31.5, Expert Settings.
 
 Press Finish to save the configurations.
+
+sshd config
+===========
+To enable the keep alive system-wide (root access required), edit /etc/ssh/ssh_config; to set the settings for just your user, edit ~/.ssh/config (create the file if it doesn't exist). Insert the following:
+
+Host *
+    ServerAliveInterval 300
+    ServerAliveCountMax 2
+You can also make your OpenSSH server keep alive all connections with clients by adding the following to /etc/ssh/sshd_config:
+
+ClientAliveInterval 300
+ClientAliveCountMax 2
 
 
 *************************
@@ -1080,21 +1129,16 @@ export CAMHOME=${HOME}/GEIRS
 ##
 export PAPI_HOME=${HOME}/DEVELOP/papi
 PYTHONPATH=$PYTHONPATH:$PAPI_HOME
-PAPI_CONFIG=$PAPI_HOME/config_files/papi_panic2_PANIC.cfg
+PAPI_CONFIG=$PAPI_HOME/config_files/papi.cfg
 PAPI_PROD=/data2/out
 # Proxy required for cdsclient at MPIA
 http_proxy=derfel.caha.es:3128
 export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy
 
 # PANIC-MIDAS PROCEDURES
-GEIRSLSTABORT="/home/panic/GEIRS/geirsLstAbort"
-CA_FFLTEST=$PAPI_HOME/simu/caha/ffltest
 AUPLAY=/usr/bin/play
-GEIRS_DIR=/home/panic/GEIRS
-FLAT_COMMAND=$PAPI_HOME/simu/caha/flats
+GEIRS_DIR=$HOME/GEIRS
 TECS_SCRIPT=$HOME/TECS/scripts
-PANIC_UTIL=$PAPI_HOME/MIDAS
-PANIC_SCI=$PAPI_HOME/MIDAS
 ASTROMETRY=/usr/local/astrometry/bin
 
 PATH=$PATH:$HOME/GEIRS/scripts:$HOME/GEIRS/binrjm:$ASTROMETRY:$HOME/bin:$HOME/TECS/scripts
@@ -1110,6 +1154,10 @@ export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'
 
 ### Para enviar el sonido al SOR del 2.2
 export AUDIOSERVER="xt22:0"
+###
+
+### Para enviar el sonido al SOR del 3.5
+export AUDIOSERVER="xt32:0"
 ###
 
 

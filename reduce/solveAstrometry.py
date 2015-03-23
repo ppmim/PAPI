@@ -36,7 +36,6 @@ from distutils import spawn
 
 import astropy.io.fits as fits
 import sys
-import logging as log
 import time
 import re
 
@@ -87,12 +86,12 @@ def readHeader(filename, extension=1):
         myfits = clfits.ClFits(filename)
     except Exception,e:
         msg = "Error reading FITS file: " + filename
-        log.error(msg)
-        log.error(str(e))
+        logging.error(msg)
+        logging.error(str(e))
         raise e
     else:
         if myfits.isMEF():
-            log.info("Found a MEF file. Extension to use = %s"%extension)
+            logging.info("Found a MEF file. Extension to use = %s"%extension)
             m_wcs = wcs.WCS(fits.getheader(filename, ext=int(extension)))
             # No SIP or Paper IV table lookup distortion correction is applied.
             ra = m_wcs.wcs_pix2world([[myfits.naxis1/2, myfits.naxis2/2]], 1)[0][0]
@@ -155,30 +154,33 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         scale = pix_scale
     
     # Extension paramter
-    if extension>0:
+    if extension > 0 :
         ext_str = "--extension %d"%int(extension)
     else:
         ext_str = ""
         
     if not is_science:
-        log.info("Frame %s is not a science frame"%filename)
-        #return filename + ".not_science"
+        logging.info("Frame %s is not a science frame"%filename)
         
     logging.debug("Starting to solve-field for: %s  Scale=%s  RA= %s Dec= %s \
     INSTRUMENT= %s"%(filename, scale, ra , dec, instrument))
     
     path_astrometry = os.path.dirname(spawn.find_executable("solve-field"))  
-    if not os.path.exists(path_astrometry+"/solve-field"):
+    if not os.path.exists(path_astrometry + "/solve-field"):
         raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s"%path_astrometry)
 
 
     #
     # We must distinguish different cases
     #
-
+    
+    # I do not way, but sometimes it only solve a field with no coordinates !
+    #ra = -1
+    #dec = -1
+    
     # 1) RA, Dec and Scale are known
     if ra != -1 and dec != -1 and scale != -1:
-        log.debug("RA, Dec and Scale are known")
+        logging.debug("RA, Dec and Scale are known")
         # To avoid problems with wrong RA,Dec coordinates guessed, a wide 
         # radius is used (0.5 degrees)
         # Although --downsample is used, scale does not need to be modified
@@ -187,17 +189,18 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         "%(path_astrometry, scale-0.05, scale+0.05, ra, dec, tmp_dir, filename, ext_str)
     # 2) RA, Dec are unknown but scale is
     elif ra == -1 or dec ==-1 :
-        log.debug("RA, Dec are unknown but scale is")
+        logging.debug("RA, Dec are unknown but scale is")
         str_cmd = "%s/solve-field -O -p --scale-units arcsecperpix --scale-low %s \
-        --scale-high %s -D %s %s %s\
-        "%(path_astrometry, scale-0.1, scale+0.1, tmp_dir, filename, ext_str)
+        --scale-high %s -D %s %s %s --downsample 2\
+        "%(path_astrometry, scale - 0.1, scale + 0.1, tmp_dir, filename, ext_str)
     # 3) None is known -- blind calibration
     if (ra==-1 or dec==-1) and scale==-1:
-        log.debug("Nothing is known")
-        str_cmd = "%s/solve-field -O -p -D %s %s %s\
+        logging.debug("Nothing is known")
+        str_cmd = "%s/solve-field -O -p -D %s %s %s --downsample 2\
         "%(path_astrometry, tmp_dir, filename, ext_str)
     
-    log.debug("CMD="+str_cmd)
+    logging.debug("CMD=" + str_cmd)
+    print "CMD_Astrometry.net =", str_cmd
     
     try:
         p = subprocess.Popen(str_cmd, bufsize=0, shell=True, 
@@ -205,8 +208,8 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              close_fds=True)
     except Exception, e:
-        log.error("Some error while running subprocess: " + str_cmd)
-        log.error(str(e))
+        logging.error("Some error while running subprocess: " + str_cmd)
+        logging.error(str(e))
         raise e
 
     # Warning:
@@ -245,7 +248,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         if match:
             ROT_ANGLE = float(match.group(1))
                 
-        log.info("ROT_ANGLE = %s"%ROT_ANGLE)
+        logging.info("ROT_ANGLE = %s"%ROT_ANGLE)
         
         # Write value into fits header
         fits.setval(out_file, keyword="ROTANGLE", value=ROT_ANGLE, comment="degrees E of N", ext=0)
@@ -257,7 +260,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         return out_file
     
     else:
-        log.error("Field was not solved.")
+        logging.error("Field was not solved.")
         raise Exception("Field was not solved.")
     
     
@@ -315,7 +318,7 @@ def runMultiSolver(files, tmp_dir, pix_scale=None, extension=1):
 
     # use all CPUs available in the computer
     n_cpus = multiprocessing.cpu_count()
-    log.debug("N_CPUS :" + str(n_cpus))
+    logging.debug("N_CPUS :" + str(n_cpus))
     pool = multiprocessing.Pool(processes=n_cpus)
     
     results = []
@@ -327,17 +330,17 @@ def runMultiSolver(files, tmp_dir, pix_scale=None, extension=1):
             # the result is ready, we use pool.map_async()
             results += [pool.map_async(calc, [red_parameters])]
         except Exception,e:
-            log.error("Error processing file: " + file)
-            log.error(str(e))
+            logging.error("Error processing file: " + file)
+            logging.error(str(e))
             
     for result in results:
         try:
             result.wait()
             # the 0 index is *ONLY* required if map_async is used !!!
             solved.append(result.get()[0])
-            log.info("New file created => %s"%solved[-1])
+            logging.info("New file created => %s"%solved[-1])
         except Exception,e:
-            log.error("Cannot process file \n" + str(e))
+            logging.error("Cannot process file \n" + str(e))
             
     
     # Here we could try again to solve fields that were not solved but
@@ -353,7 +356,7 @@ def runMultiSolver(files, tmp_dir, pix_scale=None, extension=1):
     #close() or terminate() before using join().
     pool.join()
     
-    log.info("Finished parallel calibration")
+    logging.info("Finished parallel calibration")
     
     return solved
                   
@@ -471,16 +474,16 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
 
     toc = time.time()
 
-    log.info("No. files = %s"%len(filelist))
+    logging.info("No. files = %s"%len(filelist))
     # calibracion files (bias, dark, flats, ...) are considered as solved files
-    log.info("No. files solved = %s"%(len(filelist)-len(files_not_solved)))
-    log.info("----------------")
-    log.info(files_solved)
+    logging.info("No. files solved = %s"%(len(filelist)-len(files_not_solved)))
+    logging.info("----------------")
+    logging.info(files_solved)
     print "\n"
-    log.info("No. files NOT solved = %s", len(files_not_solved))
-    log.info("--------------------")
-    log.info(files_not_solved)
-    log.info("Time : %s"%(toc-tic))
+    logging.info("No. files NOT solved = %s", len(files_not_solved))
+    logging.info("--------------------")
+    logging.info(files_not_solved)
+    logging.info("Time : %s"%(toc-tic))
 
     sys.exit()
         

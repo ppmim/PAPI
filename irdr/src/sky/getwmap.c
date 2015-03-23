@@ -29,7 +29,7 @@ extern float *getwmap(char *fn, int nx, int ny, float *gain, float sigma)
     for (i = 0; i < nx * ny; i++)
         wmap[i] = scale * gain[i];
 
-    printf("  getwmap: %s %f %f %f\n", fn, ncombine, exptime, variance);
+    printf("  getwmap: %s N=%f EXTIME=%f VAR=%f\n", fn, ncombine, exptime, variance);
 
     return wmap;
 }
@@ -55,8 +55,8 @@ extern float *getmask(float *wmap, int nx, int ny, char *objmfn,
     iyoff = (int)(border_y - yoff);
     
     /* Prueba */
-    ixoff = -xoff;
-    iyoff = -yoff;
+    /*ixoff = -xoff;
+    iyoff = -yoff;*/
     printf("\nixoff = %d  iyoff = %d\n", ixoff, iyoff);
     for (i = 0; i < ny; i++) {
         /* printf("\n DEBUG ny=%d , I=%d\n", ny, i); */

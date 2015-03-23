@@ -48,7 +48,7 @@ import numpy
 import astropy.io.fits as fits
 from astropy import wcs
 
-#Log
+# Log
 import misc.paLog
 from misc.paLog import log    
 from misc.version import __version__
@@ -199,7 +199,7 @@ class ReductionSet(object):
             dictionary containing the configuration parameters
 
         external_db_files : str or list
-            File list or Directory used as an external calibration database.
+            File list used as an external calibration database.
             Then, if during the reduction of a ReductionSet(RS) no calibration 
             (dark, flat) are found in the current RS, then PAPI will look for 
             them into this directory.
@@ -301,7 +301,7 @@ class ReductionSet(object):
         # Bad Pixel Maks
         # 
         self.bpm_mode = self.config_dict['bpm']['mode']
-        if self.bpm_mode!='none':
+        if self.bpm_mode != 'none':
             self.master_bpm  = self.config_dict['bpm']['bpm_file']
         else:
             self.master_bpm  = bpm  
@@ -398,10 +398,10 @@ class ReductionSet(object):
         # in other RS. Mainly used in Quick-Look !!    
         self.ext_db = None
         
-        # (optional) file list to build the external DB. We proceed this way, 
-        # because if we give a DB connection to the ReductionSet class instead 
-        # of a list of files, we can have problems because SQLite3 does not 
-        # support access from multiple  threads, and the RS.reduceSet() can 
+        # (optional) file list to build the external DB. We proceed this way,
+        # because if we give a DB connection to the ReductionSet class instead
+        # of a list of files, we can have problems because SQLite3 does not
+        # support access from multiple  threads, and the RS.reduceSet() can
         # be executed from other thread than it was created.
         # --> It can be a <list of files> or a <directory name> having the files
         # Further info: http://stackoverflow.com/questions/393554/python-sqlite3-and-concurrency  
@@ -411,11 +411,11 @@ class ReductionSet(object):
             if self.config_dict !=None:
                 cal_dir = self.config_dict['general']['ext_calibration_db']
                 if os.path.isdir(cal_dir):
-                    for file in dircache.listdir(cal_dir):
-                        if file.endswith(".fits") or file.endswith(".fit"):
-                            self.ext_db_files.append((cal_dir+"/"+file).replace('//','/'))
+                    for ifile in dircache.listdir(cal_dir):
+                        if ifile.endswith(".fits") or ifile.endswith(".fit"):
+                            self.ext_db_files.append((cal_dir + "/" + ifile).replace('//','/'))
         else:
-            self.ext_db_files = external_db_files  
+            self.ext_db_files = external_db_files
 
 
         # Print config_dictonary values in log file for debugging
@@ -440,6 +440,7 @@ class ReductionSet(object):
         http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         
         """
+        
         # Local DataBase (in memory)
         log.info("Initializing Local DataBase")
         instrument = self.config_dict['general']['instrument'].lower()
@@ -458,21 +459,23 @@ class ReductionSet(object):
         if self.master_flat!=None: self.db.insert(self.master_flat)
         if self.master_bpm !=None: self.db.insert(self.master_bpm)
         
-        self.db.ListDataSet()
+        # self.db.ListDataSet()
         
         # External DataBase (in memory)
-        if len(self.ext_db_files)>0:
+        if len(self.ext_db_files) > 0:
             log.info("Initializing External DataBase")
             try:
                 self.ext_db = datahandler.dataset.DataSet(self.ext_db_files,
                                                           instrument)
                 self.ext_db.createDB()
                 self.ext_db.load()
+                log.info("Calibration files found in External DB:")
+                self.ext_db.ListDataSet()
             except Exception,e:
                 log.error("Error while EXTERNAL data base initialization: \n %s"%str(e))
                 raise Exception("Error while EXTERNAL data base initialization")
 
-            self.ext_db.ListDataSet()
+            # self.ext_db.ListDataSet()
         else:
             self.ext_db = None
                 
@@ -544,6 +547,9 @@ class ReductionSet(object):
         readmode_0 = f.getReadMode()
         shape_0 = f.shape
         instrument_0 = f.getInstrument().lower()
+        
+        log.info("Values to check: FILTER=%s TYPE=%s EXPT=%s ITIME=%s NCOADD=%s READMODE=%s SHAPE=%s INST=%s",
+                 filter_0, type_0, expt_0, itime_0, ncoadd_0, readmode_0, shape_0, instrument_0)
         
         self.m_filter = filter_0
         self.m_type = type_0
@@ -641,15 +647,13 @@ class ReductionSet(object):
             
     def checkFilter(self):
         """
-        Return true is all files in file have the same filter type, false otherwise
-        
-        \return True or False
+        Return true is all files in file have the same filter type, otherwise False.
         """
         f = datahandler.ClFits(self.m_LAST_FILES[0])
         filter_0 = f.getFilter()
         self.m_filter = filter_0
         for file in self.m_LAST_FILES:
-            fi=datahandler.ClFits( file )
+            fi = datahandler.ClFits( file )
             if fi.getFilter() != filter_0:
                 log.debug("File %s does not match file filter", file)
                 return False
@@ -740,26 +744,32 @@ class ReductionSet(object):
                 new_frame_list.append(frame_list)
         # 2) Suppose we have MEF files ...
         else:
-            if first_img.getInstrument()=="hawki":
-                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','RADECSYS','UTC','LST',
+            if first_img.getInstrument() == "hawki":
+                kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','RADECSYS','UTC','LST',
 		          'UT','ST','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
 		          'FILTER', 'FILTER1', 'FILTER2', "HIERARCH ESO TPL ID", "HIERARCH ESO TPL EXPNO", 
-                  'HIERARCH ESO TPL NEXP','NCOADDS','HIERARCH ESO DET NDIT','NDIT'
-                ]   
+                  'HIERARCH ESO TPL NEXP','NCOADDS','HIERARCH ESO DET NDIT', 'NDIT',
+                  'HIERARCH ESO INS FILT1 NAME', 'HIERARCH ESO INS FILT2 NAME',
+                  'BSCALE', 'BZERO',
+                ]
+                instr = 'hawki'  
             else: # PANIC
                 kws_to_cp = ['DATE','OBJECT','DATE-OBS','RA','DEC','EQUINOX','LST',
-                   'UT','AIRMASS','IMAGETYP','EXPTIME','TELESCOP','INSTRUME','MJD-OBS',
+                   'UT','AIRMASS','IMAGETYP','TELESCOP','INSTRUME','MJD-OBS',
+                   'BSCALE', 'BZERO',
+                   'CTIME','ITIME','NCOADDS','EXPTIME','T_FOCUS','READMODE',
                    'FILTER', 'OBS_TOOL', 'PROG_ID', 'OB_ID', 
                    'OB_NAME', 'OB_PAT', 'PAT_NAME','PAT_EXPN', 'PAT_NEXP',
-                   'NCOADDS','CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
-                   'PAPITYPE','PAPIVERS','OBSERVER','ORIGIN'
+                   'CASSPOS','PIXSCALE', 'LAMP', 'DET_ID',
+                   'PAPITYPE', 'PAPIVERS','OBSERVER', 'ORIGIN'
                 ]
-            
+                instr = 'panic'
             try:
                 mef = misc.mef.MEF(frame_list)
                 (nExt, sp_frame_list) = mef.doSplit(".Q%02d.fits", 
                                                     out_dir=self.temp_dir, 
-                                                    copy_keyword=kws_to_cp)
+                                                    copy_keyword=kws_to_cp,
+                                                    instrument=instr)
             except Exception,e:
                 log.debug("Some error while splitting data set. %s",str(e))
                 raise e
@@ -767,7 +777,9 @@ class ReductionSet(object):
         # now, generate the new output filenames        
         # In principle, it is not needed; we could use [sp_frame_list]
         for n in range(1,nExt+1):
-            new_frame_list.append([self.temp_dir+"/"+os.path.basename(file.replace(".fits",".Q%02d.fits"%n)) for file in frame_list])
+            new_frame_list.append([self.temp_dir + "/" + 
+                                   os.path.basename(file.replace(".fits", ".Q%02d.fits"%n)) 
+                                   for file in frame_list])
             """
             for f in new_file_names:
                 #if re.search(".*(\.Q01)(.fits)$", f):
@@ -802,28 +814,28 @@ class ReductionSet(object):
             mode = 'dither_off_on'
             # Then, we are going to suppose the sequence S-T-S-T-S- .... (dither_off_on)
             for file in self.m_LAST_FILES:
-                if not i%2: #even
+                if not i%2: # even (par)
                     fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
-                elif i%2: #odd
+                elif i%2: # odd
                     fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
-                i = i+1         
+                i = i + 1         
         elif fits_0.isObject() and fits_1.isSky():
             # Then, we are going to suppose the sequence T-S-T-S-T- .... (dither_on_off)
             mode = 'dither_on_off'
             for file in self.m_LAST_FILES:
-                if not i%2: #even
+                if not i%2: # even (par)
                     fits = datahandler.ClFits(file)
                     if not fits.isObject():
                         return 'other'
-                elif i%2: #odd
+                elif i%2: # odd
                     fits = datahandler.ClFits(file)
                     if not fits.isSky():
                         return 'other'
-                i = i+1                 
+                i = i + 1
         elif fits_0.isObject() and fits_1.isObject():
             # check if all are objects ...
             # and if are, then, we are going to suppose the sequence T-T-T-T-T- .... (dither)
@@ -1308,25 +1320,25 @@ class ReductionSet(object):
         out_files = []
         
         # get the skymodel
-        if skymodel==None:
+        if skymodel == None:
             skymodel = self.config_dict['skysub']['skymodel']
             
-        if obs_mode=='dither':
+        if obs_mode == 'dither':
             # It comprises any dithering pattern for point-like objects
             skyfilter_cmd = self.m_irdr_path + '/skyfilter '+ list_file + \
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' +  \
             destripe + '  ' + skymodel
-        elif obs_mode=='other':
+        elif obs_mode == 'other':
             # It comprises nodding pattern for extended objects 
             # The detection of SKY/TARGET frames is done in 'skyfilter_general' based
             # on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
-            skyfilter_cmd = self.m_irdr_path+'/skyfilter_general '+ list_file \
+            skyfilter_cmd = self.m_irdr_path + '/skyfilter_general ' + list_file \
             + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
-        elif obs_mode=='dither_on_off': 
+        elif obs_mode == 'dither_on_off': 
             # actually not used
             skyfilter_cmd = self.m_irdr_path + '/skyfilteronoff ' + list_file + \
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe 
-        elif obs_mode=='dither_off_on':
+        elif obs_mode == 'dither_off_on':
             # actually not used 
             skyfilter_cmd = self.m_irdr_path + '/skyfilteroffon ' + list_file +\
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe
@@ -1334,87 +1346,48 @@ class ReductionSet(object):
             log.error("Observing mode not supported")
             raise
                   
-        # Prueba
-        for item in fileinput.input(list_file):
-            print "LINE=",item
         
-        print "SKY_FILTER_CMD=",skyfilter_cmd
+        print "SKY_FILTER_CMD = ", skyfilter_cmd
+        print "CMD_ARGS = ", skyfilter_cmd.split()
+        args = skyfilter_cmd.split()
         
+        """
         args = [self.m_irdr_path + '/skyfilter',
                 list_file,
                 gain_file,
                 str(halfnsky), 
                 mask,
-                destripe,
-                skymodel]
-        #skyfilter_cmd = args 
+                destripe
+                ,skymodel]
+        """
         
-        # Una prueba
-        #args = [self.m_irdr_path + '/skyfilter']
-        print "ARGS",args
-        # 
         output_lines = []
         try:
-            output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, shell=False, bufsize=-1)
-            #output_line = subprocess.call(args)
-            log.critical("irdr::skyfilter command executed ...")
-            #with tempfile.NamedTemporaryFile() as cmd_output:
-            #    p = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE)
-            #    log.critical("irdr::skyfilter command executed ...")
-            #    while True:
-            #        line = p.stdout.readline()
-            #        if not line and p.poll() is not None:
-            #            break
-            #        if line:
-            #            print "MY_LINE=",line.strip()
-            #            cmd_output.write(line)
-
-            #    cmd_output.seek(0)
-            #    output_lines = cmd_output.readlines()
-
+            output_lines  = subprocess.check_output(args, stderr = subprocess.STDOUT, 
+                                                    shell=False, bufsize=0)
+            log.debug("irdr::skyfilter command executed ...")
             sys.stdout.flush()
             sys.stderr.flush()
-            
         except subprocess.CalledProcessError, e:
-            log.debug("Error running skyfilter: %s"%output_lines)
+            log.critical("Error running skyfilter: %s"%output_lines)
             log.debug("Exception: %s"%str(e))
             raise Exception("Error running skyfilter")
         
-        print "OUTPUT=",output_lines
         
-        if 1:
-        #if misc.utils.runCmd( skyfilter_cmd )==1: # All was OK
-            
-            # Rename output sky-subtracted files
-            """for file in glob.glob(self.out_dir+'/*.fits.skysub'):
-                shutil.move(file, file.replace('.fits.skysub', '.skysub.fits'))
-                out_files.append(file.replace('.fits.skysub', '.skysub.fits'))
-            """
-            # look for sky subtracted images created by irdr::skyfilter            
-            files = [line.split(" ")[0].replace("\n","") 
-                     for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
-            for file in files:
-                print "FILE======",file
-                if os.path.exists(file+".skysub"): # it takes into acount dither_on_off and other extended obs. patterns
-                    print "EXISTS !!!!"
-                    shutil.move(file.replace(".fits", ".fits.skysub"), 
+        # look for sky subtracted images created by irdr::skyfilter            
+        files = [line.split(" ")[0].replace("\n","") 
+                    for line in fileinput.input(list_file)] # it takes into account the two kind of possible inputs files to skyfilter
+        for file in files:
+            # it takes into acount dither_on_off and other extended obs. patterns
+            if os.path.exists(file + ".skysub"): 
+                shutil.move(file.replace(".fits", ".fits.skysub"), 
                                 file.replace(".fits", ".skysub.fits"))
-                    out_files.append(file.replace(".fits", ".skysub.fits"))
-            print "OUTFILE======",out_files
-            ## Compose the output file list
-            #if obs_mode=='dither':
-            #   out_files=[line.split()[0].replace('.fits', '.skysub.fits') for line in fileinput.input(list_file)]
-            #elif (obs_mode=='dither_on_off' or obs_mode=='dither_off_on' or obs_mode=='other'):
-            #    out_files=glob.glob(self.out_dir+'/*.skysub.fits')
-            ##
+                out_files.append(file.replace(".fits", ".skysub.fits"))
             
-            # Sort-out data files by obs-data (actually not required when obs_mode='dither')
-            out_files = self.sortOutData(out_files) 
+        # Sort-out data files by obs-data (actually, not required when obs_mode='dither')
+        out_files = self.sortOutData(out_files) 
             
-            return out_files
-        else:
-            log.error("Some problem while running command %s", skyfilter_cmd) 
-            return []
+        return out_files
                                   
     
     def subtractNearSky(self, near_list=None, file_pos=0, out_filename=None):
@@ -1448,21 +1421,23 @@ class ReductionSet(object):
             out_filename = self.out_file
         
         
-        # Some previus checks
-        if file_pos<0 or file_pos>len(near_list):
+        # Some previous checks
+        if file_pos < 0 or file_pos > len(near_list):
             log.error("Wrong frame number selected in near-sky subtraction")
             return None
         
-        if len(near_list)<(self.HWIDTH+1):
+        if len(near_list) < (self.HWIDTH + 1):
             log.error("Wrong number of sky frames provided. Min number of sky frame is %d", 
                       self.MIN_SKY_FRAMES)
             return None
 
+        # 0.0 Check and collapse if required (cube images)
+        near_list = misc.collapse.collapse(near_list, out_dir=self.temp_dir)
         
         # 0.1 Get the gain map
         if not self.master_flat or not os.path.exists( self.master_flat ):
             #raise Exception("Error, gain map file <%s> not found"%gain)
-            #TODO: --> DONE try to compute GainMap using the given images !!!
+            # TODO: --> DONE try to compute GainMap using the given images !!!
             log.debug("---> creating gain map <----")
             output_fd, l_gainMap = tempfile.mkstemp(suffix='.fits', 
                                                     dir=self.out_dir)
@@ -1485,10 +1460,9 @@ class ReductionSet(object):
         else: l_gainMap = self.master_flat
 
         
-        #0.2 Check if GainMap need to be split
+        # 0.2 Check if GainMap need to be split
         gain_ext, g_next = self.split([l_gainMap])
-        if g_next==1: gain_ext*=4
-        #print "\nGAINEXT=",gain_ext
+        if g_next == 1: gain_ext*=4
         
         # 1. Split MEF file (into the self.out_dir)
         obj_ext, next = self.split(near_list)
@@ -1500,19 +1474,19 @@ class ReductionSet(object):
             log.debug("===> Processing extension %d", n+1)
             # Create the temp list file of nearest (ar,dec,mjd) from current 
             # selected science file
-            listfile = self.out_dir+"/nearfiles.list"
+            listfile = self.out_dir + "/nearfiles.list"
             misc.utils.listToFile(obj_ext[n], listfile)
             print "NEAR_FILES=", obj_ext[n]
-            print "GAIN_EXT_N=",gain_ext[n][0]
-            #Call external app skyfilter (irdr)
+            print "GAIN_EXT_N=", gain_ext[n][0]
+            # Call external app skyfilter (irdr)
             hwidth = self.HWIDTH
             
-            cmd = self.m_irdr_path+"/skyfilter_single %s %s %d nomask none %d %s"\
+            cmd = self.m_irdr_path + "/skyfilter_single %s %s %d nomask none %d %s"\
                         %(listfile, gain_ext[n][0], hwidth, file_pos, self.out_dir)
             print "CMD=",cmd
             e = misc.utils.runCmd( cmd )
             if e==1: # success
-                fname = self.out_dir+"/"+os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
+                fname = self.out_dir + "/" + os.path.basename(obj_ext[n][file_pos-1].replace(".fits", (".fits.skysub")))
                 out_ext.append(fname)  
             else:
                 log.error("Some error while subtracting sky in extension #%d# ", n+1)
@@ -1523,7 +1497,7 @@ class ReductionSet(object):
             mef = misc.mef.MEF(out_ext)
             mef.createMEF(out_filename)
         elif len(out_ext)==1:
-            shutil.move(out_ext[0], out_filename) 
+            shutil.move(out_ext[0], out_filename)
         else:
             log.error("Some error while subtracting sky. No output produced.")
             
@@ -1533,13 +1507,14 @@ class ReductionSet(object):
                               p_offsets_file="/tmp/offsets.pap"):
       """
       Derive pointing offsets of each image taking as reference the first one and
-      using WCS astrometric calibration of the images. 
+      using WCS astrometric calibration of the images. Note that is **very** 
+      important that the images are astrometrically calibrated.
       
         Parameters
         ----------
                 
         images_in: str
-            list of filename 
+            list of filename of images astrometrically calibrated
         p_offsets_file: str
             filename of file where offset will be saved (it can be used
             later by dithercubemean). The format of the file will be:
@@ -1564,53 +1539,57 @@ class ReductionSet(object):
       """
       
       log.info("Starting getWCSPointingOffsets....")
+
       
+      # Very important the pixel scale in order to find out good offsets values !!
+      pix_scale = self.config_dict['general']['pix_scale']
       # Init variables
       i = 0 
       offsets_mat = None
-      pix_scale = self.config_dict['general']['pix_scale']
       ra0 = -1
       dec0 = -1
-      x_pix = 1024.0
-      y_pix = 1024.0
-      offsets = numpy.zeros([len(images_in),2] , dtype=numpy.float32)
+      offsets = numpy.zeros([len(images_in), 2] , dtype=numpy.float32)
       
       # Reference image
       ref_image = images_in[0]
       try:
-            h0 = fits.getheader(ref_image)
-            w0 = wcs.WCS(h0)
-            ra0 = w0.wcs_pix2world(x_pix, y_pix, 1)[0]
-            dec0 = w0.wcs_pix2world(x_pix, y_pix, 1)[1]
-            log.debug("Ref. image: %s RA0= %s DEC0= %s"%(ref_image, ra0,dec0))
+            ref = datahandler.ClFits(ref_image)
+            # If present, pix_scale in header is prefered
+            pix_scale = ref.pixScale
+            ra0 = ref.ra    
+            dec0 = ref.dec
+            log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
       except Exception,e:
+          log.error("Cannot get reference RA_0,Dec_0 coordinates: %s"%str(e))
           raise e
         
       offset_txt_file = open(p_offsets_file, "w")
       for my_image in images_in:
-        try:
-              h = fits.getheader(my_image)
-              w = wcs.WCS(h)
-              ra = w.wcs_pix2world(x_pix, y_pix, 1)[0]
-              dec = w.wcs_pix2world(x_pix, y_pix, 1)[1]
-              log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i,ra, i, dec))
-              # Assummed that North is up and East is left
-              offsets[i][0] = ((ra - ra0)*3600*math.cos(dec0/57.296)) / float(pix_scale)
-              offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
-              
-              log.debug("offset_ra  = %s"%offsets[i][0])
-              log.debug("offset_dec = %s"%offsets[i][1])
-              
-              offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
-              i+=1
-        except Exception,e:
-          raise e
+            try:
+                ref = datahandler.ClFits(my_image)
+                ra = ref.ra
+                dec = ref.dec
+                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i, ra, i, dec))
+                
+                # Assummed that North is up and East is left
+                offsets[i][0] = ((ra - ra0)*3600 * math.cos(dec/57.29578)) / float(pix_scale)
+                offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
+                
+                log.debug("offset_ra  = %s"%offsets[i][0])
+                log.debug("offset_dec = %s"%offsets[i][1])
+                
+                offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
+                i+=1
+            except Exception,e:
+                log.error("Error computing the offsets for image %s. \n %s"%(my_image, str(e)))
+                raise e
         
       offset_txt_file.close()
       
       # Write out offsets to file
       # numpy.savetxt(p_offsets_file, offsets, fmt='%.6f')
       log.debug("(WCS) Image Offsets (pixels): ")
+      numpy.set_printoptions(suppress=True)
       log.debug(offsets)
       
       return offsets
@@ -1619,7 +1598,33 @@ class ReductionSet(object):
                             p_offsets_file='/tmp/offsets.pap'):
         """
         Derive pointing offsets between each image using SExtractor OBJECTS 
-        (makeObjMask) and offsets (IRDR)
+        (makeObjMask) and offsets (IRDR).
+        
+        Note: (from Infrared Imaging Data Reduction Software and Techniques, C.N.Sabbey)
+        The approximate dither offsets stored inthe FITS header WCS information are 
+        refined using cross-correlation analysis(offsets.c). 
+        The non-zero (object) pixels of the reference frame object mask
+        (SExtractor OBJECTS image) are stored in a pixel list (x, y, brightness), and
+        this list is cross-correlated against the object mask images of the following frames
+        in the dither set. The SExtractor OBJECTS image conveniently removes the
+        background (important for cross-correlation methods) and identifies the object
+        pixels more reliably than a simple thresholding algorithm (e.g., especially in
+        images with a non-flat background, large noise, and cosmic rays). Using an
+        object list in the cross-correlation focuses on the pixels that contribute to the
+        cross-correlation signal and is faster than cross-correlating two images.
+        The cross-correlation technique uses coordinate, magnitude, and shape information,
+        and was found to be more reliable than matching object coordinate
+        lists (the improvement was noticed in extreme cases, like Galactic center images
+        and nearly empty fields with an extended galaxy). A subpixel offset measurement
+        accuracy of about 0.1 pixels is obtained by fitting a parabola to the peak
+        of the cross-correlation image. In terms of speed, this cross-correlation method
+        was found to be around 10 times faster (for typical survey data and a relatively large
+        search box of 100 pixels) than IRAF STSDAS crosscor.
+        
+        Although the success of irdr:offsets rate is aprox. 100%, failure is indicated 
+        by an offset measurement corresponding exactly to the border of the search 
+        area, or a small fraction of object pixels overlapping in the aligned data 
+        images.
         
         Parameters
         ----------
@@ -1644,7 +1649,7 @@ class ReductionSet(object):
         offsets_mat = None
            
         # STEP 1: Create SExtractor OBJECTS images
-        suffix = '_' + self.m_filter+'.skysub.fits'
+        suffix = '_' + self.m_filter + '.skysub.fits'
         #output_list_file=self.out_dir+"/gpo_objs.pap"
         output_fd, output_list_file = tempfile.mkstemp(suffix='.pap', 
                                                        dir=self.out_dir)
@@ -1681,7 +1686,7 @@ class ReductionSet(object):
 
         if images_in==None:
             # we use the images ending with suffing in the output directory
-            my_input =  self.out_dir+'*'+suffix
+            my_input =  self.out_dir + '*' + suffix
         elif os.path.isfile(images_in): 
             # we use the given list of images
             my_input = images_in
@@ -1733,7 +1738,9 @@ class ReductionSet(object):
                   the BPM)
             
             type_comb : type of combination to use (currently, only average 
-                        available)
+                        available):
+                        - average: calculate robust mean of stack (using weights)
+                        - sum: arithmetic sum of the stack (without weights)
             
         OUTPUTS:
             output : coadded image (and the weight map .weight.fits)
@@ -1745,17 +1752,17 @@ class ReductionSet(object):
         log.info("Start coaddStackImages ...")                                          
         # STEP 1: Define parameters                                          
         input_file = input
-        if input_file==None:
+        if input_file == None:
             log.error("Bad input file provided !")
             return
         
-        if gain==None:
-            gain_file = self.out_dir+"/gain_"+self.m_filter+".fits"
+        if gain == None:
+            gain_file = self.out_dir + "/gain_" + self.m_filter + ".fits"
         else:
             gain_file = gain
         
-        if output==None:
-            output_file = self.out_dir+"/coadd_"+self.m_filter+".fits"     
+        if output == None:
+            output_file = self.out_dir + "/coadd_" + self.m_filter + ".fits"     
         else:
             output_file = output
             
@@ -1763,19 +1770,24 @@ class ReductionSet(object):
         
         # STEP 2: Run the coadd                                           
         if type_comb=='average': # (use IRDR::dithercubemean)
-            prog = self.m_irdr_path+"/dithercubemean "
+            prog = self.m_irdr_path + "/dithercubemean "
             cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file 
-            e = misc.utils.runCmd( cmd )
-            if e==0:
-                log.debug("Some error while running command %s", cmd)
-                return (None,None)
-            else:
-                log.debug("Successful ending of coaddStackImages")
-                return (output, weight_file)
+        elif type_comb=='sum':
+            # actually, weight_file is not used
+            prog = self.m_irdr_path + "/dithercubemean "
+            cmd  = prog + " " + input_file + " " + gain_file + " " + output_file + " " + weight_file + " sum " 
         #elif type_comb=='median': # (use IRAF::imcombine)
-                
-        else: return (None,None)
-    
+        else: 
+            return (None,None)
+        
+        e = misc.utils.runCmd( cmd )
+        if e==0:
+            log.debug("Some error while running command %s", cmd)
+            return (None,None)
+        else:
+            log.debug("Successful ending of coaddStackImages")
+            return (output, weight_file)
+        
                                               
     def __createMasterObjMask( self, input_file, output_master_obj_mask ):
         """
@@ -1792,13 +1804,14 @@ class ReductionSet(object):
             mask_thresh = self.config_dict['skysub']['mask_thresh']
             satur_level = self.config_dict['skysub']['satur_level']
             single_p = False # we cannot use single point, skyfilter need the whole object!
+            dilate = self.config_dict['general']['dilate']
         else:
-            print "Program should never enter here !!!"
             mask_minarea = 5
             mask_maxarea = 0 # unlimited
             mask_thresh = 1.5
             satur_level = 55000
             single_p = False
+            dilate = 0.5
         
         # In order to set a real value for satur_level, we have to check the
         # number of coadds of the images (NCOADDS or NDIT keywords).
@@ -1811,23 +1824,23 @@ class ReductionSet(object):
 
         # Call module makeObjMask
         makeObjMask(input_file, mask_minarea, mask_maxarea, mask_thresh, satur_level,
-                   outputfile=self.out_dir+"/objmask_file.txt", single_point=single_p)
+                   outputfile=self.out_dir + "/objmask_file.txt", single_point=single_p)
         
-        if os.path.exists(input_file+".objs"): 
-            shutil.move(input_file+".objs", output_master_obj_mask)
+        if os.path.exists(input_file + ".objs"): 
+            shutil.move(input_file + ".objs", output_master_obj_mask)
             log.debug("New Object mask created : %s", output_master_obj_mask)
 
-        # STEP 2: dilate mask (NOT DONE)
-        dilate = False                                                     
-        if dilate:
+        # STEP 2: dilate mask
+        # mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
+        # For wide-fields with distortion, a dilate > 0.5 is recommended.
+        if dilate > 0:
             log.info("Dilating image ....")
-            prog = self.m_irdr_path+"/dilate "
-            scale = 1.5 #mult. scale factor to expand object regions; default is 0.5 (ie, make 50%% larger)
-            cmd  = prog + " " + output_master_obj_mask + " " + str(scale)
+            prog = self.m_irdr_path + "/dilate "
+            cmd  = prog + " " + output_master_obj_mask + " " + str(dilate)
             # dilate will overwrite the master object mask
 
             e = misc.utils.runCmd( cmd )
-            if e==0:
+            if e == 0:
                 log.debug("Some error while running command %s", cmd)
             else:
                 log.debug("Successful ending of createMasterObjMask")
@@ -1844,14 +1857,16 @@ class ReductionSet(object):
         """
         
         for out_dir in list_dirs:
-            #misc.fileUtils.removefiles(out_dir+"/*.fits", out_dir+"/*.skysub*")
-            misc.fileUtils.removefiles(out_dir+"/c_*", out_dir+"/dc_*",
-                                       out_dir+"/*.nip", out_dir+"/*.pap" )
-            misc.fileUtils.removefiles(out_dir+"/coadd*", out_dir+"/*.objs",
-                                       out_dir+"/uparm*")
-            misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.list",
-                                       out_dir+"/*.xml", out_dir+"/*.ldac",
-                                       out_dir+"/*.png" )
+            # We cannot remove .fits neither .skysub.fits becasue could have 
+            # files of a previous reduction of a sequence, for example, when
+            # we want to reduce a several sequences of one night, etc.
+            misc.fileUtils.removefiles(out_dir + "/c_*", out_dir + "/dc_*",
+                                       out_dir + "/*.nip", out_dir + "/*.pap" )
+            misc.fileUtils.removefiles(out_dir + "/coadd*", out_dir + "/*.objs",
+                                       out_dir + "/uparm*")
+            misc.fileUtils.removefiles(out_dir + "/*.head", out_dir + "/*.list",
+                                       out_dir + "/*.xml", out_dir + "/*.ldac",
+                                       out_dir + "/*.png" )
 
     def purgeOutput(self):
         """
@@ -1895,8 +1910,9 @@ class ReductionSet(object):
         
         log.debug("Start builing the whole calibration files ...")
         # If not initialized, Init DB
-        if self.db==None: self.__initDB()
+        if self.db == None: self.__initDB()
         master_files = []
+        
         try:
             master_files += self.reduceSet(self.red_mode, seqs_to_reduce=None, 
                                            types_to_reduce=['DARK','DOME_FLAT',
@@ -2020,7 +2036,7 @@ class ReductionSet(object):
                     nyblock = 16
                     nsigma = 5    
                 
-                task=reduce.calGainMap.GainMap(group[0], outfile, bpm=None, 
+                task = reduce.calGainMap.GainMap(group[0], outfile, bpm=None, 
                                                do_normalization=True,
                                                mingain=mingain, maxgain=maxgain, 
                                                nxblock=nxblock,nyblock=nyblock, 
@@ -2615,33 +2631,35 @@ class ReductionSet(object):
                 # Look for the required MasterDark (any ExpTime);first in the 
                 # local DB (current RS), and if anyone found, then in the 
                 # external DB. 
-                # Local (Initially, EXPTIME is not a constraint for MASTER_DARK_MODEL)
-                master_dark_model = self.db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                # Local (Initially, EXPTIME is not a constraint for MASTER_DARK_MODEL);
+                master_dark_model = self.db.GetFilesT('MASTER_DARK_MODEL') 
                 
                 # External (ExpTime is not a constraint)
                 if len(master_dark_model) == 0 and self.ext_db != None:
                     log.debug("No MasterDarkModel in current local DB. Trying in external (historic) DB...")
-                    master_dark_model = self.ext_db.GetFilesT('MASTER_DARK_MODEL') # could there be > 1 master darks, then use the last(mjd sorted)
+                    master_dark_model = self.ext_db.GetFilesT('MASTER_DARK_MODEL') 
                 
-                # Last oportunity, look for a simple MASTER_DARK with >= EXPTIME
+                # If no dark_model, look for MASTER_DARKs with any EXPTIME
                 if len(master_dark_model) == 0:
                     master_dark_model = None
+                    # Look for recently created MASTER_DARKs (PAPI outputs are added to 'db')
                     master_darks = self.db.GetFilesT('MASTER_DARK', -1)
+                    # Look for historic/old created MASTER_DARKs (set in config file) 
                     if self.ext_db != None:
                         master_darks += self.ext_db.GetFilesT('MASTER_DARK', -1)
                     if self.master_dark !=None: master_darks += [self.master_dark]
                 else:
+                    # could there be > 1 master darks, then use the last (mjd sorted)
                     master_dark_model = master_dark_model[-1]
                     master_darks = []
-                    
+
                 # If some kind of master darks were found, then go to MasterTwilightFlat
-                if len(master_darks) > 0 or len(master_dark_model) > 0:
+                if len(master_darks) > 0 or master_dark_model != None:
                     log.debug("MASTER_DARKs = %s"%master_darks)
                     log.debug("MASTER_DARK_MODEL = %s"%master_dark_model)
                     
                     # Get filter name for filename
-                    with fits.open(sequence[0]) as f_hdu:
-                        filter_name = f_hdu[0].header['FILTER']
+                    filter_name = cfits.getFilter()
                         
                     # generate a random filename for the masterTw, to ensure we do not overwrite any file
                     output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
@@ -2679,8 +2697,9 @@ class ReductionSet(object):
                     if out!=None: files_created.append(out) # out must be equal to outfile
                 else:
                     # should we create master dark ??
-                    log.error("[reduceSeq] MASTER_DARK_MODEL not found. Cannot build master TwFlat")
-                    raise Exception("[reduceSeq] MASTER_DARK_MODEL not found")
+                    msg = "No MASTER_DARK or MASTER_DARK_MODEL found. Cannot build Master TwFlat" 
+                    log.error(msg)
+                    raise Exception(msg)
             except Exception,e:
                 log.error("[reduceSeq] Some error while creating master TwFlat: %s",str(e))
                 raise e
@@ -2771,24 +2790,27 @@ class ReductionSet(object):
                 bpm_ext, cext = self.split([bpm])
                 parallel = self.config_dict['general']['parallel']
                 
-                # Select the detector to process (Q1,Q2,Q3,Q4,all)
+                # Select the detector to process (Q1, Q2, Q3, Q4, All)
                 detector = self.config_dict['general']['detector']
-                q = -1
+                q = -1 # all
                 if next==4:
-                    if detector=='Q1': q = 0   # SG4
-                    elif detector=='Q2': q = 1 # SG1
+                    if detector=='Q1': q = 0   # SG1
+                    elif detector=='Q2': q = 1 # SG2
                     elif detector=='Q3': q = 2 # SG3
-                    elif detector=='Q4': q = 3 # SG2
+                    elif detector=='Q4': q = 4 # SG4
+                    elif detector=='Q123': q = -4 # all except SG4
                     else: q = -1 # all detectors
-                    if q!=-1:
+                    if q >=0 :
+                    #if q!=-1:
+                        # A single detector will be reduced.
                         obj_ext = [obj_ext[q]]
-                        if cext==next:
-                            if len(dark_ext)>0: dark_ext = [dark_ext[q]]
-                            if len(flat_ext)>0: flat_ext = [flat_ext[q]]
-                            if len(bpm_ext)>0: bpm_ext = [bpm_ext[q]]
+                        if len(dark_ext) == next: dark_ext = [dark_ext[q]]
+                        if len(flat_ext) == next: flat_ext = [flat_ext[q]]
+                        if len(bpm_ext) == next: bpm_ext = [bpm_ext[q]]
+                        # Reset to 1 the number of extensions
                         next = 1
                     else:
-                        # Nothing to do, all detectors will be processed
+                        # Nothing to do, **all** detectors will be processed
                         pass
 
                 if parallel==True:
@@ -2807,28 +2829,27 @@ class ReductionSet(object):
                         results = []
                           
                         for n in range(next):
-                            ## only a test to reduce Q01
-                            #log.critical("only a test to reduce Q01")
-                            #if n!=0: continue
-                            #if n!=0 and n!=1: continue
-                            ## end-of-test
-
-                            if next==1 and q!=-1: # single detector processing
-                                q_ext = q +1
+                            if next==1 and q>=0:
+                            #if next==1 and q!=-1: # single detector processing
+                                q_ext = q + 1
                             else:
                                 q_ext = n + 1
-                            log.info("[reduceSeq] ===> (PARALLEL) Reducting extension %d", q_ext)
+                            log.info("[reduceSeq] ===> (PARALLEL) Reducting detector %d", q_ext)
+                            
+                            if q==-4 and q_ext==4:
+                                # skip detector SG4
+                                continue
                             
                             #
                             # For the moment, we have the first calibration file 
                             # for each extension; what rule could we follow ?
-                            #                            
+                            #
                             if dark_ext==[]: mdark = None
                             else: mdark = dark_ext[n][0] 
                             if flat_ext==[]: mflat = None
                             else: mflat = flat_ext[n][0]
                             if bpm_ext==[]: mbpm = None
-                            else: mbpm = bpm_ext[n][0] 
+                            else: mbpm = bpm_ext[n][0]
                             
                             l_out_dir = self.out_dir + "/Q%02d" % q_ext
                             if not os.path.isdir(l_out_dir):
@@ -2888,10 +2909,14 @@ class ReductionSet(object):
                 else:
                     ######## Serial #########
                     for n in range(next):
-                        if next==1 and q!=-1: # single detector processing
+                        if next == 1 and q >=0 : # single detector processing
                             q_ext = q + 1
                         else:
                             q_ext = n + 1
+                        
+                        if q == -4 and q_ext == 4:
+                            # skip detector SG4
+                            continue
 
                         log.info("[reduceSeq] Entering SERIAL science data reduction ...")    
                         log.info("[reduceSeq] ===> (SERIAL) Reducting extension %d", q_ext)
@@ -2908,11 +2933,6 @@ class ReductionSet(object):
                         
                         if bpm_ext==[]: mbpm = None
                         else: mbpm = bpm_ext[n][0]
-                        
-                        # Debug&Test
-                        #if n==1: return None,None# only for a TEST !!!
-                        #if n!=1: continue
-                        # 
                         
                         l_out_dir = self.out_dir + "/Q%02d" % q_ext
                         if not os.path.isdir(l_out_dir):
@@ -3033,6 +3053,7 @@ class ReductionSet(object):
                 # input image (and weight map) is overwritten
                 misc.imtrim.imgTrim(file)
             if file!=None and os.path.splitext(file)[1]=='.fits':
+                log.debug("Inserting result in DB: %s",file)
                 self.db.insert(file)
         
         # not sure if is better to do here ??? 
@@ -3042,7 +3063,7 @@ class ReductionSet(object):
         return files_created
  
         
-    def reduceSingleObj_OLD(self, obj_frames, master_dark, master_flat, master_bpm, 
+    def reduceSingleObj_NOT_USED_(self, obj_frames, master_dark, master_flat, master_bpm, 
                   red_mode, out_dir, output_file):
         
         """ 
@@ -3138,7 +3159,7 @@ class ReductionSet(object):
         log.info("**** Data Validation ****")
         if self.check_data:
             if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, 
-                               chk_expt=True, chk_itime=True, chk_ncoadd=True, 
+                               chk_expt=True, chk_itime=True, chk_ncoadd=False, 
                                chk_readmode=True, chk_instrument=True)[0]==True):
                 log.debug("Data checking was OK !")
             else:
@@ -3244,7 +3265,7 @@ class ReductionSet(object):
         # 3 - Compute Gain map and apply BPM
         ########################################################################
         log.info("**** Computing gain-map from ****")
-        gainmap = out_dir+'/gain_'+self.m_filter+'.fits'
+        gainmap = out_dir + '/gain_' + self.m_filter + '.fits'
         # get gainmap parameters
         if self.config_dict:
             mingain = self.config_dict['gainmap']['mingain']
@@ -3253,8 +3274,8 @@ class ReductionSet(object):
             nyblock = self.config_dict['gainmap']['nyblock']
             nsigma = self.config_dict['gainmap']['nsigma']
         else:
-            mingain = 0.5
-            maxgain = 1.5
+            mingain = 0.2
+            maxgain = 1.8
             nxblock = 16
             nyblock = 16
             nsigma = 5
@@ -3363,7 +3384,7 @@ class ReductionSet(object):
                             [True]*len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
             except Exception,e:
-                raise e      
+                raise e
 
         ########################################################################
         # 4.2 - Divide by the master flat after sky subtraction ! 
@@ -3419,7 +3440,7 @@ class ReductionSet(object):
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
-                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                               coadded_file=output_file, config_dict=self.config_dict)
                 try:
                     aw.run(engine=self.config_dict['astrometry']['engine'])
@@ -3457,7 +3478,7 @@ class ReductionSet(object):
             self.m_LAST_FILES = new_files
             try:
                 offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
-                                                    out_dir+'/offsets1.pap')                
+                                                    out_dir + '/offsets1.pap')                
             except Exception,e:
                 log.error("Error while getting WCS pointing offsets. Cannot continue with data reduction...")
                 raise e
@@ -3693,8 +3714,8 @@ class ReductionSet(object):
         # sky subtracted frames (using the same offsets)
         #######################################################################
         log.info("**** Coadding image free distorion frames ****")
-        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
-                              out_dir+'/coadd2.fits')
+        self.coaddStackImages(out_dir + '/stack1.pap', gainmap, 
+                              out_dir + '/coadd2.fits')
         
         #        
         # Remove (trim or crop) any frame around the image due to the coadd process        
@@ -3790,13 +3811,13 @@ class ReductionSet(object):
         
         """
         
+        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
         log.info("#########################################")
         log.info("#### Starting Object Data Reduction #####")
         log.info("#### MODE = %s  ", self.red_mode)
         log.info("#### OUT_DIR = %s ",out_dir)
         log.info("#### OUT_FILE = %s ", output_file)
         log.info(" ----------------------------------")
-        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
         log.info("#### FILTER = %s", c_filter)
         log.info("#### MASTER_DARK = %s ", master_dark)
         log.info("#### MASTER_FLAT = %s ", master_flat)
@@ -3830,7 +3851,7 @@ class ReductionSet(object):
         log.info("**** Data Validation ****")
         if self.check_data:
             if (self.checkData(chk_shape=True, chk_filter=True, chk_type=False, 
-                               chk_expt=True, chk_itime=True, chk_ncoadd=True, 
+                               chk_expt=True, chk_itime=True, chk_ncoadd=False, 
                                chk_readmode=True, chk_instrument=True)[0]==True):
                 log.debug("Data checking was OK !")
             else:
@@ -3873,7 +3894,7 @@ class ReductionSet(object):
         elif self.config_dict['bpm']['mode'].lower()=='fix':
             master_bpm_4gain = None
             master_bpm_4fix = master_bpm
-        elif self.config_dict['bpm']['mode'].lower()=='gain':
+        elif self.config_dict['bpm']['mode'].lower()=='grab':
             master_bpm_4gain = master_bpm
             master_bpm_4fix = None
         else:
@@ -3899,12 +3920,12 @@ class ReductionSet(object):
         #      can come from the 'master_flat' provided by the user or from the 
         #      just created 'super_flat' with sci images 
         ########################################################################
-        if master_flat==None:
+        if master_flat == None:
             try:
                 # - Find out what kind of observing mode we have (dither, ext_dither, ...)
                 log.info('**** Computing Super-Sky Flat-Field (local_master_flat) ****')
                 local_master_flat = out_dir+"/superFlat.fits"
-                if self.obs_mode=="dither":
+                if self.obs_mode == "dither":
                     log.debug("---> dither sequece <----")
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
@@ -3912,9 +3933,9 @@ class ReductionSet(object):
                                                     norm=True, 
                                                     temp_dir=self.temp_dir)
                     superflat.create()
-                elif (self.obs_mode=="dither_on_off" or
-                      self.obs_mode=="dither_off_on" or
-                      self.obs_mode=="other"):
+                elif (self.obs_mode == "dither_on_off" or
+                      self.obs_mode == "dither_off_on" or
+                      self.obs_mode == "other"):
                     log.debug("----> EXTENDED SOURCE !!! <----")
                     sky_list = self.getSkyFrames()
                     misc.utils.listToFile(sky_list, out_dir+"/files.list")
@@ -3927,7 +3948,7 @@ class ReductionSet(object):
                     log.error("Dither mode not supported")
                     raise Exception("Error, dither mode not supported")
             except Exception,e:
-                raise e    
+                raise e
         else:
             local_master_flat = master_flat 
             log.info("Using the given (dome or twlight) master flat")
@@ -3936,7 +3957,7 @@ class ReductionSet(object):
         # 3 - Compute Gain map and apply BPM
         ########################################################################
         log.info("**** Computing gain-map from ****")
-        gainmap = out_dir+'/gain_'+self.m_filter+'.fits'
+        gainmap = out_dir + '/gain_' + self.m_filter + '.fits'
         # get gainmap parameters
         if self.config_dict:
             mingain = self.config_dict['gainmap']['mingain']
@@ -3959,7 +3980,7 @@ class ReductionSet(object):
         # normalized.
         g = reduce.calGainMap.GainMap(local_master_flat, gainmap, 
                                     bpm=master_bpm_4gain, 
-                                    do_normalization=False,  
+                                    do_normalization=False,
                                     mingain=mingain, maxgain=maxgain,
                                     nxblock=nxblock, nyblock=nyblock,
                                     nsigma=nsigma)
@@ -3971,7 +3992,7 @@ class ReductionSet(object):
         # GainMap ===> Bad pixels <=0, Good pixels = 1
         # Later, in skyfilter procedure bad pixels are set to bkg level.
         ########################################################################
-        if master_bpm_4gain !=None:
+        if master_bpm_4gain != None:
             log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm_4gain, gainmap))
             if not os.path.exists( master_bpm_4gain ):
                 log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
@@ -3988,7 +4009,7 @@ class ReductionSet(object):
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
         #      each raw frame.
         ########################################################################
-        if self.red_mode=='lab':
+        if self.red_mode == 'lab':
             log.info("**** Computing FWHM of each pre-reduced image ****")
             # First, get input parameter for FWHM estimation
             satur_level = self.config_dict['astrometry']['satur_level']
@@ -4035,19 +4056,21 @@ class ReductionSet(object):
         #     (and set bad pixels to bkg lvl)
         ########################################################################
         log.info("**** 1st Sky subtraction (without object mask) ****")
-        misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
+        misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/skylist1.list")
         # Return only filtered images; in extended-sources, sky frames  are not 
         # included.
         #  
-        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
+        self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist1.list",
                                            gainmap, 'nomask', self.obs_mode)
         
         ########################################################################
         # 4.1 - Remove crosstalk - (only if bright stars are present)
         #       (if red_mode!=quick, then crosstalk will be done later)
         ########################################################################
-        if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
-            self.config_dict['general']['remove_crosstalk']):
+        # Always remove crosstalk if enabled in config.
+        if self.config_dict['general']['remove_crosstalk']:
+        #if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
+        #    self.config_dict['general']['remove_crosstalk']):
             log.info("**** Removing crosstalk ****")
             try:
                 res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
@@ -4080,28 +4103,29 @@ class ReductionSet(object):
         ########################################################################
         # Preliminary Astrometric calibration of sky-subtracted frames.
         # ######################################################################
-        log.info("**** Preliminary Astrometric calibration ****")
-        new_files = []
-        for my_file in self.m_LAST_FILES:
-            # Run astrometric calibration
-            try:
-                solved = reduce.solveAstrometry.solveField(my_file, 
-                               out_dir, # self.temp_dir produces collision
-                               self.config_dict['general']['pix_scale'])
-            except Exception,e:
-                raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
-            else:
-                # Rename the file
-                out_filename = my_file.replace(".fits", ".ast.fits")
-                new_files.append(out_filename)
-                shutil.move(solved, out_filename)
-        
-        self.m_LAST_FILES = new_files
+        if self.config_dict['offsets']['method'] == 'wcs':
+            log.info("**** Preliminary Astrometric calibration ****")
+            new_files = []
+            for my_file in self.m_LAST_FILES:
+                # Run astrometric calibration
+                try:
+                    solved = reduce.solveAstrometry.solveField(my_file, 
+                                out_dir, # self.temp_dir produces collision
+                                self.config_dict['general']['pix_scale'])
+                except Exception,e:
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+                else:
+                    # Rename the file
+                    out_filename = my_file.replace(".fits", ".ast.fits")
+                    new_files.append(out_filename)
+                    shutil.move(solved, out_filename)
+            
+            self.m_LAST_FILES = new_files
         
         ########################################################################
         # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
         ########################################################################
-        if self.red_mode=='quick-lemon':
+        if self.red_mode == 'quick-lemon':
             output_fd, papi_output = \
                 tempfile.mkstemp(prefix = out_dir,
                                  suffix = '.papi_output', text = True)
@@ -4116,204 +4140,209 @@ class ReductionSet(object):
         #        - using astrometric calibration (wcs)
         #        - using cross-correlation (irdr.offsets)
         ########################################################################
-        self.offsets_mode = 'wcs'
-        #self.offsets_mode = 'cross-correlation'
-        if self.offsets_mode=='wcs':
+        self.offsets_method = self.config_dict['offsets']['method']
+        if self.offsets_method == 'wcs':
             log.info("Computing dither offsets using astrometric calibration")
             try:
                 offset_mat = self.getWCSPointingOffsets(self.m_LAST_FILES, 
-                                                        out_dir+'/offsets1.pap')                
+                                                        out_dir + '/offsets1.pap')                
             except Exception,e:
                 log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
                 raise e
         else:
             log.info("Computing dither offsets using cross-correlation")
-            misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+            misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/files_skysub.list")
             try:
-                offset_mat = self.getPointingOffsets(out_dir+"/files_skysub.list", 
-                                                    out_dir+'/offsets1.pap')                
+                offset_mat = self.getPointingOffsets(out_dir + "/files_skysub.list", 
+                                                    out_dir + '/offsets1.pap')
             except Exception,e:
                 log.error("Error while getting pointing offsets. Cannot continue with data reduction...")
                 raise e
         
         ########################################################################
         # End of first cycle: SINGLE REDUCTION (quick mode or extended object !)    
-        # 6 - Preliminary coaddition and registering of the stack.
-        #     We use SCAMP + SWARP
+        # 6 - Preliminary coaddition and registering of the stack. Two options:
+        #     (1) We use SCAMP + SWARP
+        #     (2) We use irdr:dithercubemean() + SCAMP/Astrometry.net
         ########################################################################
-        if 1: #self.obs_mode!='dither' or self.red_mode=="quick":
-            if self.coadd_mode=='swarp':
-                log.info("**** Doing 1st Stack Coaddition (swarp)****")
-                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
-                            coadded_file=output_file, config_dict=self.config_dict)
+        # In case of 'science' reduction (ie. 2-skysubtraction passes), 
+        ## 'swarp' cannnot be used to build the 1st-coadd due to field distorion.
+        # We need to keep the distortion in order to have a good objectMask registering
+        # for the 2nd-skysubtraction. In addition, for wide fields, the matching
+        # is not perfect, but can be improved dilating (0.5) the objectMask.
+        if self.coadd_mode == 'swarp' and (self.red_mode == "quick" or 
+                                           self.obs_mode != 'dither'):
+            log.info("**** Doing 1st Stack Coaddition (swarp)****")
+            # astrometric calibration + coadd
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
+                        coadded_file=output_file, config_dict=self.config_dict)
+            try:
+                aw.run(engine=self.config_dict['astrometry']['engine'])
+            except Exception,e:
+                log.error("Some error while running Astrowarp: %s"%str(e))
+                raise e
+        else:
+            log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")
+            # create input file for dithercubemean
+            fo = open(out_dir + '/offsets1.pap', "r")
+            fs = open(out_dir + '/stack1.pap', 'w+')
+            for line in fo:
+                n_line = line.replace(".fits.objs", ".fits") 
+                fs.write(n_line)
+            fo.close()
+            fs.close()
+            
+            # Dithercubemean
+            self.coaddStackImages(out_dir + '/stack1.pap', gainmap, 
+                                  out_dir + '/coadd1.fits', 'sum')
+            
+            # Astrometry of coadded stack
+            log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
+            if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
-                    aw.run(engine=self.config_dict['astrometry']['engine'])
+                    reduce.astrowarp.doAstrometry(out_dir + '/coadd1.fits', output_file, 
+                                          self.config_dict['astrometry']['catalog'], 
+                                          do_votable=False)
                 except Exception,e:
-                    log.error("Some error while running Astrowarp: %s"%str(e))
-                    raise e
+                    raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
             else:
-                log.info("**** Doing 1st Stack Coaddition (dithercubemean) ****")
-                # create input file for dithercubemean
-                fo = open(out_dir+'/offsets1.pap', "r")
-                fs = open(out_dir+'/stack1.pap','w+')
-                for line in fo:
-                    n_line = line.replace(".fits.objs", ".fits") 
-                    fs.write(n_line)
-                fo.close()
-                fs.close()    
-                self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
-                                      out_dir+'/coadd1.fits','average')
-                
-                log.info("**** Doing Astrometric calibration of 1st coadd stack ****")
-                if self.config_dict['astrometry']['engine']=='SCAMP':
-                    try:
-                        reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
-                                              self.config_dict['astrometry']['catalog'], 
-                                              config_dict=self.config_dict, 
-                                              do_votable=False)
-                    except Exception,e:
-                        raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
-                else:
-                    try:
-                        solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
-                                                        out_dir, # self.temp_dir produces collision
-                                                        self.config_dict['general']['pix_scale'])
+                try:
+                    solved = reduce.solveAstrometry.solveField(out_dir + '/coadd1.fits', 
+                                                    out_dir, # self.temp_dir produces collision
+                                                    self.config_dict['general']['pix_scale'])
 
-                    except Exception,e:
-                        raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
-                    else:
-                        # Rename the file
-                        shutil.move(solved, output_file)
-                        
-            # ###########################
-            # Data quality estimation
-            # ###########################
-            if self.config_dict['general']['estimate_fwhm']:
-                log.info("**** FWHM estimation of coadded_1 result frame ****")
-                satur_level = self.config_dict['astrometry']['satur_level']
-                pix_scale = self.config_dict['general']['pix_scale']
-                
-                try:
-                    pf = datahandler.ClFits(output_file)
-                    satur_level = int(satur_level) * int(pf.getNcoadds())
-                except:
-                    log.warning("Cannot get NCOADDS. Taken default (=1)")
-                    satur_level = satur_level
-                    
-                cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
-                    ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
-                    gain=4.15, sat_level=satur_level)
-                try:
-                    (fwhm, std, k, k) = cq.estimateFWHM()
-                    if fwhm>0 and fwhm<20:
-                        log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
-                    elif fwhm<0 or fwhm>20:
-                        log.error("Wrong estimation of FWHM of file %s"%output_file)
-                        log.error("Please, review your data.")           
-                    else:
-                        log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
                 except Exception,e:
-                    log.error("ERROR: something wrong while computing FWHM")
-                    raise e
-                            
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry %s"%str(e))
+                else:
+                    # Rename the file
+                    shutil.move(solved, output_file)
+                    
+        # ###########################
+        # Data quality estimation
+        # ###########################
+        if self.config_dict['general']['estimate_fwhm']:
+            log.info("**** FWHM estimation of coadded_1 result frame ****")
+            satur_level = self.config_dict['astrometry']['satur_level']
+            pix_scale = self.config_dict['general']['pix_scale']
+            
+            try:
+                pf = datahandler.ClFits(output_file)
+                satur_level = int(satur_level) * int(pf.getNcoadds())
+            except:
+                log.warning("Cannot get NCOADDS. Taken default (=1)")
+                satur_level = satur_level
+                
+            cq = reduce.checkQuality.CheckQuality(output_file, isomin=10.0,
+                ellipmax=0.3, edge_x=200, edge_y=200, pixsize=pix_scale, 
+                gain=4.15, sat_level=satur_level)
+            try:
+                (fwhm, std, k, k) = cq.estimateFWHM()
+                if fwhm>0 and fwhm<20:
+                    log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
+                elif fwhm<0 or fwhm>20:
+                    log.error("Wrong estimation of FWHM of file %s"%output_file)
+                    log.error("Please, review your data.")           
+                else:
+                    log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
+            except Exception,e:
+                log.error("ERROR: something wrong while computing FWHM")
+                raise e
+
+        ########################################################################
+        # End of QUICK reduction
+        ########################################################################
+        if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
             log.info("##### End of QUICK  data reduction ######")
             log.info("#########################################")
-            
-            if self.obs_mode!='dither' or self.red_mode=="quick":
-                return output_file
-        
-               
-            
+            return output_file
+       
         ########################################################################
         # 8 - Create master object mask of the 1st stack coadd.
         ########################################################################
         log.info("************************")
         log.info(" START SECOND PASS      ")
         log.info("************************")
-        
-        #############
-        # Build coadd 
-        #############
-        """log.info("**** Initial coaddition of sky subtracted frames ****")
 
-        fo = open(out_dir+'/offsets1.pap', "r")
-        fs = open(out_dir+'/stack1.pap','w+')
-        for line in fo:
-            n_line = line.replace(".fits.objs", ".fits") 
-            fs.write(n_line)
-        fo.close()
-        fs.close()    
-        self.coaddStackImages(out_dir+'/stack1.pap', gainmap, 
-                              out_dir+'/coadd1.fits','average')
-
-        """
-        #####################
-        # Create object mask 
-        #####################
-        
+        # Build masterObjMask of the first coadded stack
         log.info("**** Master object mask creation ****")
-        obj_mask  = self.__createMasterObjMask(output_file, 
-                                               out_dir+'/masterObjMask.fits')
-                                              
-
+        obj_mask = self.__createMasterObjMask(output_file, 
+                                               out_dir + '/masterObjMask.fits')
+        # Prueba
+        # Create a object mask for each sky-subtracted file
+        obj_mask_skysub = []
+        for im in self.m_LAST_FILES:
+            res = self.__createMasterObjMask(im,
+                                            out_dir + "/" + os.path.basename(im).replace(".fits",".obj.fits"))
+            obj_mask_skysub.append(res)
+            
         ########################################################################
         # Re-compute dither offsets taking into account the object mask
         ########################################################################
         try:
+            # All the files (sky-subtrated and first coadd) are already 
+            # astrometrically calibrated.
             temp_list = [obj_mask] + self.m_LAST_FILES
             offset_mat = self.getWCSPointingOffsets(temp_list, 
-                                                        out_dir+'/offsets1.pap')
+                                                        out_dir + '/offsets1.pap')
         except Exception,e:
-            log.error("Error while computing WCS pointing offsets. Cannot continue with data reduction...")
+            log.error("Error while computing WCS pointing offsets. "
+                "Cannot continue with data reduction...")
             raise e
         
         ########################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
         ########################################################################
-        # TODO ???
+        # TODO ? In principle, it is not necessary.
         
         ########################################################################
         # 9 - Second Sky subtraction (IRDR) using then OBJECT MASK
         ########################################################################
         log.info("**** Sky subtraction with 2nd object mask ****")
         # 9.1 Compound masked sky file list as input to IRDR::skyfilter()
-        fs = open(out_dir+"/skylist2.pap","w+")
+        fs = open(out_dir + "/skylist2.pap", "w+")
         i = 0
         # (j=1) Due to the offsets were computed with the obj_mask, the first 
         # offset (=0,0) is skipped.
         j = 1 
+        ########## PRUEBA ################
+        offset_mat.fill(0)
+        ### Fin prueba ###
         for file in self.m_rawFiles:
-            if self.apply_dark_flat==1 and master_flat!=None and master_dark!=None:
-                line = file.replace(".fits","_D_F.fits") + " " + obj_mask + " "\
+            # In case of whatever T-S-T-S-... sequence, only T frames should be used;
+            # however, the second pass of skyfilter (with object mask)
+            # has no sense for this type of sequences.
+            # if datahandler.ClFits(file).isSky():
+            #    continue
+            if self.apply_dark_flat == 1 and master_flat != None and master_dark != None:
+                line = file.replace(".fits","_D_F.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
-            elif self.apply_dark_flat==1 and master_flat!=None:
-                line = file.replace(".fits","_F.fits") + " " + obj_mask + " "\
+            elif self.apply_dark_flat == 1 and master_flat != None:
+                line = file.replace(".fits","_F.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
-            elif self.apply_dark_flat==1 and master_dark!=None:
-                line = file.replace(".fits","_D.fits") + " " + obj_mask + " "\
+            elif self.apply_dark_flat == 1 and master_dark != None:
+                line = file.replace(".fits","_D.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             else:
-                line = file + " " + obj_mask + " " + str(offset_mat[j][0]) + \
+                line = file + " " + obj_mask_skysub[i] + " " + str(offset_mat[j][0]) + \
                 " " + str(offset_mat[j][1])
             
-            fs.write(line+"\n")
+            fs.write(line + "\n")
+            if (self.obs_mode == 'dither_on_off' or 
+                self.obs_mode == 'dither_off_on') and i%2:
+                j = j + 1
+            elif self.obs_mode == 'dither':
+                j = j + 1
+            i = i + 1
             
-            if (self.obs_mode=='dither_on_off' or 
-                self.obs_mode=='dither_off_on') and i%2:
-                j = j+1
-            elif self.obs_mode=='dither':
-                j = j+1
-            i = i+1
-            
+        # Close file
         fs.flush()
         os.fsync(fs.fileno())
         fs.close()
-        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist2.pap", gainmap, 
+        self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)
         
-        print "2nd sky_filter, LAST_FILES=",self.m_LAST_FILES
         ########################################################################
         # 9.1 - Remove crosstalk - (only if bright stars are present)    
         ########################################################################
@@ -4355,10 +4384,9 @@ class ReductionSet(object):
 	########################################################################
         # Preliminary Astrometric calibration of sky-subtracted frames.
         # ######################################################################
-        log.info("**** Preliminary Astrometric calibatrion ****")
+        log.info("**** Preliminary Astrometric calibatrion (2nd sky) ****")
         new_files = []
         for my_file in self.m_LAST_FILES:
-            print "my_file=",my_file
             # Run astrometric calibration
             try:
                 solved = reduce.solveAstrometry.solveField(my_file, 
@@ -4396,10 +4424,10 @@ class ReductionSet(object):
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         #######################################################################
-        if self.coadd_mode=='swarp':
-            print "LAST_FILES=",self.m_LAST_FILES
+        if self.coadd_mode == 'swarp':
             log.info("**** Doing Final Stack Coaddition (swarp)****")
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+            # Build stack using SWARP
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                          coadded_file=output_file, config_dict=self.config_dict,
                          resample=True, subtract_back=True)
             try:
@@ -4409,21 +4437,25 @@ class ReductionSet(object):
                 raise e
         else:
             log.info("**** Doing Final Stack Coaddition (dithercubemean) ****")
+            
             # create input file for dithercubemean
-            fo = open(out_dir+'/offsets1.pap', "r")
-            fs = open(out_dir+'/stack2.pap','w+')
+            fo = open(out_dir + '/offsets1.pap', "r")
+            fs = open(out_dir + '/stack2.pap', 'w+')
             for line in fo:
-                n_line = line.replace(".fits.objs", ".fits") 
-                fs.write(n_line)
+                if ".skysub." in line:
+                    fs.write(line)
             fo.close()
-            fs.close()    
-            self.coaddStackImages(out_dir+'/stack2.pap', gainmap, 
-                                    out_dir+'/coadd2.fits','average')
+            fs.close()
+            
+            # Dithercubemean
+            self.coaddStackImages(out_dir + '/stack2.pap', gainmap, 
+                                    out_dir + '/coadd2.fits', 'average')
                 
-            log.info("**** Doing Astrometric calibration of Final coadd stack ****")
+            # Final Astrometric calibration
+            log.info("**** Doing Astrometric calibration of Final coadded stack ****")
             if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
-                    reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
+                    reduce.astrowarp.doAstrometry(out_dir + '/coadd2.fits', output_file, 
                                      self.config_dict['astrometry']['catalog'], 
                                      config_dict=self.config_dict, 
                                      do_votable=False,

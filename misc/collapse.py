@@ -38,7 +38,7 @@ from misc.version import __version__
 def collapse(frame_list, out_dir="/tmp"):
     """
     Collapse (add them up arithmetically) a (list) of data cubes into a single 
-    2D image.
+    2D image. Files can be MEF or Single.
 
     Return a list with the new collapsed frames. If no collapse is required, file
     will be created as well.
@@ -65,13 +65,13 @@ def collapse(frame_list, out_dir="/tmp"):
                 log.error("Some error collapsing MEF cube: %s"%str(e))
                 raise e
         elif len(f)>1 and len(f[1].data.shape)==2:
-            log.debug("MEF file has no cubes, no collapse required, but new file is created.")
-            shutil.copyfile(frame_i, t_filename)
-            new_frame_list.append(t_filename)
+            log.debug("MEF file has no cubes, no collapse required.")
+            #shutil.copyfile(frame_i, t_filename)
+            new_frame_list.append(frame_i)
         elif len(f[0].data.shape)!=3: # 2D !
-            log.debug("It is not a FITS-cube image, no collapse required, but file is renamed.")
-            shutil.copyfile(frame_i, t_filename)
-            new_frame_list.append(t_filename)
+            log.debug("It is not a FITS-cube image, no collapse required")
+            #shutil.copyfile(frame_i, t_filename)
+            new_frame_list.append(frame_i)
         else:            
             # Suppose we have single CUBE file ...
             out_hdulist = fits.HDUList()               
@@ -81,7 +81,12 @@ def collapse(frame_list, out_dir="/tmp"):
             prihdu.header.set('NCOADDS', f[0].data.shape[0])
             prihdu.header.set('EXPTIME', f[0].header['EXPTIME']*f[0].data.shape[0])
             prihdu.header.set('PAPIVERS', __version__, "PANIC Pipeline version")
-
+            # Weird case (OmegaCass), but it produce a fail with WCS lib
+            if 'CTYPE3' in prihdu.header: prihdu.header.remove("CTYPE3")
+            if 'CRPIX3' in prihdu.header: prihdu.header.remove("CRPIX3")
+            if 'CRVAL3' in prihdu.header: prihdu.header.remove("CRVAL3")
+            if 'CDELT3' in prihdu.header: prihdu.header.remove("CDELT3")
+            
             out_hdulist.append(prihdu)    
             #out_hdulist.verify ('ignore')
             # Now, write the new collapsed file
@@ -237,7 +242,7 @@ if __name__ == "__main__":
        parser.print_help()
        sys.exit(0)
 
-    if (not options.input_image and not options.input_image_list) or len(args)!=0: 
+    if (not options.input_image and not options.input_image_list and not options.input_single_image_list) or len(args)!=0: 
         # args is the leftover positional arguments after all options have been processed
         parser.print_help()
         parser.error("Wrong number of arguments " )

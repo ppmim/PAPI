@@ -307,7 +307,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     log.debug("[doAstrometry] *** Start Astrometric calibration ***")
     
     if not config_dict:
-            raise Exception("Config dictionary not provided ...")
+        raise Exception("Config dictionary not provided ...")
             
     # Save the resulting image to a temporary file if no path was specified
     if output_image is None:
@@ -841,7 +841,6 @@ class AstroWarp(object):
         cat_files = [(f + ".ldac") for f in self.input_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         
-        print "CATFILES = ",cat_files
         try:
             scamp.run(cat_files, updateconfig=False, clean=False)
         except Exception,e:
@@ -927,7 +926,8 @@ in principle previously reduced, but not mandatory.
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
-                  help="Source file list of data frames. It can be a file or directory name.")
+                  help="Source input file. It can be a FITS file or"
+                  "text file with a list of FITS files.")
     
     parser.add_option("-o", "--output",
                   action="store", dest="output_filename", 

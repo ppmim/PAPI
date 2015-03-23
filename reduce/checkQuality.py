@@ -88,13 +88,13 @@ class CheckQuality(object):
 
 
         if self.window=='Q1':
-            self.sex_input_file = input_file+'[%d]'%0
+            self.sex_input_file = input_file+'[%d]'%0 # ext1
         elif self.window=='Q2':
-            self.sex_input_file = input_file+'[%d]'%1
+            self.sex_input_file = input_file+'[%d]'%1 # ext2
         elif self.window=='Q3':
-            self.sex_input_file = input_file+'[%d]'%2
+            self.sex_input_file = input_file+'[%d]'%2 # ext3
         elif self.window=='Q4':
-            self.sex_input_file = input_file+'[%d]'%3
+            self.sex_input_file = input_file+'[%d]'%3 # ext4
         else:
             self.sex_input_file = input_file
              

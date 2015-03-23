@@ -5790,8 +5790,13 @@ $ setenv IMTDEV inet:5137:localhost
 Pero podemos tener problemas si hay más de un ds9 abierto; para ello habría
 que abrir el ds9 en otro puerto:
 
-$ds9 -port 5138
+$ ds9 -port 5138
 $ setenv IMTDEV inet:5138:localhost
+
+$export IMTDEV=inet:5137 (puerto por defecto !!!)
+
+$(lanzar_iraf) después de IMTDEV para que lea dicha variable.
+
 
 Una cosa muy interesante es que podemos también usar un DS9 local corriendo
 en otra máquina diferente a la que corre IRAF !! con lo cual ganamos en velocidad
@@ -5816,15 +5821,893 @@ el mosaico, aunque se reducen los 4 det. aparentenmente bien.
 
 
 
+2-Feb-2015
+----------
+- re-converto los ficheros del 10-Dic-2014 para Herve,
+pues había un error en la conversion MEF y los mef creados tenian
+mal el DET_ID and EXTNAME (sg3-sg1 swap !!); los copio al FTP del IAA
+y le digo a Hervé que se los puede descargar de nuevo.
+
+
+- Compruebo que restando un simple dark y luego dividiendo por un SkyFlat
+a secas (sin combinar mas masterflat) se obtienen también las mismas estructuras
+que se ven en las imagenes que de Tilt xxxx_D_F.fits que le pasé
+a Conchi y de las que BD decía que no entendía las estructuras
+que aparecian a pesar del dividir por el masterFlat. Por tanto, 
+en principio parece que las pre-reducción está bien.
+Más o menos lo mismo se observa con los DomeFlats !
+
+- Unifico el fichero temporal "/tmp/focus_seq_XXXX.txt" 
+(donde XXX=usuario) del que hace uso el QL para la Focus-evaluation;
+actualemente eso afecta a los siguentes ficheros fuente:
+   
+    .iraf/login.cl
+    .iraf/papi_ql_user.cl
+    papi/QL4/mainGUI.py
+    papi/QL4/runQL.py
+
+La SOLUCION ha sido crear (focus_eval) y borrar posteriormente dicho 
+fichero temporal en /home/user/.iraf/focus_seq.txt.
+
+
+
+
+
+3-Feb-2015
+----------
+- actualizo el documento de calculo del Tilt con las rutinas de BD y lo envío al grupo.
+- modifico RS.py y mainGUI.py para que se pueda leer y acceder a las
+calibraciones externas que se indican en el fichero de configuración en 'ext_calibration_db'.
+Ahora en el QL:MasterTwFlat se consultan los masters de dicho directorio, además
+de las que se hayan creado durante la sesión actual del QL.
+Internamente tenemos:
+
+- QL:
+ + inputsDB = ficheros detectados (nuevos de GEIRS)
+ + outputsDB = ficheros generados por QL + los de ext_calibration_db 
+- PAPI
+ + db = static MD, MF, MBPM + static input files (list or directory)
+ + ext_db = ficheros del directorio configurado en ext_calibration_db
+   o bien una lista pasada desde el QL (caso especial).
+
+- Obtenemos respuesta de Hervé sobre la astrometría de PANIC; nos
+dice que ha encontrado bastante problemas con los BadPixels y 
+ha obtenido residuos del orden de 30mas, y de 10-12mas en el mejor
+de los casos.
+
+- Reduzco NGC1647 de Dark, Flat y BPM para Z, Y, Ks para Conchi e Irene,
+pues las secuencias que había reducido no eran las que querían.
+
+>applyDarkFlat.py -s /data2/Tilt_NGC1647/Z/files.txt -d /data2/Masters/joins/mDark_oi06dX_20_2.fits -f /data2/Masters/TwFlats/mTwFlat_Z_xPXlTj.fits -b /data1/Calibs/master_bpm_lir_ones.join.fits -a grab -o /data2/Tilt_NGC1647/Z/
+
+
+4-Feb-2015
+----------
+
+
+9-Feb-2015
+----------
+- Me pongo a reducir las imagenesd WASP-19p de HAWKI; en dicho
+proceso encuentro varios bugs para reconocer los datos de HAWKI;
+Encuentro un bug importante en las reducción de un cuadrante independiente,
+pues no seleccionaba correctamente el Qx correspondiente de 
+las calibraciones !!
+- Finalmente consigo reducir la secuencia completa de 188 imagenes 
+de WASP19 con Dark, TwFlat y skysub usando las astrometría para el
+cálculo de los offsets.
+(P) - Habría que reducir tb WASP19: en todos los cuadrantes, sin D ni F, con irdr:offsets, ...
+y ver que dice LEMON
+
+
+10-Feb-2015
+----------
+- La teleconf que teniamos prevista con Hervé se suspende pues no 
+podemos contactar con él.
+Las cosas que yo tenía previsto preguntarle son: (ver papel mi libreta)
+- Le mando a Hervé las secuencias de Taurus(F1 y F2) que tenemos del 10-Dic-2014,
+pues el nos decía en un mensaje que no tenian dithering. Yo compruebo
+que si lo tienen, y que quizás el sólo se descargó la secuencia de foco.
+
+- Encuentro la forma de aumentar la resolución de los gráficas que
+genera SCAMP. Para ello modifico el fichero de configuración:
+
+/home/panic/DEVELOP/papi/config_files/scamp.conf
+
+con
+
+CHECKPLOT_RES          1600,1200
+
+Pero sigo sin entender por qué la gráfica de distorisión no muestra
+todo el campo de PANIC, sino la mitad !! (15'x15')
+
+
+- Víctor nos manda la primera curva de luz de WASP10, y no se ve para nada 
+el tránsito !!!
+Lanzo segunda reducción de WASP-19 con 9+9 para el skybackground, D, F y modo=science
+
+./papi.py -c config_files/papi_panic1_hawki.cfg -s /data1/HAWK-I_WASP19/ -S 2 2 -M science -W Q2
+
+El resultado está en /data2/out_wasp19 y /data/tmp_wasp19;
+
+- Me pongo a reducir las secuencias de Taurus(F1 y F2) para sacer los mapas de distorsion:
+
+# SEQ       Resultado
+------      ---------
+[59-63]     Q4 no astrometría; no se ve nada en el coadd !!
+[64-68]     Q4 no astrometría
+
+(PROBLEMA-skifilter??): Encuentro que reduciendo Q4 en las secuencias anteriores
+y en modo science, el resultado es muuucho peor o incluso podríamos decir
+que no da nada sensato. En cambio, en modo quick si da un resultado sensato.
+La única explicación es que en el modo ciencia se usa la máscara de objetos,
+y esta produce un skybackground de acuerdo a dicha máscara+gainmap, y en el
+caso del modo quick, sólo se usa el gainmap.
+Esto sólo ocurre para el detector malooo!!! para el resto parece que está bien.
+No obstante, hay que revisar y buscarle explicación a esto por si hubiese
+algún error!!
+
+
+- Cambio el catálogo GSC-2.3 al USNO-B1 en las llamadas a Astrowarp desde RS.
+
+11-Feb-2015
+----------
+- (BUG) Encuentro un problema en skyfilter.c, pues al llamarlo con 
+skymodel=2 (min), da un SFault ! ese método ha sido muy poco usado...
+Los datos eran de TaurusF1[59-63] para el SG4.
+Parcialmente solucionado (bug encontrado, pero falta mejorar el 
+cálculo de la weight_map en irdr::cube_mean_min_w()).
+
+- Soluciono bug en dilate.c (creaba imágenes de 16 bits, pero mal !);
+lo modificoo para que las imagenes sean de bitpix=-32.
+
+- Investigando sobre el problema detectado el día anterior con skyfilter
+en segunda vuelta con SG4, me doy cuenta de que la segunda vuelta de skysub
+no parace "tan buena" como debería; la diferencia básica, además de usar
+wmaps y las mascara de objetos, es que usa la "mean" ponderada en lugar
+de "median" a secas.
+
+- Además, confirmo que la mascara de objetos no se "posiciona"/enmascara 
+correctamente todos los objetos debido a la distorsión del campo (supongo!),
+pues el offset está calculado para el centro del campo y en las esquinas el 
+offset debido a la distorsión no es el mismo !!!!
+Pruebo también con irdr.offsets, y el problema persiste.
+SOLUCION "rápida"==> usar dilate>0 para cubrir más campo con la mascara de objetos;
+se nota una clara mejoría!!
+Sin embargo, la solución ideal sería "registrar" la mascara de objetos (masterObjMask.fits)
+correctamente teniendo en cuenta la distorsión !!! --->NOOO, precisamente al crear
+la máscara con el coadd1 generado por swarp ya tenemos la distorisión tenida en cuenta,
+y precisamente por eso luego al aplicar la máscara sobre las imágenes raw no
+corregidas de distorsión pues no coinciden bien los puntos de las máscara !!
+Sin embargo, si uso un dithercubemean, la máscara tampoco coindide bien en los bordes !!
+Todo indica que es problema de la máscara de objetos, que para algunas posiciones (bordes)
+no se posiciona bien, pero no se como arreglarlo !!! 
+Con dilate=1.2, mejora bastante, pero aún quedan algunos puntos "negros" en las 
+imágenes skysub.
+Otra opción, sería tener una máscara para cada imagen, con la consiguiente pérdida de 
+profundidad de campo y de CPU.
+
+
+12-Feb-2015
+----------
++ Continuo con el problema de los "puntos" en los skysub de segunda vuelta causados
+por el mal registrado de la masterObjectMask.
+Encuentro que la mejor solución es la siguiente:
+    - dilate = 0.5
+    - calcular los offsets con WCS (skysub1 calibrados astrometricamente)
+    - crear stack de los skysub con dithercubemean y los offsets anteriores
+    - crear ObjectMask del stack y dilatar (0.5) -- aún quedarán algunos puntos en los bordes, pero pocos....
+    - calcular nuevos offsets (vía WCS) con la objectMask
+    - calcular skysub2 
+    - construir nuevo coadd con skysub2: lo más recomendable es con SWARP, pues dithercubemean no
+    resuelve bien en los bordes por la distorisión del campo, aunque si el campo es pequeño se podría
+    usar.
+
+- Continuando con el problema/bug del día 11-Feb en el método irdr::cube_mean_min_w,
+lo resuelvo (aunque queda mejorar el weight_map) que para el SG4 se obtienen 
+mucho mejores resultados skymodel=min. Esto implica que quizás habría que incluir
+el caso especial de reducción del detector SG4 en la segunda pasada del sky_subtraction.
+(PENDIENTE CONFIRMAR)
+Otra opción sería usar skymode=median, pero con más de 5 imágenes de dithering (>7),
+con la esperanza de que l método irdr::mean() use el clipping y se calcule una media
+robusta rechazando los puntos malos.
+
+13-Feb-2015
+----------
+- Videoconf PANIC (ver cosas todo en panic35)
+- Comienzo implementación de suma de planos de un cubo recentrando ===> align_stack_cube.py
+   - imcombine + offset file funciona sólo in integer pixel offsets
+   - irdr.offsets no calcula bien los offsets...probar con varias configuraciones
+   pero quizás mejor usar getWCSOffsets...
+   
+- Encuentro una rutina que podría hacerlo, pero no funciona...
+https://github.com/viyh/fits-process
+
+
+16-Feb-2015
+----------
+- Definitivamente no entiendo que hace iraf.imcombine con la opción
+de los offsets !!! el resultado no es bueno !! así que opto por 
+usar dithercubemean para la suma del cubo.
+
+- Los offsets que me data irdr.offsets no me convencen, de hecho son muy
+pequeños. Por este motivo, decido usar/probar con getWCSOffsets. Compruebo
+que los offsets que me da son mucho más precisos, y practicamente iguales
+a los que obtengo con imaxam de forma manual.
+
+- modifico cube.c para añadir cube_sum para la suma aritmética simple
+de cubos. Esto se traslada a dithercubemean, que le añador un parámetro/flag
+para indicar si se quiere hacer simplemente la suma aritmética.
+Auque necesita un gainmap como entrada, luego no lo usa para nada. Mantengo
+el interfaz simplemente por comodidad.
+
+
+
+17-Feb-2015
+----------
+- Una vez terminado align_stack_cube.py para alinear y sumar los
+cubos de OmegaCass, me doy cuenta de que los offsets no siempre
+se calcula bien, aunque el mejor resultado es con getWCSOffsets, 
+pues irdr (como dice en el paper) no está pensada para offsets
+muy pequeños. Por más pruebas que hice, no encontré buenos
+offsets con irdr (sólo da offsets en torno a 0.0).
+Sin embargo, y a pesar de usar getWCSOffsets, dithercubemean no 
+termina de dar buenos coadd...pero decido seguir.
+NOTA: la imagen 38 tiene una deriva grande del telescopio que
+se aprecia en el plano-6 del cubo.
+Bueno, con todo eso decido continuar con PAPI, y ver que obtengo,
+pero me encuentro con otro problema, ahora no todas las imágenes
+tienen el mismo tamaño (shape), pues dithercubemean crea los
+coadd en función del offset que ha calculado....y eso no hay
+manera de resolverlo....al menos de momento...
+
+- Decido hacer la reducción con la suma simple de los cubos,
+sin alinearlos...y a ver que sale...
+
+- TODO: la segunda pasada de skyfilter para objetos extensos no está
+resuelto; si llamo a skyfilter_general, tendría que pasarle todos las
+imágenes, y no sólo las SCIENCE como hace ahora mismo !!!! 
+pero, ¿ qué sentido tiene entonces pasarle la máscara de objectos ?
+¿ no sería entoces mejor llamar a skyfilter simplemente con la mascara y los SCIENCE ???
+La verdad es que esto es algo no resuelto aún !!!
+
+18-Feb-2015
+-----------
+- Reduzco los datos de OmegaCass con Flat de Matilde y con la BPM que construyo a partir del txt
+que me pasó. El resultado está en : /data2/out_omegac/Q01/jun21_0XXX_coadd_F.skysub.ast.fits
+./papi.py -c config_files/papi_panic1_omegacass.cfg -s /data2/tmp_omegac/omega_coadd_simple.txt -S 1 1
+
+(P) reducir los datos con un FF creado por PAPI
+
+- Continuo con las reduccioń de datos de WASP-19 (HAWKI) con el pipeline
+de ESO. Los resutados están en /data2/esorex/products/hawki_step_subtract_bkg_0NNN.fits
+Sólo le hago la primera pasada de la sustracción de cielo, pues para seguir tendría
+que hacer máscara, etc...
+
+ cd /data2/esorex
+ 1081  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof 
+ 1085  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof 
+ 1095  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark1 darks.sof 
+ 1096  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  -h
+ 1097  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  --help
+ 1098  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  --?
+ 1099  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  -h
+ 1100  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  
+ 1102  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  -h
+ 1103  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark1 darks.sof  -h
+ 1104  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  --help
+ 1135  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks2.sof  
+ 1136  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark dark2.sof  
+ 1143  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks2.sof  
+ 1151  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_dark darks.sof  
+ 1152  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_flat flat.sof  
+ 1153  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_cal_flat flats.sof  
+ 1157  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_sci_jitter science.sof  
+ 1159  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_sci_jitter science.sof  
+ 1172  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib sof/science.sof  
+ 1173  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib science.sof  
+ 1182  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib science.sof  
+ 1183  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_basic_calib science_calib.sof 
+ 1195  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_compute_bkg science_D_F.sof 
+ 1197  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_compute_bkg science_D_F.sof 
+ 1211  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_subtract_bkg science_bkg.sof 
+ 1213  /home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_subtract_bkg science_bkg.sof
+
+- Me pongo a comparar los resultados con los que obtuve con PAPI:
+/data2/out_wasp19/Q02/HAWKI.2009-*.Q02_D_F.skysub.ast.fits
+La primera diferencia es que los datos que produce ESOREX tienen
+restado el background "residual", que en IRDR se le suma después de restar 
+el cielo...eso fue algo que ya comenté con Matilde, y que ella me dijo 
+que estaba bien, que era para evitar valores negativos en el cielo...
+
+- Decido hacer hacer una prueba y modificar skyfilter y lanzar una reducción 
+sin sumar ese background para poder comparar con ESOREX....
+Al hacer eso, me doy cuenta (más que nada por que se amplifica el efecto), 
+que el gainmap que se calcula (calGainMap) para el Q2 tiene unas "estrias" en diagonal
+muy marcadas (curiosamente sólo aparecen en el Q2 !)
+y que se quedan marcadas en el gainmap como BP!!! y son muuuchas, lo cual
+luego afecta a la sustracción de cielo (skyFilter).
+Compruebo que irdr.gainmap produce el mismo resultado, y por tanto no es que
+haya  un error en calGainMap.py, si no que el algorimo no es del todo "bueno".
+Para solucionar eso se me ocurren las siguientes opciones:
+
+    1) llamar a calGainMap con un valor NSIG grande >8, para evitar falsos BP,
+    o lo que es lo mismo, que en la segunda pasada no saque muchos píxeles.
+    2) directamente anular calGainMap, es decir, que gainmap=flatfield normalizado
+    y "mezclado" con el BPM si lo hay.
+    3) Refinar el cálculo de los BP en la actual rutina de calGainMap--> Matilde ???
+    
+
+
+- Comienzo la instalación de la version trunk-r731M-4 de GEIRS en panic1.
+
+19-Feb-2015
+-----------
+- Termina la reducción de WASP-19 con PAPI (modo science) tras las modificaciones
+en PAPI (básicamente en torno a usar dithercubemean para el primer coadd y 
+en en calGainMap con NSIG=8 para evitar falsos BP). 
+Comparando con los resultados de ESORES, a simple vista (salvo el background que ESOREX resta)
+tienen una pinta parecida. No obstante, si veo cláramente que PAPI marca
+aún BP con el background level, y que se ven cláramente en algunas estrellas.
+Sin embargo, ESOREX no hace nada de eso, y las estrellas (las mismas) aparecen 
+límpias...no se como los trata ESOREX, pero lo que está claro es que hay que
+definir muy bien cómo tratar los BP en skysub.c, pues ahora mismo los pone al bkg level,
+lo cual es bastante problemático cuando el pixel cae en una estrella !!
+Implemento una modificacioń para que en lugar del bkg_level, asigne el valor
+del pixel anterior y posterior, para así evitar tener puntos...el resultado no es muy bueno,
+en las estrellas desaparece los BP, pero aparecen mucho 'artefactos' en la imagen...
+Creo que aún habría que subir el NSIG en calGainMap...
+
+- Continuo con ESOREX, para hacer la segunda skysubtraction:
+
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_combine sub_1st_bkg.sof --> hawki_step_combine.fits, hawki_step_combine_contrib_map.fits
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_detect_obj stack_1.sof
+Detecting objects on chip number 1
+[ INFO  ] hawki_step_detect_obj:     Load the input data
+[ INFO  ] hawki_step_detect_obj:     Background:       -0.209869
+[ INFO  ] hawki_step_detect_obj:     Background noise: 0.670953
+[ INFO  ] hawki_step_detect_obj:     Mask creation with threshold: 3.815850
+[ INFO  ] hawki_step_detect_obj:     Removing single pixel detections
+[ INFO  ] hawki_step_detect_obj:     Growing the mask with radius 5
+[ INFO  ] hawki_step_detect_obj:     Labelise mask
+[ INFO  ] hawki_step_detect_obj:     Number of objects detected: 442
+[ INFO  ] hawki_step_detect_obj:     Create apertures
+[ INFO  ] hawki_step_detect_obj: Writing FITS propertylist product(OBJ_MASK): hawki_step_detect_obj_mask.fits 
+[ INFO  ] hawki_step_detect_obj: Writing FITS table product(OBJ_PARAM): hawki_step_detect_obj_stars.fits
+
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_compute_bkg science_D_F_Mask.sof
+[...]
+Computing backgrounds
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 1
+[ INFO  ] hawki_step_compute_bkg:         Number of pixels with no background available: 12229 
+[WARNING] hawki_step_compute_bkg:         Substituting pixels with no bkg with median of image 498.912659
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 2
+[ INFO  ] hawki_step_compute_bkg:         Number of pixels with no background available: 951 
+[WARNING] hawki_step_compute_bkg:         Substituting pixels with no bkg with median of image 490.153778
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 3
+[ INFO  ] hawki_step_compute_bkg:         Number of pixels with no background available: 15 
+[WARNING] hawki_step_compute_bkg:         Substituting pixels with no bkg with median of image 488.946350
+[ INFO  ] hawki_step_compute_bkg:         Computing bkg for image 4
+[...]
+
+/home/panic/SOFTWARE/bin/esorex --output-dir=products hawki_step_subtract_bkg science_bkg.sof
+
+
+- Terminar la instalación de GEIRS nuevo y ver cambios en PAPI y QL !!! 
+[...]
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0175.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0176.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0177.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0178.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0179.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0180.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0181.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0182.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0183.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0184.fits
+[ INFO  ] esorex: Created product products/hawki_step_subtract_bkg_0185.fits
+[ INFO  ] esorex: 185 products created
+[ INFO  ] esorex: Recipe operation(s) took            149 seconds to complete.
+[ INFO  ] esorex: Total size of 370 raw input frames  = 24857.78 MB
+
+[ INFO  ] esorex: => processing rate of   166.61 MB/sec
+
+
+La lástima ha sido que he perdido los ficheros de la primera pasada y ahora no puedo comparar...bueno,
+lanzo de nuevo la primera sky_subtraction pero con --output-dir=products1 !! para poder comparar.
+
+20-Feb-2015
+-----------
+- Implementación de las sugerencias de BD para el runStarfocus.py
+
+
+
+23-Feb-2015
+-----------
+- Envio los datos reducidos con ESOREX de WASP a MF y VT.
+- BD me sugiere que incluya en el QL-focus evaluation, el nuevo método
+para calcular el BestFocus.
+- BD también me dice que modifique runStarfocus para que escriba los nuevos
+valores en el fichero SGi_j.txt
+- Reduzco WASP19 con PAPI y con valores altos en GainMap para
+que se detecten muy pocos BPs, pero observo que aun hay BP distintos 
+a los que marca ESOREX (aunque algunos si aparecen en la BPM de flat or 
+darks que crea ESOREX), y lo peor es que no se que hacer con ellos.
+./papi.py -c config_files/papi_panic1_hawki.cfg -s /data1/HAWK-I_WASP19/ -g filter -M lemon -W Q2 -S 2 2
+
+
+24-Feb-2015
+-----------
+- Compruebo si en el código de PAPI está hard-coded la pixel scale del 2.2m (0.45),
+de cara al commisioning en el 3.5m. En pricipio todo está basado en el valor del fichero
+de configuración o el leido de la cabecera.
+- Hago todas las modificaciones en mef.py (y similares, ie: correctNonLinearity,
+checkQuality, eval_focus_serie.py, mainGUI.py) para la nueva
+ordenación de los MEF (Q1, Q2, Q3, Q4) siguiendo el documento PANIC-GEN-SP-02 de BD.
+En principio ahora todo es compatible con la versión anterior de los MEFs (la original,
+en el que el orden en los MEFs era SG4,1,3,2), salvo en la funcioń convertGEIRSToMEF(),
+que crea directamente los MEF en el nuevo formato sugerido; esto lo hago así
+por que no se cómo distinguir en el código si crear los MEF en versión antigua o
+en la nueva (sólo se me ocurre mirar la versión del GEIRS que creó el FITS original).
+
+Aunque he hecho bastantes pruebas, hay que probar con una reducción de PANIC y con
+el QL (que también queda por actualizar algo en la GUI).
+
+25-Feb-2015
+-----------
+- Modifico QL para el nuevo esquema de MEFs (Q1-4=SGi);
+- IMPORTANTE: 
+    ****
+    Ahora, todos los splits que se hagan en PAPI&QL se hacen
+    tendiendo en cuenta el EXTNAME, y se hacen tal: Qi=SGi
+    ****
+- Encuentro el problema que causaba el bloqueo/crash en runStarfocus.py al
+ejecutar starfocus(pyraf) y matplotlib. Se soluciona configurando otro
+backend distinto al TkAgg, es decir:
+
+# Next is needed in order to avoid a crash/deadlock when running 
+# pyraf graphs and matplotlib.pyplot graphs
+# For 'TkAgg' backend (default) produces the crash.
+matplotlib.use('QT4Agg')
+
+Teleconf con Herve Bouy sobre la Astrometría de PANIC
+-----------------------------------------------------
++ En cuanto a si son resultados definitivos, HB dice que si, y
+que no cree que se puedan mejorar.
++ En cuanto a la pregunta 6)
+    6.- Seria posible extraer de estos datos las posiciones relativas de 
+    los cuatro cuadrantes de forma que se pueda "acelerar" la astrometria 
+    en el futuro? O para que se pueda dar una primera astrometria aproximada 
+    de cara a los mosaicos, por ejemplo en los 'surveys'. 
+  HB no ve la necesidad ni la utilidad.
+  
++ Las imágenes las ha reducido de  DARK, FLAT y cielo; los BP
+los detecta a partir de los FF, y les pone un peso=0 para que 
+en el ajuste de PSF no se tengan en cuenta.
+PSFEx por defecto descarta los objetos que tengan pixeles malos,
+pero se le puede decir que los considere dichos objetos pero 
+sin tener en cuenta los pixeles malos, sin ningún tipo de interpolación.
+HB no es partidario de sustituir los BP por interpolación ni nada parecido.
+
++ Los valores que nos obtiene Hervé son de Astrometría interna,
+y son los que nos da SCAMP en la salida por pantalla en
+Astrometric stats (internal) para high S/N (dAXIS1  dAXIS2).
+Esos valores también se pueden obtener del .head que produce
+SCAMP, de las keywords ASTIRMS1/ASTIRMS2, que vienen
+expresados en grados. Si los multiplicamos por 3600 obtengo
+la dispersión de la astrometría interna en arcsec, que coincide
+con (dAXIS1  dAXIS2), es decir:
+ASTIRMS1 = dAXIS1 * 3600.0
+ASTIRMS2 = dAXIS2 * 3600.0
+
++ Para el modelo de la PSF, HB ha usado PSFEx, que nos calcula
+un modelo de PSF para la imagen. Eso modelo es el que luego se le
+pasa a SExtractor (PSF_NAME) y SCAMP. No obtante, aunquel la fotometría
+con PSF es muy buena (o mejor que la de apertura) para cuando 
+tenemos baja S/N o muchos pixeles malos como en este caso;
+sin embargo un inconveniente es que si tenemos un campo
+con galaxias de tamaño importante (>5arcs) entonces, la PSF no quedará 
+bien modelizada. Sin embargo, para solventar ese problema, HB lo que hace
+es decirle a luego a SExtractor que use el modelo "Sersic", pero no se
+exactamente como lo hace (ver http://arxiv.org/pdf/1203.1831v1.pdf).
+
++ Los valores de 30mas y 10-12 mas son valores globales excluyendo el
+detector malo, y no cree que se puedan mejorar.
+
++ En cuanto al mapa de distorsión, HB no lo ha estudiado en detalle, pero
+vió algo de desplazamiento, pero no sabe si puede ser debido al Tilt u a 
+otra cosa, pues no conoce el telescopio. Comenta que con el mapa de PSFs 
+que genera PSFEx también se podría estimar el Tilt y la calidad de la imagen.
+
++ Si le dicimos a SCAMP que haga la astometría de ORDE=1, entonces lo que nos
+da son los offsets ??? JM: no a si se refiere a los offsets de dithering o a que.
+
++ Le pregunto si SCAMP no puede dar una matriz de distorsión, y me comenta
+que nos la da en forma de Polinomio  en el fichero .head ! --> Esto puede ser muy
+útil para hacer una pre-calibración estática sin ejecutar SCAMP.
+
++ No cree que se pueda mejorar la astometría. Se podría llegar a 15mas, pero para
+ello tendríamos que tener muchas posiciones de dithering para muestrear bien y evitar
+los BP; el sugiere al menos 50-60 posiciones **unicas** y aleatorias. El nos eviará
+un patrón muy usado de 36 puntos que podemos scalar a PANIC de forma que la separación
+máxima de los puntos (amplitud del dithering) sea de 4-5arcmin.
+
++ HB cree que una dispersión de 30mas PANIC no es tan mala, y es comparable
+a otros surveys y que se puede trabajar.
+
++ No le importaría decirnos como ha hecho el la astrometría, pero ahora mismo 
+está muy liado y hasta Mayo-Junio no tendrá mucho tiempo. Tb nos dice que 
+por email o remoto no lo ve muy factible (???).
+
+
+26-Feb-2015
+-----------
+- Me paso todo el día intentando invocar desde PQL a la nueva rutina runStarfocus::runFocusEvaluation(),
+pero no hay manera, pues da muchos conflictos pyraf con la GUI del QL:
+   0- Usar el backend Qt4Agg para evitar cuelgue al finalizar runStarfocus por algún conflicto
+   con pyraf que usa Tkinter (ver código de stsci.pyraf.
+   1- tuve que quitar todas las definiciones de PYRAF_NO_DISPLAY en el QL, pues si
+   no la rutina no funciona se queja con un mensaje tq:
+   "Cannot run this command without graphics"
+   2- Tras solucionar lo anterior, me encuentro con otro problema con el siguiente mensaje:
+     bad screen distance "2.0"
+     Investigando parece que tiene que ver con el LOCALE, que parece que puede dar un
+     conflicto con TKinter, y que no es thread-safe. Se soluciona haciendo lo siguiente:
+     
+     import locale
+     # Localize the application using the system locale
+     # numpy seems to have problems with decimal separator in some locales
+     # (catalan, german...) so C locale is always used for numbers.
+     locale.setlocale(locale.LC_ALL, '')
+     locale.setlocale(locale.LC_NUMERIC, 'C')
+     
+     Refs:
+      - https://docs.python.org/2/library/locale.html
+      - http://matplotlib.1069221.n5.nabble.com/quot-bad-screen-distance-quot-tkinter-error-with-German-locale-td4769.html
+     
+    3- Tras solucionar también eso, me encuentro con otro problema, y es un mensaje tq:
+    "runtimeerror maximum recursion depth exceeded in cmp python"
+    Pero ese se solucionó misteriosamente ....
+    
+    4-Otro problema no resuelto aun, es que cuando se llama a runStarfocus la paleta 
+    de colores que muestra DS9 para las imágenes es horrible, y no se ven bien las imágenes....
+    Sin embargo, lanzandolo a mano desde la linea de comando no hay problema !!! 
+    Parece de nuevo un coflicto de recursos entre PyQT+matplotlib  y PyRAF....
+    
+27-Feb-2015
+-----------
+- Como no encuentro solución al conflicto de Pyraf_GUI  + PQL, opto por implementar
+la nueva focus_evaluation como lo hacía antes, invocando a iraf desde un system y cargando
+el fichero papi_ql_user.cl, que ahora después de ejecutar la tarea de iraf, llamará al
+script de python tal que:
+
+!/home/panic/bin/runStarfocus.py -o starfocus.log
+
+Siguie siendo un poco chapuza, pero no encuentro otra manera de hacerlo !!!!
+
+02-Marzo-2015
+-------------
++ Viaje CAHA: salida a las 10:15h.
++ Commissioning @ 3.5m telescope
+
+- modifico el script de login.cl y papi_ql_user.cl de obs35@panic35
+- parece que hay que meter un pequeño retardo en start_iraf para que de
+tiempo al DS9 a lanzarse.
+- modifico runStarfocus.py para añadir al plot el FWHM.
+
+
+03-Marzo-2015
+-------------
+- Reducción de datos de M3 para Conchi.
+- Modificación en PQL para auto-conversion de MEF2Join en la rutina de focus_evaluation.
+- Modificación en PQL para que en ApplyDarkFlat funcione la búscqueda automática
+de Masters de calibración a partir del directorio indicado en el fich. de config. ext_calibration_db.
+- Modifico QL:applyDarkFlat() para que force_apply=False !! no se porque había puesto que True !!!
+
+04-Marzo-2015
+-------------
+- Noche regular; detectado fallo en QL:subtract_nearSky.
+- Nuevo reboot de panic35 sobre las 5am; instalo en el
+crontab un script para monitorizar la memoria de GEIRS y JAVA.
+- Reducción de imágenes de Jupiter: para que se puedan reducir, hay
+que usar una configuración especial de PAPI (papi_jupiter.cnf) 
+para que los offsets los calcule con irdr:offsets en lugar de usar
+la WCS pues no es posible hacer astrometría, no hay estrellas !!!
+Además, el primer stack lo hago con dithercubemean por esa misma razón,
+ie, SWARP necesita astrometría.
+
+
+05-Marzo-2015
+-------------
+- Soluciono problema con QL:subtract_nearSky; el problema era debido
+a que eran cubos de datos y había antes que colapsarlos. Añado a
+RS:nearSkySubtraction el collapse del cubo.
+- También encuentro un bug en mef.createMEF al intentat borrar el fichero;
+de paso le añado algunas keywords.
+- Implemento la opción de reducir Q123 (todos menos el 4) en la CL de PAPI;
+también lo añado al menú de configuración del QL.
+- Añado opción de BuildCalibs to PAPI-CL (-b)
+- Añado OBJECT en el PQL para la vista de Grupos
+
+06-Marzo-2015
+-------------
+- Añado al QL la visualización de RA y DEC en formato hms y dms.
+- Pongo por defecto en QL reducción de SG1
+- Añado al pop-up del QL la opción de mostrar el patrón de dithering
+de un conjunto de imágenes.
+- Añado en applyDarkFlat, en modo autosearch, que muestre las
+calibraciones que va a usar y pregunte confirmación. Idem para
+reduceSequence.
+
+07-Marzo-2015
+-------------
+- Añado al Filtro del PQL la opción de FOCUS y MASTERS
+- Modifico RS:getWCSPointingOffsets() para que pueda funcionar incluso 
+si no tuviesemos WCS o fuese un MEF; es algo raro que pase en RS,
+pues sólo va a trabajar con Singles, pero por si acaso!
+- Arreglo el "bug" en getWCSImageOffsets para que los ficheros se ordenen
+por MJD y así en el QL se puedan mostrar correctamente los offsets del
+patrón de dithering.
+- Modifico rutina  mef.doJoin() para que acepte cubos MEF.
+- Cambio colores fondo del ListView del PQL (sugerencia de MF).
+- Actualizo el script login.cl de scripts
+- Elimino bug en papi_ql_user.cl referente al $HOME de script runStarfocus.
+- Añado distinción entre panic22 y panic35 en script .bashrc
+
+
+
+
+08-Marzo-2015
+-------------
+- cloudy al principio de la noche.
+- Modifico en el algoritmo de reducción el paso 4.1,
+de forma que remove_crosstalk se haga siempre, pues puede
+ayudar a la astrometría preliminar y al primer coadd, etc...No
+veo razones para no hacerlo, salvo por CPU time.
+
+- Compruebo que la NLC hace que un campo super poblado no sea resuelto
+por Astrometry.net !!!! debe ser por los NaNs
+
+- Observo que si no hacemos el purgeOutput() (=False en el config file),
+entonces el dithercubemean confunde los .weight.fits de reducciones
+anteriores, por eso lo mejor es limpiar!!!
+
+- Modifico getWCSImageOffsets() para que use ClFits, para cubrir más
+casos en la obtención de RA y DEC.
+
+- Viendo el problema de Astrometry_M67_0026-30 del 7-Marzo :
+
+./papi.py -s /data1/PANIC/2015-03-07/ -S 22 22 -W Q1 -M science
+
+con el dithercubemean,
+
+veo que los offsets que ha calculado getWCSImageOffsets() no coinciden con
+los que yo calculo a mano, y que eso debe ser una razón de que no funcione bien
+del dithercubemean. Intento calcular los offsets con irdr.offsets, pero no hay manera,
+quizás por que son muy grandes ???  (625, -312), 
+Sigo si entender por que no funcionaaaaa! la mascara de objetos, que está mal creada
+por que el dithercube mean hace mal el coadd, problablemente por unos offsets no 
+exactos y/o muy grandes....
+
+09-Marzo-2015
+-------------
+- En irdr::getwmap() encuentro una modificación de prueba tq:
+    ixoff = -xoff;
+    iyoff = -yoff;
+    
+ que hace que falle (SF) sky_filter !!! 
+ 
+- Reducciendo Test_diff_photom_M3_March8_0136-144 
+
+./papi.py -s /data1/PANIC/2015-03-08/ -S 30 30 -W Q1 -M science
+
+veo que no hay manera de que no
+salgan "estrellas negras", y eso creo que es debido a que al ser un campo tan poblado,
+no hay manera de enmascarar todas las estrellas correctamente. Quizás lo mejor
+para ese tipo de campos hubiese sido usar patrones T-S-T-S...
+
+- Vuevo a mirar la reducción de Astrometry_M67_0026-30 del 7-Marzo :
+
+./papi.py -s /data1/PANIC/2015-03-07/ -S 22 22 -W Q1 -M science
+
+y tras arreglar el problema del irdr::getwmap() el resulto final es mejor,
+pero no del todo bueno. Sigue sin crearse bien el primer coadd que hace 
+dithercubemean, quizás por el tema de los offsets tan grandes (> 1/4 detector).
+No obstante, habría que revisar dithercubemean para que funcione con esos offsets !!!!
+
+Confirmo que en el coadd1.fits hay objetos que no aparecen (y no se por que??),
+y por tanto en la objectMask pues tampoco, y como consecuencia en la 2nd. sky_filter
+se hace la sustracción de cielo mal.
+Yo creo que el problema tiene que venir de dithercubemean para offsets grandes !!!
+Modifico dithercubemean para que escriba las imagenes una vez "shiftadas", para
+ver si coinciden...Definitivamente compruebo que en el coadd no aparecen, mientras
+que en las shifted, como era de suponer, si aparecen. ¿ sólo queda comprobar la wmap ?????
+
+
+
+(se me ocurre que podría ser tambien el dxtalk el que eliminara la estrellas ...) --> comprobado que no es por eso.
+
+- Bajo de CAHA sobre las 17:15h
+
+10-Marzo-2015
+-------------
+- Asistencia remota observaciones de CAHA.
+- Nuevo problema de Memory Buffer en GEIRS; parece que pudo verse disparado
+por el acceso masivo a disco, pues yo estaba moviendo datos de /data1 a /data2 para
+liberar espacio. BD sospecha de eso, y del Archivo de CAHA, pero yo creo que no es por eso,
+pues ha habido casos (GEIRS mem. buffer) en los que no había Archivo ni copia masiva de datos.
+
+- BD me pide que calcule el alineado de los detectores tras haber realizado un nuevo ajuste
+en PANIC-vs-Telescopio (ver email).
+
+- Encuetro y soluciono bug en mef.py en la conversion de SEF a individual (splitGEIRSToSimple);
+todo venía por la confusión columnas X filas que hay entre Numpy y FITS (naxis):
+
+    # We must take into account that FITS(NAXISi) and Numpy arrays follow different convention:
+    # FITS : NAXIS1 = x = column; NAXIS2 = y = row
+    # Numpy arrays : [y,x]  y=row, x=column 
+
+- Afortunadamente creo que no a afectado a ningún cálculo del commisioning.
+    
+11-Marzo-2015
+-------------
+- Descubro por fin el problema del mal enmascaramiento de ciertos objetos a partir
+de coadd1.fits que crea dithercubemean. El problema es debido a que para offsets grandes (~600px)
+la distorsión es considerable (12-8px) y los offsets calculados vía WCS no son válidos
+para todo el campo, sobre todo para ciertas áreas del detector; por esto
+al hacer el stack con dithercubemean, como se usa cube_mean() el cual hace una media 
+robusta con clipping  cuando >5 frames, entonces al no coincidir los puntos (estrellas), se
+"anulan" ciertos objetos. Esto lo pude demostrar al sumar yo directamente las imagenes
+"shifted" que crea shift_image en dithercubemean (modo debug), pues para un conjunto de 5 posiciones
+de dithering se veian en algunos casos 5 estrellas, esas misma son las que luego se anulan
+al hacer la media del stack, pues no coincide ninguna en el stack.
+La solución pasa por tanto por hacer en esos casos una suma "simple" para que siempre tengamos
+objetos, aunque sea 5 (N) objetos muy juntos. Para hay que llamar a dithercubemean con
+un argumento extra (en realidad da igual su valor) para que se ejecute cube_sum() en lugar
+de cube_mean().
+
+- Pruebo esa nueva forma de calcular el primer coadd con 'sum', pero no resulta bien pues
+la máscara de objetos no se crea bien, pues hay "demasiados" falsos positivos debido al
+alto background que hemos creado con la 'suma'; creo que la solución pasaría por :
+
+  - crear una máscara para cada skysub.fits y sumar las máscaras ....
+  - crear una máscara para cada skysub.fits y ver si skyFilter admite 
+  indicar una máscara para cada skysub.fits....
+
+- Avería grave en PANIC: se rompe el 'detector exhaust pipe'.
+
+
+12-Marzo-2015
+-------------
+- Implemento la 2nd. Sky subtraction para que se use una mascara de objetos por cada .skysub.fits
+y por tanto una matriz de offsets = 0; el resultado no parece malo, y se ve que en comparación con
+la misma imagen reducida en modo quick, hay alguna "sombras" menos creadas por la contribución de
+los objetos (no enmascarados en la single skysubtraction) en el background restado.
+Habrá que ver si merece la pena hacerlo así siempre, es decir, incluso para cuando tenemos
+offsets pequeños y en teoria el coadd1 y la mascara de objetos (única) se crea correctamente....
+
+
+
+16-Marzo-2015
+-------------
+- Videoconf de PANIC: básicamente sobre el accidende de PANIC y
+los datos obtenidos durante el commisioning.
+
+- Ver en MEGARA el tema de los cppunit y autotools.
+
+
+17-Marzo-2015
+-------------
+- PQL: En applyDarkFlat, elimino la ventana que muestra los ficheros
+de calibración a usar, pues es bastante molesta en el caso de que 
+hayamos seleccionado muchos ficheros.
+
+- Parece que ya se como doy con la tecla para configurar el comando /sbin/reboot
+para que lo pueda ejecutar el usuario panic:
+
+$visudo
+
+añadir la linea:
+
+panic   ALL=(root) /sbin/shutdown,/sbin/reboot,/bin/systemctl
+
+y comentar las líneas:
+
+Defaults targetpw   # ask for the password of the target user i.e. root
+ALL    ALL=(ALL) ALL   # WARNING! Only use this together with 'Defaults targetpw'!
+
+
+Esto funciona en openSuSE12.2 como siguie:
+
+sudo /sbin/reboot  (le damos el passwd del usuario panic)
+
+pero en openSuSE13.1 no lo he podido probar aún.
+
+- Creo el script clean_cache.sh que 'limpia' la cache y que parece que 
+recupera a GEIRS del problema con "Memory buffer allocation".
+sync
+echo 3 > /proc/sys/vm/drop_caches
+
+
+- fixbug en current_night en PQL; el problema era la comparación ">0", que
+debe ser ">=0".
+
+- ver si removeXTalk debería hacerse siempre en en la primera pasada de skysub aunque
+el modo sea science !! --> hecho, lo he cambiado para que se haga siempre.
+
+
+- Modifico calDomeFlat para que acepte cubos de datos, y que además permita
+que sólo le llegue un dome_on y un dome_off. Los datos de 2015-03-10 fueron
+tomados así (cubos y sóllo un flat de cada tipo).
+Además le modifico la normalización, para que sea más robusto y use SG1_1 o Q1_1.
+
+
+18-Marzo-2015
+-------------
+- Añado collpase a calTwFlat y a calDark.
+- Añado comprobación de TEXP (bug) y NCOADD (new) en applyDarkFlat. Además
+compruebo que no hay que hacer collapse, pues la el D y F se puede aplicar 
+a cubos de datos (MEF o SEF) sin problemas.
+- Modifico calTwFlat.py para que convierta todos los ficheros a MEF si es
+necesario, para así evitar problemas. Esto lo hago porque durante el último
+commisioning muchos de los skyflat ( y algunos darks) se tomaron como SEF.
+Añado tambien np.isclose() para la comparación de los tiempos de integración,
+pues puede suceder que el time_scale no sea exactamente = 1.0.
+Esto puede ser util hacerlo en más lugares de PAPI...
+
+- Modifico mef.py (convertGEIRSToMEF) para que no renombre un fichero si 
+ya es un MEF y no tiene que hacerle nada (si lo renombramos, "se borra" el original).
+
+
+
+19-Marzo-2015
+-------------
+- Matilde me envía un email informándome de un bug en el QL ( o mal comportamiento)
+cuando hace uso de la opción "Set Filename Filter" para que filtre los ficheros
+del InputPath. El problema está en que el DataCollector, para cada fichero que
+se filtra, se piensa que se ha borrado y llama a la función mainGUI::new_file_func(),
+y a su vez hace un reordena (__sortFilesMJD) de los ficheros, y el QL
+crea de nuevo la vista del ListView, etc, etc.. todo muuuuy lento.
+Quizás la solución pase por hacer que el DC envie la lista entera de ficheros
+"desaparecidos"/filtrados en lugar de uno a uno.
+Por tanto, todo pasa por depurar DC::findNewFiles() para el caso de filtrado de ficheros.
+
+- BD me pregunta (email) que hace el 'Background estimation'.
+
+
+20-Marzo-2015
+-------------
+- Soluciono el bug reportado por Matilde (ver 19-Marzo) en el filtrado de los
+ficheros del directorio de entrada. Finalemente opto por la solución de filtrar
+a nivel listView_dataS en la funcion slot_classFilter() usando fnmatch. De esta forma,
+los ficheros filtrados (excluidos) siguen en la BD y en el DC (se seguirán detectado),
+pero eso no creo que de problemas...
+Habia pensado también en hacer un Reset de todo (BD y DC) y leer de nuevo todo
+el directorio, pero eso es más lento.
+
+- Corrijo también (de nuevo !!) el bug en el signo (-) en la declinación para valores <0.
+
+
+
+
+Comentarios sobre reducción y datos tomados para Matilde
+--------------------------------------------------------
+- En la noche 2015-03-10, las secuencias de DomeFlat sólo tienen
+uno de cada tipo (1 ON, 1 OFF). ¿ es eso correcto ? Yo tenía
+un mínimo de 3 en la rutina de calDomeFlat.
+- En ese mismo día, los DomeFlat son también cubos; ¿ basta con sumarlos ?
+
+
 
 
 
 Posibles causas del problema del Transito WASP:
 ==============================================
-1-fueron reducidas con modo quick
-2-no tiene ni Dark y Flat
-3-(creo) que fueron reducidas con el dxtalk activado
-4-no están bien muestreadas, y habría que hacer un ditheting más 
+0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
+¿ que hacer con los BP ????
+1- fueron reducidas con modo quick
+2- no tiene ni Dark y Flat
+3- (creo) que fueron reducidas con el dxtalk activado
+4- no están bien muestreadas, y habría que hacer un ditheting más 
 pequeño y razonable y con más puntos.
 
 
@@ -5833,21 +6716,97 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Añadir al PQL en la pestaña Calibrations la opción de selecionar un directorio
+con masterDarks y masterFF (ext_calibration_db) para que se lea y lo tenga disponible
+el QL para applyDark, reducciones, etc...
+- Añadir opcion de dar estimación del cielo de un conjunto de imagenes con dithering:
+básicamente es hacer un combine con un sigma reject de los objetos.
+
+- Resolver tratamiento BP en gainmap (level, etc...); ahora lo mejor es no detectarlos
+poniendo el umbral muy alto !!
+- Probar sugerencias de RM en el kernel y sistema.
+- Probar reboot como usuario panic
+- Quitar todos los debugs (ficheros temporales) de skyfilter.c
+   OJO !!! --> los ficheros /data2/tmp/sky** y /data2/tmp/skyw* de depuración
+   que se generan en skyfilter son creado por el usuario panic y si lanzaramos las misma
+   reducción (modo science) como obs35 (o cualquier otro) no podrían sobreescribirlos y fallaría !!
+   Por tanto hay que hacer algo para oborrarlos !!!
+- idem con dithercubemean con las imagenes shifted!
+
+
+- DITHERCUBEMEAN no funciona bien para offsets grandes (>300 o >600) !!! o eso me parece, pues
+con /Astrometry_M67_0026-30 del 7-Marzo no hay manera !!! (en la segunda pasada de PAPI).
+- Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
+- ver si CreateCalibs puede incluso hacer la NLC !!
+- Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
+- Que pregunte que Qi reducir en el PQL
+- Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
+de objetos no hace bien su función, pues en la imagen final salen manchas negras....
+Ejemplo: /data1/PANIC/2015-03-03/EPerez_UGC9128_March3_0026-50.fits
+Además la segunda pasada con el Q2 casca !!! el skyfilter da un SF !!!
+
+
+- Ver como permitir mod. parámetros del iraf.starfocus para el focus_evaluation.
+- ver si el pix_scale que tiene el config del RS se puede actualizar
+con el que realmente tienen los ficheros en la cabecera para así evitar 
+olvidar actualizar el fichero de configuración.
+
+- Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)! -- no veo problemas !
+- reducir datos de OmegaCass para VT
+- ver si dilate crea buenas objectMask dilatadas adecuadamente...ala ESOREX
+- Tratamiento de BP en PAPI (Skyfilter) y "anular" BP detection en GainMap !!!
+- (IMPORTANTE) Solucionar el tema del GAINMAP-->estimación erronea de BP !!!!
+
+- TODO: la segunda pasada de skyfilter para objetos extensos no está
+resuelto; si llamo a skyfilter_general, tendría que pasarle todos las
+imágenes, y no sólo las SCIENCE como hace ahora mismo !!!! 
+pero, ¿ qué sentido tiene entonces pasarle la máscara de objectos ?
+¿ no sería entoces mejor llamar a skyfilter simplemente con la mascara y los SCIENCE ???
+La verdad es que esto es algo no resuelto aún !!!
+--
+JM: No tiene sentido, pues la objectMask sólo tiene sentido para patrones
+de dithering "clasicos", y no cuando seguimos un patrón T-S (en cualquiera de sus variantes),
+pues el cielo se calcula de los SKY-frames (que deben tener dithering para una buena estimación del cielo),
+pero no se usa nunguna mascara de objetos.
+El origen de la máscara de objectos (objectMask) es para cuando calculamos el skybackground
+con las propias imágenes del dithering principal (OBJECT-frames), pues queremos
+hacer una segunda pasada de skyfilter pero evitando los objetos detectados en la primera pasada.
+Sin embargo, si podría tener sentido hacer una segunda pasada para el caso de 
+objetos extensos calculando una máscara de objetos para los SKY-frames una vez que le hayamos
+restado a dichos frames el skybackground y le calcularamos una mascara de objetos, es decir,
+hacerle una psudo reducción independiente a los SKY-frames para calcular una skybackground
+más refinado para luego restarlo a los OBJECT-frames, pero eso no se si merece la pena
+hacerlo ahora mismo...implicararía cambiar el esquema de reducción para objectos extensos y no
+es trivial...
+--
+
+
+- Modificar dataset::GetFilterFiles() para que agrupe correctamente las SKY + SCIENCE en
+el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un apaño
+en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
+si se detecta bien los SKY de los SCIENCE
+
+
+- Revisar/permitir D+F+BPM en QL de modo automatico
+- refactorizar la astrometría en RS
+- cambiar directorio temporal de astrometry.net (/tmp/) para los /tmp/tmp.sanitized.ZDkbmU !!
+- comparar los Flat/Dark de HAWKI y de PANIC
+- Reducir WASP19: todos los cuadrantes, sin D ni F, con irdr:offsets, ...
+- revisar/mejorar ApplyDarkFlat en QL
+- Añadir NCOADD, ITIME, MEF ? a la ListView del QL
+- DUDA: cómo se usa el ext_calibration_db en el QL ???
+- añadir opcion de crear "solo" calibrationes desde CL de PAPI
+- adaptar Nuevo interfaz de calTwFlat en PAPI !!
+- Sacar algún mapa de distorsión decence !! (datos Tilt y/o 10-Dic-2014)
 - aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
 en QL y demás candidatas.
 - ver que se puede hacer para forzar NCOADD, ITIME, EXPTIME en applyDark y applyDarkFlat
-- que collapse no renombre con sufijo coadd aunque no haga el collapse, pues confunde !!
 - en astrowarp: parece que shutil.move no borrar la src !! noooo! no que pasa es que
 If the destination is on the current filesystem, then os.rename()
-
 y como el PANIC_SEQ_Q01.fits suele existir de una reducción anterior, pues no borra el src, 
 sólo renombra el PANIC_SEQ_Q01.fits.
 
-- Reducir imagenes para Conchi
 - mejorar rutina de logsheet para ver los ficheros que tenemos y su tipo.
-- bug en imtrim.py: 
-ERROR (808, "Pixel subscript out of bounds (/data2/out/PANIC.2014-12-10T19:10:01.3242.weight.fits[91:3190,92:3192])") 
-(más o menos resuelto)
 
 - Resolver el problema del llenado del / a causa de la escritura en el /tmp, 
 lo cual deja la máquina sin recursos. Habría que haber creado la partición / 
@@ -5855,58 +6814,33 @@ más grande. Ahora sólo queda intentar crear un link para el /tmp, pero
 eso hay que hacerlo arrancando con un disco de sistema, pues en el /tmp
 hay muchos ficheros temporales que usa el propio sistem...
 
-- Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF; hay que configurar el IMTDEV también !!
-- instalar PAPI en panic35 y cambiar permisos en /data1 y data2 para usuario obs35.
-- copiar nuevos scripts de BD y panic_status al repositorio de PAPI y prepararlos para la instalación !!
-- actualizar el documento de calculo del Tilt con las rutinas de BD !!
+- Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF desde IRAF.display; hay que configurar el IMTDEV también !!
 
-- re-convertir ficheros para Herve (conversion MEF tenia mal el DET_ID !!)
 - Ojo, el fichero offsets1.pap se crea en /data2/out/ en lugar de /data2/out/Q0X) !!!! conflicto entre detectores en reducción paralelo !!
 nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 
-- Quitar todos los debugs (ficheros temporales) de skyfilter.c
+
 - Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
-- ¿ para qué demonios sirven lo MEF ?? podríamos trabajar sólo con joins ???
-- conversion de MEF-cubes to singles(join)-cubes !!
-- adaptar Nuevo interfaz de calTwFlat en PAPI !! 
 - limpiar fichero de configuración de variables que no usamos.
-- reductionset.py (1812), dilate=False !!! (revisar)
-- 2nd. round of skyfilter ! --> re-calculo de offsets de mascara de objetos
 - ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...
 - en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
 pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
 
-- iraf.imcombine: los NaN los "cambia" por 0s !!! --> estudiar !!
-- Unificar/distinguir el fichero temporal "/tmp/focus_seq_XXXX.txt" 
-(donde XXX=usuario) del que hace uso el QL para la Focus-evaluation;
-actualemente eso afecta a :
-   
-    .iraf/login.cl
-    .iraf/papi_ql_user.cl
-    papi/QL4/mainGUI.py
-    papi/QL4/runQL.py
-
-    SOLUCION: grabar el fichero temporal en /home/user/.iraf/focus_seq.txt
+- iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado ==> estudiar como puede afectar !!!
     
-- re-convertir ficheros para Herve (conversion MEF tenia mal el DET_ID !!)
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
 - rutina para crear BPM a partir de los NLC de BD
-- añadir EXTNAME a los ficheros BPM para que funcione el split()
+- añadir EXTNAME a los ficheros BPM para que funcione el split() --> crear rutina para crear BPM 
+a partir de los master NLC de BD.
 
 
 TODO:
 ====
-- ojo, serial data reduction !!
-- verificar que dilate=True tiene sentido en RS::__createMasterObjMask
-- Eliminar los /data2/tmp/sky_XXX.fits que se crean para debug en skyfilter !!!
 - Eliminar el primer coadd que se crea en: /tmp/PANIC_SEQ_Q01_coadd_RADMON.fits 
-- Modificar calTwFlat.py para que acepte una lista de darks en lugar de un DARK_MODEL.
 - Escribir a RM para que modifique? EXTEND=F en los single !!! para identificarlos bien de los MEF.
 - Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
 hacer una propia en Python.
-- Buscar otra forma mas robusta de calcular los offsets --->cfr LEMON !!
-- Propagar T_FOCUS al hacer split para reducción en parelelo ! y donde haga falta !
 - ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'
 - (P) Habría que revisar dicha rutina (cube_median) !!
 - ver el tema de los WEIGHT_MAPS, al construir el mosaico final; ahora
@@ -5914,16 +6848,12 @@ están comentados, pero ver si realmente son necesarios y que diferencia hay en 
 Tal y como estaba implementado parece que no funciona (probar con HAWKI)
 
 - Ver como reducir todos los cuandrantes de NGC752_focus000[1-5].fits !!
-- Analizar secuencias de foco y enviar datos a BD y CC.
 (bug)- Astrowarp no genera el .weight.fits con el mismo nombre que coadd_tmp.fits, sino coadd.weight.fits !!! pero
 luego para construir todo el mosaico si lo necesita !!!
-- Añadir relojo de busy a la rutina MEF2Single.
-- Añadir MEF2Single a la serie de foco para que haga automaticamente en caso necesario.
-
-
-(P) - crear usuario obs22 para el control de PANIC, de forma que no pueda
+- Añadir reloj de busy a la rutina MEF2Single.
+- crear instalación en obs22 del control de PANIC, de forma que no pueda
 modificar ficheros sensibles ni los fuentes del software de PANIC.
-(P) - Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
+- Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
 
 
 
@@ -6795,8 +7725,36 @@ TODO @ CAHA
 *- config NTP sync
 - Create obs22 account and install software (GEIRS/OT/PAPI)
 - DOME control from OT: Dome Flat-Fields
-- Absolute focus at CA2.2m
-- t_posit ar dec epoch
-- Movimientos relativos telescopio: verificar que se ejecutan correctamente (eg. +100,+100)
 - Pruebas archivo CAHA: definir configuración FTP server y usuario, etc...
-- Simulación observación remota desde Biblioteca !
+
+
+
+COSAS MODIFICADAS PARA PRUEBA EN PAPI
+-------------------------------------
+- check_ncoadd=False en RS
+- calSuperFlat(c_ncoadds=False)
+- Modificar collapse para que no renombre los que no son cubos (line 68 collapse.py)
+- Limpiar RS::skyFilter
+
+
+
+"""
+>>> import re
+>>> re.findall("\d+.\d+", "Current Level: 13.4 db.")
+['13.4']
+may suffice.
+
+A more robust version would be:
+
+>>> re.findall(r"[-+]?\d*\.\d+|\d+", "Current Level: -13.2 db or 14.2 or 3")
+['-13.2', '14.2', '3']
+If you want to validate user input, you could alternatively also check for a float by stepping to it directly:
+
+user_input = "Current Level: 1e100 db"
+for token in user_input.split():
+    try:
+        # if this succeeds, you have your (first) float
+        print float(token), "is a float"
+    except ValueError:
+        print token, "is something else"
+"""

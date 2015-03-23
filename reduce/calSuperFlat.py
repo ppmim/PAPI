@@ -133,17 +133,7 @@ class SuperSkyFlat(object):
         self.norm_value = norm_value
         self.__median_smooth = median_smooth
 
-        
-        # Some default parameter values
-        self.m_MIN_N_GOOD = 2
-        self.m_min_flats = 5
-        self.m_MINGAIN = 0.5    #pixels with sensitivity < MINGAIN are assumed bad 
-        self.m_MAXGAIN = 1.5    #pixels with sensitivity > MAXGAIN are assumed bad 
-        self.m_NXBLOCK = 16     #image size should be multiple of block size 
-        self.m_NYBLOCK = 16
-        self.m_NSIG = 5.0       #badpix if sensitivity > NSIG sigma from local bkg
-
-            
+                    
     def create(self):
       
         """
@@ -157,7 +147,7 @@ class SuperSkyFlat(object):
         # Check data integrity (all have the same properties)
         m_filelist = self.filelist
             
-        if not datahandler.checkDataProperties( m_filelist ):
+        if not datahandler.checkDataProperties( m_filelist , c_ncoadds=False):
             log.error("Data integrity ERROR, some files not having same properties (FILTER, EXPTIME, NCOADDS or READMODE)")
             raise Exception("Found a data integrity error")
         

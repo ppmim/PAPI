@@ -206,7 +206,7 @@ class NonLinearityCorrection(object):
         # Check if input files are in MEF format or saved as a full-frame with 
         # the 4 detectors 'stitched'.
         to_delete = None
-        if len(hdulist)==1:
+        if len(hdulist) == 1:
             # we need to convert to MEF
             log.warning("Mismatch in header data format. Converting to MEF file.")
             hdulist.close()
@@ -230,7 +230,7 @@ class NonLinearityCorrection(object):
 
         # Check headers
         try:
-            if self.force==False:
+            if self.force == False:
                 self.checkHeader(nlheader, dataheader)
         except Exception,e:
             log.error("Mismatch in header data for input NLC model %s"%str(e))
@@ -241,10 +241,23 @@ class NonLinearityCorrection(object):
         linhdu.header = dataheader.copy()
         hdus = []
 
+        # Check which version of MEF we have.
+        # Since GEIRS-r731M-18 version, new MEF extension naming:
+        #    EXTNAME = 'Qi_j'
+        #    DET_ID = 'SGi_j'
+        # and the order in the MEF file shall be Q1, Q2, Q3, Q4
+        try:
+            hdulist['Q1_1'].header
+            ext_name = 'Q%i_1'
+            ext_order = (1, 2, 3, 4)
+        except KeyError:
+            ext_name = 'SG%i_1'
+            ext_order = (4, 1, 3, 2)
+            
         # loop over detectors
         # To avoid the re-arrange of the MEF extensions
-        for iSG in (4,1,3,2):
-            extname = 'SG%i_1' %iSG
+        for iSG in ext_order:
+            extname = ext_name % iSG
             # check detector sections
             # another way would be to loop until the correct one is found
             datadetsec = hdulist[extname].header['DETSEC']
@@ -280,7 +293,7 @@ class NonLinearityCorrection(object):
             lindata[data > nlmaxs] = np.nan
             # mask where max range is nan
             # (first, take into account the option of cubes as input images) 
-            if len(lindata.shape)==3: 
+            if len(lindata.shape) == 3 : 
                 # we have a 3D image (cube)
                 for i in range(lindata.shape[0]):
                     lindata[i, np.isnan(nlmaxs)] = np.nan
@@ -403,7 +416,8 @@ if __name__ == "__main__":
     
     usage = "usage: %prog [options]"
     desc= """Performs the non-linearity correction of the PANIC raw data files
-using the proper NL-Model (FITS file).
+using the proper NL-Model (FITS file). Raw data files must be MEF files; if 
+MEF-cubes, each plane is corrected individually.
 """
     parser = OptionParser(usage, description=desc)
 

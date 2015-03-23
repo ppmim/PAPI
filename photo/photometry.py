@@ -506,7 +506,7 @@ def compute_regresion2( column_x, column_y , filter_name,
 
 
 def compute_regresion( vo_catalog, column_x, column_y , 
-                        output_filename="/tmp/linear_fit.pdf", min_snr=10.0):
+                        output_filename="/tmp/linear_fit.pdf", min_snr=10.0, pix_scale=0.45):
     """
     Compute and Plot the linear regression of two columns of the input vo_catalog
     
@@ -518,7 +518,13 @@ def compute_regresion( vo_catalog, column_x, column_y ,
     column_y: str
         column number for Y values of the regression (2MASS column name for 
         photometric value )
-    
+
+    min_snr: float
+        Minimun SNR of objects for the fitting
+
+    pix_scale: float
+        Pixel scale; used only for the radial profile plot 
+   
     Returns
     -------
     3-tuple with linear fit parameters and a Plot showing the fit
@@ -652,8 +658,9 @@ def compute_regresion( vo_catalog, column_x, column_y ,
     plt.show()
     
     # Plot radial distance VS m_err
+    pix_scale = 0.45
     radial_distance = numpy.sqrt((table_new['X_IMAGE']-1024)**2 
-                                 + (table_new['Y_IMAGE']-1024)**2)*0.45 #arcsecs
+                                 + (table_new['Y_IMAGE']-1024)**2)*pix_scale #arcsecs
     
     plt.plot( radial_distance, m_err_for_radial_systematic, '.')
     plt.xlabel("Radial distance ('arcsec')")
@@ -911,7 +918,7 @@ def doPhotometry(input_image, pixel_scale, catalog, output_filename,
     est_zp_err = zero_point
     try:
         #est_zp_err = compute_regresion(match_cat, 'MAG_AUTO', 
-        #                   two_mass_col_name, output_filename, snr )[0]
+        #                   two_mass_col_name, output_filename, snr, pixel_scale )[0]
         est_zp_err = compute_regresion2(xm, ym, filter, output_filename)[0] 
         
         log.info("Estimated ZP_err=%s"%est_zp_err)
