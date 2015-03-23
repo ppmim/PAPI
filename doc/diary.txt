@@ -6691,7 +6691,9 @@ el directorio, pero eso es más lento.
 -------------
 - Semana curso Drupal.
 - Haciendo pruebas con el despliegue de aplicaciones con git.
-
+ https://danielmiessler.com/study/git/#index
+ http://www.nosinmiubuntu.com/git-montar-estructura-para-despliegues/
+  
 
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
