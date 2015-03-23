@@ -6687,6 +6687,10 @@ el directorio, pero eso es más lento.
 - Corrijo también (de nuevo !!) el bug en el signo (-) en la declinación para valores <0.
 
 
+23-Marzo-2015
+-------------
+- Semana curso Drupal.
+
 
 
 Comentarios sobre reducción y datos tomados para Matilde
@@ -6716,6 +6720,7 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Probar ultimos "consejos" de RM sobre el memory issue! (ver mail 11-Marzo-2015)
 - Añadir al PQL en la pestaña Calibrations la opción de selecionar un directorio
 con masterDarks y masterFF (ext_calibration_db) para que se lea y lo tenga disponible
 el QL para applyDark, reducciones, etc...

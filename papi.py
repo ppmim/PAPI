@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (c) 2009-2015 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2008-2015 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
