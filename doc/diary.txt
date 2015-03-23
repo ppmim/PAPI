@@ -6690,7 +6690,7 @@ el directorio, pero eso es más lento.
 23-Marzo-2015
 -------------
 - Semana curso Drupal.
-
+- Haciendo pruebas con el despliegue de aplicaciones con git.
 
 
 Comentarios sobre reducción y datos tomados para Matilde
