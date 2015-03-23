@@ -290,7 +290,7 @@ def getBestFocus(data, output_file):
         
     Returns
     -------
-    If success, returns the best focus (in mm) computed and the min FWHM (pix).
+    If success, returns the best focus computed.
     
     """
     
@@ -329,9 +329,8 @@ def getBestFocus(data, output_file):
         print "ERROR: Parabola fit unusable!"
     best_focus = - pol[1] / (2. * pol[2])
     min_fwhm = pol([best_focus])
-    # Next message can be useful for IRAF console
-    print "QL_BEST_FOCUS (um) = %6.0f"%((best_focus + m_foc)*1000)
-    print "QL_MIN_FWHM (pix) = ", min_fwhm
+    print "BEST_FOCUS (OWN) = ", best_focus + m_foc
+    print "MIN_FWHM (OWN) = ", min_fwhm
     
     if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
         print "ERROR: Best focus out of range!"
@@ -340,8 +339,8 @@ def getBestFocus(data, output_file):
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
     plt.plot(xp + m_foc, pol(xp), '-')
     plt.axvline(best_focus + m_foc, ls='--', c='r')
-    plt.title("Best Focus=%6.0f um - FWHM=%4.2f pix" 
-        %((best_focus + m_foc)*1000, min_fwhm ))
+    plt.title("Best Focus=%6.3f mm - FWHM=%6.3f pix" 
+        %((best_focus + m_foc), min_fwhm ))
     
     plt.xlabel("T-FOCUS (mm)")
     plt.ylabel("FWHM (pixels)")
@@ -454,38 +453,19 @@ if __name__ == "__main__":
                                             options.coord_file, 
                                             options.log_file)
         
-    best_focus = getBestFocusfromStarfocus("@"+options.source_file, options.coord_file, options.log_file)
-    print "Best Focus = ",best_focus
-    
-    ############### Insert start
-    if options.data_file:
-        # write log output to data file
-        # parse backwards: look for best focus line and block with single results
-        with open(options.log_file, "r") as f:
-            f.seek (0, 2)           # Seek @ EOF
-            fsize = f.tell()        # Get Size
-            f.seek (max (fsize-2**15, 0), 0) # Set pos @ last chars
-            lines = f.readlines()       # Read to end
-        lines.reverse()
-        fo = open(options.data_file, 'w')
-        if options.target:
-            obj = options.target
-        else:
-            print 'WARNING: Object name not provided'
-            obj = 'Unknowm'
-        fo.write('# Object: %s\n' %obj)
-        while not lines[0].strip().startswith('Average'):
-            lines.pop(0)
-        line = lines.pop(0)
-        fo.write('#%s' %line)
-        while not lines[0].strip().startswith('Best'):
-            lines.pop(0)
-        k = lines.index('\n')
-        for i in range(k):
-            if lines[k -i -1].strip().startswith('Best'):
-                fo.write(lines[k - i - 1])
-        fo.close()
-        print 'Data file written: %s' %options.data_file
-    ############### Insert end
-    
-    sys.exit()
+        
+        # Compute our own BEST_FOCUS value and plot the fittting
+        print "Now, our own fitting...\n"
+        data = readStarfocusLog(options.log_file)
+        
+        plot_filename = os.path.splitext(options.data_file)[0] + ".pdf"
+        my_best_focus, min_fwhm = getBestFocus(data, plot_filename)
+        
+        d = np.array(data, dtype=np.float32)
+        avg_x = d[:,0].mean()
+        avg_y = d[:,1].mean()
+        # Write values into data file for the Tilt analysis.
+        writeDataFile(my_best_focus, min_fwhm, avg_x, avg_y, 
+                      options.data_file, options.target)
+        
+    sys.exit(0)
