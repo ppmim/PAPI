@@ -124,7 +124,7 @@ class DataSet(object):
                 continue
                         
     ############################################################
-    def insert ( self, filename ):
+    def insert( self, filename ):
         """
         Insert new FITS file into dateset
 
@@ -189,7 +189,7 @@ class DataSet(object):
 
     
     ############################################################
-    def delete ( self, filename, date=None ):
+    def delete( self, filename, date=None ):
 
         """
         Delete a row file from the dataset table

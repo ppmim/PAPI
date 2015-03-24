@@ -419,12 +419,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.outputsDB = datahandler.dataset.DataSet(None, instrument)
             self.outputsDB.createDB()
             # Insert/load the external calibration files
-            self.load_extenal_calibs(self.ext_calib_dir)
+            self.load_external_calibs(self.ext_calib_dir)
         except Exception,e:
             log.error("Error during OUTPUT data base initialization: \n %s"%str(e))
             raise Exception("Error during OUTPUT data base initialization")    
         
-    def load_extenal_calibs(self, calib_dir):
+    def load_external_calibs(self, calib_dir):
         """
         Load all the calibration files found in the specified path.
         """
@@ -436,6 +436,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 if ifile.endswith(".fits") or ifile.endswith(".fit"):
                     log.debug("Inserting file %s"%(calib_dir + "/" + ifile))
                     self.outputsDB.insert(calib_dir + "/" + ifile)
+    
+    def unload_external_calibs(self, calib_dir):
+        """
+        Unload all the calibration files found in the specified path.
+        """
+        
+        log.info("Unloading External Calibrations into DB from: %s "%calib_dir)
+        
+        if os.path.isdir(calib_dir):
+            for ifile in dircache.listdir(calib_dir):
+                if ifile.endswith(".fits") or ifile.endswith(".fit"):
+                    log.debug("Inserting file %s"%(calib_dir + "/" + ifile))
+                    self.outputsDB.delete(calib_dir + "/" + ifile)
                     
     def new_file_func_out(self, filename):
         """
@@ -600,7 +613,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #Create working thread that process the file
             try:
                 ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
-                if len(ltemp)>1:
+                if len(ltemp) >1 :
                     last_file = ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
                     # Change cursor
                     #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
@@ -817,7 +830,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         else:
             dir = str(source) # required when QFileDialog.getExistingDirectory
             ###dir = str(source[0]) # required when QFileDialog.getOpenFileNames
-            if dir==self.m_outputdir:
+            if dir == self.m_outputdir:
                 self.logConsole.error("Error, Input and Output directories cannot be the same.")
                 return
             if (self.m_sourcedir != dir and self.m_outputdir != dir):
@@ -1423,10 +1436,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                 | QFileDialog.DontResolveSymlinks)
          
         # CAREFUL: <sourcedir> must be DISTINT  to <tempdir>, infinite loop
-        if dir and self.m_sourcedir!=dir:
-            self.lineEdit_tempD.setText(dir)
+        if dir and self.m_sourcedir != dir:
+            self.lineEdit_calibsD.setText(dir)
             self.m_tempdir = str(dir)
-
+    
+    def setCalibsDir_slot(self):
+        """
+        Select Calibs Directory for master calibration files (master
+        dark, master flats) used for proccesing.
+        """
+        
+        dir = QFileDialog.getExistingDirectory( self, 
+                                                "Choose existing Directory for calibration files", 
+                                                self.ext_calib_dir, 
+                                                QFileDialog.ShowDirsOnly
+                                                | QFileDialog.DontResolveSymlinks)
+         
+        if dir and self.ext_calib_dir != str(dir):
+            self.lineEdit_calibsD.setText(str(dir))
+            # Delete previous calibrations
+            if self.ext_calib_dir:
+                self.unload_external_calibs(self.ext_calib_dir)
+            self.ext_calib_dir = str(dir)
+            self.load_external_calibs(self.ext_calib_dir)
+        
+            
     def setDarks_slot(self):
         """
         Select master dark to use in data reduction
@@ -1485,7 +1519,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.outputsDB.clearDB()
         
         # But keep the external calibration files on outputsDB
-        self.load_extenal_calibs(self.ext_calib_dir)
+        self.load_external_calibs(self.ext_calib_dir)
         
     def add_slot(self):
         """
@@ -1575,7 +1609,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.outputsDB.clearDB()
         
         # But keep the external calibration files on outputsDB
-        self.load_extenal_calibs(self.ext_calib_dir)
+        self.load_external_calibs(self.ext_calib_dir)
         
     def slot_classFilter(self):
         """ Filter files on main ListView"""

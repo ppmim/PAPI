@@ -6695,6 +6695,14 @@ el directorio, pero eso es más lento.
  http://www.nosinmiubuntu.com/git-montar-estructura-para-despliegues/
   
 
+24-Marzo-2015
+-------------
+- Añado al PQL en la pestaña Calibrations la opción de selecionar el directorio ext_calib_dir
+(con masterDarks y masterFF) para que se lea y lo tenga disponible
+el QL para applyDark, reducciones, etc...
+
+
+  
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
 - En la noche 2015-03-10, las secuencias de DomeFlat sólo tienen
