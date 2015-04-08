@@ -85,6 +85,8 @@ import datahandler
 import misc.display as display
 import astromatic
 import photo.photometry
+import reduce.correctNonLinearity
+import misc.createDataSeq
 
 #Log
 import misc.paLog
@@ -1163,7 +1165,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         # FLATS (for any filter)
         master_flat = self.outputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
-        if master_flat==[]:
+        if master_flat == []:
             master_flat = self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
         
         # BPM                
@@ -1182,13 +1184,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         log.debug("Master BPMs  found %s", master_bpm)
         """
         # Return the most recently created (according to MJD order)
-        if len(master_dark)>0: 
+        if len(master_dark) > 0: 
             self.m_masterDark = master_dark[-1]
             self.lineEdit_masterDark.setText(QString(self.m_masterDark))
             texp = self.outputsDB.GetFileInfo(self.m_masterDark)[4]
             self.lineEdit_masterDark_texp.setText(QString(texp))
         #else: self.m_masterDark = None
-        if len(master_flat)>0: 
+        if len(master_flat) > 0: 
             self.m_masterFlat = master_flat[-1]
             self.lineEdit_masterFlat.setText(QString(self.m_masterFlat))
             filter = self.outputsDB.GetFileInfo(self.m_masterFlat)[3]
@@ -1823,6 +1825,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Build Bad Pixel Map with selected files", 
             triggered=self.createBPM_slot)
 
+        self.mNLC_appAct = QtGui.QAction("&Apply Non-Linearity Correction", self,
+            shortcut="Shift+N",
+            statusTip="Apply Non-Linearity correction in a temp file.", 
+            triggered=self.applyNLC_slot)
+
         self.mBPM_appAct = QtGui.QAction("&Apply and Show BPM", self,
             shortcut="Shift+B",
             statusTip="Apply BPM and show the masked pixels in a temp file.", 
@@ -1926,6 +1933,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Collapse FITS with a cube of N layers.", 
             triggered=self.collapseCube_slot)
         
+        self.createDataSeqAct = QtGui.QAction("Create DataSeq", self,
+            #shortcut="Ctrl+j",
+            statusTip="Create a data sequence of a specified type", 
+            triggered=self.createDataSeq_slot)
+        
         # Group-menu actions
         self.redSeqAct = QtGui.QAction("Reduce Sequence", self,
             shortcut="Ctrl+R",
@@ -1994,6 +2006,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             popUpMenu.addAction(self.mBPMAct)
             popUpMenu.addSeparator()
             popUpMenu.addAction(self.mDF_appAct)
+            popUpMenu.addAction(self.mNLC_appAct)
             popUpMenu.addAction(self.mBPM_appAct)
             popUpMenu.addAction(self.mFocusEval)
             popUpMenu.addAction(self.subOwnSkyAct)
@@ -2022,6 +2035,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             subMenu_fits.addAction(self.splitMEFAct)
             subMenu_fits.addAction(self.splitSingleAct)
             subMenu_fits.addAction(self.collapseCubeAct)
+            subMenu_fits.addAction(self.createDataSeqAct)
+            
             
             newAction.setMenu(subMenu_fits)
             
@@ -2042,6 +2057,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.mGainMapAct.setEnabled(True)
             self.mBPMAct.setEnabled(True)
             self.mDF_appAct.setEnabled(True)
+            self.mNLC_appAct.setEnabled(True)
             self.mBPM_appAct.setEnabled(True)
             self.mFocusEval.setEnabled(True)
             self.subOwnSkyAct.setEnabled(True)
@@ -2055,8 +2071,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.sumAct.setEnabled(True)
             self.divAct.setEnabled(True)
             self.combAct.setEnabled(True)
+            self.createDataSeqAct.setEnabled(True)
             
-            if len(self.m_popup_l_sel)==1:
+            if len(self.m_popup_l_sel) == 1:
                 #print "#SEL_1=",len(self.m_popup_l_sel)
                 #self.dispAct.setEnabled(False)
                 self.mDarkAct.setEnabled(False)
@@ -2070,8 +2087,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.sumAct.setEnabled(False)
                 self.divAct.setEnabled(False)
                 self.combAct.setEnabled(False)
+                self.createDataSeqAct.setEnabled(False)
                 
-            if len(self.m_popup_l_sel)>1:
+            if len(self.m_popup_l_sel) > 1:
                 #print "#SEL_2",len(self.m_popup_l_sel)
                 self.dispAct.setEnabled(False)
                 self.subOwnSkyAct.setEnabled(False)
@@ -2082,14 +2100,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.bckgroundAct.setEnabled(False)
                 self.mBPM_appAct.setEnabled(False)
 
-            if len(self.m_popup_l_sel)!=2:
+            if len(self.m_popup_l_sel) != 2:
                 self.subAct.setEnabled(False)
                 # It allowed to sum/combine 2 or more images
                 #self.sumAct.setEnabled(False) 
                 self.divAct.setEnabled(False)
                 
-            if len(self.m_popup_l_sel)<5:
-                pass
+            if len(self.m_popup_l_sel) < 2:
+                self.createDataSeqAct.setEnabled(False)
                 
         ## Finally, execute the popup
         popUpMenu.exec_(event.globalPos())
@@ -2263,6 +2281,57 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.logConsole.info(QString(str(line)))
         
         QApplication.restoreOverrideCursor()
+    
+    def createDataSeq_slot(self):
+        """
+        Given a list of FITS files, update header to create  Data Sequence 
+        compliant with PAPI.
+        """
+        
+        # Ask for Sequence Type 
+        msgBox = QMessageBox()
+        msgBox.setText("Create Data Sequence")
+        msgBox.setInformativeText("Select the type of sequence:")
+        button_dark = msgBox.addButton("Dark", QMessageBox.ActionRole)
+        button_skyflat = msgBox.addButton("SkyFlat", QMessageBox.ActionRole)
+        button_domeflat = msgBox.addButton("DomeFlat", QMessageBox.ActionRole)
+        button_focus = msgBox.addButton("Focus", QMessageBox.ActionRole)
+        button_science = msgBox.addButton("Science", QMessageBox.ActionRole)
+        button_cancel = msgBox.addButton("Cancel", QMessageBox.ActionRole)
+        msgBox.setDefaultButton(button_science)
+        
+        msgBox.exec_()
+        
+        if msgBox.clickedButton() == button_dark: 
+            seq_type = 'DARK'
+        elif msgBox.clickedButton() == button_skyflat: 
+            seq_type = 'SKY_FLAT'
+        elif msgBox.clickedButton() == button_domeflat: 
+            seq_type = 'DOME_FLAT'
+        elif msgBox.clickedButton() == button_focus: 
+            seq_type = 'FOCUS'
+        elif msgBox.clickedButton() == button_science: 
+            seq_type = 'SCIENCE'
+        else:
+            # Cancel
+            return
+        
+        
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        
+        try:
+            new_files = misc.createDataSeq.createDataSeq(self.m_popup_l_sel, seq_type, overwrite=False, output_dir=self.m_outputdir)
+        except Exception,e:
+            msg = "Cannot create Data Sequece of type [%s]: %s"%(seq_type, str(e))
+            log.debug(msg)
+            QMessageBox.critical(self, "Error", msg)
+            self.logConsole.info(QString(str(msg)))
+        else:
+            line = "Files generated: %s"%new_files
+            self.logConsole.info(QString(str(line)))
+        
+        QApplication.restoreOverrideCursor()
+    
     
     def collapseCube_slot(self):
         """
@@ -3180,7 +3249,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             mFlat = calibrations['flat']
                         if bpm_mode != 'none':
                             mBPM = self.config_opts['bpm']['bpm_file']
+                    
+                    # Show message with calibrations found
+                    # Ask for confirmation
+                    msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(mDark, mFlat, mBPM)
+                    resp = QMessageBox.information(self, "Info",
+                        QString("Calibrations found are: \n %1").arg(str(msg)),
+                                     QMessageBox.Ok, QMessageBox.Cancel)
+                    if resp==QMessageBox.Cancel:
+                        return
 
+                    
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
                     self.logConsole.info("Calibrations to use for file [%s] : "%filename)
@@ -3270,7 +3349,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     msg = "New file created: %s"%result[0]
                     self.logConsole.info(msg)
                     
-                    if self.getDisplayMode()>=2:
+                    if self.getDisplayMode() >=2 :
                       display.showFrame(result[0])
                 else:
                     msg = "Master BPM '%s' does not exist."%master_bpm
@@ -3282,7 +3361,51 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 raise e
             finally:
                 QApplication.restoreOverrideCursor()
+    
+    def applyNLC_slot(self):
+        """
+        Apply to the selected files the NLC defined in the config file.
+        Bad Pixels are replaced with NaNs values.
+        Note that, the original selected file is not modified, the NLC 
+        is applied to a new output file.
+        """
 
+        if len(self.m_popup_l_sel) > 0:
+            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+            try:
+                if self.m_masterNLC:
+                    master_nlc =  self.m_masterNLC
+                else:
+                    master_nlc =  self.config_opts['nonlinearity']['model_lir']
+                if os.path.isfile(master_nlc):
+                    try:
+                        log.info("**** Applying Non-Linearity correction ****")
+                        msg = "NLC Model to apply: %s"%master_nlc
+                        log.info(msg)
+                        self.logConsole.info(msg)
+                        nl_task = reduce.correctNonLinearity.NonLinearityCorrection(master_nlc, 
+                            self.m_popup_l_sel, out_dir=self.m_tempdir, suffix='_LC')
+                        
+                        # Submit task
+                        func_to_run = nl_task.runMultiNLC
+                        params = ()
+                        log.debug("Inserting in queue the task ....")
+                        self._task_queue.put([(func_to_run, params)])
+                    except Exception,e:
+                        log.error("Error while applying NL model: %s"%str(e))
+                        raise e
+                else:
+                    msg = "Master NLC '%s' does not exist."%master_nlc
+                    QMessageBox.critical(self, "Error", msg)
+            except Exception,e:
+                msg = "Error applying NLC: '%s'"%(str(e))
+                self.logConsole.info(msg)
+                QMessageBox.critical(self, "Error", msg)
+                raise e
+            finally:
+                QApplication.restoreOverrideCursor()
+                
+                
     def focus_eval(self):
         """
         Ask what method is prefered, iraf.starfocus or SExtractor based.
@@ -3848,7 +3971,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             msgBox.exec_()
             
-            if msgBox.clickedButton()== button_all or msgBox.clickedButton()==button_new:
+            if msgBox.clickedButton() == button_all or msgBox.clickedButton() == button_new:
                 self.proc_started = True
                 self.pushButton_start_proc.setText("Stop Processing")
                 #Set Red background

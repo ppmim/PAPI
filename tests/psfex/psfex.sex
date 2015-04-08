@@ -5,21 +5,20 @@
 #-------------------------------- Catalog ------------------------------------
 
 CATALOG_NAME	test.cat	# name of the output catalog
-CATALOG_TYPE	ASCII	# "NONE","ASCII_HEAD","ASCII","FITS_1.0"
+CATALOG_TYPE	FITS_LDAC	# "NONE","ASCII_HEAD","ASCII","FITS_1.0"
 				# or "FITS_LDAC"
 
-PARAMETERS_NAME	$PAPI_HOME/config_files/sextractor.param # name of the file containing catalog contents
+PARAMETERS_NAME	sextractor_psfex.param # name of the file containing catalog contents
 
 #------------------------------- Extraction ----------------------------------
 
 DETECT_TYPE	CCD		# "CCD" or "PHOTO" (*)
 FLAG_IMAGE	flag.fits	# filename for an input FLAG-image
-DETECT_MINAREA	32		# minimum number of pixels above threshold
-DETECT_THRESH	5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+DETECT_MINAREA	5		# minimum number of pixels above threshold
+DETECT_THRESH	1.5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 ANALYSIS_THRESH	1.5		# <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
 FILTER		Y		# apply filter for detection ("Y" or "N")?
-#FILTER_NAME	$PAPI_HOME/config_files/config.sex/gauss_3.0_5x5.conv # name of the file containing the filter
 FILTER_NAME     $PAPI_HOME/config_files/sextractor.conv
 
 DEBLEND_NTHRESH	32		# Number of deblending sub-thresholds
@@ -37,13 +36,13 @@ PHOT_APERTURES	5		# MAG_APER aperture diameter(s) in pixels
 PHOT_AUTOPARAMS	2.5, 3.5	# MAG_AUTO parameters: <Kron_fact>,<min_radius>
 PHOT_FLUXFRAC    0.5
 
-SATUR_LEVEL	350000.0	# level (in ADUs) at which arises saturation
-SATUR_KEY       NONE            # keyword value has higher priority that SATUR_LEVEL
+SATUR_LEVEL	1330000	        # level (in ADUs) at which arises saturation
+SATUR_KEY       SATURATE        # keyword value has higher priority that SATUR_LEVEL
 
 MAG_ZEROPOINT	0.0		# magnitude zero-point
 MAG_GAMMA	4.0		# gamma of emulsion (for photographic scans)
 GAIN		4.15		# detector gain in e-/ADU.
-PIXEL_SCALE     0.45		# size of pixel in arcsec (0=use FITS WCS info).
+PIXEL_SCALE     0.23		# size of pixel in arcsec (0=use FITS WCS info).
 
 #------------------------- Star/Galaxy Separation ----------------------------
 
@@ -74,6 +73,6 @@ MEMORY_BUFSIZE	1024		# number of lines in buffer
 
 #----------------------------- Miscellaneous ---------------------------------
 
-VERBOSE_TYPE	QUIET # can be "QUIET", "NORMAL" or "FULL" (*)
+VERBOSE_TYPE	FULL  # can be "QUIET", "NORMAL" or "FULL" (*)
 
 #------------------------------- New Stuff -----------------------------------

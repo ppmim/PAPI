@@ -430,7 +430,7 @@
        <rect>
         <x>18</x>
         <y>121</y>
-        <width>110</width>
+        <width>121</width>
         <height>21</height>
        </rect>
       </property>
@@ -496,7 +496,7 @@
      <widget class="QComboBox" name="comboBox_QL_Mode">
       <property name="geometry">
        <rect>
-        <x>154</x>
+        <x>183</x>
         <y>121</y>
         <width>110</width>
         <height>21</height>
@@ -539,7 +539,7 @@
      <widget class="QLabel" name="textLabel4_2_2">
       <property name="geometry">
        <rect>
-        <x>160</x>
+        <x>189</x>
         <y>100</y>
         <width>80</width>
         <height>20</height>
@@ -3072,7 +3072,7 @@
        <string>Set Calibs Dir...</string>
       </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>583</x>

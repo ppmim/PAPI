@@ -813,6 +813,12 @@ class AstroWarp(object):
             sex.config['CATALOG_NAME'] = file + ".ldac"
             sex.config['DETECT_THRESH'] = self.config_dict['astrometry']['mask_thresh']
             sex.config['DETECT_MINAREA'] = self.config_dict['astrometry']['mask_minarea']
+            # Test-PSFEx
+            sex.ext_config['PSF_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/test.psf'
+            sex.ext_config['PATTERN_TYPE'] = 'RINGS-HARMONIC'
+            sex.ext_config['PARAMETERS_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/sextractor_psfex_psf.param'
+            # End-test-psfex
+            
             # SATUR_LEVEL and NCOADD
             try:
                 dh = datahandler.ClFits(file, check_integrity=False)
@@ -926,7 +932,7 @@ in principle previously reduced, but not mandatory.
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
-                  help="Source input file. It can be a FITS file or"
+                  help="Source input file. It can be a FITS file or "
                   "text file with a list of FITS files.")
     
     parser.add_option("-o", "--output",

@@ -766,22 +766,45 @@ For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
     PS: en B/N y no completos
     Recompilo PLPLOT library con PLD_jpeg ON y ya si genera SCAMP los JPEG's, pero de una calidad pésima, inservibles !!!
 
-3- Download SCAMP v.1.7.0 from Astromatic.net --->scamp-1.7.0-1.x86_64.rpm
 
-> rpm -ivl --nodeps scamp-1.7.0-1.x86_64.rpm 
+    
+3- Download src SCAMP v.2.0.4 from Astromatic.net
 
-(--nodeps es necesario para evitar la dependencia del paquete que contiene la 
-libreria libplplotd.so.9()(64bit), pues se queja al instalar SCAMP.
-Realmente si tendremos dicha libreria porque la habremos instalado a mano al
-compilar e instalar plplot-5.9.9.tgz).
+  wget http://www.astromatic.net/download/scamp/scamp-2.0.4.tar.gz
+
+  - el .rpm no se deja instalar por dos dependencias de libcsironn, libqhull que no consigo resolver,
+  por lo que decido compilar el fuente de SCAMP tal que:
+
+./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
+./make
+./make install
+(todo OK sin problemas)
 
 
 
-2.3 SWARP v2.19.1 : 
+
+2.3 SWARP v2.19.1: ---> NEW v2.38.0 (incluye modo CLIPPED para el combine, aunque no lo uso de momento)
 ------------------
-- Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.19.1-1.x86_64.rpm
+- Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.38.0-1.x86_64.rpm
 
-> rpm -ivl swarp-2.19.1-1.x86_64.rpm
+> rpm -ivl swarp-2.38.0-1.x86_64.rpm
+
+
+o bien la compilamos sin problemas tal que:
+
+./configure --enable-threads
+./make
+
+Intentando ver el .xml que genera psfex, me paso un buen rato hasta que me doy cuenta de que hay que 
+modificar la configuración de firefox para poder verlos tal que:
+
+    http://www.astromatic.net/blog
+
+(en chrome no se como se hace)
+    
+además hay que hacer "make install" para que instale los xslt en /usr/loca/share/psfex;
+
+
 
 
 3. Numpy v1.7.1 (default in openSUSE-13.1)

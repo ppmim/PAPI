@@ -6301,7 +6301,7 @@ ASTIRMS2 = dAXIS2 * 3600.0
 
 + Para el modelo de la PSF, HB ha usado PSFEx, que nos calcula
 un modelo de PSF para la imagen. Eso modelo es el que luego se le
-pasa a SExtractor (PSF_NAME) y SCAMP. No obtante, aunquel la fotometría
+pasa a SExtractor (PSF_NAME) y SCAMP. No obtante, aunque la fotometría
 con PSF es muy buena (o mejor que la de apertura) para cuando 
 tenemos baja S/N o muchos pixeles malos como en este caso;
 sin embargo un inconveniente es que si tenemos un campo
@@ -6700,9 +6700,158 @@ el directorio, pero eso es más lento.
 - Añado al PQL en la pestaña Calibrations la opción de selecionar el directorio ext_calib_dir
 (con masterDarks y masterFF) para que se lea y lo tenga disponible
 el QL para applyDark, reducciones, etc...
+Si se cambiar el directorio, entonces se borran de la BD (outputsDB) los ficheros
+de calibracion anteriores y se añaden los nuevos (sii el directorio es distinto).
+
+25-Marzo-2015
+-------------
+- Hablo con Matilde sobre el QL; la idea es quedar para ver si podemos mejorarlo;MF
+lo ha usado para reducir secuencias S-T-S-... (para Q2) y que le ha funcionado bien.
+Me sugiere la implementación de align_stack_cube.py para cubos de PANIC.
+
+- Le explico a MF la idea de los discos para PANIC; lo ve bien,
+y decidimos por tanto comprar lo siguiente:
+
+1 x disco 500GB (backup Sistema) --> 71.25€ + iva
+4 x disco 4TB (*)  --> 4 x 447.74€ = 1790.96€ + iva
 
 
-  
+(*) 2 discos serían para la particion panic22:/data1, de forma que tendríamos 4TB en total (duplucariamos la capacidad actual de 2 TB) para esa particion de datos raw, y los dos discos actuales de 2TB pasarían a ser discos de repuesto de la particion /data2 (pipeline).
+De los otros dos discos de 4TB, uno sería de repuesto para panic22 y el otro disco sería de repuesto para panic1 en el IAA.
+
+
+El precio total de esta configuración sería de 2253,2741 (iva incluido)
+
+Eso sería para la máquina de panic22; la máquina panic35 se quedaría igual o si nos interesase con otros 2200€ podríamos hacer la misma configuración. 
+
+- Tambien hablamos del tema de la tesis; que lo idea es hacer dos artículos
+para A&A, uno para Conchi (diseño de la óptica) y otro para mi (data reduction, sin LEMON ni GEIRS, pero quizás si OT).
+Yo le comento que para Septiembre yo me será posible escribir la tesis.
+
+
+26-Marzo-2015
+-------------
+- Añado NLC al QL en el pop-up menu.
+
+
+27-Marzo-2015
+-------------
+- intentando instalar psfex en panic1 para hacer el analisis de astrometrico en el 3.5m,
+pero falla por no tener la librería liblapack_atlas.so.3
+
+
+06-Abril-2015
+-------------
+- Regreso de vacaciones de Semana Santa;
+- Despues de perder un monton de horas intentando compilar PSFex, me doy
+cuenta de que compilaba bien, el único problema es que estaba intentando
+ejecutar la version binaria de udit43 en panic1 !!!!!!!!!!! 
+pero el src/psfext es correcto:
+
+Para compilarlo por tanto basta hacer:
+ 
+ > ./configure --with-atlas-libdir=/usr/lib64/atlas/
+ (o mejor para tener usar plplot:)
+ > ./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
+ > make
+
+(más info en http://wiki.ipb.ac.rs/index.php/SExtractor_installation)
+
+
+- Comienzo las pruebas con psfex, con el objetivo de ver si consigo los 
+valores de astrometría relativa que obtuvo Hervé.
+Encuentro una referencia muy buena en:
+
+https://github.com/rmjarvis/DESWL/tree/master/e2e/psfex_tests
+
+Para que luego SExtractor lea el modelo .psf, hay que usar el modificador
+
+   PSF_NAME model.pdf
+
+(opcion avanzada de SExtractor)
+
+
+07-Abril-2015
+-------------
+- A raiz del artículo http://arxiv.org/abs/1401.4169 sobre el modo CLIPPED
+en SWARP para evitar artefactor en la combinaciones de imagenes, actualizo
+la version de swarp de la 2.19.1 a la 2.38.0 (en panic1). La compilo como sigue:
+
+./configure --enable-threads
+./make
+
+y copio el swarp al directorio /usr/bin/ en panic1.
+
+- Sigo probando PSFEx en busca de mejorar la astrometría, pero no consiguo avanzar mucho:
+
+   1- con la secuencia del 3.5m /data2/out/Q01/Astrometry_M67_0017_coadd.Q01.skysub.fits
+   consigo ejecutar SEx + PSFEx + SEx(con .psf) + SCAMP, pero no veo mejora en la astrometría
+   interna (dAXIS1  dAXIS2 para High S/N), de echo obtengo los mismos valores con y sin PSF !!
+   Los valores que obtento son: axis1~0.0536 y axis2~0.0389 para High S/N, es decir, en torno 
+   a 40-50 mas en la astrometría interna.
+   
+   2- con la secuencia del 2.2m que estuvo mirando Hervé (TaurusF1), al ajecutar PSFEx obtengo
+   un Segmentation Fault, y no consigo pasar de ahi por más parámetros que intengo modificar y revisar.
+   
+   (ambas pruebas las hago con imagenes indivuales, con **solo** skysub, sin dark ni FF ni BPM !!!)
+   
+   Por todo esto, le escribo a Hervé, a ver si me puede ayudar. Me contesta rápido diciendo que
+   está muy liado, pero que lo hará cuando tenga un rato.
+   
+Lo extraño de todo esto es que no hay mejora con y sin PSF...
+
+Encuento una página interesate que habla de PSFEx : https://github.com/RobertLuptonTheGood/psfex/blob/master/README
+
+- Intentando ver el .xml que genera psfex, me paso un buen rato hasta que me doy cuenta de que hay que 
+modificar la configuración de firefox para poder verlos tal que:
+
+    http://www.astromatic.net/blog
+
+(en chrome no se como se hace)
+    
+además hay que hacer "make install" para que instale los xslt en /usr/loca/share/psfex;
+
+
+   
+08-Abril-2015
+-------------
++ Actualizo (en panic1) la version de SCAMP de 1.7.0 a 2.0.4:
+  - el .rpm no se deja instalar por dos dependencias de libcsironn, libqhull que no consigo resolver,
+  por lo que decido compilar el fuente de SCAMP tal que:
+
+./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
+./make
+./make install
+(todo OK sin problemas)
+
+- Sigo haciendo pruebas con PSFEx, y me doy cuenta de que para que SCAMP "tenga en cuenta" (realmente es SExtractor
+quién lo tiene que tener en cuenta) el modelo de PSF tenemos que decirle a SExtractor
+que no de los parametros XPSF_IMAGE, YPSF_IMAGE obtenidos en la (segunda) llamada a SExtractor
+con el modelo de la PSF. De esta forma, el catálogo que obtendremos tendrá los valores X/YPSF_IMAGE;
+Despues, ejecuto SCAMP con esos nuevos catálogos y observo que dAXIS1/2 cambian, pero muy poco
+e incluso para peor...
+Además leo en una presentación de E.Bertin que XWIN_IMAGE (cendroide con el Ajuste Gaussiano) puede 
+tener una precisión muy parecida (<10%error) a XPSF_IMAGE, pero de una forma más rápida que usando la PSF.
+En definitiva, que sigo sin obtener valores < 40 mas.
+
+
+- Encuento una herramienta interesante: http://pythonhosted.org/pyplate/index.html, que usa PSFEx la resolver la astrometría,
+la idea sería bueno para incluir en PAPI, de forma que en astrowarp tengamos un parámetro que nos diga
+si queremos usar PSF o no, y en su caso entonces calcule la PSF; eso sería obviamente para un conjunto de imagenes
+del mismo campo, ie., dithering.
+
+- Me surge la duda de si tendría que general .psf para cada imagen? ahora mismo uso uno .psf
+para todas las de la secuencia de dithering.
+
+- Creo la rutina createDataSeq.py para poder crear/reconstruir Data Sequences 
+de un tipo determinado; añado dicha funcionalid al QL.
+
+
+
+09-Abril-2015
+-------------
+
+
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
 - En la noche 2015-03-10, las secuencias de DomeFlat sólo tienen
@@ -6730,17 +6879,27 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Añadir a astrowarp la opcion de usar ajuste PSF para la astrometría (ala http://pythonhosted.org/pyplate/index.html); antes 
+tendría que tener algun input más de Hervé para ver que merece la pena...pues ahora mismo con las pruebas que he hecho
+no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
+- En los cubos de datos, al hacer el coadd, el TEXP resultante puede que no coincida con ningun dark tomado de forma automática por el OT ??
+  Ejemp:
+   > papi.py -c config_files/papi.cfg -s /data1/PANIC/2015-03-07/ -S 20 20 -W Q1 -M quick-lemon
+- Retomar el tema de mejorar y añadir a PAPI la suma de cubos con alineado (align_stack_cube.py).
+- Añadir NLC al QL: quizas un applyCalibs y que ahí pregunte que quieres hacer...
+- Crear rutina (QL) para "crear" OBs compatibles con PAPI a partir de un conjunto de ficheros seleccionados:
+  la idea es que pregunte de que tipo son (DARK, FLAT, SCIENCE, etc) y yo les añada/modifique
+  las keywords. Esto permitiría "arreglar" y "aprovechar" OBs interrumpidos durante la observación
+  o simplemente del que queremos eliminar algun fichero por estár mal...
+  
+- Realizar analisis astrometría ala Hervé (ver notas teleconf) con psfex --partly done
 - Probar ultimos "consejos" de RM sobre el memory issue! (ver mail 11-Marzo-2015)
-- Añadir al PQL en la pestaña Calibrations la opción de selecionar un directorio
-con masterDarks y masterFF (ext_calibration_db) para que se lea y lo tenga disponible
-el QL para applyDark, reducciones, etc...
+- Probar reboot como usuario panic
 - Añadir opcion de dar estimación del cielo de un conjunto de imagenes con dithering:
 básicamente es hacer un combine con un sigma reject de los objetos.
 
 - Resolver tratamiento BP en gainmap (level, etc...); ahora lo mejor es no detectarlos
 poniendo el umbral muy alto !!
-- Probar sugerencias de RM en el kernel y sistema.
-- Probar reboot como usuario panic
 - Quitar todos los debugs (ficheros temporales) de skyfilter.c
    OJO !!! --> los ficheros /data2/tmp/sky** y /data2/tmp/skyw* de depuración
    que se generan en skyfilter son creado por el usuario panic y si lanzaramos las misma
@@ -6800,7 +6959,6 @@ es trivial...
 el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un apaño
 en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
 si se detecta bien los SKY de los SCIENCE
-
 
 - Revisar/permitir D+F+BPM en QL de modo automatico
 - refactorizar la astrometría en RS
