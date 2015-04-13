@@ -387,8 +387,9 @@ class MasterTwilightFlat(object):
                         try:
                             n_dark = t_darks[round(t_flat, 1)] 
                         except KeyError:
-                            log.error("Cannot find proper master DARK for FLAT with expTime=%f"%t_flat)
-                            raise Exception("Cannot find dark for flat")
+                            msg = "Cannot find proper master DARK for FLAT with expTime=%f"%t_flat
+                            log.error(msg)
+                            raise Exception(msg)
                     
                         mdark = fits.open(n_dark)
                         scaled_dark = mdark[i].data
@@ -408,8 +409,9 @@ class MasterTwilightFlat(object):
                     try:
                         n_dark = t_darks[round(t_flat, 1)]
                     except KeyError:
-                        log.error("Cannot find proper master DARK for FLAT with expTime=%f"%t_flat)
-                        raise Exception("Cannot find dark for flat")
+                        msg = "Cannot find proper master DARK for FLAT with expTime=%f"%t_flat
+                        log.error(msg)
+                        raise Exception(msg)
                     mdark = fits.open(n_dark)
                     scaled_dark = mdark[0].data
                     

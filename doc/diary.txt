@@ -6844,12 +6844,31 @@ del mismo campo, ie., dithering.
 para todas las de la secuencia de dithering.
 
 - Creo la rutina createDataSeq.py para poder crear/reconstruir Data Sequences 
-de un tipo determinado; añado dicha funcionalid al QL.
+de un tipo determinado; añado dicha funcionalid al QL  (FITS->Create DataSeq).
 
 
 
 09-Abril-2015
 -------------
+-Trabajo para OSN con WeatherServer + RF T150
+
+10-Abril-2015
+-------------
+-Trabajo para OSN con WeatherServer + RF T150
+
+
+13-Abril-2015
+-------------
+- Probando la última version de GEIRS con PAPI, encuentro bug en mef.py al hacer el split !! Qi_j no es correcto, debe ser Qi !!!!!
+Hay que revisar todos los lugares donde aparezca Qi_j y cambiarlo por Qi.
+Básicamente han sido mef.py y correctNonLinearity.py.
+Soluciono dicho bug.
+
+- Añado la copia de EGAINi/ENOISEi a los headers en las operaciones con MEF en mef.py.
+
+- Compruebo que nos actuales NLC de BD son compatibles con el nuevo esquema de MEFs, pues
+lo que se comprueba es el DET_ID, y ese sigue siendo el mismo (SGi), no ha cambiado.
+
 
 
 Comentarios sobre reducción y datos tomados para Matilde
@@ -6876,9 +6895,11 @@ pequeño y razonable y con más puntos.
 
 
 
-
 TODOs - urgentes
 ================
+- Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi.
+- Probar a instalar PAPI en un directorio del sistema único y ver si lo pueden ejecutar todos los usuarios.
+- Ver la opción de añadir a "todas" la llamadas de SExtractor la máscaras de pixeles malos como un WEIGHT_MAP
 - Añadir a astrowarp la opcion de usar ajuste PSF para la astrometría (ala http://pythonhosted.org/pyplate/index.html); antes 
 tendría que tener algun input más de Hervé para ver que merece la pena...pues ahora mismo con las pruebas que he hecho
 no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
@@ -6886,12 +6907,7 @@ no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
   Ejemp:
    > papi.py -c config_files/papi.cfg -s /data1/PANIC/2015-03-07/ -S 20 20 -W Q1 -M quick-lemon
 - Retomar el tema de mejorar y añadir a PAPI la suma de cubos con alineado (align_stack_cube.py).
-- Añadir NLC al QL: quizas un applyCalibs y que ahí pregunte que quieres hacer...
-- Crear rutina (QL) para "crear" OBs compatibles con PAPI a partir de un conjunto de ficheros seleccionados:
-  la idea es que pregunte de que tipo son (DARK, FLAT, SCIENCE, etc) y yo les añada/modifique
-  las keywords. Esto permitiría "arreglar" y "aprovechar" OBs interrumpidos durante la observación
-  o simplemente del que queremos eliminar algun fichero por estár mal...
-  
+- Añadir quizas una opción genérica applyCalibs y que ahí pregunte que quieres hacer (DARK, FLAT, BPM, NLC)
 - Realizar analisis astrometría ala Hervé (ver notas teleconf) con psfex --partly done
 - Probar ultimos "consejos" de RM sobre el memory issue! (ver mail 11-Marzo-2015)
 - Probar reboot como usuario panic
@@ -6913,12 +6929,14 @@ con /Astrometry_M67_0026-30 del 7-Marzo no hay manera !!! (en la segunda pasada 
 - Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
 - ver si CreateCalibs puede incluso hacer la NLC !!
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
-- Que pregunte que Qi reducir en el PQL
+- Que pregunte que Qi reducir en el PQL (ahora sólo está en el tab 'configuración'
 - Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
 de objetos no hace bien su función, pues en la imagen final salen manchas negras....
 Ejemplo: /data1/PANIC/2015-03-03/EPerez_UGC9128_March3_0026-50.fits
 Además la segunda pasada con el Q2 casca !!! el skyfilter da un SF !!!
 
+- Ver como propagar todos los mensajes de error del PAPI en la consola del QL; por
+ejemplo, si applyNLC desde el QL falla, sólo devuelve 'No value returned'.
 
 - Ver como permitir mod. parámetros del iraf.starfocus para el focus_evaluation.
 - ver si el pix_scale que tiene el config del RS se puede actualizar
@@ -6968,7 +6986,6 @@ si se detecta bien los SKY de los SCIENCE
 - revisar/mejorar ApplyDarkFlat en QL
 - Añadir NCOADD, ITIME, MEF ? a la ListView del QL
 - DUDA: cómo se usa el ext_calibration_db en el QL ???
-- añadir opcion de crear "solo" calibrationes desde CL de PAPI
 - adaptar Nuevo interfaz de calTwFlat en PAPI !!
 - Sacar algún mapa de distorsión decence !! (datos Tilt y/o 10-Dic-2014)
 - aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
@@ -7011,7 +7028,6 @@ a partir de los master NLC de BD.
 TODO:
 ====
 - Eliminar el primer coadd que se crea en: /tmp/PANIC_SEQ_Q01_coadd_RADMON.fits 
-- Escribir a RM para que modifique? EXTEND=F en los single !!! para identificarlos bien de los MEF.
 - Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
 hacer una propia en Python.
 - ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'

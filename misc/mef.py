@@ -167,12 +167,12 @@ class MEF (object):
                 temp = numpy.zeros((height*2, width*2), dtype = numpy.float32)
                 
             # Since GEIRS-r731M-18 version, new MEF extension naming:
-            #    EXTNAME = 'Qi_j'
-            #    DET_ID = 'SGi_j'
+            #    EXTNAME = 'Qi'
+            #    DET_ID =  'SGi'
             # and the order in the MEF file shall be Q1,Q2,Q3,Q4
             try:
-                hdulist['Q1_1'].header
-                ext_name = 'Q%i_1'
+                hdulist['Q1'].header
+                ext_name = 'Q%i'
             except KeyError:
                 ext_name = 'SG%i_1'
             
@@ -256,7 +256,7 @@ class MEF (object):
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
             # Check if is a MEF file 
-            if len(hdulist)>1:
+            if len(hdulist) > 1:
                 n_ext = len(hdulist)-1
                 log.debug("MEF file with %d extensions", n_ext)
             else:
@@ -267,10 +267,10 @@ class MEF (object):
             for iSG in range (1, n_ext + 1):
                 if instrument.lower() == 'panic':
                     # Since GEIRS-r731M-18 version, new MEF extension naming:
-                    #    EXTNAME = 'Qi_j'
-                    #    DET_ID = 'SGi_j'
+                    #    EXTNAME = 'Qi'
+                    #    DET_ID = 'SGi'
                     # and the order in the MEF file shall be Q1,Q2,Q3,Q4
-                    extname = 'Q%i_1' %iSG
+                    extname = 'Q%i' %iSG
                     try:
                         hdulist[extname].header
                     except KeyError, e:
@@ -299,6 +299,8 @@ class MEF (object):
                 #keywords  = [if key not in hdulist[1].header for key in hdulist[0].header.cards
 
                 # now, copy extra keywords required
+                copy_keyword.append('EGAIN%i'%iSG)
+                copy_keyword.append('ENOISE%i'%iSG)
                 for key in copy_keyword:
                     try:
                         value = hdulist[0].header.cards[key].value
@@ -314,6 +316,10 @@ class MEF (object):
                         # extension should have CRVAL/CRPIX values!!
                     except KeyError:
                         log.debug("Key %s cannot be copied, is not in the header"%(key))
+                
+                # To avoid copying all values to all extensions.
+                copy_keyword.remove('EGAIN%i'%iSG)
+                copy_keyword.remove('ENOISE%i'%iSG)
                 
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
@@ -405,8 +411,8 @@ class MEF (object):
     def convertGEIRSToMEF( self, out_filename_suffix = ".mef.fits",
                            out_dir = None, copy_keyword = []):
         """ 
-        Method used to convert a single FITS file (PANIC-GEIRS v0) 
-        having a full 4-detector-frame to a MEF with a 4-extension FITS, 
+        Method used to convert a single FITS file (PANIC-GEIRS SEF) 
+        having a full 4-detector-frame to a MEF with a 4-extensions, 
         one per each frame. The full-4kx4k frame can be a cube with N planes.
 
         It **IS** also valid for cubes of data.
@@ -731,17 +737,17 @@ class MEF (object):
                         if (i*2+j)==0: det_id = 4
                         elif (i*2+j)==1: det_id = 3
                         elif (i*2+j)==2: det_id = 1
-                        elif (i*2+j)==3: det_id = 2                       
+                        elif (i*2+j)==3: det_id = 2
 
                     # Since GEIRS-r731M-18 version, new MEF extension naming:
-                    #    EXTNAME = 'Qi_j'
-                    #    DET_ID = 'SGi_j'
+                    #    EXTNAME = 'Qi'
+                    #    DET_ID =  'SGi'
                     # and the order in the MEF file shall be Q1,Q2,Q3,Q4
-                    hdu_i.header.set('DET_ID', "SG%i"%det_id, 
+                    hdu_i.header.set('DET_ID', "SG%i"%det_id,
                                         "PANIC Detector id SGi [i=1..4]")
                     hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
                     ### TODO: suspend until new version of GEIRS (see bellow)
-                    #####hdu_i.header.set('EXTNAME', "Q%i_1"%det_id)
+                    #####hdu_i.header.set('EXTNAME', "Q%i"%det_id)
                     ### end_suspend
                     
                     # DETSEC and DATASEC
@@ -758,12 +764,14 @@ class MEF (object):
                     hdu_i.header.set('DETSEC', det_sec)
                     hdu_i.header.set('DATASEC', data_sec)
 
-                    # now, copy extra keywords required
+                    # now, copy required extra keywords 
+                    copy_keyword.append('EGAIN%d'%det_id)
+                    copy_keyword.append('ENOISE%d'%det_id)
                     for key in copy_keyword:
                         try:
                             value = in_hdulist[0].header.cards[key].value
                             comment = in_hdulist[0].header.cards[key].comment
-                            if key=='HIERARCH ESO DET NDIT':
+                            if key == 'HIERARCH ESO DET NDIT':
                                 hdu_i.header.set ('NDIT', value, comment)
                             else:
                                 hdu_i.header.set (key, value, comment)
@@ -771,6 +779,9 @@ class MEF (object):
                             # extension should have CRVAL/CRPIX values!!
                         except KeyError:
                             log.warning("Key %s cannot be copied, is not in the header"%(key))
+                    
+                    copy_keyword.remove('EGAIN%d'%det_id)
+                    copy_keyword.remove('ENOISE%d'%det_id)
                     # Append new HDU to MEF
                     # Force BITPIX=-32
                     hdu_i.scale('float32')
@@ -798,7 +809,7 @@ class MEF (object):
     def splitGEIRSToSimple( self, out_filename_suffix = ".Q%02d.fits", 
                             out_dir = None):
         """ 
-        Method used to convert a single FITS file (PANIC-GEIRS v0) 
+        Method used to convert a single FITS file (PANIC-GEIRS SEF) 
         having a full (4kx4k) 4-detector-frame to 4 single FITS files with a 
         file per detector. The 4-detector-frame can be a cube of data.
         Header is fully copied from original file, and added new WCS keywords.
@@ -813,8 +824,8 @@ class MEF (object):
     
     
         Since GEIRS-r731M-18 version, new MEF extension naming:
-           EXTNAME = 'Qi_j'
-           DET_ID = 'SGi_j' (same ids as before)
+           EXTNAME = 'Qi'
+           DET_ID =  'SGi_j' (same ids as before)
         and the order in the MEF file shall be Q1,Q2,Q3,Q4
 
         But, for single FITS files, I don't know how to identify the detectors 
@@ -1201,7 +1212,7 @@ if __name__ == "__main__":
     
     parser.add_option ("-G", "--geirs-split",
                   action = "store_true", dest = "geirs_split", \
-                  help = "make a split of GEIRS-v0 files, creating \
+                  help = "make a split of GEIRS SEF file, creating \
                   4-single files and adding a suffix for each extension", \
                   default = False)
     
@@ -1212,7 +1223,7 @@ if __name__ == "__main__":
    
     parser.add_option ("-g", "--geirs-convert",
                   action = "store_true", dest = "geirs_convert", \
-                  help = "convert a GEIRS-v0 file (with 1 extension) to a \
+                  help = "convert a GEIRS SEF file to a \
                   MEF FITS file with 4 extensions", default = False)
     
     parser.add_option ("-d", "--output_dir",
