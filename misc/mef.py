@@ -149,7 +149,7 @@ class MEF (object):
                 log.error(msg)
                 raise Exception(msg)
                 
-            if len(hdulist[1].data.shape) >2:
+            if len(hdulist[1].data.shape) > 2:
                 msg = "Found a MEF cube to join as to SEF."
                 log.debug(msg)
                 n_planes = hdulist[1].data.shape[0]

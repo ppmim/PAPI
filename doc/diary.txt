@@ -6869,6 +6869,13 @@ Soluciono dicho bug.
 - Compruebo que nos actuales NLC de BD son compatibles con el nuevo esquema de MEFs, pues
 lo que se comprueba es el DET_ID, y ese sigue siendo el mismo (SGi), no ha cambiado.
 
+14-Abril-2015
+-------------
+- OSN: Modificación a WeatherServer y programa Rueda de Filtros T150.
+
+15-Abril-2015
+-------------
+- Creo la rutina getBPM.py para la creación de la BPM a partir del fichero de la NLC.
 
 
 Comentarios sobre reducción y datos tomados para Matilde
@@ -6926,6 +6933,10 @@ poniendo el umbral muy alto !!
 
 - DITHERCUBEMEAN no funciona bien para offsets grandes (>300 o >600) !!! o eso me parece, pues
 con /Astrometry_M67_0026-30 del 7-Marzo no hay manera !!! (en la segunda pasada de PAPI).
+Efectivamente no funciona bien debido a la distorsion del campo. Con esos offsets, el coadd no
+funciona bien, y por tanto la mascara de objectos para el skyfilter de la segunda vuelta, no 
+se hace correctamente.
+
 - Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
 - ver si CreateCalibs puede incluso hacer la NLC !!
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
