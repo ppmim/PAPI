@@ -41,6 +41,7 @@
 # Import necessary modules
 
 import os
+import shutil
 import fileinput
 from optparse import OptionParser
 
@@ -487,8 +488,8 @@ class MEF (object):
             if len(in_hdulist) > 1 :
                 log.info("File %s is already a MEF file. No conversion required"%file)
                 # We copy, because if rename, then remove the original file.
-                shutil.copy(file, new_filename)
-                out_filenames.append(new_filename)
+                #shutil.copyfile(file, new_filename)
+                out_filenames.append(file)
                 continue
             
 

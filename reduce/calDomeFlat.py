@@ -106,7 +106,7 @@ class MasterDomeFlat(object):
             
          # NOTE : We do NOT subtract any MASTER_DARK, it is not required for 
          DOME FLATS (it is done implicitly because both ON/OFF flats are taken 
-         with the same Exposition Time)    
+         with the same Exposition Time)
         
     TODO:
     -----

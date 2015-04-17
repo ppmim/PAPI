@@ -2730,7 +2730,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Called to create a master dark frame.
         """
 
-        if len(self.m_popup_l_sel)<3:
+        if len(self.m_popup_l_sel) < 3:
             QMessageBox.information(self,"Info","Not enough frames !")
             return
 
@@ -2748,26 +2748,26 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   "Choose a filename to save under",
                                                   self.m_outputdir + "/master_dark.fits", 
                                                   "*.fits")
-        # if not outfileName.isEmpty():
-        #     try:
-        #         texp_scale = False
-        #         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        #         self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, 
-        #                                                self.m_tempdir, 
-        #                                                str(outfileName), 
-        #                                                texp_scale)
-        #         thread = reduce.ExecTaskThread(self._task.createMaster, 
-        #                                        self._task_info_list)
-        #         thread.start()
-        #     except Exception, e:
-        #         QApplication.restoreOverrideCursor() 
-        #         QMessageBox.critical(self, "Error", 
-        #                              "Error while creating master Dark. \n"+str(e))
-        #         raise e
-        # else:
-        #     pass
+        if not outfileName.isEmpty():
+            try:
+                texp_scale = False
+                QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                self._task = reduce.calDark.MasterDark(self.m_popup_l_sel, 
+                                                       self.m_tempdir, 
+                                                       str(outfileName), 
+                                                       texp_scale)
+                thread = reduce.ExecTaskThread(self._task.createMaster, 
+                                                self._task_info_list)
+                thread.start()
+            except Exception, e:
+                QApplication.restoreOverrideCursor() 
+                QMessageBox.critical(self, "Error", 
+                                      "Error while creating master Dark. \n"+str(e))
+                raise e
+        else:
+             pass
 
-    
+        """
         if not outfileName.isEmpty():
             try:
                 self.processFiles(self.m_popup_l_sel, group_by=self.group_by, 
@@ -2778,7 +2778,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 raise e
         else:
             pass     
-
+        """
+        
     def createMasterDFlat_slot(self):
         
         """

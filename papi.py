@@ -150,7 +150,16 @@ def main(arguments = None):
     
     parser.add_option("-p", "--print",
                   action = "store_true", dest = "print_seq", default = False,
-                  help = "Print detected sequences in the Data Set")
+                  help = "Print all detected sequences in the Data Set")
+    
+    parser.add_option('-T', '--sequences_type',
+                      type='choice',
+                      action='store',
+                      dest='seq_type',
+                      choices=['DARK', 'FLAT', 'FOCUS', 'SCIENCE', 'CAL', 'all'],
+                      default='all',
+                      help="Specify the type of sequences to show: "
+                      "DARK, FLAT, FOCUS, SCIENCE, CAL, all [default: %default]")
     
     parser.add_option("-b", "--build_calibrations",
                   action = "store_true", dest = "build_calibrations", default = False,
@@ -195,7 +204,7 @@ def main(arguments = None):
     (init_options, i_args) = parser.parse_args(args = arguments)
     
     # If no arguments, print help
-    if len(arguments)<1:
+    if len(arguments) < 1:
        parser.print_help()
        sys.exit(0)
 
@@ -222,7 +231,7 @@ def main(arguments = None):
 
     # Manually mix bpm_file, having priority the invokation values over config
     # file value.
-    if init_options.bpm_file!=None:
+    if init_options.bpm_file != None:
       options['bpm']['bpm_file'] = init_options.bpm_file
     
     # Add the configuration filename as an extra value to the dictionary
@@ -264,7 +273,7 @@ def main(arguments = None):
                     rs_files.append((general_opts['source']+"/"+file).replace('//','/'))
     
     # Check for list files sorted by MJD
-    if init_options.list==True:
+    if init_options.list == True:
         log.debug("Creating logsheet file ....")
         logSheet = gls.LogSheet(rs_files, "/tmp/logsheet.txt", [0,len(rs_files)], True)
         logSheet.create()
@@ -310,12 +319,13 @@ def main(arguments = None):
                 config_dict = options )
 
         if init_options.print_seq:
-            rs.getSequences()
+            rs.getSequences(stype=init_options.seq_type)
         elif init_options.build_calibrations:
             rs.buildCalibrations()
         else:
-            if init_options.seq_to_reduce==-1: #all
-                rs.reduceSet(red_mode=general_opts['reduction_mode'])
+            if init_options.seq_to_reduce == -1: #all
+                rs.reduceSet(red_mode=general_opts['reduction_mode'],
+                             types_to_reduce=[init_options.seq_type])
             else:
                 m_seqs_to_reduce = []
                 m_seqs_to_reduce = range(init_options.seq_to_reduce[0], 
@@ -323,8 +333,15 @@ def main(arguments = None):
                 #for elem in init_options.seq_to_reduce: 
                 #    m_seqs_to_reduce.append(int(elem))
                 #return
+                if init_options.seq_type == 'CAL':
+                    stype = ['DARK', 'DOME_FLAT', 'SKY_FLAT']
+                elif init_options.seq_type == 'FLAT':
+                    stype = ['DOME_FLAT', 'SKY_FLAT']
+                else:
+                    stype = [init_options.seq_type]
                 rs.reduceSet(red_mode=general_opts['reduction_mode'], 
-                             seqs_to_reduce=m_seqs_to_reduce)
+                             seqs_to_reduce=m_seqs_to_reduce,
+                             types_to_reduce=[init_options.seq_type])
                 
     except RS.ReductionSetException, e:
         print e

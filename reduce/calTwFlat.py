@@ -225,13 +225,16 @@ class MasterTwilightFlat(object):
             mef = misc.mef.MEF(self.__master_dark_list)
             self.__master_dark_list = mef.convertGEIRSToMEF(out_dir=self.__temp_dir)[1]
         except Exception,e:
-            log.debug("Error converting Darks to MEF file: %s", str(e))
+            log.error("Error converting Darks to MEF file: %s", str(e))
+            raise e
+        
         # Flats
         try:
             mef = misc.mef.MEF(framelist)
             framelist = mef.convertGEIRSToMEF(out_dir=self.__temp_dir)[1]
-        except Exception,e:
-            log.debug("Error converting Flats to MEF file: %s", str(e))
+        except Exception, e:
+            log.error("Error converting Flats to MEF file: %s", str(e))
+            raise e
             
         # STEP 1: Check the  TYPE(twilight) and FILTER,READEMODE of each Flat frame
         # If any frame on list missmatch the FILTER, then the master twflat will be aborted
@@ -294,7 +297,7 @@ class MasterTwilightFlat(object):
                 log.error("Frame %s skipped, either over or under exposed" %(iframe))
             
             
-        if len(good_frames) > self.m_MIN_N_GOOD:
+        if len(good_frames) >= self.m_MIN_N_GOOD:
             log.info('Found %d flat frames with same filter [%s] and type:\n', len(good_frames), f_filter)
             for e in good_frames:
                 log.info("--->%s",e)            

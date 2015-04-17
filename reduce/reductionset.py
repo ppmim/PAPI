@@ -1072,7 +1072,7 @@ class ReductionSet(object):
         
         return match_list # a list of tuples as (file,filter)
     
-    def getSequences(self, show=True):
+    def getSequences(self, show=True, stype='all'):
         """
         Look for sequences (calib,science) in the current data set following the
         grouping criteria given by self.group_by and orderted by MJD.
@@ -1082,10 +1082,14 @@ class ReductionSet(object):
         show: bool
             if True, print out in std output the found sequences.
         
+        stype: str
+            (only for OT grouping)
+            Type of the sequences to get (DARK, FLAT, FOCUS, SCIENCE, CAL, None)
+            
         Returns
         -------
         A list of lists of sequence files and their types (DARK, TW_FLAT, 
-        DOME_FLAT, SCIENCE) ; see ClFits class for further details).
+        DOME_FLAT, SCIENCE, FOCUS) ; see ClFits class for further details).
         
         """
         
@@ -1093,10 +1097,13 @@ class ReductionSet(object):
         seqs = []
         seq_types = []
         
-        if self.group_by=='ot':
-            seqs, seq_types = self.getOTSequences(show)
-        elif self.group_by=='filter':
-            if self.db==None: self.__initDB()
+        if self.group_by == 'ot':
+            if stype != 'all':
+                seqs, seq_types = self.getOTSequences(show, stype)
+            else:
+                seqs, seq_types = self.getOTSequences(show)
+        elif self.group_by == 'filter':
+            if self.db == None: self.__initDB()
             seqs, seq_types = self.db.GetSequences(group_by='filter',
                max_mjd_diff = self.config_dict['general']['max_mjd_diff']/86400.0,
                max_ra_dec_diff = self.config_dict['general']['max_ra_dec_offset'],
@@ -1109,44 +1116,50 @@ class ReductionSet(object):
         # because is a "clean" list of full path-names of files, instead of
         # files printed in "debug" output 
         if show:
-            k=0
+            k = 0
             print "\n ========================================================="
             print " =========== GROUPED SEQUENCES (by %s) =============="%self.group_by
             print " ========================================================="
             for type in seq_types:
-                print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
-                        %(k, type, self.db.GetFileInfo(seqs[k][0])[3], 
-                          self.db.GetFileInfo(seqs[k][0])[4], 
-                          len(seqs[k]))
-                print "-------------------------------------------------------------------"
-                for file in seqs[k]:
-                    #print file + " type= %s"%self.db.GetFileInfo(file)[2]
-                    print file 
+                if stype != 'all' and type == 'UNKNOWN':
+                    continue
+                else:
+                    print "\nSEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
+                            %(k, type, self.db.GetFileInfo(seqs[k][0])[3], 
+                            self.db.GetFileInfo(seqs[k][0])[4], 
+                            len(seqs[k]))
+                    print "-------------------------------------------------------------------"
+                    for file in seqs[k]:
+                        #print file + " type= %s"%self.db.GetFileInfo(file)[2]
+                        print file 
                 k+=1
             log.debug("Found %d groups of files", len(seq_types))
         
 
-        #To print the sequences into the log file
+        # To print the sequences into the log file
         debug = 1
         if debug:    
-            k=0
+            k = 0
             log.debug("=========================================================")
             log.debug("=========== GROUPED SEQUENCES (by %s) =============="%self.group_by)
             log.debug("=========================================================")
             for type in seq_types:
-                log.debug("SEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
-                        %(k, type, self.db.GetFileInfo(seqs[k][0])[3], 
-                          self.db.GetFileInfo(seqs[k][0])[4], 
-                          len(seqs[k])))
-                log.debug("-------------------------------------------------------------------")
-                for file in seqs[k]:
-                    log.debug("%s type = %s" %(file, self.db.GetFileInfo(file)[2]))
+                if stype != 'all' and type == 'UNKNOWN':
+                    continue
+                else:
+                    log.debug("SEQUENCE #[%d]  - TYPE= %s   FILTER= %s  TEXP= %f  #files = %d " \
+                            %(k, type, self.db.GetFileInfo(seqs[k][0])[3], 
+                            self.db.GetFileInfo(seqs[k][0])[4], 
+                            len(seqs[k])))
+                    log.debug("-------------------------------------------------------------------")
+                    for file in seqs[k]:
+                        log.debug("%s type = %s" %(file, self.db.GetFileInfo(file)[2]))
                 k+=1
             
         return seqs, seq_types
     
     
-    def getOTSequences(self, show=True):
+    def getOTSequences(self, show=True, stype=None):
         """
         Look for sequences (calib, science) in the current data set and print
         the results.
@@ -1164,15 +1177,25 @@ class ReductionSet(object):
                     2.1.1 Group all next files up to PAT_EXPN=PAT_NEXP
             3. while (files in DataSet)
             4. Print files of each Group found 
+        
+        Parameters
+        ----------
+        show: bool
+            if True, print out the sequences found in the std output
+        
+        stype: str
+            Type of the sequences to get, ie., DARK, FLAT, SCIENCE, CAL (=darks & flats), None(=all)
             
-        @param show: if True, print out the sequences found in the std output
-             
-        @return: two lists:
+        Returns
+        -------
+        Returns two lists as follow:
                 - a list of lists of sequence files belonging to
                 - a list with the types of the sequences (DARK, TW_FLAT, 
                 DOME_FLAT, SCIENCE) ; see ClFits class for further details)
         
-        @attention: this method is an (better) alertenative to getObjectSequences()        
+        Notes
+        -----
+        This method is an (better) alertenative to getObjectSequences()        
         """
         
         log.debug("[getOTSequences] Looking for OT generated Data Sequences into the DataSet")
@@ -1180,8 +1203,10 @@ class ReductionSet(object):
         seq_list = [] # list of list of sequence filenames
         seq_types = [] # list of types of sequence (dark, dflat, sflat, focus, science, ....)
         
-        if self.db==None: self.__initDB()
-        seq_list, seq_types = self.db.GetSequences(group_by='ot') # much more quick than read again the FITS files
+        if self.db == None: 
+            self.__initDB()
+        
+        seq_list, seq_types = self.db.GetSequences(group_by='ot', type=stype) # much more quick than read again the FITS files
         
         return seq_list, seq_types
         
@@ -1915,7 +1940,7 @@ class ReductionSet(object):
         
         try:
             master_files += self.reduceSet(self.red_mode, seqs_to_reduce=None, 
-                                           types_to_reduce=['DARK','DOME_FLAT',
+                                           types_to_reduce=['DARK', 'DOME_FLAT',
                                                            'SKY_FLAT'])
         except Exception,e:
             log.error("Some error while builing master calibration files...: %s", str(e))
@@ -2334,15 +2359,15 @@ class ReductionSet(object):
         # Check which sequences are required to reduce (-S command line param)
         # If no sequence number was specified, all seqs will be re-ordered and
         # processed 
-        if seqs_to_reduce==None:
+        if seqs_to_reduce == None:
             seqs_to_reduce = range(len(sequences))
-            # Re-order the sequences by type: DARK, DOME_FLAT, TW_FLAT, SCIENCE
+            # Re-order the sequences by type: DARK, DOME_FLAT, SKY_FLAT, SCIENCE
             # This is required because some calibration sequence could be created 
             # after the science sequence, and might happen no other calibration is 
             # available to process the current sequence.
             sequences, seq_types = self.reorder_sequences(sequences, seq_types)
         
-        if len(sequences)==0:
+        if len(sequences) == 0:
             raise Exception("No well-defined sequence to process was found")
         
         k = 0

@@ -6878,6 +6878,39 @@ lo que se comprueba es el DET_ID, y ese sigue siendo el mismo (SGi), no ha cambi
 - Creo la rutina getBPM.py para la creación de la BPM a partir del fichero de la NLC.
 
 
+16-Abril-2015
+-------------
+- Modifico DE NUEVO (volviendo a trás) mainGUI:createMasterDark_slot() para que use 
+calDark.MasterDark() en lugar del generico processFiles(), pues así hace más
+chequeos y avisa de cualquier incompatibilidad en los DARKS. El processFiles(), en cambio
+los agrupa y no comprueba sin sin DARKS, y aunque sean FLATS o SCI, lo procesa diciendo
+eso si que ha generado un FLAT o lo que sea; pero eso no sería muy consistente con lo
+que ha solicidado el usuario.
+
+- Encuentro y soluciono bug en mef.py->convertGEIRSToMEF(); si es un MEF, shutil no estaba importado,
+pero además mejor no modificamos/copiamos el fichero. Lo dejamos tal cual, siguiendo 
+la misma filosofía que en collapse();
+
+
+17-Abril-2015
+-------------
+- Añado la opción de mostar las sequencias de un determinado tipo --> opcion -p -T 'typo'.
+Igualmente, si no damos '-p', sino simplemente -T, entonces reduce **solo** la secuencias
+de ese tipo.
+(P) Falta probarlo más.
+
+ 
+Revision de funciones de QL
+---------------------------
+*) Pop-up menu
+ 1-Build Master Dark-- modificado para usar calDark.MasterDark() en lugar del generico processFiles();
+   ahora se queja si hay algún DARK no compatible.
+ 2-Build Master DomeFlat -- OK
+   Si hay algun Flat que no es compatible, no lo usa (Frame skipped), pero en consola QL no dice nada, sólo avisa en 
+   consola Linux.
+ 3-Build Master Twlight Flat -- algunos errores; solucionados.
+      
+   
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
 - En la noche 2015-03-10, las secuencias de DomeFlat sólo tienen
@@ -6904,6 +6937,7 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Comprobar que el tipo TW_FLAT no se usa, sólo se usa SKY_FLAT; en principio no es necesario distinguir DUSK/DAWN FLATS
 - Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi.
 - Probar a instalar PAPI en un directorio del sistema único y ver si lo pueden ejecutar todos los usuarios.
 - Ver la opción de añadir a "todas" la llamadas de SExtractor la máscaras de pixeles malos como un WEIGHT_MAP
@@ -7022,7 +7056,6 @@ nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 
 
 - Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
-- limpiar fichero de configuración de variables que no usamos.
 - ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...
 - en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
 pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
@@ -7031,9 +7064,11 @@ pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
     
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
-- rutina para crear BPM a partir de los NLC de BD
-- añadir EXTNAME a los ficheros BPM para que funcione el split() --> crear rutina para crear BPM 
-a partir de los master NLC de BD.
+- limpiar fichero de configuración de variables que no usamos.
+- Mejorar Ordenamiento por campos (columnas, ejem. TExp) numéricos en la ListView del QL;
+parece que habría que sobreescribir la clase:
+
+http://stackoverflow.com/questions/363200/is-it-possible-to-sort-numbers-in-a-qtreewidget-column
 
 
 TODO:
@@ -7501,7 +7536,6 @@ documentación GEIRS (3.3 Postprocessing)
 - Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
 - Dejar muy claro en la documentación que tipo de ficheros son los mejores para
 PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
-- Comprobar lectura correcta de nuevas keys : CAM_DETROT90 y CAM_DETXYFLIP en r719M.
 
 - Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
 o SWARP (VTerrón lo está usando y está contento...)
@@ -7514,15 +7548,11 @@ o SWARP (VTerrón lo está usando y está contento...)
 - "Collapsar" los cubos de PANIC con un average + sigmaclip en lugar de una
 simple suma aritmética !!! --> imcobine !
 
-- Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
-de llamar directamente a calDark.py.
-  ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
 - Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
 - Rutina para copiar datos de varios directorios a un único directorio y renombrando
 los ficheros de forma única (DATE+TIMESTAMP)!!
 
 - Revisar GUI QL !!! y quitar lo que no sirva !!
-- Second pass of sky-subtraction for extended objects
 - Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
 - Support for sub-windows (not tested, but probably does not work properly) 
 - Method to empiricaly determine the geometric distortion based an auto-calibration 
@@ -7571,7 +7601,7 @@ de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho
 - Probar bien solveAstrometry() con HAWK-I
  
 - Comprender bien el valor (unidades) de ASTRRMS1 que da SCAMP, pues parece que 
-son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
+son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)---> NOOO, son el grados !!! y parece correcto !! ver notas Herve
 - cuando RM nos pase la r711M, probar los MEF integrados, los subwindows con MEF, etc , etc ...
 - Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
 - Documento (TN) Data Grouping algorithms
@@ -7593,9 +7623,7 @@ datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de P
 - ver notas libreta sobre si se reduce o no HAWK-I-5; 
 en el portatil lo hace, pero el resultado no es muy bueno, 
 incluso la astrometria no parece funcionar
-
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-- añadir sonidos con from PyQt4.phonon import Phonon (ver sound.py en tests)
 - PANIC Tesis ala O2000 !!!
 
 
