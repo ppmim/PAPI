@@ -327,7 +327,7 @@ class MasterDomeFlat(object):
                     try:
                         f[ext_name].header
                     except KeyError:
-                        ext_name = 'Q1_1'
+                        ext_name = 'Q1'
                 elif f_instrument == 'hawki': 
                     ext_name = 'CHIP2.INT1'
                 

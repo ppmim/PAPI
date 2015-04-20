@@ -90,14 +90,28 @@ def createDataSeq(input_files, seq_type, overwrite=False, output_dir=None):
         log.error(msg)
         raise Exception(msg)
     
-    prog_id = ' '
+    prog_id = '       '
     ob_id = '1'
     ob_name = 'OB_dummy'
     ob_pat = 'unknown'
     pat_name = 'unknown'
     pat_expn = 0
     
+    # Sort out files by MJD !!
+    dataset = []
+    sorted_files = []
     for ifile in new_files:
+        mjd = fits.getval(ifile, "MJD-OBS", ext=0)
+        dataset.append((ifile, mjd))
+    # Sort out the files
+    dataset = sorted(dataset, key=lambda data_file: data_file[1])
+    # Created sorted list
+    for l_tuple in dataset:
+        sorted_files.append(l_tuple[0])
+
+    print "SORTED",sorted_files
+      
+    for ifile in sorted_files:
         pat_expn += 1
         with fits.open(ifile, 'update') as hdu:
             log.debug("Updating file %s"%ifile)
@@ -126,9 +140,9 @@ def createDataSeq(input_files, seq_type, overwrite=False, output_dir=None):
                 raise Exception(msg)
     
     log.info("New data sequence of type %s created."%seq_type)
-    log.info("Files: %s"%new_files)
+    log.info("Files: %s"%sorted_files)
     
-    return new_files
+    return sorted_files
 
     
 #################

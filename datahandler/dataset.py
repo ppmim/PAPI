@@ -783,7 +783,7 @@ class DataSet(object):
             filter can be specified to restrict the search
           
         type: str
-            it can be SCIENCE, DARKs, FLATs, FOCUS, CAL (=calibrations)  or None (=anytype)
+            it can be SCIENCE, DARKs, FLATs, DOME_FLAT, FOCUS, CAL (=calibrations)  or None (=anytype)
           
         Notes
         -----
@@ -818,6 +818,8 @@ class DataSet(object):
             s_type = "type='FOCUS'"
         elif type == "FLAT":
             s_type = "type LIKE '%FLAT%'"
+        elif type == "DOME_FLAT":
+            s_type = "type LIKE 'DOME_FLAT%'"
         elif type == "CAL":
             s_type = "type='DARK' or type LIKE '%FLAT%'"
         else:

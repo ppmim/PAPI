@@ -24,9 +24,11 @@ def getItimesNcoadds(path, output_file, recursive=False):
     output_file with a table with the unique combinations
     of [read_mode, itime, ncoadds, save_mode].
     
+    - DARK and DOME_LAMP_[ON|OFF] images are ignored.
+    - Only lir and rrr-mpia images are recognized.
+    - Cubes (SEF or MEF) are detected and the number of layers is used as NCOADDS.
     
-    
-    Exam. myout_file.txt:
+    Example of output file:
     
     lir       2.7   2  mef
     lir       5.0  10  mef
@@ -64,24 +66,45 @@ def getItimesNcoadds(path, output_file, recursive=False):
     for my_file in filelist:
         try:
             my_fits = fits.open(my_file)
+            # Image type
             if 'IMAGETYP' in  my_fits[0].header:
                 papitype = my_fits[0].header['IMAGETYP']
             else:
                 papitype = 'unknown'
+                
+            # Ignore DARKs and DOME_LAMP_[ON|OFF] images
             if "DARK" in papitype  or "LAMP" in papitype:
-                print "Skipping file %s"%my_file
+                print "Image is a DARK or DOME_LAMP_. Skipping file %s"%my_file
                 continue
+            
+            # Read-Mode
             read_mode = my_fits[0].header['READMODE']
             if read_mode == 'line.interlaced.read': 
                 read_mode = 'lir'
             elif read_mode == 'fast-reset-read.read':
                 read_mode = 'rrr-mpia'
+            else:
+                print "Read mode not recognized. Skipping file %s"%myfile
+                continue
+            
+            # ITIME
             itime = my_fits[0].header['ITIME']
-            ncoadds = my_fits[0].header['NCOADDS']
-            if len(my_fits)>1:
+            
+            # Save mode
+            if len(my_fits) > 1:
                 save_mode = 'mef'
             else:
                 save_mode = 'sef'
+            
+            # NCOADDS: if we have a cube, we take into account the number of layers
+            if save_mode == 'mef' and len(my_fits[1].data.shape) > 2:
+                ncoadds = my_fits[1].data.shape[0]
+            elif save_mode == 'sef' and len(my_fits[0].data.shape) > 2:
+                ncoadds = my_fits[0].data.shape[0]
+            else:
+                ncoadds = my_fits[0].header['NCOADDS']
+                
+            # Finaly, write out the parameters to text file
             if [read_mode, itime, ncoadds, save_mode] not in file_types:
                 file_types.append([read_mode, itime, ncoadds, save_mode])
                 # Insert into output file

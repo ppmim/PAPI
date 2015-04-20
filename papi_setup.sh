@@ -59,8 +59,6 @@ cp $PAPI_HOME/scripts/start_ql.sh $PAPI_BIN/start_ql
 chmod a+x $PAPI_BIN/start_ql
 cp $PAPI_HOME/scripts/start_iraf.sh $PAPI_BIN/start_iraf
 chmod $PAPI_BIN/start_iraf
-cp -av $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/
-chmod a+x $PAPI_HOME/commissining/getDarks.py
 
 # To check the PANIC temperatures and press
 cp -av $PAPI_HOME/scripts/panic_status $PAPI_BIN/
@@ -103,7 +101,9 @@ ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus
 ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck
 ln -s $PAPI_HOME/commissioning/getImageOffsets.py $PAPI_BIN/getImageOffsets
-
+# getDarks: Used by the OT to genereate all the darks for a given night directory.
+ln -s $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/getDarks.py
+chmod a+x $PAPI_HOME/commissioning/getDarks.py
 
 
 # ---------------------------------------

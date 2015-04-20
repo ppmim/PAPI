@@ -1190,7 +1190,7 @@ class ReductionSet(object):
         -------
         Returns two lists as follow:
                 - a list of lists of sequence files belonging to
-                - a list with the types of the sequences (DARK, TW_FLAT, 
+                - a list with the types of the sequences (DARK, SKY_FLAT, 
                 DOME_FLAT, SCIENCE) ; see ClFits class for further details)
         
         Notes
@@ -2331,8 +2331,8 @@ class ReductionSet(object):
         seqs_to_reduce: list
             list of sequence number [0,N-1] to be reduced;
             default (None), all sequences found will be reduced.
-        types_to_reduces: str
-            Types of sequences to reduce (all, DARK, DOME_FLAT, TW_FLAT, SCIENCE). 
+        types_to_reduces: list of types
+            Types of sequences to reduce (all, DARK, DOME_FLAT, SKY_FLAT, SCIENCE). 
            
         Returns
         -------
@@ -2352,7 +2352,7 @@ class ReductionSet(object):
             self.red_mode = red_mode
         #else, keep the red_mode from the object initialization
             
-        # Look for the sequences     
+        # Look for all the sequences     
         sequences, seq_types = self.getSequences()
         
         
@@ -2442,11 +2442,11 @@ class ReductionSet(object):
         
         for r_type in req_types_order:
             for i,type in enumerate(seq_types):
-                log.debug("TYPE=%s  R_TYPE=%s"%(type,r_type))
+                #log.debug("TYPE=%s  R_TYPE=%s"%(type,r_type))
                 if type == r_type:
                     new_sequences.append(sequences[i])
                     new_seq_types.append(type)
-                    log.info("[reorder_sequences]: Sequence is of type [%s]"%(r_type.lower()))
+                    #log.info("[reorder_sequences]: Sequence is of type [%s]"%(r_type.lower()))
                 #else:
                 #    log.debug("[reorder_sequences]: Sequence is NOT of type [%s]"%(r_type.lower()))
             

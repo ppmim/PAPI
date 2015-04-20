@@ -156,10 +156,10 @@ def main(arguments = None):
                       type='choice',
                       action='store',
                       dest='seq_type',
-                      choices=['DARK', 'FLAT', 'FOCUS', 'SCIENCE', 'CAL', 'all'],
+                      choices=['DARK', 'FLAT', 'DOME_FLAT', 'SKY_FLAT', 'FOCUS', 'SCIENCE', 'CAL', 'all'],
                       default='all',
                       help="Specify the type of sequences to show: "
-                      "DARK, FLAT, FOCUS, SCIENCE, CAL, all [default: %default]")
+                      "DARK, FLAT(all), DOME_FLAT, SKY_FLAT, FOCUS, SCIENCE, CAL, all [default: %default]")
     
     parser.add_option("-b", "--build_calibrations",
                   action = "store_true", dest = "build_calibrations", default = False,
@@ -168,7 +168,7 @@ def main(arguments = None):
     # file calibration options
     
     parser.add_option("-C", "--ext_calibration_db", type = "str",
-                  action = "store", dest = "ext_calib_dir", 
+                  action = "store", dest = "ext_calibration_db", 
                   default = None, 
                   help = "External calibration directory "
                   "(library of Dark & Flat calibrations)")
@@ -317,15 +317,16 @@ def main(arguments = None):
                 group_by=general_opts['group_by'], 
                 check_data=general_opts['check_data'],
                 config_dict = options )
-
+    
+                    
         if init_options.print_seq:
-            rs.getSequences(stype=init_options.seq_type)
+            rs.getSequences(show=True, stype=init_options.seq_type)
         elif init_options.build_calibrations:
             rs.buildCalibrations()
         else:
             if init_options.seq_to_reduce == -1: #all
                 rs.reduceSet(red_mode=general_opts['reduction_mode'],
-                             types_to_reduce=[init_options.seq_type])
+                             types_to_reduce=stype)
             else:
                 m_seqs_to_reduce = []
                 m_seqs_to_reduce = range(init_options.seq_to_reduce[0], 
@@ -339,9 +340,10 @@ def main(arguments = None):
                     stype = ['DOME_FLAT', 'SKY_FLAT']
                 else:
                     stype = [init_options.seq_type]
+                
                 rs.reduceSet(red_mode=general_opts['reduction_mode'], 
                              seqs_to_reduce=m_seqs_to_reduce,
-                             types_to_reduce=[init_options.seq_type])
+                             types_to_reduce=stype)
                 
     except RS.ReductionSetException, e:
         print e

@@ -6894,12 +6894,36 @@ la misma filosofía que en collapse();
 
 17-Abril-2015
 -------------
-- Añado la opción de mostar las sequencias de un determinado tipo --> opcion -p -T 'typo'.
+- Añado la opción de mostar las sequencias de un determinado tipo --> opcion -p -T 'type'.
 Igualmente, si no damos '-p', sino simplemente -T, entonces reduce **solo** la secuencias
 de ese tipo.
-(P) Falta probarlo más.
 
- 
+20-Abril-2015
+-------------
+- Soluciono algunos problemas OSN (RF y WS).
+- Continuo con pruebas opción -T, y soluciono algún problema. Ciertamente el interfaz no
+está unificado, pues RS.getSequences() sólo admite un tipo, mientras que RS.reduceSet() 
+admite una lista de tipos.
+
+- BugFix en createDataSeq.py; hay que ordenar los ficheros por MJD !!! solucionado !
+
+- BugFix en papi.py con la variable ext_calibration_db; estaba mal nombrada y no se correspondía
+la de la line de comandos con la del fichero de configuración. 
+
+- Mofifico getDarks.py para que tenga en cuenta los CUBOS de imagenes (por ejemplo skyflats), 
+pues en dicho caso el NCOADDS del DARK a tomar debe ser igual al número de capas/planos del CUBO.
+Si no lo hacemos así, entonces por ejemplo puede que no se creen DARKs con el TEXP necesario 
+para restar al skyflat. 
+Esto me ocurre por ejemplo con algunos skyflats (dawn) de 2015-03-10/skyflats_dawn_*.
+
+- Modifico calTwFlat para que compruebe que los flats "buenos" (según Matilde) están comprendidos en
+el rango [10000-40000], teniendo en cuenta los 4 detectores !!! --> lo suyo sería solo el bueno !!
+- Modifico calTwFlat.py para que compruebe exactamente el ITIME y NCOADDS para la sustracción del DARK;
+si no hay matching, entonces no se resta.
+
+
+
+
 Revision de funciones de QL
 ---------------------------
 *) Pop-up menu
@@ -6909,7 +6933,9 @@ Revision de funciones de QL
    Si hay algun Flat que no es compatible, no lo usa (Frame skipped), pero en consola QL no dice nada, sólo avisa en 
    consola Linux.
  3-Build Master Twlight Flat -- algunos errores; solucionados.
-      
+    
+   bug -- linea 39s de calTwFlat; hay que hacer una mejor aproximaxión
+   
    
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------

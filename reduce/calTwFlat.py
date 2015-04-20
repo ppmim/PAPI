@@ -116,7 +116,7 @@ class MasterTwilightFlat(object):
   
     """
     def __init__(self, flat_files, master_dark_model, master_dark_list, 
-                 output_filename="/tmp/mtwflat.fits", lthr=1000, hthr=100000,
+                 output_filename="/tmp/mtwflat.fits", lthr=15000, hthr=30000,
                  bpm=None, normal=True, temp_dir="/tmp/", median_smooth=False):
         
         """
@@ -138,10 +138,10 @@ class MasterTwilightFlat(object):
             Filename of the output master tw-flat to build
         
         lthr: int
-            Low threshold to identify good twilight flats (default 100)
+            Low threshold to identify good twilight flats (default 15000)
         
         hthr: int
-            High threshold to identify good twilight flats (default 100000)
+            High threshold to identify good twilight flats (default 30000)
         
         bpm: string
             Bad Pixel mask to use (optional)
@@ -243,6 +243,7 @@ class MasterTwilightFlat(object):
         f_type = ''
         f_filter = ''
         f_readmode = ''
+        f_ncoadds = -1
         f_instrument = 'Unknown'
         good_frames = []
         
@@ -255,31 +256,42 @@ class MasterTwilightFlat(object):
             # Compute the mean count value in chip to find out good frames (good enough ??)
             mean = 0
             myfits = fits.open(iframe, ignore_missing_end=True)
-            if f.mef==True:
+            if f.mef == True:
                 log.debug("Found a MEF file")
                 try:
                     for i in range(1,f.next + 1):
                         mean+=robust.mean(myfits[i].data)
                     mean = float(mean / f.next)
-                    log.debug("MEAN value of TwFlat (MEF) = %f", mean)
-                except Exception,e:
+                except Exception, e:
                     log.error("Error computing MEAN of image")
                     raise e
+                
+                # take into account cubes (they will be summed aritmetically)
+                if len(myfits[1].data.shape) > 2:
+                    mean = mean * myfits[1].data.shape[0]
+                    
+                log.debug("MEAN value of TwFlat (MEF) = %f", mean)
             else:
                 myfits = fits.open(iframe, ignore_missing_end=True)
                 mean = robust.mean(myfits[0].data)
+                # take into account cubes (they will be summed aritmetically)
+                if len(myfits[0].data.shape) > 2:
+                    mean = mean * myfits[0].data.shape[0]
                 log.debug("MEAN value of Twflat (SEF) = %d", mean)
                 
             myfits.close()            
             
-            if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type or f.getReadMode()!=f_readmode)) :
-                log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE.")
+            if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type 
+                                 or f.getReadMode() != f_readmode
+                                 or f.getNcoadds() != f_ncoadds)):
+                log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE or NCOADDS")
                 raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
                 #continue
             else: 
                 f_expt = f.expTime()
                 f_filter = f.getFilter()
                 f_readmode = f.getReadMode()
+                f_ncoadds = f.getNcoadds()
                 if f.isTwFlat():
                     f_type = f.getType()
                 else:
@@ -344,7 +356,8 @@ class MasterTwilightFlat(object):
                     if not cdark.isDark() and not cdark.isMasterDark():
                         log.error("File %s is neither a Dark nor a Master Dark."%idark)
                         raise Exception("File %s is neither a Dark nor a Master Dark."%idark) 
-                    t_darks[round(cdark.expTime(), 1)] = idark
+                    #t_darks[round(cdark.expTime(), 1)] = idark
+                    t_darks[round(cdark.getItime(), 1), cdark.getNcoadds()] = idark
                     log.debug("DARK - expTime=%f"%cdark.expTime())
                 except Exception,e:
                     log.error("Error reading Master Dark: %s"%idark)
@@ -377,20 +390,23 @@ class MasterTwilightFlat(object):
             # Build master dark with proper (scaled) EXPTIME and subtract 
             # (I don't know how good is this method of scaling !!!)
             f = fits.open(iframe, ignore_missing_end=True)
-            t_flat = datahandler.ClFits( iframe ).expTime()
+            i_flat = f[0].header['ITIME']
+            nc_flat = f[0].header['NCOADDS']
             if nExt > 0:
                 for i in range(1, nExt + 1):
                     if use_dark_model:
                         mdark = fits.open(self.__master_dark_model)
                         log.info("Scaling MASTER_DARK_MODEL")
-                        scaled_dark = mdark[i].data[1] * t_flat + mdark[i].data[0]
+                        scaled_dark = mdark[i].data[1] * f[0].header['EXPTIME'] + mdark[i].data[0]
                     else:
-                        log.info("Using proper MASTER_DARK")
+                        msg = "Using proper master DARK for FLAT with ITIME=%f, NCOADDS=%d"%(i_flat, nc_flat)
+                        log.info(msg)
                         # Get filename of the master dark to use
                         try:
-                            n_dark = t_darks[round(t_flat, 1)] 
+                            #n_dark = t_darks[round(t_flat, 1)]
+                            n_dark = t_darks[round(i_flat, 1), nc_flat]
                         except KeyError:
-                            msg = "Cannot find proper master DARK for FLAT with expTime=%f"%t_flat
+                            msg = "Cannot find proper master DARK for FLAT with ITIME=%f, NCOADDS=%d"%(i_flat, nc_flat) 
                             log.error(msg)
                             raise Exception(msg)
                     
@@ -406,13 +422,14 @@ class MasterTwilightFlat(object):
                 if use_dark_model:
                     log.info("Scaling MASTER_DARK_MODEL")
                     mdark = fits.open(self.__master_dark_model)
-                    scaled_dark = mdark[0].data[1]*t_flat + mdark[0].data[0]
+                    scaled_dark = mdark[0].data[1] * f[0].header['EXPTIME'] + mdark[0].data[0]
                 else:
-                    log.info("Using proper MASTER_DARK")
+                    msg = "Using proper master DARK for FLAT with ITIME=%f, NCOADDS=%d"%(i_flat, nc_flat)
+                    log.info(msg)
                     try:
-                        n_dark = t_darks[round(t_flat, 1)]
+                        n_dark = t_darks[round(i_flat, 1), nc_flat]
                     except KeyError:
-                        msg = "Cannot find proper master DARK for FLAT with expTime=%f"%t_flat
+                        msg = "Cannot find proper master DARK for FLAT with ITIME=%f, NCOADDS=%d"%(i_flat, nc_flat) 
                         log.error(msg)
                         raise Exception(msg)
                     mdark = fits.open(n_dark)
@@ -502,7 +519,7 @@ class MasterTwilightFlat(object):
                     try:
                         f[ext_name].header
                     except KeyError:
-                        ext_name = 'Q1_1'
+                        ext_name = 'Q1'
                 elif f_instrument == 'hawki': 
                     ext_name = 'CHIP2.INT1'
                 
@@ -630,12 +647,12 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
                   action="store_true", dest="median_smooth", default=False,
                   help="Median smooth the combined flat-field [default=%default]")
     
-    parser.add_option("-L", "--low", type='float', default=1000,
+    parser.add_option("-L", "--low", type='float', default=15000,
                   action="store", dest="minlevel", 
                   help="Flats with median level bellow are rejected "
                   "[default=%default].")
     
-    parser.add_option("-H", "--high", type='float', default=100000,
+    parser.add_option("-H", "--high", type='float', default=30000,
                   action="store", dest="maxlevel", 
                   help="Flats with median level above are rejected "
                   "[default=%default].")
@@ -643,7 +660,7 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
     (options, args) = parser.parse_args()
     
     
-    if len(sys.argv[1:])<1:
+    if len(sys.argv[1:]) < 1:
         parser.print_help()
         sys.exit(0)
        
