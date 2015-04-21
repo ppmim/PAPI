@@ -6922,6 +6922,23 @@ el rango [10000-40000], teniendo en cuenta los 4 detectores !!! --> lo suyo ser�
 si no hay matching, entonces no se resta.
 
 
+21-Abril-2015
+-------------
+- Bugfix y mejoras en calSuperFlat.py.
+- Sustituyo en PAPI muchas de las llamadas a 
+        os.path.dirname(yourpath)
+  por 
+        os.path.abspath(os.path.join(yourpath, os.pardir)) 
+para evitar el problema cuando 'yourpath' es un nombre de fichero sin ningún path, ejemplo: prueba.txt
+De esta forma, nos devueve el directorio actual como directorio en el cual se debe (al menos) encontrar
+el fichero.
+
+- Modificación en datacollector.py (__listFiles) para que sólo se traten ficheros con
+extension .fits o .fit; de esta manera evitamos los repetidos intentos (20 * 5) que se llegan
+a hacer de ficheros que no fallen al leerse como FITS. Esto es algo que puedo ocurrir
+muy fácilmente al cambiar el usuario el filtro (Set filename filter) en la GUI del QL.
+
+
 
 
 Revision de funciones de QL
@@ -6933,9 +6950,13 @@ Revision de funciones de QL
    Si hay algun Flat que no es compatible, no lo usa (Frame skipped), pero en consola QL no dice nada, sólo avisa en 
    consola Linux.
  3-Build Master Twlight Flat -- algunos errores; solucionados.
-    
-   bug -- linea 39s de calTwFlat; hay que hacer una mejor aproximaxión
-   
+        Ahora comprueba de forma exhaustiva el ITIME,NCOADDS.
+ 
+ 4-Build Master Dome Flat: OK, incluso sólo con 1 on, 1 off
+ 5-Build GainMap:
+    - encuentro un bug sintactico importante!!
+    - me cuenstiono que sentido tiene ....!!!
+    - con dome_flat_on_off parece que se "ejecuta" correctamente.
    
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
@@ -6963,6 +6984,8 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Cuestionarse donde usar ExecTaskThread, pues de esa forma si podemos obtener el
+error que se pueda producir (via Excepcion).
 - Comprobar que el tipo TW_FLAT no se usa, sólo se usa SKY_FLAT; en principio no es necesario distinguir DUSK/DAWN FLATS
 - Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi.
 - Probar a instalar PAPI en un directorio del sistema único y ver si lo pueden ejecutar todos los usuarios.

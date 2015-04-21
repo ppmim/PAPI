@@ -864,12 +864,13 @@ class AstroWarp(object):
             raise Exception ("Cannot find required .head file")
             
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
-        swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
+        # Note: we use os.path.abspath(os.path.join(yourpath, os.pardir)) as a trick to get the parent dir 
+        swarp.ext_config['IMAGEOUT_NAME'] = os.path.abspath(os.path.join(self.coadded_file, os.pardir))  + "/coadd_tmp.fits"
         #"Projected" weight-maps are created only if weight-maps were given in input.
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
-            swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
+            swarp.ext_config['WEIGHTOUT_NAME'] =  os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.weight.fits"
         
         if not self.resample:
             swarp.ext_config['RESAMPLE'] = 'N' # then, no field distortion removing is done
@@ -901,12 +902,12 @@ class AstroWarp(object):
         ## TODO: I am not sure if it is needed to do again ?????
         if (len(self.input_files)>1):
             log.debug("*** Doing final astrometric calibration....")
-            doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+            doAstrometry(os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.fits", 
                          self.coadded_file, self.catalog, 
                          self.config_dict, self.do_votable,
                          self.resample, self.subtract_back)
         else:
-            shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+            shutil.move(os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.fits", 
                         self.coadded_file)
         
         log.info("Lucky you ! file %s created", self.coadded_file)

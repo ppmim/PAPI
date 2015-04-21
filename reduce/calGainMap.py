@@ -146,8 +146,9 @@ class TwlightGainMap(object):
 class DomeGainMap(object):
     """ Compute the gain map from a list of dome (lamp-on,lamp-off) frames """
     
-    def __init_(self, filelist,  output_filename="/tmp/domeFlat.fits", bpm=None):
-        """ """
+    def __init__(self, filelist,  output_filename="/tmp/domeFlat.fits", bpm=None):
+        """ 
+        """
         self.framelist = filelist
         self.output = output_filename
         self.bpm = bpm
@@ -155,14 +156,14 @@ class DomeGainMap(object):
     def create(self):
         """ Creation of the Gain map"""
         
-        #First, we create the Dome Flat
+        # First, we create the Dome Flat
         try:
             output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
             os.close(output_fd)
             domeflat = reduce.calDomeFlat.MasterDomeFlat(self.framelist, 
                                                          temp_dir="/tmp", 
                                                          output_filename=tmp_output_path)
-            domeflat.create()
+            domeflat.createMaster()
         except Exception,e:
             log.error("Error while creating master dome flat: %s", str(e))
             raise e
@@ -232,7 +233,7 @@ class GainMap(object):
         """
          
         self.flat = flatfield  # Flat-field image (normalized or not, because optionaly, normalization can be done here)
-        self.output_file_dir = os.path.dirname(output_filename)
+        self.output_file_dir = os.path.abspath(os.path.join(output_filename, os.pardir))
         self.output_filename = output_filename  # full filename (path+filename)
         self.bpm = bpm
         self.do_norm = do_normalization

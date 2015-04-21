@@ -3166,7 +3166,7 @@ class ReductionSet(object):
         
         # Copy/link source files (file or directory) to reduce to the working directory
         # and Initialize self.m_LAST_FILES
-        if not os.path.dirname(obj_frames[0])==out_dir:
+        if not os.path.abspath(os.path.join(obj_frames[0], os.pardir)) == out_dir:
             misc.fileUtils.linkSourceFiles(obj_frames, out_dir)
             self.m_LAST_FILES = [out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
         else:
@@ -3862,7 +3862,7 @@ class ReductionSet(object):
         
         # Copy/link source files (file or directory) to reduce to the working directory
         # and Initialize self.m_LAST_FILES
-        if not os.path.dirname(obj_frames[0])==out_dir:
+        if not os.path.abspath(os.path.join(obj_frames[0], os.pardir)) == out_dir:
             misc.fileUtils.linkSourceFiles(obj_frames, out_dir)
             self.m_LAST_FILES = [out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
         else:

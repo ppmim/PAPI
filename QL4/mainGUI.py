@@ -39,7 +39,7 @@
 import locale
 locale.setlocale(locale.LC_ALL, '')
 locale.setlocale(locale.LC_NUMERIC, 'C')
-print "LC_NUMERIC =", locale.getlocale(locale.LC_NUMERIC) 
+#print "LC_NUMERIC =", locale.getlocale(locale.LC_NUMERIC) 
 
 import matplotlib
 # Next is needed in order to avoid a crash/deadlock when running 
@@ -140,7 +140,7 @@ from misc.version import __version__
 # http://stackoverflow.com/questions/5429584/handling-the-classmethod-pickling-issue-with-copy-reg
 # but it does not work (at least for me!) 
 #
-
+        
 def _pickle_method(method):
     
     #Pickle methods properly, including class methods.
@@ -617,16 +617,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 ltemp = self.inputsDB.GetFilesT('SCIENCE') # (mjd sorted)
                 if len(ltemp) >1 :
                     last_file = ltemp[-2] # actually, the last in the list is the current one (filename=ltemp[-1])
-                    # Change cursor
-                    #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    #self.m_processing = False    # Pause autochecking coming files - ANY MORE REQUIRED ?, now using a mutex in thread !!!!
-                    #self._task = self.mathOp
-                    #thread = reduce.ExecTaskThread(self._task, 
-                    #                               self._task_info_list,  
-                    #                               [filename, last_file],
-                    #                               '-',None)
-                    #thread.start()
-                    
                     # Put into the queue the task to be done
                     func_to_run = mathOp
                     _suffix = "_" + os.path.basename(last_file)
@@ -1044,7 +1034,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         launched with the ExecTaskThread function.
         """
         
-        if len(self._task_info_list)>0:
+        if len(self._task_info_list) > 0:
             self.logConsole.debug("Task finished")
             try:
                 self._task_info = self._task_info_list.pop()
@@ -2616,7 +2606,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                       "*.fits")
             if not outFilename.isEmpty():
                 try:
-                    #Change cursor
+                    # Change cursor
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
@@ -2734,16 +2724,6 @@ class MainGUI(QtGui.QMainWindow, form_class):
             QMessageBox.information(self,"Info","Not enough frames !")
             return
 
-        #listItems = self.listBox_darks.findItems(QString("*"), 
-        #                                    Qt.MatchWrap | Qt.MatchWildcard)
-        # Build list
-        #l_list = [ str(item.text()) for item in listItems]
-
-        #if len(l_list)<3:
-        #    QMessageBox.information(self,"Info","Not enough frames !")
-        #    return
-        
-        #print "LIST =", self.m_popup_l_sel
         outfileName = QFileDialog.getSaveFileName(self,
                                                   "Choose a filename to save under",
                                                   self.m_outputdir + "/master_dark.fits", 
@@ -2871,8 +2851,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
          
         """
         
-        if len(self.m_popup_l_sel)<=1:
-            QMessageBox.information(self,"Info","Not enough frames !")
+        if len(self.m_popup_l_sel) <= 1:
+            QMessageBox.information(self, "Info", "Not enough frames !")
             return
 
         outfileName = QFileDialog.getSaveFileName(self,
@@ -2903,7 +2883,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread.start()
                 except Exception, e:
                     QApplication.restoreOverrideCursor()
-                    QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
+                    QMessageBox.critical(self, "Error", "Error while creating Gain Map. " + str(e))
                     raise e
             elif flat_type.count("SKY_FLAT"):
                 try:
@@ -2916,35 +2896,34 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread.start()
                 except Exception, e:
                     QApplication.restoreOverrideCursor()
-                    QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
+                    QMessageBox.critical(self, "Error", "Error while creating Gain Map. " + str(e))
                     raise e
             else:
                 QMessageBox.information(self,"Info","Cannot build GainMap, image type not supported.")
                 log.error("Cannot build GainMap, image type <%s> not supported."%str(flat_type))
         else:
-            pass                     
+            pass
                 
     def subtract_ownSky_slot(self):
-        """ Subtract OWN image sky background using SExtrator tool
-            NOTE: this operation support MEF files, but the background image
-            created by SExtractor might not have all the keywords required (AR, DEC, INSTRUMENT, ...)
+        """ 
+        Subtract OWN image sky background using SExtrator tool
+        NOTE: this operation support MEF files, but the background image
+        created by SExtractor might not have all the keywords required (AR, DEC, INSTRUMENT, ...)
         """
         
         if not self.m_listView_item_selected:
             return
         fits = datahandler.ClFits(self.m_listView_item_selected)
         
-        if fits.getType()=='SCIENCE':
+        if fits.getType() == 'SCIENCE':
             sex_config = self.papi_home + self.config_opts['config_files']['sextractor_conf']
             sex_param = self.papi_home + self.config_opts['config_files']['sextractor_param']
             sex_conv = self.papi_home + self.config_opts['config_files']['sextractor_conv']
             minarea =  self.config_opts['skysub']['mask_minarea']
             threshold = self.config_opts['skysub']['mask_thresh']
             input_file = self.m_listView_item_selected
-            out_file = self.m_outputdir+"/"+os.path.basename(input_file.replace(".fits",".skysub.fits"))
+            out_file = self.m_outputdir + "/" + os.path.basename(input_file.replace(".fits",".skysub.fits"))
         
-            #cmd="sex %s -c %s -FITS_UNSIGNED Y -DETECT_MINAREA %s  -DETECT_THRESH %s  -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s" % (input_file, sex_config, str(minarea), str(threshold), out_file)  
-            #cmd="sex %s -c %s -DETECT_MINAREA %s -DETECT_THRESH %s -CHECKIMAGE_TYPE -BACKGROUND -CHECKIMAGE_NAME %s -PARAMETERS_NAME %s -FILTER_NAME %s"% (input_file, sex_config, str(minarea), str(threshold), out_file, sex_param, sex_conv )  
             
             """
             ***
@@ -2958,7 +2937,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # doesn't return the output file created !
             #
             input_file = self.m_listView_item_selected
-            out_file = self.m_outputdir+"/"+os.path.basename(input_file.replace(".fits",".skysub.fits"))
+            out_file = self.m_outputdir + "/" + os.path.basename(input_file.replace(".fits",".skysub.fits"))
             sex = astromatic.SExtractor()
             #sex.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/sex.conf"
             #sex.ext_config['CHECKIMAGE_TYPE'] = "OBJECTS"
@@ -3385,7 +3364,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         log.info(msg)
                         self.logConsole.info(msg)
                         nl_task = reduce.correctNonLinearity.NonLinearityCorrection(master_nlc, 
-                            self.m_popup_l_sel, out_dir=self.m_tempdir, suffix='_LC')
+                            self.m_popup_l_sel, out_dir=self.m_outputdir, suffix='_LC')
                         
                         # Submit task
                         func_to_run = nl_task.runMultiNLC

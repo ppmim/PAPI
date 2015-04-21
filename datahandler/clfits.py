@@ -369,9 +369,9 @@ class ClFits (object):
                                      ignore_missing_end=False) # since some problems with O2k files 
                 except Exception, e:
                     log.warning("Error reading FITS : %s"%self.pathname)
-                    if nTry<retries:
+                    if nTry < retries:
                         nTry +=1
-                        time.sleep(nTry*0.5)
+                        time.sleep(nTry * 0.5)
                         log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
                     else:
                         log.error("Finally, FITS-file could not be read with data integrity:  %s\n %s"%(self.pathname, str(e)))

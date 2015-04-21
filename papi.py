@@ -324,6 +324,12 @@ def main(arguments = None):
         elif init_options.build_calibrations:
             rs.buildCalibrations()
         else:
+            if init_options.seq_type == 'CAL':
+                stype = ['DARK', 'DOME_FLAT', 'SKY_FLAT']
+            elif init_options.seq_type == 'FLAT':
+                stype = ['DOME_FLAT', 'SKY_FLAT']
+            else:
+                stype = [init_options.seq_type]
             if init_options.seq_to_reduce == -1: #all
                 rs.reduceSet(red_mode=general_opts['reduction_mode'],
                              types_to_reduce=stype)
@@ -334,13 +340,6 @@ def main(arguments = None):
                 #for elem in init_options.seq_to_reduce: 
                 #    m_seqs_to_reduce.append(int(elem))
                 #return
-                if init_options.seq_type == 'CAL':
-                    stype = ['DARK', 'DOME_FLAT', 'SKY_FLAT']
-                elif init_options.seq_type == 'FLAT':
-                    stype = ['DOME_FLAT', 'SKY_FLAT']
-                else:
-                    stype = [init_options.seq_type]
-                
                 rs.reduceSet(red_mode=general_opts['reduction_mode'], 
                              seqs_to_reduce=m_seqs_to_reduce,
                              types_to_reduce=stype)

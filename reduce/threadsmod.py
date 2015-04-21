@@ -1,14 +1,23 @@
-################################################################################
+#! /usr/bin/env python
+#encoding:UTF-8
+
+# Copyright (c) 2008-2015 Jose M. Ibanez All rights reserved.
+# Institute of Astrophysics of Andalusia, IAA-CSIC
 #
-# PANICtool
+# This file is part of PAPI
 #
-# ReduceThread.py
+# PAPI is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# Author : jmiguel@iaa.e
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# Last update 12/05/2008
-#
-################################################################################
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Import requered modules
 
@@ -23,7 +32,8 @@ lock = threading.Lock()
 
 class ExecTaskThread(threading.Thread):
     """ 
-    Thread to execute a task and then signal with a event to a waiting thread about the result of the task
+    Thread to execute a task and then signal with a event to a waiting 
+    thread about the result of the task.
     """
     def __init__(self, task, task_info_list, *args):
     
@@ -46,7 +56,7 @@ class ExecTaskThread(threading.Thread):
             self._task_info._curr_status = "FINISHED"
             self._task_info._return      = None
             self._task_info._exit_status = 1             # EXIT_FAILURE, some error happened
-            self._task_info._exc = e
+            self._task_info._exc = e  # Exception
             #raise e # If it is raised, I do not know where/how to catch it ??
         finally:
             self._task_info_list.append(self._task_info)
@@ -90,7 +100,7 @@ class WaitTaskThread(threading.Thread):
             
             self._event.clear()   # restore the event condition
 
-class TaskInfo ():
+class TaskInfo():
     """ 
     Class where ExecTaskThread and WaitTaskThread share info and the result of execution
     """
@@ -104,8 +114,7 @@ class TaskInfo ():
         
     def clear(self):
                   
-        self._name = None              
-        self._exit_status = None       
-        self._return = None            
-        self._exc = None    
-                          
+        self._name = None
+        self._exit_status = None
+        self._return = None
+        self._exc = None

@@ -130,46 +130,20 @@ class DataCollector (object):
     def __listFiles(self, dirpath):
         """
         Get directory list sorted by creation date.
+        
+        Note: only .fits or .fit files are considered, not matter 
+        what kind of filename_filter is set.
         """
+        
         #a = [os.path.join(dirpath, s) for s in os.listdir(dirpath)
         #    if os.path.isfile(os.path.join(dirpath, s))]
         a = [os.path.join(dirpath, s) for s in glob.glob(dirpath + "/" + self.filename_filter) \
-              if os.path.isfile(os.path.join(dirpath, s))]
+              if os.path.isfile(os.path.join(dirpath, s)) and ( 
+                 os.path.join(dirpath, s).endswith('.fits') or os.path.join(dirpath, s).endswith('.fit')) ]
          
         a.sort(key=lambda s: os.path.getmtime(s))
         return a
        
-    def __listFilesMJD(self, dirpath):
-        """
-    	-- NOT USED -- !!!
-    	
-    	Sort out input data files by MJD
-    	
-    	@NOTE: be careful, it could be a heavy routine    
-        """
-        
-        dir_files = [os.path.join(dirpath, s) for s in glob.glob(dirpath+"/"+self.filename_filter) \
-                     if os.path.isfile(os.path.join(dirpath, s))]
-
-        dataset = []
-        
-        for file in dir_files:
-            try:
-                fits = datahandler.ClFits(file)
-            except Exception,e:
-                print "[__listFilesMJD] Error reading file %s , skipped..."%(file)
-                print str(e)
-                self.bad_files_found.append(file)      
-            else:
-                dataset.append((file, fits.getMJD()))
-        
-        dataset = sorted(dataset, key=lambda data_file: data_file[1])          
-        sorted_files = []
-        for tuple in dataset:
-            sorted_files.append(tuple[0])
-    
-        return sorted_files
-    
     def __sortFilesMJD(self, i_files):
         """
         Sort out input data files by MJD
@@ -233,10 +207,10 @@ class DataCollector (object):
     
         contents = []
         
-        if start_datetime==None:
+        if start_datetime == None:
             # by default, we limit the files one day old
             l_start_datetime = dt.datetime.now()-dt.timedelta(days=1)    
-        if end_datetime==None:
+        if end_datetime == None:
             l_end_datetime = dt.datetime.now()
         if l_end_datetime < l_start_datetime:
             print "[DC] Error, end_datetime < start_datetime !"

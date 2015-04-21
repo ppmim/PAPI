@@ -207,7 +207,7 @@ class MasterTwilightFlat(object):
             master tw-flat",nframes, self.m_min_flats)
             raise ExError("Flat sequence is too short, at least %s frames are required"%self.m_min_flats)
         
-        if not os.path.exists(os.path.dirname(self.__output_filename)):
+        if not os.path.exists(os.path.abspath(os.path.join(self.__output_filename, os.pardir))):
             log.error('Directory of combined FLAT frame does not exist')
             raise ExError('Directory of combined FLAT frame does not exist')
         if not self.__output_filename :

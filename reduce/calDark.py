@@ -153,7 +153,7 @@ class MasterDark(object):
             raise Exception("Not enough number of dark frames (>=%s) to compute master dark" %(self.m_min_ndarks))
             
             
-        if not os.path.exists(os.path.dirname(self.__output_filename)):
+        if not os.path.exists(os.path.abspath(os.path.join(self.__output_filename, os.pardir))):
             raise NameError, 'Wrong output path'
         if not self.__output_filename:
             log.error("Combined DARK frame not defined")

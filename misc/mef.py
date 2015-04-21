@@ -130,7 +130,7 @@ class MEF (object):
         new_files = []    
         for file in self.input_files:        
             if output_dir == None:
-                output_dir = os.path.dirname(file)
+                output_dir = os.path.abspath(os.path.join(file, os.pardir))
                 print "OUT_DIR=",output_dir
                 if output_dir == "": output_dir = "."
             try:
@@ -283,7 +283,7 @@ class MEF (object):
                 new_filename = file.replace(".fits", suffix)
                 if out_dir != None: 
                     new_filename = new_filename.replace( 
-                                    os.path.dirname(new_filename), out_dir
+                                    os.path.abspath(os.path.join(new_filename, os.pardir)), out_dir
                                     )
                     
                 out_filenames.append(new_filename)
@@ -481,7 +481,7 @@ class MEF (object):
             # Compose the ouputfilename
             new_filename = file.replace(".fits", out_filename_suffix)
             if out_dir != None: 
-                new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
+                new_filename = new_filename.replace(os.path.abspath(os.path.join(new_filename, os.pardir)), out_dir) 
             
             
             # Check if is a MEF file
@@ -1165,7 +1165,7 @@ class MEF (object):
                     new_filename = file.replace(".fits", 
                                                 out_filename_suffix % det_id) # number from 1 to 4
                     if out_dir != None: 
-                        new_filename = new_filename.replace(os.path.dirname(new_filename), 
+                        new_filename = new_filename.replace(os.path.abspath(os.path.join(new_filename, os.pardir)), 
                                                             out_dir) 
                     out_filenames.append (new_filename)
      
