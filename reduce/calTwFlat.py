@@ -522,6 +522,8 @@ class MasterTwilightFlat(object):
                         ext_name = 'Q1'
                 elif f_instrument == 'hawki': 
                     ext_name = 'CHIP2.INT1'
+                else:
+                    ext_name = 1
                 
                 naxis1 = f[ext_name].header['NAXIS1']
                 naxis2 = f[ext_name].header['NAXIS2']

@@ -679,18 +679,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # DARK - Do NOT require equal EXPTIME Master Dark ???
         # First, look for a DARK_MODEL, then MASTER_DARK
         master_dark = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1) 
-        if len(master_dark)==0 and self.outputsDB!=None:
+        if len(master_dark) == 0 and self.outputsDB!=None:
             master_dark = self.outputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
-            if len(master_dark)==0:
+            if len(master_dark) == 0:
                 master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime)
         
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
-        if len(master_flat)==0:
+        if len(master_flat) == 0:
             master_flat = self.inputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
-        if len(master_flat)==0 and self.outputsDB!=None:
+        if len(master_flat) == 0 and self.outputsDB!=None:
             master_flat = self.outputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
-            if len(master_flat)==0:
+            if len(master_flat) == 0:
                 master_flat = self.outputsDB.GetFilesT('MASTER_TW_FLAT', -1, filter)
 
         # BPM: it is read from config file
@@ -708,23 +708,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
         log.debug("Master BPMs  found %s", master_bpm)
         
         # Return the most recently created (according to MJD order)
-        if len(master_dark)>0: 
+        if len(master_dark) > 0: 
             r_dark = master_dark[-1]
-            log.debug("First DARK candidate: %s"%r_dark)            
+            log.debug("First DARK candidate: %s" % r_dark)            
             r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
-            log.debug("Final DARK candidate: %s"%r_dark)            
+            log.debug("Final DARK candidate: %s" % r_dark)            
         else: 
             r_dark = None
         
         if len(master_flat)>0:
             r_flat = master_flat[-1]
-            log.debug("First FLAT candidate: %s"%r_flat)            
+            log.debug("First FLAT candidate: %s" % r_flat)            
             r_flat = self.getBestShapedFrame(master_flat, sci_obj_list[0])
-            log.debug("Final FLAT candidate: %s"%r_flat)            
+            log.debug("Final FLAT candidate: %s" % r_flat)            
         else: 
             r_flat = None
             
-        if len(master_bpm)>0:
+        if len(master_bpm) > 0:
             r_bpm = master_bpm[-1]
             log.debug("First BPM candidate: %s"%r_bpm)            
             r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
@@ -2818,8 +2818,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # If no files, returns an empy list
                 darks = self.outputsDB.GetFilesT('MASTER_DARK', -1)
                 
-                print "DARKS=", darks
-                print "DM=",dark_model
+                #print "DARKS=", darks
+                #print "DM=",dark_model
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     
@@ -2888,8 +2888,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             elif flat_type.count("SKY_FLAT"):
                 try:
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+                    darks = self.outputsDB.GetFilesT('MASTER_DARK', -1)
                     self._task = reduce.calGainMap.TwlightGainMap(self.m_popup_l_sel,
-                                                              self.m_masterDark, 
+                                                              darks, 
                                                               str(outfileName), 
                                                               None, self.m_tempdir)
                     thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
@@ -3082,30 +3083,33 @@ class MainGUI(QtGui.QMainWindow, form_class):
               
     def createBPM_slot(self):
         """ 
-        Create a Bad Pixel Mask from a set of selected files (flats)
-        It is run interactively.
-
-        NOTE: not sure if it works ??
+        Create a Bad Pixel Mask from a set of selected files (flats lamp on/off and).
+        The user only need to select: N x DOME_FLAT on/off and the proper master dark 
+        (the same for all) will be find out automatically.
+        
+        NOTE: not sure if it works ?
         """
                     
-        if len(self.m_popup_l_sel)>3:
+        if len(self.m_popup_l_sel) > 3:
             outfileName = QFileDialog.getSaveFileName(self,
                                                       "Choose a filename so save under",
-                                                      "/tmp/BadPixelMask", 
-                                                      "BPM (*.pl)", )
+                                                      self.m_outputdir + "/BadPixelMask", 
+                                                      "BPM (*.fits)", )
             if not outfileName.isEmpty():
                 show = True
                 try:
-                    self.genFileList(self.m_popup_l_sel, "/tmp/bpm.list")
-                    dark = "/tmp/master_dark.fits"
+                    self.genFileList(self.m_popup_l_sel, self.m_tempdir + "/flat.list")
+                    expTime = datahandler.ClFits(self.m_popup_l_sel[0]).expTime()
+                    dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime)[-1]
                     lsig = 10
                     hsig = 10
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-                    self._task = reduce.calBPM_2.BadPixelMask( "/tmp/bpm.list", 
+                    self._task = reduce.calBPM_2.BadPixelMask( self.m_tempdir + "/flat.list", 
                                                                dark, 
                                                                str(outfileName), 
                                                                lsig, hsig, 
                                                                self.m_tempdir)
+                    
                     thread = reduce.ExecTaskThread(self._task.create, 
                                                    self._task_info_list)
                     thread.start()

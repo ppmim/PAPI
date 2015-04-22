@@ -240,6 +240,19 @@ You can also make your OpenSSH server keep alive all connections with clients by
 ClientAliveInterval 300
 ClientAliveCountMax 2
 
+CAHA ARCHIVE
+============
+- To get access to the archive2 machine to get a bigger area for storate, we have
+to add the next line to the /etc/fstab file:
+
+archivo2:/ARCHIVE/PANICCALIBS   /data1/ARCHIVE  nfs     defaults,mountvers=3,nfsvers=3 0 0
+
+Note: we use NFS v3 to preserve the user permissions, and that way only 'panic' user 
+have Write access to the archive2 File system; the rest of users on panic22/panic35 have
+only 'read' permissions.
+
+
+
 
 *************************
 ** Telescope Interface **

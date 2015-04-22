@@ -6939,7 +6939,19 @@ a hacer de ficheros que no fallen al leerse como FITS. Esto es algo que puedo oc
 muy fácilmente al cambiar el usuario el filtro (Set filename filter) en la GUI del QL.
 
 
+22-Abril-2015
+-------------
+- Modificación en calGainMap.py para que la normalización se haga respecto al detector SG1.
+- Solucion bugs en la llamada QL:Build Gain Map; ahora parece que funciona con DOME_FLAT, SKY_FLAT y SCIENCE
+- Encuentro multiples problemas en calBPM_2.py:
 
+  pendiente:
+   - conflito en calBPM_2.py entre mscred y imred; como consecuencia no se puede ejecutar ccdmask !!!
+   - y decidir cual es el calBPM_X es el bueno !!!!
+   
+23-Abril-2015
+-------------
+(P) Continuar con depuración QL e intentar implementar sky-estimation from a set of images...(ala MAtilde).
 
 Revision de funciones de QL
 ---------------------------
@@ -6953,10 +6965,17 @@ Revision de funciones de QL
         Ahora comprueba de forma exhaustiva el ITIME,NCOADDS.
  
  4-Build Master Dome Flat: OK, incluso sólo con 1 on, 1 off
- 5-Build GainMap:
+ 5-Build GainMap: 
+   Basicamente lo que hace es buscar los pixeles malos en un MasterFlat (que crea si es necesario) y ponerlos a 0
     - encuentro un bug sintactico importante!!
-    - me cuenstiono que sentido tiene ....!!!
+    - me cuenstiono que sentido tiene ....!!! bueno, ya que esta...
     - con dome_flat_on_off parece que se "ejecuta" correctamente.
+ 6-Build BPM: bugs varios !!!
+   - conflicto msred y imred en calBPM_2 ---> PENDIENTE
+   - pendiente ver que algoritmo vamos a usar finalmente (calBPM_2 o calBPM_3), a priori calBPM_3, pero
+   queda por confirmar por Matilde.
+ 
+ 
    
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
@@ -6984,6 +7003,8 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Me surge la duda de que diferencia entre SuperFlat y TwFlat; básicamente son iguales,
+excepto que en TwFlat que resta el dark y en SuperFlat no se hace nada.
 - Cuestionarse donde usar ExecTaskThread, pues de esa forma si podemos obtener el
 error que se pueda producir (via Excepcion).
 - Comprobar que el tipo TW_FLAT no se usa, sólo se usa SKY_FLAT; en principio no es necesario distinguir DUSK/DAWN FLATS

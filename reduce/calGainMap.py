@@ -102,12 +102,12 @@ class SkyGainMap(object):
 class TwlightGainMap(object):
     """ Compute the gain map from a list of twlight frames """
     
-    def __init__(self, flats_filelist, master_dark, 
+    def __init__(self, flats_filelist, master_dark_list, 
                  output_filename="/tmp/gainmap.fits",  
                  bpm=None, temp_dir="/tmp/"):
 
         self.framelist = flats_filelist
-        self.master_dark = master_dark
+        self.master_dark_list = master_dark_list
         self.output = output_filename
         self.bpm = bpm
         self.temp_dir = temp_dir
@@ -120,9 +120,10 @@ class TwlightGainMap(object):
             output_fd, tmp_output_path = tempfile.mkstemp(suffix='.fits')
             os.close(output_fd)
                 
-            twflat = reduce.calTwFlat.MasterTwilightFlat (self.framelist,
-                                                            self.master_dark, 
-                                                            tmp_output_path)
+            twflat = reduce.calTwFlat.MasterTwilightFlat(self.framelist,
+                                                         master_dark_model=None,
+                                                         master_dark_list=self.master_dark_list, 
+                                                         output_filename=tmp_output_path)
             twflat.createMaster()
         except Exception,e:
             log.error("Error while creating twlight flat: %s", str(e))
@@ -164,7 +165,7 @@ class DomeGainMap(object):
                                                          temp_dir="/tmp", 
                                                          output_filename=tmp_output_path)
             domeflat.createMaster()
-        except Exception,e:
+        except Exception, e:
             log.error("Error while creating master dome flat: %s", str(e))
             raise e
         
@@ -251,7 +252,7 @@ class GainMap(object):
         
         """
         Given a NOT normalized flat field, compute the gain map taking 
-        into account the input parameters and an optional Bad Pixel Map (bpm)
+        into account the input parameters and an optional Bad Pixel Map (bpm).
         
         Return
         ------
@@ -264,24 +265,21 @@ class GainMap(object):
         if os.path.exists(self.output_filename): os.remove(self.output_filename)
 
         # Check if we have a MEF file
-        f = datahandler.ClFits ( self.flat )
+        f = datahandler.ClFits( self.flat )
         isMEF = f.mef
         if (not isMEF): nExt = 1
         else: nExt = f.next
         
         naxis1 = f.naxis1
         naxis2 = f.naxis2
-        offset1 = int(naxis1*0.1)
-        offset2 = int(naxis2*0.1)
+        offset1 = int(naxis1 * 0.1)
+        offset2 = int(naxis2 * 0.1)
         nbad = 0
 
-        if f.getInstrument()=='panic' and naxis1==4096 and naxis2==4096:
+        if f.getInstrument() == 'panic' and naxis1 == 4096 and naxis2 == 4096:
             is_a_panic_full_frame = True # i.e., a single extension (GEIRS) full frame
         else: is_a_panic_full_frame = False
 
-        # Check if normalization is already done to FF or otherwise it must be
-        # done here
-         
         
         gain = np.zeros([nExt, naxis1, naxis2], dtype=np.float32)
         myflat = fits.open(self.flat)
@@ -290,45 +288,61 @@ class GainMap(object):
         # done here
         if isMEF: extN = 1
         else: extN = 0
-        if np.median(myflat[extN].data)> 100:
+        if np.median(myflat[extN].data) > 100:
+            # ##############################################################################
+            # Normalize the flat (if MEF, all extension are normalized wrt extension/chip SG1)#
+            # ##############################################################################
             self.do_norm = True
-            log.info("Normalization will be done !")
+            log.info("Normalization need to be done !")
+            if isMEF:
+                ##chip = 1 # normalize wrt to mode of chip SG1_1
+                if f.getInstrument() == 'panic': 
+                    ext_name = 'SG1_1'
+                    try:
+                        myflat[ext_name].header
+                    except KeyError:
+                        ext_name = 'Q1'
+                elif f_instrument == 'hawki': 
+                    ext_name = 'CHIP2.INT1'
+                else:
+                    ext_name = 1
+                
+                # Note that in Numpy, arrays are indexed as rows X columns (y, x),
+                # contrary to FITS standard (NAXIS1=columns, NAXIS2=rows).
+                median = np.median(myflat[ext_name].data[offset2 : naxis2 - offset2,
+                                                    offset1 : naxis1 - offset1])
+                msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%f)" % (ext_name, median)
+            elif is_a_panic_full_frame:
+                # It supposed to have a full frame of PANIC in one single 
+                # extension (GEIRS default). Normalize wrt detector SG1_1
+                median = np.median(myflat[0].data[200 : 2048-200, 2048+200 : 4096-200 ])
+                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%f)" % median
+            else:
+                # Not MEF, not PANIC full-frame, but could be a PANIC subwindow
+                median = np.median(myflat[0].data[offset2 : naxis2 - offset2,
+                                             offset1 : naxis1 - offset1])
+                msg = "Normalization of master flat frame. (MEDIAN = %d)" % median
         else:
             self.do_norm = False
-            log.info("**No** normalization will be done !")
+            median = 1.0
+            log.info("**No** normalization will be done. Image is already normalized !")
             
         for chip in range(0, nExt):
-            log.debug("Operating in CHIP %d", chip+1)
+            log.debug("Operating in Extension %d", chip + 1)
             if isMEF:
-                #flatM=np.reshape(myflat[chip+1].data, naxis1*naxis2)
-                flatM = myflat[chip+1].data                 
+                flatM = myflat[chip + 1].data                 
             else:
                 flatM = myflat[0].data
             
-            # ##############################################################################
-            # Normalize the flat (if MEF, all extension is normalized wrt extension/chip 1)#
-            # ##############################################################################
-            if chip==0:
-                if self.do_norm and not is_a_panic_full_frame:
-                    median = np.median(flatM[offset1:naxis1-offset1, offset2:naxis2-offset2])
-                    mean = np.mean(flatM[offset1:naxis1-offset1, offset2:naxis2-offset2])
-                    mode = 3*median-2*mean
-                    log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
-                    log.debug("Normalizing flat-field by MEDIAN ( %f ) value", median)
-                
-                elif self.do_norm and is_a_panic_full_frame:
-                    median = np.median(flatM[offset1/2:naxis1/2-offset1/2, offset2/2:naxis2/2-offset2/2])
-                    mean = np.mean(flatM[offset1/2:naxis1/2-offset1/2, offset2/2:naxis2/2-offset2/2])
-                    mode = 3*median-2*mean
-                    log.debug("MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", median, mean, mode)
-                    log.debug("Normalizing (PANIC full-frame) flat-field by MEDIAN ( %f ) value", median)
-
-                else: median = 1.0 # normalization not required (but must be already done !!)
-                
+            if len(flatM.shape) > 2:
+                msg = "Data cubes are not currently supported; image need to be collapsed."
+                log.error(msg)
+                raise Exception(msg)
+            
             # To avoid zero-division
             __epsilon = 1.0e-20
             if np.fabs(median) > __epsilon:
-                flatM = flatM/median
+                flatM = flatM / median
             else:
                 flatM = flatM
                 
@@ -345,14 +359,15 @@ class GainMap(object):
             # Foreach image block
             for i in range(0, naxis1, self.m_NYBLOCK):
                 for j in range(0, naxis2, self.m_NXBLOCK):
-                    box = gain[chip][i: i + self.m_NXBLOCK, j: j + self.m_NYBLOCK]
+                    box = gain[chip][i : i + self.m_NXBLOCK, j : j + self.m_NYBLOCK]
                     p = np.where(box > 0.0)
                     buf = box[p]
                     if len(buf) > 0: med = np.median(buf)
                     else: med = 0.0
-                    dev[i:i + self.m_NXBLOCK, j: j + self.m_NYBLOCK] = np.where(box > 0, (box - med), 0)
+                    dev[i : i + self.m_NXBLOCK, j : j + self.m_NYBLOCK] = np.where(box > 0, (box - med), 0)
                             
-            """                
+            """
+            # original code from gainmap.c
             # Foreach image block
             for i in range(0,naxis1, self.m_NYBLOCK):
                 for j in range(0,naxis2, self.m_NXBLOCK ):
@@ -381,9 +396,9 @@ class GainMap(object):
             #log.debug("MED=%f LO=%f HI=%f SIGMA=%f", med, lo, hi, sig)                    
                                 
             # Find more badpix by local dev
-            p = np.where( (dev<lo) | (dev>hi))
+            p = np.where( (dev < lo) | (dev > hi))
             gain[chip][p] = 0.0 # badpix
-            log.debug("Final number of Bad Pixel = %d", (gain[chip]==0.0).sum())
+            log.debug("Final number of Bad Pixel = %d", (gain[chip] == 0.0).sum())
             
                  
         # Now, write result in a (MEF/single)-FITS file             

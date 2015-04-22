@@ -4002,7 +4002,8 @@ class ReductionSet(object):
         # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
         # pixels deviating >30%(?),...
         # do_normalization=False because it is suppossed that FF is already 
-        # normalized.
+        # normalized, however the flat-field is checked (median > 100) to 
+        # find out if it was already normalized.
         g = reduce.calGainMap.GainMap(local_master_flat, gainmap, 
                                     bpm=master_bpm_4gain, 
                                     do_normalization=False,
