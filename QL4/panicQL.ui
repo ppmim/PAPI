@@ -2243,7 +2243,7 @@
        </property>
        <item>
         <property name="text">
-         <string>None</string>
+         <string>Only results</string>
         </property>
        </item>
        <item>
@@ -2253,12 +2253,12 @@
        </item>
        <item>
         <property name="text">
-         <string>Only results</string>
+         <string>All files</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>All files</string>
+         <string>None</string>
         </property>
        </item>
       </widget>

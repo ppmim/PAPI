@@ -165,7 +165,13 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     logging.debug("Starting to solve-field for: %s  Scale=%s  RA= %s Dec= %s \
     INSTRUMENT= %s"%(filename, scale, ra , dec, instrument))
     
-    path_astrometry = os.path.dirname(spawn.find_executable("solve-field"))  
+    try:
+        path_astrometry = os.path.dirname(spawn.find_executable("solve-field"))  
+    except Exception, e:
+        msg = "Cannot find the pathname for solve-field"
+        log.error(msg)
+        raise Exception(msg)
+    
     if not os.path.exists(path_astrometry + "/solve-field"):
         raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s"%path_astrometry)
 
@@ -221,7 +227,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     solve_out =  stdoutdata + "\n" + stderrdata
 
     
-    if len(solve_out)>1:
+    if len(solve_out) > 1:
         logging.info("Solve-field output:")
         #print solve_out
     #

@@ -82,7 +82,7 @@ def do_skySubtration(in_filelist, out_dir=None, n_nearest=1,
         log.error("Can not read input file list")
         raise Exception("Can not read input file list")
     
-    if out_dir==None:
+    if out_dir == None:
         out_dir = os.path.abspath(os.path.join(in_filelist, os.pardir))
 
     if os.path.exists(config_file):

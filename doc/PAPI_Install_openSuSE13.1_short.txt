@@ -564,6 +564,8 @@ zypper install python-qt4
 zypper install libXmu6-32bit  (needed by xgterm)
 zypper install cfitsio libcfitsio-devel
 zypper install python-pip
+zypper install mupdf ( para mostrar pdfs desde QL de forma rápida )
+
 
 + LEMON Requirements:
 sudo zypper install openmpi-devel python-gtk p7zip

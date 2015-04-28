@@ -141,10 +141,10 @@ class ApplyDarkFlat(object):
         """   
 
         log.debug("Start applyDarkFlat")
-        log.debug(" + Master Dark: %s"%self.__mdark)
-        log.debug(" + Master Flat: %s"%self.__mflat)
-        log.debug(" + Master BPM: %s"%self.__bpm)
-        log.debug(" + SCI Source images: %s"%str(self.__sci_files))
+        log.debug(" + Master Dark: %s" % self.__mdark)
+        log.debug(" + Master Flat: %s" % self.__mflat)
+        log.debug(" + Master BPM: %s" % self.__bpm)
+        log.debug(" + SCI Source images: %s" % str(self.__sci_files))
         
         
         start_time = time.time()
@@ -247,10 +247,14 @@ class ApplyDarkFlat(object):
             flat_filter = None
             modian = 1 
         
+                
         # Add suffix whether BPM is to be applied
-        if self.__bpm!=None and self.__bpm_action!='none':
+        if self.__bpm != None and self.__bpm_action != 'none':
             out_suffix = out_suffix.replace(".fits","_BPM.fits") 
-
+            if self.__mdark == None and self.__mflat == None:
+                with fits.open(self.__bpm) as bp:
+                    n_ext = len(bp) - 1
+            
 
         # Get the user-defined list of flat frames
         framelist = self.__sci_files
@@ -275,7 +279,7 @@ class ApplyDarkFlat(object):
             f = fits.open(iframe)
             cf = datahandler.ClFits(iframe)
             f_ncoadd = cf.getNcoadds()
-            log.debug("Science frame %s EXPTIME= %f TYPE= %s FILTER= %s NCOADD=%s"\
+            log.debug("Science frame %s EXPTIME = %f ,TYPE = %s ,FILTER = %s ,NCOADD=%s"\
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter(), f_ncoadd))
             
             # Check FILTER
@@ -411,18 +415,18 @@ class ApplyDarkFlat(object):
                     
 
                     # Now, apply BPM
-                    if self.__bpm!=None:
-                        if sci_data.shape!=bpm_data.shape:
-                            print "SCI=",sci_data.shape
-                            print "BPM=",bpm_data.shape
+                    if self.__bpm != None:
+                        if sci_data.shape != bpm_data.shape:
+                            print "SCI = ",sci_data.shape
+                            print "BPM = ",bpm_data.shape
                             log.error("Source data and BPM do not match image shape")
                             raise Exception("Source data and BPM do not match image shape")
-                        if self.__bpm_action=='fix':
+                        if self.__bpm_action == 'fix':
                             log.debug("Fixing Bad Pixles...")
                             sci_data = fixpix(sci_data, bpm_data, iraf=True)
-                        elif self.__bpm_action=='grab':
+                        elif self.__bpm_action == 'grab':
                             log.debug("Grabbing BPM")
-                            sci_data[bpm_data==1] = numpy.NaN
+                            sci_data[bpm_data == 1] = numpy.NaN
                         else:
                             log.debug("Nothing to do with BPM")
 

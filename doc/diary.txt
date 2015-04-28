@@ -6951,7 +6951,92 @@ muy fácilmente al cambiar el usuario el filtro (Set filename filter) en la GUI 
    
 23-Abril-2015
 -------------
-(P) Continuar con depuración QL e intentar implementar sky-estimation from a set of images...(ala MAtilde).
+(P) Continuar con depuración QL e intentar implementar sky-estimation from a set of images...(ala Matilde).
+- Continuo con la depuración del QL:
+  - bugfix en applyDarkFlat cuando sólo hay BPM.
+  - bugfix en subtract own-sky
+  - mejora en do_raw_astrometry para permitir MEF o SEF y que nos pida el detector a usar.
+  - bug (SF) en do_photometry()
+       - prueba con la cola de multiprocessing, pero también falla, incluso peor...
+         Quizás la solución pase por mostrar el gráfico desde la hebra principal, al igual 
+         que hacía antiguamente (la primera versión) con focus_evalution() ...
+
+
+24-Abril-2015
+-------------
+(P) -resolver bug de do_photometry()
+- Añado la opcion de mostar pdf en el QL para los ficheros obtenidos de la cola de procesamiento (checkDoneQueue);
+el objetivo es poder mostrar los pdf que genere do_photometry(). Pero sigue dando problemas el uso de matplotlib
+desde una hebra/proceso:
+
+[xcb] Unknown sequence number while processing queue
+[xcb] Most likely this is a multi-threaded client and XInitThreads has not been called
+[xcb] Aborting, sorry about that.
+gedit: ../../src/xcb_io.c:273: poll_for_event: Assertion `!xcb_xlib_threads_sequence_lost' failed.
+
+
+Pruebo a llamar a photometry() desde la hebra principal, pero ahora no muestra tampoco
+las gráfica o sólo muestra la última, y además da el siguiente mensaje:
+
+    QCoreApplication::exec: The event loop is already running
+    (see http://stackoverflow.com/questions/14559500/pyqt-and-matplotlib)
+
+- Como 'okular' es una aplicacińo bastante pesada y no puedo configurar el tamñao de la
+ventana, instalo con zypper 'mupdf' que es una aplicación mucho más ligera para mostrar
+pdfs.
+
+
+27-Abril-2015
+-------------
+- Sigo intentado mejorar el tema de mostrar los gráficos de matplotlib de forma
+correcta desde una hebra del QL; todo parece que tiene que ver con el backend
+de matplotlib, que solo el 'Agg' es thread-safe.
+
+http://stackoverflow.com/questions/25807679/accessing-qtgui-qapplication-clipboard-from-the-run-method-of-qtcore-qthread
+http://jbarillari.blogspot.com.es/2009/09/threadsafety-and-matplotlibpylab.html
+
+http://stackoverflow.com/questions/19390622/real-time-plotting-with-matplotlib-pyqt-and-threading-ends-to-python-crash
+
+
+- Despues de muchas pruebas y muchas vueltas, resulta que todo se soluciona elimino de mainGUI.py las lineas:
+
+import matplotlib
+matplotlib.use('QT4Agg')
+
+pues realmente no se usa directamente en el QL. Si le pongo matplotlib.use('Agg') no casca, pero no muestra
+las figuras de doPhotometry() aunque show=True.
+
+Parece que todo es por un conflicto entre varios import del modulo matplotlib, que se usa en photometry.py y
+en runStarfocus.py  y  getImageOffsets.py, de momento...
+
+- Finalemente, la solución a adoptar será llamar a doPhotometry(show=False) y que sea el QL el que muestre 
+el PDF generado con la herramienta 'mupdf' que se instala fácilmente con zypper.
+
+Tras quitar el import de arriba, compruebo que eval_focus_serie(iraf) funcion bien.
+Parece que todo tiene tambien relacción con que el backend the matplotlib no sea thread-safe. 
+Sobre que backend es más conveniente, encontré lo siguiente:
+
+http://stackoverflow.com/questions/7156058/matplotlib-backends-do-i-care
+
+
+- Encuentro el bug en astrometry.net relaccionado con el --cpulimit, que no funciona a no ser que 
+en el fichero de configuracion esté activado "inparallel"; otra opción, quizás las mejor,
+es usar el modificador timeout en la llamada a subprocess.check_call(args, timeout = timeout).
+
+https://groups.google.com/forum/#!topic/astrometry/gyWYg3bQmZ0
+https://github.com/vterron/lemon/commit/bddfacd95e6985543f4f7464da417ec3d49c6c39
+
+
+===> de momento, habilito 'inparallel' tanto en panic1, panic22 y panic35(estaba ya activado)
+
+
+
+
+
+
+
+
+
 
 Revision de funciones de QL
 ---------------------------
@@ -6967,14 +7052,21 @@ Revision de funciones de QL
  4-Build Master Dome Flat: OK, incluso sólo con 1 on, 1 off
  5-Build GainMap: 
    Basicamente lo que hace es buscar los pixeles malos en un MasterFlat (que crea si es necesario) y ponerlos a 0
-    - encuentro un bug sintactico importante!!
+    - encuentro un bug sintactico importante!! --fixed
     - me cuenstiono que sentido tiene ....!!! bueno, ya que esta...
     - con dome_flat_on_off parece que se "ejecuta" correctamente.
+    - se ejecuta con cualquiera, pero con SKY_FLAT tiene que encontrar los darks para restar.
  6-Build BPM: bugs varios !!!
    - conflicto msred y imred en calBPM_2 ---> PENDIENTE
    - pendiente ver que algoritmo vamos a usar finalmente (calBPM_2 o calBPM_3), a priori calBPM_3, pero
    queda por confirmar por Matilde.
  
+ 7-ApplyDarkFlat & BPM: OK, aunque:
+    - puede que no encuentre las calibraciones si no esta cargado en el /data2/out y 
+    tampoco están en el directorio ext_calibration_db.
+    - además puede que no las encuentre debido al tipo de fichero (MEF o SEF).
+ 8- Do photmetry: bug !! 
+ 9- Do astrometry:
  
    
 Comentarios sobre reducción y datos tomados para Matilde
@@ -7003,6 +7095,10 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
+la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina la ejecución actual.
+- intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararllo (do_raw_astrometry) !!
+- Averiguar para que se necesita ENOISE y EGAIN !!!
 - Me surge la duda de que diferencia entre SuperFlat y TwFlat; básicamente son iguales,
 excepto que en TwFlat que resta el dark y en SuperFlat no se hace nada.
 - Cuestionarse donde usar ExecTaskThread, pues de esa forma si podemos obtener el
@@ -7143,6 +7239,11 @@ http://stackoverflow.com/questions/363200/is-it-possible-to-sort-numbers-in-a-qt
 
 TODO:
 ====
+- BUg: al decirle al QL que haga la fotometría a una imagen (un cubo), lo hace 
+pero al final, al mostrar el plot, da un SF y se cierra el QL; el ultimo 
+mensaje fue:
+QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
+                   
 - Eliminar el primer coadd que se crea en: /tmp/PANIC_SEQ_Q01_coadd_RADMON.fits 
 - Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
 hacer una propia en Python.

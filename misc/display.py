@@ -174,6 +174,25 @@ def stopDisplay():
 
 ################################################################################
 #
+def showPDF(filename):
+    """
+    Display a PDF file with the default PDF viewer (mupdf)
+    """
+    
+    if filename.endswith(".pdf"):
+        # try to find out a pdf client
+        try:
+            pdf_path = os.path.dirname(spawn.find_executable("mupdf"))
+            os.system(pdf_path + "/mupdf %s" % filename)
+        except Exception, e:
+            msg = "Cannot display PDF file, cannot find PDF client mupdf"
+            log.error(msg)
+            raise e
+
+    else:
+        log.info("Give file %s does not look a PDF file" % filename)
+
+############################
 if __name__ == "__main__":
    startDisplay()
    

@@ -46,11 +46,7 @@ import os
 from astropy.table import Table
 import numpy
 
-#import matplotlib
-#matplotlib.use('TkAgg')
-
 import matplotlib.pyplot as plt
-#import matplotlib.mlab as mlab
 import pylab
             
 import catalog_query
@@ -334,9 +330,11 @@ def generate_phot_comp_plot( input_catalog, filter, expt = 1.0 ,
         else: return 'stdout'
 
 def compute_regresion2( column_x, column_y , filter_name,
-                        output_filename="/tmp/linear_fit.pdf"):
+                        output_filename="/tmp/linear_fit.pdf",
+                        show=False):
     """
-    Compute and Plot the linear regression of two columns of the input vo_catalog
+    Compute and Plot the linear regression of two columns of the 
+    input vo_catalog.
     
     Parameters
     ----------
@@ -346,7 +344,9 @@ def compute_regresion2( column_x, column_y , filter_name,
         
     column_y: str
         column name/number for Y values of the regression (2MASS column name 
-        for photometric value )
+        for photometric value)
+    show: bool
+        When true, the generated plots are shown.
     
     Returns
     -------
@@ -355,9 +355,15 @@ def compute_regresion2( column_x, column_y , filter_name,
              b - slope of the linear fit
              r - estimated error
              
-    None if happen some error  
+    None if some error happen. 
     """
     
+    
+    # taka the ouput_dir for the other pdf plot from the main
+    # plot filename. 
+    # Note: It is much better use next sentence instead of os.path.dirname()
+    # to take into account when the output_filename has no path.
+    output_dir = os.path.abspath(os.path.join(output_filename, os.pardir))
     
     X = column_x # MAG_AUTO = -2.5 * numpy.log10(table_new['FLUX_AUTO']/1.0)
     Y = column_y # 2MASS photometric value
@@ -370,7 +376,7 @@ def compute_regresion2( column_x, column_y , filter_name,
     n_X = X[validdataBoth] #- (0.5*0.05) # a row extinction correction
     n_Y = Y[validdataBoth] 
 
-    if len(n_X)<3 or len(n_Y)<3:
+    if len(n_X) < 3 or len(n_Y) < 3:
         raise Exception("Not enough number of data, only %d points found"%len(n_X))
 
     # Compute the linear fit
@@ -390,48 +396,50 @@ def compute_regresion2( column_x, column_y , filter_name,
     
     # Plot the results
     pol = numpy.poly1d(res[0])
+    plt.hold(False)
+    fig = plt.figure()
     plt.plot(n_X, n_Y, '.', n_X, pol(n_X), '-')
-    plt.title("Filter %s  -- Poly fit: %f X + %f  r=%f ZP=%f" %(filter_name, b,a,r,a))
+    plt.title("Filter %s  -- Poly fit: %f X + %f  r=%f ZP=%f" %(filter_name, b, a, r, a))
     plt.xlabel("Inst_Mag (MAG_AUTO) / mag")
     plt.ylabel("2MASS Mag  / mag")
-    plt.savefig(output_filename)
-    plt.show()
-    log.debug("Zero Point (from polyfit) =%f", a)
+    fig.savefig(output_filename)
+    if show: plt.show()
+    log.debug("Zero Point (from polyfit) = %f", a)
     
     
     # Compute the ZP as the median of all per-star ZP=(Mag_2mass-Mag_Inst)
     zps = n_Y - n_X 
     zp = numpy.median(zps)
     #zp = a
-    log.debug("Initial ZP(median) = %f"%zp)
+    log.debug("Initial ZP(median) = %f" % zp)
     zp_sigma = numpy.std(zps)
     #print "ZPS=",zps
     # do a kind of sigma-clipping
-    zp_c = numpy.median(zps[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)])
-    log.debug("ZP_sigma=%f"%zp_sigma)
-    log.debug("Clipped ZP = %f"%zp_c)
+    zp_c = numpy.median(zps[numpy.where(numpy.abs(zps - zp) < zp_sigma * 2)])
+    log.debug("ZP_sigma=%f" % zp_sigma)
+    log.debug("Clipped ZP = %f" % zp_c)
     zp = zp_c
     #zp = a
     
     # Now, compute the histogram of errors
     m_err_for_radial_systematic = n_Y - (n_X + zp)
-    n_X = n_X[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)]
-    n_Y = n_Y[numpy.where(numpy.abs(zps-zp)<zp_sigma*2)]
-    log.debug("Number of points = %d"%len(n_X))
+    n_X = n_X[numpy.where(numpy.abs(zps - zp) < zp_sigma * 2)]
+    n_Y = n_Y[numpy.where(numpy.abs(zps - zp) < zp_sigma * 2)]
+    log.debug("Number of points = %d" % len(n_X))
     #m_err = n_Y - (n_X*b + zp ) 
     m_err = n_Y - (n_X + zp)
-    rms = numpy.sqrt( numpy.mean( (m_err)**2 ) )
+    rms = numpy.sqrt( numpy.mean( (m_err) ** 2 ) )
     MAD = numpy.median( numpy.abs(m_err-numpy.median(m_err)))
     std = numpy.std(m_err)
     #std2 = numpy.std(m_err[numpy.where(numpy.abs(m_err)<std*2)])
     
 
-    log.info("ZP = %f"%zp)
-    log.debug("MAD(m_err) = %f"%MAD)
-    log.debug("MEAN(m_err) = %f"%numpy.mean(m_err))
-    log.debug("MEDIAN(m_err) = %f"%numpy.median(m_err))
-    log.info("STD(m_err) = %f"%std)
-    log.info("RMS(m_err) = %f"%rms)
+    log.info("ZP = %f" % zp)
+    log.debug("MAD(m_err) = %f" % MAD)
+    log.debug("MEAN(m_err) = %f" % numpy.mean(m_err))
+    log.debug("MEDIAN(m_err) = %f" % numpy.median(m_err))
+    log.info("STD(m_err) = %f" % std)
+    log.info("RMS(m_err) = %f" % rms)
     #log.debug("STD2 = %f"%std2)
     
     #my_mag = n_X*b + zp
@@ -440,11 +448,11 @@ def compute_regresion2( column_x, column_y , filter_name,
     plt.plot( my_mag, m_err, '.')
     plt.xlabel("Inst_Mag")
     plt.ylabel("2MASS_Mag-Inst_Mag")
-    plt.title("(1) Calibration with 2MASS - STD = %f"%std)
+    plt.title("(1) Calibration with 2MASS - STD = %f" % std)
     #plt.plot((b * n_X + a), m_err, '.')
     plt.grid(color='r', linestyle='-', linewidth=1)
-    plt.savefig("/tmp/phot_errs.pdf")
-    plt.show()
+    plt.savefig(output_dir + "/phot_errs.pdf")
+    if show: plt.show()
     
     # Plot radial distance VS m_err
 #    radial_distance = numpy.sqrt((table_new['X_IMAGE']-1024)**2 
@@ -454,7 +462,7 @@ def compute_regresion2( column_x, column_y , filter_name,
 #    plt.xlabel("Radial distance ('arcsec')")
 #    plt.ylabel("2MASS_Mag-Inst_Mag")
 #    plt.title("(1) Spatial systematics - STD = %f"%std)
-#    plt.savefig("/tmp/espatial_systematics_errs.pdf")
+#    plt.savefig(output_dir + "/espatial_systematics_errs.pdf")
 #    plt.show()
     
     
@@ -463,12 +471,12 @@ def compute_regresion2( column_x, column_y , filter_name,
     temp = n_Y - n_X 
     #print "LEN1=",len(temp)
     #print "LEN2=",len(temp[numpy.where(numpy.abs(m_err)<std*2)])
-    zp2 = numpy.median( temp[numpy.where(numpy.abs(m_err)<std*2)])
+    zp2 = numpy.median( temp[numpy.where(numpy.abs(m_err) < std * 2)])
     m_err2 = n_Y - (n_X + zp2) 
-    rms2 = numpy.sqrt( numpy.mean( (m_err2)**2 ) )
+    rms2 = numpy.sqrt( numpy.mean( (m_err2) ** 2 ) )
     std2 = numpy.std(m_err2)
-    MAD2 = numpy.median( numpy.abs(m_err2-numpy.median(m_err2)))
-    MAD2b = numpy.sqrt( numpy.median( (m_err2-numpy.median(m_err2))**2 ) )
+    MAD2 = numpy.median( numpy.abs(m_err2 - numpy.median(m_err2)))
+    MAD2b = numpy.sqrt( numpy.median( (m_err2 - numpy.median(m_err2)) ** 2 ) )
     #std3 = numpy.std(m_err[numpy.where(numpy.abs(m_err2)<std2*2)])
 
     log.debug("ZP2 = %f"%zp2)
@@ -478,29 +486,25 @@ def compute_regresion2( column_x, column_y , filter_name,
     log.debug("STD(m_err2) = %f"%std2)
     log.debug("RMS(m_err2) = %f"%rms2)
 
-    #log.debug("STD3 = %f"%std3)
-    
-    
-    
 
     #print m_err
     # Lo normal es que coincida la RMS con la STD, pues la media de m_err en este caso es 0
     my_mag = n_X+zp2
-    plt.plot( my_mag[numpy.where(m_err<std*2)], m_err[numpy.where(m_err<std*2)], '.')
+    plt.plot( my_mag[numpy.where(m_err < std * 2)], m_err[numpy.where(m_err < std * 2)], '.')
     plt.xlabel("Inst_Mag")
     plt.ylabel("2MASS_Mag-Inst_Mag")
     plt.title("(2) Calibration with 2MASS - STD = %f"%std2)
     #plt.plot((b * n_X + a), m_err, '.')
-    plt.savefig("/tmp/phot_errs.pdf")
-    plt.show()
+    plt.savefig(output_dir + "/phot_errs.pdf")
+    if show: plt.show()
     
     
     pylab.hist(m_err2, bins=50, normed=0)
-    pylab.title("Mag error Histogram - RMS = %f mag STD = %f"%(rms2,std2))
+    pylab.title("Mag error Histogram - RMS = %f mag STD = %f"%(rms2, std2))
     pylab.xlabel("Mag error")
     pylab.ylabel("Frequency")
-    plt.savefig("/tmp/phot_hist.pdf")
-    pylab.show()
+    plt.savefig(output_dir + "/phot_hist.pdf")
+    if show: pylab.show()
     
     return (zp, b, r)
 
@@ -508,6 +512,9 @@ def compute_regresion2( column_x, column_y , filter_name,
 def compute_regresion( vo_catalog, column_x, column_y , 
                         output_filename="/tmp/linear_fit.pdf", min_snr=10.0, pix_scale=0.45):
     """
+    
+    NOT USED !
+    
     Compute and Plot the linear regression of two columns of the input vo_catalog
     
     Parameters
@@ -785,7 +792,7 @@ class STILTSwrapper (object):
         """
 
 def doPhotometry(input_image, pixel_scale, catalog, output_filename, 
-                 snr=10.0, zero_point=0.0):
+                 snr=10.0, zero_point=0.0, show=False):
     """
     Run the rough photometric calibraiton based on MAG_AUTO (SExtractor, 
     Kron-like elliptical aperture magnitude) and the 2MASS catalog magnitudes.
@@ -802,13 +809,16 @@ def doPhotometry(input_image, pixel_scale, catalog, output_filename,
         photometric catalog to compare to (2MASS, USNO-B, ...)
     
     output_filename: str
-        filename where output figure will be saved
+        filename where output pdf plot will be saved
     
     snr: float
         minimum SNR of stars used of linear fit
     
     zero_point: float 
         initial magnitud zero point for SExtractor (default 0.0)
+    
+    show: bool
+        When True, show the generated plots.
     
     Returns
     -------
@@ -910,7 +920,7 @@ def doPhotometry(input_image, pixel_scale, catalog, output_filename,
         log.error("XMatch failed %s. Check astrometric calibration of source.", str(e))
         raise e
     
-    ## 3a- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
+    ## 3-  Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
     ###### and generate the plot file with the photometric comparison
     ###### using Numpy & Matplotlib
     ###### 2MASS_Mag = Inst_Mag*b + ZP  
@@ -919,28 +929,12 @@ def doPhotometry(input_image, pixel_scale, catalog, output_filename,
     try:
         #est_zp_err = compute_regresion(match_cat, 'MAG_AUTO', 
         #                   two_mass_col_name, output_filename, snr, pixel_scale )[0]
-        est_zp_err = compute_regresion2(xm, ym, filter, output_filename)[0] 
+        est_zp_err = compute_regresion2(xm, ym, filter, output_filename, show)[0] 
         
         log.info("Estimated ZP_err=%s"%est_zp_err)
         #sys.exit(0)
     except Exception, e:
         log.error("Sorry, some error while computing linear fit or\
-        ploting the results: %s", str(e))
-        raise e
-    
-    # 3b- Compute the linear regression (fit) of Inst_Mag VS 2MASS_Mag
-    # and generate the plot file with the photometric comparison 
-    # using STILTS
-    try:
-        exptime = 1.0 # SWARP normalize flux to 1 sec
-        #file_ext = os.path.splitext(output_filename)[1]
-        #output_filename_2 = output_filename.replace(file_ext, "_b"+file_ext) 
-        #plot_file = generate_phot_comp_plot( match_cat, two_mass_col_name, exptime, 
-        #                                      output_filename_2, 
-        #                                      out_format='pdf')
-        #log.debug("Plot file generated : %s", plot_file) 
-    except Exception, e:
-        log.error("Sorry, some error while computing linear fit or \
         ploting the results: %s", str(e))
         raise e
 
@@ -1025,7 +1019,7 @@ Zero Point."""
     try:
         catalog = "2MASS"
         doPhotometry(options.input_image, options.pix_scale, catalog, 
-            options.output_filename, options.snr, options.zero_point)
+            options.output_filename, options.snr, options.zero_point, True)
     except Exception, e:
         log.info("Some error while running photometric calibration: %s"%str(e))
         sys.exit(0)

@@ -249,7 +249,7 @@ class MEF (object):
                 
         out_filenames = []
         n = 0 
-        for file in self.input_files:        
+        for file in self.input_files:
             try:
                 hdulist = fits.open(file)
             except IOError:
@@ -324,8 +324,8 @@ class MEF (object):
                 
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
-                del out_hdulist[0].header['EXTNAME']                
-                out_hdulist.writeto(out_filenames[n], 
+                del out_hdulist[0].header['EXTNAME']
+                out_hdulist.writeto(out_filenames[n],
                         output_verify = 'ignore', clobber = True)
                 out_hdulist.close(output_verify = 'ignore')
                 del out_hdulist
@@ -366,7 +366,7 @@ class MEF (object):
                 raise MEF_Exception ("Error, can not open file %s"%file)
 
             # Check if is a MEF file 
-            if len(f)>1:
+            if len(f) > 1:
                 mef = True
                 n_ext = len(f)-1
                 
@@ -538,14 +538,14 @@ class MEF (object):
             new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81], 
                                         [-81, -81] ], numpy.float_)
             
-            for i in range (0, n_ext/2):
-                for j in range (0, n_ext/2):
+            for i in range (0, n_ext / 2):
+                for j in range (0, n_ext / 2):
                     log.debug("Reading quadrant-%d ..." % (i*2 + j))
                     # Check if we have a cube of data
-                    if len(in_hdulist[0].data.shape)==2:
+                    if len(in_hdulist[0].data.shape) == 2:
                         hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
                                                         2048*j:2048*(j+1)]
-                    elif len(in_hdulist[0].data.shape)>2:
+                    elif len(in_hdulist[0].data.shape) > 2:
                         hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1), 
                                                         2048*j:2048*(j+1)]
                     else:
@@ -555,7 +555,7 @@ class MEF (object):
                             "shape."%file)
 
                     hdu_i = fits.ImageHDU (data = hdu_data_i)
-                    log.debug("Data size of %d-quadrant = %s" % (i*2+j, hdu_data_i.shape))
+                    log.debug("Data size of %d-quadrant = %s" % (i * 2 + j, hdu_data_i.shape))
                     
                     # Create the new WCS
                     try:
@@ -576,15 +576,15 @@ class MEF (object):
                         # Instead, WCS header is built from primaryHeader. 
                         chip_gap = 167
                         new_wcs = wcs.WCS(primaryHeader)
-                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2 + chip_gap/2.0, 
-                                             primaryHeader['NAXIS2']/2 + chip_gap/2.0]  
+                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1'] / 2 + chip_gap / 2.0, 
+                                             primaryHeader['NAXIS2'] / 2 + chip_gap / 2.0]  
                         new_wcs.wcs.crval =  [ primaryHeader['RA'], 
                                               primaryHeader['DEC'] ]
                         new_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
                         new_wcs.wcs.cunit = ['deg', 'deg']
                         try:
                             pix_scale = primaryHeader['PIXSCALE']
-                        except Exception,e:
+                        except Exception, e:
                             raise Exception("Cannot find PIXSCALE keyword")
 
                         # We suppose no rotation, and North is up and East at left.
@@ -595,14 +595,14 @@ class MEF (object):
                         # In addition, it must be noted that:
                         # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
                         # r = clockwise rotation_angle 
-                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
-                                          [0, pix_scale/3600.0]]
+                        new_wcs.wcs.cd = [[-pix_scale / 3600.0, 0], 
+                                          [0, pix_scale / 3600.0]]
 
                         # wcs_pix2world: No SIP or Paper IV table lookup 
                         # distortion correction is applied. To perform distortion 
                         # correction, see on astropy all_pix2world, sip_pix2foc, 
                         # p4_pix2foc, or pix2foc.
-                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
+                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[ i * 2 + j]], 1)
                         # ----
 
                         # Now update the new-wcs for the new subframe header.
@@ -645,7 +645,7 @@ class MEF (object):
                         # When DETROT90=1, 90deg clockwise rotation
                         # When DETROT90=2, 180deg clockwise rotation (default
                         # for PANIC)
-                        if primaryHeader['DETROT90']==0:
+                        if primaryHeader['DETROT90'] == 0:
                             if (i*2+j)==0: 
                                 if detflipxy==0: det_id = 2
                                 elif detflipxy==1: det_id = 3
@@ -667,11 +667,11 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2
                         elif primaryHeader['DETROT90']==1:
-                            if (i*2+j)==0:
-                                if detflipxy==0: det_id = 3
-                                elif detflipxy==1: det_id = 4 
-                                elif detflipxy==2: det_id = 2
-                                elif detflipxy==3: det_id = 1
+                            if (i*2+j) == 0:
+                                if detflipxy == 0: det_id = 3
+                                elif detflipxy == 1: det_id = 4 
+                                elif detflipxy == 2: det_id = 2
+                                elif detflipxy == 3: det_id = 1
                             elif (i*2+j)==1:
                                 if detflipxy==0: det_id = 2
                                 elif detflipxy==1: det_id = 1
@@ -735,18 +735,18 @@ class MEF (object):
                     else:
                         # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
                         log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
-                        if (i*2+j)==0: det_id = 4
-                        elif (i*2+j)==1: det_id = 3
-                        elif (i*2+j)==2: det_id = 1
-                        elif (i*2+j)==3: det_id = 2
+                        if (i*2+j) == 0: det_id = 4
+                        elif (i*2+j) == 1: det_id = 3
+                        elif (i*2+j) == 2: det_id = 1
+                        elif (i*2+j) == 3: det_id = 2
 
                     # Since GEIRS-r731M-18 version, new MEF extension naming:
                     #    EXTNAME = 'Qi'
                     #    DET_ID =  'SGi'
                     # and the order in the MEF file shall be Q1,Q2,Q3,Q4
-                    hdu_i.header.set('DET_ID', "SG%i"%det_id,
+                    hdu_i.header.set('DET_ID', "SG%i" % det_id,
                                         "PANIC Detector id SGi [i=1..4]")
-                    hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
+                    hdu_i.header.set('EXTNAME',"SG%i_1 " % det_id)
                     ### TODO: suspend until new version of GEIRS (see bellow)
                     #####hdu_i.header.set('EXTNAME', "Q%i"%det_id)
                     ### end_suspend
@@ -792,7 +792,7 @@ class MEF (object):
             
             # Now, write the new MEF file in the right order (Q1,Q2,Q3,Q4)
             # This order is since GEIRS-r731M-18 (see. doc. PANIC-GEN-SP-02)
-            ### suspend until new version of GEIRS (see above)
+            ### TODO: suspend until new version of GEIRS (see above)
             #####tmp_hdus.sort(key=lambda my_hdu: my_hdu.header['EXTNAME'])
             ### end_suspend
             for h in tmp_hdus: out_hdulist.append(h)
@@ -898,11 +898,11 @@ class MEF (object):
                 raise MEF_Exception("Error, found a MEF file, expected a single FITS ")
      
             # Check if it is a cube 
-            if len(in_hdulist[0].data.shape)!=2:
+            if len(in_hdulist[0].data.shape) !=2 :
                 log.debug("Found a Cube of data.")
 
             # Check file is a 4kx4k full-frame  
-            if in_hdulist[0].header['NAXIS1']!=4096 or in_hdulist[0].header['NAXIS2']!=4096:
+            if in_hdulist[0].header['NAXIS1'] != 4096 or in_hdulist[0].header['NAXIS2'] != 4096:
                 log.error('Error, file %s is not a full frame image', file)
                 raise MEF_Exception("Error, file %s is not a full frame image" % file)
 
@@ -999,9 +999,9 @@ class MEF (object):
                         # In addition, it must be noted that:
                         # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
                         # r = clockwise rotation_angle 
-                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
-                                          [0, pix_scale/3600.0]]
-                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
+                        new_wcs.wcs.cd = [[-pix_scale / 3600.0, 0], 
+                                          [0, pix_scale / 3600.0]]
+                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[ i * 2 + j]], 1)
                         
                         #print "Pix Centers = ",pix_centers[i*2+j]
                         #print "New Pix Centers = ", new_pix_center
@@ -1138,10 +1138,10 @@ class MEF (object):
                     else:
                         # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
                         log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
-                        if (i*2+j)==0: det_id = 4
-                        elif (i*2+j)==1: det_id = 1
-                        elif (i*2+j)==2: det_id = 3
-                        elif (i*2+j)==3: det_id = 2
+                        if (i*2+j) == 0: det_id = 4
+                        elif (i*2+j) == 1: det_id = 1
+                        elif (i*2+j) == 2: det_id = 3
+                        elif (i*2+j) == 3: det_id = 2
 
                     # DETSEC and DATASEC
                     data_sec = '[%i:%i,%i:%i]' % (5, 2044, 5, 2044)
@@ -1159,7 +1159,7 @@ class MEF (object):
                     prihdu.header.set('DET_ID', 'SG%s'%det_id, 
                                           "PANIC Detector id SGi [i=1..4]")
                     
-                    out_hdulist.append(prihdu)    
+                    out_hdulist.append(prihdu)
                     out_hdulist.verify('ignore')
                 
                     new_filename = file.replace(".fits", 
