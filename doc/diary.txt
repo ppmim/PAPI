@@ -5752,6 +5752,8 @@ ahora falla getPointingOffsets !!!!
 - Matilde comprueba que efectivamente los NaN en IRAF los muestra como <0 y que los
 trata como 0s, pues ella calculó la media en una ventanita con NaNs y efectivamente 
 los trataba como Os.
+Yo compruebo que Numpy trata los NaN como NaN, y en cualquier operación da como
+resultado otro NaN. Sin embargo, hay funciones que nos permiten tratar los NaN como 0's: numpy.nansum
 
 - El problema que tengo ahora es la segunda sustracción de cielo, pues no se enmascaran
 correctamente todos los objectos, y por tanto al crear el cielo a restar están todos 
@@ -6951,7 +6953,6 @@ muy fácilmente al cambiar el usuario el filtro (Set filename filter) en la GUI 
    
 23-Abril-2015
 -------------
-(P) Continuar con depuración QL e intentar implementar sky-estimation from a set of images...(ala Matilde).
 - Continuo con la depuración del QL:
   - bugfix en applyDarkFlat cuando sólo hay BPM.
   - bugfix en subtract own-sky
@@ -6964,7 +6965,6 @@ muy fácilmente al cambiar el usuario el filtro (Set filename filter) en la GUI 
 
 24-Abril-2015
 -------------
-(P) -resolver bug de do_photometry()
 - Añado la opcion de mostar pdf en el QL para los ficheros obtenidos de la cola de procesamiento (checkDoneQueue);
 el objetivo es poder mostrar los pdf que genere do_photometry(). Pero sigue dando problemas el uso de matplotlib
 desde una hebra/proceso:
@@ -7030,14 +7030,87 @@ https://github.com/vterron/lemon/commit/bddfacd95e6985543f4f7464da417ec3d49c6c39
 ===> de momento, habilito 'inparallel' tanto en panic1, panic22 y panic35(estaba ya activado)
 
 
+28-Abril-2015
+-------------
+- Compruebo que el 'Median combine of images (con sigmaclip)' de un cubo de datos
+lo hace IRAF para cada plano, produciendo al final una imagen-cubo, es decir, hace
+el combine para cada plano uno a uno.
+Si intentamos combinar imagenes cubo con no-cubo, IRAF da un Warning, pero se lanza
+ninguna Excepcion, por lo que el QL no se entera, aunque no se genera ninguna imagen.
+
+- Prueba de PAPI para reducir toda una noche, por ejemplo, 2015-03-10:
+
+   > ./papi.py -s /data1/PANIC/2015-03-10/ -d /data2/PAPI_tests/prueba1
+
+   con:
+     ext_calibration_db = /data2/Masters2
+     apply NLC = false
+     BPM = none
+     applyDF = 0
+     
+     - En principio va bien.
+     
+   con:
+     ext_calibration_db = /data2/Masters2
+     applyNLC = True
+     applyDF = 1
+     
+     aparecen los NaN y luego O's (IRAF) !!!
+     Numpy trata los NaN como NaNs, y cualquier operación con ellos produce otro NaN.
+
+     Corrijo en datase.py::GetFiles() el parametro ROUND para que no sea tan
+     permisivo con el valor aprox. del TEXP; antes ROUND=0.5, ahora ROUND=0.1;
+     pues luego en applyDarkFlat o calTwFlat puede fallar pues la precisión 
+     buscada es mayor.
+     
+     
+- Añado rutina nan2num  al modulo misc.statutils.py
+- Encuentro codigo interesante: https://github.com/nhmc/Barak/blob/master/barak/
+- Encuentro documentación interesante para un pipeline: http://members.galev.org/rkotulla/research/podi-pipeline/
+  y además un portal con muy buena pinta para un Archiv+Pipelien !!! == > https://portal.odi.iu.edu/index/front
+  y una charla muy interesante sobre el pipeline: http://members.galev.org/rkotulla/wp-content/uploads/2013/04/podi_update+progress__75dpi.pdf
+  
+
+(P) - ver de nuevo el bug al final de la reducción con imgTrim y la weight image; a pesar de poner purge=True,
+sale el error.
+
+- Intento ver si hay una forma fácil de poner un toolTip en el QL (pyqt tooltip QTreeview), pero no parece
+que sea evidente...
+
+- Como lo del toolTip no es evidente, añado la función "Image Info" al QL para que muestre la información
+básica de fichero actualmente selecciónado. El objetivo es ver de forma rápida si por ejemplo es un MEF o SEF,
+si es un cubo, el nro. de COADDS, ITIME, OBS_TOOL, etc..
+
+- PAPI se queda atascado en SWARP cuando hace lo siguiente:
+
+swarp -c /home/panic/DEVELOP/papi/config_files/swarp.conf -WEIGHTOUT_NAME /data2/tmp/PANIC_SEQ_Q03_coadd_g4Sl2Z.weight.fits -IMAGEOUT_NAME /data2/tmp/PANIC_SEQ_Q03_coadd_g4Sl2Z.fits -COPY_KEYWORDS OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT -HEADER_SUFFIX .fits.head /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0026_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0027_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0028_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0029_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0030_LC_coadd.Q03_F.skysub.ast.fits
+
+(las imagenes están muy desenfocadas !)
+
+===> Quizás habría que poner algun timeout al procesamiento de una secuencia, para que no se 
+quede ahí indefinidamente y no siga procesando las demas...; en principio el metodo get(timeout) multiprocessing.Pool().
 
 
 
 
 
-
-
-
+Tratamiento NaNs
+----------------
+- iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado 
+- numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
+  que te permiten tratarlos como 0's (numpy.nansum)
+  Además, tengo una rutina muy util en misc.statutils, llamada nan2num(a, replace)
+  
+- SExtractor: leido en el foro que los reconoce y los sabe tratar (como ?).
+  Si embargo, he leido que aconsejan sustituirlos por -BIG (-1e+30)
+  """
+  Sextractor incorrectly registers the background level as NAN and finds no sources for images with NAN values.  Two workarounds for this problem that we found to be effective are:
+  Edit image so that NANs are changed to a value less than or equal to –BIG.  BIG is defined in the sextractor header files as 1e+30, if a pixel is smaller than this then sextractor will ignore it.
+  Perform manual estimation of background by editing default.sex configuration file parameters as follows: “BACK_TYPE MANUAL”, “BACK_VALUE  <background value>”
+  """
+  En el log de Sextractor (r20), encuentro el siguiente comentario de E.Bertin: 
+  "Discard NaN pixels in non-weighted background measurements (as in SWarp)."
+ 
 Revision de funciones de QL
 ---------------------------
 *) Pop-up menu
@@ -7047,7 +7120,7 @@ Revision de funciones de QL
    Si hay algun Flat que no es compatible, no lo usa (Frame skipped), pero en consola QL no dice nada, sólo avisa en 
    consola Linux.
  3-Build Master Twlight Flat -- algunos errores; solucionados.
-        Ahora comprueba de forma exhaustiva el ITIME,NCOADDS.
+        Ahora comprueba de forma exhaustiva el ITIME, NCOADDS.
  
  4-Build Master Dome Flat: OK, incluso sólo con 1 on, 1 off
  5-Build GainMap: 
@@ -7065,8 +7138,9 @@ Revision de funciones de QL
     - puede que no encuentre las calibraciones si no esta cargado en el /data2/out y 
     tampoco están en el directorio ext_calibration_db.
     - además puede que no las encuentre debido al tipo de fichero (MEF o SEF).
- 8- Do photmetry: bug !! 
- 9- Do astrometry:
+ 8- Do photmetry: bug !! fixed 
+ 9- Do astrometry: OK; now solve-field --cpulimit works due 'inparallel' parameter in astrometry config file.
+ 
  
    
 Comentarios sobre reducción y datos tomados para Matilde
@@ -7075,6 +7149,14 @@ Comentarios sobre reducción y datos tomados para Matilde
 uno de cada tipo (1 ON, 1 OFF). ¿ es eso correcto ? Yo tenía
 un mínimo de 3 en la rutina de calDomeFlat.
 - En ese mismo día, los DomeFlat son también cubos; ¿ basta con sumarlos ?
+- Si se aplica NLC, a los pixeles malos se les asigna el valor NaN, que luego
+en IRAF (por ejemplo) los convirte/trata como 0s, y son arrastrados
+para el resto de la Pipeline. ¿ qué hacer con esos 0s ??
+- Las imagenes con NCOADD>1, al hacer la NLC hay que hacerla de
+forma "aproximada" dividiendo por NCOADDS !!
+- No hay DARKs para todo, debido al tema de los cubos y getDarks.py, y que ahora ya
+está solucionado (en principio...).
+
 
 
 
@@ -7083,7 +7165,7 @@ un mínimo de 3 en la rutina de calDomeFlat.
 Posibles causas del problema del Transito WASP:
 ==============================================
 0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
-¿ que hacer con los BP ????
+   ¿ que hacer con los BP ????
 1- fueron reducidas con modo quick
 2- no tiene ni Dark y Flat
 3- (creo) que fueron reducidas con el dxtalk activado
@@ -7095,16 +7177,16 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi (buscar TODO)
 - un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
 la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina la ejecución actual.
-- intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararllo (do_raw_astrometry) !!
+- intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararlo (do_raw_astrometry) !!
 - Averiguar para que se necesita ENOISE y EGAIN !!!
 - Me surge la duda de que diferencia entre SuperFlat y TwFlat; básicamente son iguales,
 excepto que en TwFlat que resta el dark y en SuperFlat no se hace nada.
 - Cuestionarse donde usar ExecTaskThread, pues de esa forma si podemos obtener el
 error que se pueda producir (via Excepcion).
 - Comprobar que el tipo TW_FLAT no se usa, sólo se usa SKY_FLAT; en principio no es necesario distinguir DUSK/DAWN FLATS
-- Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi.
 - Probar a instalar PAPI en un directorio del sistema único y ver si lo pueden ejecutar todos los usuarios.
 - Ver la opción de añadir a "todas" la llamadas de SExtractor la máscaras de pixeles malos como un WEIGHT_MAP
 - Añadir a astrowarp la opcion de usar ajuste PSF para la astrometría (ala http://pythonhosted.org/pyplate/index.html); antes 
@@ -7113,13 +7195,20 @@ no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
 - En los cubos de datos, al hacer el coadd, el TEXP resultante puede que no coincida con ningun dark tomado de forma automática por el OT ??
   Ejemp:
    > papi.py -c config_files/papi.cfg -s /data1/PANIC/2015-03-07/ -S 20 20 -W Q1 -M quick-lemon
-- Retomar el tema de mejorar y añadir a PAPI la suma de cubos con alineado (align_stack_cube.py).
+  
+  Esto en principio se solucionó con una nueva version de getDarks.py de forma que cuando se encuentra un
+  cubo, toma un dark con NCOADDS igual al numero de capas del cubo, en lugar de tomar 1 solo COADD con ITIME.
+  Esto lo hablé com Matilde y le pareció bien.
+   
+- Retomar el tema de mejorar y añadir a PAPI la suma de cubos con alineado (align_stack_cube.py), o al menos 
+que la suma sea un combine+sigclip.
 - Añadir quizas una opción genérica applyCalibs y que ahí pregunte que quieres hacer (DARK, FLAT, BPM, NLC)
 - Realizar analisis astrometría ala Hervé (ver notas teleconf) con psfex --partly done
 - Probar ultimos "consejos" de RM sobre el memory issue! (ver mail 11-Marzo-2015)
 - Probar reboot como usuario panic
 - Añadir opcion de dar estimación del cielo de un conjunto de imagenes con dithering:
-básicamente es hacer un combine con un sigma reject de los objetos.
+básicamente es hacer un combine con un sigma reject de los objetos : 
+   ---> Esto está ya implementado ya en el QL: Math-->Combine Images (median+sigclip)
 
 - Resolver tratamiento BP en gainmap (level, etc...); ahora lo mejor es no detectarlos
 poniendo el umbral muy alto !!
@@ -7227,7 +7316,8 @@ nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
 
 - iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado ==> estudiar como puede afectar !!!
-    
+  numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
+  que te permiten tratarlos como 0's (numpy.nansum)
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
 - limpiar fichero de configuración de variables que no usamos.

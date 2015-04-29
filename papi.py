@@ -345,9 +345,15 @@ def main(arguments = None):
                              types_to_reduce=stype)
                 
     except RS.ReductionSetException, e:
-        print e
+        log.error("Error during data reduction: %s " % str(e))
+    
+    # The following handles ctrl-c. We need to do it this way due to a
+    # bug in multiprocessing, see:
+    # http://stackoverflow.com/questions/1408356/keyboard-interrupts-with-pythons-multiprocessing-pool
+    # and http://bugs.python.org/issue8296.
     except (KeyboardInterrupt, SystemExit):
-        raise
+        log.error("Ctrl-c, KeyboardInterrupt !")
+        sys.exit()
     except Exception, e:
         print "Cannot reduce the Data Set, check error log...."
         print str(e)

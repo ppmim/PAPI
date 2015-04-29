@@ -271,7 +271,7 @@ class NonLinearityCorrection(object):
                 raise ValueError('Mismatch of detector IDs for extension' %extname)
 
             # Work around to correct data when NCOADDS>1
-            if hdulist[0].header['NCOADDS']>1:
+            if hdulist[0].header['NCOADDS'] > 1:
                 if self.coadd_correction:
                     log.info("NCOADDS>1; Doing ncoadd correction...")
                     n_coadd = hdulist[0].header['NCOADDS']

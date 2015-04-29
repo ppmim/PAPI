@@ -270,7 +270,6 @@ class ReductionSet(object):
         else:
             self.out_dir = out_dir
             
-        
         if not os.path.exists(self.out_dir):
             raise Exception("Output dir does not exist.")
         
@@ -311,16 +310,21 @@ class ReductionSet(object):
         # 
         self.non_linearity_apply = self.config_dict['nonlinearity']['apply']
         if self.non_linearity_apply:
-            myhdulist = fits.open(rs_filelist[-1])
-            if myhdulist[0].header['READMODE'] == 'line.interlaced.read':
-                self.non_linearity_model = self.config_dict['nonlinearity']['model_lir']
-            elif myhdulist[0].header['READMODE'] == 'fast-reset-read.read':
-                self.non_linearity_model = self.config_dict['nonlinearity']['model_rrrmpia']
-            else:
-                log.warning("Non-Linearity model does not match. Correction de-activated.")
-                self.non_linearity_apply = False
-                self.non_linearity_model = None
-
+            try:
+                myhdulist = fits.open(rs_filelist[-1])
+                if myhdulist[0].header['READMODE'] == 'line.interlaced.read':
+                    self.non_linearity_model = self.config_dict['nonlinearity']['model_lir']
+                elif myhdulist[0].header['READMODE'] == 'fast-reset-read.read':
+                    self.non_linearity_model = self.config_dict['nonlinearity']['model_rrrmpia']
+                else:
+                    log.warning("Non-Linearity model does not match. Correction de-activated.")
+                    self.non_linearity_apply = False
+                    self.non_linearity_model = None
+            except Exception, e:
+                msg = "Error while reading READMODE keyword on file %s" % rs_filelist[-1]
+                log.error(msg)
+                raise Exception(msg)
+            
         #
         # Reduction mode (lemon=for LEMON pipeline, quick=for QL, science=for 
         # science, lab=laboratory) 
@@ -901,36 +905,36 @@ class ReductionSet(object):
         filter = obj_frame.getFilter()
         
         # Init the DB (ext_db is always initialited whether db!=None)  
-        if self.db==None: 
+        if self.db == None: 
             self.__initDB()
 
         # DARK - Does require equal EXPTIME Master Dark ???
         # First, look for a DARK_MODEL
         master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) 
-        if len(master_dark)==0 and self.ext_db!=None:
+        if len(master_dark) == 0 and self.ext_db != None:
             master_dark = self.ext_db.GetFilesT('MASTER_DARK_MODEL', -1)
         
         # Secondly (hopefully), try to find a MASTER_DARK with equal expTime
-        if len(master_dark)==0:
+        if len(master_dark) == 0:
             log.info("Now, trying to find a MASTER_DARK")
             master_dark = self.db.GetFilesT('MASTER_DARK', expTime)
-        if len(master_dark)==0 and self.ext_db!=None:
+        if len(master_dark) == 0 and self.ext_db != None:
             log.info("Last chance to find a MASTER_DARK in ext_DB")
             master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime)
         
              
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
-        if master_flat==[]:
+        if master_flat == []:
             master_flat = self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
-        if len(master_flat)==0 and self.ext_db!=None:
+        if len(master_flat) == 0 and self.ext_db != None:
             master_flat = self.ext_db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
-            if len(master_flat)==0:
+            if len(master_flat) == 0:
                 master_flat=self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
 
         # BPM                
         master_bpm = self.db.GetFilesT('MASTER_BPM')
-        if len(master_bpm)==0 and self.ext_db!=None:
+        if len(master_bpm) == 0 and self.ext_db != None:
             master_bpm = self.ext_db.GetFilesT('MASTER_BPM')
 
         log.debug("Master Darks found %s", master_dark)
@@ -1440,9 +1444,9 @@ class ReductionSet(object):
         log.debug("Start subtractNearSky")
         
         # default values
-        if near_list==None:
+        if near_list == None:
             near_list = self.rs_filelist
-        if out_filename==None: 
+        if out_filename == None: 
             out_filename = self.out_file
         
         
@@ -2163,8 +2167,8 @@ class ReductionSet(object):
         last_filter = full_flat_list[0][1]
         group=[]
         k=0
-        while k<len(full_flat_list):
-            while k<len(full_flat_list) and full_flat_list[k][1]==last_filter:
+        while k < len(full_flat_list):
+            while k < len(full_flat_list) and full_flat_list[k][1] == last_filter:
                 group.append(full_flat_list[k][0])
                 k+=1
             #create the new master
@@ -2184,7 +2188,7 @@ class ReductionSet(object):
                 log.error("Some error while creating master DomeFlat: %s",str(e))
                 log.error("but, proceding with next flat group ...")
                 #raise e
-            if k<len(full_flat_list):
+            if k < len(full_flat_list):
                 # reset the new group
                 group=[]
                 last_filter=full_flat_list[k][1]
@@ -2503,7 +2507,7 @@ class ReductionSet(object):
         # conversion to MEF if needed. 
         # Note2: NonLinearityCorrection() performs the NLC in parallel,
         # instead of processing the sequence file by file.
-        if self.non_linearity_apply==True:
+        if self.non_linearity_apply == True:
             master_nl = self.non_linearity_model # (lir or rrrmpia)
             try:
                 log.info("**** Applying Non-Linearity correction ****")
@@ -2512,8 +2516,8 @@ class ReductionSet(object):
                             sequence, out_dir=self.temp_dir, suffix='_LC')
                 corr_sequence = nl_task.runMultiNLC()
 
-            except Exception,e:
-                log.error("Error while applying NL model: %s"%str(e))
+            except Exception, e:
+                log.error("Error while applying NL model: %s" % str(e))
                 raise e
             
             sequence = corr_sequence
@@ -2620,8 +2624,9 @@ class ReductionSet(object):
             try:
                 # Generate a random filename for the master, to ensure we do not
                 # overwrite any file
+                filter_name = cfits.getFilter()
                 output_fd, outfile = tempfile.mkstemp(suffix='.fits', 
-                                                      prefix='mDFlat_', 
+                                                      prefix='mDFlat_' + filter_name + '_', 
                                                       dir=self.out_dir)
                 os.close(output_fd)
                 os.unlink(outfile) # we only need the name
@@ -2680,8 +2685,8 @@ class ReductionSet(object):
 
                 # If some kind of master darks were found, then go to MasterTwilightFlat
                 if len(master_darks) > 0 or master_dark_model != None:
-                    log.debug("MASTER_DARKs = %s"%master_darks)
-                    log.debug("MASTER_DARK_MODEL = %s"%master_dark_model)
+                    log.debug("MASTER_DARKs = %s" % master_darks)
+                    log.debug("MASTER_DARK_MODEL = %s" % master_dark_model)
                     
                     # Get filter name for filename
                     filter_name = cfits.getFilter()
@@ -2776,11 +2781,14 @@ class ReductionSet(object):
             except Exception,e:
                 log.error("[reduceSeq] Error while processing Focus Series: %s",str(e))
                 raise e
+        
         elif cfits.isScience():
+            
             l_out_dir = ''
             results = None
             out_ext = []
             log.info("[reduceSeq] Reduction of SCIENCE Sequence: \n%s"%str(sequence))
+        
             if len(sequence) < self.config_dict['general']['min_frames']:
                 log.info("[reduceSeq] Found a too SHORT Obs. object sequence.\n\
                  Only %d frames found. Required >%d frames"%(len(sequence),
@@ -2799,7 +2807,7 @@ class ReductionSet(object):
                 dark, flat, bpm = None, None, None
                 if self.red_mode == 'quick' or self.red_mode == 'quick-lemon':
                     # Quick-Mode: optionally calibrations are used.
-                    if self.apply_dark_flat==1 or self.apply_dark_flat==2: 
+                    if self.apply_dark_flat == 1 or self.apply_dark_flat == 2: 
                         dark, flat, bpm = self.getCalibFor(sequence)
                 else:
                     # Science-Mode: always calibration are required !
@@ -2818,12 +2826,12 @@ class ReductionSet(object):
                 # Select the detector to process (Q1, Q2, Q3, Q4, All)
                 detector = self.config_dict['general']['detector']
                 q = -1 # all
-                if next==4:
-                    if detector=='Q1': q = 0   # SG1
-                    elif detector=='Q2': q = 1 # SG2
-                    elif detector=='Q3': q = 2 # SG3
-                    elif detector=='Q4': q = 4 # SG4
-                    elif detector=='Q123': q = -4 # all except SG4
+                if next == 4:
+                    if detector == 'Q1': q = 0   # SG1
+                    elif detector == 'Q2': q = 1 # SG2
+                    elif detector == 'Q3': q = 2 # SG3
+                    elif detector == 'Q4': q = 4 # SG4
+                    elif detector == 'Q123': q = -4 # all except SG4
                     else: q = -1 # all detectors
                     if q >=0 :
                     #if q!=-1:
@@ -2838,7 +2846,7 @@ class ReductionSet(object):
                         # Nothing to do, **all** detectors will be processed
                         pass
 
-                if parallel==True:
+                if parallel == True:
                     ######## Parallel #########
                     log.info("[reduceSeq] Entering PARALLEL data reduction ...")
                     try:
@@ -2854,14 +2862,14 @@ class ReductionSet(object):
                         results = []
                           
                         for n in range(next):
-                            if next==1 and q>=0:
+                            if next == 1 and q >= 0:
                             #if next==1 and q!=-1: # single detector processing
                                 q_ext = q + 1
                             else:
                                 q_ext = n + 1
                             log.info("[reduceSeq] ===> (PARALLEL) Reducting detector %d", q_ext)
                             
-                            if q==-4 and q_ext==4:
+                            if q == -4 and q_ext == 4:
                                 # skip detector SG4
                                 continue
                             
@@ -2869,11 +2877,11 @@ class ReductionSet(object):
                             # For the moment, we have the first calibration file 
                             # for each extension; what rule could we follow ?
                             #
-                            if dark_ext==[]: mdark = None
+                            if dark_ext == []: mdark = None
                             else: mdark = dark_ext[n][0] 
-                            if flat_ext==[]: mflat = None
+                            if flat_ext == []: mflat = None
                             else: mflat = flat_ext[n][0]
-                            if bpm_ext==[]: mbpm = None
+                            if bpm_ext == []: mbpm = None
                             else: mbpm = bpm_ext[n][0]
                             
                             l_out_dir = self.out_dir + "/Q%02d" % q_ext
@@ -2914,7 +2922,7 @@ class ReductionSet(object):
                         for result in results:
                             result.wait()
                             # the 0 index is *ONLY* required if map_async is used !!!
-                            out_ext.append(result.get()[0]) 
+                            out_ext.append(result.get(1)[0]) 
 
                         ##for result in results:
                         ##    out_ext.append(result)

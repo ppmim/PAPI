@@ -546,12 +546,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #   TODO : !! Not completelly finished !!!
         ##################################################################
         if self.proc_started:
-            if self.comboBox_QL_Mode.currentText()=="None":
+            if self.comboBox_QL_Mode.currentText() == "None":
                 return
             elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
                 if end_seq: self.processFiles(seq)
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
-                if end_seq and seqType!="SCIENCE":
+                if end_seq and seqType != "SCIENCE":
                     # Build master calibrations
                     self.processFiles(seq)
                 else:
@@ -1591,8 +1591,50 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         if self.m_listView_item_selected:
             display.showFrame(self.m_listView_item_selected)
-        else:
-            print "Error, no file selected !"
+        
+    def image_info_slot(self):
+        """
+        Print on QL-console the basic information of the selected image.
+        """
+        
+        if self.m_listView_item_selected:
+            filename = self.m_listView_item_selected
+            try:
+                # Get file info
+                (date, ut_time, type, filter, texp, detector_id, run_id, 
+                        ra, dec, object, mjd) = self.inputsDB.GetFileInfo(self.m_listView_item_selected)
+                with fits.open(filename) as hdu:
+                    if len(hdu) > 1:
+                        shape = hdu[1].data.shape
+                        fits_type = 'MEF'
+                    else:
+                        shape = hdu[0].data.shape
+                        fits_type = 'SEF'
+                    itime = hdu[0].header['ITIME']
+                    ncoadds = hdu[0].header['NCOADDS']
+                    if 'OBS_TOOL' in hdu[0].header:
+                        is_ot = True
+                    else:
+                        is_ot = False
+                        
+            except Exception, e:
+                msg = "Error reading file %s " % filename
+                log.error(msg)
+                self.logConsole.error(msg)
+                raise Exception(msg)
+            
+            # Print out the info
+            self.logConsole.info("---------------")
+            self.logConsole.info("%s Filename : %s" % (fits_type, filename))
+            self.logConsole.info("Image Shape : %s" % str(shape))
+            self.logConsole.info("Filter : %s " % filter)
+            self.logConsole.info("ITIME : %f " % itime)
+            self.logConsole.info("NCOADDS : %d " % ncoadds)
+            self.logConsole.info("EXPTIME : %f " % texp)
+            self.logConsole.info("TYPE : %s " % type)
+            self.logConsole.info("OT keywords : %s " % is_ot)
+            self.logConsole.info("---------------")
+                                 
             
     def filename_filter_slot(self):
         """ Modify filename filter for the data collector.
@@ -1663,7 +1705,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 #temp.union( set([file for lista in sequences if file in lista]) )
             un_groupped = set(self.inputsDB.GetFiles()) - temp
             """
-            if len(un_groupped)>0:
+            if len(un_groupped) > 0:
                 sequences.append(list(un_groupped))
                 seq_types.append("UNKNOWN")
             
@@ -1745,19 +1787,19 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem = QTreeWidgetItem( self.listView_dataS )
                 (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
                  dec, object, mjd)= db.GetFileInfo(file)
-                elem.setText (0, str(file))
-                elem.setText (1, str(type))
-                elem.setText (2, str(filter))
-                elem.setText (3, str(texp))
-                elem.setText (4, str(date) + "::" + str(ut_time))
-                elem.setText (5, str(object))
+                elem.setText(0, str(file))
+                elem.setText(1, str(type))
+                elem.setText(2, str(filter))
+                elem.setText(3, str(texp))
+                elem.setText(4, str(date) + "::" + str(ut_time))
+                elem.setText(5, str(object))
                 c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
                 if dec < 0: sign = -1
                 else: sign = 1
-                str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
-                str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
-                elem.setText (6, str(str_ra))
-                elem.setText (7, str(str_dec))
+                str_ra = "%02d:%02d:%04.1f" % (c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                str_dec = "%02d:%02d:%02.0f" % (c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
+                elem.setText(6, str(str_ra))
+                elem.setText(7, str(str_dec))
             
             # In addition, if "ALL" is selected, we show the OUTS as well
             if str(self.comboBox_classFilter.currentText()) == "ALL":
@@ -1767,20 +1809,20 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 for file in fileList:
                     elem = QTreeWidgetItem( self.listView_dataS )
                     (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
-                     dec, object, mjd)=db.GetFileInfo(file)
-                    elem.setText (0, str(file))
-                    elem.setText (1, str(type))
-                    elem.setText (2, str(filter))
-                    elem.setText (3, str(texp))
-                    elem.setText (4, str(date) + "::" + str(ut_time))
-                    elem.setText (5, str(object))
+                     dec, object, mjd) = db.GetFileInfo(file)
+                    elem.setText(0, str(file))
+                    elem.setText(1, str(type))
+                    elem.setText(2, str(filter))
+                    elem.setText(3, str(texp))
+                    elem.setText(4, str(date) + "::" + str(ut_time))
+                    elem.setText(5, str(object))
                     c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
                     if dec < 0: sign = -1
                     else: sign = 1
-                    str_ra =  "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
-                    str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
-                    elem.setText (6, str(str_ra))
-                    elem.setText (7, str(str_dec))
+                    str_ra =  "%02d:%02d:%04.1f" % (c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
+                    str_dec = "%02d:%02d:%02.0f" % (c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
+                    elem.setText(6, str(str_ra))
+                    elem.setText(7, str(str_dec))
             
             if elem:
                 self.listView_dataS.setCurrentItem(elem)
@@ -1797,10 +1839,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         
         #### Main Pop-up actions
-        self.dispAct = QtGui.QAction("&Display image", self,
-            shortcut="Ctrl+D",
+        self.dispAct = QtGui.QAction("&Display Image", self,
+            shortcut=self.tr("Ctrl+D"),
             statusTip="Display current selected image", 
             triggered=self.display_slot)
+        
+        self.infoAct = QtGui.QAction("&Image Info", self,
+            shortcut=QKeySequence('Ctrl+H'),
+            statusTip="Show Image basic information", 
+            triggered=self.image_info_slot)
+        self.infoAct.setShortcut(self.tr('Ctrl+H'))
         
         self.copyAct = QtGui.QAction("&Copy files to clipboard", self,
             shortcut="Ctrl+C",
@@ -1908,7 +1956,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             statusTip="Subtract selected files", 
             triggered=self.subtractFrames_slot)
         
-        self.combAct = QtGui.QAction("Combine Images (median)", self,
+        self.combAct = QtGui.QAction("Combine Images (median&sigclip)", self,
             shortcut="Ctrl+*",
             statusTip="Median combine selected files", 
             triggered=self.combFrames_slot)
@@ -2012,6 +2060,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #### Create the 'Files' Popup menu 
             popUpMenu = QtGui.QMenu("QL popup menu", self)
             popUpMenu.addAction(self.dispAct)
+            popUpMenu.addAction(self.infoAct)
             popUpMenu.addAction(self.copyAct)
             popUpMenu.addAction(self.toTextFileAct)
             popUpMenu.addAction(self.ditherAct)
@@ -2067,6 +2116,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Restore default values, because an former call could have changed
             # the state.
             self.dispAct.setEnabled(True)
+            self.infoAct.setEnabled(True)
             self.ditherAct.setEnabled(True)
             self.mDarkAct.setEnabled(True)
             self.mDFlatAct.setEnabled(True)
@@ -2824,7 +2874,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Build list
         #l_list = [ str(item.text()) for item in listItems]
         
-        if len(self.m_popup_l_sel)>2:
+        if len(self.m_popup_l_sel) > 2:
             outfileName = QFileDialog.getSaveFileName(self,
                            "Choose a filename to save under",
                            self.m_outputdir+"/master_twflat.fits", 
@@ -4490,16 +4540,16 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
     
     log.debug("Start mathOp")
     
-    if tempDir==None:
+    if tempDir == None:
         t_dir = "/tmp"
     else:
         t_dir = tempDir
     
-    if outputFile==None:
+    if outputFile == None:
         output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
         os.close(output_fd)
 
-    if operator!='+' and operator!='-' and operator!='/' and operator!='combine':
+    if operator != '+' and operator != '-' and operator != '/' and operator != 'combine':
         log.error("Math operation not supported")
         return None
 
@@ -4507,12 +4557,12 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         # Remove an old output file (might it happen ?)
         misc.fileUtils.removefiles(outputFile)
         ## MATH operation '+'
-        if (operator=='combine' and len(files) > 1):
+        if (operator == 'combine' and len(files) > 1):
             log.debug("Files to combine = [%s]", files )
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
             # Very important to not scale the frames, because it could 
             # produce wrong combined images due to outliers (bad pixels)
-            iraf.mscred.combine(input=("@"+(t_dir+"/files.tmp").replace('//','/')),
+            iraf.mscred.combine(input=("@" + (t_dir+"/files.tmp").replace('//','/')),
                      output=outputFile,
                      combine='median',
                      ccdtype='',
@@ -4527,7 +4577,7 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
                      #expname='EXPTIME'
                      #ParList = _getparlistname ('flatcombine')
                      )
-        elif (operator=='+' and len(files) > 1):
+        elif (operator == '+' and len(files) > 1):
             log.debug("Files to sum = [%s]", files )
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
             # Very important to not scale the frames, because it could 
@@ -4541,7 +4591,7 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
                      hsigma=3,
                      subset='no',
                      scale='none',
-                     weight = 'none'
+                     weight='none'
                      #masktype='none'
                      #verbose='yes'
                      #scale='exposure',
@@ -4560,9 +4610,9 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
             log.error("Operation not allowed")
             return None
     except Exception, e:
-        log.error("[mathOp] An erron happened while math operation with FITS files")
+        log.error("[mathOp] An error happened while math operation with FITS files")
         raise e
     
-    log.debug("mathOp result : %s"%outputFile)
+    log.debug("mathOp result : %s" % outputFile)
     
     return outputFile

@@ -2,9 +2,6 @@
 Statistics procedures.
 """
 
-# %&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&
-# IMPORTS
-# %&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&%&
 
 import math
 import numpy as np
@@ -85,3 +82,23 @@ def nanmedian(arr):
     """
     return numpy.median(arr[arr==arr])
 
+def nan2num(a, replace=0):
+    """ Replace `nan` or `inf` entries with the `replace` keyword
+    value.
+
+    If replace is "mean", use the mean of the array to replace
+    values. If it's "interp", intepolate from the nearest values.
+    """
+    a = numpy.atleast_1d(a)
+    b = numpy.array(a, copy=True)
+    bad = numpy.isnan(b) | numpy.isinf(b)
+    if replace == 'mean' and (~bad).sum() > 0:
+        replace = b[~bad].mean().astype(b.dtype)
+    elif replace == 'interp':
+        x = numpy.arange(len(a))
+        replace = numpy.interp(x[bad], x[~bad], b[~bad]).astype(b.dtype)
+        
+    b[bad] = replace
+    if len(b) == 1:
+        return b[0]
+    return b

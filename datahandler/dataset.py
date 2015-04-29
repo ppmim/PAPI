@@ -381,10 +381,10 @@ class DataSet(object):
                 
             # TEXP: Any 'texp' requirement 
             if  texp == -1:
-                s_texp = "texp>=%f" %(texp)
+                s_texp = "texp>=%f" %texp
             else:
-                ROUND = 0.5  # We do not need an accurate value !
-                s_texp = "texp>%f and texp<%f" %(texp-ROUND, texp+ROUND)
+                ROUND = 0.1  # We do not need an accurate value !
+                s_texp = "texp>=%f and texp<=%f" %(texp - ROUND, texp + ROUND)
 
             # FILTER: The master dark does not have a 'filter' requirement
             if type == 'MASTER_DARK' or filter == "ANY":
