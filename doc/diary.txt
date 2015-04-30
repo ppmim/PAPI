@@ -7071,8 +7071,6 @@ ninguna Excepcion, por lo que el QL no se entera, aunque no se genera ninguna im
   y una charla muy interesante sobre el pipeline: http://members.galev.org/rkotulla/wp-content/uploads/2013/04/podi_update+progress__75dpi.pdf
   
 
-(P) - ver de nuevo el bug al final de la reducción con imgTrim y la weight image; a pesar de poner purge=True,
-sale el error.
 
 - Intento ver si hay una forma fácil de poner un toolTip en el QL (pyqt tooltip QTreeview), pero no parece
 que sea evidente...
@@ -7089,6 +7087,53 @@ swarp -c /home/panic/DEVELOP/papi/config_files/swarp.conf -WEIGHTOUT_NAME /data2
 
 ===> Quizás habría que poner algun timeout al procesamiento de una secuencia, para que no se 
 quede ahí indefinidamente y no siga procesando las demas...; en principio el metodo get(timeout) multiprocessing.Pool().
+
+
+29-Abril-2015
+-------------
+- Instalo latex (zypper texlive-latex) en panic1 para poder generar el latex y posterior PDF de la documetación de PANIC; instala
+un montón de paquetes y ocupa casi 1 GB.
+
+- Se me vuelve a llenar el /tmp de panic1 debido a solve-field; escribo una issue en https://github.com/dstndstn/astrometry.net/issues/45
+pues parece que puede haber un problema en astrometry-netv0.50 y no se borran los /tmp/tmp.sanitized files.
+Otra solución  sería usar el modificador --temp-dir para que indicarle donde grabar todos los temp files; esto implicaría
+modificar un poco el modulo solveAstrometry.py --> DONE
+
+- Modificación en solveAstrometry.py para que la funcion solveField admita el parametro temp_dir para AstrometryNet y así
+evitar el llenado del /tmp (mientras solventan el bug en Astrometry.net reportado por JM)
+
+- Descubro, que al hacer la NLC, como se propagan los NaNs al hacer dividir por el Flat en applyDarkFlat (numpy), pues no se restó
+dark, que los hubiera convertido en O's (IRAF !!), entonces el solveField (astrometry.net) no es capaz de resolver !!
+
+
+
+30-Abril-2015
+-------------
+- bugfix al final de la reducción con imgTrim y la weight image por la doble "//" que no le gusta a IRAF (imcopy).
+
+- Me quedo depurando el nuevo solveField y ver como le afecta la NLC !!! -- ojo, tengo en applyDarkFlat convertir los NaNs en 0s
+
+(P) - ROTANGLE -- añadir opción de verlo en QL
+(P) - Como es posibles que GainMap saque aún pixeles malos con los umbrales tan altos !!! crear un valor "clave" para no-limits ??
+
+- Pruebas PAPI:
+
+  *) NLC + xtalk (sin applyDarkFlat): astrometry.net OK, swarp SI termina ...
+  *) NLC (sin xtalk ni DF): astrometry.net OK, pero NO termina swarp !!!!!!!!!!!!!!!!
+  en concreto es por un fichero al que SWARP no le sabe calcular las coordenadas ni la pix_scale !!! /data2/PAPI_tests/prueba2/Q02/EPerez_UGCA290_March9_0054_LC_coadd.Q02.skysub.ast.fits
+  Pero si lo abro con DS9, todo parece correcto, y en la cabecera no veo nada raro....
+  
+  *) Nada: OK, todo ok.
+  *) NLC + xtalk + DF=1: astrometry no resuelve , por los NaNs!! sin embargo, si los sustituyo por 0's la imagen
+  /data1/PANIC/2015-03-09/EPerez_UGCA290_March9_0046.fits no se resuelve la astrometría, y además tiene una pinta fea la prereducida...
+  sin embargo, las demás parecen OK.
+  (ver esto con más detalle, quizás sea el GainMap !!!)
+  
+  
+  
+
+
+
 
 
 
@@ -7177,6 +7222,7 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- OJO, en reductionset.py, tengo en el multiprocesing.pool.get(N) N=1 !!!!! para una prueba !!! que parece que no funciona...
 - Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi (buscar TODO)
 - un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
 la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina la ejecución actual.

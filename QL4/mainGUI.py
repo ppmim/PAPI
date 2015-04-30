@@ -3907,6 +3907,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                     # args of the solveAstrometry
                                                     file_to_calib, 
                                                     self.m_outputdir,
+                                                    self.m_tempdir,
                                                     self.config_opts['general']['pix_scale'])
                     thread.start()
                 except:

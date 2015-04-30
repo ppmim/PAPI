@@ -48,6 +48,7 @@ from optparse import OptionParser
 from scipy import interpolate, ndimage
 
 import misc.fileUtils
+import misc.statutils
 import misc.utils as utils
 import datahandler
 
@@ -413,7 +414,10 @@ class ApplyDarkFlat(object):
                     # no matter if they are MEF or single HDU fits.  
                     sci_data = (sci_data - dark_data) / flat_data
                     
-
+                    # TEST to convert NaNs to 0's !!
+                    #sci_data = misc.statutils.nan2num(sci_data, 0)
+                    # end-test
+                    
                     # Now, apply BPM
                     if self.__bpm != None:
                         if sci_data.shape != bpm_data.shape:
@@ -431,7 +435,7 @@ class ApplyDarkFlat(object):
                             log.debug("Nothing to do with BPM")
 
                     if n_ext > 1: # it means, MEF
-                        f[chip+1].data = sci_data
+                        f[chip + 1].data = sci_data
                     else:
                         f[0].data = sci_data
 

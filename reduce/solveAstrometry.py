@@ -108,7 +108,7 @@ def readHeader(filename, extension=1):
         return (scale, ra, dec, instrument, is_science)
         
     
-def solveField(filename, tmp_dir, pix_scale=None, extension=0):
+def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
     """
     Do astrometric calibration to the given filename using Astrometry.net 
     function 'solve-field'.
@@ -122,8 +122,11 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         Filename of the frame to solve; cannot be a MEF file, Astrometry.net
         only supports MEF files with the option --extension. 
         
+    out_dir: str
+        Directory where out files are saved.
+        
     tmp_dir: str
-        Directory where output files are saved
+        Directory where temp files of solve-field are saved and then deleted.
 
     pix_scale: float
         Default pixel scale to use in case it cannot be find out from header
@@ -131,19 +134,21 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     extension: int
         In case of MEF file, extension to be used to solve field. Default 0
         extension means 'no-mef', and then one single extension.
-        
+
     Returns
     -------
     Filename of solved file (filename.new.fits) 
-    
     """
-    
+
     #
-    # Create temporal directory
+    # Create temporal and or output directory
     #    
     if not os.path.isdir(tmp_dir):
         os.makedirs(tmp_dir)
     
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+        
     #
     # Read header parameters
     #    
@@ -155,7 +160,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     
     # Extension paramter
     if extension > 0 :
-        ext_str = "--extension %d"%int(extension)
+        ext_str = "--extension %d" % int(extension)
     else:
         ext_str = ""
         
@@ -173,7 +178,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         raise Exception(msg)
     
     if not os.path.exists(path_astrometry + "/solve-field"):
-        raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s"%path_astrometry)
+        raise Exception("[solveAstrometry] Error, cannot find Astrometry.net binaries in %s" % path_astrometry)
 
 
     #
@@ -191,19 +196,19 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         # radius is used (0.5 degrees)
         # Although --downsample is used, scale does not need to be modified
         str_cmd = "%s/solve-field -O -p --scale-units arcsecperpix --scale-low %s \
-        --scale-high %s --ra %s --dec %s --radius 0.5 -D %s %s --downsample 2 %s\
-        "%(path_astrometry, scale-0.05, scale+0.05, ra, dec, tmp_dir, filename, ext_str)
+        --scale-high %s --ra %s --dec %s --radius 0.5 -D %s --temp-dir %s %s --downsample 2 %s\
+        "%(path_astrometry, scale-0.05, scale+0.05, ra, dec, out_dir, tmp_dir, filename, ext_str)
     # 2) RA, Dec are unknown but scale is
     elif ra == -1 or dec ==-1 :
         logging.debug("RA, Dec are unknown but scale is")
         str_cmd = "%s/solve-field -O -p --scale-units arcsecperpix --scale-low %s \
-        --scale-high %s -D %s %s %s --downsample 2\
-        "%(path_astrometry, scale - 0.1, scale + 0.1, tmp_dir, filename, ext_str)
+        --scale-high %s -D %s --temp-dir %s %s %s --downsample 2\
+        "%(path_astrometry, scale - 0.1, scale + 0.1, out_dir, tmp_dir, filename, ext_str)
     # 3) None is known -- blind calibration
     if (ra==-1 or dec==-1) and scale==-1:
         logging.debug("Nothing is known")
-        str_cmd = "%s/solve-field -O -p -D %s %s %s --downsample 2\
-        "%(path_astrometry, tmp_dir, filename, ext_str)
+        str_cmd = "%s/solve-field -O -p -D %s --temp-dir %s %s %s --downsample 2\
+        "%(path_astrometry, out_dir, tmp_dir, filename, ext_str)
     
     logging.debug("CMD=" + str_cmd)
     print "CMD_Astrometry.net =", str_cmd
@@ -233,12 +238,12 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
     #
     # Look for filename.solved to know if field was solved
     #
-    solved_file = os.path.join(tmp_dir, 
+    solved_file = os.path.join(out_dir, 
         os.path.splitext(os.path.basename(filename))[0] + ".solved")
 
     if os.path.exists(solved_file):
         logging.info("Field solved !")
-        new_file = os.path.join(tmp_dir, os.path.splitext(os.path.basename(filename))[0] + ".new")
+        new_file = os.path.join(out_dir, os.path.splitext(os.path.basename(filename))[0] + ".new")
         out_file = new_file.replace(".new", ".ast.fits")
         shutil.move(new_file, out_file)
         
@@ -254,7 +259,7 @@ def solveField(filename, tmp_dir, pix_scale=None, extension=0):
         if match:
             ROT_ANGLE = float(match.group(1))
                 
-        logging.info("ROT_ANGLE = %s"%ROT_ANGLE)
+        logging.info("ROT_ANGLE = %s" % ROT_ANGLE)
         
         # Write value into fits header
         fits.setval(out_file, keyword="ROTANGLE", value=ROT_ANGLE, comment="degrees E of N", ext=0)
@@ -312,7 +317,7 @@ def calc(args):
     """
     return solveField(*args)
         
-def runMultiSolver(files, tmp_dir, pix_scale=None, extension=1):
+def runMultiSolver(files, out_dir, tmp_dir, pix_scale=None, extension=1):
     """
     Run a parallel proceesing to solve astrometry for the input files taking
     advantege of multi-core CPUs.
@@ -330,7 +335,7 @@ def runMultiSolver(files, tmp_dir, pix_scale=None, extension=1):
     results = []
     solved = []
     for file in files:
-        red_parameters = (file, tmp_dir, pix_scale, extension)
+        red_parameters = (file, out_dir, tmp_dir, pix_scale, extension)
         try:
             # Instead of pool.map() that blocks until
             # the result is ready, we use pool.map_async()
@@ -390,6 +395,11 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
                   action="store", dest="output_dir", default="/tmp",
                   help="Place all output files in the specified directory [default=%default]")
     
+    parser.add_option("-t", "--temp_dir",
+                  action="store", dest="temp_dir", default="/tmp",
+                  help="Place all temp files in the specified directory [default=%default]")
+    
+    
     parser.add_option("-p", "--pixel_scale",
                   action="store", dest="pixel_scale", type=float, 
                   help="Pixel scale of the images")
@@ -443,25 +453,27 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
                 hdulist = fits.open(options.source_file)
                 filelist = [options.source_file]
             except:
-                filelist = [line.replace( "\n", "") 
+                filelist = [line.replace("\n", "") 
                             for line in fileinput.input(options.source_file)]
         elif os.path.isdir(options.source_file):
-            filelist = glob.glob(options.source_file+"/*.fit*")
+            filelist = glob.glob(options.source_file + "/*.fit*")
             # Look for subdirectories
             if options.recursive:
                 subdirectories = [ name for name in os.listdir(options.source_file) \
                     if os.path.isdir(os.path.join(options.source_file, name)) ]
                 for subdir in subdirectories:
-                    filelist += glob.glob(os.path.join(options.source_file, subdir)+"/*.fit*")
+                    filelist += glob.glob(os.path.join(options.source_file, subdir) + "/*.fit*")
                 
         # Parallel approach        
-        files_solved = runMultiSolver(filelist, options.output_dir, 
+        files_solved = runMultiSolver(filelist, 
+                                      options.output_dir,
+                                      options.temp_dir,
                                       options.pixel_scale,
                                       options.extension)
         for file in filelist:
             ren_file = os.path.join(options.output_dir,
-                    os.path.basename(os.path.splitext(file)[0]+".new.fits"))
-            if ren_file not in files_solved and file+".not_science" not in files_solved:
+                    os.path.basename(os.path.splitext(file)[0] + ".ast.fits"))
+            if ren_file not in files_solved and file + ".not_science" not in files_solved:
                 files_not_solved.append(file)
         
         # Serial approach
@@ -475,14 +487,14 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
         #        logging.error("Error solving file %s  [%s] "%(file,str(e)))
                     
     else:
-        logging.error("Source file %s does not exists",options.source_file)
+        logging.error("Source file %s does not exists", options.source_file)
         sys.exit()
 
     toc = time.time()
 
-    logging.info("No. files = %s"%len(filelist))
+    logging.info("No. files = %s" % len(filelist))
     # calibracion files (bias, dark, flats, ...) are considered as solved files
-    logging.info("No. files solved = %s"%(len(filelist)-len(files_not_solved)))
+    logging.info("No. files solved = %s"%(len(filelist) - len(files_not_solved)))
     logging.info("----------------")
     logging.info(files_solved)
     print "\n"

@@ -3497,11 +3497,12 @@ class ReductionSet(object):
             for my_file in self.m_LAST_FILES:
                 # Run astrometric calibration
                 try:
-                    solved = reduce.solveAstrometry.solveField(my_file, 
+                    solved = reduce.solveAstrometry.solveField(my_file,
                                   out_dir, # self.temp_dir produces collision
+                                  self.temp_dir,
                                   self.config_dict['general']['pix_scale'])
                 except Exception,e:
-                    raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
+                    raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s" % (my_file, str(e)))
                 else:
                     # Rename the file
                     out_filename = my_file.replace(".fits", ".ast.fits")
@@ -3568,6 +3569,7 @@ class ReductionSet(object):
                 try:
                     solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
                                                     out_dir, # self.temp_dir produces collision
+                                                    self.temp_dir,
                                                     self.config_dict['general']['pix_scale'])
 
                 except Exception,e:
@@ -3774,7 +3776,7 @@ class ReductionSet(object):
                 raise Exception("[reductionset] Cannot solve Astrometry %s"%str(e))
         else:
             try:
-                solved = reduce.solveAstrometry.solveField(out_dir+'/coadd2.fits', 
+                solved = reduce.solveAstrometry.solveField(out_dir + '/coadd2.fits', 
                                                     self.temp_dir,
                                                     self.config_dict['general']['pix_scale'])
             except Exception,e:
@@ -4145,6 +4147,7 @@ class ReductionSet(object):
                 try:
                     solved = reduce.solveAstrometry.solveField(my_file, 
                                 out_dir, # self.temp_dir produces collision
+                                self.temp_dir,
                                 self.config_dict['general']['pix_scale'])
                 except Exception,e:
                     raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
@@ -4243,6 +4246,7 @@ class ReductionSet(object):
                 try:
                     solved = reduce.solveAstrometry.solveField(out_dir + '/coadd1.fits', 
                                                     out_dir, # self.temp_dir produces collision
+                                                    self.temp_dir,
                                                     self.config_dict['general']['pix_scale'])
 
                 except Exception,e:
@@ -4425,6 +4429,7 @@ class ReductionSet(object):
             try:
                 solved = reduce.solveAstrometry.solveField(my_file, 
                                out_dir, # self.temp_dir produces collision
+                               self.temp_dir,
                                self.config_dict['general']['pix_scale'])
             except Exception,e:
                 raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
@@ -4499,8 +4504,9 @@ class ReductionSet(object):
                     raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
             else:
                 try:
-                    solved = reduce.solveAstrometry.solveField(out_dir+'/coadd2.fits', 
+                    solved = reduce.solveAstrometry.solveField(out_dir + '/coadd2.fits', 
                                        out_dir, # self.temp_dir produces collision
+                                       self.temp_dir,
                                        self.config_dict['general']['pix_scale'])
 
                 except Exception,e:

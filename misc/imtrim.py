@@ -26,7 +26,7 @@
 # imtrim.py
 #
 # Created    : 21/01/2009    jmiguel@iaa.es
-# Last update: 28/07/2014    jmiguel@iaa.es: eliminados import noao,ccdred, imred
+# Last update: 28/07/2014    jmiguel@iaa.es: remove import noao,ccdred, imred
 #
 ###############################################################################
 
@@ -73,14 +73,15 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
           
     """ 
 
-    if outputfile==None:
+    if outputfile == None:
         # inputfile name is overwritten        
         outputfile = inputfile
-    elif os.path.exists(outputfile) and outputfile!=inputfile:
+    elif os.path.exists(outputfile) and outputfile != inputfile:
         raise Exception("Error, output file name already exists.")
         
     # clean double slash (//) due to problems in IRAF
-    file = inputfile.replace("//","/") 
+    file = inputfile.replace("//", "/")
+    outputfile = outputfile.replace("//", "/")
     
     log.debug("Start imgTrim ....")
     
@@ -95,7 +96,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     try:
         nx = indata[0].header['NAXIS1']
         ny = indata[0].header['NAXIS2']
-        log.debug("NX=%d  NY=%d"%(nx,ny))
+        log.debug("NX=%d  NY=%d" % (nx, ny))
     except Exception,e:
         raise e
     
@@ -210,26 +211,26 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     start = ny
     step = int(p_step)
     i = start
-    while i>=1:
-        if (lasti==i):
-            std=1.0
+    while i >= 1:
+        if (lasti == i):
+            std = 1.0
         else:
             std = float(iraf.imstat (
                 images=file+"[*,"+str(i)+"]",
                 fields='stddev',format='no',Stdout=1)[0])
         
-        if (std!=0.0):
-            if (i==ny):
+        if (std != 0.0):
+            if (i == ny):
                 ymax = ny
                 break
             else:
-                if (step==1):
+                if (step == 1):
                     ymax = i
                     break
                 else:
                     lasti = i
-                    step = step/2
-                    i=i+2*step
+                    step = step / 2
+                    i= i + 2 * step
         else:
             pass
         i-=step
@@ -237,10 +238,10 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     
     
     # Add a certain number or row/colums to avoid the noise
-    xmin+=10
-    ymin+=10
-    xmax-=10
-    ymax-=10
+    xmin += 10
+    ymin += 10
+    xmax -= 10
+    ymax -= 10
     
     #
     # Finaly, update (overwriting) the original images (.fits, 
@@ -248,8 +249,9 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     # Note that iraf.imcopy makes the WCS update accordingly to the image crop,
     # and modify WCS keywords on header (but not always as we'd wish, e.g.,
     # remove CDi_j values equal to 0)
-    iraf.imcopy(input=file+"["+str(xmin)+":"+str(xmax)+","+
-            str(ymin)+":"+str(ymax)+"]", output=outputfile)
+    log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (file.replace("//", "/"), xmin, xmax, ymin, ymax))
+    iraf.imcopy(input=file.replace("//", "/") + "[" + str(xmin) + ":" + str(xmax) + "," +
+            str(ymin) + ":" + str(ymax) + "]", output=outputfile)
     
     fits.setval(outputfile, keyword='HISTORY', value='Image trimmed', ext=0)
     fits.setval(outputfile, keyword='PAPIVERS', value=__version__, 
@@ -258,19 +260,22 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     # 
     # Look for weight and objs images
     #
-    ima_sec = file.replace(".fits", ".weight.fits")
+    ima_sec = file.replace(".fits", ".weight.fits").replace("//", "/")
     if os.path.exists(ima_sec):
-        iraf.imcopy(input=ima_sec+"["+str(xmin)+":"+str(xmax)+","+
-            str(ymin)+":"+str(ymax)+"]", output=ima_sec)
+        log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_sec, xmin, xmax, ymin, ymax))
+        iraf.imcopy(input=ima_sec + "[" + str(xmin) + ":" + str(xmax) + "," +
+            str(ymin) + ":" + str(ymax) + "]", output=ima_sec)
     
-    ima_objs = file.replace(".fits", "objs.fits")
+    ima_objs = file.replace(".fits", "objs.fits").replace("//", "/")
     if os.path.exists( ima_objs ):
-        iraf.imcopy(input=ima_objs+"["+str(xmin)+":"+str(xmax)+","+
-            str(ymin)+":"+str(ymax)+"]", output=ima_objs)
+        log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_objs, xmin, xmax, ymin, ymax))
+        iraf.imcopy(input=ima_objs + "[" + str(xmin) + ":" + str(xmax) + "," +
+            str(ymin) + ":" + str(ymax) + "]", output=ima_objs)
             
     
     log.debug("....End of imgTrim --> XMIN= %d YMIN=%d XMAX= %d YMAX=%d"
             %(xmin, ymin, xmax, ymax))
+    
     return (xmin, ymin, xmax, ymax)
         
 ###############################################################################

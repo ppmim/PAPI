@@ -43,7 +43,7 @@ import reduce.solveAstrometry
 # for initWCS (fk5prec)
 #from PyWCSTools import wcscon
 
-def initWCS( input_image, pixel_scale):
+def initWCS(input_image, pixel_scale):
     """
     Call this routine to write rough WCS into FITS header and update RA,DEC
     coordinates to J2000.0 equinox; and this way allow SCAMP make astrometry
@@ -571,14 +571,14 @@ class AstroWarp(object):
             log.error("Error, variable PAPI_HOME not defined.")
             raise Exception("Error, variable PAPI_HOME not defined")
 
-        # TODO: I have to provide an alternate way to get a default config dictionary ...
+        # TODO: I have to provide an alternate way to get a default config dictionary
         if not config_dict:
             raise Exception("Config dictionary not provided ...")
         else:
             self.config_dict = config_dict # the config dictionary
             
         self.input_files = input_files
-        if catalog!=None:
+        if catalog != None:
             self.catalog = catalog
         else: 
             self.catalog = config_dict['astrometry']['catalog']
@@ -589,6 +589,7 @@ class AstroWarp(object):
         self.subtract_back = subtract_back
         self.pix_scale = config_dict['general']['pix_scale']
         self.temp_dir = config_dict['general']['temp_dir']
+        self.output_dir = config_dict['general']['output_dir']
 
 
     def run(self, engine='SCAMP'):
@@ -602,7 +603,7 @@ class AstroWarp(object):
                     values are ('SCAMP', 'Astrometry.net').
         """
 
-        if engine=='SCAMP':
+        if engine == 'SCAMP':
             self.runWithSCAMP()
         else:
             self.runWithAstrometryNet()
@@ -644,6 +645,7 @@ class AstroWarp(object):
                 try:
                     solved = reduce.solveAstrometry.solveField( 
                                             file,
+                                            self.output_dir,
                                             self.temp_dir,
                                             self.config_dict['general']['pix_scale'])
                 except Exception,e:
@@ -754,11 +756,12 @@ class AstroWarp(object):
         ## STEP 4: Make again the final astrometric calibration (only 
         ## if we coadded more that one file) to the final coadd.
         ## TODO: I am not sure if it is needed to do again ?????
-        if (len(self.input_files)>1):
+        if (len(self.input_files) > 1):
             log.debug("*** Doing final astrometric calibration....")
             try:
                 solved = reduce.solveAstrometry.solveField(
-                            output_path, 
+                            output_path,
+                            self.output_dir,
                             self.temp_dir,
                             self.config_dict['general']['pix_scale'])
             except Exception,e:
@@ -1004,6 +1007,7 @@ in principle previously reduced, but not mandatory.
                     log.debug("[Astrowarp] Solving with Astrometry.Net engine")
                     solved = reduce.solveAstrometry.solveField( 
                                         filelist[0],
+                                        cfg_options['general']['output_dir'],
                                         cfg_options['general']['temp_dir'],
                                         cfg_options['general']['pix_scale'])
                 except Exception,e:

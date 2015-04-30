@@ -362,11 +362,14 @@ def doAstroCalib( image_list, pix_scale ):
     log.info("**** Preliminary Astrometric calibration ****")
     new_files = []
     out_dir = "/data2/out_omegac"
+    temp_dir = "/data2/tmp"
+
     for my_file in image_list:
         # Run astrometric calibration
         try:
             solved = reduce.solveAstrometry.solveField(my_file, 
-                            out_dir, # self.temp_dir produces collision
+                            out_dir, # self.temp_dir produces collision,
+                            temp_dir,
                             pix_scale)
         except Exception,e:
             raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
