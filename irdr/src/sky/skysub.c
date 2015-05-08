@@ -15,7 +15,7 @@
 #include "hist.h"
 
 /* sky subtraction and image destriping using object masking */
-extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm, 
+extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainmap*/, 
                      float *sky, float *skyw, float *mask, char *type)
 {
     int i;
@@ -62,7 +62,7 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm,
 /* NOTE: in order to preserve the original count level, a constant (mode)
    representing the median sky level is added to all pixels.
 */
-extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm,
+extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm /* gainmap*/,
                             float *sky, char *type)
 {
     int i;

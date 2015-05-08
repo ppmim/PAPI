@@ -60,6 +60,7 @@ def modFITS(files, keyword, value, ext=0):
            
     print "Starting modFITS..."
     n = 0
+    old_version = False
 
     for file in files:        
         try:

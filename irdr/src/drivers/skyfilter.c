@@ -231,7 +231,10 @@ static void readdata(int i, int usemask)
     if (usemask) {
         /* getwmap: produce a weight map from exptime * gainmap / variance */
         float *wmap = getwmap(fn[i], nx, ny, gainmap, sigs[i]);
-        /* getmask: mask object pixels in a weight map taking into account offsets */
+        /* getmask: mask 'object pixels' & 'bad pixels' (gain) in a weight map 
+         * taking into account offsets of the main 'objectMask';
+           Thus, wdata includes 'object & bad' pixels.
+         */
         wdata[i] = getmask(wmap, nx, ny, mfn[i], xshift[i], yshift[i]);
         /* DEBUG */
         if (debug)

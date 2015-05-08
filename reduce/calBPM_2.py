@@ -70,7 +70,7 @@ class ExError(Exception):
 
 class BadPixelMask(object):
     """
-    Builds a bad pixel mask (hot and cold pixels) from a set of images 
+    Builds a bad pixel mask (of dead pixels) from a set of images 
     ( lamp_on and lamp_off frames and darks) using iraf.ccdmask task.
     In addition to the flats, the proper dark is needed.
         

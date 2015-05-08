@@ -236,12 +236,15 @@ class ApplyDarkFlat(object):
                 median = numpy.median(dat)
                 mean = numpy.mean(dat)
                 mode = 3 * median - 2 * mean
-                log.debug("Flat stats: MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
+                
+                log.info("Flat stats: MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
                            median, mean, mode)
+                
                 if self.__norm: 
-                    log.debug("Flat-field will be normalized by MEDIAN ( %f ) value", median)
+                    log.warning("Flat-field will be normalized by MEDIAN ( %f ) value", median)
+                
                 out_suffix = out_suffix.replace(".fits","_F.fits")
-                log.debug("Found master FLAT to divide by: %s"%self.__mflat)
+                log.debug("Found master FLAT to divide by: %s" % self.__mflat)
         else:
             log.warning("No master flat to be divided by !")
             flat_data = 1.0
@@ -280,7 +283,7 @@ class ApplyDarkFlat(object):
             f = fits.open(iframe)
             cf = datahandler.ClFits(iframe)
             f_ncoadd = cf.getNcoadds()
-            log.debug("Science frame %s EXPTIME = %f ,TYPE = %s ,FILTER = %s ,NCOADD=%s"\
+            log.debug("Science frame %s, EXPTIME = %f, TYPE = %s, FILTER = %s, NCOADD = %s"\
                       %(iframe, cf.expTime(), cf.getType(), cf.getFilter(), f_ncoadd))
             
             # Check FILTER
@@ -355,14 +358,19 @@ class ApplyDarkFlat(object):
                     # Single
                     else:
                         # Get DARK
-                        if self.__mdark != None: 
+                        if self.__mdark != None:
                             if (not self.__force_apply and 
                                 (not numpy.isclose(time_scale, 1.0, atol=1e-02) 
                                  or f_ncoadd != dark_ncoadd)
                                 ): # for dark_model time_scale==-1
-                                log.debug("Dark EXPTIME mismatch ! checking if it is a dark model ...")
+                                
+                                if f_ncoadd != dark_ncoadd:
+                                    log.warning("Dark NCOADD mismatch !. Checking if Dark is a dark model...")
+                                else:
+                                    log.warning("Dark EXPTIME mismatch (time_scale= %f)! Checking if Dark is a dark model ..." % time_scale)
+                                
                                 if not cdark.isMasterDarkModel():
-                                    log.error("Cannot find out a scaled dark to apply")
+                                    log.error("Dark is not a DarkModel, cannot find out a scaled dark to apply")
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
                                     log.debug("DarkModel found: Scaling dark with dark model...")
@@ -376,7 +384,7 @@ class ApplyDarkFlat(object):
                         if self.__mflat != None: 
                             if self.__norm:
                                 log.debug("Normalizing FF...")
-                                flat_data = flat[0].data/median  # normalization
+                                flat_data = flat[0].data / median  # normalization
                             else:
                                 log.debug("No normalization will be done to FlatField.")
                                 # we suppose it's already normalized
@@ -397,7 +405,7 @@ class ApplyDarkFlat(object):
                     
                     # To avoid NaN values due to zero division by FLAT
                     __epsilon = 1.0e-20
-                    flat_data = numpy.where(numpy.fabs(flat_data)<__epsilon, 
+                    flat_data = numpy.where(numpy.fabs(flat_data) < __epsilon, 
                                             1.0, flat_data)
                     # Other way to solve the zero division in FF
                     #sci_data = numpy.where(flat_data==0.0, 

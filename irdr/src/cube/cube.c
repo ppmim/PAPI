@@ -206,7 +206,7 @@ cube_mean(float *planes[MAXNPLANES], float *wplanes[MAXNPLANES], int np,
             nval = 0;
 
             for (j = 0; j < np; j++)
-                if ((wval = *(wplanes[j] + i)) > 0.0) {     /* if not masked */
+                if ((wval = *(wplanes[j] + i)) > 0.0) {     /* if not masked ==> neither object nor bad pixel */
                     buf[nval] = *(planes[j] + i) + scale[j];
                     wbuf[nval++] = wval;
                 }

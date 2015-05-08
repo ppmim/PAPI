@@ -250,6 +250,7 @@ class MEF (object):
         out_filenames = []
         n = 0 
         for file in self.input_files:
+            log.debug("Splitting file %s",file)
             try:
                 hdulist = fits.open(file)
             except IOError:

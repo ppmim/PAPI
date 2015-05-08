@@ -903,12 +903,13 @@ class ReductionSet(object):
         # have the same features (expT,filter,ncoadd, readout-mode, ...)
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
+        ncoadds = obj_frame.getNcoadds()
         
         # Init the DB (ext_db is always initialited whether db!=None)  
         if self.db == None: 
             self.__initDB()
 
-        # DARK - Does require equal EXPTIME Master Dark ???
+        # DARK - Does require equal EXPTIME and NCOADDS Master Dark ?
         # First, look for a DARK_MODEL
         master_dark = self.db.GetFilesT('MASTER_DARK_MODEL', -1) 
         if len(master_dark) == 0 and self.ext_db != None:
@@ -916,10 +917,10 @@ class ReductionSet(object):
         
         # Secondly (hopefully), try to find a MASTER_DARK with equal expTime
         if len(master_dark) == 0:
-            log.info("Now, trying to find a MASTER_DARK")
+            log.info("Now, trying to find a MASTER_DARK (expTime=%f)" % expTime)
             master_dark = self.db.GetFilesT('MASTER_DARK', expTime)
         if len(master_dark) == 0 and self.ext_db != None:
-            log.info("Last chance to find a MASTER_DARK in ext_DB")
+            log.info("Last chance to find a MASTER_DARK in ext_DB (%s) with (expTime=%f)" % (self.ext_db_files, expTime))
             master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime)
         
              
@@ -932,7 +933,7 @@ class ReductionSet(object):
             if len(master_flat) == 0:
                 master_flat=self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
 
-        # BPM                
+        # BPM
         master_bpm = self.db.GetFilesT('MASTER_BPM')
         if len(master_bpm) == 0 and self.ext_db != None:
             master_bpm = self.ext_db.GetFilesT('MASTER_BPM')
@@ -943,15 +944,20 @@ class ReductionSet(object):
         
         
         # Return the most recently created (according to MJD order)
-        if len(master_dark)>0: 
+        if len(master_dark) > 0:
             r_dark = master_dark[-1]
-            log.debug("First DARK candidate: %s"%r_dark)            
-            r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
-            log.debug("Second DARK candidate: %s"%r_dark)            
+            log.debug("First DARK candidate: %s" % r_dark)
+            # check if have the same NCOADDS
+            with fits.open(r_dark) as hdu:
+                if 'NCOADDS' in hdu[0].header and ncoadds == hdu[0].header['NCOADDS']:
+                    r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
+                else:
+                    r_dark = None
+            log.debug("Second DARK candidate: %s" % r_dark)            
         else: 
             r_dark = None
         
-        if len(master_flat)>0:
+        if len(master_flat) > 0:
             r_flat = master_flat[-1]
             log.debug("First FLAT candidate: %s"%r_flat)            
             r_flat = self.getBestShapedFrame(master_flat, sci_obj_list[0])
@@ -959,11 +965,11 @@ class ReductionSet(object):
         else: 
             r_flat = None
         
-        if len(master_bpm)>0: 
+        if len(master_bpm) > 0: 
             r_bpm = master_bpm[-1]
-            log.debug("First BPM candidate: %s"%r_bpm)            
+            log.debug("First BPM candidate: %s" % r_bpm)            
             r_bpm = self.getBestShapedFrame(master_bpm, sci_obj_list[0])
-            log.debug("Second BPM candidate: %s"%r_bpm)            
+            log.debug("Second BPM candidate: %s" % r_bpm)            
         else: 
             r_bpm = None
 
@@ -2568,7 +2574,7 @@ class ReductionSet(object):
                                    chk_readmode=True, chk_instrument=True,
                                    file_list=sequence)
                                    
-                if (r[0]==True):
+                if (r[0] == True):
                     log.debug("Found dark series with equal EXPTIME. Master dark is going to be created")
                     task = reduce.calDark.MasterDark (sequence, self.temp_dir, 
                                                       outfile, texp_scale=False,
@@ -3469,7 +3475,7 @@ class ReductionSet(object):
         ########################################################################
         #self.coadd_mode = 'swarp'
         #self.coadd_mode = 'dithercubemean'
-        if self.coadd_mode=='swarp':
+        if self.coadd_mode == 'swarp':
             if self.obs_mode!='dither' or self.red_mode=="quick":
                 log.info("**** Doing Astrometric calibration and coaddition result frame ****")
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
@@ -3918,18 +3924,19 @@ class ReductionSet(object):
         self.m_rawFiles = self.m_LAST_FILES        
 
         ########################################################################
-        # 0 - Bad Pixels; two options:
-        # To Fix: replace with a bi-linear interpolation from nearby pixels.
-        # To add to gainmap:  to set bad pixels to bkg level 
+        # 0 - Bad Pixels; three options:
+        # 'none': nothing to do, BPM is ignored.
+        # 'fix': replace with a bi-linear interpolation from nearby pixels.
+        # 'grab': to add to gainmap and then set bad pixels to bkg level (skyfilter)
         # Both options are incompatible.
         ########################################################################
-        if self.config_dict['bpm']['mode'].lower()=='none':
+        if self.config_dict['bpm']['mode'].lower() == 'none':
             master_bpm_4gain = None
             master_bpm_4fix = None
-        elif self.config_dict['bpm']['mode'].lower()=='fix':
+        elif self.config_dict['bpm']['mode'].lower() == 'fix':
             master_bpm_4gain = None
             master_bpm_4fix = master_bpm
-        elif self.config_dict['bpm']['mode'].lower()=='grab':
+        elif self.config_dict['bpm']['mode'].lower() == 'grab':
             master_bpm_4gain = master_bpm
             master_bpm_4fix = None
         else:
@@ -3959,11 +3966,11 @@ class ReductionSet(object):
             try:
                 # - Find out what kind of observing mode we have (dither, ext_dither, ...)
                 log.info('**** Computing Super-Sky Flat-Field (local_master_flat) ****')
-                local_master_flat = out_dir+"/superFlat.fits"
+                local_master_flat = out_dir + "/superFlat.fits"
                 if self.obs_mode == "dither":
                     log.debug("---> dither sequece <----")
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                    superflat = reduce.SuperSkyFlat(out_dir + "/files.list", 
                                                     local_master_flat, bpm=None, 
                                                     norm=True, 
                                                     temp_dir=self.temp_dir)
@@ -3973,8 +3980,8 @@ class ReductionSet(object):
                       self.obs_mode == "other"):
                     log.debug("----> EXTENDED SOURCE !!! <----")
                     sky_list = self.getSkyFrames()
-                    misc.utils.listToFile(sky_list, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                    misc.utils.listToFile(sky_list, out_dir + "/files.list")
+                    superflat = reduce.SuperSkyFlat(out_dir + "/files.list", 
                                                     local_master_flat, bpm=None, 
                                                     norm=True, 
                                                     temp_dir=self.temp_dir)
@@ -4035,10 +4042,13 @@ class ReductionSet(object):
             else:
                 # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
                 bpm_data = fits.getdata(master_bpm_4gain, header=False)
-                badpix_p = numpy.where(bpm_data>0)
+                badpix_p = numpy.where(bpm_data > 0)
+                log.debug("Number of Bad Pixels to combine from BPM: %d", (bpm_data > 0).sum())
                 gain_data, gh = fits.getdata(gainmap, header=True)
+                log.debug("Initial number of Bad Pixels in GainMap: %d", (gain_data ==0).sum())
                 gain_data[badpix_p] = 0
-                gh.set('HISTORY','Combined with BPM:%s'%master_bpm_4gain)
+                log.debug("Final number of Bad Pixels in GainMap: %d", (gain_data==0).sum())
+                gh.set('HISTORY','Combined with BPM:%s' % master_bpm_4gain)
                 fits.writeto(gainmap, gain_data, header=gh, clobber=True)
         
         ########################################################################
@@ -4110,8 +4120,8 @@ class ReductionSet(object):
             log.info("**** Removing crosstalk ****")
             try:
                 res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
-                            [None]*len(self.m_LAST_FILES), 
-                            [True]*len(self.m_LAST_FILES))
+                            [None] * len(self.m_LAST_FILES), 
+                            [True] * len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
             except Exception,e:
                 raise e      
@@ -4127,7 +4137,7 @@ class ReductionSet(object):
         # For further details, check TN and Wei-Hao (SIMPLE) mails. 
         # So, it is implemented here only for academic purposes !
         ########################################################################
-        if self.apply_dark_flat==2 and master_flat!=None:
+        if self.apply_dark_flat==2 and master_flat != None:
             log.info("**** Applying Flat AFTER sky subtraction ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        None,  
@@ -4394,7 +4404,9 @@ class ReductionSet(object):
                 raise e
 
         ########################################################################
-        # 9.2 - Remove Cosmic Rays -    
+        # 9.2 - Remove Cosmic Rays - 
+        #       It has only sense for LEMON output, because CR should be 
+        #       removed during the stack combine (co-adding with SWARP).
         ########################################################################
         if self.config_dict['general']['remove_cosmic_ray']:
             try:

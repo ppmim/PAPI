@@ -7113,8 +7113,6 @@ dark, que los hubiera convertido en O's (IRAF !!), entonces el solveField (astro
 
 - Me quedo depurando el nuevo solveField y ver como le afecta la NLC !!! -- ojo, tengo en applyDarkFlat convertir los NaNs en 0s
 
-(P) - ROTANGLE -- añadir opción de verlo en QL
-(P) - Como es posibles que GainMap saque aún pixeles malos con los umbrales tan altos !!! crear un valor "clave" para no-limits ??
 
 - Pruebas PAPI:
 
@@ -7130,8 +7128,124 @@ dark, que los hubiera convertido en O's (IRAF !!), entonces el solveField (astro
   (ver esto con más detalle, quizás sea el GainMap !!!)
   
   
-  
 
+04-Mayo-2015
+-------------
+- Soluciono el problema de ds9 a través del x2go; el problema era debido a 
+que tenía instalado en panic22 el nomachine_4.2.27_1_x86_64.rpm y el fichero
+/usr/NX/share/rgb no le gusta al x2go. Se soluciono copiando (o creando un enlace)
+al fichero original del sistem: /usr/share/X11/rgb
+
+
+/usr/NX/share/rgb -> /usr/share/X11/rgb
+
+
+- Instalo x2goserver en panic35 y le digo a BD que los puede usar vía ssh.
+
+
+(P) - ROTANGLE -- añadir opción de verlo en QL
+
+(P) - Como es posibles que GainMap saque aún pixeles malos con los umbrales tan altos !!! crear un valor "clave" para no-limits ??
+==> el problema era que los umbrales eran aún bajos (0.2 y 1.8), pues el sigma actua sobre "otros" umbrales.
+con Low=0.0 y high=999999, se detectan muchos menos....
+
+(P) NLC deja muuuuchos NaNs, que no se que hacer con ellossss !!
+
+
+05-Mayo-2015 (adios primaR)
+------------ 
+- Hago nuevo gráfico de los pasos del pipeline.
+- Confirmo que los NaN que genera la NLC se propagan hasta despues de skysub y dxtalk.
+- De nuevo me da la impresión que los NaNs no le gustan a Astrometry.net, pues no resuelve un campo con bastantes estrellas...
+pues no es por los NaNs...pero no entiendo por qué Astrometry.net no resuevel la imagen:
+
+/data2/PAPI_tests/prueba2/Q02/M67_Tests_Photometry_March9_0041_coadd.Q02_F.skysub.fits
+
+(P) ===> todo el problema era debido al FF que la había aplicado, cosa que no entiendo como le puede afectar tanto...HAY QUE VERLO !!
+Inspeccionando la imagen diferencia de con y sin FF, no veo mucha diferencia...solo se me ocurre que el FF tenga estrella y que
+se añadan a la imagen al hacer el FF y por eso no resuelve la astrometría....aunque a simple vista en el FF no se ven...
+Esta claro (viendo los objetos que detecta) que el FF vuelve "loca" la imagen, y no se detectan luego los objetos, aunque
+a simple vista se ven cláramente....
+
+
+
+06-Mayo-2015
+------------ 
+- bugfix: Modifico RS:getCalibFor() para que en los DARK se compruebe el NCOADDS, 
+pues luego en applyDarkFlat() se comprueba también.
+
+- Parace que todo el problema con el FF (ver arriba) es por el GainMap que luego se usa en Skyfilter, es decir, no es el propio FF; 
+el problema era que tenía en el fichero de configuración los siguientes valores:
+
+    mingain = 0.0 # pixels with sensitivity < MINGAIN are assumed bad (0.7) 
+    maxgain = 99999999.0 # pixels with sensitivity > MAXGAIN are assumed bad (1.3)
+
+y así no se marcaban los pixeles malos, con lo cual en la SkySubtraction no se hace bien con el GainMap de un skyFF;
+si embargo, si no le damos un FF, sino que el GainMap se crea a partir del SuperFlat, entonces el GainMap
+es menos "malo" y la SkySubtraction funciona bien....y por tanto se hace la astrometría etc...
+En resumen, no podemos tener umbrales absurdos para el GainMap !! (TBC)
+
+
+
+07-Mayo-2015
+------------ 
+- Por n-esima vez, mirando a ver como solucionar el tema de los BadPixels !!
+En resumen:
+  + 1st SkySubtraction: no se tienen en cuenta los BP (ni objectMask) al calcular el skybackground (cube_median), 
+    pero en la sustraccińo de cielo (resta) si se tienen en cuenta los BP, a los que se les asigna el background_level
+    de dicho frame.
+  + 2ndo SkySubtraction: se tienen en cuenta tanto los BP la ObjectMask para el calculo de skybackground (cube_mean)
+  que posteriormente se resta. Además, en la resta del skybackground, a los BP de nuevo se les asigana el background_level.
+
+  + En el (1er o 2do) coadd (swarp), se "eliminan" los BP (y posibles CR y NaNs) debido al dithering.
+  + El "problema" de los BP (CR y NaNs) por tanto queda para el caso de LEMON, o cuando no se quiera 
+  hacer ningún stack/coadd de los frames del dithering.
+
+En cuanto a los hacemos la NLC tenemos un montón de NaNs que se propagan hasta el primer coadd, y justo
+ahí se "eliminan" con el combine final, pero para LEMON no se "eliminan" pues no se hace
+dicho coadd. Las posibles soluciones que se me ocurren:
+
+   1) dejarlos como está, con el bkg_level
+   2) marcarlos como 0 / NaN
+   3) Sustituirlos por Interpolación  (ala cpl_detector_interpolate_rejected) es decir:
+   The value of a bad pixel is interpolated from the good pixels among the 8 nearest. 
+   (If all but one of the eight neighboring pixels are bad, the interpolation becomes a nearest neighbor interpolation). 
+   For integer images the interpolation in done with floating-point and rounded to the nearest integer.
+
+   If there are pixels for which all of the eight neighboring pixels are bad, a subsequent interpolation pass is done, 
+   where the already interpolated pixels are included as source for the interpolation.
+
+  The interpolation passes are repeated until all bad pixels have been interpolated. In the worst case, 
+  all pixels will be interpolated from a single good pixel.
+
+
+08-Mayo-2015
+------------ 
+- ver como darle a Sextractor la BPM --> solo tendría sentido para las imagenes .skysub.fits, pues
+las que ya sean coadds, no tienen BP pues se deben de haber eliminado con el median-combine...
+- probar el Mix de BPM con GainMap y ver como sale las imagenes; bien, todo parece correcto.
+
+- Pruebo iraf.fixpix(".skysub.fits", "PANIC_BPM.fits") y el resultado es horrible;
+parece que voy a tener que implementar mi propia rutina....ala CPL...
+
+
+- Implementar interpolación de BP ala CPL (quizás en Python como un modulo independiente o C en skysub ??).
+Finalmente, implemento el modulo cleanBadPix.py, extraido del código de lacosmic (http://star.herts.ac.uk/~bsipocz/astropy/docs_check/html/_modules/photutils/detection/lacosmic.html)
+Lo pruebo con BPM (BP=1) funciona bien, pero aún deja algunos Pixeles si corregir (en mitad de estrellas) que son debidos
+a BP enmascarados por en el gainmap, y por tanto es mejor usar el gainmap para corregir; sin embargo,
+para usar el gainmap en el cual los BP=0, hay que modificar ligeramente la rutina para que tome los BP=0.
+Tras eso, lo pruebo con imagenes .skysub.fits, y queda muy bien !!
+Por tanto, ahora toca añadir cleanBadPix al PAPI como paso opciona para la salida de LEMON, aunque
+no creo que esté mal hacerlo como paso genérico y opcional, pues no creo que afecta mucho al 
+co-add que luego se haga con SWARP/dithercubemean.
+
+
+
+
+
+TODO
+- Ver que valores serían buenos para GainMap (low,high).
+- Ver si puedo instalar Lemon  probarlo con datos de WASP-XX de PANIC.
 
 
 
@@ -7155,6 +7269,10 @@ Tratamiento NaNs
   """
   En el log de Sextractor (r20), encuentro el siguiente comentario de E.Bertin: 
   "Discard NaN pixels in non-weighted background measurements (as in SWarp)."
+  
+- Los NaNs "sobreviven" hasta el coadd, es decir, se mantien incluso en el remove_xtalk; 
+por tanto, son transmitidos a LEMON...(todo esto es valido para mode quick como science).
+
  
 Revision de funciones de QL
 ---------------------------
@@ -7222,6 +7340,16 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- cambiar o parametrizar la mascara ObjectMask para la segunda pasada del skyfilter, pues
+ahora se hace una mascara para cada imagen, en lugar de tener una para todas. Eso se hizo
+como prueba para el caso de desplazamientos (dithing offsets) grandes, pues debido a la distorsión
+no se puede una mascara genérica para todas, pues el offset genérico no sirve debido a la distorsión 
+es muy diferente para pixeles muy separados en el detector!!! comentado con Matilde, y ella también 
+lo veía así.
+
+- mejorar dxtalk ala SIMPLE (https://www.asiaa.sinica.edu.tw/~whwang/idl/SIMPLE/WIRCAM/Doc/simple.pdf)
+- hacer algo para que Sextractor tenga en cuenta los BPM, o al menos multiplicar la ObjectMask por la BPM (O's).
+ extraido de SNAP: the object mask are multiplied by the bad pixel mask to remove false detections;
 - OJO, en reductionset.py, tengo en el multiprocesing.pool.get(N) N=1 !!!!! para una prueba !!! que parece que no funciona...
 - Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi (buscar TODO)
 - un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
@@ -7229,7 +7357,7 @@ la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina
 - intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararlo (do_raw_astrometry) !!
 - Averiguar para que se necesita ENOISE y EGAIN !!!
 - Me surge la duda de que diferencia entre SuperFlat y TwFlat; básicamente son iguales,
-excepto que en TwFlat que resta el dark y en SuperFlat no se hace nada.
+excepto que en TwFlat que resta el dark y en SuperFlat no se hace nada de dark subtraction.
 - Cuestionarse donde usar ExecTaskThread, pues de esa forma si podemos obtener el
 error que se pueda producir (via Excepcion).
 - Comprobar que el tipo TW_FLAT no se usa, sólo se usa SKY_FLAT; en principio no es necesario distinguir DUSK/DAWN FLATS
@@ -7250,7 +7378,6 @@ no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
 que la suma sea un combine+sigclip.
 - Añadir quizas una opción genérica applyCalibs y que ahí pregunte que quieres hacer (DARK, FLAT, BPM, NLC)
 - Realizar analisis astrometría ala Hervé (ver notas teleconf) con psfex --partly done
-- Probar ultimos "consejos" de RM sobre el memory issue! (ver mail 11-Marzo-2015)
 - Probar reboot como usuario panic
 - Añadir opcion de dar estimación del cielo de un conjunto de imagenes con dithering:
 básicamente es hacer un combine con un sigma reject de los objetos : 

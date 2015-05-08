@@ -362,8 +362,12 @@ class GainMap(object):
                     box = gain[chip][i : i + self.m_NXBLOCK, j : j + self.m_NYBLOCK]
                     p = np.where(box > 0.0)
                     buf = box[p]
-                    if len(buf) > 0: med = np.median(buf)
-                    else: med = 0.0
+                    if len(buf) > 0: 
+                        med = np.median(buf)
+                        #log.debug("Median=%f"%med)
+                    else:
+                        #log.warning("Median < 0 !")
+                        med = 0.0
                     dev[i : i + self.m_NXBLOCK, j : j + self.m_NYBLOCK] = np.where(box > 0, (box - med), 0)
                             
             """
@@ -393,12 +397,12 @@ class GainMap(object):
             lo  = med - self.m_NSIG * sig
             hi  = med + self.m_NSIG * sig
                                 
-            #log.debug("MED=%f LO=%f HI=%f SIGMA=%f", med, lo, hi, sig)                    
+            log.debug("MED=%f LO=%f HI=%f SIGMA=%f", med, lo, hi, sig)                    
                                 
             # Find more badpix by local dev
             p = np.where( (dev < lo) | (dev > hi))
             gain[chip][p] = 0.0 # badpix
-            log.debug("Final number of Bad Pixel = %d", (gain[chip] == 0.0).sum())
+            log.debug("Final number of Bad Pixels = %d", (gain[chip] == 0.0).sum())
             
                  
         # Now, write result in a (MEF/single)-FITS file             
@@ -418,13 +422,13 @@ class GainMap(object):
             fo.append(prihdu)
             # Add each extension
             for chip in range(0, nExt):
-                hdu = fits.ImageHDU(data=gain[chip], header=myflat[chip+1].header)
+                hdu = fits.ImageHDU(data=gain[chip], header=myflat[chip + 1].header)
                 hdu.scale('float32') # important to set first data type ??
                 #hdu.header.update('EXTVER',1)
                 fo.append(hdu)
                 del hdu
         else: 
-            prihdu = fits.PrimaryHDU(gain[0],prihdr)
+            prihdu = fits.PrimaryHDU(gain[0], prihdr)
             fo.append(prihdu)
         
         fo.writeto(output,output_verify='ignore')

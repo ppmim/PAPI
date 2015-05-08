@@ -349,7 +349,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     try:
         sex.run(input_image, updateconfig=True, clean=False)
     except Exception,e:
-        log.error("Error running SExtractor: %s"%str(e)) 
+        log.error("Error running SExtractor: %s" % str(e)) 
         raise e
     
     # A test to apply single point mask
@@ -376,7 +376,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     # order to be able to solve fields with large errors
     scamp.ext_config['MATCH_FLIPPED'] = 'Y'
     scamp.ext_config['POSANGLE_MAXERR'] = 5
-    scamp.ext_config['POSITION_MAXERR'] = 5
+    scamp.ext_config['POSITION_MAXERR'] = 10
 
     #scamp.ext_config['CHECKPLOT_TYPE'] = "NONE"
     scamp.ext_config['WRITE_XML'] = "N"
@@ -387,7 +387,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     try:
         scamp.run(cat_file, updateconfig=False, clean=False)
     except Exception,e:
-        log.error("Error running SCAMP: %s"%str(e))
+        log.error("Error running SCAMP: %s" % str(e))
         raise e
     
     ## STEP 3: Merge and Warp the astrometric parameters (.head keywords) with 
@@ -565,8 +565,8 @@ class AstroWarp(object):
         # PAPI_HOME
         try:
             self.papi_home = os.environ['PAPI_HOME']
-            if self.papi_home[-1]!='/':
-                self.papi_home+='/'
+            if self.papi_home[-1] != '/':
+                self.papi_home += '/'
         except Exception,e:
             log.error("Error, variable PAPI_HOME not defined.")
             raise Exception("Error, variable PAPI_HOME not defined")
@@ -817,9 +817,9 @@ class AstroWarp(object):
             sex.config['DETECT_THRESH'] = self.config_dict['astrometry']['mask_thresh']
             sex.config['DETECT_MINAREA'] = self.config_dict['astrometry']['mask_minarea']
             # Test-PSFEx
-            sex.ext_config['PSF_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/test.psf'
-            sex.ext_config['PATTERN_TYPE'] = 'RINGS-HARMONIC'
-            sex.ext_config['PARAMETERS_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/sextractor_psfex_psf.param'
+            #sex.ext_config['PSF_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/test.psf'
+            #sex.ext_config['PATTERN_TYPE'] = 'RINGS-HARMONIC'
+            #sex.ext_config['PARAMETERS_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/sextractor_psfex_psf.param'
             # End-test-psfex
             
             # SATUR_LEVEL and NCOADD
@@ -990,13 +990,13 @@ in principle previously reduced, but not mandatory.
             filelist = [line.replace( "\n", "") 
                       for line in fileinput.input(options.source_file)]
             
-        if len(filelist)==1:
+        if len(filelist) == 1:
             # Astromatic
             if options.engine=="SCAMP":
                 try:
                     log.debug("[Astrowarp] Solving with SCAMP engine")
                     doAstrometry(filelist[0], output_image=options.output_filename,
-                              catalog='USNO-B1', config_dict=cfg_options, 
+                              catalog='2MASS', config_dict=cfg_options, 
                               do_votable=False, resample=options.resample,
                               subtract_back=options.subtract_back)
                 except Exception,e:
