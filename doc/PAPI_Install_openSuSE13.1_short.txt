@@ -108,6 +108,8 @@ NTP server: derfel.caha.es
 
 +) NTP Config
 
+First, UTC clock should be set in yast2, and then config the NTP as follow:
+
 > zypper install ntp
 > sudo chkconfig --add ntp
 > sudo service ntp status|start
@@ -268,6 +270,8 @@ http://www.aps.anl.gov/Accelerator_Systems_Division/Accelerator_Operations_Physi
 
 >rpm -ivvl OAGTclTk-1.21-1.openSUSE.12.3.x86_64.rpm
 
+(anymore required: now the posets.caha.es telescope proxy interface is used, and accessed via rsh with no password required)
+
 2. Copy the TECS scrtips:
 
 > mkdir $HOME/TECS/scripts
@@ -392,7 +396,10 @@ monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats STATUS
 Requirements
 ------------
 
+*) sudo zypper install gsl gsl-devel
+
 *) sudo zypper install readline5
+
 
 
 *) system setup

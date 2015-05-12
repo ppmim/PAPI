@@ -59,6 +59,7 @@ from misc.version import __version__
 # Interact with FITS files
 import astropy.io.fits as fits
 
+import misc.cleanBadPix as cleanBadPix
 import numpy
 
 
@@ -320,39 +321,50 @@ class ApplyDarkFlat(object):
                     dark_data = None
                     # MEF
                     if n_ext > 1: # it means, MEF
+                        # Get the right extension by name
+                        chip_name = 'Q%d' % (chip + 1)
+                        try:
+                            f[chip_name].header
+                        except KeyError:
+                            chip_name = 'SG%i_1' % (chip + 1)
+                        
+                        log.info("Processing extension %s" % chip_name)
+                        
                         # Get DARK
                         if self.__mdark != None: 
                             if (not self.__force_apply and 
                                 (not numpy.isclose(time_scale, 1.0, atol=1e-02) 
                                  or f_ncoadd != dark_ncoadd)
                                 ): # for dark_model time_scale==-1
-                                log.debug("Dark EXPTIME mismatch ! looking for dark model ...")
-                                print "t_scale=", time_scale
+                                log.debug("Dark EXPTIME mismatch ! looking for DarkModel ...")
                                 if not cdark.isMasterDarkModel():
                                     log.error("Cannot find out a scaled dark to apply")
                                     raise Exception("Cannot find a scaled dark to apply")
                                 else:
-                                    log.debug("Scaling dark with dark model...")
-                                    dark_data = dark[chip + 1].data[1] * exp_time + dark[chip + 1].data[0]
+                                    log.debug("Scaling dark with DarkModel...")
+                                    dark_data = dark[chip_name].data[1] * exp_time + dark[chip_name].data[0]
                             else:
-                                dark_data = dark[chip + 1].data
-                        else: dark_data = 0
+                                dark_data = dark[chip_name].data
+                        else: 
+                            dark_data = 0
                     
                         # Get normalized FLAT
                         if self.__mflat != None: 
                             if self.__norm:
                                 # normalization wrt chip 0
-                                flat_data = flat[chip + 1].data / median
+                                flat_data = flat[chip_name].data / median
                             else:
                                 # suppose it's already normalized
-                                flat_data = flat[chip + 1].data 
+                                flat_data = flat[chip_name].data 
                         else: 
                             flat_data = 1
-                        sci_data = f[chip + 1].data
+                            
+                        # Get SCI data 
+                        sci_data = f[chip_name].data
 
                         # Get BPM
                         if self.__bpm != None: 
-                            bpm_data = fits.getdata(self.__bpm, ext= chip + 1, 
+                            bpm_data = fits.getdata(self.__bpm, extname = chip_name,
                                                       header=False)
 
                     # Single
@@ -433,26 +445,30 @@ class ApplyDarkFlat(object):
                             print "BPM = ",bpm_data.shape
                             log.error("Source data and BPM do not match image shape")
                             raise Exception("Source data and BPM do not match image shape")
+                        
                         if self.__bpm_action == 'fix':
                             log.debug("Fixing Bad Pixles...")
-                            sci_data = fixpix(sci_data, bpm_data, iraf=True)
+                            #sci_data = fixpix(sci_data, bpm_data, iraf=True)
+                            sci_data = fixpix(sci_data, bpm_data)
+
                         elif self.__bpm_action == 'grab':
                             log.debug("Grabbing BPM")
                             sci_data[bpm_data == 1] = numpy.NaN
+
                         else:
                             log.debug("Nothing to do with BPM")
 
                     if n_ext > 1: # it means, MEF
-                        f[chip + 1].data = sci_data
+                        f[chip_name].data = sci_data
                     else:
                         f[0].data = sci_data
 
-                # Update header                                
+                # Update header
                 if self.__mdark != None: 
                     f[0].header.add_history('Dark subtracted %s' %self.__mdark)
                 if self.__mflat != None: 
-                    f[0].header.add_history('Flat-Field with %s' %self.__mflat)        
-                if self.__bpm != None and self.__bpm_action!='none':
+                    f[0].header.add_history('Flat-Field with %s' %self.__mflat)
+                if self.__bpm != None and self.__bpm_action != 'none':
                     f[0].header.add_history('BPM with %s' %self.__bpm)
 
                 f[0].header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
@@ -475,8 +491,35 @@ class ApplyDarkFlat(object):
                 
         return result_file_list
         
+def fixpix( image_data, mask_data):
+    """
+    Clean masked (bad) pixels from an input image. Each masked pixel 
+    is replaced by the median of unmasked pixels in a 2D window of ``size`` centered on
+    it.  If all pixels in the window are masked, then the window is
+    increased in size until unmasked pixels are found.
+    
+    Parameters
+    ----------
+    image_data: the image array to fix
+    
+    mask_data: an array that is True (or >0) where image contains bad pixels
+    
+    Returns
+    -------
+    The cleaned image array;otherwise an exception is raised.
+    
         
-def fixpix(im, mask, iraf=False):
+    """
+    
+    try:
+        #mask = numpy.where( mask_data == 0, 1, 0)
+        #mask = numpy.logical_not(mask_data)
+        return cleanBadPix._clean_masked_pixels(image_data, mask_data, size=5, exclude_mask=None)
+    except Exception,e:
+        log.error("Error cleanning bad pixels...")
+        raise e
+    
+def fixpix_old(im, mask, iraf=False):
     """ 
     Applies a bad-pixel mask to the input image (im), creating an image with 
     masked values replaced with a bi-linear interpolation from nearby pixels.  
@@ -560,7 +603,7 @@ def fixpix(im, mask, iraf=False):
 
         cleaned[i * mask] = subim[subgood].mean()
 
-    return cleaned        
+    return cleaned
         
 ################################################################################
 # main
@@ -635,10 +678,13 @@ same image size.
        and options.bpm_file is None:
         parser.print_help()
         parser.error("Incorrect number of arguments " )
-        
-    filelist = [line.replace( "\n", "") 
-                for line in fileinput.input(options.source_file_list)]
     
+    if datahandler.isaFITS(options.source_file_list):
+        filelist = [options.source_file_list]
+    else:
+        filelist = [line.replace( "\n", "") 
+                    for line in fileinput.input(options.source_file_list)]
+        
     try:
         res = ApplyDarkFlat(filelist, options.dark_file, options.flat_file, 
                             options.bpm_file, options.out_dir, 
@@ -646,7 +692,7 @@ same image size.
                             options.normalize)
         res.apply() 
     except Exception,e:
-        log.error("Error running task: %s"%str(e))
+        log.error("Error running task: %s" % str(e))
         sys.exit(0)
     
     

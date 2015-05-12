@@ -976,7 +976,7 @@ def isaFITS(filepath):
     if os.path.exists(filepath):
         try:
             fd = fits.open(filepath, ignore_missing_end=True)
-            if fd[0].header['SIMPLE']==True:
+            if fd[0].header['SIMPLE'] == True:
                 return True
             else:
                 return False
@@ -1024,7 +1024,7 @@ def fits_simple_verify(fitsfile):
         #    file_size = os.stat(fitsfile).st_size
 
         # check that file_size>fits_block_size*5 to be sure all the header/s content can be read     
-        if file_size<FITS_BLOCK_SIZE*4 or file_size % FITS_BLOCK_SIZE != 0:
+        if (file_size < FITS_BLOCK_SIZE * 4) or (file_size % FITS_BLOCK_SIZE) != 0:
             log.warning("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
             raise ValueError("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
     # Exceptions are re-raised after the finally clause has been executed

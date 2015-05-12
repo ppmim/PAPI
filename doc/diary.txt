@@ -6885,7 +6885,7 @@ lo que se comprueba es el DET_ID, y ese sigue siendo el mismo (SGi), no ha cambi
 - Modifico DE NUEVO (volviendo a trás) mainGUI:createMasterDark_slot() para que use 
 calDark.MasterDark() en lugar del generico processFiles(), pues así hace más
 chequeos y avisa de cualquier incompatibilidad en los DARKS. El processFiles(), en cambio
-los agrupa y no comprueba sin sin DARKS, y aunque sean FLATS o SCI, lo procesa diciendo
+los agrupa y no comprueba sin son DARKS, y aunque sean FLATS o SCI, lo procesa diciendo
 eso si que ha generado un FLAT o lo que sea; pero eso no sería muy consistente con lo
 que ha solicidado el usuario.
 
@@ -7097,7 +7097,9 @@ un montón de paquetes y ocupa casi 1 GB.
 - Se me vuelve a llenar el /tmp de panic1 debido a solve-field; escribo una issue en https://github.com/dstndstn/astrometry.net/issues/45
 pues parece que puede haber un problema en astrometry-netv0.50 y no se borran los /tmp/tmp.sanitized files.
 Otra solución  sería usar el modificador --temp-dir para que indicarle donde grabar todos los temp files; esto implicaría
-modificar un poco el modulo solveAstrometry.py --> DONE
+modificar un poco el modulo solveAstrometry.py --> DONE; además, de esta forma, al usar papi_tmp, el propio PAPI lo borrará automaticamente
+en purgeOutput().
+
 
 - Modificación en solveAstrometry.py para que la funcion solveField admita el parametro temp_dir para AstrometryNet y así
 evitar el llenado del /tmp (mientras solventan el bug en Astrometry.net reportado por JM)
@@ -7192,7 +7194,7 @@ En resumen, no podemos tener umbrales absurdos para el GainMap !! (TBC)
 - Por n-esima vez, mirando a ver como solucionar el tema de los BadPixels !!
 En resumen:
   + 1st SkySubtraction: no se tienen en cuenta los BP (ni objectMask) al calcular el skybackground (cube_median), 
-    pero en la sustraccińo de cielo (resta) si se tienen en cuenta los BP, a los que se les asigna el background_level
+    pero en la sustracción de cielo (resta) si se tienen en cuenta los BP, a los que se les asigna el background_level
     de dicho frame.
   + 2ndo SkySubtraction: se tienen en cuenta tanto los BP la ObjectMask para el calculo de skybackground (cube_mean)
   que posteriormente se resta. Además, en la resta del skybackground, a los BP de nuevo se les asigana el background_level.
@@ -7235,9 +7237,87 @@ Lo pruebo con BPM (BP=1) funciona bien, pero aún deja algunos Pixeles si correg
 a BP enmascarados por en el gainmap, y por tanto es mejor usar el gainmap para corregir; sin embargo,
 para usar el gainmap en el cual los BP=0, hay que modificar ligeramente la rutina para que tome los BP=0.
 Tras eso, lo pruebo con imagenes .skysub.fits, y queda muy bien !!
-Por tanto, ahora toca añadir cleanBadPix al PAPI como paso opciona para la salida de LEMON, aunque
+Por tanto, ahora toca añadir cleanBadPix.py al PAPI como paso opciona para la salida de LEMON, aunque
 no creo que esté mal hacerlo como paso genérico y opcional, pues no creo que afecta mucho al 
 co-add que luego se haga con SWARP/dithercubemean.
+
+11-Mayo-2015
+------------ 
+- Encuentro bug importante en applyDarkFlat !!! (es que esto nunca acaba !!), pues
+al trabajar con MEF no se tenía en cuenta la posible desordenación (tras los cambios en GEIRS) de las extensiones;
+lo soluciono accediendo a las extensiones por su nombre en lugar de por el número.
+
+- Además, añado applyDarkFlat la nueva rutina de cleanBadPix.py, pues funciona mucho más rapido que la de python y mejor que
+la de IRAF (o eso creo).
+
+- Me doy cuenta de lo importante que es a la hora de restar el DARK que sea del mismo TEXP y el mismo NCOADDS, pues 
+al aplicar un dark de 27seg (ncoadd=1) a una image de 2.7s x 10 coadds, las lineas malas (por ejemplo fila 320) no se eliminan,
+pues en el dark la linea mala tiene una cuentas ~2.7s, es decir, donde se crean las cuentas es en la propia lectura y no en la
+integración. Por eso, para poder limpiar bien las imagenes hay que usar DARKS ***idénticos*** (cosa que por otro lado siempre se ha acosejado).
+Sin embargo, debido a como se tomaron los dark con la rutina getDarks.py durante los commisionings anteriores, no tenemos darks 
+correctos para todas las observaciones.
+
+
+12-Mayo-2015
+------------ 
+- Hervé me confirma que Sextractor, PSFEx, SWARP ignora los pixeles con NaN, es decir, les da un peso 0, como si le hubiesemos dado un mapa de pesos con 0.
+
+- Envio el siguiente resumen de cambios de PAPI & QL a BD (y al resto IAA team); ademas creo el fichero changes.txt para ir 
+haciendolo de forma periódica.
+
+
+PAPI & QL: main changes from last commissioning
+-----------------------------------------------
+
+- added support to new MEF structure (old also supported)
+- added option for Xtalk remove before 1st sky subtraction, and not only before 2nd sky subtraction
+- added support for cubes ar20nd SEF in calibration routines (calDark, calDomeFlat, calTwFlat)
+- strong check for ITIME and NCOADD on dark subtraction
+- modified routine (getDarks.py) for taking automatic dark exposures in OT: now, cubes will be taken into account, and then a cube of N layers and ITIME will produce a DARK of N coadds of ITIME
+- flat normalization wrt Q1 or SG1_1 (instead of index by number 1)
+- new option on QL to select an additional calibration directory ("QL-->Calibrations->SetCalibs Dir..."); default value is set in $PAPI_CONFIG file (ext_calibration_db)
+- new option for NL-Correction in QL pop-up menu for a set of files (Apply Non-Linearity Correction)
+- new feature on QL pop-up menu (FITS->Create DataSeq) to build sequences with right OT keywords; useful to re-rebuild/fix aborted sequences or non-OT sequences
+- new option for cube collapse in QL pop-up menu (FITS->Collapse cube); in progress try to collapse with re-centering (alignment).
+- QL photometric estimation show the pdf plot of the fitting of InstMag vs 2MASS
+- added to QL pop-up menu option to show basic info of a FITS file (MEF/SEF, shape, Filter, ITIME, NCOADDS, EXPTIME and type)
+- added to QL pop-up menu option to show plot of dither pattern of a set of selected files (Show Dither Pattern)
+- added option on pipeline CL to show sequences of a given type (-T [DARK|FLAT|DOME_FLAT|SKY_FLAT|FOCUS|SCIENCE|CAL|all] )
+- copy of EGAINi and ENOISEi on FITS splits
+- modified low and high threshold levels for skyflats acceptance to [10000-40000] in calTwFlat routine
+- only .fit or .fits files will be treated by PAPI&QL
+- support to MEF on QL Astrometric calib and ask for detector to solve
+- enabled '--cpulimit' (=300s) + 'inparallel'  on astrometric calibration with Astrometry.net
+- added optional clean of bad pixels just after sky subtraction; the bad pix (given by the gainmap) are replaced by the median of a 2D window, and if all pixels in the window are bad, then the window in increased in size until unmasked pixels (>0) are found
+- (in progress) new approach for processing of dither sequences with large offsets; in that cases, and due optical distortion, the common object mask (from the 1st coadd) does not match for all individual images, thus individual object masks have to be used
+- several bugfixs:
+   - SEF to MEF conversion and new MEF structure (Qi)
+   - current_night check box on QL
+   - set filename filter on QL
+   - sign in declination values on QL
+   - conflict with matplotlib and QL threads
+   - tmp.* files created by Astrometry.net were not removed automatically as announced; until bugifx in Astrometry.net, removed by PAPI.
+   - (other hundred...)
+
+
+Misc
+----
+- run astrometric calibrations with PSFEx with data from 3.5m (M67); achieved ~40mas for internal astrometry dispersion and waiting for Hervé support.
+- enabled x2go on panic22/panic35 for remote control of PANIC; problem with ds9 colors solved
+- order of spare disks for PANIC computers (1 x 500 GB + 4 x 4 TB)
+- NLC produces lots of NaNs for bad pixels (and above LINMAX value); how should PAPI handle these values ? in principle, they are masked (and ignored) up to the co-add, where are again ignored and removed in median combine (see above new optional routine to clean bad pixels) 
+
+--------------
+
+
+
+- Acceso meteo OSN desde fuera (y dentro) del IAA:
+
+wget -q -O $HOME/pru.txt http://www.osn.iaa.es/cgi-bin/snowsClient.py
+
+
+13-Mayo-2015
+------------ 
 
 
 
@@ -7270,6 +7350,8 @@ Tratamiento NaNs
   En el log de Sextractor (r20), encuentro el siguiente comentario de E.Bertin: 
   "Discard NaN pixels in non-weighted background measurements (as in SWarp)."
   
+- Hervé me confirma (12-Mayo-2015) que Sextractor, PSFEx, SWARP ignora los pixeles con NaN, es decir, les da un peso 0, como si le hubiesemos dado un mapa de pesos con 0.
+
 - Los NaNs "sobreviven" hasta el coadd, es decir, se mantien incluso en el remove_xtalk; 
 por tanto, son transmitidos a LEMON...(todo esto es valido para mode quick como science).
 

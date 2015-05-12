@@ -71,6 +71,7 @@ from astromatic.swarp import *
 import datahandler.dataset
 import misc.collapse
 import correctNonLinearity
+import misc.cleanBadPix as cleanBadPix
 
 
 
@@ -4008,11 +4009,11 @@ class ReductionSet(object):
             nyblock = self.config_dict['gainmap']['nyblock']
             nsigma = self.config_dict['gainmap']['nsigma']
         else:
-            mingain = 0.5
-            maxgain = 1.5
+            mingain = 0.2
+            maxgain = 1.8
             nxblock = 16
             nyblock = 16
-            nsigma = 5
+            nsigma = 10
             
         # When gainmap is created (from dome or sky flats), it must be normalized
         # wrt mode of chip 1 to get gain differences, set bad pixels, 
@@ -4137,7 +4138,7 @@ class ReductionSet(object):
         # For further details, check TN and Wei-Hao (SIMPLE) mails. 
         # So, it is implemented here only for academic purposes !
         ########################################################################
-        if self.apply_dark_flat==2 and master_flat != None:
+        if self.apply_dark_flat == 2 and master_flat != None:
             log.info("**** Applying Flat AFTER sky subtraction ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        None,  
@@ -4166,12 +4167,28 @@ class ReductionSet(object):
                     out_filename = my_file.replace(".fits", ".ast.fits")
                     new_files.append(out_filename)
                     shutil.move(solved, out_filename)
-            
+
             self.m_LAST_FILES = new_files
-        
+
         ########################################################################
         # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
         ########################################################################
+        if self.config_dict['bpm']['mode'].lower() == 'fix2':
+            new_files = []
+            for my_file in self.m_LAST_FILES:
+                try:
+                    out = im.replace(".fits", ".cl.fits.")
+                    out = cleanBadPix.cleanBadPixels( my_file, gainmap, output_file=out, is_gainmap=True)
+                except Exception, e:
+                    log.error("Error in call to cleanBadPix: %s" % str(e))
+                    raise e
+                else:
+                    new_files.append(out)
+                    log.info("File %s cleaned." % out)
+             
+            # update list of processed files
+            self.m_LAST_FILES = new_files
+             
         if self.red_mode == 'quick-lemon':
             output_fd, papi_output = \
                 tempfile.mkstemp(prefix = out_dir,
