@@ -680,7 +680,7 @@ class ClFits (object):
                 # No SIP or Paper IV table lookup distortion correction is applied.
                 # Take as reference the coordinates of the center of the detector
                 self._ra = m_wcs.wcs_pix2world([[self.naxis1/2, self.naxis2/2]], 1)[0][0]
-                log.debug("Read RA-WCS coordinate =%s", self._ra)
+                #log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA'] # degrees supposed
             elif 'OBJCTRA' in myfits[0].header:

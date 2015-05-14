@@ -38,7 +38,7 @@ import matplotlib.patches as patches
 import datahandler
 
 
-def draw_offsets(offsets, pix_scale = 0.23, scale_factor=0.1):
+def draw_offsets(offsets, pix_scale = 0.23, scale_factor=1.0):
     
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111, aspect='equal')
@@ -46,18 +46,18 @@ def draw_offsets(offsets, pix_scale = 0.23, scale_factor=0.1):
     max_y = numpy.abs(offsets[: , 1]).max()
     i = 0
     r_width = (4096 + 167) / 1.0 * pix_scale * scale_factor
-    plt.xlim(offsets[: , 0].min()-(4096+167)/2.0*pix_scale - 100, offsets[: , 0].max()+(4096+167)/2.0*pix_scale + 100)
-    plt.ylim(offsets[: , 1].min()-(4096+167)/2.0*pix_scale - 100, offsets[: , 1].max()+(4096+167)/2.0*pix_scale + 100)
+    plt.xlim(offsets[: , 0].min() - (4096 + 167) / 2.0 * pix_scale - 100, offsets[: , 0].max() + (4096 + 167) / 2.0 * pix_scale + 100)
+    plt.ylim(offsets[: , 1].min() - (4096 + 167) / 2.0 * pix_scale - 100, offsets[: , 1].max() + (4096 + 167) / 2.0 * pix_scale + 100)
     plt.xlabel("RA (arcsec)")
     plt.ylabel("Dec (arcsec)")
-    plt.title("Ditther offsets (magnification = %02.1f)"%scale_factor)
+    plt.title("Ditther offsets (magnification = %02.1f, pix_scale = %02.2f)" % (scale_factor, pix_scale))
     plt.grid()
     
     for x,y in offsets:
-        print "X=%s , Y=%s"%(x, y)
+        print "X=%s , Y=%s" % (x, y)
         ax2.add_patch(
             patches.Rectangle(
-                (x-r_width/2.0, y-r_width/2.0),
+                (x - r_width / 2.0, y - r_width / 2.0),
                 r_width,
                 r_width,
                 fill=True, alpha=0.3  # remove background
@@ -136,11 +136,12 @@ def getWCSPointingOffsets(images_in,
             ref = datahandler.ClFits(ref_image)
             # If present, pix_scale in header is prefered
             pix_scale = ref.pixScale
+            print "PIXSCALE = ",pix_scale
             ra0 = ref.ra    
             dec0 = ref.dec
-            log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
-      except Exception,e:
-          log.error("Cannot get reference RA_0,Dec_0 coordinates: %s"%str(e))
+            log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f" % (ref_image, ra0, dec0, pix_scale))
+      except Exception, e:
+          log.error("Cannot get reference RA_0, Dec_0 coordinates: %s" % str(e))
           raise e
         
       offset_txt_file = open(p_offsets_file, "w")
@@ -203,7 +204,7 @@ if __name__ == "__main__":
                   help="Pixel scale")
     
     parser.add_option("-d", "--draw_scale", type=float,
-                  action="store", dest="draw_scale", default=0.1,
+                  action="store", dest="draw_scale", default=1.0,
                   help="Draw scale of detector (0.0-1.0) [default=%default]")
     
     (options, args) = parser.parse_args()

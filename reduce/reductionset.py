@@ -244,16 +244,16 @@ class ReductionSet(object):
         # PAPI_HOME
         try:
             self.papi_home = os.environ['PAPI_HOME']
-            if self.papi_home[-1]!='/':
-                self.papi_home+='/'
-        except Exception,e:
+            if self.papi_home[-1] != '/':
+                self.papi_home += '/'
+        except Exception, ex:
             log.error("Error, variable PAPI_HOME not defined.")
-            raise e
+            raise ex
 
         # Temporal directory for temporal files created during the data 
         # reduction process
         if temp_dir == None:
-            if self.config_dict !=None:
+            if self.config_dict != None:
                 self.temp_dir = self.config_dict['general']['temp_dir']
             else:
                 self.temp_dir = "/tmp/"
@@ -264,7 +264,7 @@ class ReductionSet(object):
 
         # Output directory for the results of the data reduction process            
         if out_dir == None:
-            if self.config_dict !=None:
+            if self.config_dict != None:
                 self.out_dir = self.config_dict['general']['output_dir']
             else:
                 self.out_dir = "/tmp/"
@@ -275,7 +275,7 @@ class ReductionSet(object):
             raise Exception("Output dir does not exist.")
         
         # Main output file resulted from the data reduction process
-        if out_file==None: 
+        if out_file == None: 
             # if no filename, we take the DATE-OBS of the first file of the SEQ
             with fits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
                 if 'DATE-OBS' in myhdulist[0].header:
@@ -321,7 +321,7 @@ class ReductionSet(object):
                     log.warning("Non-Linearity model does not match. Correction de-activated.")
                     self.non_linearity_apply = False
                     self.non_linearity_model = None
-            except Exception, e:
+            except Exception:
                 msg = "Error while reading READMODE keyword on file %s" % rs_filelist[-1]
                 log.error(msg)
                 raise Exception(msg)
@@ -600,12 +600,14 @@ class ReductionSet(object):
                     mismatch_filter = True
                     info_mismatch = "chk_filter"
                     break
+            
             if chk_type and not mismatch_type: 
                 if fi.getType() != type_0:
                     log.debug("File %s does not match TYPE", file)
                     mismatch_type = True
                     info_mismatch = "chk_type"
                     break
+                
             if chk_expt and not mismatch_expt: 
                 if fi.expTime() != expt_0:
                 #if prev_MJD!=-1 and ((fi.expTime()+self.MAX_MJD_DIFF)<expt_0 or
@@ -633,14 +635,15 @@ class ReductionSet(object):
                     info_mismatch = "chk_readmode"
                     break
             if chk_cont and not mismatch_cont:
-                if prev_MJD!=-1 and (fi.getMJD()-prev_MJD)>self.MAX_MJD_DIFF:
+                if prev_MJD != -1 and (fi.getMJD() - prev_MJD)>self.MAX_MJD_DIFF:
                     log.error("Maximmun time distant between two consecutives frames exceeded. File= %s",file)
                     mismatch_cont = True
                     info_mismatch = "chk_cont"
                     break
                 else:
-                    prev_MJD=fi.getMJD()
-                    
+                    prev_MJD = fi.getMJD()
+        
+        
         if mismatch_shape or mismatch_filter or mismatch_type or mismatch_expt or  \
             mismatch_itime or mismatch_ncoadd or mismatch_cont:
             log.error("Data checking found a mismatch....check your data files....")
@@ -1594,7 +1597,7 @@ class ReductionSet(object):
             pix_scale = ref.pixScale
             ra0 = ref.ra    
             dec0 = ref.dec
-            log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f"%(ref_image, ra0, dec0, pix_scale))
+            log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f" % (ref_image, ra0, dec0, pix_scale))
       except Exception,e:
           log.error("Cannot get reference RA_0,Dec_0 coordinates: %s"%str(e))
           raise e
@@ -1605,19 +1608,19 @@ class ReductionSet(object):
                 ref = datahandler.ClFits(my_image)
                 ra = ref.ra
                 dec = ref.dec
-                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s"%(my_image, i, ra, i, dec))
+                log.debug("Image: %s RA[%d]= %s DEC[%d]= %s" % (my_image, i, ra, i, dec))
                 
                 # Assummed that North is up and East is left
                 offsets[i][0] = ((ra - ra0)*3600 * math.cos(dec/57.29578)) / float(pix_scale)
                 offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
                 
-                log.debug("offset_ra  = %s"%offsets[i][0])
-                log.debug("offset_dec = %s"%offsets[i][1])
+                log.debug("offset_ra  = %s" % offsets[i][0])
+                log.debug("offset_dec = %s" % offsets[i][1])
                 
-                offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
+                offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n" % (offsets[i][0], offsets[i][1]))
                 i+=1
             except Exception,e:
-                log.error("Error computing the offsets for image %s. \n %s"%(my_image, str(e)))
+                log.error("Error computing the offsets for image %s. \n %s" % (my_image, str(e)))
                 raise e
         
       offset_txt_file.close()
@@ -1704,7 +1707,7 @@ class ReductionSet(object):
             mask_minarea = 5
             mask_maxarea = 200
             mask_thresh = 1.5
-            satur_level = 300000
+            satur_level = 55000
             single_p = True
             
         # In order to set a real value for satur_level, we have to check the
@@ -2996,7 +2999,7 @@ class ReductionSet(object):
             # LEMON mode
             # If red_mode is 'lemon', then no warping of frames is required.
             #
-            if self.red_mode=='lemon' or self.red_mode=='quick-lemon':
+            if self.red_mode == 'lemon' or self.red_mode == 'quick-lemon':
                 files_created = out_ext
                 log.info("*** Obs. Sequence LEMON-reduced. ***") 
                 return files_created
@@ -3881,7 +3884,7 @@ class ReductionSet(object):
         # and Initialize self.m_LAST_FILES
         if not os.path.abspath(os.path.join(obj_frames[0], os.pardir)) == out_dir:
             misc.fileUtils.linkSourceFiles(obj_frames, out_dir)
-            self.m_LAST_FILES = [out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
+            self.m_LAST_FILES = [out_dir + "/" + os.path.basename(file_i) for file_i in obj_frames]
         else:
             self.m_LAST_FILES = obj_frames
             
@@ -3913,7 +3916,13 @@ class ReductionSet(object):
         ########################################################################
         try:
             # overwrite initial given observing mode
-            self.obs_mode = self.getObsMode()  
+            self.obs_mode = self.getObsMode()
+            # Check if we have an extended object; in that case, only 'quick' 
+            # reduction modes are supported.
+            if red_mode == 'lemon' and self.obs_mode != 'dither':
+                log.warning("Reduction mode 'lemon' not supported for extended"\
+                    "object sequences, 'quick-lemon' will be used.")
+                self.red_mode = 'quick-lemon'
         except:
             raise
         
@@ -4092,8 +4101,8 @@ class ReductionSet(object):
                     raise e
             
             log.info("**********************************")
-            log.info("*** Mean-FWHM = %s"%numpy.mean(fwhm_t))
-            log.info("*** Mean-STD = %s"%numpy.mean(std_t))
+            log.info("*** Mean-FWHM = %s" % numpy.mean(fwhm_t))
+            log.info("*** Mean-STD = %s" % numpy.mean(std_t))
             log.info("*** END of Lab data reduction ****")
             return self.m_LAST_FILES[0]
             
@@ -4171,13 +4180,13 @@ class ReductionSet(object):
             self.m_LAST_FILES = new_files
 
         ########################################################################
-        # 4.3 - LEMON connection - End here for Quick-LEMON-1 processing    
+        # 4.3 - Clean Bad Pixels (probably only required for LEMON)    
         ########################################################################
         if self.config_dict['bpm']['mode'].lower() == 'fix2':
             new_files = []
             for my_file in self.m_LAST_FILES:
                 try:
-                    out = im.replace(".fits", ".cl.fits.")
+                    out = my_file.replace(".fits", ".cl.fits.")
                     out = cleanBadPix.cleanBadPixels( my_file, gainmap, output_file=out, is_gainmap=True)
                 except Exception, e:
                     log.error("Error in call to cleanBadPix: %s" % str(e))
@@ -4188,7 +4197,10 @@ class ReductionSet(object):
              
             # update list of processed files
             self.m_LAST_FILES = new_files
-             
+            
+        ########################################################################
+        # 4.4 - LEMON connection - End here for Quick-LEMON-1 processing    
+        ########################################################################     
         if self.red_mode == 'quick-lemon':
             output_fd, papi_output = \
                 tempfile.mkstemp(prefix = out_dir,
@@ -4302,21 +4314,21 @@ class ReductionSet(object):
                 gain=4.15, sat_level=satur_level)
             try:
                 (fwhm, std, k, k) = cq.estimateFWHM()
-                if fwhm>0 and fwhm<20:
-                    log.info("File %s - FWHM = %s (pixels) std= %s"%(output_file, fwhm, std))
-                elif fwhm<0 or fwhm>20:
-                    log.error("Wrong estimation of FWHM of file %s"%output_file)
+                if fwhm > 0 and fwhm < 20:
+                    log.info("File %s - FWHM = %s (pixels) std= %s" % (output_file, fwhm, std))
+                elif fwhm < 0 or fwhm > 20:
+                    log.error("Wrong estimation of FWHM of file %s" % output_file)
                     log.error("Please, review your data.")           
                 else:
-                    log.error("ERROR: Cannot estimate FWHM of file %s"%output_file)           
-            except Exception,e:
+                    log.error("ERROR: Cannot estimate FWHM of file %s" % output_file)           
+            except Exception, e:
                 log.error("ERROR: something wrong while computing FWHM")
                 raise e
 
         ########################################################################
-        # End of QUICK reduction
+        # End of QUICK reduction (note is unique red mode for exteded obejcts)
         ########################################################################
-        if self.obs_mode!='dither' or self.red_mode=="quick":
+        if self.obs_mode != 'dither' or self.red_mode == "quick":
             log.info("Generated output file ==>%s", output_file)
             log.info("#########################################")
             log.info("##### End of QUICK  data reduction ######")
@@ -4334,28 +4346,46 @@ class ReductionSet(object):
         log.info("**** Master object mask creation ****")
         obj_mask = self.__createMasterObjMask(output_file, 
                                                out_dir + '/masterObjMask.fits')
-        # Prueba
-        # Create a object mask for each sky-subtracted file
-        obj_mask_skysub = []
-        for im in self.m_LAST_FILES:
-            res = self.__createMasterObjMask(im,
-                                            out_dir + "/" + os.path.basename(im).replace(".fits",".obj.fits"))
-            obj_mask_skysub.append(res)
             
         ########################################################################
         # Re-compute dither offsets taking into account the object mask
         ########################################################################
         try:
             # All the files (sky-subtrated and first coadd) are already 
-            # astrometrically calibrated.
+            # astrometrically calibrated
             temp_list = [obj_mask] + self.m_LAST_FILES
             offset_mat = self.getWCSPointingOffsets(temp_list, 
                                                         out_dir + '/offsets1.pap')
-        except Exception,e:
+        except Exception, e:
             log.error("Error while computing WCS pointing offsets. "
                 "Cannot continue with data reduction...")
             raise e
         
+        # In order to know if a single/common object mask (deeper) or multiple (individual)
+        # object masks for each sky-subtracted file, we get the maximum offset.
+        # For values > max_dither_offset, and due to the optical distortion,
+        # multiple (individual) masks are used; otherwise a common object mask got from
+        # the first coadd.
+        if numpy.nanmax(numpy.absolute(offset_mat)) > \
+            self.config_dict['offsets']['max_dither_offset']:
+            log.warning("Maximum dither offset exceeded %f > %f"\
+                %(numpy.nanmax(numpy.absolute(offset_mat)), self.config_dict['offsets']['max_dither_offset']))
+            log.warning("Individual (multiple) object masks will be used...")
+            single_obj_mask = False
+            # Then, the offsets of object masks will be 0,0
+            offset_mat.fill(0)
+            # Create a object mask for each sky-subtracted file
+            obj_mask_skysub = []
+            for im in self.m_LAST_FILES:
+                res = self.__createMasterObjMask(im,
+                                  out_dir + "/" + os.path.basename(im).replace(".fits", ".obj.fits"))
+                obj_mask_skysub.append(res)
+        else:
+            # Only a common and deeper object mask
+            log.info("Single (and deeper) object mask will be used")
+            single_obj_mask = True
+            obj_mask_skysub = [obj_mask] * len(self.m_LAST_FILES)
+            
         ########################################################################
         # 8.5 - Re-compute the gainmap taking into account the object mask
         ########################################################################
@@ -4371,9 +4401,7 @@ class ReductionSet(object):
         # (j=1) Due to the offsets were computed with the obj_mask, the first 
         # offset (=0,0) is skipped.
         j = 1 
-        ########## PRUEBA ################
-        offset_mat.fill(0)
-        ### Fin prueba ###
+        
         for file in self.m_rawFiles:
             # In case of whatever T-S-T-S-... sequence, only T frames should be used;
             # however, the second pass of skyfilter (with object mask)
@@ -4381,13 +4409,13 @@ class ReductionSet(object):
             # if datahandler.ClFits(file).isSky():
             #    continue
             if self.apply_dark_flat == 1 and master_flat != None and master_dark != None:
-                line = file.replace(".fits","_D_F.fits") + " " + obj_mask_skysub[i] + " "\
+                line = file.replace(".fits", "_D_F.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             elif self.apply_dark_flat == 1 and master_flat != None:
-                line = file.replace(".fits","_F.fits") + " " + obj_mask_skysub[i] + " "\
+                line = file.replace(".fits", "_F.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             elif self.apply_dark_flat == 1 and master_dark != None:
-                line = file.replace(".fits","_D.fits") + " " + obj_mask_skysub[i] + " "\
+                line = file.replace(".fits", "_D.fits") + " " + obj_mask_skysub[i] + " "\
                 + str(offset_mat[j][0]) + " " + str(offset_mat[j][1])
             else:
                 line = file + " " + obj_mask_skysub[i] + " " + str(offset_mat[j][0]) + \
@@ -4419,9 +4447,28 @@ class ReductionSet(object):
                 self.m_LAST_FILES = res
             except Exception,e:
                 raise e
-
+        
         ########################################################################
-        # 9.2 - Remove Cosmic Rays - 
+        # 9.2 - Clean Bad Pixels (probably only required for LEMON)    
+        ########################################################################
+        if self.config_dict['bpm']['mode'].lower() == 'fix2':
+            new_files = []
+            for my_file in self.m_LAST_FILES:
+                try:
+                    out = my_file.replace(".fits", ".cl.fits")
+                    out = cleanBadPix.cleanBadPixels( my_file, gainmap, output_file=out, is_gainmap=True)
+                except Exception, e:
+                    log.error("Error in call to cleanBadPix: %s" % str(e))
+                    raise e
+                else:
+                    new_files.append(out)
+                    log.info("File %s cleaned." % out)
+             
+            # update list of processed files
+            self.m_LAST_FILES = new_files
+            
+        ########################################################################
+        # 9.3 - Remove Cosmic Rays - 
         #       It has only sense for LEMON output, because CR should be 
         #       removed during the stack combine (co-adding with SWARP).
         ########################################################################
@@ -4434,9 +4481,9 @@ class ReductionSet(object):
             except Exception,e:
                 raise e
 	
-    
+        
         #######################################################################
-        # 9.3 - Divide by the master flat after sky subtraction ! (see notes above)
+        # 9.4 - Divide by the master flat after sky subtraction ! (see notes above)
         # (the same task as above 4.2) --> HAS NO SENSE !!! only for a test ??? or a.l.a. O2k 
         #######################################################################
         if self.apply_dark_flat==2 and master_flat!=None:
@@ -4449,8 +4496,8 @@ class ReductionSet(object):
             self.m_LAST_FILES = res.apply()
 
 	########################################################################
-        # Preliminary Astrometric calibration of sky-subtracted frames.
-        # ######################################################################
+        # 9.5 Preliminary Astrometric calibration of sky-subtracted frames.
+        ########################################################################
         log.info("**** Preliminary Astrometric calibatrion (2nd sky) ****")
         new_files = []
         for my_file in self.m_LAST_FILES:
@@ -4472,7 +4519,7 @@ class ReductionSet(object):
         self.m_LAST_FILES = new_files
         
         ########################################################################
-        # 9.4 - LEMON connection - End here for LEMON processing    
+        # 9.6 - LEMON connection - End here for LEMON processing    
         ########################################################################
         
         if self.red_mode=='lemon':

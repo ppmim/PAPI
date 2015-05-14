@@ -13,6 +13,7 @@
 #include "stripe.h"
 #include "fitsIO.h"
 #include "hist.h"
+#include <math.h>
 
 /* sky subtraction and image destriping using object masking */
 extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainmap*/, 
@@ -30,7 +31,15 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainma
 
     for (i = 0; i < nx * ny; i++)
     {
-        if (bpm[i] <= 0)
+        /* Check for NAN values, ie., bad pixels !!         
+           http://stackoverflow.com/questions/14174991/how-to-define-nan-value-in-ansi-c?lq=1 
+           http://c-faq.com/fp/nan.html 
+        */
+        if ( isnan(bpm[i]) )
+        {
+            imgout[i] = bpm[i]; /* NAN macro does not work, but 0./.0 is equivalent*/
+        }
+        else if (bpm[i] <= 0)
             imgout[i] = bkg;  /* set bad pixels to bkg lvl */
             /* JMIM: I thik bad pixels should be set to __local__ bkg level to take into account when the pixel is in a star !! */
             /* compute local bkg, but probably only valid for isolated badpixels. !!*/
@@ -74,7 +83,15 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm /*
     
     for (i = 0; i < nx * ny; i++)
     {	
-    	if (bpm[i] <= 0)
+        /* Check for NAN values, ie., bad pixels !!         
+           http://stackoverflow.com/questions/14174991/how-to-define-nan-value-in-ansi-c?lq=1 
+           http://c-faq.com/fp/nan.html 
+        */
+        if ( isnan(bpm[i]) )
+        {
+            imgout[i] = bpm[i]; /* NAN macro does not work, but 0./.0 is equivalent*/
+        }
+    	else if (bpm[i] <= 0)
             imgout[i] = bkg;  /* set bad pixels to bkg lvl */
     	
     	else{

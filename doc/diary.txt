@@ -7196,7 +7196,7 @@ En resumen:
   + 1st SkySubtraction: no se tienen en cuenta los BP (ni objectMask) al calcular el skybackground (cube_median), 
     pero en la sustracción de cielo (resta) si se tienen en cuenta los BP, a los que se les asigna el background_level
     de dicho frame.
-  + 2ndo SkySubtraction: se tienen en cuenta tanto los BP la ObjectMask para el calculo de skybackground (cube_mean)
+  + 2ndo SkySubtraction: se tienen en cuenta tanto los BP como la ObjectMask para el calculo de skybackground (cube_mean)
   que posteriormente se resta. Además, en la resta del skybackground, a los BP de nuevo se les asigana el background_level.
 
   + En el (1er o 2do) coadd (swarp), se "eliminan" los BP (y posibles CR y NaNs) debido al dithering.
@@ -7318,8 +7318,37 @@ wget -q -O $HOME/pru.txt http://www.osn.iaa.es/cgi-bin/snowsClient.py
 
 13-Mayo-2015
 ------------ 
+- Implemento la object mask multiple para el caso en que los dither offsets sean mayores
+de un determinado valor, pues debido a la distorion optica (la distorsión es muy diferente 
+para pixeles muy separados en el detector!!! comentado con Matilde, y ella también 
+lo veía así) no se puede usar una mascara comun, pues el primer coadd no se hace 
+bien (dithercubemean), y por tanto, la mascarca
+correspondiente no sera buena....
+Para eso, se usa el nuevo parametro del config file ['offsets']['max_dither_offset'].
+
+- Ejemplo: 
+
+./papi.py -s /data1/PANIC/2015-03-03/ -d /data2/PAPI_tests/prueba2/ -S 23 23 -W Q2 -M lemon
 
 
+- Videocon:
+
+  - en cuanto a mi pregunta sobre qué hacer con los NaNs que pone la NLC, todos (incluido KM, MF, BD, VT)
+  están de acuerdo es dejarlos como NaNs, y que no se tengan en cuenta dichos pixles para 
+  los cálculos, y por supuesto tampoco en el combine (coadd) final. En cualquier caso, también
+  están de acuerdo en **no usar** el metodo cleanBadPix.py, pues es mejor dejarlos tal cual.
+  - KM nos recuerda que es **urgente** la documentación !!!
+  - BD me pide que confirme que el QL estará disponible con los nuevos MEF; yo le digo que ya lo está.
+  
+  
+
+14-Mayo-2015
+------------
+- Instalo spyder en panic1 y comienzo a trabajar con dicho IDE. 
+- Modifico skysub.c para que en la funciones skysub() y skysub_nomaks() se
+reconozcan los NaNs y se dejen en la imagen de salida a un valor NaN en
+lugar del bkg_level;
+Al hacer eso, falla Astrometry.net pues no puede resolver las imagenes .skysub !!!
 
 
 
@@ -7422,12 +7451,11 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
-- cambiar o parametrizar la mascara ObjectMask para la segunda pasada del skyfilter, pues
-ahora se hace una mascara para cada imagen, en lugar de tener una para todas. Eso se hizo
-como prueba para el caso de desplazamientos (dithing offsets) grandes, pues debido a la distorsión
-no se puede una mascara genérica para todas, pues el offset genérico no sirve debido a la distorsión 
-es muy diferente para pixeles muy separados en el detector!!! comentado con Matilde, y ella también 
-lo veía así.
+- como conclusión de la videocon del 13-Mayo, hay que ver como hacer para que los NaNs se conserven y se ignoren en
+todos los cálculos cuando se haga la NLC. Además, cuando no se haga la NLC, hace falta que si se aplica
+la BPM sea con NaNs, pues parece que es el valor que puede funcionar mejor ya que lo ignoran Sextractor, SWARP, Numpy, etc...
+Queda ver como corregir skyfilter para que los 0s del gainmap se conviertan en NaNs en lugar de bck_level !!!
+
 
 - mejorar dxtalk ala SIMPLE (https://www.asiaa.sinica.edu.tw/~whwang/idl/SIMPLE/WIRCAM/Doc/simple.pdf)
 - hacer algo para que Sextractor tenga en cuenta los BPM, o al menos multiplicar la ObjectMask por la BPM (O's).

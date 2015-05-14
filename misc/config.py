@@ -585,6 +585,7 @@ def read_config_file(config_file = default_config_file()):
     offsets["satur_level"] = read_parameter(config, "offsets", "satur_level", long, False, config_file)
     offsets["single_point"] = read_parameter(config, "offsets", "single_point", bool, False, config_file)
     offsets["method"] = read_parameter(config, "offsets", "method", str, False, config_file)
+    offsets["max_dither_offset"] = read_parameter(config, "offsets", "max_dither_offset", int, False, config_file)
     
     
     options["offsets"] = offsets     

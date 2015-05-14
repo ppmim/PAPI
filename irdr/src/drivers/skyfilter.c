@@ -146,11 +146,11 @@ int main(int argc, char *argv[])
             /* DEBUG */
             if (debug)
             {
-                strcpy(aux,"/data2/tmp/sky_");
+                strcpy(aux, "/data2/tmp/sky_");
                 strcat(aux, basename(fn[i]));
                 writefits(aux, fn[i], (char*)sky, -32, nx, ny);
                 
-                strcpy(aux,"/data2/tmp/skyw_");
+                strcpy(aux, "/data2/tmp/skyw_");
                 strcat(aux, basename(fn[i]));
                 writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
                 
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
             /*DEBUG*/
             if (debug)
             {
-                strcpy(aux,"/data2/tmp/sky_");
+                strcpy(aux, "/data2/tmp/sky_");
                 strcat(aux, basename(fn[i]));
                 writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
             }
