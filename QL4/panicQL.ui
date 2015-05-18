@@ -1093,9 +1093,9 @@
      <widget class="QLineEdit" name="lineEdit_filename_filter">
       <property name="geometry">
        <rect>
-        <x>536</x>
+        <x>475</x>
         <y>30</y>
-        <width>60</width>
+        <width>121</width>
         <height>21</height>
        </rect>
       </property>
@@ -3367,8 +3367,10 @@
   </action>
   <action name="fileShow">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../../../../../../../../../home/staff1/papi/QL4/images/ds9.gif</normaloff>../../../../../../../../../../../../../../home/staff1/papi/QL4/images/ds9.gif</iconset>
+    <iconset resource="panicQL_resources.qrc">
+     <normaloff>:/my_icon/images/ds9.png</normaloff>
+     <normalon>:/my_icon/images/ds9.png</normalon>
+     <selectedon>:/my_icon/images/ds9.png</selectedon>:/my_icon/images/ds9.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Show</string>

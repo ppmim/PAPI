@@ -1,6 +1,10 @@
 PANIC Quick-Look Tool (PQL)
 ===========================
-The PANIC Quick-Look ((hereafter PQL) will  perform some on-line data processing 
+
+Purpose
+*******
+
+The PANIC Quick-Look (hereafter PQL) will  perform some on-line data processing 
 for quick-look or quality check of the data being acquired, taking a close look 
 at a raw near-infrared image and getting a quick feedback of the running observation.
 
@@ -25,74 +29,350 @@ sky subtraction looking for the nearest N frames around the selected one. Other
 option available is to select a set of files and request a shift and align of 
 them.
 
-The PQL can be operated in both near-real time mode and offline mode (all data files
-already stored in the disk), although its functionalities have been provided 
-mainly in near-real time to check the status and progress of the observation 
-during the night. 
+The PQL can be operated in both near-real time mode (during the observation) and
+offline mode (after the observation, with all data files already stored in the disk);
+however, its functionalities have been provided mainly in near-real time to check 
+the status and progress of the observation during the night. 
 
-The next figure shows a snapshot of the PQL:
-  
-.. image:: _static/pql_main.png
-   :align: center
-   :scale: 65 %
-   
+
 
 .. index:: quick-look, running
 
 
-Running on-line
-***************
+FITS files and headers
+**********************
+QuickLook obly supports FITS_ (Flexible Image Transport System) image formats. 
+For general purposer, such as vieweing and simple analysis, only minimal headers
+keywords are required. However, and in order to group and reduce observing sequences, 
+the following header keywords are also required::
 
-Running PQL can be as simple as executing the following command in a terminal::
-	
-	> ./runPQL.py [-C config_file ] [-s raw_data ] [-o result ] 
-
-Where ``config_file`` is the configuration file to be used (see bellow),
-``raw_data`` is the directory of the raw dataset (uncalibrated) having 
-both science or calibration files, and ``result`` is the path to the directory 
-where the calibrated data produced by the QL will be saved.  
-
-If no option is specified for launch the PQL, it will look for the default 
-configuration file and run with the configuration on it.
+    OBS_TOOL= 'OT_V1.1 '           / PANIC Observing Tool Software version          
+    PROG_ID = '        '           / PANIC Observing Program ID                     
+    OB_ID   = '6       '           / PANIC Observing Block ID                       
+    OB_NAME = 'OB CU Cnc Ks 2'     / PANIC Observing Block Name                     
+    OB_PAT  = '5-point '           / PANIC Observing Block Pattern Type             
+    PAT_NAME= 'OS Ks 2 '           / PANIC Observing Secuence Pattern Name          
+    PAT_EXPN=                    1 / PANIC Pattern exposition number                
+    PAT_NEXP=                    5 / PANIC Pattern total number of expositions      
+    IMAGETYP= 'SCIENCE '           / PANIC Image type                         
 
 
-.. index:: config, quicklook, papi, on-line
+These keywords are automatically added to the FITS header by the PANIC Observation Tool,
+as each file is created. If these are not saved, the PQL will not work correctly.
 
-Running off-line
+Starting the PQL
 ****************
-Run PQL in off-line mode means that data were already taken and are in a specific
-directory that we wish to inspect in quick way.
-In order for working in off-line mode, yoy
 
-.. index:: config, quicklook, off-line
+To start PQL GUI, you can lauch it from the PANIC computer (panic22/panic35) once you are
+logged as obs22/obs35 user. Thus, as any one of the workstations of the observing room,
+open a X terminal window and log into the PANIC computer as follow:
+  
+for 2.2m::
+
+    $ ssh -X obs22@panic22 
+    (ask Calar Alto staff for password)
+   
+for 3.5m::
+
+    $ ssh -X obs35@panic35 
+    (ask Calar Alto staff for password)
+   
+Once you are logged into the PANIC computer, to lauch PQL GUI type next command::
 
 
-Optional Commands
+    $ start_ql &
+    
+The next figure shows a snapshot of the main window of the PQL GUI:
+  
+.. image:: _static/PQL_GUI_main_window.png
+   :align: center
+   :scale: 65 %
+
+
+
+Configuration files
+*******************
+
+The configuration files used by the PQL are located in the $PAPI_HOME/config_files.
+The main config file is the same file used by PAPI, ie., $PAPI_CONFIG, and usually
+called papi.cfg.
+
+At the end of the $PAPI_CONFIG file, there is section called 'quicklook', where the
+user can set next parameters::
+
+    # Next are some configurable options for the PANIC Quick Look tool
+    #
+    # some important directories
+    #
+    source = /data1/PANIC/
+    output_dir = /data2/out   # the directory to which the resulting images will be saved.
+    temp_dir = /data2/tmp    # the directory to which temporal results will be saved
+    verbose = True
+
+    # Run parameters
+    run_mode = Lazy # default (initial) run mode of the QL; it can be (None, Lazy, Prereduce)
+
+
+Although the user can edit these values in the config file, they can be set easily
+on the PQL GUI. 
+
+PQL's Main Window
 *****************
 
-Here's a listing of the PQL command line options::
+The PQL main window contains a menu bar (1), tool bar (2), four tabbed panels (3) and 
+an event log window (4).
+Images are displayed in an external well-known application, ds9_. Plots results are displayed in 
+the additional windows, usually generated by matplotlib than can be popied to the clipboard, 
+printed and saved.
 
-   Usage: runQL.py [OPTION]... DIRECTORY...
+Menu bar
+********
 
-   This module in the main application for the PANIC Quick Loook (PQL) data
-   reduction system
+The menu bar provides acces to some PQL's capabilities.
+
+1. File
+2. View
+3. Settings
+4. Calibrations
+5. Tools
+6. Help
+7. Exit
+
+
+Buttons bar
+***********
+
+The button bar duplicates some of the options available from the menu bar or the pop-up menu. 
+The buttons provide quick access to change the most frecuently-used PQL actions:
+
+- add a file to the current view
+- change the source input directory
+- display the current selected image 
+- open an IRAF console
+- open Aladin_ tool
+
+.. image:: _static/PQL_GUI_toolbar.png
+   :align: center
+   :scale: 65 %
    
-   Options:
-     --version             show program's version number and exit
-     -h, --help            show this help message and exit
-     -c CONFIG_FILE, --config=CONFIG_FILE
-                           config file for the PANIC Pipeline application. If not
-                           specified, './config_files/papi_portatil.cfg' is used
-     -v, --verbose         verbose mode [default]
-     -s SOURCE, --source=SOURCE
-                           Source directory of data frames. It has to be a
-                           fullpath file name
-     -o OUTPUT_DIR, --output_dir=OUTPUT_DIR
-                           output directory to write products
-     -t TEMP_DIR, --temp_dir=TEMP_DIR
-                           temporary directory to write
-      
+
+Main Panel
+**********
+This tab panel contains the following controls:
+
+- Input directory
+- Ouput directory
+- Filename filter
+- Data list view
+- List view filter
+- QL mode
+- 'Subract last-2' button
+- 'START processing' button
+- 'Create Calibrations' button
+
+
+Data Directories
+----------------
+
+In the 'Main' tab panel of the PQL main window, the fitst thing to set up are the data directories:
+
+.. image:: _static/PQL_GUI_data_dirs.png
+   :align: center
+   :scale: 65 %
+
+
+
+Input directory
+^^^^^^^^^^^^^^^
+
+This is where you tell PQL where the data are or being saved by GEIRS. This directory is specified
+at the beggining of the night on the Observation Tool. PQL requieres all data to lie in some main 
+directory, not being required to distribute the files in individual sub-directories for darks, flats,
+and science images. It is advised that this directory follow the next format::
+
+    /data1/PANIC/YYYYMMDD
+
+To set the value, the user must push the 'Input Dir' button:
+
+.. image:: _static/PQL_GUI_input_dir_but.png
+   :align: center
+   :scale: 65 %
+    
+Output directory
+^^^^^^^^^^^^^^^^
+
+This is where you tell PQL where the data generated by the PQL, as result of some processing, will be saved.
+This directory must also be specified at the begining of the night, and is advised to follow the next format::
+
+   /data2/out_YYYYMMDD
+  
+
+To set the value, the user must push the 'Output Dir' button:
+
+.. image:: _static/PQL_GUI_output_dir_but.png
+   :align: center
+   :scale: 65 %
+
+
+Temporal directory
+^^^^^^^^^^^^^^^^^^
+
+This is where you tell PQL where the temporal files generated by the PQL, as result of some processing, 
+will be saved, and probably deleted after at the end of that processing.
+This directory must also be specified at the begining of the night, and is advised to follow the next format::
+
+   /data2/tmp_YYYYMMDD
+
+To set the value, the user must push the 'Temporary Dir' button than appears on the 'Setup' tab, 
+instead the 'Main' tab used for input and output directory.
+
+
+.. image:: _static/PQL_GUI_tmp_dir.png
+   :align: center
+   :scale: 65 %
    
+
+Filename Filter 
+---------------
+
+In this box, the user can filter the name of the files should appears on the data list view 
+from the input directory (output files are not filtered).
+The filter can contains '*' and '?' wildcards. 
+
+For example:
+
+    `*March10_00?1*`
+
+.. image:: _static/PQL_GUI_filter.png
+   :align: center
+   :scale: 65 %
+
+Data list view
+--------------
+Tha data list view control displays all the files found in the input directory, or in the output directory 
+if the check box at the right of output directory is checked. Additionaly, the use can add any other FITS file.
+The control is a multicolum table with the next fields:
+
+.. image:: _static/PQL_GUI_data_list_view.png
+   :align: center
+   :scale: 65 %
+
+Filename
+  Full path name of the file found in the 
+Image type
+  The type of the FITS file detected: DARK, DOME_FLAT, SKY_FLAT, FOCUS, SCIENCE 
+ExpT
+  Exposition time of the file (EXPTIME keyword)
+Date-Obs
+  Observation data of the file (DATE-OBS keyword)
+Object
+  Object name (OBJECT keyword)
+RA
+  Right ascention of center of the image.
+Dec
+  Declination of the cener of the image.
+ 
+List view filter
+----------------
+It allows to select the type of files to be shown in the data list view. The options are:
+
+
+INPUTS
+  Files of the input directory
+OUTS
+  Files of the ouput directory
+DARK
+  Files marked (IMAGETYP) as DARK images
+DOME_FLAT
+  Files marked as DOME_FLAT image  
+FOUCS
+  Files marked as FOCUS image from a focus series
+SKY_FLAT
+  Files marked as SKY_FLAT images
+SCIENCE
+  Files marked as SCIENCE image or with unknown type.
+MASTERS
+  Files marked as MASTER calibration files produced by PAPI
+REDUCED
+  Files marked as calibrated by PAPI
+GROUP
+  Special case that show all the files groupped as sequences
+ALL
+  Show all the files, not matter the type of it
+  
+ 
+.. image:: _static/PQL_GUI_listview_filter.png
+   :align: center
+   :scale: 65 %
+
    
-	
+QuickLook Mode
+--------------
+
+Last file received
+------------------
+
+Buttons
+-------
+
+Subract-last2 button
+^^^^^^^^^^^^^^^^^^^^
+Create calibrations button
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+START button
+^^^^^^^^^^^^
+
+Add button
+^^^^^^^^^^
+
+Remove button
+^^^^^^^^^^^^^
+
+Clear All button
+^^^^^^^^^^^^^^^^
+
+Setup Panel
+***********
+
+Calibrations Panel
+******************
+
+Log Panel
+*********
+
+Pop-up Menu
+***********
+
+.. image:: _static/PQL_GUI_pop_up.png
+   :align: center
+   :scale: 65 %
+
+Display image
+-------------
+
+Image info
+----------
+
+How to ...?
+***********
+
+How do I make mosaics with PQL? 
+-------------------------------
+PAPI will automatically warp (using SWARP) your images as thre are located on the sky. 
+
+How do I make use of parallelisation ?
+--------------------------------------
+Just be sure the number of *parallel* parameter is set to *True* on the $PAPI_CONFIG file.
+
+
+
+
+
+
 .. index:: quicklook, off-line, on-line, configuration
+
+.. _FITS: http://fits.gsfc.nasa.gov
+.. _IRAF: 
+.. _ds9: http://ds9.si.edu/site/Home.html
+.. _Aladin: http://aladin.u-strasbg.fr

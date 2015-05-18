@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/panic/DEVELOP/papi/QL4/panicQL.ui'
+# Form implementation generated from reading ui file '/home/panic/DEVELOP/spyderworkspace/papi/QL4/panicQL.ui'
 #
 # Created by: PyQt4 UI code generator 4.10.3
 #
@@ -1036,7 +1036,9 @@ class Ui_panicQL(object):
         self.fileDirAction.setObjectName(_fromUtf8("fileDirAction"))
         self.fileShow = QtGui.QAction(panicQL)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(_fromUtf8("../../../../../../../../../../../../../../home/staff1/papi/QL4/images/ds9.gif")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/my_icon/images/ds9.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/my_icon/images/ds9.png")), QtGui.QIcon.Normal, QtGui.QIcon.On)
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/my_icon/images/ds9.png")), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.fileShow.setIcon(icon3)
         self.fileShow.setProperty("name", _fromUtf8("fileShow"))
         self.fileShow.setObjectName(_fromUtf8("fileShow"))
