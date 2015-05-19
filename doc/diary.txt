@@ -5752,6 +5752,8 @@ ahora falla getPointingOffsets !!!!
 - Matilde comprueba que efectivamente los NaN en IRAF los muestra como <0 y que los
 trata como 0s, pues ella calculó la media en una ventanita con NaNs y efectivamente 
 los trataba como Os.
+Yo compruebo que Numpy trata los NaN como NaN, y en cualquier operación da como
+resultado otro NaN. Sin embargo, hay funciones que nos permiten tratar los NaN como 0's: numpy.nansum
 
 - El problema que tengo ahora es la segunda sustracción de cielo, pues no se enmascaran
 correctamente todos los objectos, y por tanto al crear el cielo a restar están todos 
@@ -6301,7 +6303,7 @@ ASTIRMS2 = dAXIS2 * 3600.0
 
 + Para el modelo de la PSF, HB ha usado PSFEx, que nos calcula
 un modelo de PSF para la imagen. Eso modelo es el que luego se le
-pasa a SExtractor (PSF_NAME) y SCAMP. No obtante, aunquel la fotometría
+pasa a SExtractor (PSF_NAME) y SCAMP. No obtante, aunque la fotometría
 con PSF es muy buena (o mejor que la de apertura) para cuando 
 tenemos baja S/N o muchos pixeles malos como en este caso;
 sin embargo un inconveniente es que si tenemos un campo
@@ -6687,14 +6689,748 @@ el directorio, pero eso es más lento.
 - Corrijo también (de nuevo !!) el bug en el signo (-) en la declinación para valores <0.
 
 
+23-Marzo-2015
+-------------
+- Semana curso Drupal.
+- Haciendo pruebas con el despliegue de aplicaciones con git.
+ https://danielmiessler.com/study/git/#index
+ http://www.nosinmiubuntu.com/git-montar-estructura-para-despliegues/
+  
+
+24-Marzo-2015
+-------------
+- Añado al PQL en la pestaña Calibrations la opción de selecionar el directorio ext_calib_dir
+(con masterDarks y masterFF) para que se lea y lo tenga disponible
+el QL para applyDark, reducciones, etc...
+Si se cambiar el directorio, entonces se borran de la BD (outputsDB) los ficheros
+de calibracion anteriores y se añaden los nuevos (sii el directorio es distinto).
+
+25-Marzo-2015
+-------------
+- Hablo con Matilde sobre el QL; la idea es quedar para ver si podemos mejorarlo;MF
+lo ha usado para reducir secuencias S-T-S-... (para Q2) y que le ha funcionado bien.
+Me sugiere la implementación de align_stack_cube.py para cubos de PANIC.
+
+- Le explico a MF la idea de los discos para PANIC; lo ve bien,
+y decidimos por tanto comprar lo siguiente:
+
+1 x disco 500GB (backup Sistema) --> 71.25€ + iva
+4 x disco 4TB (*)  --> 4 x 447.74€ = 1790.96€ + iva
 
 
+(*) 2 discos serían para la particion panic22:/data1, de forma que tendríamos 4TB en total (duplucariamos la capacidad actual de 2 TB) para esa particion de datos raw, y los dos discos actuales de 2TB pasarían a ser discos de repuesto de la particion /data2 (pipeline).
+De los otros dos discos de 4TB, uno sería de repuesto para panic22 y el otro disco sería de repuesto para panic1 en el IAA.
+
+
+El precio total de esta configuración sería de 2253,2741 (iva incluido)
+
+Eso sería para la máquina de panic22; la máquina panic35 se quedaría igual o si nos interesase con otros 2200€ podríamos hacer la misma configuración. 
+
+- Tambien hablamos del tema de la tesis; que lo idea es hacer dos artículos
+para A&A, uno para Conchi (diseño de la óptica) y otro para mi (data reduction, sin LEMON ni GEIRS, pero quizás si OT).
+Yo le comento que para Septiembre yo me será posible escribir la tesis.
+
+
+26-Marzo-2015
+-------------
+- Añado NLC al QL en el pop-up menu.
+
+
+27-Marzo-2015
+-------------
+- intentando instalar psfex en panic1 para hacer el analisis de astrometrico en el 3.5m,
+pero falla por no tener la librería liblapack_atlas.so.3
+
+
+06-Abril-2015
+-------------
+- Regreso de vacaciones de Semana Santa;
+- Despues de perder un monton de horas intentando compilar PSFex, me doy
+cuenta de que compilaba bien, el único problema es que estaba intentando
+ejecutar la version binaria de udit43 en panic1 !!!!!!!!!!! 
+pero el src/psfext es correcto:
+
+Para compilarlo por tanto basta hacer:
+ 
+ > ./configure --with-atlas-libdir=/usr/lib64/atlas/
+ (o mejor para tener usar plplot:)
+ > ./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
+ > make
+
+(más info en http://wiki.ipb.ac.rs/index.php/SExtractor_installation)
+
+
+- Comienzo las pruebas con psfex, con el objetivo de ver si consigo los 
+valores de astrometría relativa que obtuvo Hervé.
+Encuentro una referencia muy buena en:
+
+https://github.com/rmjarvis/DESWL/tree/master/e2e/psfex_tests
+
+Para que luego SExtractor lea el modelo .psf, hay que usar el modificador
+
+   PSF_NAME model.pdf
+
+(opcion avanzada de SExtractor)
+
+
+07-Abril-2015
+-------------
+- A raiz del artículo http://arxiv.org/abs/1401.4169 sobre el modo CLIPPED
+en SWARP para evitar artefactor en la combinaciones de imagenes, actualizo
+la version de swarp de la 2.19.1 a la 2.38.0 (en panic1). La compilo como sigue:
+
+./configure --enable-threads
+./make
+
+y copio el swarp al directorio /usr/bin/ en panic1.
+
+- Sigo probando PSFEx en busca de mejorar la astrometría, pero no consiguo avanzar mucho:
+
+   1- con la secuencia del 3.5m /data2/out/Q01/Astrometry_M67_0017_coadd.Q01.skysub.fits
+   consigo ejecutar SEx + PSFEx + SEx(con .psf) + SCAMP, pero no veo mejora en la astrometría
+   interna (dAXIS1  dAXIS2 para High S/N), de echo obtengo los mismos valores con y sin PSF !!
+   Los valores que obtento son: axis1~0.0536 y axis2~0.0389 para High S/N, es decir, en torno 
+   a 40-50 mas en la astrometría interna.
+   
+   2- con la secuencia del 2.2m que estuvo mirando Hervé (TaurusF1), al ajecutar PSFEx obtengo
+   un Segmentation Fault, y no consigo pasar de ahi por más parámetros que intengo modificar y revisar.
+   
+   (ambas pruebas las hago con imagenes indivuales, con **solo** skysub, sin dark ni FF ni BPM !!!)
+   
+   Por todo esto, le escribo a Hervé, a ver si me puede ayudar. Me contesta rápido diciendo que
+   está muy liado, pero que lo hará cuando tenga un rato.
+   
+Lo extraño de todo esto es que no hay mejora con y sin PSF...
+
+Encuento una página interesate que habla de PSFEx : https://github.com/RobertLuptonTheGood/psfex/blob/master/README
+
+- Intentando ver el .xml que genera psfex, me paso un buen rato hasta que me doy cuenta de que hay que 
+modificar la configuración de firefox para poder verlos tal que:
+
+    http://www.astromatic.net/blog
+
+(en chrome no se como se hace)
+    
+además hay que hacer "make install" para que instale los xslt en /usr/loca/share/psfex;
+
+
+   
+08-Abril-2015
+-------------
++ Actualizo (en panic1) la version de SCAMP de 1.7.0 a 2.0.4:
+  - el .rpm no se deja instalar por dos dependencias de libcsironn, libqhull que no consigo resolver,
+  por lo que decido compilar el fuente de SCAMP tal que:
+
+./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
+./make
+./make install
+(todo OK sin problemas)
+
+- Sigo haciendo pruebas con PSFEx, y me doy cuenta de que para que SCAMP "tenga en cuenta" (realmente es SExtractor
+quién lo tiene que tener en cuenta) el modelo de PSF tenemos que decirle a SExtractor
+que no de los parametros XPSF_IMAGE, YPSF_IMAGE obtenidos en la (segunda) llamada a SExtractor
+con el modelo de la PSF. De esta forma, el catálogo que obtendremos tendrá los valores X/YPSF_IMAGE;
+Despues, ejecuto SCAMP con esos nuevos catálogos y observo que dAXIS1/2 cambian, pero muy poco
+e incluso para peor...
+Además leo en una presentación de E.Bertin que XWIN_IMAGE (cendroide con el Ajuste Gaussiano) puede 
+tener una precisión muy parecida (<10%error) a XPSF_IMAGE, pero de una forma más rápida que usando la PSF.
+En definitiva, que sigo sin obtener valores < 40 mas.
+
+
+- Encuento una herramienta interesante: http://pythonhosted.org/pyplate/index.html, que usa PSFEx la resolver la astrometría,
+la idea sería bueno para incluir en PAPI, de forma que en astrowarp tengamos un parámetro que nos diga
+si queremos usar PSF o no, y en su caso entonces calcule la PSF; eso sería obviamente para un conjunto de imagenes
+del mismo campo, ie., dithering.
+
+- Me surge la duda de si tendría que general .psf para cada imagen? ahora mismo uso uno .psf
+para todas las de la secuencia de dithering.
+
+- Creo la rutina createDataSeq.py para poder crear/reconstruir Data Sequences 
+de un tipo determinado; añado dicha funcionalid al QL  (FITS->Create DataSeq).
+
+
+
+09-Abril-2015
+-------------
+-Trabajo para OSN con WeatherServer + RF T150
+
+10-Abril-2015
+-------------
+-Trabajo para OSN con WeatherServer + RF T150
+
+
+13-Abril-2015
+-------------
+- Probando la última version de GEIRS con PAPI, encuentro bug en mef.py al hacer el split !! Qi_j no es correcto, debe ser Qi !!!!!
+Hay que revisar todos los lugares donde aparezca Qi_j y cambiarlo por Qi.
+Básicamente han sido mef.py y correctNonLinearity.py.
+Soluciono dicho bug.
+
+- Añado la copia de EGAINi/ENOISEi a los headers en las operaciones con MEF en mef.py.
+
+- Compruebo que nos actuales NLC de BD son compatibles con el nuevo esquema de MEFs, pues
+lo que se comprueba es el DET_ID, y ese sigue siendo el mismo (SGi), no ha cambiado.
+
+14-Abril-2015
+-------------
+- OSN: Modificación a WeatherServer y programa Rueda de Filtros T150.
+
+15-Abril-2015
+-------------
+- Creo la rutina getBPM.py para la creación de la BPM a partir del fichero de la NLC.
+
+
+16-Abril-2015
+-------------
+- Modifico DE NUEVO (volviendo a trás) mainGUI:createMasterDark_slot() para que use 
+calDark.MasterDark() en lugar del generico processFiles(), pues así hace más
+chequeos y avisa de cualquier incompatibilidad en los DARKS. El processFiles(), en cambio
+los agrupa y no comprueba sin son DARKS, y aunque sean FLATS o SCI, lo procesa diciendo
+eso si que ha generado un FLAT o lo que sea; pero eso no sería muy consistente con lo
+que ha solicidado el usuario.
+
+- Encuentro y soluciono bug en mef.py->convertGEIRSToMEF(); si es un MEF, shutil no estaba importado,
+pero además mejor no modificamos/copiamos el fichero. Lo dejamos tal cual, siguiendo 
+la misma filosofía que en collapse();
+
+
+17-Abril-2015
+-------------
+- Añado la opción de mostar las sequencias de un determinado tipo --> opcion -p -T 'type'.
+Igualmente, si no damos '-p', sino simplemente -T, entonces reduce **solo** la secuencias
+de ese tipo.
+
+20-Abril-2015
+-------------
+- Soluciono algunos problemas OSN (RF y WS).
+- Continuo con pruebas opción -T, y soluciono algún problema. Ciertamente el interfaz no
+está unificado, pues RS.getSequences() sólo admite un tipo, mientras que RS.reduceSet() 
+admite una lista de tipos.
+
+- BugFix en createDataSeq.py; hay que ordenar los ficheros por MJD !!! solucionado !
+
+- BugFix en papi.py con la variable ext_calibration_db; estaba mal nombrada y no se correspondía
+la de la line de comandos con la del fichero de configuración. 
+
+- Mofifico getDarks.py para que tenga en cuenta los CUBOS de imagenes (por ejemplo skyflats), 
+pues en dicho caso el NCOADDS del DARK a tomar debe ser igual al número de capas/planos del CUBO.
+Si no lo hacemos así, entonces por ejemplo puede que no se creen DARKs con el TEXP necesario 
+para restar al skyflat. 
+Esto me ocurre por ejemplo con algunos skyflats (dawn) de 2015-03-10/skyflats_dawn_*.
+
+- Modifico calTwFlat para que compruebe que los flats "buenos" (según Matilde) están comprendidos en
+el rango [10000-40000], teniendo en cuenta los 4 detectores !!! --> lo suyo sería solo el bueno !!
+- Modifico calTwFlat.py para que compruebe exactamente el ITIME y NCOADDS para la sustracción del DARK;
+si no hay matching, entonces no se resta.
+
+
+21-Abril-2015
+-------------
+- Bugfix y mejoras en calSuperFlat.py.
+- Sustituyo en PAPI muchas de las llamadas a 
+        os.path.dirname(yourpath)
+  por 
+        os.path.abspath(os.path.join(yourpath, os.pardir)) 
+para evitar el problema cuando 'yourpath' es un nombre de fichero sin ningún path, ejemplo: prueba.txt
+De esta forma, nos devueve el directorio actual como directorio en el cual se debe (al menos) encontrar
+el fichero.
+
+- Modificación en datacollector.py (__listFiles) para que sólo se traten ficheros con
+extension .fits o .fit; de esta manera evitamos los repetidos intentos (20 * 5) que se llegan
+a hacer de ficheros que no fallen al leerse como FITS. Esto es algo que puedo ocurrir
+muy fácilmente al cambiar el usuario el filtro (Set filename filter) en la GUI del QL.
+
+
+22-Abril-2015
+-------------
+- Modificación en calGainMap.py para que la normalización se haga respecto al detector SG1.
+- Solucion bugs en la llamada QL:Build Gain Map; ahora parece que funciona con DOME_FLAT, SKY_FLAT y SCIENCE
+- Encuentro multiples problemas en calBPM_2.py:
+
+  pendiente:
+   - conflito en calBPM_2.py entre mscred y imred; como consecuencia no se puede ejecutar ccdmask !!!
+   - y decidir cual es el calBPM_X es el bueno !!!!
+   
+23-Abril-2015
+-------------
+- Continuo con la depuración del QL:
+  - bugfix en applyDarkFlat cuando sólo hay BPM.
+  - bugfix en subtract own-sky
+  - mejora en do_raw_astrometry para permitir MEF o SEF y que nos pida el detector a usar.
+  - bug (SF) en do_photometry()
+       - prueba con la cola de multiprocessing, pero también falla, incluso peor...
+         Quizás la solución pase por mostrar el gráfico desde la hebra principal, al igual 
+         que hacía antiguamente (la primera versión) con focus_evalution() ...
+
+
+24-Abril-2015
+-------------
+- Añado la opcion de mostar pdf en el QL para los ficheros obtenidos de la cola de procesamiento (checkDoneQueue);
+el objetivo es poder mostrar los pdf que genere do_photometry(). Pero sigue dando problemas el uso de matplotlib
+desde una hebra/proceso:
+
+[xcb] Unknown sequence number while processing queue
+[xcb] Most likely this is a multi-threaded client and XInitThreads has not been called
+[xcb] Aborting, sorry about that.
+gedit: ../../src/xcb_io.c:273: poll_for_event: Assertion `!xcb_xlib_threads_sequence_lost' failed.
+
+
+Pruebo a llamar a photometry() desde la hebra principal, pero ahora no muestra tampoco
+las gráfica o sólo muestra la última, y además da el siguiente mensaje:
+
+    QCoreApplication::exec: The event loop is already running
+    (see http://stackoverflow.com/questions/14559500/pyqt-and-matplotlib)
+
+- Como 'okular' es una aplicacińo bastante pesada y no puedo configurar el tamñao de la
+ventana, instalo con zypper 'mupdf' que es una aplicación mucho más ligera para mostrar
+pdfs.
+
+
+27-Abril-2015
+-------------
+- Sigo intentado mejorar el tema de mostrar los gráficos de matplotlib de forma
+correcta desde una hebra del QL; todo parece que tiene que ver con el backend
+de matplotlib, que solo el 'Agg' es thread-safe.
+
+http://stackoverflow.com/questions/25807679/accessing-qtgui-qapplication-clipboard-from-the-run-method-of-qtcore-qthread
+http://jbarillari.blogspot.com.es/2009/09/threadsafety-and-matplotlibpylab.html
+
+http://stackoverflow.com/questions/19390622/real-time-plotting-with-matplotlib-pyqt-and-threading-ends-to-python-crash
+
+
+- Despues de muchas pruebas y muchas vueltas, resulta que todo se soluciona elimino de mainGUI.py las lineas:
+
+import matplotlib
+matplotlib.use('QT4Agg')
+
+pues realmente no se usa directamente en el QL. Si le pongo matplotlib.use('Agg') no casca, pero no muestra
+las figuras de doPhotometry() aunque show=True.
+
+Parece que todo es por un conflicto entre varios import del modulo matplotlib, que se usa en photometry.py y
+en runStarfocus.py  y  getImageOffsets.py, de momento...
+
+- Finalemente, la solución a adoptar será llamar a doPhotometry(show=False) y que sea el QL el que muestre 
+el PDF generado con la herramienta 'mupdf' que se instala fácilmente con zypper.
+
+Tras quitar el import de arriba, compruebo que eval_focus_serie(iraf) funcion bien.
+Parece que todo tiene tambien relacción con que el backend the matplotlib no sea thread-safe. 
+Sobre que backend es más conveniente, encontré lo siguiente:
+
+http://stackoverflow.com/questions/7156058/matplotlib-backends-do-i-care
+
+
+- Encuentro el bug en astrometry.net relaccionado con el --cpulimit, que no funciona a no ser que 
+en el fichero de configuracion esté activado "inparallel"; otra opción, quizás las mejor,
+es usar el modificador timeout en la llamada a subprocess.check_call(args, timeout = timeout).
+
+https://groups.google.com/forum/#!topic/astrometry/gyWYg3bQmZ0
+https://github.com/vterron/lemon/commit/bddfacd95e6985543f4f7464da417ec3d49c6c39
+
+
+===> de momento, habilito 'inparallel' tanto en panic1, panic22 y panic35(estaba ya activado)
+
+
+28-Abril-2015
+-------------
+- Compruebo que el 'Median combine of images (con sigmaclip)' de un cubo de datos
+lo hace IRAF para cada plano, produciendo al final una imagen-cubo, es decir, hace
+el combine para cada plano uno a uno.
+Si intentamos combinar imagenes cubo con no-cubo, IRAF da un Warning, pero se lanza
+ninguna Excepcion, por lo que el QL no se entera, aunque no se genera ninguna imagen.
+
+- Prueba de PAPI para reducir toda una noche, por ejemplo, 2015-03-10:
+
+   > ./papi.py -s /data1/PANIC/2015-03-10/ -d /data2/PAPI_tests/prueba1
+
+   con:
+     ext_calibration_db = /data2/Masters2
+     apply NLC = false
+     BPM = none
+     applyDF = 0
+     
+     - En principio va bien.
+     
+   con:
+     ext_calibration_db = /data2/Masters2
+     applyNLC = True
+     applyDF = 1
+     
+     aparecen los NaN y luego O's (IRAF) !!!
+     Numpy trata los NaN como NaNs, y cualquier operación con ellos produce otro NaN.
+
+     Corrijo en datase.py::GetFiles() el parametro ROUND para que no sea tan
+     permisivo con el valor aprox. del TEXP; antes ROUND=0.5, ahora ROUND=0.1;
+     pues luego en applyDarkFlat o calTwFlat puede fallar pues la precisión 
+     buscada es mayor.
+     
+     
+- Añado rutina nan2num  al modulo misc.statutils.py
+- Encuentro codigo interesante: https://github.com/nhmc/Barak/blob/master/barak/
+- Encuentro documentación interesante para un pipeline: http://members.galev.org/rkotulla/research/podi-pipeline/
+  y además un portal con muy buena pinta para un Archiv+Pipelien !!! == > https://portal.odi.iu.edu/index/front
+  y una charla muy interesante sobre el pipeline: http://members.galev.org/rkotulla/wp-content/uploads/2013/04/podi_update+progress__75dpi.pdf
+  
+
+
+- Intento ver si hay una forma fácil de poner un toolTip en el QL (pyqt tooltip QTreeview), pero no parece
+que sea evidente...
+
+- Como lo del toolTip no es evidente, añado la función "Image Info" al QL para que muestre la información
+básica de fichero actualmente selecciónado. El objetivo es ver de forma rápida si por ejemplo es un MEF o SEF,
+si es un cubo, el nro. de COADDS, ITIME, OBS_TOOL, etc..
+
+- PAPI se queda atascado en SWARP cuando hace lo siguiente:
+
+swarp -c /home/panic/DEVELOP/papi/config_files/swarp.conf -WEIGHTOUT_NAME /data2/tmp/PANIC_SEQ_Q03_coadd_g4Sl2Z.weight.fits -IMAGEOUT_NAME /data2/tmp/PANIC_SEQ_Q03_coadd_g4Sl2Z.fits -COPY_KEYWORDS OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT -HEADER_SUFFIX .fits.head /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0026_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0027_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0028_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0029_LC_coadd.Q03_F.skysub.ast.fits /data2/PAPI_tests/prueba1/Q03/CUCnc_Test_Photom_March10_0030_LC_coadd.Q03_F.skysub.ast.fits
+
+(las imagenes están muy desenfocadas !)
+
+===> Quizás habría que poner algun timeout al procesamiento de una secuencia, para que no se 
+quede ahí indefinidamente y no siga procesando las demas...; en principio el metodo get(timeout) multiprocessing.Pool().
+
+
+29-Abril-2015
+-------------
+- Instalo latex (zypper texlive-latex) en panic1 para poder generar el latex y posterior PDF de la documetación de PANIC; instala
+un montón de paquetes y ocupa casi 1 GB.
+
+- Se me vuelve a llenar el /tmp de panic1 debido a solve-field; escribo una issue en https://github.com/dstndstn/astrometry.net/issues/45
+pues parece que puede haber un problema en astrometry-netv0.50 y no se borran los /tmp/tmp.sanitized files.
+Otra solución  sería usar el modificador --temp-dir para que indicarle donde grabar todos los temp files; esto implicaría
+modificar un poco el modulo solveAstrometry.py --> DONE; además, de esta forma, al usar papi_tmp, el propio PAPI lo borrará automaticamente
+en purgeOutput().
+
+
+- Modificación en solveAstrometry.py para que la funcion solveField admita el parametro temp_dir para AstrometryNet y así
+evitar el llenado del /tmp (mientras solventan el bug en Astrometry.net reportado por JM)
+
+- Descubro, que al hacer la NLC, como se propagan los NaNs al hacer dividir por el Flat en applyDarkFlat (numpy), pues no se restó
+dark, que los hubiera convertido en O's (IRAF !!), entonces el solveField (astrometry.net) no es capaz de resolver !!
+
+
+
+30-Abril-2015
+-------------
+- bugfix al final de la reducción con imgTrim y la weight image por la doble "//" que no le gusta a IRAF (imcopy).
+
+- Me quedo depurando el nuevo solveField y ver como le afecta la NLC !!! -- ojo, tengo en applyDarkFlat convertir los NaNs en 0s
+
+
+- Pruebas PAPI:
+
+  *) NLC + xtalk (sin applyDarkFlat): astrometry.net OK, swarp SI termina ...
+  *) NLC (sin xtalk ni DF): astrometry.net OK, pero NO termina swarp !!!!!!!!!!!!!!!!
+  en concreto es por un fichero al que SWARP no le sabe calcular las coordenadas ni la pix_scale !!! /data2/PAPI_tests/prueba2/Q02/EPerez_UGCA290_March9_0054_LC_coadd.Q02.skysub.ast.fits
+  Pero si lo abro con DS9, todo parece correcto, y en la cabecera no veo nada raro....
+  
+  *) Nada: OK, todo ok.
+  *) NLC + xtalk + DF=1: astrometry no resuelve , por los NaNs!! sin embargo, si los sustituyo por 0's la imagen
+  /data1/PANIC/2015-03-09/EPerez_UGCA290_March9_0046.fits no se resuelve la astrometría, y además tiene una pinta fea la prereducida...
+  sin embargo, las demás parecen OK.
+  (ver esto con más detalle, quizás sea el GainMap !!!)
+  
+  
+
+04-Mayo-2015
+-------------
+- Soluciono el problema de ds9 a través del x2go; el problema era debido a 
+que tenía instalado en panic22 el nomachine_4.2.27_1_x86_64.rpm y el fichero
+/usr/NX/share/rgb no le gusta al x2go. Se soluciono copiando (o creando un enlace)
+al fichero original del sistem: /usr/share/X11/rgb
+
+
+/usr/NX/share/rgb -> /usr/share/X11/rgb
+
+
+- Instalo x2goserver en panic35 y le digo a BD que los puede usar vía ssh.
+
+
+(P) - ROTANGLE -- añadir opción de verlo en QL
+
+(P) - Como es posibles que GainMap saque aún pixeles malos con los umbrales tan altos !!! crear un valor "clave" para no-limits ??
+==> el problema era que los umbrales eran aún bajos (0.2 y 1.8), pues el sigma actua sobre "otros" umbrales.
+con Low=0.0 y high=999999, se detectan muchos menos....
+
+(P) NLC deja muuuuchos NaNs, que no se que hacer con ellossss !!
+
+
+05-Mayo-2015 (adios primaR)
+------------ 
+- Hago nuevo gráfico de los pasos del pipeline.
+- Confirmo que los NaN que genera la NLC se propagan hasta despues de skysub y dxtalk.
+- De nuevo me da la impresión que los NaNs no le gustan a Astrometry.net, pues no resuelve un campo con bastantes estrellas...
+pues no es por los NaNs...pero no entiendo por qué Astrometry.net no resuevel la imagen:
+
+/data2/PAPI_tests/prueba2/Q02/M67_Tests_Photometry_March9_0041_coadd.Q02_F.skysub.fits
+
+(P) ===> todo el problema era debido al FF que la había aplicado, cosa que no entiendo como le puede afectar tanto...HAY QUE VERLO !!
+Inspeccionando la imagen diferencia de con y sin FF, no veo mucha diferencia...solo se me ocurre que el FF tenga estrella y que
+se añadan a la imagen al hacer el FF y por eso no resuelve la astrometría....aunque a simple vista en el FF no se ven...
+Esta claro (viendo los objetos que detecta) que el FF vuelve "loca" la imagen, y no se detectan luego los objetos, aunque
+a simple vista se ven cláramente....
+
+
+
+06-Mayo-2015
+------------ 
+- bugfix: Modifico RS:getCalibFor() para que en los DARK se compruebe el NCOADDS, 
+pues luego en applyDarkFlat() se comprueba también.
+
+- Parace que todo el problema con el FF (ver arriba) es por el GainMap que luego se usa en Skyfilter, es decir, no es el propio FF; 
+el problema era que tenía en el fichero de configuración los siguientes valores:
+
+    mingain = 0.0 # pixels with sensitivity < MINGAIN are assumed bad (0.7) 
+    maxgain = 99999999.0 # pixels with sensitivity > MAXGAIN are assumed bad (1.3)
+
+y así no se marcaban los pixeles malos, con lo cual en la SkySubtraction no se hace bien con el GainMap de un skyFF;
+si embargo, si no le damos un FF, sino que el GainMap se crea a partir del SuperFlat, entonces el GainMap
+es menos "malo" y la SkySubtraction funciona bien....y por tanto se hace la astrometría etc...
+En resumen, no podemos tener umbrales absurdos para el GainMap !! (TBC)
+
+
+
+07-Mayo-2015
+------------ 
+- Por n-esima vez, mirando a ver como solucionar el tema de los BadPixels !!
+En resumen:
+  + 1st SkySubtraction: no se tienen en cuenta los BP (ni objectMask) al calcular el skybackground (cube_median), 
+    pero en la sustracción de cielo (resta) si se tienen en cuenta los BP, a los que se les asigna el background_level
+    de dicho frame.
+  + 2ndo SkySubtraction: se tienen en cuenta tanto los BP como la ObjectMask para el calculo de skybackground (cube_mean)
+  que posteriormente se resta. Además, en la resta del skybackground, a los BP de nuevo se les asigana el background_level.
+
+  + En el (1er o 2do) coadd (swarp), se "eliminan" los BP (y posibles CR y NaNs) debido al dithering.
+  + El "problema" de los BP (CR y NaNs) por tanto queda para el caso de LEMON, o cuando no se quiera 
+  hacer ningún stack/coadd de los frames del dithering.
+
+En cuanto a los hacemos la NLC tenemos un montón de NaNs que se propagan hasta el primer coadd, y justo
+ahí se "eliminan" con el combine final, pero para LEMON no se "eliminan" pues no se hace
+dicho coadd. Las posibles soluciones que se me ocurren:
+
+   1) dejarlos como está, con el bkg_level
+   2) marcarlos como 0 / NaN
+   3) Sustituirlos por Interpolación  (ala cpl_detector_interpolate_rejected) es decir:
+   The value of a bad pixel is interpolated from the good pixels among the 8 nearest. 
+   (If all but one of the eight neighboring pixels are bad, the interpolation becomes a nearest neighbor interpolation). 
+   For integer images the interpolation in done with floating-point and rounded to the nearest integer.
+
+   If there are pixels for which all of the eight neighboring pixels are bad, a subsequent interpolation pass is done, 
+   where the already interpolated pixels are included as source for the interpolation.
+
+  The interpolation passes are repeated until all bad pixels have been interpolated. In the worst case, 
+  all pixels will be interpolated from a single good pixel.
+
+
+08-Mayo-2015
+------------ 
+- ver como darle a Sextractor la BPM --> solo tendría sentido para las imagenes .skysub.fits, pues
+las que ya sean coadds, no tienen BP pues se deben de haber eliminado con el median-combine...
+- probar el Mix de BPM con GainMap y ver como sale las imagenes; bien, todo parece correcto.
+
+- Pruebo iraf.fixpix(".skysub.fits", "PANIC_BPM.fits") y el resultado es horrible;
+parece que voy a tener que implementar mi propia rutina....ala CPL...
+
+
+- Implementar interpolación de BP ala CPL (quizás en Python como un modulo independiente o C en skysub ??).
+Finalmente, implemento el modulo cleanBadPix.py, extraido del código de lacosmic (http://star.herts.ac.uk/~bsipocz/astropy/docs_check/html/_modules/photutils/detection/lacosmic.html)
+Lo pruebo con BPM (BP=1) funciona bien, pero aún deja algunos Pixeles si corregir (en mitad de estrellas) que son debidos
+a BP enmascarados por en el gainmap, y por tanto es mejor usar el gainmap para corregir; sin embargo,
+para usar el gainmap en el cual los BP=0, hay que modificar ligeramente la rutina para que tome los BP=0.
+Tras eso, lo pruebo con imagenes .skysub.fits, y queda muy bien !!
+Por tanto, ahora toca añadir cleanBadPix.py al PAPI como paso opciona para la salida de LEMON, aunque
+no creo que esté mal hacerlo como paso genérico y opcional, pues no creo que afecta mucho al 
+co-add que luego se haga con SWARP/dithercubemean.
+
+11-Mayo-2015
+------------ 
+- Encuentro bug importante en applyDarkFlat !!! (es que esto nunca acaba !!), pues
+al trabajar con MEF no se tenía en cuenta la posible desordenación (tras los cambios en GEIRS) de las extensiones;
+lo soluciono accediendo a las extensiones por su nombre en lugar de por el número.
+
+- Además, añado applyDarkFlat la nueva rutina de cleanBadPix.py, pues funciona mucho más rapido que la de python y mejor que
+la de IRAF (o eso creo).
+
+- Me doy cuenta de lo importante que es a la hora de restar el DARK que sea del mismo TEXP y el mismo NCOADDS, pues 
+al aplicar un dark de 27seg (ncoadd=1) a una image de 2.7s x 10 coadds, las lineas malas (por ejemplo fila 320) no se eliminan,
+pues en el dark la linea mala tiene una cuentas ~2.7s, es decir, donde se crean las cuentas es en la propia lectura y no en la
+integración. Por eso, para poder limpiar bien las imagenes hay que usar DARKS ***idénticos*** (cosa que por otro lado siempre se ha acosejado).
+Sin embargo, debido a como se tomaron los dark con la rutina getDarks.py durante los commisionings anteriores, no tenemos darks 
+correctos para todas las observaciones.
+
+
+12-Mayo-2015
+------------ 
+- Hervé me confirma que Sextractor, PSFEx, SWARP ignora los pixeles con NaN, es decir, les da un peso 0, como si le hubiesemos dado un mapa de pesos con 0.
+
+- Envio el siguiente resumen de cambios de PAPI & QL a BD (y al resto IAA team); ademas creo el fichero changes.txt para ir 
+haciendolo de forma periódica.
+
+
+PAPI & QL: main changes from last commissioning
+-----------------------------------------------
+
+- added support to new MEF structure (old also supported)
+- added option for Xtalk remove before 1st sky subtraction, and not only before 2nd sky subtraction
+- added support for cubes ar20nd SEF in calibration routines (calDark, calDomeFlat, calTwFlat)
+- strong check for ITIME and NCOADD on dark subtraction
+- modified routine (getDarks.py) for taking automatic dark exposures in OT: now, cubes will be taken into account, and then a cube of N layers and ITIME will produce a DARK of N coadds of ITIME
+- flat normalization wrt Q1 or SG1_1 (instead of index by number 1)
+- new option on QL to select an additional calibration directory ("QL-->Calibrations->SetCalibs Dir..."); default value is set in $PAPI_CONFIG file (ext_calibration_db)
+- new option for NL-Correction in QL pop-up menu for a set of files (Apply Non-Linearity Correction)
+- new feature on QL pop-up menu (FITS->Create DataSeq) to build sequences with right OT keywords; useful to re-rebuild/fix aborted sequences or non-OT sequences
+- new option for cube collapse in QL pop-up menu (FITS->Collapse cube); in progress try to collapse with re-centering (alignment).
+- QL photometric estimation show the pdf plot of the fitting of InstMag vs 2MASS
+- added to QL pop-up menu option to show basic info of a FITS file (MEF/SEF, shape, Filter, ITIME, NCOADDS, EXPTIME and type)
+- added to QL pop-up menu option to show plot of dither pattern of a set of selected files (Show Dither Pattern)
+- added option on pipeline CL to show sequences of a given type (-T [DARK|FLAT|DOME_FLAT|SKY_FLAT|FOCUS|SCIENCE|CAL|all] )
+- copy of EGAINi and ENOISEi on FITS splits
+- modified low and high threshold levels for skyflats acceptance to [10000-40000] in calTwFlat routine
+- only .fit or .fits files will be treated by PAPI&QL
+- support to MEF on QL Astrometric calib and ask for detector to solve
+- enabled '--cpulimit' (=300s) + 'inparallel'  on astrometric calibration with Astrometry.net
+- added optional clean of bad pixels just after sky subtraction; the bad pix (given by the gainmap) are replaced by the median of a 2D window, and if all pixels in the window are bad, then the window in increased in size until unmasked pixels (>0) are found
+- (in progress) new approach for processing of dither sequences with large offsets; in that cases, and due optical distortion, the common object mask (from the 1st coadd) does not match for all individual images, thus individual object masks have to be used
+- several bugfixs:
+   - SEF to MEF conversion and new MEF structure (Qi)
+   - current_night check box on QL
+   - set filename filter on QL
+   - sign in declination values on QL
+   - conflict with matplotlib and QL threads
+   - tmp.* files created by Astrometry.net were not removed automatically as announced; until bugifx in Astrometry.net, removed by PAPI.
+   - (other hundred...)
+
+
+Misc
+----
+- run astrometric calibrations with PSFEx with data from 3.5m (M67); achieved ~40mas for internal astrometry dispersion and waiting for Hervé support.
+- enabled x2go on panic22/panic35 for remote control of PANIC; problem with ds9 colors solved
+- order of spare disks for PANIC computers (1 x 500 GB + 4 x 4 TB)
+- NLC produces lots of NaNs for bad pixels (and above LINMAX value); how should PAPI handle these values ? in principle, they are masked (and ignored) up to the co-add, where are again ignored and removed in median combine (see above new optional routine to clean bad pixels) 
+
+--------------
+
+
+
+- Acceso meteo OSN desde fuera (y dentro) del IAA:
+
+wget -q -O $HOME/pru.txt http://www.osn.iaa.es/cgi-bin/snowsClient.py
+
+
+13-Mayo-2015
+------------ 
+- Implemento la object mask multiple para el caso en que los dither offsets sean mayores
+de un determinado valor, pues debido a la distorion optica (la distorsión es muy diferente 
+para pixeles muy separados en el detector!!! comentado con Matilde, y ella también 
+lo veía así) no se puede usar una mascara comun, pues el primer coadd no se hace 
+bien (dithercubemean), y por tanto, la mascarca
+correspondiente no sera buena....
+Para eso, se usa el nuevo parametro del config file ['offsets']['max_dither_offset'].
+
+- Ejemplo: 
+
+./papi.py -s /data1/PANIC/2015-03-03/ -d /data2/PAPI_tests/prueba2/ -S 23 23 -W Q2 -M lemon
+
+
+- Videocon:
+
+  - en cuanto a mi pregunta sobre qué hacer con los NaNs que pone la NLC, todos (incluido KM, MF, BD, VT)
+  están de acuerdo es dejarlos como NaNs, y que no se tengan en cuenta dichos pixles para 
+  los cálculos, y por supuesto tampoco en el combine (coadd) final. En cualquier caso, también
+  están de acuerdo en **no usar** el metodo cleanBadPix.py, pues es mejor dejarlos tal cual.
+  - KM nos recuerda que es **urgente** la documentación !!!
+  - BD me pide que confirme que el QL estará disponible con los nuevos MEF; yo le digo que ya lo está.
+  
+  
+
+14-Mayo-2015
+------------
+- Instalo spyder en panic1 y comienzo a trabajar con dicho IDE. 
+- Modifico skysub.c para que en la funciones skysub() y skysub_nomaks() se
+reconozcan los NaNs y se dejen en la imagen de salida a un valor NaN en
+lugar del bkg_level;
+Al hacer eso, falla Astrometry.net pues no puede resolver las imagenes .skysub !!!
+
+
+
+TODO
+- Ver que valores serían buenos para GainMap (low,high).
+- Ver si puedo instalar Lemon  probarlo con datos de WASP-XX de PANIC.
+
+
+
+
+
+
+
+Tratamiento NaNs
+----------------
+- iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado 
+- numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
+  que te permiten tratarlos como 0's (numpy.nansum)
+  Además, tengo una rutina muy util en misc.statutils, llamada nan2num(a, replace)
+  
+- SExtractor: leido en el foro que los reconoce y los sabe tratar (como ?).
+  Si embargo, he leido que aconsejan sustituirlos por -BIG (-1e+30)
+  """
+  Sextractor incorrectly registers the background level as NAN and finds no sources for images with NAN values.  Two workarounds for this problem that we found to be effective are:
+  Edit image so that NANs are changed to a value less than or equal to –BIG.  BIG is defined in the sextractor header files as 1e+30, if a pixel is smaller than this then sextractor will ignore it.
+  Perform manual estimation of background by editing default.sex configuration file parameters as follows: “BACK_TYPE MANUAL”, “BACK_VALUE  <background value>”
+  """
+  En el log de Sextractor (r20), encuentro el siguiente comentario de E.Bertin: 
+  "Discard NaN pixels in non-weighted background measurements (as in SWarp)."
+  
+- Hervé me confirma (12-Mayo-2015) que Sextractor, PSFEx, SWARP ignora los pixeles con NaN, es decir, les da un peso 0, como si le hubiesemos dado un mapa de pesos con 0.
+
+- Los NaNs "sobreviven" hasta el coadd, es decir, se mantien incluso en el remove_xtalk; 
+por tanto, son transmitidos a LEMON...(todo esto es valido para mode quick como science).
+
+ 
+Revision de funciones de QL
+---------------------------
+*) Pop-up menu
+ 1-Build Master Dark-- modificado para usar calDark.MasterDark() en lugar del generico processFiles();
+   ahora se queja si hay algún DARK no compatible.
+ 2-Build Master DomeFlat -- OK
+   Si hay algun Flat que no es compatible, no lo usa (Frame skipped), pero en consola QL no dice nada, sólo avisa en 
+   consola Linux.
+ 3-Build Master Twlight Flat -- algunos errores; solucionados.
+        Ahora comprueba de forma exhaustiva el ITIME, NCOADDS.
+ 
+ 4-Build Master Dome Flat: OK, incluso sólo con 1 on, 1 off
+ 5-Build GainMap: 
+   Basicamente lo que hace es buscar los pixeles malos en un MasterFlat (que crea si es necesario) y ponerlos a 0
+    - encuentro un bug sintactico importante!! --fixed
+    - me cuenstiono que sentido tiene ....!!! bueno, ya que esta...
+    - con dome_flat_on_off parece que se "ejecuta" correctamente.
+    - se ejecuta con cualquiera, pero con SKY_FLAT tiene que encontrar los darks para restar.
+ 6-Build BPM: bugs varios !!!
+   - conflicto msred y imred en calBPM_2 ---> PENDIENTE
+   - pendiente ver que algoritmo vamos a usar finalmente (calBPM_2 o calBPM_3), a priori calBPM_3, pero
+   queda por confirmar por Matilde.
+ 
+ 7-ApplyDarkFlat & BPM: OK, aunque:
+    - puede que no encuentre las calibraciones si no esta cargado en el /data2/out y 
+    tampoco están en el directorio ext_calibration_db.
+    - además puede que no las encuentre debido al tipo de fichero (MEF o SEF).
+ 8- Do photmetry: bug !! fixed 
+ 9- Do astrometry: OK; now solve-field --cpulimit works due 'inparallel' parameter in astrometry config file.
+ 
+ 
+   
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
 - En la noche 2015-03-10, las secuencias de DomeFlat sólo tienen
 uno de cada tipo (1 ON, 1 OFF). ¿ es eso correcto ? Yo tenía
 un mínimo de 3 en la rutina de calDomeFlat.
 - En ese mismo día, los DomeFlat son también cubos; ¿ basta con sumarlos ?
+- Si se aplica NLC, a los pixeles malos se les asigna el valor NaN, que luego
+en IRAF (por ejemplo) los convirte/trata como 0s, y son arrastrados
+para el resto de la Pipeline. ¿ qué hacer con esos 0s ??
+- Las imagenes con NCOADD>1, al hacer la NLC hay que hacerla de
+forma "aproximada" dividiendo por NCOADDS !!
+- No hay DARKs para todo, debido al tema de los cubos y getDarks.py, y que ahora ya
+está solucionado (en principio...).
+
 
 
 
@@ -6703,7 +7439,7 @@ un mínimo de 3 en la rutina de calDomeFlat.
 Posibles causas del problema del Transito WASP:
 ==============================================
 0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
-¿ que hacer con los BP ????
+   ¿ que hacer con los BP ????
 1- fueron reducidas con modo quick
 2- no tiene ni Dark y Flat
 3- (creo) que fueron reducidas con el dxtalk activado
@@ -6713,19 +7449,52 @@ pequeño y razonable y con más puntos.
 
 
 
-
 TODOs - urgentes
 ================
-- Añadir al PQL en la pestaña Calibrations la opción de selecionar un directorio
-con masterDarks y masterFF (ext_calibration_db) para que se lea y lo tenga disponible
-el QL para applyDark, reducciones, etc...
+- como conclusión de la videocon del 13-Mayo, hay que ver como hacer para que los NaNs se conserven y se ignoren en
+todos los cálculos cuando se haga la NLC. Además, cuando no se haga la NLC, hace falta que si se aplica
+la BPM sea con NaNs, pues parece que es el valor que puede funcionar mejor ya que lo ignoran Sextractor, SWARP, Numpy, etc...
+Queda ver como corregir skyfilter para que los 0s del gainmap se conviertan en NaNs en lugar de bck_level !!!
+
+
+- mejorar dxtalk ala SIMPLE (https://www.asiaa.sinica.edu.tw/~whwang/idl/SIMPLE/WIRCAM/Doc/simple.pdf)
+- hacer algo para que Sextractor tenga en cuenta los BPM, o al menos multiplicar la ObjectMask por la BPM (O's).
+ extraido de SNAP: the object mask are multiplied by the bad pixel mask to remove false detections;
+- OJO, en reductionset.py, tengo en el multiprocesing.pool.get(N) N=1 !!!!! para una prueba !!! que parece que no funciona...
+- Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi (buscar TODO)
+- un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
+la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina la ejecución actual.
+- intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararlo (do_raw_astrometry) !!
+- Averiguar para que se necesita ENOISE y EGAIN !!!
+- Me surge la duda de que diferencia entre SuperFlat y TwFlat; básicamente son iguales,
+excepto que en TwFlat que resta el dark y en SuperFlat no se hace nada de dark subtraction.
+- Cuestionarse donde usar ExecTaskThread, pues de esa forma si podemos obtener el
+error que se pueda producir (via Excepcion).
+- Comprobar que el tipo TW_FLAT no se usa, sólo se usa SKY_FLAT; en principio no es necesario distinguir DUSK/DAWN FLATS
+- Probar a instalar PAPI en un directorio del sistema único y ver si lo pueden ejecutar todos los usuarios.
+- Ver la opción de añadir a "todas" la llamadas de SExtractor la máscaras de pixeles malos como un WEIGHT_MAP
+- Añadir a astrowarp la opcion de usar ajuste PSF para la astrometría (ala http://pythonhosted.org/pyplate/index.html); antes 
+tendría que tener algun input más de Hervé para ver que merece la pena...pues ahora mismo con las pruebas que he hecho
+no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
+- En los cubos de datos, al hacer el coadd, el TEXP resultante puede que no coincida con ningun dark tomado de forma automática por el OT ??
+  Ejemp:
+   > papi.py -c config_files/papi.cfg -s /data1/PANIC/2015-03-07/ -S 20 20 -W Q1 -M quick-lemon
+  
+  Esto en principio se solucionó con una nueva version de getDarks.py de forma que cuando se encuentra un
+  cubo, toma un dark con NCOADDS igual al numero de capas del cubo, en lugar de tomar 1 solo COADD con ITIME.
+  Esto lo hablé com Matilde y le pareció bien.
+   
+- Retomar el tema de mejorar y añadir a PAPI la suma de cubos con alineado (align_stack_cube.py), o al menos 
+que la suma sea un combine+sigclip.
+- Añadir quizas una opción genérica applyCalibs y que ahí pregunte que quieres hacer (DARK, FLAT, BPM, NLC)
+- Realizar analisis astrometría ala Hervé (ver notas teleconf) con psfex --partly done
+- Probar reboot como usuario panic
 - Añadir opcion de dar estimación del cielo de un conjunto de imagenes con dithering:
-básicamente es hacer un combine con un sigma reject de los objetos.
+básicamente es hacer un combine con un sigma reject de los objetos : 
+   ---> Esto está ya implementado ya en el QL: Math-->Combine Images (median+sigclip)
 
 - Resolver tratamiento BP en gainmap (level, etc...); ahora lo mejor es no detectarlos
 poniendo el umbral muy alto !!
-- Probar sugerencias de RM en el kernel y sistema.
-- Probar reboot como usuario panic
 - Quitar todos los debugs (ficheros temporales) de skyfilter.c
    OJO !!! --> los ficheros /data2/tmp/sky** y /data2/tmp/skyw* de depuración
    que se generan en skyfilter son creado por el usuario panic y si lanzaramos las misma
@@ -6736,15 +7505,21 @@ poniendo el umbral muy alto !!
 
 - DITHERCUBEMEAN no funciona bien para offsets grandes (>300 o >600) !!! o eso me parece, pues
 con /Astrometry_M67_0026-30 del 7-Marzo no hay manera !!! (en la segunda pasada de PAPI).
+Efectivamente no funciona bien debido a la distorsion del campo. Con esos offsets, el coadd no
+funciona bien, y por tanto la mascara de objectos para el skyfilter de la segunda vuelta, no 
+se hace correctamente.
+
 - Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
 - ver si CreateCalibs puede incluso hacer la NLC !!
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
-- Que pregunte que Qi reducir en el PQL
+- Que pregunte que Qi reducir en el PQL (ahora sólo está en el tab 'configuración'
 - Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
 de objetos no hace bien su función, pues en la imagen final salen manchas negras....
 Ejemplo: /data1/PANIC/2015-03-03/EPerez_UGC9128_March3_0026-50.fits
 Además la segunda pasada con el Q2 casca !!! el skyfilter da un SF !!!
 
+- Ver como propagar todos los mensajes de error del PAPI en la consola del QL; por
+ejemplo, si applyNLC desde el QL falla, sólo devuelve 'No value returned'.
 
 - Ver como permitir mod. parámetros del iraf.starfocus para el focus_evaluation.
 - ver si el pix_scale que tiene el config del RS se puede actualizar
@@ -6786,7 +7561,6 @@ el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un 
 en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
 si se detecta bien los SKY de los SCIENCE
 
-
 - Revisar/permitir D+F+BPM en QL de modo automatico
 - refactorizar la astrometría en RS
 - cambiar directorio temporal de astrometry.net (/tmp/) para los /tmp/tmp.sanitized.ZDkbmU !!
@@ -6795,7 +7569,6 @@ si se detecta bien los SKY de los SCIENCE
 - revisar/mejorar ApplyDarkFlat en QL
 - Añadir NCOADD, ITIME, MEF ? a la ListView del QL
 - DUDA: cómo se usa el ext_calibration_db en el QL ???
-- añadir opcion de crear "solo" calibrationes desde CL de PAPI
 - adaptar Nuevo interfaz de calTwFlat en PAPI !!
 - Sacar algún mapa de distorsión decence !! (datos Tilt y/o 10-Dic-2014)
 - aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
@@ -6821,24 +7594,30 @@ nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
 
 
 - Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
-- limpiar fichero de configuración de variables que no usamos.
 - ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...
 - en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
 pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
 
 - iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado ==> estudiar como puede afectar !!!
-    
+  numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
+  que te permiten tratarlos como 0's (numpy.nansum)
 - ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
 - ver que hace en general PAPI con los NaN de la NLC y BPM !!!
-- rutina para crear BPM a partir de los NLC de BD
-- añadir EXTNAME a los ficheros BPM para que funcione el split() --> crear rutina para crear BPM 
-a partir de los master NLC de BD.
+- limpiar fichero de configuración de variables que no usamos.
+- Mejorar Ordenamiento por campos (columnas, ejem. TExp) numéricos en la ListView del QL;
+parece que habría que sobreescribir la clase:
+
+http://stackoverflow.com/questions/363200/is-it-possible-to-sort-numbers-in-a-qtreewidget-column
 
 
 TODO:
 ====
+- BUg: al decirle al QL que haga la fotometría a una imagen (un cubo), lo hace 
+pero al final, al mostrar el plot, da un SF y se cierra el QL; el ultimo 
+mensaje fue:
+QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
+                   
 - Eliminar el primer coadd que se crea en: /tmp/PANIC_SEQ_Q01_coadd_RADMON.fits 
-- Escribir a RM para que modifique? EXTEND=F en los single !!! para identificarlos bien de los MEF.
 - Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
 hacer una propia en Python.
 - ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'
@@ -7301,7 +8080,6 @@ documentación GEIRS (3.3 Postprocessing)
 - Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
 - Dejar muy claro en la documentación que tipo de ficheros son los mejores para
 PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
-- Comprobar lectura correcta de nuevas keys : CAM_DETROT90 y CAM_DETXYFLIP en r719M.
 
 - Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
 o SWARP (VTerrón lo está usando y está contento...)
@@ -7314,15 +8092,11 @@ o SWARP (VTerrón lo está usando y está contento...)
 - "Collapsar" los cubos de PANIC con un average + sigmaclip en lugar de una
 simple suma aritmética !!! --> imcobine !
 
-- Modifico mainGUI:createMasterDark_slot() para que use processFiles() en lugar
-de llamar directamente a calDark.py.
-  ==>Esto habría que hacerlo para otras funciones _slot_ del QL !!!
 - Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
 - Rutina para copiar datos de varios directorios a un único directorio y renombrando
 los ficheros de forma única (DATE+TIMESTAMP)!!
 
 - Revisar GUI QL !!! y quitar lo que no sirva !!
-- Second pass of sky-subtraction for extended objects
 - Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
 - Support for sub-windows (not tested, but probably does not work properly) 
 - Method to empiricaly determine the geometric distortion based an auto-calibration 
@@ -7371,7 +8145,7 @@ de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho
 - Probar bien solveAstrometry() con HAWK-I
  
 - Comprender bien el valor (unidades) de ASTRRMS1 que da SCAMP, pues parece que 
-son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)
+son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)---> NOOO, son el grados !!! y parece correcto !! ver notas Herve
 - cuando RM nos pase la r711M, probar los MEF integrados, los subwindows con MEF, etc , etc ...
 - Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
 - Documento (TN) Data Grouping algorithms
@@ -7393,9 +8167,7 @@ datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de P
 - ver notas libreta sobre si se reduce o no HAWK-I-5; 
 en el portatil lo hace, pero el resultado no es muy bueno, 
 incluso la astrometria no parece funcionar
-
 - escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-- añadir sonidos con from PyQt4.phonon import Phonon (ver sound.py en tests)
 - PANIC Tesis ala O2000 !!!
 
 

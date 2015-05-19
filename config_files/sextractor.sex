@@ -48,7 +48,7 @@ PIXEL_SCALE     0.45		# size of pixel in arcsec (0=use FITS WCS info).
 #------------------------- Star/Galaxy Separation ----------------------------
 
 SEEING_FWHM	0.8		# stellar FWHM in arcsec
-STARNNW_NAME	$PAPI_HOME/irdr/src/config/default.nnw	# Neural-Network_Weight table filename
+STARNNW_NAME	$PAPI_HOME/config_files/sextractor.nnw	# Neural-Network_Weight table filename
 
 #------------------------------ Background -----------------------------------
 

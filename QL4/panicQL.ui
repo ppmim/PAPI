@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>Jose Migueo Ibanez (IAA-CSIC)</author>
  <class>panicQL</class>
  <widget class="QMainWindow" name="panicQL">
   <property name="geometry">
@@ -40,7 +41,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>5</x>
+      <x>10</x>
       <y>0</y>
       <width>940</width>
       <height>460</height>
@@ -327,7 +328,7 @@
        </palette>
       </property>
       <property name="toolTip">
-       <string>Processed files location</string>
+       <string>Output directory for generated files</string>
       </property>
       <property name="readOnly">
        <bool>true</bool>
@@ -430,7 +431,7 @@
        <rect>
         <x>18</x>
         <y>121</y>
-        <width>110</width>
+        <width>121</width>
         <height>21</height>
        </rect>
       </property>
@@ -496,7 +497,7 @@
      <widget class="QComboBox" name="comboBox_QL_Mode">
       <property name="geometry">
        <rect>
-        <x>154</x>
+        <x>183</x>
         <y>121</y>
         <width>110</width>
         <height>21</height>
@@ -539,7 +540,7 @@
      <widget class="QLabel" name="textLabel4_2_2">
       <property name="geometry">
        <rect>
-        <x>160</x>
+        <x>189</x>
         <y>100</y>
         <width>80</width>
         <height>20</height>
@@ -1083,7 +1084,7 @@
        </palette>
       </property>
       <property name="toolTip">
-       <string>Input raw files location</string>
+       <string>Input directory of raw files to read</string>
       </property>
       <property name="readOnly">
        <bool>true</bool>
@@ -1092,9 +1093,9 @@
      <widget class="QLineEdit" name="lineEdit_filename_filter">
       <property name="geometry">
        <rect>
-        <x>536</x>
+        <x>475</x>
         <y>30</y>
-        <width>60</width>
+        <width>121</width>
         <height>21</height>
        </rect>
       </property>
@@ -2243,7 +2244,7 @@
        </property>
        <item>
         <property name="text">
-         <string>None</string>
+         <string>Only results</string>
         </property>
        </item>
        <item>
@@ -2253,12 +2254,12 @@
        </item>
        <item>
         <property name="text">
-         <string>Only results</string>
+         <string>All files</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>All files</string>
+         <string>None</string>
         </property>
        </item>
       </widget>
@@ -2274,9 +2275,9 @@
      <widget class="QLabel" name="textLabel3_2">
       <property name="geometry">
        <rect>
-        <x>661</x>
-        <y>144</y>
-        <width>51</width>
+        <x>701</x>
+        <y>140</y>
+        <width>61</width>
         <height>20</height>
        </rect>
       </property>
@@ -2287,31 +2288,15 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_masterFlat_Filter">
-      <property name="geometry">
-       <rect>
-        <x>583</x>
-        <y>144</y>
-        <width>70</width>
-        <height>19</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
      <widget class="QPushButton" name="pushButton_loadLastCalibs">
       <property name="enabled">
        <bool>true</bool>
       </property>
       <property name="geometry">
        <rect>
-        <x>34</x>
+        <x>23</x>
         <y>66</y>
-        <width>120</width>
+        <width>141</width>
         <height>29</height>
        </rect>
       </property>
@@ -2781,26 +2766,10 @@
        <string>Use as defaults</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_masterDark_texp">
-      <property name="geometry">
-       <rect>
-        <x>584</x>
-        <y>114</y>
-        <width>70</width>
-        <height>19</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
      <widget class="QLabel" name="textLabel3_5">
       <property name="geometry">
        <rect>
-        <x>661</x>
+        <x>700</x>
         <y>116</y>
         <width>61</width>
         <height>20</height>
@@ -2813,27 +2782,11 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_readout_mode">
-      <property name="geometry">
-       <rect>
-        <x>583</x>
-        <y>204</y>
-        <width>70</width>
-        <height>19</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
      <widget class="QLabel" name="textLabel3_6">
       <property name="geometry">
        <rect>
-        <x>661</x>
-        <y>204</y>
+        <x>702</x>
+        <y>198</y>
         <width>111</width>
         <height>20</height>
        </rect>
@@ -3023,36 +2976,11 @@
        </item>
       </layout>
      </widget>
-     <widget class="QComboBox" name="comboBox_bpm_action">
-      <property name="geometry">
-       <rect>
-        <x>586</x>
-        <y>175</y>
-        <width>90</width>
-        <height>19</height>
-       </rect>
-      </property>
-      <item>
-       <property name="text">
-        <string>None</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Set NaNs</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Fix</string>
-       </property>
-      </item>
-     </widget>
      <widget class="QLabel" name="textLabel3_7">
       <property name="geometry">
        <rect>
-        <x>684</x>
-        <y>175</y>
+        <x>703</x>
+        <y>171</y>
         <width>51</width>
         <height>18</height>
        </rect>
@@ -3073,9 +3001,9 @@
      <widget class="QLineEdit" name="lineEdit_calibsD">
       <property name="geometry">
        <rect>
-        <x>150</x>
-        <y>17</y>
-        <width>290</width>
+        <x>174</x>
+        <y>24</y>
+        <width>401</width>
         <height>21</height>
        </rect>
       </property>
@@ -3117,7 +3045,7 @@
        </palette>
       </property>
       <property name="toolTip">
-       <string>Input raw files location</string>
+       <string>Directory of master calibrations files (masterDark, masterFlats, ...)</string>
       </property>
       <property name="readOnly">
        <bool>true</bool>
@@ -3126,10 +3054,10 @@
      <widget class="QPushButton" name="pushButton_calibsD">
       <property name="geometry">
        <rect>
-        <x>29</x>
+        <x>28</x>
         <y>16</y>
-        <width>110</width>
-        <height>23</height>
+        <width>131</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="font">
@@ -3142,8 +3070,69 @@
        <string>Select a directory or log file for received files location</string>
       </property>
       <property name="text">
-       <string>Calibs...</string>
+       <string>Set Calibs Dir...</string>
       </property>
+     </widget>
+     <widget class="QWidget" name="layoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>583</x>
+        <y>114</y>
+        <width>112</width>
+        <height>111</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_7">
+       <item>
+        <widget class="QLineEdit" name="lineEdit_masterDark_texp">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit_masterFlat_Filter">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBox_bpm_action">
+         <item>
+          <property name="text">
+           <string>None</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Set NaNs</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Fix</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit_readout_mode">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="TabPage">
@@ -3378,8 +3367,10 @@
   </action>
   <action name="fileShow">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../../../../../../../../../home/staff1/papi/QL4/images/ds9.gif</normaloff>../../../../../../../../../../../../../../home/staff1/papi/QL4/images/ds9.gif</iconset>
+    <iconset resource="panicQL_resources.qrc">
+     <normaloff>:/my_icon/images/ds9.png</normaloff>
+     <normalon>:/my_icon/images/ds9.png</normalon>
+     <selectedon>:/my_icon/images/ds9.png</selectedon>:/my_icon/images/ds9.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Show</string>
@@ -4312,6 +4303,22 @@
     <hint type="sourcelabel">
      <x>291</x>
      <y>104</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>480</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_calibsD</sender>
+   <signal>clicked()</signal>
+   <receiver>panicQL</receiver>
+   <slot>setCalibsDir_slot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>112</y>
     </hint>
     <hint type="destinationlabel">
      <x>480</x>

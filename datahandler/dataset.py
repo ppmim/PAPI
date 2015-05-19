@@ -101,7 +101,8 @@ class DataSet(object):
         if source==None: source = self.source
         
         # 1. Load the source
-        if type(source)==type(list()): contents = source 
+        if type(source) == type(list()): 
+            contents = source 
         elif os.path.isdir(source):
             log.debug("Loadding Source Directory %s" %source)
             contents = [os.path.join(source, file) for file in os.listdir(source)]
@@ -124,7 +125,7 @@ class DataSet(object):
                 continue
                         
     ############################################################
-    def insert ( self, filename ):
+    def insert( self, filename ):
         """
         Insert new FITS file into dateset
 
@@ -189,7 +190,7 @@ class DataSet(object):
 
     
     ############################################################
-    def delete ( self, filename, date=None ):
+    def delete( self, filename, date=None ):
 
         """
         Delete a row file from the dataset table
@@ -380,10 +381,10 @@ class DataSet(object):
                 
             # TEXP: Any 'texp' requirement 
             if  texp == -1:
-                s_texp = "texp>=%f" %(texp)
+                s_texp = "texp>=%f" %texp
             else:
-                ROUND = 0.5  # We do not need an accurate value !
-                s_texp = "texp>%f and texp<%f" %(texp-ROUND, texp+ROUND)
+                ROUND = 0.1  # We do not need an accurate value !
+                s_texp = "texp>=%f and texp<=%f" %(texp - ROUND, texp + ROUND)
 
             # FILTER: The master dark does not have a 'filter' requirement
             if type == 'MASTER_DARK' or filter == "ANY":
@@ -499,7 +500,7 @@ class DataSet(object):
          
         Returns
         -------
-        A List of types [DARK, DOME_FLAT, TW_FLAT, SCIENCE] and list of list, 
+        A List of types [DARK, DOME_FLAT, SKY_FLAT, SCIENCE] and list of list, 
         having each list the list of files beloging to.
 
         Notes
@@ -508,13 +509,13 @@ class DataSet(object):
                     
         """
         
-        if max_mjd_diff==None: 
+        if max_mjd_diff == None: 
             max_mjd_diff = DataSet.MAX_MJD_DIFF
         
-        if max_ra_dec_diff==None:
+        if max_ra_dec_diff == None:
             max_ra_dec_diff = DataSet.MAX_RA_DEC_DIFF
         
-        if max_nfiles==None:
+        if max_nfiles == None:
             max_nfiles = DataSet.MAX_NFILES
     
         par_list = [] # parameter tuple list (filter, type)
@@ -529,19 +530,22 @@ class DataSet(object):
         cur.execute(s_select,"")
         rows = cur.fetchall()
         par_list = []
-        if len(rows)>0:
+        
+        if len(rows) > 0:
             par_list = [[str(f[0]), str(f[1])] for f in rows] # important to apply str() ??
         print "Total rows selected:  %d"%(len(par_list))
         print "Filters found :\n ", par_list
         
         # Look for DOME_FLATS_ON/OFF
-        s_select="select DISTINCT filter from dataset where type='DOME_FLAT_LAMP_OFF' or type='DOME_FLAT_LAMP_ON' order by mjd"
+        s_select = "select DISTINCT filter from dataset where type='DOME_FLAT_LAMP_OFF' or type='DOME_FLAT_LAMP_ON' order by mjd"
         cur = self.con.cursor()
         cur.execute(s_select,"")
         rows = cur.fetchall()
         par_list2 = []
-        if len(rows)>0:
+        
+        if len(rows) > 0:
             par_list2 = [[str(f[0]), "DOME_FLAT"] for f in rows] # important to apply str() ??
+        
         print "(2nd) Total rows selected:  %d" %(len(par_list2))
         print "(2nd) Filters found :\n ", par_list2
 
@@ -552,14 +556,14 @@ class DataSet(object):
         # Finally, look for files of each Filter
         for par in par_list:
             cur = self.con.cursor()
-            if par[1]!='DOME_FLAT':
+            if par[1] != 'DOME_FLAT':
                 s_select = "select filename from dataset where filter=? and type=? order by mjd"
                 cur.execute(s_select,(par[0],par[1]))    
             else:
                 s_select = "select filename from dataset where filter=? and type like 'DOME_FLAT%' order by mjd"
                 cur.execute(s_select, (par[0],)) # la coma es imprescindible, no se por que .....
             rows = cur.fetchall()
-            if len(rows)>0:
+            if len(rows) > 0:
                 filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             #print "====> %d files found for Filter %s" %(len(rows), par[0])
 
@@ -606,12 +610,12 @@ class DataSet(object):
                     group.append(file)
                     mjd_0 = t
                 # Darks do not have coordinates restrictions
-                elif (self.GetFileInfo(seq[0])[2]=='DARK' and 
+                elif (self.GetFileInfo(seq[0])[2] == 'DARK' and 
                       math.fabs(t-mjd_0)< max_mjd_diff and len(group) < max_nfiles):
                     group.append(file)
                     mjd_0 = t
                 # Flats (dome or sky) do not have coordinates restrictions
-                elif (self.GetFileInfo(seq[0])[2].find("DOME_FLAT")>=0 and 
+                elif (self.GetFileInfo(seq[0])[2].find("FLAT")>=0 and 
                       math.fabs(t-mjd_0)< max_mjd_diff and len(group) < max_nfiles):
                     group.append(file)
                     mjd_0 = t
@@ -630,77 +634,7 @@ class DataSet(object):
 
         return  new_seq_list, new_seq_par
                  
-    def GetFilterFiles_TEST(self, max_mjd_diff=None ):
-        """ 
-        @summary: Get all SCIENCE and CALIB file groups found for each (Filter,Type) 
-        ordered by MJD; no other keyword is looked for (OB_ID, OB_PAT, ...).
-        
-        In addition, MJD is checked in order to look for time gaps into a (Filter,Type) 
-        sequence. It will be quite useful for data grouping when the OT was not used 
-        during the observing run.
-        
-        @param max_mjd_diff: Maximum seconds of temporal distant allowed between 
-        two consecutive frames
-         
-        @return: the list of types [DARK, FLAT, etc] and list of list,
-        having each list the list of files beloging to.
-
-        @note: it is mainly useful when the OT is not used for the data acquisition
-                    
-        """
-        
-        if max_mjd_diff==None: max_mjd_diff=DataSet.MAX_MJD_DIFF
-        
-        par_list = [] # parameter tuple list (filter,texp)
-        filter_file_list = [] # list of file list (one per each filter)
-              
-        # First, look for Filters on SCIENCE files
-        #s_select="select DISTINCT filter,texp from dataset where type='SCIENCE' or type='SKY' order by mjd"
-        s_select="select DISTINCT filter,type from dataset  order by mjd"
-
-        #print s_select
-        cur = self.con.cursor()
-        cur.execute(s_select,"")
-        rows = cur.fetchall()
-        if len(rows)>0:
-            par_list = [ [str(f[0]), str(f[1])]  for f in rows] # important to apply str() ??
-        print "Total rows selected:  %d" %(len(par_list))
-        print "Filters found :\n ", par_list
-        
-        # Finally, look for files of each Filter
-        for par in par_list:
-            s_select = "select filename from dataset where filter=? and type=? order by mjd"
-            #s_select = "select filename from dataset where filter=? and texp=?  order by mjd"    
-            cur = self.con.cursor()
-            cur.execute(s_select,(par[0],par[1]))
-            rows = cur.fetchall()
-            if len(rows)>0:
-                filter_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
-            #print "%d files found for Filter %s" %(len(rows), par[0])
-
-        # Now, look for temporal gap inside the current sequences were found
-        new_seq_list = []
-        new_seq_par = []
-        k = 0
-        for seq in filter_file_list:
-            group = []
-            mjd_0 = self.GetFileInfo(seq[0])[10]
-            for file in seq:
-                t = self.GetFileInfo(file)[10]
-                if math.fabs(t-mjd_0)<max_mjd_diff:
-                    group.append(file)
-                    mjd_0 = t
-                else:
-                    log.debug("Sequence split due to temporal gap between sequence frames")
-                    new_seq_list.append(group[:]) # very important, lists are mutable !
-                    new_seq_par.append(par_list[k][1])
-                    mjd_0 = t
-                    group = [file]
-            new_seq_list.append(group[:]) # very important, lists are mutable !
-            new_seq_par.append(par_list[k][1])
-            k+=1    
-            
-        return  new_seq_list, new_seq_par
+    
     
     def GetSciFilterFiles(self, max_mjd_diff=None ):
         """ 
@@ -776,7 +710,8 @@ class DataSet(object):
 
                          
     def GetSequences(self, group_by='ot', max_mjd_diff=None, 
-                     max_ra_dec_diff=None, max_nfiles=None ):
+                     max_ra_dec_diff=None, max_nfiles=None, 
+                     type=None, filter=None):
         """
         General function to look for Sequences in the current data base of files
         
@@ -798,20 +733,33 @@ class DataSet(object):
         max_nfiles: int
             Maximum number of files allowed into a sequence.
         
+        type: str
+            (only for OT grouping)
+            DARK, FLAT, SCIENCE, CAL (calibrations=Darks, Flats), None (=all)
+        filter: str
+            (only for OT grouping)
+            Filter used for the observation (Ks, H, J, ...)
+            
         Returns
         -------
         Two lists:
              - a of list, having each list the list of files beloging 
                to the sequence.
              - a list with the Types for each sequence found (DARK, DOME_FLAT, 
-             TW_FLAT, SCIENCE)
+             SKY_FLAT, SCIENCE)
         """   
         
-        if group_by.lower()=='ot': 
-            return self.GetSeqFiles()
-        elif group_by.lower()=='filter':
-            return self.GetFilterFiles(max_mjd_diff, max_ra_dec_diff, max_nfiles)
-        elif group_by.lower()=='none':
+        if group_by.lower() == 'ot':
+            return self.GetSeqFiles(filter=filter, type=type)
+        elif group_by.lower() == 'filter':
+            if type != None or filter != None:
+                msg = "'Type' and 'filter' Options not yet implemented"
+                log.error(msg)
+                raise Exception(msg)
+            else:
+                return self.GetFilterFiles(max_mjd_diff, max_ra_dec_diff, max_nfiles)
+                                       
+        elif group_by.lower() == 'none':
             seqs = []
             seq_types = []
             seqs = [self.GetFiles()]
@@ -821,79 +769,6 @@ class DataSet(object):
         else:
             return [],[]
         
-    def GetSeqFiles_TEST(self, filter=None, type=None):
-        """
-        TO BE DEPRECATED ?
-         
-        Get all the files for each Observing Sequence (OS) found. 
-        By OS we mean a set of files with the next common features:
-        
-            (OB_ID, OB_PAT, FILTER, TEXP)
-            
-        INPUTS
-        @param filter:  filter can be specified to restrict the search
-          
-        @param type: it can be SCIENCE, DARKs,FLATs  (None=any type)
-          
-        @note: this method is thought to work fine for SCIENCE sequences;
-        for calibration sequences need improvements
-        
-        @return: two lists:
-             - a list of list of parameters of each list found (OB_ID, OB_PAT, FILTER, TEXP)
-             - a of list, having each list the list of files beloging 
-               to the sequence.
-    
-        @see: GetSeqFiles()
-        
-        @deprecated: currently GetSeqFiles() is used, following PAT_EXPN=PAT_NEXP 
-        datagrouping rule 
-            
-        """
-        
-        seq_pat_list = [] # list of sequences features (ob_id,ob_pat,filter)
-        seq_list = [] # list of list of sequences filenames
-
-        if filter==None:
-            s_filter = "filter>=?"
-            filter=""
-        else:
-            s_filter = "filter=?"
-              
-        if type==None:
-            s_type = "type>=''"
-        elif type=="SCIENCE":
-            s_type = "type='SCIENCE' or type='SKY'"
-        elif type=="FLAT":
-            s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
-        else:
-            s_type = "type='%s'"%(str(type))
-                      
-        # First, look for OB_IDs
-        #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
-        s_select="select DISTINCT ob_id,ob_pat,filter,texp from dataset where %s and %s order by mjd" %(s_filter,s_type)
-        #print s_select
-        cur = self.con.cursor()
-        cur.execute(s_select,(filter,))
-        rows = cur.fetchall()
-        if len(rows)>0:
-            seq_pat_list = [[f[0], f[1], f[2], f[3]] for f in rows] 
-        print "Total rows selected:  %d" %(len(seq_pat_list))
-        print "OS's found :\n ", seq_pat_list
-        
-        # Finally, look for files of each OB_ID
-        for seq in seq_pat_list:
-            s_select = "select filename from dataset where ob_id=? and ob_pat=? and filter=? and texp=? order by mjd"    
-            #print s_select
-            cur = self.con.cursor()
-            cur.execute(s_select,(seq[0],seq[1],seq[2],seq[3]))
-            #print "done !"
-            rows = cur.fetchall()
-            if len(rows)>0:
-                seq_list.append([str(f[0]) for f in rows]) # important to apply str() !!
-            #print "%d files found in OS %s" %(len(rows), str(seq[0])+"_"+str(seq[1])+"_"+str(seq[2])+"_"+str(seq[3]))
-            
-        return seq_pat_list, seq_list
-    
     
     def GetSeqFiles(self, filter=None, type=None):
         """ 
@@ -902,43 +777,58 @@ class DataSet(object):
         
             - start with PAT_EXPN=1 and end with the PAT_EXPN=PAT_NEXP
             
-        INPUTS
-        @param filter:  filter can be specified to restrict the search
+        Parameteres
+        -----------
+        filter: str
+            filter can be specified to restrict the search
           
-        @param type: it can be SCIENCE, DARKs, FLATs  (None=any type)
+        type: str
+            it can be SCIENCE, DARKs, FLATs, DOME_FLAT, FOCUS, CAL (=calibrations)  or None (=anytype)
           
-        @note: this method is thought to work fine for SCIENCE sequences;
-        for calibration sequences need improvements
+        Notes
+        -----
+        This method is thought to work fine for SCIENCE sequences;
+        for calibration sequences need improvements.
         
-        @return: two lists:
+        Returns:
+        -------
+        Two lists:
              - a list of list, having each list the list of files beloging 
                to the sequence.
              - a list with the Types for each sequence found (DARK, DOME_FLAT, 
-             TW_FLAT, SCIENCE)
+             SKY_FLAT, SCIENCE)
     
-        @see: GetSeqFiles()
+        See: GetSeqFiles()
             
         """
         
-        if filter==None:
+        if filter == None:
             s_filter = "filter>=?"
-            filter=""
+            filter = ""
         else:
             s_filter = "filter=?"
               
-        if type==None:
-            s_type = "type>=''"
-        elif type=="SCIENCE":
+        if type == None:
+            s_type = "type>=''" # any type (all)
+        elif type == "SCIENCE":
             s_type = "type='SCIENCE' or type='SKY'"
-        elif type=="FLAT":
-            s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
+        elif type == "DARK":
+            s_type = "type='DARK'"
+        elif type == "FOCUS":
+            s_type = "type='FOCUS'"
+        elif type == "FLAT":
+            s_type = "type LIKE '%FLAT%'"
+        elif type == "DOME_FLAT":
+            s_type = "type LIKE 'DOME_FLAT%'"
+        elif type == "CAL":
+            s_type = "type='DARK' or type LIKE '%FLAT%'"
         else:
             s_type = "type='%s'"%(str(type))
                       
         # First, look for OB_IDs
         #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
-        s_select="select filename, ob_id, ob_pat, expn, nexp, filter, texp, type \
-                from dataset where %s and %s order by mjd" %(s_filter,s_type)
+        s_select = "select filename, ob_id, ob_pat, expn, nexp, filter, texp, type \
+                from dataset where %s and %s order by mjd" %(s_filter, s_type)
         #print s_select
         cur = self.con.cursor()
         cur.execute(s_select,(filter,))
@@ -1004,114 +894,6 @@ class DataSet(object):
         
         return seq_list, seq_types
 
-    ############################################################
-
-    def GetSeqFilesC(self, filter=None, type=None):
-        """
-        !!! NOT USED, TBC !!!
-        
-        NEW VERSION WITH FRAMENUM for distinguish-FITS
-        ==============================================
-        Get all the files for each Observing Sequence (OS) found. 
-        By OS we mean a set of files with the next common features:
-        
-            - start with PAT_EXPN=1 and end with the PAT_EXPN=PAT_NEXP
-            
-        Parameters
-        ----------
-        filter: str
-            filter can be specified to restrict the search
-          
-        type: str
-            it can be SCIENCE, DARKs,FLATs  (None=any type)
-          
-        Notes
-        -----
-        This method is thought to work fine for SCIENCE sequences;
-        for calibration sequences need improvements
-        
-        Returns
-        -------
-        Two lists:
-             - a list of list, having each list the list of files beloging 
-               to the sequence.
-             - a list with the Types for each sequence found (DARK, DOME_FLAT, 
-             TW_FLAT, SCIENCE)
-    
-        See also
-        --------
-        GetSeqFiles()
-            
-        """
-        
-        if filter==None:
-            s_filter = "filter>=?"
-            filter = ""
-        else:
-            s_filter = "filter=?"
-              
-        if type==None:
-            s_type = "type>=''"
-        elif type=="SCIENCE":
-            s_type = "type='SCIENCE' or type='SKY'"
-        elif type=="FLAT":
-            s_type = "type='SKY_FLAT' or type='DOME_FLAT' or type='FLAT'"
-        else:
-            s_type = "type='%s'"%(str(type))
-                      
-        # First, look for OB_IDs
-        #s_select="select ob_id,ob_pat,filter from dataset where %s group by ob_id,ob_pat,filter" %(s_filter)
-        s_select="select filename, ob_id, ob_pat, expn, nexp, filter, texp, type \
-                from dataset where %s and %s order by mjd" %(s_filter,s_type)
-        #print s_select
-        cur = self.con.cursor()
-        cur.execute(s_select,(filter,))
-        rows = cur.fetchall()
-        
-        found_first = False
-        group = []
-        seq_list = [] # list of lists of files from each sequence
-        seq_types =[] # list of types for each sequence
-        for fits in rows:
-            print "%s  %s  %s  %s  %s %s  %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
-                                       fits[3], fits[4], fits[5], fits[6], fits[7], # expn, nexp, filter, texp, type
-                                       fits[3]==fits[4]) # true/false
-            if fits[7].count('MASTER'): 
-                print "--------> Found a MASTER calibration file; it will not be grouped !!!<----------"
-                continue
-            if fits[3]==1 : #and framenum==1: #expn == 1 ?
-                group = [str(fits[0])] #filename
-                found_first = True # update flag
-                # special case of only-one-file sequences
-                if fits[3]==fits[4]:
-                    #detected end of the sequence
-                    seq_list.append(group[:]) # very important ==> lists are mutable !
-                    # Set the 'nice' type
-                    if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
-                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
-                    else: my_type = str(fits[7])
-                    seq_types.append(my_type)
-                    group = []
-                    found_first = False  # reset flag
-            elif found_first:
-                group.append(str(fits[0]))
-                if fits[3]==fits[4]:
-                    #detected end of the sequence
-                    seq_list.append(group[:]) # very important ==> lists are mutable !
-                    # Set the 'nice' type
-                    if str(fits[7]).count("DOME_FLAT"): my_type = "DOME_FLAT"
-                    elif str(fits[7]).count("TW_FLAT"): my_type = "TW_FLAT"
-                    else: my_type = str(fits[7])
-                    seq_types.append(my_type)
-                    group = []
-                    found_first = False  # reset flag
-            else:
-                pass
-        
-        print "[dataset.GetSeqFilesC] OS's found :\n ", seq_list
-        
-        return seq_list, seq_types
-                       
                        
     ############################################################    
     def GetFileInfo( self, filename ):

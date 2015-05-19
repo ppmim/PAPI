@@ -64,7 +64,7 @@ class BadPixelMask(object):
     """
     Generates a Bad Pixel Mask (BPM) from a set of darks with fixed exp. time,
     and set of dome flat images. The output is a FITS file with the bad pixels 
-    coded with 1 and good pixels as 0.
+    coded as 1 and good pixels as 0.
 
     - At least one set (>2) of darks or flats are required as input. 
     - Inputs files can be MEF files.
@@ -99,7 +99,7 @@ class BadPixelMask(object):
 
         if outputfile==None:
             dt = datetime.datetime.now()
-            self.output = self.temp_dir + 'BadPixMask'+dt.strftime("-%Y%m%d%H%M%S")
+            self.output = self.temp_dir + 'BadPixMask' + dt.strftime("-%Y%m%d%H%M%S")
         else:
             self.output = outputfile
         
@@ -107,11 +107,11 @@ class BadPixelMask(object):
     def create(self):
         """ 
          Algorith to create the BPM
-         --------------------------      
-         1. Combine all of the darks into a master --> HOT pixels
+         --------------------------
+         1. Combine all of the DARKs into a master --> HOT pixels
             1.1 Define the threshold as :  75% of (median-3*sigma)
             1.2 Mask (==1) pixels **above** the threshold.
-         2. Combine all of the dome flats into a master --> COLD pixels
+         2. Combine all of the dome FLATs into a master --> COLD pixels
             2.1 Define the threshold as :  15% of (median)
             2.2 Mask (==1) pixels **below** the threshold.
          3. Combine the HOT and COLD masks
@@ -123,22 +123,22 @@ class BadPixelMask(object):
         __epsilon = 1.0e-20
         
 
-        if self.dark_list==None and self.flat_list==None:
+        if self.dark_list == None and self.flat_list = =None:
             msg = "Neither Darks nor Flats images provided !"
             log.error(msg)
             raise Exception(msg)
 
-        if self.dark_list!=None and len(self.dark_list)<3:
+        if self.dark_list != None and len(self.dark_list) < 3:
             log.error('Not enough darks provided. At least 3 darks frames are required')
             raise Exception("Not enough darks provided. At least 3 darks frames are required")
         
-        if self.flat_list!=None and len(self.flat_list)<3:
+        if self.flat_list != None and len(self.flat_list) < 3:
             log.error('Not enough dome flats provided. At least 3 flat frames are required')
             raise Exception("Not enough dome flats provided. At least 3 flat frames are required")
         
         dark = None
-        if self.dark_list!=None:    
-            # STEP 1: Make the combine of dark frames
+        if self.dark_list != None:    
+            # STEP 1: Make the combine of DARK frames
             log.debug("Combining DARKS frames...")
             dark_comb = self.temp_dir + '/darkcomb.fits'
             misc.fileUtils.removefiles(dark_comb)
@@ -158,7 +158,7 @@ class BadPixelMask(object):
 
             # STEP 1.1: Define the threshold as: 75% of (mean-3*sigma)
             dark = fits.open(dark_comb)
-            nExt = 1 if len(dark)==1 else len(dark)-1
+            nExt = 1 if len(dark) == 1 else len(dark) - 1
             if nExt==1: nx1,nx2 = dark[0].data.shape
             else: nx1,nx2 = dark[1].data.shape
             bpm = numpy.zeros([nExt, nx1, nx2], dtype=numpy.uint8)
@@ -184,16 +184,16 @@ class BadPixelMask(object):
                 # STEP 1.2: Mask (==1) pixels **above** the threshold.
                 bpm[i_nExt, (dark[ext].data > dark_threshold) | numpy.isnan(dark[ext].data)] = 1
                 nbad_hot[i_nExt] = (bpm[i_nExt]==1).sum()
-                log.info("   # Hot-Bad pixels from Dark of detector %d : %d"
-                    %(i_nExt+1, nbad_hot[i_nExt]))
+                log.info("   # Hot-Bad pixels from DARKs from detector %d : %d"
+                    %(i_nExt + 1, nbad_hot[i_nExt]))
         else:
             nbad_hot = 0
             log.info("# Hot-Bad pixels from Dark : No Darks provided !")
 
 
-        # STEP 2: Make the combine of dome Flat frames
+        # STEP 2: Make the combine of dome FLAT frames
         # - Build the frame list for IRAF
-        if self.flat_list!=None:    
+        if self.flat_list != None:
             log.debug("Combining Flat frames...")
             flat_comb = self.temp_dir + '/flatcomb.fits'
             misc.fileUtils.removefiles(flat_comb)
@@ -217,8 +217,8 @@ class BadPixelMask(object):
 
             flat = fits.open(flat_comb)
             
-            nExt = 1 if len(flat)==1 else len(flat)-1
-            if nExt==1: nx1,nx2 = flat[0].data.shape
+            nExt = 1 if len(flat) == 1 else len(flat) - 1
+            if nExt == 1: nx1,nx2 = flat[0].data.shape
             else: nx1,nx2 = flat[1].data.shape
             nbad_cold = numpy.zeros(nExt)
 
@@ -278,7 +278,7 @@ class BadPixelMask(object):
         # STEP 6: Save the BPM ---
         misc.fileUtils.removefiles(self.output)
         hdulist = fits.HDUList()     
-        if self.flat_list!=None: hdr0 = flat[0].header
+        if self.flat_list != None: hdr0 = flat[0].header
         else: hdr0 = dark[0].header
 
         prihdu = fits.PrimaryHDU (data = None, header = None)
@@ -309,7 +309,7 @@ class BadPixelMask(object):
         
         prihdu.header.add_history('BPM created from %s' % src_files)
 
-        if nExt>1:
+        if nExt > 1:
             prihdu.header.set('EXTEND', True, after = 'NAXIS')
             prihdu.header.set('NEXTEND', nExt)
             prihdu.header.set('FILENAME', self.output)
@@ -318,8 +318,8 @@ class BadPixelMask(object):
                 hdu = fits.PrimaryHDU()
                 hdu.scale('int16') # important to set first data type
                 hdu.data = bpm[i_ext]
-                ext = i_nExt + int(nExt>1)
-                if dark!=None and 'DET_ID' in dark[ext].header:
+                ext = i_nExt + int(nExt > 1)
+                if dark != None and 'DET_ID' in dark[ext].header:
                     hdu.header.set('DET_ID', dark[ext].header['DET_ID'])
                 hdulist.append(hdu)
                 del hdu
@@ -348,9 +348,9 @@ class BadPixelMask(object):
 ###############################################################################
 usage = "usage: %prog [options] "
 desc = """
-Creates a bad pixel mask (BPM) from a set of darks with fixed exp. time, and
-and set of dome flat images. The output is a FITS file with the bad pixels coded 
-with 1 and good pixels as 0.
+Creates a bad pixel mask (BPM) from a set of DARKs with fixed exp. time, and
+and set of dome FLATs images. The output is a FITS file with the bad pixels coded 
+as 1s and good pixels as 0s.
 At least one set (>2) of darks or flats are required as input. Inputs files can
 be MEF files or simple FITS, but prefered MEF files to distinguish the detectors.
 """

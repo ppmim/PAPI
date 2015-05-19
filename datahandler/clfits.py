@@ -369,9 +369,9 @@ class ClFits (object):
                                      ignore_missing_end=False) # since some problems with O2k files 
                 except Exception, e:
                     log.warning("Error reading FITS : %s"%self.pathname)
-                    if nTry<retries:
+                    if nTry < retries:
                         nTry +=1
-                        time.sleep(nTry*0.5)
+                        time.sleep(nTry * 0.5)
                         log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
                     else:
                         log.error("Finally, FITS-file could not be read with data integrity:  %s\n %s"%(self.pathname, str(e)))
@@ -680,7 +680,7 @@ class ClFits (object):
                 # No SIP or Paper IV table lookup distortion correction is applied.
                 # Take as reference the coordinates of the center of the detector
                 self._ra = m_wcs.wcs_pix2world([[self.naxis1/2, self.naxis2/2]], 1)[0][0]
-                log.debug("Read RA-WCS coordinate =%s", self._ra)
+                #log.debug("Read RA-WCS coordinate =%s", self._ra)
             elif 'RA' in myfits[0].header:
                 self._ra = myfits[0].header['RA'] # degrees supposed
             elif 'OBJCTRA' in myfits[0].header:
@@ -976,7 +976,7 @@ def isaFITS(filepath):
     if os.path.exists(filepath):
         try:
             fd = fits.open(filepath, ignore_missing_end=True)
-            if fd[0].header['SIMPLE']==True:
+            if fd[0].header['SIMPLE'] == True:
                 return True
             else:
                 return False
@@ -1024,7 +1024,7 @@ def fits_simple_verify(fitsfile):
         #    file_size = os.stat(fitsfile).st_size
 
         # check that file_size>fits_block_size*5 to be sure all the header/s content can be read     
-        if file_size<FITS_BLOCK_SIZE*4 or file_size % FITS_BLOCK_SIZE != 0:
+        if (file_size < FITS_BLOCK_SIZE * 4) or (file_size % FITS_BLOCK_SIZE) != 0:
             log.warning("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
             raise ValueError("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
     # Exceptions are re-raised after the finally clause has been executed

@@ -43,7 +43,7 @@ import reduce.solveAstrometry
 # for initWCS (fk5prec)
 #from PyWCSTools import wcscon
 
-def initWCS( input_image, pixel_scale):
+def initWCS(input_image, pixel_scale):
     """
     Call this routine to write rough WCS into FITS header and update RA,DEC
     coordinates to J2000.0 equinox; and this way allow SCAMP make astrometry
@@ -349,7 +349,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     try:
         sex.run(input_image, updateconfig=True, clean=False)
     except Exception,e:
-        log.error("Error running SExtractor: %s"%str(e)) 
+        log.error("Error running SExtractor: %s" % str(e)) 
         raise e
     
     # A test to apply single point mask
@@ -376,7 +376,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     # order to be able to solve fields with large errors
     scamp.ext_config['MATCH_FLIPPED'] = 'Y'
     scamp.ext_config['POSANGLE_MAXERR'] = 5
-    scamp.ext_config['POSITION_MAXERR'] = 5
+    scamp.ext_config['POSITION_MAXERR'] = 10
 
     #scamp.ext_config['CHECKPLOT_TYPE'] = "NONE"
     scamp.ext_config['WRITE_XML'] = "N"
@@ -387,7 +387,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     try:
         scamp.run(cat_file, updateconfig=False, clean=False)
     except Exception,e:
-        log.error("Error running SCAMP: %s"%str(e))
+        log.error("Error running SCAMP: %s" % str(e))
         raise e
     
     ## STEP 3: Merge and Warp the astrometric parameters (.head keywords) with 
@@ -565,20 +565,20 @@ class AstroWarp(object):
         # PAPI_HOME
         try:
             self.papi_home = os.environ['PAPI_HOME']
-            if self.papi_home[-1]!='/':
-                self.papi_home+='/'
+            if self.papi_home[-1] != '/':
+                self.papi_home += '/'
         except Exception,e:
             log.error("Error, variable PAPI_HOME not defined.")
             raise Exception("Error, variable PAPI_HOME not defined")
 
-        # TODO: I have to provide an alternate way to get a default config dictionary ...
+        # TODO: I have to provide an alternate way to get a default config dictionary
         if not config_dict:
             raise Exception("Config dictionary not provided ...")
         else:
             self.config_dict = config_dict # the config dictionary
             
         self.input_files = input_files
-        if catalog!=None:
+        if catalog != None:
             self.catalog = catalog
         else: 
             self.catalog = config_dict['astrometry']['catalog']
@@ -589,6 +589,7 @@ class AstroWarp(object):
         self.subtract_back = subtract_back
         self.pix_scale = config_dict['general']['pix_scale']
         self.temp_dir = config_dict['general']['temp_dir']
+        self.output_dir = config_dict['general']['output_dir']
 
 
     def run(self, engine='SCAMP'):
@@ -602,7 +603,7 @@ class AstroWarp(object):
                     values are ('SCAMP', 'Astrometry.net').
         """
 
-        if engine=='SCAMP':
+        if engine == 'SCAMP':
             self.runWithSCAMP()
         else:
             self.runWithAstrometryNet()
@@ -644,6 +645,7 @@ class AstroWarp(object):
                 try:
                     solved = reduce.solveAstrometry.solveField( 
                                             file,
+                                            self.output_dir,
                                             self.temp_dir,
                                             self.config_dict['general']['pix_scale'])
                 except Exception,e:
@@ -754,11 +756,12 @@ class AstroWarp(object):
         ## STEP 4: Make again the final astrometric calibration (only 
         ## if we coadded more that one file) to the final coadd.
         ## TODO: I am not sure if it is needed to do again ?????
-        if (len(self.input_files)>1):
+        if (len(self.input_files) > 1):
             log.debug("*** Doing final astrometric calibration....")
             try:
                 solved = reduce.solveAstrometry.solveField(
-                            output_path, 
+                            output_path,
+                            self.output_dir,
                             self.temp_dir,
                             self.config_dict['general']['pix_scale'])
             except Exception,e:
@@ -813,6 +816,12 @@ class AstroWarp(object):
             sex.config['CATALOG_NAME'] = file + ".ldac"
             sex.config['DETECT_THRESH'] = self.config_dict['astrometry']['mask_thresh']
             sex.config['DETECT_MINAREA'] = self.config_dict['astrometry']['mask_minarea']
+            # Test-PSFEx
+            #sex.ext_config['PSF_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/test.psf'
+            #sex.ext_config['PATTERN_TYPE'] = 'RINGS-HARMONIC'
+            #sex.ext_config['PARAMETERS_NAME'] = '/home/panic/DEVELOP/papi/tests/psfex/sextractor_psfex_psf.param'
+            # End-test-psfex
+            
             # SATUR_LEVEL and NCOADD
             try:
                 dh = datahandler.ClFits(file, check_integrity=False)
@@ -858,12 +867,13 @@ class AstroWarp(object):
             raise Exception ("Cannot find required .head file")
             
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
-        swarp.ext_config['IMAGEOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.fits"
+        # Note: we use os.path.abspath(os.path.join(yourpath, os.pardir)) as a trick to get the parent dir 
+        swarp.ext_config['IMAGEOUT_NAME'] = os.path.abspath(os.path.join(self.coadded_file, os.pardir))  + "/coadd_tmp.fits"
         #"Projected" weight-maps are created only if weight-maps were given in input.
         if os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
-            swarp.ext_config['WEIGHTOUT_NAME'] = os.path.dirname(self.coadded_file) + "/coadd_tmp.weight.fits"
+            swarp.ext_config['WEIGHTOUT_NAME'] =  os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.weight.fits"
         
         if not self.resample:
             swarp.ext_config['RESAMPLE'] = 'N' # then, no field distortion removing is done
@@ -895,12 +905,12 @@ class AstroWarp(object):
         ## TODO: I am not sure if it is needed to do again ?????
         if (len(self.input_files)>1):
             log.debug("*** Doing final astrometric calibration....")
-            doAstrometry(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+            doAstrometry(os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.fits", 
                          self.coadded_file, self.catalog, 
                          self.config_dict, self.do_votable,
                          self.resample, self.subtract_back)
         else:
-            shutil.move(os.path.dirname(self.coadded_file) + "/coadd_tmp.fits", 
+            shutil.move(os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.fits", 
                         self.coadded_file)
         
         log.info("Lucky you ! file %s created", self.coadded_file)
@@ -926,7 +936,7 @@ in principle previously reduced, but not mandatory.
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
-                  help="Source input file. It can be a FITS file or"
+                  help="Source input file. It can be a FITS file or "
                   "text file with a list of FITS files.")
     
     parser.add_option("-o", "--output",
@@ -980,13 +990,13 @@ in principle previously reduced, but not mandatory.
             filelist = [line.replace( "\n", "") 
                       for line in fileinput.input(options.source_file)]
             
-        if len(filelist)==1:
+        if len(filelist) == 1:
             # Astromatic
             if options.engine=="SCAMP":
                 try:
                     log.debug("[Astrowarp] Solving with SCAMP engine")
                     doAstrometry(filelist[0], output_image=options.output_filename,
-                              catalog='USNO-B1', config_dict=cfg_options, 
+                              catalog='2MASS', config_dict=cfg_options, 
                               do_votable=False, resample=options.resample,
                               subtract_back=options.subtract_back)
                 except Exception,e:
@@ -997,6 +1007,7 @@ in principle previously reduced, but not mandatory.
                     log.debug("[Astrowarp] Solving with Astrometry.Net engine")
                     solved = reduce.solveAstrometry.solveField( 
                                         filelist[0],
+                                        cfg_options['general']['output_dir'],
                                         cfg_options['general']['temp_dir'],
                                         cfg_options['general']['pix_scale'])
                 except Exception,e:

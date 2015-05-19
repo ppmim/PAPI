@@ -212,7 +212,7 @@ class NonLinearityModel(object):
             log.error("No FLAT frames defined")
             raise
         
-        if not os.path.exists(os.path.dirname(self.__output_filename)):
+        if not os.path.exists(os.path.abspath(os.path.join(self.__output_filename, os.pardir))):
             raise NameError, 'Wrong output path'
         if not self.__output_filename:
             log.error("Output FLAT frame not defined")

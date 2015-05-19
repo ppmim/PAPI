@@ -92,7 +92,7 @@ def do_stack(in_filelist, out_image=None, s_type='median', run_offsets=True,
     if config_file and os.path.exists(config_file):
         conf = misc.config.read_config_file(config_file)
     
-    out_dir = os.path.dirname(out_image)  
+    out_dir = os.path.abspath(os.path.join(out_image, os.pardir))  
     
     task = RS.ReductionSet( filelist, 
                             out_dir,

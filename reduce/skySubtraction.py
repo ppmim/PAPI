@@ -82,8 +82,8 @@ def do_skySubtration(in_filelist, out_dir=None, n_nearest=1,
         log.error("Can not read input file list")
         raise Exception("Can not read input file list")
     
-    if out_dir==None:
-        out_dir = os.path.dirname(in_filelist)
+    if out_dir == None:
+        out_dir = os.path.abspath(os.path.join(in_filelist, os.pardir))
 
     if os.path.exists(config_file):
         conf = misc.config.read_config_file(config_file)
@@ -147,7 +147,7 @@ TO BE COMPLETED !!!!
         parser.print_help()
         parser.error("wrong number of arguments " )
     if not options.output_dir:
-        options.output_image = os.path.dirname(options.input_file)
+        options.output_image = os.path.abspath(os.path.join(options.input_file, os.pardir))
 
     try:
         do_skySubtration(options.input_file, options.output_dir, 

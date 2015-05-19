@@ -423,8 +423,8 @@ class BadPixelMask(object):
             # - Divide the resulting combined flat by its median (robust estimator)
             log.debug("Divide the resulting combined flat by its median...")
             flat_comb_hdu = fits.open(flat_comb)
-            nExt = 1 if len(flat_comb_hdu)==1 else len(flat_comb_hdu)-1
-            if nExt ==1:
+            nExt = 1 if len(flat_comb_hdu) == 1 else len(flat_comb_hdu) - 1
+            if nExt == 1:
                 median = numpy.median(flat_comb_hdu[0].data)
                 flat_comb_hdu[0].data = flat_comb_hdu[0].data / median
             else:
@@ -432,7 +432,7 @@ class BadPixelMask(object):
                     median = numpy.median(flat_comb_hdu[i_nExt+1].data)
                     flat_comb_hdu[i_nExt+1].data = flat_comb_hdu[i_nExt+1].data / median
 
-            if nExt==1:            
+            if nExt == 1:            
                 nx1 = flat_comb_hdu[0].header['NAXIS1']
                 nx2 = flat_comb_hdu[0].header['NAXIS2']
             else:
@@ -451,16 +451,16 @@ class BadPixelMask(object):
                 #ceros=(mflat[0].data==0).sum()
                 #print "CEROS=", ceros
                 for i_nExt in range(0, nExt):
-                    if nExt==1:
+                    if nExt == 1:
                         # to avoid zero division error
                         mydata = numpy.where(flat_comb_hdu[0].data==0, 0.0001, 
                                              flat_comb_hdu[0].data) 
-                        tmpf = f_i[0].data/mydata
+                        tmpf = f_i[0].data / mydata
                     else:
                         # to avoid zero division error
-                        mydata = numpy.where(flat_comb_hdu[i_nExt+1].data==0, 0.0001, 
-                                             flat_comb_hdu[i_nExt+1].data) 
-                        tmpf = f_i[i_nExt+1].data/mydata
+                        mydata = numpy.where(flat_comb_hdu[i_nExt + 1].data==0, 0.0001, 
+                                             flat_comb_hdu[i_nExt + 1].data) 
+                        tmpf = f_i[i_nExt + 1].data / mydata
                     
                     std = numpy.std(tmpf)
                     median = numpy.median(tmpf)
@@ -472,7 +472,7 @@ class BadPixelMask(object):
                     print ">>MAD=",mad
                 
                     #log.debug("Divide each flatted flat by its median")
-                    tmpf = tmpf/median
+                    tmpf = tmpf / median
                     
                     low = self.lthr
                     high = self.hthr
@@ -483,7 +483,7 @@ class BadPixelMask(object):
                     print ">>HIGH=", high
                 
                     # STEP 4.3 Define the bad pixels
-                    tmpf.shape = nx1,nx2
+                    tmpf.shape = nx1, nx2
                     bpm[ i_nExt, (tmpf < low) | (tmpf > high)]+=1
                 log.debug("BPM updated with current flat %s", flat)
                 f_i.close()
@@ -493,8 +493,8 @@ class BadPixelMask(object):
             # STEP 5: Go through the rejection mask and if a pixel has been marked bad 
             # more than a set number of times (a quarter of number of images), 
             # then it is defined as bad.
-            nbmax = numpy.maximum(2, len(good_flats)/4)
-            bpm = numpy.where(bpm>nbmax, 1, 0) # bad pixel set to 1
+            nbmax = numpy.maximum(2, len(good_flats) / 4)
+            bpm = numpy.where(bpm > nbmax, 1, 0) # bad pixel set to 1
 
             # Show stats
             nbad = numpy.zeros(nExt)
@@ -527,7 +527,7 @@ class BadPixelMask(object):
             prihdu.header.set('PAPIVERS', __version__, 'PANIC Pipeline version')
             prihdu.header.add_history('BPM created from %s' % good_flats)
 
-            if nExt>1:
+            if nExt > 1:
                 prihdu.header.set('EXTEND', True, after = 'NAXIS')
                 prihdu.header.set('NEXTEND', nExt)
                 prihdu.header.set('FILENAME', self.output)

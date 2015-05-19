@@ -6,14 +6,16 @@ sys.path.append("../.") # The directory that contains cosmic.py
 
 import cosmics
 
+input_file = "/data2/PAPI_tests/prueba2/Q02/EPerez_UGC9128_March3_0063_coadd.Q02.skysub.fits"
+
 # Read the FITS :
 #array, header = cosmics.fromfits("input.fits")
-array, header = cosmics.fromfits("o2k_prueba.fits")
+array, header = cosmics.fromfits(input_file)
 
 # array is a 2D numpy array
 
 # Build the object :
-c = cosmics.cosmicsimage(array, gain=2.2, readnoise=10.0, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+c = cosmics.cosmicsimage(array, gain=4, readnoise=10.0, sigclip = 5.0, sigfrac = 0.5, objlim = 2.0)
 # There are other options, check the manual...
 
 # Run the full artillery :

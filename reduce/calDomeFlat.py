@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2008-2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2008-2015 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -106,7 +106,7 @@ class MasterDomeFlat(object):
             
          # NOTE : We do NOT subtract any MASTER_DARK, it is not required for 
          DOME FLATS (it is done implicitly because both ON/OFF flats are taken 
-         with the same Exposition Time)    
+         with the same Exposition Time)
         
     TODO:
     -----
@@ -155,7 +155,7 @@ class MasterDomeFlat(object):
         log.debug("Start createMasterDomeFlat")
         
         start_time = time.time()
-        t=utils.clock()
+        t = utils.clock()
         t.tic()
     
         # Cleanup old files
@@ -182,10 +182,10 @@ class MasterDomeFlat(object):
             raise 'No FLAT frames defined'
         
         
-        if not os.path.exists(os.path.dirname(self.__output_filename)):
+        if not os.path.exists(os.path.abspath(os.path.join(self.__output_filename, os.pardir))):
             log.error('Directory of combined FLAT frame does not exist')
             raise 'Directory of combined FLAT frame does not exist'
-        if not self.__output_filename :
+        if not self.__output_filename:
             log.error('Combined FLAT frame not defined')
             raise 'Combined FLAT frame not defined'
     
@@ -327,24 +327,25 @@ class MasterDomeFlat(object):
                     try:
                         f[ext_name].header
                     except KeyError:
-                        ext_name = 'Q1_1'
+                        ext_name = 'Q1'
                 elif f_instrument == 'hawki': 
                     ext_name = 'CHIP2.INT1'
+                else:
+                    ext_name = 1
                 
                 naxis1 = f[ext_name].header['NAXIS1']
                 naxis2 = f[ext_name].header['NAXIS2']
                 offset1 = int(naxis1 * 0.1)
                 offset2 = int(naxis2 * 0.1)
-                
-                median = np.median(f[ext_name].data[offset2:naxis2-offset2,
-                                                    offset1:naxis1-offset1])
+                # Note that in Numpy, arrays are indexed as rows X columns (y, x),
+                # contrary to FITS standard (NAXIS1=columns, NAXIS2=rows).
+                median = np.median(f[ext_name].data[offset2 : naxis2 - offset2,
+                                                    offset1 : naxis1 - offset1])
                 msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)"%(ext_name,median)
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower() == 'panic'
                   and f[0].header['NAXIS1'] == 4096 and f[0].header['NAXIS2'] == 4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default). Normalize wrt detector SG1_1
-                # Note that in Numpy, arrays are indexed as rows X columns (y, x),
-                # contrary to FITS standard (NAXIS1=columns, NAXIS2=rows).
                 median = np.median(f[0].data[200 : 2048-200, 2048+200 : 4096-200 ])
                 msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
             else:
@@ -353,8 +354,8 @@ class MasterDomeFlat(object):
                 naxis2 = f[0].header['NAXIS2']
                 offset1 = int(naxis1 * 0.1)
                 offset2 = int(naxis2 * 0.1)
-                median = np.median(f[0].data[offset2:naxis2 - offset2,
-                                                    offset1:naxis1 - offset1])
+                median = np.median(f[0].data[offset2 : naxis2 - offset2,
+                                             offset1 : naxis1 - offset1])
                 msg = "Normalization of master flat frame. (MEDIAN=%d)"%median 
  
 
@@ -481,7 +482,7 @@ then creates a Master Dome Flat-Field. It does **not** require any Master Dark.
     filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
 
     print "Files:",filelist
-    tmp_dir = os.path.dirname(options.output_filename)
+    tmp_dir = os.path.abspath(os.path.join(options.output_filename, os.pardir))
     mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, 
                             options.normalize, options.median_smooth)
     mDFlat.createMaster()

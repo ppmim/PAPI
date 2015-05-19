@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (c) 2009-2015 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2008-2015 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -150,7 +150,16 @@ def main(arguments = None):
     
     parser.add_option("-p", "--print",
                   action = "store_true", dest = "print_seq", default = False,
-                  help = "Print detected sequences in the Data Set")
+                  help = "Print all detected sequences in the Data Set")
+    
+    parser.add_option('-T', '--sequences_type',
+                      type='choice',
+                      action='store',
+                      dest='seq_type',
+                      choices=['DARK', 'FLAT', 'DOME_FLAT', 'SKY_FLAT', 'FOCUS', 'SCIENCE', 'CAL', 'all'],
+                      default='all',
+                      help="Specify the type of sequences to show: "
+                      "DARK, FLAT(all), DOME_FLAT, SKY_FLAT, FOCUS, SCIENCE, CAL, all [default: %default]")
     
     parser.add_option("-b", "--build_calibrations",
                   action = "store_true", dest = "build_calibrations", default = False,
@@ -159,7 +168,7 @@ def main(arguments = None):
     # file calibration options
     
     parser.add_option("-C", "--ext_calibration_db", type = "str",
-                  action = "store", dest = "ext_calib_dir", 
+                  action = "store", dest = "ext_calibration_db", 
                   default = None, 
                   help = "External calibration directory "
                   "(library of Dark & Flat calibrations)")
@@ -195,7 +204,7 @@ def main(arguments = None):
     (init_options, i_args) = parser.parse_args(args = arguments)
     
     # If no arguments, print help
-    if len(arguments)<1:
+    if len(arguments) < 1:
        parser.print_help()
        sys.exit(0)
 
@@ -222,7 +231,7 @@ def main(arguments = None):
 
     # Manually mix bpm_file, having priority the invokation values over config
     # file value.
-    if init_options.bpm_file!=None:
+    if init_options.bpm_file != None:
       options['bpm']['bpm_file'] = init_options.bpm_file
     
     # Add the configuration filename as an extra value to the dictionary
@@ -264,7 +273,7 @@ def main(arguments = None):
                     rs_files.append((general_opts['source']+"/"+file).replace('//','/'))
     
     # Check for list files sorted by MJD
-    if init_options.list==True:
+    if init_options.list == True:
         log.debug("Creating logsheet file ....")
         logSheet = gls.LogSheet(rs_files, "/tmp/logsheet.txt", [0,len(rs_files)], True)
         logSheet.create()
@@ -308,14 +317,22 @@ def main(arguments = None):
                 group_by=general_opts['group_by'], 
                 check_data=general_opts['check_data'],
                 config_dict = options )
-
+    
+                    
         if init_options.print_seq:
-            rs.getSequences()
+            rs.getSequences(show=True, stype=init_options.seq_type)
         elif init_options.build_calibrations:
             rs.buildCalibrations()
         else:
-            if init_options.seq_to_reduce==-1: #all
-                rs.reduceSet(red_mode=general_opts['reduction_mode'])
+            if init_options.seq_type == 'CAL':
+                stype = ['DARK', 'DOME_FLAT', 'SKY_FLAT']
+            elif init_options.seq_type == 'FLAT':
+                stype = ['DOME_FLAT', 'SKY_FLAT']
+            else:
+                stype = [init_options.seq_type]
+            if init_options.seq_to_reduce == -1: #all
+                rs.reduceSet(red_mode=general_opts['reduction_mode'],
+                             types_to_reduce=stype)
             else:
                 m_seqs_to_reduce = []
                 m_seqs_to_reduce = range(init_options.seq_to_reduce[0], 
@@ -324,12 +341,19 @@ def main(arguments = None):
                 #    m_seqs_to_reduce.append(int(elem))
                 #return
                 rs.reduceSet(red_mode=general_opts['reduction_mode'], 
-                             seqs_to_reduce=m_seqs_to_reduce)
+                             seqs_to_reduce=m_seqs_to_reduce,
+                             types_to_reduce=stype)
                 
     except RS.ReductionSetException, e:
-        print e
+        log.error("Error during data reduction: %s " % str(e))
+    
+    # The following handles ctrl-c. We need to do it this way due to a
+    # bug in multiprocessing, see:
+    # http://stackoverflow.com/questions/1408356/keyboard-interrupts-with-pythons-multiprocessing-pool
+    # and http://bugs.python.org/issue8296.
     except (KeyboardInterrupt, SystemExit):
-        raise
+        log.error("Ctrl-c, KeyboardInterrupt !")
+        sys.exit()
     except Exception, e:
         print "Cannot reduce the Data Set, check error log...."
         print str(e)

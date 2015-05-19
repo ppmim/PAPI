@@ -243,12 +243,12 @@ class NonLinearityCorrection(object):
 
         # Check which version of MEF we have.
         # Since GEIRS-r731M-18 version, new MEF extension naming:
-        #    EXTNAME = 'Qi_j'
-        #    DET_ID = 'SGi_j'
+        #    EXTNAME = 'Qi'
+        #    DET_ID =  'SGi'
         # and the order in the MEF file shall be Q1, Q2, Q3, Q4
         try:
-            hdulist['Q1_1'].header
-            ext_name = 'Q%i_1'
+            hdulist['Q1'].header
+            ext_name = 'Q%i'
             ext_order = (1, 2, 3, 4)
         except KeyError:
             ext_name = 'SG%i_1'
@@ -271,7 +271,7 @@ class NonLinearityCorrection(object):
                 raise ValueError('Mismatch of detector IDs for extension' %extname)
 
             # Work around to correct data when NCOADDS>1
-            if hdulist[0].header['NCOADDS']>1:
+            if hdulist[0].header['NCOADDS'] > 1:
                 if self.coadd_correction:
                     log.info("NCOADDS>1; Doing ncoadd correction...")
                     n_coadd = hdulist[0].header['NCOADDS']
@@ -428,7 +428,7 @@ MEF-cubes, each plane is corrected individually.
     
     parser.add_option("-i", "--input_file",
                   action="store", dest="input_file",
-                  help="FITS file file to be corrected.")
+                  help="FITS file to be corrected.")
     
     parser.add_option("-s", "--source",
                   action="store", dest="source_file_list",

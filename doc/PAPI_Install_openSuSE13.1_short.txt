@@ -108,6 +108,8 @@ NTP server: derfel.caha.es
 
 +) NTP Config
 
+First, UTC clock should be set in yast2, and then config the NTP as follow:
+
 > zypper install ntp
 > sudo chkconfig --add ntp
 > sudo service ntp status|start
@@ -240,6 +242,19 @@ You can also make your OpenSSH server keep alive all connections with clients by
 ClientAliveInterval 300
 ClientAliveCountMax 2
 
+CAHA ARCHIVE
+============
+- To get access to the archive2 machine to get a bigger area for storate, we have
+to add the next line to the /etc/fstab file:
+
+archivo2:/ARCHIVE/PANICCALIBS   /data1/ARCHIVE  nfs     defaults,mountvers=3,nfsvers=3 0 0
+
+Note: we use NFS v3 to preserve the user permissions, and that way only 'panic' user 
+have Write access to the archive2 File system; the rest of users on panic22/panic35 have
+only 'read' permissions.
+
+
+
 
 *************************
 ** Telescope Interface **
@@ -254,6 +269,8 @@ http://www.aps.anl.gov/Accelerator_Systems_Division/Accelerator_Operations_Physi
 1. Install the OAGTclTk library:
 
 >rpm -ivvl OAGTclTk-1.21-1.openSUSE.12.3.x86_64.rpm
+
+(anymore required: now the posets.caha.es telescope proxy interface is used, and accessed via rsh with no password required)
 
 2. Copy the TECS scrtips:
 
@@ -379,7 +396,10 @@ monster>  rsh -l staff ultra3 /disk-a/staff/FFL/RFLATS/rflats STATUS
 Requirements
 ------------
 
+*) sudo zypper install gsl gsl-devel
+
 *) sudo zypper install readline5
+
 
 
 *) system setup
@@ -551,6 +571,8 @@ zypper install python-qt4
 zypper install libXmu6-32bit  (needed by xgterm)
 zypper install cfitsio libcfitsio-devel
 zypper install python-pip
+zypper install mupdf ( para mostrar pdfs desde QL de forma rápida )
+
 
 + LEMON Requirements:
 sudo zypper install openmpi-devel python-gtk p7zip
@@ -766,22 +788,45 @@ For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
     PS: en B/N y no completos
     Recompilo PLPLOT library con PLD_jpeg ON y ya si genera SCAMP los JPEG's, pero de una calidad pésima, inservibles !!!
 
-3- Download SCAMP v.1.7.0 from Astromatic.net --->scamp-1.7.0-1.x86_64.rpm
 
-> rpm -ivl --nodeps scamp-1.7.0-1.x86_64.rpm 
+    
+3- Download src SCAMP v.2.0.4 from Astromatic.net
 
-(--nodeps es necesario para evitar la dependencia del paquete que contiene la 
-libreria libplplotd.so.9()(64bit), pues se queja al instalar SCAMP.
-Realmente si tendremos dicha libreria porque la habremos instalado a mano al
-compilar e instalar plplot-5.9.9.tgz).
+  wget http://www.astromatic.net/download/scamp/scamp-2.0.4.tar.gz
+
+  - el .rpm no se deja instalar por dos dependencias de libcsironn, libqhull que no consigo resolver,
+  por lo que decido compilar el fuente de SCAMP tal que:
+
+./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
+./make
+./make install
+(todo OK sin problemas)
 
 
 
-2.3 SWARP v2.19.1 : 
+
+2.3 SWARP v2.19.1: ---> NEW v2.38.0 (incluye modo CLIPPED para el combine, aunque no lo uso de momento)
 ------------------
-- Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.19.1-1.x86_64.rpm
+- Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.38.0-1.x86_64.rpm
 
-> rpm -ivl swarp-2.19.1-1.x86_64.rpm
+> rpm -ivl swarp-2.38.0-1.x86_64.rpm
+
+
+o bien la compilamos sin problemas tal que:
+
+./configure --enable-threads
+./make
+
+Intentando ver el .xml que genera psfex, me paso un buen rato hasta que me doy cuenta de que hay que 
+modificar la configuración de firefox para poder verlos tal que:
+
+    http://www.astromatic.net/blog
+
+(en chrome no se como se hace)
+    
+además hay que hacer "make install" para que instale los xslt en /usr/loca/share/psfex;
+
+
 
 
 3. Numpy v1.7.1 (default in openSUSE-13.1)
@@ -1189,7 +1234,25 @@ x2go
 2) Install x2go packages
 
 > zypper install x2goserver
-> zypper install x2goclient
+Note: If nxclient was already installed (eg. nomachine_4.2.27_1_x86_64.rpm), there is a conflict with 
+the colormap; in this case, we must copy the /usr/share/X11/rgb.txt to  /usr/NX/share/rgb
+in order to substitute the NX (wrong) rgb file. Otherwise, we could get error messages as below:
+(In fact, nxclient is not required, because x2goserver install its own nxagent; 
+X2Go server currently uses NXv3 based libraries and tools for the backend implementation of X2Go,
+x2goagent (NX-like XServer)).
+
+ 
+
+$ emacs
+Undefined color: "black"
+
+$ds9
+Undefined color : "white" ....
+
+(see https://bbs.archlinux.org/viewtopic.php?id=108217)
+
+
+> zypper install x2goclient (actally, not required)
 
 VNC
 ===

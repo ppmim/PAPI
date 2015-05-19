@@ -3,8 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+#################################
 PANIC Data Pipeline Documentation
-=================================
+#################################
 .. warning::
 
    This "Documentation" is still a work in progress; some of the material
@@ -38,7 +39,7 @@ In addition to this html version of the manual, there is also a pdf_ version to 
 **Development Team:** José M. Ibáñez (IAA-CSIC)
 
 Caveat
-******
+======
 
 Currently PAPI it is able to reduce data taken with the Observing Tool (OT) 
 defining the required observing blocks (OB), or manually through GEIRS scripts.
@@ -50,7 +51,7 @@ PAPI is **not** designed to reduce any kind of field taken with PANIC.
 
    
 Contents
-********
+========
 .. toctree::
    :maxdepth: 3
    :numbered:

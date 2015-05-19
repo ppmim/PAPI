@@ -41,6 +41,7 @@
 # Import necessary modules
 
 import os
+import shutil
 import fileinput
 from optparse import OptionParser
 
@@ -129,7 +130,7 @@ class MEF (object):
         new_files = []    
         for file in self.input_files:        
             if output_dir == None:
-                output_dir = os.path.dirname(file)
+                output_dir = os.path.abspath(os.path.join(file, os.pardir))
                 print "OUT_DIR=",output_dir
                 if output_dir == "": output_dir = "."
             try:
@@ -149,7 +150,7 @@ class MEF (object):
                 log.error(msg)
                 raise Exception(msg)
                 
-            if len(hdulist[1].data.shape) >2:
+            if len(hdulist[1].data.shape) > 2:
                 msg = "Found a MEF cube to join as to SEF."
                 log.debug(msg)
                 n_planes = hdulist[1].data.shape[0]
@@ -167,12 +168,12 @@ class MEF (object):
                 temp = numpy.zeros((height*2, width*2), dtype = numpy.float32)
                 
             # Since GEIRS-r731M-18 version, new MEF extension naming:
-            #    EXTNAME = 'Qi_j'
-            #    DET_ID = 'SGi_j'
+            #    EXTNAME = 'Qi'
+            #    DET_ID =  'SGi'
             # and the order in the MEF file shall be Q1,Q2,Q3,Q4
             try:
-                hdulist['Q1_1'].header
-                ext_name = 'Q%i_1'
+                hdulist['Q1'].header
+                ext_name = 'Q%i'
             except KeyError:
                 ext_name = 'SG%i_1'
             
@@ -248,7 +249,8 @@ class MEF (object):
                 
         out_filenames = []
         n = 0 
-        for file in self.input_files:        
+        for file in self.input_files:
+            log.debug("Splitting file %s",file)
             try:
                 hdulist = fits.open(file)
             except IOError:
@@ -256,7 +258,7 @@ class MEF (object):
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
             # Check if is a MEF file 
-            if len(hdulist)>1:
+            if len(hdulist) > 1:
                 n_ext = len(hdulist)-1
                 log.debug("MEF file with %d extensions", n_ext)
             else:
@@ -267,10 +269,10 @@ class MEF (object):
             for iSG in range (1, n_ext + 1):
                 if instrument.lower() == 'panic':
                     # Since GEIRS-r731M-18 version, new MEF extension naming:
-                    #    EXTNAME = 'Qi_j'
-                    #    DET_ID = 'SGi_j'
+                    #    EXTNAME = 'Qi'
+                    #    DET_ID = 'SGi'
                     # and the order in the MEF file shall be Q1,Q2,Q3,Q4
-                    extname = 'Q%i_1' %iSG
+                    extname = 'Q%i' %iSG
                     try:
                         hdulist[extname].header
                     except KeyError, e:
@@ -282,7 +284,7 @@ class MEF (object):
                 new_filename = file.replace(".fits", suffix)
                 if out_dir != None: 
                     new_filename = new_filename.replace( 
-                                    os.path.dirname(new_filename), out_dir
+                                    os.path.abspath(os.path.join(new_filename, os.pardir)), out_dir
                                     )
                     
                 out_filenames.append(new_filename)
@@ -299,6 +301,8 @@ class MEF (object):
                 #keywords  = [if key not in hdulist[1].header for key in hdulist[0].header.cards
 
                 # now, copy extra keywords required
+                copy_keyword.append('EGAIN%i'%iSG)
+                copy_keyword.append('ENOISE%i'%iSG)
                 for key in copy_keyword:
                     try:
                         value = hdulist[0].header.cards[key].value
@@ -315,10 +319,14 @@ class MEF (object):
                     except KeyError:
                         log.debug("Key %s cannot be copied, is not in the header"%(key))
                 
+                # To avoid copying all values to all extensions.
+                copy_keyword.remove('EGAIN%i'%iSG)
+                copy_keyword.remove('ENOISE%i'%iSG)
+                
                 out_hdulist[0].header.add_history("[MEF.doSplit] Image split from original MEF %s"%file) 
                 # delete some keywords not required anymore
-                del out_hdulist[0].header['EXTNAME']                
-                out_hdulist.writeto(out_filenames[n], 
+                del out_hdulist[0].header['EXTNAME']
+                out_hdulist.writeto(out_filenames[n],
                         output_verify = 'ignore', clobber = True)
                 out_hdulist.close(output_verify = 'ignore')
                 del out_hdulist
@@ -359,7 +367,7 @@ class MEF (object):
                 raise MEF_Exception ("Error, can not open file %s"%file)
 
             # Check if is a MEF file 
-            if len(f)>1:
+            if len(f) > 1:
                 mef = True
                 n_ext = len(f)-1
                 
@@ -405,8 +413,8 @@ class MEF (object):
     def convertGEIRSToMEF( self, out_filename_suffix = ".mef.fits",
                            out_dir = None, copy_keyword = []):
         """ 
-        Method used to convert a single FITS file (PANIC-GEIRS v0) 
-        having a full 4-detector-frame to a MEF with a 4-extension FITS, 
+        Method used to convert a single FITS file (PANIC-GEIRS SEF) 
+        having a full 4-detector-frame to a MEF with a 4-extensions, 
         one per each frame. The full-4kx4k frame can be a cube with N planes.
 
         It **IS** also valid for cubes of data.
@@ -474,15 +482,15 @@ class MEF (object):
             # Compose the ouputfilename
             new_filename = file.replace(".fits", out_filename_suffix)
             if out_dir != None: 
-                new_filename = new_filename.replace(os.path.dirname(new_filename), out_dir) 
+                new_filename = new_filename.replace(os.path.abspath(os.path.join(new_filename, os.pardir)), out_dir) 
             
             
             # Check if is a MEF file
             if len(in_hdulist) > 1 :
                 log.info("File %s is already a MEF file. No conversion required"%file)
                 # We copy, because if rename, then remove the original file.
-                shutil.copy(file, new_filename)
-                out_filenames.append(new_filename)
+                #shutil.copyfile(file, new_filename)
+                out_filenames.append(file)
                 continue
             
 
@@ -531,14 +539,14 @@ class MEF (object):
             new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81], 
                                         [-81, -81] ], numpy.float_)
             
-            for i in range (0, n_ext/2):
-                for j in range (0, n_ext/2):
+            for i in range (0, n_ext / 2):
+                for j in range (0, n_ext / 2):
                     log.debug("Reading quadrant-%d ..." % (i*2 + j))
                     # Check if we have a cube of data
-                    if len(in_hdulist[0].data.shape)==2:
+                    if len(in_hdulist[0].data.shape) == 2:
                         hdu_data_i = in_hdulist[0].data[2048*i:2048*(i+1), 
                                                         2048*j:2048*(j+1)]
-                    elif len(in_hdulist[0].data.shape)>2:
+                    elif len(in_hdulist[0].data.shape) > 2:
                         hdu_data_i = in_hdulist[0].data[:, 2048*i:2048*(i+1), 
                                                         2048*j:2048*(j+1)]
                     else:
@@ -548,7 +556,7 @@ class MEF (object):
                             "shape."%file)
 
                     hdu_i = fits.ImageHDU (data = hdu_data_i)
-                    log.debug("Data size of %d-quadrant = %s" % (i*2+j, hdu_data_i.shape))
+                    log.debug("Data size of %d-quadrant = %s" % (i * 2 + j, hdu_data_i.shape))
                     
                     # Create the new WCS
                     try:
@@ -569,15 +577,15 @@ class MEF (object):
                         # Instead, WCS header is built from primaryHeader. 
                         chip_gap = 167
                         new_wcs = wcs.WCS(primaryHeader)
-                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1']/2 + chip_gap/2.0, 
-                                             primaryHeader['NAXIS2']/2 + chip_gap/2.0]  
+                        new_wcs.wcs.crpix = [primaryHeader['NAXIS1'] / 2 + chip_gap / 2.0, 
+                                             primaryHeader['NAXIS2'] / 2 + chip_gap / 2.0]  
                         new_wcs.wcs.crval =  [ primaryHeader['RA'], 
                                               primaryHeader['DEC'] ]
                         new_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
                         new_wcs.wcs.cunit = ['deg', 'deg']
                         try:
                             pix_scale = primaryHeader['PIXSCALE']
-                        except Exception,e:
+                        except Exception, e:
                             raise Exception("Cannot find PIXSCALE keyword")
 
                         # We suppose no rotation, and North is up and East at left.
@@ -588,14 +596,14 @@ class MEF (object):
                         # In addition, it must be noted that:
                         # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
                         # r = clockwise rotation_angle 
-                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
-                                          [0, pix_scale/3600.0]]
+                        new_wcs.wcs.cd = [[-pix_scale / 3600.0, 0], 
+                                          [0, pix_scale / 3600.0]]
 
                         # wcs_pix2world: No SIP or Paper IV table lookup 
                         # distortion correction is applied. To perform distortion 
                         # correction, see on astropy all_pix2world, sip_pix2foc, 
                         # p4_pix2foc, or pix2foc.
-                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
+                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[ i * 2 + j]], 1)
                         # ----
 
                         # Now update the new-wcs for the new subframe header.
@@ -638,7 +646,7 @@ class MEF (object):
                         # When DETROT90=1, 90deg clockwise rotation
                         # When DETROT90=2, 180deg clockwise rotation (default
                         # for PANIC)
-                        if primaryHeader['DETROT90']==0:
+                        if primaryHeader['DETROT90'] == 0:
                             if (i*2+j)==0: 
                                 if detflipxy==0: det_id = 2
                                 elif detflipxy==1: det_id = 3
@@ -660,11 +668,11 @@ class MEF (object):
                                 elif detflipxy==2: det_id = 3
                                 elif detflipxy==3: det_id = 2
                         elif primaryHeader['DETROT90']==1:
-                            if (i*2+j)==0:
-                                if detflipxy==0: det_id = 3
-                                elif detflipxy==1: det_id = 4 
-                                elif detflipxy==2: det_id = 2
-                                elif detflipxy==3: det_id = 1
+                            if (i*2+j) == 0:
+                                if detflipxy == 0: det_id = 3
+                                elif detflipxy == 1: det_id = 4 
+                                elif detflipxy == 2: det_id = 2
+                                elif detflipxy == 3: det_id = 1
                             elif (i*2+j)==1:
                                 if detflipxy==0: det_id = 2
                                 elif detflipxy==1: det_id = 1
@@ -728,20 +736,20 @@ class MEF (object):
                     else:
                         # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
                         log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
-                        if (i*2+j)==0: det_id = 4
-                        elif (i*2+j)==1: det_id = 3
-                        elif (i*2+j)==2: det_id = 1
-                        elif (i*2+j)==3: det_id = 2                       
+                        if (i*2+j) == 0: det_id = 4
+                        elif (i*2+j) == 1: det_id = 3
+                        elif (i*2+j) == 2: det_id = 1
+                        elif (i*2+j) == 3: det_id = 2
 
                     # Since GEIRS-r731M-18 version, new MEF extension naming:
-                    #    EXTNAME = 'Qi_j'
-                    #    DET_ID = 'SGi_j'
+                    #    EXTNAME = 'Qi'
+                    #    DET_ID =  'SGi'
                     # and the order in the MEF file shall be Q1,Q2,Q3,Q4
-                    hdu_i.header.set('DET_ID', "SG%i"%det_id, 
+                    hdu_i.header.set('DET_ID', "SG%i" % det_id,
                                         "PANIC Detector id SGi [i=1..4]")
-                    hdu_i.header.set('EXTNAME',"SG%i_1"%det_id)
+                    hdu_i.header.set('EXTNAME',"SG%i_1 " % det_id)
                     ### TODO: suspend until new version of GEIRS (see bellow)
-                    #####hdu_i.header.set('EXTNAME', "Q%i_1"%det_id)
+                    #####hdu_i.header.set('EXTNAME', "Q%i"%det_id)
                     ### end_suspend
                     
                     # DETSEC and DATASEC
@@ -758,12 +766,14 @@ class MEF (object):
                     hdu_i.header.set('DETSEC', det_sec)
                     hdu_i.header.set('DATASEC', data_sec)
 
-                    # now, copy extra keywords required
+                    # now, copy required extra keywords 
+                    copy_keyword.append('EGAIN%d'%det_id)
+                    copy_keyword.append('ENOISE%d'%det_id)
                     for key in copy_keyword:
                         try:
                             value = in_hdulist[0].header.cards[key].value
                             comment = in_hdulist[0].header.cards[key].comment
-                            if key=='HIERARCH ESO DET NDIT':
+                            if key == 'HIERARCH ESO DET NDIT':
                                 hdu_i.header.set ('NDIT', value, comment)
                             else:
                                 hdu_i.header.set (key, value, comment)
@@ -771,6 +781,9 @@ class MEF (object):
                             # extension should have CRVAL/CRPIX values!!
                         except KeyError:
                             log.warning("Key %s cannot be copied, is not in the header"%(key))
+                    
+                    copy_keyword.remove('EGAIN%d'%det_id)
+                    copy_keyword.remove('ENOISE%d'%det_id)
                     # Append new HDU to MEF
                     # Force BITPIX=-32
                     hdu_i.scale('float32')
@@ -780,7 +793,7 @@ class MEF (object):
             
             # Now, write the new MEF file in the right order (Q1,Q2,Q3,Q4)
             # This order is since GEIRS-r731M-18 (see. doc. PANIC-GEN-SP-02)
-            ### suspend until new version of GEIRS (see above)
+            ### TODO: suspend until new version of GEIRS (see above)
             #####tmp_hdus.sort(key=lambda my_hdu: my_hdu.header['EXTNAME'])
             ### end_suspend
             for h in tmp_hdus: out_hdulist.append(h)
@@ -798,7 +811,7 @@ class MEF (object):
     def splitGEIRSToSimple( self, out_filename_suffix = ".Q%02d.fits", 
                             out_dir = None):
         """ 
-        Method used to convert a single FITS file (PANIC-GEIRS v0) 
+        Method used to convert a single FITS file (PANIC-GEIRS SEF) 
         having a full (4kx4k) 4-detector-frame to 4 single FITS files with a 
         file per detector. The 4-detector-frame can be a cube of data.
         Header is fully copied from original file, and added new WCS keywords.
@@ -813,8 +826,8 @@ class MEF (object):
     
     
         Since GEIRS-r731M-18 version, new MEF extension naming:
-           EXTNAME = 'Qi_j'
-           DET_ID = 'SGi_j' (same ids as before)
+           EXTNAME = 'Qi'
+           DET_ID =  'SGi_j' (same ids as before)
         and the order in the MEF file shall be Q1,Q2,Q3,Q4
 
         But, for single FITS files, I don't know how to identify the detectors 
@@ -886,11 +899,11 @@ class MEF (object):
                 raise MEF_Exception("Error, found a MEF file, expected a single FITS ")
      
             # Check if it is a cube 
-            if len(in_hdulist[0].data.shape)!=2:
+            if len(in_hdulist[0].data.shape) !=2 :
                 log.debug("Found a Cube of data.")
 
             # Check file is a 4kx4k full-frame  
-            if in_hdulist[0].header['NAXIS1']!=4096 or in_hdulist[0].header['NAXIS2']!=4096:
+            if in_hdulist[0].header['NAXIS1'] != 4096 or in_hdulist[0].header['NAXIS2'] != 4096:
                 log.error('Error, file %s is not a full frame image', file)
                 raise MEF_Exception("Error, file %s is not a full frame image" % file)
 
@@ -987,9 +1000,9 @@ class MEF (object):
                         # In addition, it must be noted that:
                         # CD1_1 = cos(r), CD1_2 = sin(r), CD2_1 = -sin(r), CD2_2 = cos(r)
                         # r = clockwise rotation_angle 
-                        new_wcs.wcs.cd = [[-pix_scale/3600.0, 0], 
-                                          [0, pix_scale/3600.0]]
-                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[i*2+j]], 1)
+                        new_wcs.wcs.cd = [[-pix_scale / 3600.0, 0], 
+                                          [0, pix_scale / 3600.0]]
+                        new_pix_center = new_wcs.wcs_pix2world([pix_centers[ i * 2 + j]], 1)
                         
                         #print "Pix Centers = ",pix_centers[i*2+j]
                         #print "New Pix Centers = ", new_pix_center
@@ -1126,10 +1139,10 @@ class MEF (object):
                     else:
                         # Then, we suppose DETROT90=2, DETXYFLI=0, and default for PANIC !
                         log.warning("No DETROT90 found, supposed DETROT90=2 and DETXYFLI=0")
-                        if (i*2+j)==0: det_id = 4
-                        elif (i*2+j)==1: det_id = 1
-                        elif (i*2+j)==2: det_id = 3
-                        elif (i*2+j)==3: det_id = 2
+                        if (i*2+j) == 0: det_id = 4
+                        elif (i*2+j) == 1: det_id = 1
+                        elif (i*2+j) == 2: det_id = 3
+                        elif (i*2+j) == 3: det_id = 2
 
                     # DETSEC and DATASEC
                     data_sec = '[%i:%i,%i:%i]' % (5, 2044, 5, 2044)
@@ -1147,13 +1160,13 @@ class MEF (object):
                     prihdu.header.set('DET_ID', 'SG%s'%det_id, 
                                           "PANIC Detector id SGi [i=1..4]")
                     
-                    out_hdulist.append(prihdu)    
+                    out_hdulist.append(prihdu)
                     out_hdulist.verify('ignore')
                 
                     new_filename = file.replace(".fits", 
                                                 out_filename_suffix % det_id) # number from 1 to 4
                     if out_dir != None: 
-                        new_filename = new_filename.replace(os.path.dirname(new_filename), 
+                        new_filename = new_filename.replace(os.path.abspath(os.path.join(new_filename, os.pardir)), 
                                                             out_dir) 
                     out_filenames.append (new_filename)
      
@@ -1201,7 +1214,7 @@ if __name__ == "__main__":
     
     parser.add_option ("-G", "--geirs-split",
                   action = "store_true", dest = "geirs_split", \
-                  help = "make a split of GEIRS-v0 files, creating \
+                  help = "make a split of GEIRS SEF file, creating \
                   4-single files and adding a suffix for each extension", \
                   default = False)
     
@@ -1212,7 +1225,7 @@ if __name__ == "__main__":
    
     parser.add_option ("-g", "--geirs-convert",
                   action = "store_true", dest = "geirs_convert", \
-                  help = "convert a GEIRS-v0 file (with 1 extension) to a \
+                  help = "convert a GEIRS SEF file to a \
                   MEF FITS file with 4 extensions", default = False)
     
     parser.add_option ("-d", "--output_dir",
