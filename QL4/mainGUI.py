@@ -281,11 +281,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.ext_calib_dir = self.config_opts['general']['ext_calibration_db']
 
         # Default run mode
-        if self.config_opts['quicklook']['run_mode']=="None": 
+        if self.config_opts['quicklook']['run_mode'] == "None": 
             self.comboBox_QL_Mode.setCurrentIndex(0)
-        elif self.config_opts['quicklook']['run_mode']=="Lazy": 
+        elif self.config_opts['quicklook']['run_mode'] == "Lazy": 
             self.comboBox_QL_Mode.setCurrentIndex(1)
-        elif self.config_opts['quicklook']['run_mode']=="PreReduction": 
+        elif self.config_opts['quicklook']['run_mode'] == "PreReduction": 
             self.comboBox_QL_Mode.setCurrentIndex(2)
         else: 
             self.comboBox_QL_Mode.setCurrentIndex(0)
@@ -549,7 +549,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if self.comboBox_QL_Mode.currentText() == "None":
                 return
             elif self.comboBox_QL_Mode.currentText().contains("Pre-reduction"):
-                if end_seq: self.processFiles(seq)
+                if end_seq: 
+                    self.processFiles(seq)
             elif self.comboBox_QL_Mode.currentText().contains("Lazy"):
                 if end_seq and seqType != "SCIENCE":
                     # Build master calibrations
@@ -580,7 +581,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         
         # ONLY SCIENCE frames will be pre-processed 
-        if type!="SCIENCE":
+        if type != "SCIENCE":
             return
 
         self.logConsole.info("[processLazy] Processing file %s "%filename)
@@ -4156,7 +4157,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             output.put(RS.ReductionSet(args).func())
             
     def processFiles(self, files=None, group_by=None, outfilename=None,
-                     interactive=False):
+                     interactive=False, red_mode='quick'):
         """
         Process the files provided; if any files were given, all the files 
         in the current Source List View (but not the output files) will be
@@ -4181,6 +4182,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
             will be saved with a filename as: 'PANIC.[DATE-OBS].fits',
             where DATE-OBS is the keyword value of the first file in the sequence.
         
+        interactive: bool
+            if true, show the calibrations found and ask the user to confirm them
+            for the calibration. Default value is false.
+        
+        red_mode: str
+            Reduction mode to use in the processing  (quick|science|lemon|quick-lemon|lab).
+            Default value is 'quick'.
+            
         Notes
         -----
         When the RS object is created, we provide the outputDB as the 
@@ -4220,13 +4229,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #     group_by="ot", check_data=True, config_dict=None, 
             #     external_db_files=None, temp_dir = None,
             
-            if group_by==None: l_group_by = self.group_by
-            else: l_group_by = group_by
+            if group_by == None: 
+                l_group_by = self.group_by
+            else: 
+                l_group_by = group_by
             
             # Here, it is decided if last calibration files will be used
             # GUI preferences have higher priority than values selected in
             # config file. 
-            if self.checkBox_pre_subDark_FF.checkState()==Qt.Checked:
+            if self.checkBox_pre_subDark_FF.checkState() == Qt.Checked:
                 calib_db_files = self.outputsDB.GetFiles()
                 self.config_opts['general']['apply_dark_flat'] = 1
                 log.debug("ext-calibretion DB loaded")
@@ -4248,7 +4259,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self.config_opts['bpm']['mode'] = 'none'
 
             #
-            if self.comboBox_AstromEngine.currentText()=="SCAMP":
+            if self.comboBox_AstromEngine.currentText() == "SCAMP":
                 self.config_opts['astrometry']['engine'] = "SCAMP"
             else:
                 self.config_opts['astrometry']['engine'] = "AstrometryNet"
@@ -4275,7 +4286,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             #
             params = [(files, self.m_outputdir, outfilename,
                       "dither", None, 
-                      None, None, "quick",
+                      None, None, red_mode,
                       l_group_by, True,
                       self.config_opts,
                       calib_db_files, None)]
@@ -4283,7 +4294,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             log.debug("Let's create a ReductionSet ...")
 
             # Show the calibration to be used
-            if self.config_opts['general']['apply_dark_flat']!=0:
+            if self.config_opts['general']['apply_dark_flat'] != 0:
                 # Look for calibs
                 md, mf, mb = self.getCalibFor(files)
                 

@@ -356,7 +356,7 @@ class Ui_panicQL(object):
         self.lineEdit_sourceD.setReadOnly(True)
         self.lineEdit_sourceD.setObjectName(_fromUtf8("lineEdit_sourceD"))
         self.lineEdit_filename_filter = QtGui.QLineEdit(self.tab)
-        self.lineEdit_filename_filter.setGeometry(QtCore.QRect(536, 30, 60, 21))
+        self.lineEdit_filename_filter.setGeometry(QtCore.QRect(475, 30, 121, 21))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 137))
         brush.setStyle(QtCore.Qt.SolidPattern)
