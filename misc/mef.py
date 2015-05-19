@@ -301,8 +301,8 @@ class MEF (object):
                 #keywords  = [if key not in hdulist[1].header for key in hdulist[0].header.cards
 
                 # now, copy extra keywords required
-                copy_keyword.append('EGAIN%i'%iSG)
-                copy_keyword.append('ENOISE%i'%iSG)
+                copy_keyword.append('EGAIN%i' % iSG)
+                copy_keyword.append('ENOISE%i' % iSG)
                 for key in copy_keyword:
                     try:
                         value = hdulist[0].header.cards[key].value
@@ -747,28 +747,28 @@ class MEF (object):
                     # and the order in the MEF file shall be Q1,Q2,Q3,Q4
                     hdu_i.header.set('DET_ID', "SG%i" % det_id,
                                         "PANIC Detector id SGi [i=1..4]")
-                    hdu_i.header.set('EXTNAME',"SG%i_1 " % det_id)
-                    ### TODO: suspend until new version of GEIRS (see bellow)
-                    #####hdu_i.header.set('EXTNAME', "Q%i"%det_id)
-                    ### end_suspend
+                    ### old GEIRS format 
+                    #hdu_i.header.set('EXTNAME',"SG%i_1 " % det_id)
+                    ### new GEIRS format since GEIRS-r731M-18
+                    hdu_i.header.set('EXTNAME', "Q%i" % det_id)
                     
                     # DETSEC and DATASEC
                     data_sec = '[%i:%i,%i:%i]' % (5, 2044, 5, 2044)
-                    if det_id==1: # SG1
+                    if det_id == 1: # SG1
                         det_sec = '[%i:%i,%i:%i]'  % (2049, 4096, 1, 2048)
-                    elif det_id==2: # SG2
+                    elif det_id == 2: # SG2
                         det_sec = '[%i:%i,%i:%i]'  % (2049, 4096, 2049, 4096)
-                    elif det_id==3: # SG3
+                    elif det_id == 3: # SG3
                         det_sec = '[%i:%i,%i:%i]'  % (1, 2048, 2049, 4096)
-                    elif det_id==4: # SG4
+                    elif det_id == 4: # SG4
                         det_sec = '[%i:%i,%i:%i]'  % (1, 2048, 1, 2048)
                     
                     hdu_i.header.set('DETSEC', det_sec)
                     hdu_i.header.set('DATASEC', data_sec)
 
                     # now, copy required extra keywords 
-                    copy_keyword.append('EGAIN%d'%det_id)
-                    copy_keyword.append('ENOISE%d'%det_id)
+                    copy_keyword.append('EGAIN%d' % det_id)
+                    copy_keyword.append('ENOISE%d' % det_id)
                     for key in copy_keyword:
                         try:
                             value = in_hdulist[0].header.cards[key].value
@@ -791,12 +791,13 @@ class MEF (object):
                     ##out_hdulist.append(hdu_i)
                     ##out_hdulist.verify('ignore')
             
-            # Now, write the new MEF file in the right order (Q1,Q2,Q3,Q4)
+            # Now, write the new MEF file in the right order (Q1, Q2, Q3, Q4)
             # This order is since GEIRS-r731M-18 (see. doc. PANIC-GEN-SP-02)
-            ### TODO: suspend until new version of GEIRS (see above)
-            #####tmp_hdus.sort(key=lambda my_hdu: my_hdu.header['EXTNAME'])
-            ### end_suspend
-            for h in tmp_hdus: out_hdulist.append(h)
+            # If you wish to back to old GEIRS format (SGi_1), comment next
+            # line for sorting.
+            tmp_hdus.sort( key=lambda my_hdu: my_hdu.header['EXTNAME'] )
+            for h in tmp_hdus: 
+                out_hdulist.append(h)
             
             out_hdulist.writeto(new_filename, output_verify = 'ignore', 
                                 clobber=True)

@@ -82,7 +82,7 @@ Once you are logged into the PANIC computer, to lauch PQL GUI type next command:
 
     $ start_ql &
     
-The next figure shows a snapshot of the main window of the PQL GUI:
+The next figure shows a snapshot of the main window of the PQL GUI that will bring up the *start_ql* command.
   
 .. image:: _static/PQL_GUI_main_window.png
    :align: center
@@ -136,7 +136,10 @@ The menu bar provides acces to some PQL's capabilities.
 4. Calibrations
 5. Tools
 6. Help
+  Opens a web browser which shows an on-line HTML version of this user's manual. This will fail 
+  if the internet conection and proxy is not correctly configured.
 7. Exit
+  Quit the PQL application.
 
 
 Buttons bar
@@ -148,7 +151,7 @@ The buttons provide quick access to change the most frecuently-used PQL actions:
 - add a file to the current view
 - change the source input directory
 - display the current selected image 
-- open an IRAF console
+- open an IRAF_ console
 - open Aladin_ tool
 
 .. image:: _static/PQL_GUI_toolbar.png
@@ -309,6 +312,53 @@ ALL
 QuickLook Mode
 --------------
 
+The quick look mode combo box allows to select the mode in which the PQL will be run when the **START processing** button is pushed.
+The current modes are:
+
+None
+  No processing action is done
+
+Lazy
+  If the end of a calibration (DARK, FLAT) sequence is detected, the master file is built. Otherwise,
+  and the SCIENCE files are processed as specified in the 'Setup->Lazy Mode':
+  
+  + Apply DARK + FLAT + BPM
+  + Subtract Last Frame (Science)
+  + Subract Nearest Sky
+
+.. image:: _static/PQL_GUI_qlmodes.png
+   :align: center
+   :scale: 65 %
+
+  
+Pre-Reduction
+  If the end of observing sequence is detected, it is processed in a quick mode (single pass for sky subtraction). 
+  For calibration sequences, the master file will be built, and for science sequences, a quick 
+  reduction will be done using options configured in the 'Setup->Pre-Reduction Mode' and the 
+  calibrations found in local database (output directory and external calibration directory).
+  Note that the pre-reduction options configured in the config file will be overwritten.
+  
+.. image:: _static/PQL_GUI_pre-redmode.png
+   :align: center
+   :scale: 65 %
+  
+Quick-LEMON
+  The same as Pre-reduction, but the processing stops after the 1st sky subtraction, and 
+  no final co-added image is produced. It is useful for LEMON_ processing for light curves.
+
+Full-Reduction
+  If the end of observing sequence is detected, it is processed in a *science* mode (double pass for sky subtraction). 
+  For calibration sequences, the master file will be built, and for science sequences, a *science* 
+  reduction will be done using options configured in the 'Setup->Pre-Reduction Mode' and the 
+  calibrations found in local database (output directory and external calibration directory).
+  Note that the pre-reduction options configured in the config file will be overwritten.
+
+Full-LEMON
+  The same as Pre-reduction, but the processing stops after the 2nd sky subtraction, and 
+  no final co-added image is produced. It is useful for LEMON_ processing for light curves.
+
+
+
 Last file received
 ------------------
 
@@ -373,6 +423,7 @@ Just be sure the number of *parallel* parameter is set to *True* on the $PAPI_CO
 .. index:: quicklook, off-line, on-line, configuration
 
 .. _FITS: http://fits.gsfc.nasa.gov
-.. _IRAF: 
+.. _IRAF: http://iraf.noao.edu/
 .. _ds9: http://ds9.si.edu/site/Home.html
 .. _Aladin: http://aladin.u-strasbg.fr
+.. _LEMON: https://lemon.readthedocs.org/
