@@ -41,8 +41,11 @@ the status and progress of the observation during the night.
 
 FITS files and headers
 **********************
-QuickLook obly supports FITS_ (Flexible Image Transport System) image formats. 
-For general purposer, such as vieweing and simple analysis, only minimal headers
+QuickLook only supports FITS_ (Flexible Image Transport System) image formats. Due
+PANIC hava an FPA of four detector, the FITS files can be ``Single Extension FITS (SEF)`` 
+or ``Multi-Extension FITS (MEF)``, however MEF are prefered.
+
+For general purpose, such as viewing and simple analysis, only minimal headers
 keywords are required. However, and in order to group and reduce observing sequences, 
 the following header keywords are also required::
 
@@ -250,6 +253,8 @@ For example:
    :align: center
    :scale: 65 %
 
+.. _data_list_view:
+
 Data list view
 --------------
 Tha data list view control displays all the files found in the input directory, or in the output directory 
@@ -361,26 +366,49 @@ Full-LEMON
 
 Last file received
 ------------------
+This field shows the last file received (detected) by the PQL.
+
 
 Buttons
 -------
 
 Subract-last2 button
 ^^^^^^^^^^^^^^^^^^^^
+It will produced a new image as result of the subtraction of last two images received.
+
 Create calibrations button
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This button will start the processing of all the calibration
+sequences received. As result, a list of master calibrations will be generated
+in the output directory. 
 
 START button
 ^^^^^^^^^^^^
 
+This button starts the processing of all the sequences received. You will be 
+asked whether to proccess all the current images or only the new ones. 
+As result, a list of master calibrations and science calibrated images will be generated
+in the output directory. 
+
 Add button
 ^^^^^^^^^^
+This button allows to add manually a single file to the *Data List View* from wherever the
+file is.
+
 
 Remove button
 ^^^^^^^^^^^^^
+This button removes manually from the *Data List View* the currently selected file, but it
+does not remove neither from the local database nor the file system.
+
 
 Clear All button
 ^^^^^^^^^^^^^^^^
+It removes all the current files from the *Data List View*, but they will not be removed
+from the file system. As result, it will empty the *Data List View* 
+until a new input directory is selected or a new file is detected in the current one.
+
 
 Setup Panel
 ***********
@@ -394,18 +422,191 @@ Log Panel
 Pop-up Menu
 ***********
 
+It is a context pop-up menu that appears when the user select a file (or
+a set of them) in the *Data List View* and click the right mouse button.
+Next figure shows the options of that pop-up menu:
+
+
 .. image:: _static/PQL_GUI_pop_up.png
    :align: center
    :scale: 65 %
 
+Some actions in the menu could be disabled and greyed out if they are not
+availabe or applicable to the selected files.
+   
 Display image
 -------------
+It displays the currect selected image in the ds9_ display. it will launch the ds9 
+application if it is not opened.
 
 Image info
 ----------
+It is a quick way to see some basic information of the selected image. The information
+is mainly concerning the FITS structure and exposition times used. The information will
+be shown in the *Event Log Console* as follow:
 
+::
+
+  ---------------
+  SEF Filename : /data1/PANIC/2015-05-19_SS_zenith_Ks_1_3/SS_Ks_SG1_4_0024.fits
+  Image Shape : (32, 32)
+  Filter : Ks 
+  ITIME : 0.045000 
+  NCOADDS : 1 
+  EXPTIME : 0.045000 
+  TYPE : FOCUS 
+  OT keywords : True 
+  ---------------
+
+Of course, if you need any other information of the file, you can find it using
+the 'ds9->File->Display Header...' option.
+
+
+Copy files to clipboard
+-----------------------
+It copies the current selected file to the clipboard. This way you could paste the 
+full pathnames to any other file. It is quite useful when using the PAPI command
+line to run some operation that is not available on the PQL.
+  
+Copy files to text file
+-----------------------
+If copies the current selected files into the specified text file. It is quite useful 
+when using the PAPI command line to run some operation that is not available on the PQL.
+
+Show Dither pattern
+-------------------
+It brings up a plot with the dither offsets obtained from the RA,Dec coordinates 
+of the FITS header. You have to select a set of images in the *Data List View* and
+then right-button and *Show Dither pattern*.
+
+.. image:: _static/PQL_GUI_dither_pat_ex.png
+   :align: center
+   :scale: 25 %
+   
+
+.. _calibrations:
+
+Calibrations
+************
+Next options allow to build the master calibration files from a given set of selected files.
+
+
+Build Master Dark
+-----------------
+This command is used to produce a master dark file from a set of files currectly selected 
+in the *Data List View*. It checks that all the selected files are compliant, ie., 
+have the same EXPTIME, NCOADD, ITIME, READMODE and shape. You only have to give the name of 
+the master dark file to be created.
+
+The master dark is computed using an average combine with a minmax rejection algorithm.
+   
+
+Build Master Dome Flat
+----------------------
+This command is used to produce a Master DOME FLAT file from a set of files currectly selected 
+in the :ref:`Data List View <data_list_view>`. It checks that all the selected files are compliant, ie., 
+have the same FILTER, NCOADD, READMODE and shape. You have to select at least one DOME_FLAT_LAMP_OFF 
+and one DOME_FLAT_LAMP_ON image, and then provide the name for the master dome flat to create.
+
+The procedure to create the master dome flat is as follow: 
+
+    #. Check the EXPTIME , TYPE(dome) and FILTER of each Flat frame
+    #. Separate lamp ON/OFF dome flats
+    #. Make the median combine + sigmaclip of Flat LAMP-OFF frames 
+    #. Make the median combine + sigmaclip of Flat LAMP-ON frames
+    #. Subtract lampON-lampOFF (implicit dark subtraction)
+    #. (optionally) Normalize the flat-field with median (robust estimator)
+            
+    Note that we do **not** need to subtract any MASTER_DARK; it is not required for 
+    DOME FLATS (it is done implicitly because both ON/OFF flats are taken 
+    with the same Exposition Time).
+
+Build Master Twlight (sky) Flat
+-------------------------------
+This command is used to produce a Master SKY FLAT file from a set of files currectly selected 
+in the :ref:`Data List View <data_list_view>`. It checks that all the selected files are compliant, ie., 
+have the same FILTER, NCOADD, READMODE and shape. You have to select at least three SKY_FLAT
+images (dusk or dawn). The procedure will look for the required master dark frames to subtract 
+in the current output directory and in the external calibration directory. If some of the master dark
+are not found, then the procedure will fail.
+
+The procedure to create the master sky flat is as follow:
+
+    #. Check the  TYPE (sky flat) and FILTER of each Flat frame
+       If any frame on list missmatch the FILTER, then the master 
+       twflat will skip this frame and continue with then next ones.
+       EXPTIME do not need be the same, so EXPTIME scaling with 'mode' 
+       will be done. 
+    
+    #. Check either over or under exposed frames ( [10000 < mean_level < 40000] ADUs )
+        
+    #. We subtract a proper MASTER_DARK, it is required for TWILIGHT FLATS 
+       because they might have diff EXPTIMEs.
+        
+    #. Make the combine (median + sigclip rejection) the dark subtracted Flat 
+       frames scaling by 'mode'.
+        
+    #. Normalize the sky-flat wrt SG1 detector, dividing by its mean value.
+    
+
+Build GainMap
+-------------
+This command is used to produce a Master GainMap file from a set of files currectly selected 
+in the :ref:`Data List View <data_list_view>`. It checks that all the selected files are compliant, ie., 
+have the same FILTER, NCOADD, READMODE and shape. You have to select at least three
+flat frames (dome, dusk or dawn). For sky flats, the procedure will look for the required master dark 
+frames to subtract in the current output directory and in the external calibration directory. 
+If some of the master dark are not found, then the procedure will fail. Dome flat do not need
+dark subtraction.
+
+The procedure to create the master sky flat is as follow:
+
+    #. Check the  TYPE (sky flat) and FILTER of each Flat frame
+       If any frame on list missmatch the FILTER, then the master 
+       twflat will skip this frame and continue with then next ones.
+       EXPTIME do not need be the same, so EXPTIME scaling with 'mode' 
+       will be done. 
+       
+    #. Create the proper master dome/sky flat.
+    
+    #. Once the master dome flat is created, the procedure will 
+    compute the gainmap as follow:
+    
+
+
+Photometric calibration
+-----------------------
+.. note::
+
+   Your **data is assumed to be calibrated**. Dark subtraction, flat-fielding correction and any 
+   other necessary steps should have been performed before any data is fed to the photometric 
+   calibration.
+
+
+    
+.. _howto:
+   
 How to ...?
 ***********
+
+How to determine the telescope focus ?
+--------------------------------------
+
+
+How to inspect the profile of the stars in an image ?
+-----------------------------------------------------
+You should follow the next steps:
+
+1. select in the *Data List View* the image to inspect.
+2. double-click to display the image into ds9 and zoom to the area you wish to inspect
+3. go to the tool bar (or Tool menu) and open an IRAF console
+4. type in the iraf console 'imexam'
+5. focus the mouse cursor on the ds9_ display and type the *imexam* comand you wish
+   for the inspection. For example, type ***r*** to show the *radial profile* of 
+   the selected star
+6. once you have finished the inspection, type q to exit from *imexam*
+
+
 
 How do I make mosaics with PQL? 
 -------------------------------

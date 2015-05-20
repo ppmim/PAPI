@@ -129,9 +129,9 @@ class CheckQuality(object):
         """
         
         # Check whether detector selection can be done
-        if self.window!='all':
+        if self.window != 'all':
             f = fits.open(self.input_file)
-            if len(f)!=5:
+            if len(f) != 5:
                 raise Exception("Error, expected a MEF file with 4 extensions")
 
         
@@ -244,11 +244,11 @@ class CheckQuality(object):
                 #print "SNR=",snr
             else:
                 continue
-            if (x>self.edge_x and x<naxis1-self.edge_x and 
-                y>self.edge_y and y<naxis2-self.edge_y and
-                ellipticity<self.ellipmax and fwhm>0.1 and 
-                fwhm<20 and flags<=31 and   
-                isoarea>float(self.isomin) and snr>self.min_snr): 
+            if (x > self.edge_x and x < naxis1 - self.edge_x and 
+                y > self.edge_y and y < naxis2 - self.edge_y and
+                ellipticity < self.ellipmax and fwhm > 0.1 and 
+                fwhm < 20 and flags <= 31 and   
+                isoarea > float(self.isomin) and snr > self.min_snr): 
                 # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
                 #print "%s SNR_APER= %s " %(i, snr)
@@ -266,7 +266,7 @@ class CheckQuality(object):
         
         m_good_stars = numpy.array(good_stars)
         
-        print "Found <%d> GOOD stars"%len(m_good_stars)
+        print "Found <%d> GOOD stars" % len(m_good_stars)
         
         if len(m_good_stars)>self.MIN_NUMBER_GOOD_STARS:
             std = numpy.std(m_good_stars[:,8])

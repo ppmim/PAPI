@@ -66,6 +66,17 @@ Bug reports
 ***********
 Please file an issue with the `issue tracker <https://github.com/ppmim/PAPI/issues>`_ on github.
 
+
+Release Notes
+*************
+* 1.2.x
+    - New module names.
+    - Bug Fixes
+* 1.0.x
+    - First version
+    - :mod:`~AstroObject.fileset` module which allows for controlled filesets
+
+    
 .. _PANIC: http://www.iaa.es/PANIC
 .. _CAHA: http://www.caha.es
 .. _Omega2000: http://www.caha.es/CAHA/Instruments/O2000/index.html

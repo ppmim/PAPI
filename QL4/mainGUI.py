@@ -1569,7 +1569,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
     def del_slot(self):
         """     
         Delete the current selected file from the main list view panel, 
-        but we do not remote from the DataCollector neither file system.
+        but we do not remove from the DataCollector neither file system.
         """
         
         self.m_popup_l_sel = []
@@ -2260,8 +2260,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
             log.error(msg)
             QMessageBox.information(self, "Info", msg)
         else:
+            # Try to get PIX_SCALE
+            with fits.open(self.m_popup_l_sel[0]) as hdu:
+                if 'PIXSCALE' in hdu[0].header:
+                    pix_scale = hdu[0].header['PIXSCALE']
+                else:
+                    pix_scale = self.config_opts['general']['pix_scale']
+            
             # Draw plot with dither pathern
-            off.draw_offsets(offsets, self.config_opts['general']['pix_scale'], 1.0)
+            off.draw_offsets(offsets, pix_scale, 1.0)
 
     def MEF2Single_slot(self):
         """
@@ -2905,7 +2912,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread.start()
                 except Exception,e:
                     QApplication.restoreOverrideCursor()
-                    msg = "Error creating master Twilight Flat file: %s"%str(e)
+                    msg = "Error creating master Twilight Flat file: %s" % str(e)
                     log.error(msg)
                     self.logConsole.error(msg)
                     QMessageBox.critical(self, "Error",  msg)
@@ -3705,7 +3712,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   window=detector)
             try:
                 fwhm,std,k,k = cq.estimateFWHM()
-                if fwhm>0:
+                if fwhm > 0:
                     self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
                                              .arg(os.path.basename(ifile))
                                              .arg(fwhm)
@@ -3713,7 +3720,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 else:
                     self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")           
             except Exception,e:
-                self.logConsole.error("ERROR: Cannot estimate FWHM of selected image: %s"%str(e))
+                self.logConsole.error("ERROR: Cannot estimate FWHM of selected image: %s" % str(e))
                 #raise e
     
     def do_quick_reduction_slot(self):
@@ -3795,7 +3802,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if outfileName.isEmpty(): return # nothig to do !
            
         #Create working thread that compute sky-frame
-        if len(file_list)>1:
+        if len(file_list) > 1:
             try:
                 #because choosen files might not be a complete sequence we
                 #set group_by to 'filter'
