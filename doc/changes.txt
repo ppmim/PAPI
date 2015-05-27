@@ -1,0 +1,42 @@
+2015-05-12:
+
+PAPI & QL: main changes from last commissioning
+-----------------------------------------------
+
+- added support to new MEF structure (old also supported)
+- added option for Xtalk remove before 1st sky subtraction, and not only before 2nd sky subtraction
+- added support for cubes and SEF in calibration routines (calDark, calDomeFlat, calTwFlat)
+- strong check for ITIME and NCOADD on dark subtraction
+- modified routine (getDarks.py) for taking automatic dark exposures in OT: now, cubes will be taken into account, and then a cube of N layers and ITIME will produce a DARK of N coadds of ITIME
+- flat normalization wrt Q1 or SG1_1 (instead of index by number 1)
+- new option on QL to select an additional calibration directory ("QL-->Calibrations->SetCalibs Dir..."); default value is set in $PAPI_CONFIG file (ext_calibration_db)
+- new option for NL-Correction in QL pop-up menu for a set of files (Apply Non-Linearity Correction)
+- new feature on QL pop-up menu (FITS->Create DataSeq) to build sequences with right OT keywords; useful to re-rebuild/fix aborted sequences or non-OT sequences
+- new option for cube collapse in QL pop-up menu (FITS->Collapse cube); in progress try to collapse with re-centering (alignment).
+- QL photometric estimation show the pdf plot of the fitting of InstMag vs 2MASS
+- added to QL pop-up menu option to show basic info of a FITS file (MEF/SEF, shape, Filter, ITIME, NCOADDS, EXPTIME and type)
+- added to QL pop-up menu option to show plot of dither pattern of a set of selected files (Show Dither Pattern)
+- added option on pipeline CL to show sequences of a given type (-T [DARK|FLAT|DOME_FLAT|SKY_FLAT|FOCUS|SCIENCE|CAL|all] )
+- copy of EGAINi and ENOISEi on FITS splits
+- modified low and high threshold levels for skyflats acceptance to [10000-40000] in calTwFlat routine
+- only .fit or .fits files will be treated by PAPI&QL
+- support to MEF on QL Astrometric calib and ask for detector to solve
+- enabled '--cpulimit' + 'inparallel' (=300s) on astrometric calibration with Astrometry.net
+- added optional clean of bad pixels just after sky subtraction; the bad pix (given by the gainmap) are replaced by the median of a 2D window, and if all pixels in the window are bad, then the window in increased in size until unmasked pixels (>0) are found  
+- (in progress) new approach for processing of dither sequences with large offsets; in that cases, and due optical distortion, the common object mask (from the 1st coadd) does not match for all individual images, thus individual object masks have to be used
+- several bugfixs:
+   - SEF to MEF conversion and new MEF structure (Qi)
+   - current_night check box on QL
+   - set filename filter on QL
+   - sign in declination values on QL
+   - conflict with matplotlib and QL threads
+   - tmp.* files created by Astrometry.net were not removed automatically as announced; until bugifx in Astrometry.net, removed by PAPI.
+   - (other hundred...)
+
+
+Misc
+----
+- run astrometric calibrations with PSFEx with data from 3.5m (M67); achieved ~40mas for internal astrometry dispersion and waiting for Hervé support.
+- enabled x2go on panic22/panic35 for remote control of PANIC; problem with ds9 colors solved
+- order of spare disks for PANIC computers (1 x 500 GB + 4 x 4 TB)
+- NLC produces lots of NaNs for bad pixels (and above LINMAX value); how should PAPI handle these values ? in principle, they are masked (and ignored) up to the co-add, where are again ignored and removed in median combine (see above new optional routine to clean bad pixels)

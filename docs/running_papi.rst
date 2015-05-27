@@ -1,13 +1,16 @@
 .. _papi:
 
 Running PAPI
-============
+************
 
 .. index:: quickstart, running
 
+This chapter gives an introduction in how to get started with PAPI, showing the steps that 
+would normally be necessary to reduce a data set from PANIC. In particular, this example 
+assumes that we have a series of FITS images from an observation of the object [TBD]
 
 Quickstart
-**********
+==========
 
 Running PAPI can be as simple as executing the following command in a terminal::
 	
@@ -25,8 +28,8 @@ Example::
 
 
 
-Optional Commands
-*****************
+Optional Arguments
+------------------
 
 For most image sets PAPI can be run in the default configuration with no 
 additional interaction required. If the default settings are insufficient for 
@@ -38,69 +41,125 @@ The next command will show some of the available options::
    $ papi.py --help
 
 
-Then, the listing of the PAPI command line options::
+Then, the listing of the PAPI command line options:
+
+::
 
     Usage: papi.py [OPTION]... DIRECTORY...
     
-    This is PAPI, the PANIC PIpeline data reduction system - IAA-CSIC - Version 1.2.20141023145908
+    This is PAPI, the PANIC PIpeline data reduction system - IAA-CSIC - Version 1.2.20150508064845
 
     Options:
-      --version             show program's version number and exit
-      -h, --help            show this help message and exit
-      -c CONFIG_FILE, --config=CONFIG_FILE
-                            Config file for the PANIC Pipeline application.If not specified, './config_files/papi.cfg' is used.
-      -C, --Check           Check if versions of PAPI modules are right.
-      -s SOURCE, --source=SOURCE
-                            Source file list of data frames. It can be a fileor directory name.
-      -o OUTPUT_FILE, --output_file=OUTPUT_FILE
-                            Final reduced output image
-      -t TEMP_DIR, --temp_dir=TEMP_DIR
-                            Directory for temporal files
-      -d OUTPUT_DIR, --out_dir=OUTPUT_DIR
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    -c CONFIG_FILE, --config=CONFIG_FILE
+                            Config file for the PANIC Pipeline application.If not
+                            specified, './config_files/papi.cfg' is used.
+    -s SOURCE, --source=SOURCE
+                            Source file list of data frames. It can be a fileor
+                            directory name.
+    -d OUTPUT_DIR, --out_dir=OUTPUT_DIR
                             Output dir for product files
-      -r ROWS, --rows=ROWS  Use _only_ files of the source file-list in the rangeof rows specified (0 to N, both included)
-      -R, --recursive       Does recursive search for files in source directory
-      -l, --list            Generate a list with all the source files read fromthe source and sorted by MJD
-      -M REDUCTION_MODE, --red_mode=REDUCTION_MODE
-                            Mode of data reduction to do (quick|science|lab|lemon|quick-lemon).
-      -m OBS_MODE, --obs_mode=OBS_MODE
+    -o OUTPUT_FILE, --output_file=OUTPUT_FILE
+                            Final reduced output image
+    -t TEMP_DIR, --temp_dir=TEMP_DIR
+                            Directory for temporal files
+    -r ROWS, --rows=ROWS  Use _only_ files of the source file-list in the
+                            rangeof rows specified (0 to N, both included)
+    -R, --recursive       Does recursive search for files in source directory
+    -l, --list            Generate a list with all the source files read fromthe
+                            source and sorted by MJD
+    -M REDUCTION_MODE, --red_mode=REDUCTION_MODE
+                            Mode of data reduction to do (quick|science|lab|lemon
+                            |quick-lemon).
+    -m OBS_MODE, --obs_mode=OBS_MODE
                             Observing mode (dither|ext_dither|other)
-      -p, --print           Print detected sequences in the Data Set
-      -S SEQ_TO_REDUCE, --seq_to_reduce=SEQ_TO_REDUCE
-                            Sequence number to reduce. By default, all sequences found will be reduced.
-      -D MASTER_DARK, --master_dark=MASTER_DARK
+    -S SEQ_TO_REDUCE, --seq_to_reduce=SEQ_TO_REDUCE
+                            Sequence number to reduce. By default, all sequences
+                            found will be reduced.
+    -W DETECTOR, --window_detector=DETECTOR
+                            Specify which detector to process:Q1(SG1), Q2(SG2),
+                            Q3(SG3), Q4(SG4), Q123(all except SG4), all [default:
+                            all]
+    -p, --print           Print all detected sequences in the Data Set
+    -T SEQ_TYPE, --sequences_type=SEQ_TYPE
+                            Specify the type of sequences to show: DARK,
+                            FLAT(all), DOME_FLAT, SKY_FLAT, FOCUS, SCIENCE, CAL,
+                            all [default: all]
+    -b, --build_calibrations
+                            Build all the master calibrations files
+    -C EXT_CALIBRATION_DB, --ext_calibration_db=EXT_CALIBRATION_DB
+                            External calibration directory (library of Dark & Flat
+                            calibrations)
+    -D MASTER_DARK, --master_dark=MASTER_DARK
                             Master dark to subtract
-      -F MASTER_FLAT, --master_flat=MASTER_FLAT
+    -F MASTER_FLAT, --master_flat=MASTER_FLAT
                             Master flat to divide by
-      -B BPM_FILE, --bpm_file=BPM_FILE
+    -B BPM_FILE, --bpm_file=BPM_FILE
                             Bad pixel mask file
-      -g GROUP_BY, --group_by=GROUP_BY
-                            kind of data grouping (based on) to do with thedataset files (ot |filter)
-      -k, --check_data      if true, check data properties matching (type, expt, filter, ncoadd, mjd)
+    -g GROUP_BY, --group_by=GROUP_BY
+                            kind of data grouping (based on) to do with thedataset
+                            files (ot |filter)
+    -k, --check_data      if true, check data properties matching (type, expt,
+                            filter, ncoadd, mjd)
+    -e, --Check           Check if versions of PAPI modules are right.
+
   
 
 Input FITS data files
-*********************
+---------------------
+
 GEIRS is capable of saving the frames in different modes (integrated, FITS-cubes,
 MEF, etc ). It can be configured in the OT when the OP (observing program) is defined.
 
 However, PAPI does not accept any kind of FITS data files available in GEIRS, only
 the configured in the OT. As result, PAPI could accept the next type of FITS files:
 
- - Single integrated FITS file: the four detectors are saved in single file and in a single stitched image. This is the default and more common saving mode used. 
+ - Integrated Multi-Extension-FITS (MEF): a unique FITS file with four extensions (MEF),
+   one per each detector (or window). If the number of coadd (NCOADDS) is > 0, then they 
+   will be integrated (arithmetic sum) in a single frame. This is the default and more common 
+   saving mode used. This is the **default** and more wished saving mode.   
+   This mode will also be used when the software or hardware subwindowing is set and 
+   the integrated option is selected.
+ 
+ - Non-integrated Multi-Extension-FITS (MEF): a unique FITS file with four extensions (MEF), 
+   one per each detector (or window), having each extension N planes, where N is the number 
+   of coadds (NCOADDS), ie. a cube of N planes.  
+   This mode will be also used when the software or hardware subwindowing is set up and 
+   the no-integrated option is selected.
+ 
+ - Single integrated FITS file: the four detectors are saved in single file and in a 
+   single extension FITS image (SEF). If the number of coadds (NCOADDS) is > 0, then 
+   they are integrated (arithmetic sum) in a single frame.
 
- - Single non-integrated FITS-cube: the four detectors are saved in a single file in a single stitched image, and each individual exposition in a plane of a cube. It means N planes, where N is the number of coadds or expositions.
+ - Single non-integrated FITS-cube: the four detectors are saved in a single extension 
+   FITS (SEF) file, and each individual exposition in a plane/layer of a cube. It means N 
+   planes, where N is the number of coadds or expositions.
+ 
+ 
+ .. Note:: Currently PAPI is **not working** with non-integrated individual files of an 
+    exposition. In case you are interested in no-integrated files and wish to reduce 
+    the data with PAPI, you should use SEF of MEF non-integrated FITS-cube mode.
 
- - Non-integrated Multi-Extension-FITS (MEF): a unique FITS file with four extensions (MEF), one per each detector (or window), having each extension N planes, where N is the number of expositions (coadds), ie. a cube of N planes.  
- This mode will be also used when the software or hardware subwindowing is set up and the no-integrated option is selected.
- Currently integrated MEF are not available in GEIRS (and therefore nor in OT), but integrated subwindows/detectors can be generated only as separated files, one for each defined subwindow/detector.
+Show grouped files in a raw directory
+-------------------------------------
+For the grouping the application uses the :ref:`keywords <fits_headers>` written 
+by the OT during the observation.
 
- .. Note:: Currently PAPI is not working with non-integrated separated files of an exposition. In case you are interested in no-integrated files and wish to reduce the data with PAPI, you should use single non-integrated FITS-cube mode.
+Command::
 
-   
+    $papi.py -s /my/raw_data/directory -p
+
+Show grouped files per filter and coordinates in a raw directory 
+----------------------------------------------------------------
+Command::
+
+    $papi.py -s /my/raw_data/directory -g filter -p 
+
+    
 
 How NOT to use PAPI
-*******************
+===================
 
 PAPI uses a strictly linear approach for data reduction, which makes for easy and
 transparent processing. And you have to stick to that. It is usually not possible 
@@ -110,7 +169,7 @@ data structures totally incompatible.
 
 	
 Configuration files
-*******************
+===================
 PAPI has a set of configuration files required to run properly. They are the next
 ones:
 
@@ -136,18 +195,26 @@ ones:
 
 
 Examples
-********
+========
 
 .. _config:
 
 Main config file
-----------------
+================
+
+This file has a structure similar to that of Microsoft Windows INI files. It is 
+divided into “sections”, each of which has a number of “name = value” entries. 
+The order in which sections appear is not important. 
+
+Any plain text editor can be used to do edit the file. If some section or 
+keyword is missing, the application will fail and inform about that.
+
 
 File papi.cfg::
 
 
     # Default configuration file for PAPI 1.0
-    # Updated 26 Sep 2013  
+    # updated 20 May 2015  
 
     ##############################################################################
     [general]
@@ -155,18 +222,18 @@ File papi.cfg::
 
     # 
     # Instrument (pani,o2k,hawki): if INSTRUME keyword does not match, an error
-    # will be throw. Letter not case-sensitive. 
+    # will be throw. Letters not case-sensitive. 
     # 
-    instrument = Omega2000
-
+    instrument = PANIC 
 
 
     #
     # Some important directories
-    # Note: Output dir must be different from Quick-Look 
-    source = /mnt/GEIRS_DATA  # it can be a directory or a text file with a list of filenames to be processed
-    output_dir = /data/out   # the directory to which the resulting images will be saved.
-    temp_dir = /data/tmp     # the directory to which temporal results will be saved
+    # nOTE: oUTPut dir must be different from Quick-Look 
+    #source = /home/jmiguel/DATA/SIMU_PANIC_3/q1.txt   # it can be a directory or a text file with a list of filenames to be processed
+    source = /data1/PANIC
+    output_dir = /data2/out   # the directory to which the resulting images will be saved.
+    temp_dir = /data2/tmp    # the directory to which temporal results will be saved (avoid trailing slash).
 
     #
     # If no outfile name is given (None), the result of each sequence reduced.
@@ -179,7 +246,7 @@ File papi.cfg::
     # of each PANIC detector separatelly.
     # Otherwise (False), all be processed sequencially.
     parallel = True
-    ncpus = 2  # Number of CPU's cores to used for parallel processing
+    ncpus = 8  # Number of CPU's cores to used for parallel processing
 
     verbose = True # currently not used
 
@@ -189,6 +256,21 @@ File papi.cfg::
     #reduction_mode : reduction mode to do with the raw science files
     #
     reduction_mode = quick   # default reduction mode (quick|science|lemon|quick-lemon|lab)
+
+    #
+    # detector: detector to reduce/process (Q1,Q2,Q3,Q4,all).
+    # For O2k, this parameter has no effect.
+    # Q1=ext1 - [0:2048, 0:2048]      - SG4 (for CAM_DETROT90=2) -- the bad detector
+    # Q2=ext2 - [2048:4096, 0:2048]   - SG1
+    # Q3=ext3 - [0:2048, 2048:4096]   - SG3
+    # Q4=ext4 - [2048:4096,2048:4096] - SG2
+    #
+    # Since GEIRS-r731M-18 version, new MEF extension naming:
+    #           EXTNAME = 'Qi_j'
+    #           DET_ID = 'SGi_j' (same ids as before)
+    # and the order in the MEF file is Q1,Q2,Q3,Q4,Q123 (all except Q4)
+    detector = all
+
 
     #
     obs_mode = dither  #default observing mode of input data files to reduce (dither|ext_dither|other)
@@ -208,7 +290,7 @@ File papi.cfg::
     # Note that the calibrations into the current RS have always higher priority than
     # the ones in the external calibration DB.
     #
-    ext_calibration_db = /data/out
+    ext_calibration_db = /data2/Masters2/
 
     #
     # check data integrity. It consists in checking if TEXP,NCOADD,FILTER and READMODE match properly
@@ -217,13 +299,15 @@ File papi.cfg::
 
     #
     # Remove crosstalk. If True, a procedure to remove the crosstalk will be executed
-    # just after the 2nd. sky subtraction. (both O2K or PANIC)
+    # just after the 1st/2nd. sky subtraction (both O2K or PANIC).
     #
-    remove_crosstalk = False
+    remove_crosstalk = True
 
     #
     # Cosmic-Ray Removal. If True, a procedure to remove the CR will be executed
-    # just after the 2nd. sky subtraction. (both O2K or PANIC)
+    # just after the 2nd. sky subtraction.
+    # It has only sense for LEMON output, because CR should be 
+    # removed during the stack combine (co-adding with SWARP). 
     #
     remove_cosmic_ray = False
 
@@ -238,7 +322,7 @@ File papi.cfg::
     #
     # Estimate FWHM after reduction of each sequence
     #
-    estimate_fwhm = True
+    estimate_fwhm = False
 
     # min_frames : minimun number of frames required to reduce a sequence
     #
@@ -258,16 +342,18 @@ File papi.cfg::
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     #
-    # apply_dark_flat : 0  Neither dark nor flat field will be applied
-    #                   1  the pipeline will look for a master dark and master flat 
+    # apply_dark_flat : 0  Neither dark nor flat field will be applied.
+    #                   1  The pipeline will look for a master dark and master flat 
     #                      field to be applied to the raw science frames.
-    #                      Both master DARK and FLAT are optional,i.e., each one can be applied 
-    #                      even the other is not present.
-    #                   2  master flat will be looked for to be applied AFTER 
+    #                      Both master DARK and FLAT are optional,i.e., each one 
+    #                      can be applied even the other is not present.
+    #                      It no DARK/FLAT are found, the reduction continues
+    #                      without apply them, but implicity due to skysubtraction (superflat).
+    #                   2  Master flat will be looked for to be applied AFTER 
     #                      skysubtraction, but no DARK will be subtracted (it is 
     #                      supposed to be done by the skysubtraction) 
-    #                   (some people think they are not required !)
-    apply_dark_flat = 1 
+    #                      (some people think they are not required !)
+    apply_dark_flat = 0 
 
     #
     # some other values (really required ?)
@@ -298,6 +384,23 @@ File papi.cfg::
     filter_name_Ks = KS
 
 
+    # Coadd mode (2nd pass, ie., final coadd): dithercubemean | swarp
+    # 'dithercubemean': it uses the irdr::dithercubemean routine, and then requires
+    # image offsets computed with offsets.c
+    # 'swarp': it uses the astrometric calibration to register the images with SWARP;
+    # it is more time consuming than 'cubemean' due to it runs :Astrometry.Net + SEx + SCAMP + SWARP
+    # Note: for the 1st coadd for object mask, dithercubemean is **always** used
+    # to avoid the distortion correction.
+    #coadd_mode = dithercubemean
+    coadd_mode = swarp
+
+    # Dilatation of the object mask
+    # Due to field distortion, it is recommended to dilete the object mask
+    # in order to have a 'good' object masking for the 2nd-skysubtraction pass.
+    # Next value is a mult. scale factor to expand object regions; default 
+    # is 0.5 (ie, make 50% larger)
+    dilate = 0.2
+
 
     ##############################################################################
     [config_files]
@@ -311,6 +414,33 @@ File papi.cfg::
     sextractor_conv = config_files/sextractor.conv    # File containing the filter definition
     scamp_conf = config_files/scamp.conf              # SCAMP configuration file
     swarp_conf = config_files/swarp.conf              # SWarp configuration file
+
+
+    ##############################################################################
+    [nonlinearity]  
+    ##############################################################################
+    # Non Linearity correction (apply=True)
+    apply = False
+
+    # FITS file containing the NL model for correction
+    model_lir = /data1/Calibs/mNONLIN_LIR_01.01.fits
+    model_rrrmpia = /data1/Calibs/mNONLIN_RRR-MPIA_01.01.fits
+
+    ##############################################################################
+    [bpm]  
+    ##############################################################################
+    # Bad Pixel Mask mode:
+    # - fix: Bad Pixels are replaced with a bi-linear interpolation from nearby pixels.  
+    #   Probably only good for isolated badpixels; 
+    # - grab: no fix BPM, but only set to NaN the bad pixels. It will be taken 
+    #   into account in GainMaps. 
+    # - none: no action will be done with the BPM
+    # BPMask ==> Bad pixeles >0, Good pixels = 0
+    mode = none
+
+    # FITS file containing the BPM (bad pixels > 0, good_pixels = 0)
+    #bpm_file = /data1/Calibs/bpm_lir_v01.00.fits
+    bpm_file = /data1/Calibs/mBPM_LIR_01.01.mef.fits
 
     ##############################################################################
     [dark]  
@@ -420,7 +550,7 @@ File papi.cfg::
 
     # min_frames : minimun number of frames required to build a master twlight flat
     #
-    min_frames = 5
+    min_frames = 3
 
     area_width = 1000       # length in pixels of the central area used for normalization
 
@@ -445,19 +575,19 @@ File papi.cfg::
     # 
     object_names = MASTER_SKY_FLAT, MASTER_DOME_FLAT, MASTER_TW_FLAT
 
-    mingain = 0.7 # pixels with sensitivity < MINGAIN are assumed bad (0.7) 
-    maxgain = 1.3 # pixels with sensitivity > MAXGAIN are assumed bad (1.3)
-    nsigma = 5    # badpix if sensitivity > NSIG sigma from local bkg (5.0)
+    mingain = 0.1 # pixels with sensitivity < MINGAIN are assumed bad (0.7) 
+    maxgain = 1.9 # pixels with sensitivity > MAXGAIN are assumed bad (1.3)
+    nsigma =  10  # badpix if sensitivity > NSIG sigma from local bkg (5.0)
     nxblock = 16  # image size should be multiple of block size (16)
     nyblock = 16  # (16)
     normalize = yes # if 'yes' apply a previous normalization to master flat images 
-      
+    
     area_width = 1000   # area to use for normalization (1000) 
 
     ##############################################################################
     [skysub] 
     ##############################################################################
-
+    # Used for: createObjMask, skySubtraction 
     # object_names: in order to make it possible to work in batch mode, is it
     # possible to run the PANIC skysubtration module in all the images, specifying in
     # this parameter which ones will be considered. That is, only those images 
@@ -493,11 +623,21 @@ File papi.cfg::
 
     area_width = 1000       # length in pixels of the central area used for normalization
 
-    # Object mask --> The smaller DT and DMIN, the fainter the objects masked.
-    mask_minarea = 5   # sex:DETECT_MINAREA used for object masking, minimun number of connected pixels above the detection threshold making up an object.
-    mask_thresh = 1.5   # sex:DETECT_THRESH used for object masking, given in units of sigma of the sky background noise.
+    # Object mask
+    mask_minarea = 10    # sex:DETECT_MINAREA (min. # of pixels above threshold)
+    mask_maxarea = 0     # sex:DETECT_MAXAREA (SExtractor> 2.19.5, max. # of pixels above threshold; 0=unlimited)
+    mask_thresh = 3.5   # sex:DETECT_THRESH used for object masking (1.5)
     #expand_mask = 0.5   # amount to expand the object mask regions
-    satur_level = 3000000 # sex:SATUR_LEVEL; level (in ADUs) at which arises saturation
+
+    #
+    # sex:SATUR_LEVEL: level (in ADUs) for a single exposure image at which the pixel
+    # arises saturation. Note than that value should be updated with NCOADDS or NDIT
+    # keywords when present in the header. So, the value specified here is for a
+    # single image with NCOADD = 1.
+    # Of course, this values will be specific for each detector, and in case of 
+    # a multi-detector instrument, should be the lowest value of all detectors.
+    #  
+    satur_level = 55000 
 
     # skymodel : sky model used used during the sky subtraction. It will be a 
     #             parameter for the IRDR::skyfilter() executable
@@ -509,6 +649,17 @@ File papi.cfg::
     ##############################################################################
     [offsets] 
     ##############################################################################
+    # Method used to compute the dither offsets (only for 1st pass):
+    #  - wcs: using the astrometric calibration and coordinates of the center of 
+    #    the images.
+    #  - cross-correlation: no astrometric calibration required, use irdr:offsets
+    #    cross-reference offset algorithm. For big offsets and sparse/poor fields,
+    #    it not recommended.
+    # Note: for the object mask registering in the 2nd pass of skysub, wcs is
+    # the method always used (hard-coded).
+    method = wcs
+    #method = cross-correlation
+
     # single_point: If true, means that the SEextractor objmask will be reduced to a
     # single point (centroid) to run the cross-reference offset algorithm,i.e.,
     # each object is represented by a single, one-valued pixel, located at the
@@ -518,11 +669,12 @@ File papi.cfg::
     # satured objects, etc ..) that make the cross-reference algorithm too slow 
     # and even might with wrong results.  
     # 
-    single_point = True
+    single_point = False
 
     # Object mask
-    mask_minarea = 5 #15   # sex:DDETECT_MINAREA used for object masking
-    mask_thresh = 1.5 #5.0   # sex:DDETECT_THRESH used for object masking
+    mask_minarea = 10     # sex:DETECT_MINAREA (min. # of pixels above threshold)
+    mask_maxarea = 0    # sex:DETECT_MAXAREA (SExtractor> 2.19.5, max. # of pixels above threshold; 0=unlimited)
+    mask_thresh = 2.5 #5.0   # sex:DDETECT_THRESH used for object masking
 
     #
     # sex:SATUR_LEVEL: level (in ADUs) for a single exposure image at which the pixel
@@ -532,7 +684,7 @@ File papi.cfg::
     # Of course, this values will be specific for each detector, and in case of 
     # a multi-detector instrument, should be the lowest value of all detectors.
     #  
-    satur_level = 5000
+    satur_level = 55000
 
     #
     # Minimun overlap correlation fraction between offset translated images 
@@ -540,13 +692,29 @@ File papi.cfg::
     #
     min_corr_frac = 0.1
 
+
+    # 
+    # Maximun dither offset (in pixels) allowed to use a single object mask
+    # 
+    # In order to know if a single/common object mask (deeper) or multiple (individual)
+    # object masks for each sky-subtracted file is needed.
+    # For values > max_dither_offset, and due to the optical distortion,
+    # multiple (individual) masks are used; otherwise a common object mask got from
+    # the first coadd.
+    #
+    max_dither_offset = 200
+
     ##############################################################################
     [astrometry]
     ##############################################################################
+    # Astrometric engine (SCAMP or AstrometryNet)
+    engine = AstrometryNet
+    #engine = SCAMP
+
     # Object mask
-    mask_minarea = 5   # sex:DETECT_MINAREA used for object masking
-    mask_maxarea = 10000 # Not yet implemented in PAPI !!! and not supported by SExtractor
-    mask_thresh = 1.5   # sex:DETECT_THRESH used for object masking
+    mask_minarea = 20   # sex:DETECT_MINAREA (min. # of pixels above threshold)
+    mask_maxarea = 0    # sex:DETECT_MAXAREA (SExtractor> 2.19.5, max. # of pixels above threshold; 0=unlimited)
+    mask_thresh = 3.5   # sex:DETECT_THRESH used for object masking
     #expand_mask = 0.5   # amount to expand the object mask regions
 
     #
@@ -557,12 +725,12 @@ File papi.cfg::
     # Of course, this values will be specific for each detector, and in case of 
     # a multi-detector instrument, should be the lowest value of all detectors.
     #  
-    satur_level = 5000
+    satur_level = 50000
 
 
-    catalog = GSC-2.3    # Catalog used in SCAMP configuration (2MASS, USNO-A1, USNO-A2,
-                         # USNO-B1,SC-1.3, GSC-2.2, GSC-2.3, UCAC-1, UCAC-2, UCAC-3, 
-                         # NOMAD-1, PPMX, DENIS-3, SDSS-R3, SDSS-R5, SDSS-R6 or SDSS-R7)
+    catalog = 2MASS    # Catalog used in SCAMP configuration (2MASS, USNO-A1, USNO-A2,
+                        # USNO-B1,SC-1.3, GSC-2.2, GSC-2.3, UCAC-1, UCAC-2, UCAC-3, 
+                        # NOMAD-1, PPMX, DENIS-3, SDSS-R3, SDSS-R5, SDSS-R6 or SDSS-R7)
 
     ##############################################################################
     [keywords] 
@@ -587,39 +755,27 @@ File papi.cfg::
 
     # Next are some configurable options for the PANIC Quick Look tool
     #
-    # Some important directories
-    #   Note: Output directory must be different from defined for PAPI (see above)
+    # some important directories
+    #
     #source = /data/O2K/Feb.2012/120213      # it can be a directory or a file (GEIRS datalog file)
     #source = /mnt/GEIRS_DATA
     #source = /home/panic/GEIRS/log/save_CA2.2m.log
     #source = /mnt/tmp/fitsfiles.corrected
     #source = /home/panic/tmp/fitsfiles.corrected
-
-    source = /mnt/SDB2/panic/data/O2K/Matilde/120105
-    output_dir = /data/out   # the directory to which the resulting images will be saved.
-    temp_dir = /data/tmp     # the directory to which temporal results will be saved
+    source = /data1/PANIC/
+    #source = /home/panic/tmp/fitsGeirsWritten
+    output_dir = /data2/out   # the directory to which the resulting images will be saved.
+    temp_dir = /data2/tmp    # the directory to which temporal results will be saved
     verbose = True
 
     # Run parameters
     run_mode = Lazy # default (initial) run mode of the QL; it can be (None, Lazy, Prereduce)
+    )
 
-
-
-Show grouped files in a row directory
--------------------------------------
-Command::
-
-    $papi.py -s /my/raw_data/directory -p
-
-Show grouped files per filter and coordinates in a row directory 
-----------------------------------------------------------------
-Command::
-
-    $papi.py -s /my/raw_data/directory -g filter -p 
 
 
 Getting PAPI Data
-*****************
+=================
 
 The PAPI pipeline requires the full set of uncalibrated data products 
 and best reference files for each observation in the input image set. These files 
@@ -640,8 +796,8 @@ requesting data from CAHA you need to specify:
 .. index:: options
 
 
-Troubleshooting
-***************
+Caveats
+=======
 
 As we stated previously, PAPI was developed primarily for reducing NIR imaging
 data of any kind of sources (galactic, extragalactic, coarse or crowed fields, 

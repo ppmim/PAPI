@@ -1,7 +1,27 @@
+#! /usr/bin/env python
+#encoding:UTF-8
+
+# Copyright (c) 2008-2015 Jose M. Ibanez All rights reserved.
+# Institute of Astrophysics of Andalusia, IAA-CSIC
 #
-# PANICtool
+# This file is part of PAPI
 #
-# DataClassifier.py
+# PAPI is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+##############################################################################
+#
+# clfits.py
 #
 # Created    : 07/04/2008    jmiguel@iaa.es
 # Update     : 25/05/2009    jmiguel@iaa.es   Added object field
@@ -83,6 +103,7 @@ class ClFits (object):
         ----------
         full_pathname: str
             pathname The full filename of the fits file to classify.
+        
         check_integrity: bool
             When True, the FITS integrity is done to check the file is complete.
             Mainly used on QL the know whether file writting finished. 
@@ -334,8 +355,16 @@ class ClFits (object):
         nTry = 0
         found_size = 0
 
-        if self.check_integrity: 
-            # First, we check if file is still being saved
+        if self.check_integrity:
+            # First, check if the file has the right extension (.fit, .fits)
+            if not ( self.pathname.endswith('.fits') or 
+                    self.pathname.endswith('.fit') ):
+                msg = "%s does not seem a FITS file (.fits, .fit)" % self.pathname
+                log.error(msg)
+                raise Exception(msg)
+                
+            # Secondly, we check if file is still being saved, ie., still 
+            # open by some GEIRS's process
             if check_open(self.pathname, "geirs_save"):
                 # File is still open by 'save' process of GEIRS 
                 raise IOError("Error, file %s still being saved"%self.pathname)
@@ -368,14 +397,14 @@ class ClFits (object):
                     myfits = fits.open(self.pathname, mode='readonly', memmap=True,
                                      ignore_missing_end=False) # since some problems with O2k files 
                 except Exception, e:
-                    log.warning("Error reading FITS : %s"%self.pathname)
+                    log.warning("Error reading FITS : %s" % self.pathname)
                     if nTry < retries:
                         nTry +=1
                         time.sleep(nTry * 0.5)
                         log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
                     else:
-                        log.error("Finally, FITS-file could not be read with data integrity:  %s\n %s"%(self.pathname, str(e)))
-                        log.error("File discarded : %s"%self.pathname)
+                        log.error("Finally, FITS-file could not be read with data integrity:  %s\n %s" % (self.pathname, str(e)))
+                        log.error("File discarded : %s" % self.pathname)
                         raise e
                 else:
                     break
@@ -388,7 +417,7 @@ class ClFits (object):
                                      ignore_missing_end=False)     
 
         # Check if is a MEF file 
-        if len(myfits)>1:
+        if len(myfits) > 1:
             self.mef = True
             self.next = len(myfits)-1
             ###log.debug("Found a MEF file with %d extensions", self.next)

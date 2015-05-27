@@ -186,7 +186,7 @@ def getWCSPointingOffsets(images_in,
 if __name__ == "__main__":
     
     usage = "usage: %prog [options]"
-    desc = """Gives the image offsets (arcsecs) in based on the WCS of the image headers.""" 
+    desc = """Gives the image offsets (arcsecs) based on the WCS of the image headers.""" 
     """ A plot of the dither pattern is also saved as offsets.png"""
     
     parser = OptionParser(usage, description=desc)

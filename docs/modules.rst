@@ -14,7 +14,7 @@ as they are needed in order to accomplish a complete data reduction of a set of 
 .. tabularcolumns:: |r|l|
 
 =======================     ===========
-Module                      Description
+Main Modules                Description
 =======================     ===========
 ``papi``                    Main pipeline script to start the entire data reduction process 
 ``applyDarkFlat``           Finds out the best Focus value from a focus series
@@ -32,14 +32,36 @@ Module                      Description
 ``makeobjmask``             Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
 ``photometry``              Performs a photometric calibration comparison with 2MASS
 ``solveAstrometry``         Performs a astrometric calibration using Astrometry.net and 42xx index files
-``remove_cosmics``          Detect and clean cosmic ray hits on images based on Pieter van Dokkum's L.A.Cosmic algorithm.
-``eval_focus_serie``        Estimate the best focus value of a focus exposures
+``remove_cosmics``          Detects and clean cosmic ray hits on images based on Pieter van Dokkum's L.A.Cosmic algorithm.
+``eval_focus_serie``        Estimates the best focus value of a focus exposures
+``cleanBadPix``             Cleans masked (bad) pixels from an input image. 
 =======================     ===========
+
+|
+|
+
+=======================     ===========
+Utilities                   Description
+=======================     ===========
+``createDataSeq``           Modifies headers of a set of FITS files to create a Data Sequece compliant with PAPI
+``getBPM``                  Creates the BPM file from the NonLinearity correction MEF file. The bad pixels will be saved as 1's
+``mef``                     Tool to convert from SEF to MEF and viceversa; also allows to give splits of the extensions or join SEFs.
+``collapse``                Collapses (add them up arithmetically) each cube of a list files into a single 2D image.
+``genLogsheet``             Generates a text file as a log sheet from a set of images.
+``imtrim``                  Crops/cuts the input image edges
+``modFITS``                 Allows to perfom the modification of any FITS keyword
+``runStarfocus``            Run IRAF.starfocus for a focus sequece and return the best focus value and a plot of the fit.
+``runPsfmeasure``           Run IRAF.psfmeasure for a focus sequece and get field FWHM of given stars
+``getDarks``                Gives the unique values of [read_mode, itime, ncoadd, save_mode] of a set of files of a given directory. 
+                            Used to know the DARKS required from them.
+``getImageOffsets``         Gives the image offsets (arcsecs) based on the WCS of the image headers
+=======================     ===========
+
 
 
 ``papi``
 ********
-The papi module (see :ref:`papi`) is the main PAPI script that run the data reduction.  
+The papi module (see :ref:`papi`) is the main PAPI script that run the data reduction.
 It starts by creating a subdirectory in the ``PAPI_PROD`` directory using the 
 run name give on the command line.  Within the run directory the following
 sub-directories are created:

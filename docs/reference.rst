@@ -1,8 +1,7 @@
 .. _reference:
 
-====================
 PAPI Reference
-====================
+**************
 
 :Release: |version|
 

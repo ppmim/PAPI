@@ -6,6 +6,11 @@
 #################################
 PANIC Data Pipeline Documentation
 #################################
+
+:Release: |version|
+
+:Date: |today|
+
 .. warning::
 
    This "Documentation" is still a work in progress; some of the material
@@ -49,30 +54,43 @@ galaxy cluster surveys). Other types imaging data have been reduced with PAPI
 but results can not be as good as desired. (See :ref:`troubleshooting` for tips).
 PAPI is **not** designed to reduce any kind of field taken with PANIC.  
 
-   
+
 Contents
 ========
+
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :numbered:
    
    install
-   running
    quick_look
-   ref
-   data
-   photo
+   running_papi
    reference
+   data
    processing
-   acknowledgments
    references
    faq
    troubleshooting
-   citation
+   acknowledgments
    license
    glossary
 
+Citation
+========
 
+If your research uses PAPI, we'd appreciate it if you could acknowledge the fact by including the following citation:
+
+"This research made use of PAPI, the pipeline of PANIC instrument. It is funded by the Spanish Ministry of Economy and 
+Competitiveness with funds from the European Union (FEDER) and the Spanish national budget, through the grants 
+ICTS-2006-15, ICTS-2007-10, ICTS-2008-24, ICTS-2009-32 and the project Intramural 200450E458 of the Spanish National 
+Research Council."
+    
+- Ibáñez Mengual, J.M., Fernández, M., Rodríguez Gómez, J. R., García Segura, A. J., Storz, C., "The PANIC software system", `Proc. SPIE 7740`_, 77402E (2010)
+
+- Ibáñez Mengual,J.M, García A.J, Storz C., Fried J. W., Fernández M., Rodríguez J. F., "Advanced PANIC quick-look tool using Python", `Proc. SPIE 8451`_, (2012)
+
+
+   
 Indices and tables
 ==================
 
@@ -89,3 +107,6 @@ Documentation last updated on |today|
 .. _HAWK-I: http://www.eso.org/sci/facilities/paranal/instruments/hawki/
 .. _sphinx: http://sphinx.pocoo.org
 .. _pdf: http://www.iaa.es/~jmiguel/PANIC/PAPI/PAPI.pdf
+.. _Proc. SPIE 7740 : http://proceedings.spiedigitallibrary.org/proceeding.aspx?articleid=751764
+.. _Proc. SPIE 8451: http://proceedings.spiedigitallibrary.org/proceeding.aspx?articleid=1363096
+

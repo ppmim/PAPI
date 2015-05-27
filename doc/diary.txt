@@ -7469,6 +7469,10 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- ver como hacer de forma opcional la comprobacion con check_open() en clfits.py para que
+se acelere la lectura de FITS, sobre todo cuando se carga un directorio completo de una noche
+ya observada....speed up the QL load !!!
+
 - como conclusión de la videocon del 13-Mayo, hay que ver como hacer para que los NaNs se conserven y se ignoren en
 todos los cálculos cuando se haga la NLC. Además, cuando no se haga la NLC, hace falta que si se aplica
 la BPM sea con NaNs, pues parece que es el valor que puede funcionar mejor ya que lo ignoran Sextractor, SWARP, Numpy, etc...

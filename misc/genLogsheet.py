@@ -126,10 +126,10 @@ class LogSheet (object):
 
         print "KEYS=",keys            
         for key in keys:
-            if self.rows==None:  # show all the data 
+            if self.rows == None:  # show all the data 
                 f = sorted_list[key]
                 logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, f.pathname, f.getFilter(), f.getType(), f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
-            elif id>=min and id<=max:
+            elif id >= min and id <= max:
                 f = sorted_list[key]
                 logsheet.write('%s\n' % (f.pathname))
                 print '%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s'\
@@ -147,8 +147,8 @@ class LogSheet (object):
         return self.__output_filename
     
     def show (self):
-        #To be completed
-        os.system("cat %s" %(self.__output_filename))
+        # To be completed
+        os.system("cat %s" % (self.__output_filename))
         pass
                 
 ################################################################################
@@ -184,7 +184,7 @@ if __name__ == "__main__":
                   help="show only filenames the range of rows specified (0 to N")
 
     parser.add_option("-F", "--filenames_only",
-                  action="store_true", dest="filenames_only", default=True,
+                  action="store_true", dest="filenames_only", default=False,
                   help="Only print out the filenames")
     
 
