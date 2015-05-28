@@ -7351,6 +7351,24 @@ lugar del bkg_level;
 Al hacer eso, falla Astrometry.net pues no puede resolver las imagenes .skysub !!!
 
 
+18-Mayo-2015
+------------
+- Comienzo documentación del QL usando sphinx
+
+19-Mayo-2015
+------------
+- Continuo con la documentación del QL
+- Instalo la última version del QL en panic22 y panic35 para el usuario panic (BD);
+además compruebo que da los mismos valores para el FWHM que la versión de Octubre del 2014,
+pues BD me lo pidio para los test que estaban haciendo en CAHA despues de la
+reparación de PANIC.
+
+
+20-Mayo-2015
+------------
+- Continuo con la documentación del QL.
+
+
 
 TODO
 - Ver que valores serían buenos para GainMap (low,high).
@@ -7451,6 +7469,10 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- ver como hacer de forma opcional la comprobacion con check_open() en clfits.py para que
+se acelere la lectura de FITS, sobre todo cuando se carga un directorio completo de una noche
+ya observada....speed up the QL load !!!
+
 - como conclusión de la videocon del 13-Mayo, hay que ver como hacer para que los NaNs se conserven y se ignoren en
 todos los cálculos cuando se haga la NLC. Además, cuando no se haga la NLC, hace falta que si se aplica
 la BPM sea con NaNs, pues parece que es el valor que puede funcionar mejor ya que lo ignoran Sextractor, SWARP, Numpy, etc...

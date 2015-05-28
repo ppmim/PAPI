@@ -6,9 +6,6 @@ PAPI FAQ
 Installation
 ------------
 
-Where can I get PAPI ?
-----------------------
-The stable version can be dowloaded from https://github.com/ppmim/PAPI/.
 
 Does PAPI work with python 3?
 -----------------------------
@@ -26,21 +23,6 @@ It has not been tested yet, but probably it does not work.
 Data reduction
 ---------------
 
-Are there any known problems with PANIC data?
----------------------------------------------
-Please, go to http://www.iaa.es/PANIC to get the list of last known problems.
-
-
-Where can I find tutorial on PANIC data reduction?
---------------------------------------------------
-Please, visit http://www.iaa.es/~jmiguel/PANIC/PAPI/html/index.html for a detaild
-description.
-
-
-I have a problem with the PAPI pipeline. What should I do?
-----------------------------------------------------------
-The PANIC pipeline is continuosly under development; please, follow the changes
-and publish issues on https://github.com/ppmim/PAPI/issues.
 
 
 What is the best way to reduce PAPI data?

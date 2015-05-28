@@ -2,13 +2,13 @@
 .. _installation:
 
 Installation & Configuration  
-============================
+****************************
 
 .. index:: prerequisites, requirements, pipeline
 
 
 Requirements and Supported Platforms
-************************************
+------------------------------------
 
 Because PAPI is written mostly in Python and ANSI C, it can run on any platform
 that has the required Python modules and GCC compilier. However, it has been developed
@@ -36,11 +36,13 @@ Additional packages are optionally required:
 .. index:: installing, building, source, downloading
 
 Download
-********
-The latest stable version of PAPI can be downloaded from `here <https://github.com/ppmim/PAPI>`_
+--------
+
+The latest stable version of PAPI can be downloaded from `GitHub repository <https://github.com/ppmim/PAPI>`_ .
 
 Building and Installation
-*************************
+-------------------------
+
 Once you have installed the required packages described above, you are ready to install
 PAPI; for this, follow the next steps::
 
@@ -50,7 +52,8 @@ PAPI; for this, follow the next steps::
 
 
 Building the documentation
-**************************
+--------------------------
+
 The PAPI documentation is base on `sphinx`_. With the package installed, the 
 html documentation can be built from the `doc` directory::
 
@@ -63,9 +66,21 @@ The documentation can be built in different formats. The complete list will appe
 if you type `make`.
 
 Bug reports
-***********
-Please file an issue with the `issue tracker <https://github.com/ppmim/PAPI/issues>`_ on github.
+-----------
 
+Please submit issues with the `issue tracker <https://github.com/ppmim/PAPI/issues>`_ on github.
+
+
+Release Notes
+-------------
+
+* 1.2.x
+    - Support for new MEF structure (Qi); old format (SGi_1) also supported
+    - Bug Fixes
+* 1.0.x
+    - First version
+    
+    
 .. _PANIC: http://www.iaa.es/PANIC
 .. _CAHA: http://www.caha.es
 .. _Omega2000: http://www.caha.es/CAHA/Instruments/O2000/index.html

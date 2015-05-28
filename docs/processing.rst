@@ -7,9 +7,9 @@ detail and list the parameters that can be changed if needed.
 Next figure shows the main steps that are involved in the PANIC pipeline:
 
 
-.. image:: _static/papi_steps.jpg
+.. image:: _static/PAPI_flowchart.jpg
    :align: center
-   :scale: 30%
+   :scale: 40%
 
 Outline
 -------

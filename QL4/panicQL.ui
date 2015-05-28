@@ -1441,7 +1441,7 @@
        <rect>
         <x>20</x>
         <y>10</y>
-        <width>181</width>
+        <width>271</width>
         <height>131</height>
        </rect>
       </property>
@@ -1521,6 +1521,9 @@
          <property name="toolTip">
           <string>Temporal files location</string>
          </property>
+         <property name="text">
+          <string>/tmp/</string>
+         </property>
          <property name="readOnly">
           <bool>true</bool>
          </property>
@@ -1531,9 +1534,9 @@
      <widget class="QGroupBox" name="groupBox_2">
       <property name="geometry">
        <rect>
-        <x>230</x>
+        <x>311</x>
         <y>10</y>
-        <width>421</width>
+        <width>281</width>
         <height>131</height>
        </rect>
       </property>
@@ -1578,8 +1581,8 @@
       <widget class="QCheckBox" name="checkBox_data_grouping_OT">
        <property name="geometry">
         <rect>
-         <x>260</x>
-         <y>70</y>
+         <x>14</x>
+         <y>103</y>
          <width>140</width>
          <height>19</height>
         </rect>
@@ -1809,9 +1812,9 @@
      <widget class="QGroupBox" name="groupBox_3">
       <property name="geometry">
        <rect>
-        <x>660</x>
+        <x>610</x>
         <y>10</y>
-        <width>251</width>
+        <width>301</width>
         <height>131</height>
        </rect>
       </property>
@@ -1821,7 +1824,7 @@
       <widget class="QComboBox" name="comboBox_AstromCatalog">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>17</x>
          <y>40</y>
          <width>90</width>
          <height>21</height>
@@ -1861,7 +1864,7 @@
       <widget class="QLabel" name="textLabel1_2">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>17</x>
          <y>20</y>
          <width>58</width>
          <height>20</height>
@@ -1869,6 +1872,114 @@
        </property>
        <property name="text">
         <string>Catalog</string>
+       </property>
+       <property name="wordWrap">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QLabel" name="textLabel3_4">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>70</y>
+         <width>161</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Astrometric Engine</string>
+       </property>
+       <property name="wordWrap">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_AstromEngine">
+       <property name="geometry">
+        <rect>
+         <x>19</x>
+         <y>90</y>
+         <width>161</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>AstrometryNet</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SCAMP</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QLineEdit" name="line_edit_detect_threshold">
+       <property name="geometry">
+        <rect>
+         <x>225</x>
+         <y>40</y>
+         <width>59</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>137</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>137</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>244</red>
+             <green>244</green>
+             <blue>244</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
+        </palette>
+       </property>
+       <property name="inputMask">
+        <string>##.##; </string>
+       </property>
+       <property name="text">
+        <string>3.5</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="textLabel4_4">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>20</y>
+         <width>111</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Detect Threshold</string>
        </property>
        <property name="wordWrap">
         <bool>false</bool>
@@ -2176,45 +2287,6 @@
        </property>
        <property name="text">
         <string>Detector to reduce</string>
-       </property>
-       <property name="wordWrap">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="comboBox_AstromEngine">
-       <property name="geometry">
-        <rect>
-         <x>380</x>
-         <y>190</y>
-         <width>118</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <item>
-        <property name="text">
-         <string>AstrometryNet</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>SCAMP</string>
-        </property>
-       </item>
-      </widget>
-      <widget class="QLabel" name="textLabel3_4">
-       <property name="geometry">
-        <rect>
-         <x>380</x>
-         <y>170</y>
-         <width>161</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Astrometric Engine</string>
        </property>
        <property name="wordWrap">
         <bool>false</bool>

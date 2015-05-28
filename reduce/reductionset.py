@@ -2248,8 +2248,8 @@ class ReductionSet(object):
                     
                     task = reduce.calTwFlat.MasterTwilightFlat(group, 
                                                                master_dark[-1], 
-                                                               outfile, lthr=1000, 
-                                                               hthr=100000, 
+                                                               outfile, lthr=10000, 
+                                                               hthr=40000, 
                                                                bpm=None)
                     out = task.createMaster()
                     
@@ -2718,8 +2718,8 @@ class ReductionSet(object):
                                                                master_dark_model,
                                                                master_darks,
                                                                outfile, 
-                                                               lthr=1000, 
-                                                               hthr=100000, 
+                                                               lthr=10000, 
+                                                               hthr=40000, 
                                                                bpm=None,
                                                                normal=True, # it is also done in calGainMap
                                                                temp_dir=self.temp_dir,

@@ -104,7 +104,9 @@ ln -s $PAPI_HOME/commissioning/getImageOffsets.py $PAPI_BIN/getImageOffsets
 # getDarks: Used by the OT to genereate all the darks for a given night directory.
 ln -s $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/getDarks.py
 chmod a+x $PAPI_HOME/commissioning/getDarks.py
-
+# tool to edit FITS headers
+ln -s $PAPI_HOME/irdr/extern/wcstools/bin/edhead $PAPI_BIN/edhead
+chmod a+x $PAPI_BIN/edhead
 
 # ---------------------------------------
 # Add Environment Variables to bash shell

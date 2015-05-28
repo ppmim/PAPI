@@ -116,7 +116,7 @@ class MasterTwilightFlat(object):
   
     """
     def __init__(self, flat_files, master_dark_model, master_dark_list, 
-                 output_filename="/tmp/mtwflat.fits", lthr=15000, hthr=30000,
+                 output_filename="/tmp/mtwflat.fits", lthr=10000, hthr=40000,
                  bpm=None, normal=True, temp_dir="/tmp/", median_smooth=False):
         
         """
@@ -301,9 +301,9 @@ class MasterTwilightFlat(object):
                     #log.error("Error, frame %s does not look a TwiLight Flat field" %(iframe))
                     #raise Exception("Error, frame %s does not look a TwiLight Flat field" %(iframe))
             
-            # STEP 1.1: Check either over or under exposed frames
+            # STEP 1.1: Check either over or under exposed frames, taking into account the NCOADDS!
             log.debug("Flat frame '%s' - FILTER=%s EXPTIME= %f TYPE= %s Mean= %f" %(iframe, f_filter, f_expt, f_type, mean))
-            if mean > self.m_lthr and mean < self.m_hthr:
+            if (mean / f_ncoadds) > self.m_lthr and (mean  / f_ncoadds) < self.m_hthr:
                 good_frames.append(iframe)
             else:
                 log.error("Frame %s skipped, either over or under exposed" %(iframe))
@@ -649,12 +649,12 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
                   action="store_true", dest="median_smooth", default=False,
                   help="Median smooth the combined flat-field [default=%default]")
     
-    parser.add_option("-L", "--low", type='float', default=15000,
+    parser.add_option("-L", "--low", type='float', default=10000,
                   action="store", dest="minlevel", 
                   help="Flats with median level bellow are rejected "
                   "[default=%default].")
     
-    parser.add_option("-H", "--high", type='float', default=30000,
+    parser.add_option("-H", "--high", type='float', default=40000,
                   action="store", dest="maxlevel", 
                   help="Flats with median level above are rejected "
                   "[default=%default].")

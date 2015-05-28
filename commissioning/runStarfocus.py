@@ -277,7 +277,7 @@ def readStarfocusLog(log_file):
 def getBestFocus(data, output_file):
     """
     Fit the input data read from starfocus log file,
-    to a parabola and find out the minimin (best focus estimation).
+    to a parabola and find out the minimun (best focus estimation).
     
     Parameters
     ----------

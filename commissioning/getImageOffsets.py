@@ -186,7 +186,7 @@ def getWCSPointingOffsets(images_in,
 if __name__ == "__main__":
     
     usage = "usage: %prog [options]"
-    desc = """Gives the image offsets (arcsecs) in based on the WCS of the image headers.""" 
+    desc = """Gives the image offsets (arcsecs) based on the WCS of the image headers.""" 
     """ A plot of the dither pattern is also saved as offsets.png"""
     
     parser = OptionParser(usage, description=desc)
@@ -225,13 +225,21 @@ if __name__ == "__main__":
     else:
         print "Error, cannot read file : ", options.source_file
         sys.exit(0)
+    
+    # Try to get PIX_SCALE
+    with fits.open(files[0]) as hdu:
+        if 'PIXSCALE' in hdu[0].header:
+            pix_scale = hdu[0].header['PIXSCALE']
+        else:
+            pix_scale = options.pix_scale
+            
     try:    
         offsets = getWCSPointingOffsets(files, options.output_filename)
     except Exception,e:
         log.error("Error, cannot find out the image offsets. %s",str(e))
     
     # Draw plot with dither pathern
-    draw_offsets(offsets, options.pix_scale, options.draw_scale)
+    draw_offsets(offsets, pix_scale, options.draw_scale)
     
     # Print out the offset matrix
     numpy.set_printoptions(suppress=True)

@@ -347,7 +347,7 @@ class GainMap(object):
                 flatM = flatM
 
             # Check for bad pixel
-            gain[chip] = np.where( (flatM < self.m_MINGAIN) | (flatM > self.m_MAXGAIN), np.nan, flatM)
+            gain[chip] = np.where( (flatM < self.m_MINGAIN) | (flatM > self.m_MAXGAIN), 0.0, flatM)
             m_bpm = np.where(gain[chip] == 0.0, 1, 0) # bad pixel set to 1
             nbad = (m_bpm == 1).sum()
             log.debug("Initial number of Bad Pixels : %d ", nbad)
@@ -401,8 +401,8 @@ class GainMap(object):
 
             # Find more badpix by local dev
             p = np.where( (dev < lo) | (dev > hi))
-            #gain[chip][p] = 0.0 # badpix
-            gain[chip][p] = np.nan # badpix
+            gain[chip][p] = 0.0 # badpix
+            #gain[chip][p] = np.nan # badpix
 
             log.debug("Final number of Bad Pixels = %d", (gain[chip] == 0.0).sum())
 

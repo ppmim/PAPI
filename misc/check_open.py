@@ -9,7 +9,8 @@ import pipes
 import subprocess
 
 def check_open(path, process):
-    """ Check whether the file is open by a process.
+    """ 
+    Check whether the file is open by a process.
 
     https://stackoverflow.com/q/17321930/184363.
 
