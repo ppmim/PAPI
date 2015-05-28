@@ -6,6 +6,15 @@ Troubleshooting
 This section gives a description of some problems that can be obtained and how 
 they can be solved.
 
+Why do I get a "command not found" error when trying to run one of the PAPI modules?
+====================================================================================
+
+If you are trying to run the command from the same directory as the executable (i.e.,$HOME/bin), 
+make sure that your path contains "."
+
+If you are trying to run the command from another directory, add $HOME/bin to your path.
+
+
 PAPI does not recognize a group of files as a well formed sequence.
 ===================================================================
 
@@ -90,6 +99,17 @@ At present the pipeline applies a correction for PSF distortions based on a
 distortion map derived during the astrometric calibration done with SCAMP (a 
 software developped by Emmanuel Bertin) and 2MASS.
 
+
+Is there a way to look at or edit FITS headers?
+===============================================
+
+The PAPI package includes the WCS library and tools, including a program called **edhead**. 
+This is built automatically when you build PAPI, and it is installed into the $HOME/bin.
+directory.
+
+To run **edhead**, simply type `edhead filename.fits`. It will strip the header from the FITS 
+file and open it for editing using the program defined in your environment. Make the changes, 
+save and exit the editor, and the header is re-attached to the image.
 
 
 .. _astromatic: http://www.astromatic.net/

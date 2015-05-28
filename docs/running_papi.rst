@@ -149,14 +149,180 @@ by the OT during the observation.
 Command::
 
     $papi.py -s /my/raw_data/directory -p
+    
+Example::
 
-Show grouped files per filter and coordinates in a raw directory 
+    $papi.py -s /data2/2015-03-10/ -p
+    
+    [PAPI]: 2015-05-28 09:18:01,484 DEBUG    reductionset:1150: Found 16 groups of files
+    [PAPI]: 2015-05-28 09:18:01,484 DEBUG    reductionset:1157: =========================================================
+    [PAPI]: 2015-05-28 09:18:01,484 DEBUG    reductionset:1158: =========== GROUPED SEQUENCES (by ot) ==============
+    [PAPI]: 2015-05-28 09:18:01,484 DEBUG    reductionset:1159: =========================================================
+    [PAPI]: 2015-05-28 09:18:01,484 DEBUG    reductionset:1167: SEQUENCE #[0]  - TYPE= DOME_FLAT   FILTER= H2  TEXP= 2.739931  #files = 2 
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1170: /data2/2015-03-10/domeflats_0042.fits type = DOME_FLAT_LAMP_ON
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1170: /data2/2015-03-10/domeflats_0043.fits type = DOME_FLAT_LAMP_OFF
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1167: SEQUENCE #[1]  - TYPE= SKY_FLAT   FILTER= H2  TEXP= 6.398718  #files = 5 
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0001_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0002_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,485 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0003_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,486 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0004_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,486 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0005_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,486 DEBUG    reductionset:1167: SEQUENCE #[2]  - TYPE= SKY_FLAT   FILTER= KS  TEXP= 2.739931  #files = 17 
+    [PAPI]: 2015-05-28 09:18:01,486 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,486 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0006_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,486 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0007_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,486 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0008_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0009_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0010_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0011_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0012_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0013_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0014_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0015_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,487 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0016_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,488 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0017_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,488 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0018_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,488 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0019_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,488 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0020_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,488 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0021_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,488 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0022_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,488 DEBUG    reductionset:1167: SEQUENCE #[3]  - TYPE= SKY_FLAT   FILTER= H  TEXP= 2.739931  #files = 6 
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0023_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0024_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0025_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0026_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0027_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0028_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,489 DEBUG    reductionset:1167: SEQUENCE #[4]  - TYPE= SKY_FLAT   FILTER= Z  TEXP= 3.994767  #files = 5 
+    [PAPI]: 2015-05-28 09:18:01,490 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,490 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0029_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,490 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0030_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,490 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0031_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,490 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0032_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,490 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0033_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,490 DEBUG    reductionset:1167: SEQUENCE #[5]  - TYPE= SKY_FLAT   FILTER= Y  TEXP= 11.023218  #files = 4 
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0034_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0035_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0036_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0037_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1167: SEQUENCE #[6]  - TYPE= SKY_FLAT   FILTER= J  TEXP= 51.580027  #files = 3 
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,491 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0038_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0039_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dusk_0040_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1167: SEQUENCE #[7]  - TYPE= SCIENCE   FILTER= Y  TEXP= 10.000000  #files = 5 
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1170: /data2/2015-03-10/Standard_Star_FS15_March10_0046.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1170: /data2/2015-03-10/Standard_Star_FS15_March10_0047.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1170: /data2/2015-03-10/Standard_Star_FS15_March10_0048.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,492 DEBUG    reductionset:1170: /data2/2015-03-10/Standard_Star_FS15_March10_0049.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,493 DEBUG    reductionset:1170: /data2/2015-03-10/Standard_Star_FS15_March10_0050.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,493 DEBUG    reductionset:1167: SEQUENCE #[8]  - TYPE= SKY_FLAT   FILTER= J  TEXP= 14.890000  #files = 4 
+    [PAPI]: 2015-05-28 09:18:01,493 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,493 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0001_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,493 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0002_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,493 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0003_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,493 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0004_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1167: SEQUENCE #[9]  - TYPE= SKY_FLAT   FILTER= Y  TEXP= 6.973964  #files = 4 
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0005_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0006_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0007_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0008_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1167: SEQUENCE #[10]  - TYPE= SKY_FLAT   FILTER= Z  TEXP= 3.767568  #files = 4 
+    [PAPI]: 2015-05-28 09:18:01,494 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0009_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0010_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0011_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0012_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1167: SEQUENCE #[11]  - TYPE= SKY_FLAT   FILTER= H  TEXP= 2.739931  #files = 2 
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0013_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,495 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0014_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,496 DEBUG    reductionset:1167: SEQUENCE #[12]  - TYPE= SKY_FLAT   FILTER= KS  TEXP= 5.598094  #files = 7 
+    [PAPI]: 2015-05-28 09:18:01,496 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,496 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0015_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,496 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0016_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,496 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0017_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,496 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0018_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,496 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0019_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0020_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0021_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1167: SEQUENCE #[13]  - TYPE= SKY_FLAT   FILTER= H2  TEXP= 13.596323  #files = 7 
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0022_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0023_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0024_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,497 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0025_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,498 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0026_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,498 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0027_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,498 DEBUG    reductionset:1170: /data2/2015-03-10/skyflats_dawn_0028_seq.fits type = SKY_FLAT
+    [PAPI]: 2015-05-28 09:18:01,498 DEBUG    reductionset:1167: SEQUENCE #[14]  - TYPE= DARK   FILTER= BLANK  TEXP= 6.974000  #files = 5 
+    [PAPI]: 2015-05-28 09:18:01,498 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,498 DEBUG    reductionset:1170: /data2/2015-03-10/darks_March10_0251.fits type = DARK
+    [PAPI]: 2015-05-28 09:18:01,498 DEBUG    reductionset:1170: /data2/2015-03-10/darks_March10_0252.fits type = DARK
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1170: /data2/2015-03-10/darks_March10_0253.fits type = DARK
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1170: /data2/2015-03-10/darks_March10_0254.fits type = DARK
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1170: /data2/2015-03-10/darks_March10_0255.fits type = DARK
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1167: SEQUENCE #[15]  - TYPE= UNKNOWN   FILTER= KS  TEXP= 1096.000000  #files = 12 
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1168: -------------------------------------------------------------------
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1170: /data2/2015-03-10/PANIC.2015-03-10T21:08:38.5625.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1170: /data2/2015-03-10/domeflats_0002.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,499 DEBUG    reductionset:1170: /data2/2015-03-10/focus_0016.fits type = FOCUS
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/focus_0012.fits type = FOCUS
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/domeflats_0001.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/domeflats_0044.fits type = DOME_FLAT_LAMP_ON
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/focus_0013.fits type = FOCUS
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/focus_0015.fits type = FOCUS
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/focus_0014.fits type = FOCUS
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/domeflats_0041.fits type = DOME_FLAT_LAMP_OFF
+    [PAPI]: 2015-05-28 09:18:01,500 DEBUG    reductionset:1170: /data2/2015-03-10/Standard_Star_FS15_March10_0013_coadd.fits type = SCIENCE
+    [PAPI]: 2015-05-28 09:18:01,501 DEBUG    reductionset:1170: /data2/2015-03-10/GJ623_Test_Photom_March10_0043_coadd.fits type = SCIENCE
+
+
+    
+Show grouped files per filter and coordinates of a raw directory 
 ----------------------------------------------------------------
 Command::
 
     $papi.py -s /my/raw_data/directory -g filter -p 
 
+
+Reduce a specificied number of sequences of the group list 
+---------------------------------------------------------
+To reduce the sequneces from N1 to N2 from the group list obtained with a '-p' command,
+you have to use the `-S` parameter with two values, N1 and N2, where 
+
+   N1: number of the first sequnece to reduce
+   N2: number of the last sequence to reduce
+
+Command::
+
+    $papi.py -s /my/raw_data/directory -S N1 N2 
+
+Example::
+
+    $papi.py -s /data2/2015-03-10/ -S 14 20
     
+If you only want to reduce a specific sequence, for example number 14, you should type:
+
+::
+    
+    $papi.py -s /data2/2015-03-10/ -S 14 14 
+    
+    [PAPI]: 2015-05-28 09:52:15,122 DEBUG    calDark:283: Saved master DARK to /data2/out/mDark_Xdb5bc_6_1.fits
+    [PAPI]: 2015-05-28 09:52:15,122 DEBUG    calDark:284: createMasterDark' finished Elapsed time(s): 2.183243
+    [PAPI]: 2015-05-28 09:52:15,123 DEBUG    reductionset:2596: OUTPUT file generated /data2/out/mDark_Xdb5bc_6_1.fits
+    [PAPI]: 2015-05-28 09:52:15,179 DEBUG    reductionset:3099: Inserting result in DB: /data2/out/mDark_Xdb5bc_6_1.fits
+    [PAPI]: 2015-05-28 09:52:15,211 DEBUG    reductionset:2414: [reduceSet] All sequences processed.
+    [PAPI]: 2015-05-28 09:52:15,211 DEBUG    reductionset:2415: [reduceSet] Files generated # 1 #: ***
+    [PAPI]: 2015-05-28 09:52:15,212 DEBUG    reductionset:2416:             - /data2/out/mDark_Xdb5bc_6_1.fits
+    [PAPI]: 2015-05-28 09:52:15,212 DEBUG    reductionset:2417:             Sequences failed  # 0 #: ***
+
 
 How NOT to use PAPI
 ===================
