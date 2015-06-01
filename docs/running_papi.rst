@@ -110,17 +110,28 @@ Input FITS data files
 ---------------------
 
 GEIRS is capable of saving the frames in different modes (integrated, FITS-cubes,
-MEF, etc ). It can be configured in the OT when the OP (observing program) is defined.
+MEF, etc ). Next ones are available in the OT when the OP (Observing Program) 
+is defined:
+
+ - Multi-Extension FITS (MEF) - Integrated
+ - Multi-Extension FITS (MEF) - Cube
+ - Integrated All (SEF - Integrated)
+ - FITS Cube (SEF - Cube)
+ - Individual (SEF - Individual)
+ 
 
 However, PAPI does not accept any kind of FITS data files available in GEIRS, only
-the configured in the OT. As result, PAPI could accept the next type of FITS files:
+the configured in the OT, except `Individual`. As result, PAPI accepts 
+the next type of FITS files (in order of preference):
 
  - Integrated Multi-Extension-FITS (MEF): a unique FITS file with four extensions (MEF),
-   one per each detector (or window). If the number of coadd (NCOADDS) is > 0, then they 
-   will be integrated (arithmetic sum) in a single frame. This is the default and more common 
-   saving mode used. This is the **default** and more wished saving mode.   
-   This mode will also be used when the software or hardware subwindowing is set and 
-   the integrated option is selected.
+   where each extension corresponds to one of the 4 images produced by the single
+   detector chips. 
+   If the number of coadd (NCOADDS) is > 0, then they will be integrated (arithmetic sum) 
+   in a single image. This is the default and more common saving mode used; in fact, it
+   is the **default** and more wished saving mode.   
+   This mode will also be used when the software or hardware sub-windowing is set and 
+   the integrated option is selected. Then, there will be an extension for each sub-window.
  
  - Non-integrated Multi-Extension-FITS (MEF): a unique FITS file with four extensions (MEF), 
    one per each detector (or window), having each extension N planes, where N is the number 
@@ -322,6 +333,47 @@ If you only want to reduce a specific sequence, for example number 14, you shoul
     [PAPI]: 2015-05-28 09:52:15,211 DEBUG    reductionset:2415: [reduceSet] Files generated # 1 #: ***
     [PAPI]: 2015-05-28 09:52:15,212 DEBUG    reductionset:2416:             - /data2/out/mDark_Xdb5bc_6_1.fits
     [PAPI]: 2015-05-28 09:52:15,212 DEBUG    reductionset:2417:             Sequences failed  # 0 #: ***
+
+
+Reduce all the sequences of a given directory
+---------------------------------------------
+
+Command::
+
+    $papi.py -s /my/raw_data/directory -d /my/output/directory 
+    
+With this command, the pipeline will reduce all the detected sequences in the /my/raw_data/directory
+using the default values set in the $PAPI_CONFIG file, and with the reduction mode specified in 
+`reduction_mode` (quick, science, quick-lemon, lemon, lab) 
+However, if you can specify the reduction mode using the `-M` option as follow:
+
+::
+    
+    $papi.py -s /my/raw_data/directory -d /my/output/directory -M quick
+
+
+If you need to reduce all the sequences of a given set of directories, then
+you should create an script to do that; for example see next bash script:
+
+::
+
+    #!/bin/bash
+    # Script to reduce a set of directories
+
+
+    PAPI=$HOME/bin/papi.py
+    CONFIG_FILE=$PAPI_CONFIG
+    MY_DIRS_JAN="2015-03-05 2015-03-06 2015-03-07 2015-03-08 2015-03-09"
+    for dir in $MY_DIRS
+    do
+        if [ ! -d /data2/out/${dir} ]
+        then
+            mkdir -p /data2/out/${dir}
+        fi
+        ${PAPI} -c $CONFIG_FILE -s /data1/PANIC/${dir} -g ot -d /data2/out/${dir} -R science
+    done
+
+
 
 
 How NOT to use PAPI

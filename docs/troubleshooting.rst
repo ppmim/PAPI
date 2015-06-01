@@ -111,6 +111,15 @@ To run **edhead**, simply type `edhead filename.fits`. It will strip the header 
 file and open it for editing using the program defined in your environment. Make the changes, 
 save and exit the editor, and the header is re-attached to the image.
 
+Does PAPI generate a log file of the processing ?
+=================================================
+Yes, it can be configured in the $PAPI_CONFIG file with the parameter `logfile = /tmp/papi.log`.
+For each, execution, the log filename will have an suffix with the timestamp of the data and time,
+i.e., /tmp/papi_YYYY-MM-DDTHH:MM:SS.ss.log.
+
+
+
+
 
 .. _astromatic: http://www.astromatic.net/
 .. _sextractor: http://www.astromatic.net/software/sextractor
