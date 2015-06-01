@@ -947,11 +947,14 @@ For the quick reducion, the pipeline will use the preferences established on 'Se
 
 How do I make mosaics with PQL? 
 -------------------------------
-PAPI will automatically warp (using SWARP) your images as thre are located on the sky. 
+PAPI automatically aligns and coadds (using SWARP) your images as they are located on the sky. 
 
 How do I make use of parallelisation ?
 --------------------------------------
 Just be sure the number of *parallel* parameter is set to *True* on the $PAPI_CONFIG file.
+When `parallel=True`, the pipeline will reduce each detector in parallel using all the 
+cores available in your computer.
+
 
 
 

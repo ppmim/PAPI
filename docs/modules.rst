@@ -61,25 +61,98 @@ Utilities                   Description
 
 ``papi``
 ********
-The papi module (see :ref:`papi`) is the main PAPI script that run the data reduction.
-It starts by creating a subdirectory in the ``PAPI_PROD`` directory using the 
-run name give on the command line.  Within the run directory the following
-sub-directories are created:
+
+**Description:**
+
+The papi module (see :ref:`papi`) is the main PAPI module to run the data reduction.
+It starts by creating a subdirectory in the ``output_dir`` directory using the 
+name give on the command line or in the $PAPI_CONFIG file.  Within the run directory 
+a [Q1-Q4] subdirectories, one for each detector, will be created. The temporal files
+will be saved (and deleted at the end) in the ``temp_dir`` directory.
 
 
-.. tabularcolumns:: |r|l|
+**Syntax:**
 
-=========   ===========  
-Directory   Description
-=========   ===========
-``CALIB``   A copy of all the calibration created (master dark, master flat, ...)
-``TMP``     Temporal data products needed for data reduction, normally purged
-``FINAL``   The final data products (final image mosiacs, weightmaps and context images)
-=========   ===========
+::
+
+    Usage: papi.py [OPTION]... DIRECTORY...
+    
+    This is PAPI, the PANIC PIpeline data reduction system - IAA-CSIC - Version 1.2.20150508064845
+
+    Options:
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    -c CONFIG_FILE, --config=CONFIG_FILE
+                            Config file for the PANIC Pipeline application.If not
+                            specified, './config_files/papi.cfg' is used.
+    -s SOURCE, --source=SOURCE
+                            Source file list of data frames. It can be a fileor
+                            directory name.
+    -d OUTPUT_DIR, --out_dir=OUTPUT_DIR
+                            Output dir for product files
+    -o OUTPUT_FILE, --output_file=OUTPUT_FILE
+                            Final reduced output image
+    -t TEMP_DIR, --temp_dir=TEMP_DIR
+                            Directory for temporal files
+    -r ROWS, --rows=ROWS  Use _only_ files of the source file-list in the
+                            rangeof rows specified (0 to N, both included)
+    -R, --recursive       Does recursive search for files in source directory
+    -l, --list            Generate a list with all the source files read fromthe
+                            source and sorted by MJD
+    -M REDUCTION_MODE, --red_mode=REDUCTION_MODE
+                            Mode of data reduction to do (quick|science|lab|lemon
+                            |quick-lemon).
+    -m OBS_MODE, --obs_mode=OBS_MODE
+                            Observing mode (dither|ext_dither|other)
+    -S SEQ_TO_REDUCE, --seq_to_reduce=SEQ_TO_REDUCE
+                            Sequence number to reduce. By default, all sequences
+                            found will be reduced.
+    -W DETECTOR, --window_detector=DETECTOR
+                            Specify which detector to process:Q1(SG1), Q2(SG2),
+                            Q3(SG3), Q4(SG4), Q123(all except SG4), all [default:
+                            all]
+    -p, --print           Print all detected sequences in the Data Set
+    -T SEQ_TYPE, --sequences_type=SEQ_TYPE
+                            Specify the type of sequences to show: DARK,
+                            FLAT(all), DOME_FLAT, SKY_FLAT, FOCUS, SCIENCE, CAL,
+                            all [default: all]
+    -b, --build_calibrations
+                            Build all the master calibrations files
+    -C EXT_CALIBRATION_DB, --ext_calibration_db=EXT_CALIBRATION_DB
+                            External calibration directory (library of Dark & Flat
+                            calibrations)
+    -D MASTER_DARK, --master_dark=MASTER_DARK
+                            Master dark to subtract
+    -F MASTER_FLAT, --master_flat=MASTER_FLAT
+                            Master flat to divide by
+    -B BPM_FILE, --bpm_file=BPM_FILE
+                            Bad pixel mask file
+    -g GROUP_BY, --group_by=GROUP_BY
+                            kind of data grouping (based on) to do with thedataset
+                            files (ot |filter)
+    -k, --check_data      if true, check data properties matching (type, expt,
+                            filter, ncoadd, mjd)
+    -e, --Check           Check if versions of PAPI modules are right.
+
 
 PAPI creates a in-memory SQLite_ database to store the uncalibrated input data fits 
 headers and pipeline metadata. 
 
+**Results:**
+
+FITS file/s with coadd as result of the reduction and calibration of the specified sequences; otherwise,
+the error will be shown in the console and log file.
+
+
+**Examples:**
+
+The following example reduce, in quick mode, all the sequences of the given directory:
+
+::
+   
+   $papi.py -s /my/raw_data/directory -d /my/output/directory -M quick
+
+   
 .. index:: papi
 
 ``applyDarkFlat``
