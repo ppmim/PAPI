@@ -1169,18 +1169,22 @@ class MEF (object):
                     if out_dir != None: 
                         new_filename = new_filename.replace(os.path.abspath(os.path.join(new_filename, os.pardir)), 
                                                             out_dir) 
-                    out_filenames.append (new_filename)
+                    out_filenames.append(new_filename)
      
                     # Now, write the new simple FITS file
-                    out_hdulist.writeto (new_filename, 
+                    out_hdulist.writeto (new_filename,
                                          output_verify = 'ignore', clobber=True)
-                    out_hdulist.close (output_verify = 'ignore')
+                    out_hdulist.close(output_verify = 'ignore')
                     del out_hdulist
                     log.info ("FITS file %s created" % (out_filenames[n]))
                     n += 1
         
+        # Very important to sort alphabetically in order to get
+        # the files in the right order respect to Q1-Q4
+        out_filenames.sort()
+        
         log.debug("End of [splitGEIRSToSimple]")
-        return n_ext,out_filenames
+        return n_ext, out_filenames
                                   
 ################################################################################
 # main

@@ -3,13 +3,16 @@
 # Memory monitoring
 
 p1=`ps -e | fgrep geirs_disp | awk '{print $1}'`
-geirs=`pmap -d $p1 |grep mapped`
+if [[  "$p1" ]]; then
+   geirs=`pmap -d $p1 |grep mapped`
+   echo `date --iso-8601=seconds` "GEIRS : " $geirs >> /tmp/mem_monitor.txt
+fi
 
 p2=`ps -e | fgrep java | awk '{print $1}'`
-java=`pmap -d $p2 |grep mapped`
-
-echo `date --iso-8601=seconds` "GEIRS : " $geirs >> /tmp/mem_monitor.txt
-echo `date --iso-8601=seconds` "JAVA  : " $java >> /tmp/mem_monitor.txt
+if [ "$p2" ]; then
+   java=`pmap -d $p2 |grep mapped`
+   echo `date --iso-8601=seconds` "JAVA  : " $java >> /tmp/mem_monitor.txt
+fi
 
 # More memory monitoring
 

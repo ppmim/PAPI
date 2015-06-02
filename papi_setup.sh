@@ -4,7 +4,7 @@
 # User Configurable Settings
 #------------------------------------------------------------------------------
 # path to PAPI source directory
-export PAPI_HOME=${HOME}/papi
+export PAPI_HOME=${HOME}/DEVELOP/papi
 export PAPI_BIN=${HOME}/bin
 
 # path to PAPI output data products
@@ -98,9 +98,9 @@ chmod a+x $PAPI_HOME/photo/photometry.py
 ln -s $PAPI_HOME/photo/photometry.py $PAPI_BIN/photometry
 
 # Some tools for commissioning
-ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus
-ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck
-ln -s $PAPI_HOME/commissioning/getImageOffsets.py $PAPI_BIN/getImageOffsets
+ln -s $PAPI_HOME/commissioning/runStarfocus.py $PAPI_BIN/runStarfocus.py
+ln -s $PAPI_HOME/commissioning/p_50_tiltcheck.py $PAPI_BIN/p_50_tiltcheck.py
+ln -s $PAPI_HOME/commissioning/getImageOffsets.py $PAPI_BIN/getImageOffsets.py
 # getDarks: Used by the OT to genereate all the darks for a given night directory.
 ln -s $PAPI_HOME/commissioning/getDarks.py $PAPI_BIN/getDarks.py
 chmod a+x $PAPI_HOME/commissioning/getDarks.py
