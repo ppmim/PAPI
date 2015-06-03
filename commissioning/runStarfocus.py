@@ -84,6 +84,7 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
 
     global telescope
     
+    
     # Read NCOADDS of the images to set the SATURATION limit
     if os.path.isfile(images[1:]):
         files = [line.replace("\n", "").replace('//','/')
@@ -97,11 +98,21 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
                 telescope = hdu[0].header['TELESCOP']
             else:
                 telescope = ""
-                
+    else:
+        msg = "Error, cannot find file %s" %(images[1:])
+        print msg
+        raise Exception(msg)
+    
     print "SATUR_LEVEL =", satur_level
     
-    if coord_file == "" or coord_file == None: idisplay = "yes"
-    else: idisplay = "no"
+    if coord_file == "" or coord_file == None: 
+        idisplay = "yes"
+    else: 
+        idisplay = "no"
+        if not os.path.isfile(coord_file):
+            msg = "ERROR, cannot open file %s" %coord_file
+            raise Exception(msg)
+    
     print "IDISPLAY=",idisplay
     print "COORD_FILE=",coord_file
     print "IMAGES_FILE", images
@@ -290,7 +301,7 @@ def getBestFocus(data, output_file):
         
     Returns
     -------
-    If success, returns the best focus computed.
+    If success, returns the best focus computed in mm, and min FWHM in pixels.
     
     """
     
@@ -392,7 +403,39 @@ def runFocusEvaluation(source_file, coord_file, log_file):
     print "Now, our own fitting...\n"
     data = readStarfocusLog("/home/panic/iraf/starfocus.log")
     my_best_focus, min_fwhm  = getBestFocus(data, "starfocus.pdf")
+
+def writeValueForOT(best_focus):
+    """
+    Write the value into text file (~/tmp/ql_focus) for OT
     
+    Paramaters
+    ----------
+    best_focus: float (mm)
+    
+    Returns
+    -------
+    Filename written.
+    
+    """
+
+    from os.path import expanduser
+    home = expanduser("~")
+    ql_focus_text_file = home + "/tmp/ql_focus"
+
+    if not os.path.isdir(home + "/tmp"):
+        msg = "tmp directory %s not found. Using %s directory"
+        sys.stderr.write(msg % (home + "/tmp", home ))
+        ql_focus_text_file = home + "/ql_focus"
+
+    with open(ql_focus_text_file, "w") as text_file:
+        # best_focus [microns] are written to
+        # text file ready to be read and used by OT.
+        text_file.write("%d" % int(round(best_focus*1000)))
+    
+    return ql_focus_text_file
+
+##############################################################################
+
 if __name__ == "__main__":
     
     usage = "usage: %prog [options] "
@@ -428,14 +471,18 @@ if __name__ == "__main__":
     if len(sys.argv[1:])<1:
        parser.print_help()
        sys.exit(0)
+       
     # Choose the right execution
     if not options.source_file and not options.coord_file and not options.log_file:
         parser.print_help()
         parser.error("incorrent number of arguments")
-    # only read current log and compute BestFocus
+    
+    # only read current log and compute BestFocus (used from QL)
     elif not options.source_file and not options.coord_file and options.log_file:
         data = readStarfocusLog(options.log_file)
         my_best_focus, min_fwhm = getBestFocus(data, "starfocus.pdf")
+        writeValueForOT(my_best_focus)
+    
     # run iraf.starfocus and compute our own BestFocus
     elif options.source_file and options.coord_file and not options.data_file:
         try:
@@ -445,7 +492,8 @@ if __name__ == "__main__":
         except Exception, e:
             print "ERROR running focus evaluation"
             raise e
-    # Complete execution
+    
+    # Complete execution (used for Tilt Analysis)
     else:
         #display.startDisplay()
         # Run iraf.starfocus
