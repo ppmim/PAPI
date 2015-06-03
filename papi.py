@@ -218,11 +218,13 @@ def main(arguments = None):
     if not init_options.config_file:
         try:
             config_file = os.environ['PAPI_CONFIG']
+            log.info("Using PAPI_CONFIG : %s" %config_file) 
         except KeyError, error:
             print 'Environment variable PAPI_CONFIG not found!'
             sys.exit()
     else:
         config_file = init_options.config_file
+    
     
     # Now, we "mix" the invokation parameter values with the values in the 
     # config file, having priority the invokation values over config file values
@@ -280,7 +282,7 @@ def main(arguments = None):
         return
    
     # Take only the rows(files) required
-    if (os.path.isfile(general_opts['source']) and init_options.rows!=None):
+    if (os.path.isfile(general_opts['source']) and init_options.rows != None):
         if (init_options.rows[0]<0) or (init_options.rows[1]>len(rs_files)-1):
             parser.error("wrong rows index values (0,%s)"%(len(rs_files)-1))
             parser.print_help()
@@ -305,10 +307,11 @@ def main(arguments = None):
     log.debug("   + Astrometric catalog: %s", options['astrometry']['catalog'])
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
-    # Create the RS (it works both simple FITS as MEF files)            
+    # Create the RS (it works both simple FITS as MEF files)
     try:
         rs = RS.ReductionSet( rs_files, general_opts['output_dir'], 
-                out_file=general_opts['output_file'],
+                #out_file=general_opts['output_file'],
+                out_file=init_options.output_file,
                 obs_mode=general_opts['obs_mode'],
                 dark=general_opts['master_dark'], 
                 flat=general_opts['master_flat'],
