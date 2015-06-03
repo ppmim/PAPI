@@ -3479,6 +3479,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         Ask what method is prefered, iraf.starfocus or SExtractor based.
         """
 
+        self.focus_eval_iraf()
+        
+        # While optimize the Sextractor based method, only IRAF method will
+        # be available.
+        
+        """
         msgBox = QMessageBox()
         msgBox.setText("Method selection:")
         msgBox.setInformativeText("Do you want to use <iraf.starfocus> or <SExtractor>?")
@@ -3490,7 +3496,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if msgBox.clickedButton() == button_iraf: self.focus_eval_iraf()
         elif msgBox.clickedButton() == button_sex: self.focus_eval_sex()
         else: pass
-
+        """
         
     def focus_eval_iraf(self):
         """
@@ -3554,10 +3560,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         It is run **non interactively**.
         
         NOTE: it only works for MEF files !!!
+        NOTE2: not used, because values are not good ! TBC
 
         """
         
-        if len(self.m_popup_l_sel)>3:
+        if len(self.m_popup_l_sel) > 3:
             with fits.open(self.m_popup_l_sel[0]) as myfits:
                 if len(myfits)!=5:
                     msg = "This routine only works for MEF files. Run FITS->Single2MEF."
@@ -3797,11 +3804,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Select the name of the output result file
         outfileName = QFileDialog.getSaveFileName(self,
                                                   "Choose a filename to save under",
-                                                  self.m_outputdir+"/red_result.fits", 
+                                                  self.m_outputdir + "/red_result.fits", 
                                                   "*.fits")
         if outfileName.isEmpty(): return # nothig to do !
            
-        #Create working thread that compute sky-frame
+        # Create working thread that compute sky-frame
         if len(file_list) > 1:
             try:
                 #because choosen files might not be a complete sequence we
