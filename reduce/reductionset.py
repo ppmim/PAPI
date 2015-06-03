@@ -283,7 +283,7 @@ class ReductionSet(object):
                             myhdulist[0].header['DATE-OBS'] +".fits"
                 else:
                     output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', 
-                                                        prefix='red_set_', 
+                                                        prefix='PANIC_RED_', 
                                                         dir=self.out_dir)
                     os.close(output_fd)
                     os.unlink(self.out_file) # we only need the name
@@ -1532,10 +1532,10 @@ class ReductionSet(object):
                 raise Exception("Some error while subtracting sky in extension #%d# "%(n+1))
         
         # 3. Package results back from each extension into a MEF file (only if nExt>1)
-        if len(out_ext)>1:
+        if len(out_ext) > 1:
             mef = misc.mef.MEF(out_ext)
             mef.createMEF(out_filename)
-        elif len(out_ext)==1:
+        elif len(out_ext) == 1:
             shutil.move(out_ext[0], out_filename)
         else:
             log.error("Some error while subtracting sky. No output produced.")
@@ -3017,19 +3017,24 @@ class ReductionSet(object):
                     # Add the PAPI version
                     myhdulist[0].header.set('PAPIVERS', 
                                             __version__, 'PANIC Pipeline version')
-                    if 'DATE-OBS' in myhdulist[0].header:
-                        seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                    #TBD: add images of the sequence reduced to the history keyword
+                    if not self.out_file:
+                        if 'DATE-OBS' in myhdulist[0].header:
+                            seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                        else:
+                            output_fd, seq_result_outfile = tempfile.mkstemp(suffix='.fits', 
+                                                                prefix='PANIC_RED_', 
+                                                                dir=self.out_dir)
+                            os.close(output_fd)
+                            os.unlink(seq_result_outfile) # we only need the name
                     else:
-                        output_fd, seq_result_outfile = tempfile.mkstemp(suffix='.fits', 
-                                                            prefix='PANIC_SEQ_', 
-                                                            dir=self.out_dir)
-                        os.close(output_fd)
-                        os.unlink(seq_result_outfile) # we only need the name
+                        seq_result_outfile = self.out_file
+                        
             except Exception,e:
                 log.error("Error: %s"%str(e))
                 raise e
             
-            if len(out_ext)>1:
+            if len(out_ext) > 1:
                 log.debug("[reduceSeq] *** Creating final output file *WARPING* single output frames....***")
                 #option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
@@ -3064,7 +3069,7 @@ class ReductionSet(object):
                 log.info("*** Obs. Sequence reduced. File %s created.  ***", 
                          seq_result_outfile)
                 
-            elif len(out_ext)==1:
+            elif len(out_ext) == 1:
                 shutil.move(out_ext[0], seq_result_outfile)
                 if os.path.isfile(out_ext[0].replace(".fits", ".weight.fits")):
                     shutil.move(out_ext[0].replace(".fits", ".weight.fits"), 
