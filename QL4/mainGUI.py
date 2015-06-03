@@ -912,9 +912,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
                                                        self.file_pattern , 
                                                        self.new_file_func)
+           
+            # Set default output dir also with current DATE
+            self.m_outputdir = "/data2/out/" + currentDate
+            if not os.path.exists(self.m_outputdir):
+                os.makedirs(self.m_outputdir)
+            self.lineEdit_outputD.setText(self.m_outputdir)
+               
         else:
             self.lineEdit_sourceD.setText("")
+            self.lineEdit_outputD.setText("")
             self.m_sourcedir = ""
+            self.m_outputdir = ""
             
     def autocheck_slot(self):
         """Called when check-button for Input dir is clicked"""
