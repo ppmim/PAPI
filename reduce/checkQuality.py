@@ -68,7 +68,7 @@ class CheckQuality(object):
        If no error, a seeing estimation value
     """
     def __init__(self, input_file, isomin=32.0, ellipmax=0.3, edge_x=2, edge_y=2, 
-                 pixsize=0.45, gain = 4.15, sat_level=1500000, write=False,
+                 pixsize=0.45, gain = 4.15, sat_level=50000, write=False,
                  min_snr=5.0, window='all'):
         
         self.input_file = input_file
@@ -79,7 +79,6 @@ class CheckQuality(object):
         self.edge_y = int(edge_y)
         self.pixsize = float(pixsize)
         self.gain = float(gain)
-        self.satur_level = sat_level
         self.write = False
         self.verbose = False
         self.min_snr = min_snr
@@ -97,9 +96,14 @@ class CheckQuality(object):
             self.sex_input_file = input_file + '[%d]'%4 # ext4
         else:
             self.sex_input_file = input_file
-             
         
-    
+        # Compute SATUR_LEVEL from NCOADD in header
+        with fits.open(input_file) as hdu:
+            if 'NCOADDS' in hdu[0].header:
+                self.satur_level = hdu[0].header['NCOADDS'] * 50000
+            else:
+                self.satur_level = satur_level
+                
     def estimateFWHM(self, psfmeasure=False):
         """ 
         A FWHM of the current image is estimated using the 'best' stars on it.
@@ -247,7 +251,7 @@ class CheckQuality(object):
             if (x > self.edge_x and x < naxis1 - self.edge_x and 
                 y > self.edge_y and y < naxis2 - self.edge_y and
                 ellipticity < self.ellipmax and fwhm > 0.1 and 
-                fwhm < 20 and flags <= 31 and   
+                fwhm < 20 and flags == 0 and   
                 isoarea > float(self.isomin) and snr > self.min_snr): 
                 # and fwhm<5*std it does not work many times
                 good_stars.append(a[i,:])
