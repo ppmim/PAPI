@@ -37,8 +37,8 @@ Main Modules                Description
 ``cleanBadPix``             Cleans masked (bad) pixels from an input image. 
 =======================     ===========
 
-|
-|
+
+.. tabularcolumns:: |r|l|
 
 =======================     ===========
 Utilities                   Description

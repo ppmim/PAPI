@@ -9,7 +9,7 @@ Next figure shows the main steps that are involved in the PANIC pipeline:
 
 .. image:: _static/PAPI_flowchart.jpg
    :align: center
-   :scale: 40%
+   :scale: 70%
 
 Outline
 -------
