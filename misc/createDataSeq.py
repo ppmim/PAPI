@@ -103,31 +103,40 @@ def createDataSeq(input_files, seq_type, overwrite=False, output_dir=None):
     for ifile in new_files:
         mjd = fits.getval(ifile, "MJD-OBS", ext=0)
         dataset.append((ifile, mjd))
+    
     # Sort out the files
     dataset = sorted(dataset, key=lambda data_file: data_file[1])
+    
     # Created sorted list
     for l_tuple in dataset:
         sorted_files.append(l_tuple[0])
 
-    print "SORTED",sorted_files
+    print "SORTED", sorted_files
       
     for ifile in sorted_files:
         pat_expn += 1
         with fits.open(ifile, 'update') as hdu:
             log.debug("Updating file %s"%ifile)
             try:
-                hdu[0].header.set('OBS_TOOL', 'createDS',
+                if not 'OBS_TOOL' in hdu[0].header:
+                    hdu[0].header.set('OBS_TOOL', 'createDS',
                                 'PANIC Observing Tool Software version')
-                hdu[0].header.set('PROG_ID', prog_id,
+                if not 'PROG_ID' in hdu[0].header:
+                    hdu[0].header.set('PROG_ID', prog_id,
                                 'PANIC Observing Program ID')
-                hdu[0].header.set('OB_ID', ob_id,
+                if not 'OB_ID' in hdu[0].header:
+                    hdu[0].header.set('OB_ID', ob_id,
                                 'PANIC Observing Block ID')
-                hdu[0].header.set('OB_NAME', ob_name,
+                if not 'OB_NAME' in hdu[0].header:
+                    hdu[0].header.set('OB_NAME', ob_name,
                                 'PANIC Observing Block Name')
-                hdu[0].header.set('OB_PAT', ob_pat,
+                if not 'OB_PAT' in hdu[0].header:
+                    hdu[0].header.set('OB_PAT', ob_pat,
                                 'PANIC Observing Block Pattern Type')
-                hdu[0].header.set('PAT_NAME', pat_name,
+                if not 'PAT_NAME' in hdu[0].header:
+                    hdu[0].header.set('PAT_NAME', pat_name,
                                 'PANIC Observing Sequence Pattern Name')
+                # next ones need to be updated in anycase
                 hdu[0].header.set('PAT_EXPN', pat_expn,
                                 'PANIC Observing Exposition Number')
                 hdu[0].header.set('PAT_NEXP', pat_nexp,
