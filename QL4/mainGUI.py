@@ -117,7 +117,7 @@ from iraf import mscred
 from multiprocessing import Process, Queue
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import QString
+from PyQt4.QtCore import QString, QSize
 from PyQt4.QtCore import QTimer
 from PyQt4.QtGui import QFileDialog
 from PyQt4.QtGui import QTreeWidgetItem
@@ -402,6 +402,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.lineEdit_masterFlat.setText(QString(self.m_masterFlat))
         self.lineEdit_masterMask.setText(QString(self.m_masterMask))
         self.lineEdit_masterNLC.setText(QString(self.m_masterNLC))
+        
+        
+        #self.listView_dataS.headerItem().resizeSection(3, 10)
+        for i in range(0,8):
+            self.listView_dataS.resizeColumnToContents(i)
+        
         
         
     def __initDBs(self):
@@ -1800,6 +1806,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem.setText(0, str(file))
                 elem.setText(1, str(type))
                 elem.setText(2, str(filter))
+                #elem.setSizeHint(2, QSize(2,2))
                 elem.setText(3, str(texp))
                 elem.setText(4, str(date) + "::" + str(ut_time))
                 elem.setText(5, str(object))
@@ -1821,8 +1828,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
                      dec, object, mjd) = db.GetFileInfo(file)
                     elem.setText(0, str(file))
-                    elem.setText(1, str(type))
-                    elem.setText(2, str(filter))
+                    elem.setText(1, str(type.split()[0]))
+                    elem.setText(2, str(filter.split()[0]))
                     elem.setText(3, str(texp))
                     elem.setText(4, str(date) + "::" + str(ut_time))
                     elem.setText(5, str(object))
@@ -1836,7 +1843,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             if elem:
                 self.listView_dataS.setCurrentItem(elem)
-                
+            
+            # Resize the columns and set sort column
+            for i in range(0,8):
+                self.listView_dataS.resizeColumnToContents(i)
+            self.listView_dataS.sortItems(4, Qt.DescendingOrder)
                       
 #########################################################################
 ###### Pop-Up ###########################################################
@@ -2400,11 +2411,25 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # Cancel
             return
         
-        
+        # Ask whether to overwrite or create new
+        msgBox = QMessageBox()
+        msgBox.setText("Create Data Sequence")
+        msgBox.setInformativeText("Do you want to overwrite or create new files")
+        button_overwrite = msgBox.addButton("Overwrite", QMessageBox.ActionRole)
+        button_create = msgBox.addButton("Create", QMessageBox.ActionRole)
+        msgBox.exec_()
+        if msgBox.clickedButton() == button_overwrite: 
+            overwrite = True
+        else:
+            overwrite = False
+            
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         
         try:
-            new_files = misc.createDataSeq.createDataSeq(self.m_popup_l_sel, seq_type, overwrite=False, output_dir=self.m_outputdir)
+            new_files = misc.createDataSeq.createDataSeq(self.m_popup_l_sel, 
+                                                         seq_type, 
+                                                         overwrite=overwrite, 
+                                                         output_dir=self.m_outputdir)
         except Exception,e:
             msg = "Cannot create Data Sequece of type [%s]: %s"%(seq_type, str(e))
             log.debug(msg)
@@ -2894,7 +2919,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if len(self.m_popup_l_sel) > 2:
             outfileName = QFileDialog.getSaveFileName(self,
                            "Choose a filename to save under",
-                           self.m_outputdir+"/master_twflat.fits", 
+                           self.m_outputdir + "/master_twflat.fits", 
                            "*.fits")
             
             if not outfileName.isEmpty():
@@ -3714,11 +3739,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if file_info != None and (file_info[2] != 'SCIENCE' and file_info[2] != 'FOCUS'):
                 QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
             elif file_info == None:
-                if self.outputsDB.GetFileInfo(ifile)[2]!='SCIENCE':
+                if self.outputsDB.GetFileInfo(ifile)[2] != 'SCIENCE':
                     QMessageBox.warning(self, "Warning", "Selected file is not SCIENCE type.")
             
             pix_scale = self.config_opts['general']['pix_scale']
             satur_level = self.config_opts['skysub']['satur_level']
+            # However, satur_level is re-computed in CheckQuality routine based on NCOADDS
             iso_min_size = self.config_opts['skysub']['mask_minarea']
             cq = reduce.checkQuality.CheckQuality(ifile,
                                                   sat_level=satur_level, 
@@ -3727,12 +3753,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                   pixsize=pix_scale,
                                                   window=detector)
             try:
-                fwhm,std,k,k = cq.estimateFWHM()
+                fwhm, std, k, k = cq.estimateFWHM()
                 if fwhm > 0:
-                    self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3")
+                    self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3 detector= %4")
                                              .arg(os.path.basename(ifile))
                                              .arg(fwhm)
-                                             .arg(std)))
+                                             .arg(std)
+                                             .arg(detector)))
                 else:
                     self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")           
             except Exception,e:
