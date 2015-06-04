@@ -265,8 +265,11 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
         fits.setval(out_file, keyword="ROTANGLE", value=ROT_ANGLE, comment="degrees E of N", ext=0)
         
         # in any case try to remove the files created by astrometry.net
-        basename = os.path.join(tmp_dir, os.path.splitext(os.path.basename(filename))[0])
+        basename = os.path.join(out_dir, os.path.splitext(os.path.basename(filename))[0])
         cleanUp(basename)
+        # and now, tmp.sanitized.* that is not removed by astrometry.net
+        for fl in glob.glob(tmp_dir + "/tmp.sanitized.*"):
+            os.remove(fl)
         
         return out_file
     
