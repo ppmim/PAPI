@@ -345,6 +345,12 @@ def getBestFocus(data, output_file):
     
     if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
         print "ERROR: Best focus out of range!"
+        best_focus_out_of_range = True
+    else:
+        best_focus_out_of_range = False
+    
+    # Write best focus for OT
+    writeValueForOT(best_focus)
     
     # Plotting
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
@@ -359,7 +365,7 @@ def getBestFocus(data, output_file):
     plt.ylim(np.min(fwhm_values) - 1, np.max(fwhm_values) + 1 )
     if pol[2] < 0:
         plt.figtext(0.5, 0.5, 'ERROR: Parabola fit unusable!', size='x-large', color='r', weight='bold', ha='center', va='bottom')
-    if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
+    if best_focus_out_of_range:
         plt.figtext(0.5, 0.5, 'ERROR: Best focus out of range!', size='x-large', color='r', weight='bold', ha='center', va='top')
     plt.grid()
     
@@ -481,7 +487,6 @@ if __name__ == "__main__":
     elif not options.source_file and not options.coord_file and options.log_file:
         data = readStarfocusLog(options.log_file)
         my_best_focus, min_fwhm = getBestFocus(data, "starfocus.pdf")
-        writeValueForOT(my_best_focus)
     
     # run iraf.starfocus and compute our own BestFocus
     elif options.source_file and options.coord_file and not options.data_file:
