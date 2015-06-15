@@ -572,6 +572,7 @@ zypper install libXmu6-32bit  (needed by xgterm)
 zypper install cfitsio libcfitsio-devel
 zypper install python-pip
 zypper install mupdf ( para mostrar pdfs desde QL de forma rápida )
+zypper install gsl gsl-devel
 
 
 + LEMON Requirements:

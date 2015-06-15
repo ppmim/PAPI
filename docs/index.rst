@@ -17,8 +17,9 @@ PANIC Data Pipeline Documentation
    is not organized, and several aspects of PAPI are not yet covered
    with sufficient detail.
 
-Welcome! This is the Documentation for PAPI, the Data Reduction Pipeline of PANIC
-instrument (PANIC Pipeline, version |version|, |today|). 
+Welcome! This is the Documentation for :ref:`papi`, the Data Reduction Pipeline of PANIC
+instrument, and for :ref:`pql`, the GUI of PAPI used during the observation;
+it means that all processing routines used by PQL are implented in PAPI.
 
 
 PAPI is the automatic image processing pipeline for data taken with the 
@@ -59,7 +60,7 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :numbered:
    
    install

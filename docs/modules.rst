@@ -660,5 +660,5 @@ Options:
 .. _scamp: http://www.astromatic.net/software/scamp
 .. _swarp: http://www.astromatic.net/software/swarp
 .. _SQLite: http://www.sqlite.org
-.. _HAWAII-2RG: http://w3.iaa.es/PANIC/index.php/gb/workpackages/detectors
+.. _HAWAII-2RG: http://panic.iaa.es/detectors
 

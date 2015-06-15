@@ -7370,6 +7370,16 @@ reparación de PANIC.
 
 
 
+
+01-04-Junio-2015
+----------------
++ Continuación del commissioning de PANIC en el 2.2m.
++ Cambios relevantes:
+  - do_astrometry en QL fallaba por el indice del los cuandrantes
+  - algun fallo por instalación incompleta de PAPI para usuario obs22
+  - 
+  
+
 TODO
 - Ver que valores serían buenos para GainMap (low,high).
 - Ver si puedo instalar Lemon  probarlo con datos de WASP-XX de PANIC.

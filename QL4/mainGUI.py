@@ -895,10 +895,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if self.checkBox_geirsFile.isChecked():
             self.lineEdit_sourceD.setText(self._fitsGeirsWritten_)
             self.m_sourcedir = self._fitsGeirsWritten_
-            if self.dc!=None: del self.dc
-            self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
-                                                       self.file_pattern , 
-                                                       self.new_file_func)
+            if self.dc != None: 
+                del self.dc
+            self.dc = datahandler.DataCollector("geirs-file2", self.m_sourcedir, 
+                                                 self.file_pattern , 
+                                                 self.new_file_func)
         else:
             self.lineEdit_sourceD.setText("")
             self.m_sourcedir = ""
@@ -909,22 +910,41 @@ class MainGUI(QtGui.QMainWindow, form_class):
         ## Activate or deactivate the autochecking of new files
         if self.checkBox_currentNight.isChecked():
             if datetime.datetime.utcnow().hour >= 0 and datetime.datetime.utcnow().hour <= 8:
-                currentDate = (datetime.datetime.utcnow()-datetime.timedelta(days=1)).isoformat().split('T')[0]
+                currentDate = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).isoformat().split('T')[0]
             else:
                 currentDate = datetime.datetime.today().isoformat().split('T')[0]
+                
+            old_value = self.m_sourcedir
             self.m_sourcedir = "/data1/PANIC/" + currentDate
-            self.lineEdit_sourceD.setText(self.m_sourcedir)
-            if self.dc != None: del self.dc
-            self.dc = datahandler.DataCollector("dir", self.m_sourcedir, 
-                                                       self.file_pattern , 
-                                                       self.new_file_func)
+            if not os.path.exists(self.m_sourcedir):
+                res = QMessageBox.information(self, "Info", 
+                                            QString("Current INPUT night directory does not exist. Do you want to create it ?"), 
+                                            QMessageBox.Ok, QMessageBox.Cancel)
+                if res == QMessageBox.Ok:
+                    os.makedirs(self.m_sourcedir)
+                    self.lineEdit_sourceD.setText(self.m_sourcedir)
+                else:
+                    self.m_sourcedir = old_value
+            else:
+                self.lineEdit_sourceD.setText(self.m_sourcedir)
+            
+            if self.dc != None: 
+                del self.dc
+            self.dc = datahandler.DataCollector("dir", self.m_sourcedir,
+                                                 self.file_pattern,
+                                                 self.new_file_func)
            
             # Set default output dir also with current DATE
             self.m_outputdir = "/data2/out/" + currentDate
             if not os.path.exists(self.m_outputdir):
-                os.makedirs(self.m_outputdir)
-            self.lineEdit_outputD.setText(self.m_outputdir)
-               
+                res = QMessageBox.information(self, "Info", 
+                                            QString("Current OUTPUT night directory does not exist. Do you want to create it ?"), 
+                                            QMessageBox.Ok, QMessageBox.Cancel)
+                if res == QMessageBox.Ok:
+                    os.makedirs(self.m_outputdir)
+                    self.lineEdit_outputD.setText(self.m_outputdir)
+            else:
+                self.lineEdit_outputD.setText(self.m_outputdir)
         else:
             self.lineEdit_sourceD.setText("")
             self.lineEdit_outputD.setText("")
@@ -2599,7 +2619,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 res = QMessageBox.information(self, "Info", 
                                             QString("Selected frame does not look an MASTER DARK.\n Continue anyway?"), 
                                             QMessageBox.Ok, QMessageBox.Cancel)
-                if res==QMessageBox.Cancel:
+                if res == QMessageBox.Cancel:
                     return
                   
             self.lineEdit_masterDark.setText(source)

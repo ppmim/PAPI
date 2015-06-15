@@ -1,13 +1,15 @@
 .. _papi:
 
-Running PAPI
-************
+PAPI
+****
 
 .. index:: quickstart, running
 
 This chapter gives an introduction in how to get started with PAPI, showing the steps that 
 would normally be necessary to reduce a data set from PANIC. In particular, this example 
-assumes that we have a series of FITS images from an observation of the object [TBD]
+assumes that we have a series of FITS images from an observation run.
+
+
 
 Quickstart
 ==========
@@ -306,10 +308,10 @@ Command::
 Reduce a specificied number of sequences of the group list 
 ---------------------------------------------------------
 To reduce the sequneces from N1 to N2 from the group list obtained with a '-p' command,
-you have to use the `-S` parameter with two values, N1 and N2, where 
+you have to use the `-S` parameter with two values, N1 and N2, where:
 
-   N1: number of the first sequnece to reduce
-   N2: number of the last sequence to reduce
+   - N1: number of the first sequnece to reduce
+   - N2: number of the last sequence to reduce
 
 Command::
 
@@ -344,8 +346,9 @@ Command::
     
 With this command, the pipeline will reduce all the detected sequences in the /my/raw_data/directory
 using the default values set in the $PAPI_CONFIG file, and with the reduction mode specified in 
-`reduction_mode` (quick, science, quick-lemon, lemon, lab) 
-However, if you can specify the reduction mode using the `-M` option as follow:
+`reduction_mode` (quick, science, quick-lemon, lemon, lab).
+However, you can specify the **reduction mode** (quick, science, quick-lemon, lemon) 
+using the `-M` option as follow:
 
 ::
     
@@ -374,7 +377,19 @@ you should create an script to do that; for example see next bash script:
     done
 
 
+Reduction modes
+===============
 
+PAPI currectly supports next reduction modes:
+
+  - quick (default): single pass for sky background subtraction 
+  - science: double pass for sky background subtraction
+  - quick-lemon: sigle pass for sky background, and no alignment or coadd is done.
+  - lemon: double pass for sky background subtraction, and no alignment or coadd is done.
+  - lab: for laboratory purposes
+
+  
+For more details, see :ref:`processing`.
 
 How NOT to use PAPI
 ===================
@@ -414,6 +429,7 @@ ones:
 
 Examples
 ========
+TBD
 
 .. _config:
 
@@ -995,7 +1011,7 @@ File papi.cfg::
 Getting PAPI Data
 =================
 
-The PAPI pipeline requires the full set of uncalibrated data products 
+PAPI requires the full set of uncalibrated data products 
 and best reference files for each observation in the input image set. These files 
 can be readily obtained through the CAHA_ archive. When
 requesting data from CAHA you need to specify:

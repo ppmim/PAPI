@@ -227,7 +227,7 @@ class DataCollector (object):
         
         if start_datetime == None:
             # by default, we limit the files one day old
-            l_start_datetime = dt.datetime.now()-dt.timedelta(days=1)    
+            l_start_datetime = dt.datetime.now() - dt.timedelta(days=1)    
         if end_datetime == None:
             l_end_datetime = dt.datetime.now()
         if l_end_datetime < l_start_datetime:
@@ -313,7 +313,7 @@ class DataCollector (object):
 	                    #print "FILE = ", sline[6]
 	            """
             # To read ~/tmp/fitsGeirsWritten 
-            elif self.mode=="geirs-file2":
+            elif self.mode == "geirs-file2":
                 contents = self.read_GEIRS_fitsLog(type=2)
                 """
 	            # Read the file contents from a generated GEIRS file
