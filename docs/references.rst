@@ -13,7 +13,17 @@ Webpages
 
 - `PANIC (PAnoramic Near Infrared Camera) <http://www.iaa.es/PANIC>`_
 
-- `Calar Alto Observatory <http://www.caha.es>`_.
+- `Instituto de Astrofísca de Andalucía (IAA-CSIC)`_
+
+- `Max Planck Institute for Astronomy (MPIA)`_
+
+- `Calar Alto Observatory <http://www.caha.es>`_
+
+- `GEIRS`_
+
+- `Observation Tool (OT)`_
+
+- `LEMON`_
 
 - `Astromatic <http://www.astromatic.net/>`_
 
@@ -22,3 +32,8 @@ Webpages
 
 .. _Proc. SPIE 7740 : http://proceedings.spiedigitallibrary.org/proceeding.aspx?articleid=751764
 .. _Proc. SPIE 8451: http://proceedings.spiedigitallibrary.org/proceeding.aspx?articleid=1363096
+.. _GEIRS: http://www2.mpia-hd.mpg.de/~mathar/public/PANIC-SW-DCS-01.pdf
+.. _Observation Tool (OT): http://www.iaa.es/~agsegura/PANIC_OT/PANIC_Observation_Tool.html
+.. _LEMON: http://lemon.readthedocs.org/en/latest/
+.. _Instituto de Astrofísca de Andalucía (IAA-CSIC): http://www.iaa.es
+.. _Max Planck Institute for Astronomy (MPIA): http://www.mpia.de/en

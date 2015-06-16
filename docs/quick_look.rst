@@ -11,7 +11,7 @@ for quick-look or quality check of the data being acquired, taking a close look
 at a raw near-infrared image and getting a quick feedback of the running observation.
 
 PQL is an application with a graphical user interface which monitors the 
-GEIRS data output, waiting for new FITS files coming from GEIRS. When a new file 
+GEIRS_ data output, waiting for new FITS files coming from GEIRS_. When a new file 
 is detected, it is added to the file list view in the main panel, and then 
 PQL will perform the task previously specified by the user in the setup 
 configuration. Some of the available tasks are:
@@ -155,10 +155,10 @@ The menu bar provides acces to some PQL's capabilities.
 4. Calibrations
 5. Tools
 6. Help
-  Opens a web browser which shows an on-line HTML version of this user's manual. This will fail 
-  if the internet conection or proxy is not correctly configured.
+   Opens a web browser which shows an on-line HTML version of this user's manual. This will fail 
+   if the internet conection or proxy is not correctly configured.
 7. Exit
-  Quit PQL application.
+   Quit PQL application.
 
 
 Tool bar
@@ -300,9 +300,9 @@ For example:
 .. image:: _static/PQL_GUI_filter.png
    :align: center
    :scale: 65 %
+   
 
 .. _data_list_view:
-
 
 Data list view
 --------------
@@ -311,9 +311,12 @@ Tha data list view control displays all the files found in the input directory, 
 if the check box at the right of output directory is checked. Additionaly, the use can add any other FITS file.
 The control is a multicolum table with the next fields:
 
+
+
 .. image:: _static/PQL_GUI_data_list_view.png
    :align: center
-   :scale: 65 %
+   :scale: 88 %
+
 
 Filename
   Full path name of the file found in the 
@@ -388,6 +391,12 @@ The quick look mode combo box allows you to select the mode in which PQL
 will be run when the **START processing** button is pushed.
 The current modes are:
 
+.. image:: _static/PQL_GUI_qlmodes.png
+   :align: center
+   :scale: 65 %
+   
+|
+
 None
   No processing action is done
 
@@ -400,11 +409,6 @@ Lazy (**default**)
   + Subtract Last Frame (Science)
   + Subract Nearest Sky
 
-.. image:: _static/PQL_GUI_qlmodes.png
-   :align: center
-   :scale: 65 %
-
-  
 Pre-Reduction
   If the end of observing sequence is detected, it is processed in a quick mode (single pass for sky subtraction). 
   For calibration sequences, the master file will be built, and for science sequences, a quick 
@@ -414,8 +418,10 @@ Pre-Reduction
   
 .. image:: _static/PQL_GUI_pre-redmode.png
    :align: center
-   :scale: 65 %
-  
+   :scale: 80 %
+   
+|
+
 Quick-LEMON
   The same as Pre-reduction, but the processing stops after the 1st sky subtraction, and 
   no final co-added image is produced. It is useful for LEMON_ processing for light curves.
@@ -585,7 +591,7 @@ of some sequence. This window is used only as output, and you cannot type any co
 
 .. image:: _static/PQL_GUI_event_log_console.png
    :align: center
-   :scale: 65 %
+   :scale: 80 %
    
    
 Pop-up menu
@@ -779,7 +785,7 @@ ds9->Edit->Preferences->General->Color) on the display.
 The corrected image is saved in the output directory with a `_LC` suffix.
 
 The master Non-Linearity correction file used for the correction is defined in 
-the configuration file :ref:`_configuration_file`.
+the configuration :ref:`file <configuration_file>`.
 
 
 Apply and show BPM
@@ -791,7 +797,7 @@ ds9->Edit->Preferences->General->Color) on the display.
 
 The bad pixel masked image is saved in the output directory with a `_BPM` suffix.
 
-The master Bad Pixel Mask file used is defined in the configuration file :ref:`_configuration_file`.
+The master Bad Pixel Mask file used is defined in the configuration :ref:`file <configuration_file>`.
 
 .. _focus_evaluation:
 
@@ -822,15 +828,19 @@ get the best focus value for that serie is as follow:
    
 .. figure:: _static/PQL_GUI_focus_eval_1.png
    :align: center
-   :scale: 65 %
+   :scale: 85 %
    
+|
+
 3. Focus the mouse over the stars you think are nice for the evaluation and 
    type **m** or **g** (give the profile of the selected star).
 
 .. image:: _static/PQL_GUI_focus_eval_2.png
    :align: center
-   :scale: 65 %
+   :scale: 85 %
    
+|
+
 4. When you have finished of selecting all the stars you want for the focus evaluation,
    type **q**.
 
@@ -839,24 +849,30 @@ get the best focus value for that serie is as follow:
    good for the focus evaluation (outliers); for this, type **x** and then i/s/f/p.
    Type **u** to undo the removing of the outliers.
    If you need more info about this commands see starfocus_
+
 |
+
 .. image:: _static/PQL_GUI_focus_eval_3.png
    :align: center
-   :scale: 65 %
+   :scale: 85 %
 
 |   
 
 .. image:: _static/PQL_GUI_focus_eval_4.png
    :align: center
-   :scale: 65 %
+   :scale: 85 %
    
+|
+
 5. Once you have removed the outliers, type **q** (with the focus on the plot window)
    and you will get the final plot with the fit of the values, and the estimation 
    for the best focus of the telescope.
    
 .. figure:: _static/PQL_GUI_focus_eval_5.png
    :align: center
-   :scale: 65 %
+   :scale: 85 %
+   
+|
 
 6. Finally, the best focus obtained will be sent to the OT (which will ask you 
    for confirmation) for setting the new telescope focus.
@@ -979,10 +995,12 @@ the FWHM estimation.
 
     E. Bertin:
     "There are currently 2 ways to measure the FWHM of a source in SExtractor. Both are rather imperfect:
-     - FWHM_IMAGE derives the FWHM from the isophotal area of the object at half maximum.
-     - FLUX_RADIUS estimates the radius of the circle centered on the barycenter that 
-       encloses about half of the total flux. For a Gaussian profile, this is equal to 1/2 FWHM. 
-       But with most images on astronomical images it will be slightly higher.
+    
+    - FWHM_IMAGE derives the FWHM from the isophotal area of the object at half maximum.
+     
+    - FLUX_RADIUS estimates the radius of the circle centered on the barycenter that 
+      encloses about half of the total flux. For a Gaussian profile, this is equal to 1/2 FWHM. 
+      But with most images on astronomical images it will be slightly higher.
     
     A profile-fitting option will be available in the next version of SExtractor. I am 
     currently working on it."
@@ -1043,15 +1061,22 @@ This option allows the next conversion operations with the FITS files selected o
 How do I ...?
 =============
 
-How do I report a issue ?
--------------------------
-Please submit issues with the `issue tracker <https://github.com/ppmim/PAPI/issues>`_ on github.
-
-
 How to determine the telescope focus ?
 --------------------------------------
 To determine the telescope focus, you should run a OT focus serie around the 
 guest value and then run the :ref:`Focus Evaluation <focus_evaluation>`.
+
+
+How to determine the field rotation ?
+-------------------------------------
+To determine the field rotation, firstly you should observe a enough
+crowded field and then run the astrometric calibration on it for **each**
+detector. Once you have the new FITS astrometrically calibrated, you have to 
+look for the *ROTANGLE* keyword in the new header. For example::
+
+
+    ROTANGLE=            -0.032836 / degrees E of N
+
 
 How to inspect the profile of the stars in an image ?
 -----------------------------------------------------
@@ -1100,6 +1125,9 @@ the $PAPI_CONFIG file.
 When `parallel=True`, the pipeline will reduce each detector in parallel 
 using all the cores available in your computer.
 
+How do I report a issue ?
+-------------------------
+Please submit issues with the `issue tracker <https://github.com/ppmim/PAPI/issues>`_ on github.
 
 
 

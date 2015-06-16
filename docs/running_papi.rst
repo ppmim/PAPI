@@ -5,11 +5,20 @@ PAPI
 
 .. index:: quickstart, running
 
-This chapter gives an introduction in how to get started with PAPI, showing the steps that 
-would normally be necessary to reduce a data set from PANIC. In particular, this example 
-assumes that we have a series of FITS images from an observation run.
+Purpose
+=======
+
+PANIC pipeline (hereafter PAPI) performs the automatic data processing both for
+quick-look and for science quality of the data produced by PANIC. The automated 
+processing steps include basic calibration (removeing instrumental signature, dark 
+and flat-fielding), cosmic-ray removal, treatment for electronic ghosts (cross-talk), 
+sky subtraction, non-linear count-rate correction, robust alignment and registration
+removing the field distortion.
 
 
+This chapter gives an introduction in how to get started with PAPI, showing the 
+steps that would normally be necessary to reduce a data set from PANIC. In particular, 
+this example assumes that we have a series of FITS images from an observation run.
 
 Quickstart
 ==========
@@ -150,7 +159,7 @@ the next type of FITS files (in order of preference):
    planes, where N is the number of coadds or expositions.
  
  
- .. Note:: Currently PAPI is **not working** with non-integrated individual files of an 
+ .. Note:: Currently PAPI is **not working** with non-integrated *individual* files of an 
     exposition. In case you are interested in no-integrated files and wish to reduce 
     the data with PAPI, you should use SEF of MEF non-integrated FITS-cube mode.
 
@@ -384,8 +393,8 @@ PAPI currectly supports next reduction modes:
 
   - quick (default): single pass for sky background subtraction 
   - science: double pass for sky background subtraction
-  - quick-lemon: sigle pass for sky background, and no alignment or coadd is done.
-  - lemon: double pass for sky background subtraction, and no alignment or coadd is done.
+  - quick-lemon: single pass for sky background and neither alignment nor coadd is done.
+  - lemon: double pass for sky background subtraction, and neither alignment nor coadd is done.
   - lab: for laboratory purposes
 
   

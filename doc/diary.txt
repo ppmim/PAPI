@@ -7368,6 +7368,24 @@ reparación de PANIC.
 ------------
 - Continuo con la documentación del QL.
 
+sudo zypper install texlive-threeparttable
+sudo zypper install texlive-cjk-latex-extras
+sudo zypper install texlive-wrapfig
+sudo zypper install texlive-multirow
+sudo zypper install texlive-upquote
+sudo pip install sphinx_bootstrap_theme
+sudo pip install sphinx_rtd_theme
+
+Definitivamente, el tema rtd es que mejor queda, mucho más bonito y 
+fácil de navegar. Para activarlo despues de instarlo, hay que
+modificar el fichero docs/conf.py.
+Sin embargo, el .pdf aún no queda bien, hay que ver como retocalo
+o cambiar algunas cosas para que quede bien....
+
+
+
+
+
 
 
 
@@ -7377,8 +7395,15 @@ reparación de PANIC.
 + Cambios relevantes:
   - do_astrometry en QL fallaba por el indice del los cuandrantes
   - algun fallo por instalación incompleta de PAPI para usuario obs22
-  - 
+  - hago algunas modificaciones en la GUI y algunas mejoras 
   
+
+  
+15-Jun-2015
+-----------
++ Instalo en panic1 los siguientes modulos de cara a la documentación:
+
+
 
 TODO
 - Ver que valores serían buenos para GainMap (low,high).

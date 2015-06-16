@@ -10,7 +10,7 @@ Installation & Configuration
 Requirements and Supported Platforms
 ------------------------------------
 
-Because PAPI is written mostly in Python and ANSI C, it can run on any platform
+Because PAPI is written mostly in Python_ and ANSI C, it can run on any platform
 that has the required Python modules and GCC compilier. However, it has been developed
 and deeply tested under `openSuSE`_ 12.x/13.x x86_64 Linux OS.  
 `Python 2.7.x <http://www.python.org>`_ or higher and the following packages 
@@ -89,4 +89,4 @@ Release Notes
 .. _pdf: http://www.iaa.es/~jmiguel/PANIC/PAPI/PAPI.pdf
 .. _openSuSE: http://www.opensuse.org/
 .. _issue tracker
-  
+.. _Python: http://www.python.org

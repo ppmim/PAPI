@@ -11,7 +11,7 @@ as they are needed in order to accomplish a complete data reduction of a set of 
 
 .. index:: modules
 
-.. tabularcolumns:: |r|l|
+.. tabularcolumns:: |r|J|
 
 =======================     ===========
 Main Modules                Description
@@ -32,27 +32,34 @@ Main Modules                Description
 ``makeobjmask``             Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
 ``photometry``              Performs a photometric calibration comparison with 2MASS
 ``solveAstrometry``         Performs a astrometric calibration using Astrometry.net and 42xx index files
-``remove_cosmics``          Detects and clean cosmic ray hits on images based on Pieter van Dokkum's L.A.Cosmic algorithm.
+``remove_cosmics``          Detects and clean cosmic ray hits on images based on Pieter van 
+                            Dokkum's L.A.Cosmic algorithm.
 ``eval_focus_serie``        Estimates the best focus value of a focus exposures
 ``cleanBadPix``             Cleans masked (bad) pixels from an input image. 
 =======================     ===========
 
 
-.. tabularcolumns:: |r|l|
+.. tabularcolumns:: |r|J|
 
 =======================     ===========
 Utilities                   Description
 =======================     ===========
-``createDataSeq``           Modifies headers of a set of FITS files to create a Data Sequece compliant with PAPI
-``getBPM``                  Creates the BPM file from the NonLinearity correction MEF file. The bad pixels will be saved as 1's
-``mef``                     Tool to convert from SEF to MEF and viceversa; also allows to give splits of the extensions or join SEFs.
-``collapse``                Collapses (add them up arithmetically) each cube of a list files into a single 2D image.
+``createDataSeq``           Modifies headers of a set of FITS files to create a Data Sequece compliant 
+                            with PAPI
+``getBPM``                  Creates the BPM file from the NonLinearity correction MEF file. 
+                            The bad pixels will be saved as 1's
+``mef``                     Tool to convert from SEF to MEF and viceversa; also allows to give splits 
+                            of the extensions or join SEFs.
+``collapse``                Collapses (add them up arithmetically) each cube of a list files into a 
+                            single 2D image.
 ``genLogsheet``             Generates a text file as a log sheet from a set of images.
 ``imtrim``                  Crops/cuts the input image edges
 ``modFITS``                 Allows to perfom the modification of any FITS keyword
-``runStarfocus``            Run IRAF.starfocus for a focus sequece and return the best focus value and a plot of the fit.
+``runStarfocus``            Run IRAF.starfocus for a focus sequece and return the best focus value and 
+                            a plot of the fit.
 ``runPsfmeasure``           Run IRAF.psfmeasure for a focus sequece and get field FWHM of given stars
-``getDarks``                Gives the unique values of [read_mode, itime, ncoadd, save_mode] of a set of files of a given directory. 
+``getDarks``                Gives the unique values of [read_mode, itime, ncoadd, save_mode] of a set 
+                            of files of a given directory. 
                             Used to know the DARKS required from them.
 ``getImageOffsets``         Gives the image offsets (arcsecs) based on the WCS of the image headers
 =======================     ===========
@@ -448,23 +455,23 @@ The flatfield will be normalized to make a gainmap and set bad pixels to 0.
 
 Usage::
 
-Options:
-  -h, --help            show this help message and exit
-  -s SOURCE_FILE, --source=SOURCE_FILE
-                        Flat Field image NOT normalized. It has to be a fullpath file name (required)
-  -o OUTPUT_FILENAME, --output=OUTPUT_FILENAME
-                        output file to write the Gain Map
-  -L MINGAIN, --low=MINGAIN
-                        pixel below this gain value  are considered bad (default=0.5)
-  -H MAXGAIN, --high=MAXGAIN
-                        pixel above this gain value are considered bad (default=1.5)
-  -x NXBLOCK, --nx=NXBLOCK
-                        X dimen. (pixels) to compute local bkg (even) (default=16)
-  -y NYBLOCK, --ny=NYBLOCK
-                        Y dimen. (pixels) to compute local bkg (even) (default=16)
-  -n NSIGMA, --nsigma=NSIGMA
-                        number of (+|-)stddev from local bkg to be bad pixel (default=5)
-  -N, --normal          if true, the input flat-field will be normalized before build the gainmap (default=True)
+    Options:
+    -h, --help            show this help message and exit
+    -s SOURCE_FILE, --source=SOURCE_FILE
+                            Flat Field image NOT normalized. It has to be a fullpath file name (required)
+    -o OUTPUT_FILENAME, --output=OUTPUT_FILENAME
+                            output file to write the Gain Map
+    -L MINGAIN, --low=MINGAIN
+                            pixel below this gain value  are considered bad (default=0.5)
+    -H MAXGAIN, --high=MAXGAIN
+                            pixel above this gain value are considered bad (default=1.5)
+    -x NXBLOCK, --nx=NXBLOCK
+                            X dimen. (pixels) to compute local bkg (even) (default=16)
+    -y NYBLOCK, --ny=NYBLOCK
+                            Y dimen. (pixels) to compute local bkg (even) (default=16)
+    -n NSIGMA, --nsigma=NSIGMA
+                            number of (+|-)stddev from local bkg to be bad pixel (default=5)
+    -N, --normal          if true, the input flat-field will be normalized before build the gainmap (default=True)
 
 
 Example::
