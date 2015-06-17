@@ -7368,6 +7368,20 @@ reparación de PANIC.
 ------------
 - Continuo con la documentación del QL.
 
+01-04-Junio-2015
+----------------
++ Continuación del commissioning de PANIC en el 2.2m.
++ Cambios relevantes:
+  - do_astrometry en QL fallaba por el indice del los cuandrantes
+  - algun fallo por instalación incompleta de PAPI para usuario obs22
+  - hago algunas modificaciones en la GUI y algunas mejoras 
+  
+
+  
+15-Jun-2015
+-----------
++ Instalo en panic1 los siguientes modulos de cara a la documentación:
+
 sudo zypper install texlive-threeparttable
 sudo zypper install texlive-cjk-latex-extras
 sudo zypper install texlive-wrapfig
@@ -7384,34 +7398,9 @@ o cambiar algunas cosas para que quede bien....
 
 
 
-
-
-
-
-
-01-04-Junio-2015
-----------------
-+ Continuación del commissioning de PANIC en el 2.2m.
-+ Cambios relevantes:
-  - do_astrometry en QL fallaba por el indice del los cuandrantes
-  - algun fallo por instalación incompleta de PAPI para usuario obs22
-  - hago algunas modificaciones en la GUI y algunas mejoras 
-  
-
-  
-15-Jun-2015
------------
-+ Instalo en panic1 los siguientes modulos de cara a la documentación:
-
-
-
 TODO
 - Ver que valores serían buenos para GainMap (low,high).
 - Ver si puedo instalar Lemon  probarlo con datos de WASP-XX de PANIC.
-
-
-
-
 
 
 
@@ -7487,8 +7476,6 @@ está solucionado (en principio...).
 
 
 
-
-
 Posibles causas del problema del Transito WASP:
 ==============================================
 0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
@@ -7518,7 +7505,6 @@ Queda ver como corregir skyfilter para que los 0s del gainmap se conviertan en N
 - hacer algo para que Sextractor tenga en cuenta los BPM, o al menos multiplicar la ObjectMask por la BPM (O's).
  extraido de SNAP: the object mask are multiplied by the bad pixel mask to remove false detections;
 - OJO, en reductionset.py, tengo en el multiprocesing.pool.get(N) N=1 !!!!! para una prueba !!! que parece que no funciona...
-- Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi (buscar TODO)
 - un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
 la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina la ejecución actual.
 - intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararlo (do_raw_astrometry) !!

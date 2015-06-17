@@ -78,13 +78,11 @@ next figure:
 Next table shows the mapping of extension/quadrant names and detectors:
 
 
-.. tabularcolumns:: |r|l|
-
-=====================    ===  ===  ===  ===
-Extension Name           Q1   Q2   Q3   Q4
-=====================    ===  ===  ===  ===
-Detector Hardware id     SG1  SG2  SG3  SG4
-=====================    ===  ===  ===  ===
++------------------------+------+------+------+-------+
+| Extension Name         | Q1   |  Q2  |  Q3  |  Q4   |
++========================+======+======+======+=======+
+| Detector Hw ID         | SG1  | SG2  | SG3  |  SG4  |
++------------------------+------+------+------+-------+
 
 
 Note that the order of the extensions in the FITS file is Q1 (ext. 1), 
