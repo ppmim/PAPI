@@ -28,7 +28,7 @@ Outline
       number of  the closest images; 
     * this sky frame is subtracted by the image and the result is 
       divided by the master flat;
-    * bright objects are detected by SExtractor in these cleaned images 
+    * bright objects are detected by SExtractor_ in these cleaned images 
       to measure the offsets among the images; the object mask are 
       multiplied by the bad pixel mask to remove false detections;
     * a cross-correlation algorithm among the object masks is used to 
@@ -37,7 +37,7 @@ Outline
     * the cleaned images are combined using the offsets, creating the 
       "quick" image;
     * to remove the effect of faint obejcts on the estimate of the sky 
-      frames, SExtractor is used on the combined image to create a master 
+      frames, SExtractor_ is used on the combined image to create a master 
       object mask;
     * the object mask is dilatated by a certain factor to remove also 
       the undetected object tails;
@@ -112,7 +112,7 @@ First pass coaddition
 
 Master object mask
 ******************
-Sextractor_ is again used to find objects in this first-pass coadded image in 
+SExtractor_ is again used to find objects in this first-pass coadded image in 
 order to mask then during next sky estimation. This time the parameters controlling
 the detection threshold should be set to have deeper detections and mask faint
 objects. The parameters involved nad ther default values are:
@@ -167,9 +167,7 @@ in the *nonlinearity* section the keyword *apply = True*.
 Crosstalk
 *********
 
-Crosstalk can in general be corrected well, provided that it is spatially stable. 
-The latter is not always the case for near-IR detector arrays. In particular 
-recent HAWAII2 sensors with multiple parallel readout sections can show crosstalk 
+HAWAII2 sensors with multiple parallel readout sections can show crosstalk 
 in form of compact positive and negative ghost images whose amplitude varies between 
 readout sections. PAPI has a optional de-crosstalk module that assumes that the 
 amplitude is the same, therefore the correction will only partially remove the 
@@ -208,7 +206,7 @@ have to be made. You should check though that the images have correct header key
 
 
 .. _astromatic: http://www.astromatic.net/
-.. _sextractor: http://www.astromatic.net/software/sextractor
+.. _SExtractor: http://www.astromatic.net/software/sextractor
 .. _scamp: http://www.astromatic.net/software/scamp
 .. _swarp: http://www.astromatic.net/software/swarp
 .. _HAWAII-2RG: http://w3.iaa.es/PANIC/index.php/gb/workpackages/detectors

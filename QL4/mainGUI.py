@@ -2545,12 +2545,23 @@ class MainGUI(QtGui.QMainWindow, form_class):
     ######### End Pup-Up ########################################################    
     
     def fileExit(self):
-        #First, stop the DataCollector timer
+        """
+        Exit PQL
+        """
+        # Ask if you are sure
+        res = QMessageBox.information(self, "Info", 
+                                      QString("Do you really want to quit ?"),
+                                      QMessageBox.Ok, QMessageBox.Cancel)
+        if res == QMessageBox.Cancel:
+            return
+        
+        # Then, firt stop the DataCollector timer and any ds9 instance
         if self.checkBox_autocheck.isChecked():
             self.timer_dc.stop()
         
         os.system("killall ds9")
         sys.exit(0)
+        
         
     def fileOpen(self):
         self.setDataSourceDir_slot()
@@ -2837,7 +2848,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Pause autochecking coming files - ANY MORE REQUIRED ?, 
                     # now using a mutex in thread !!!!
                     self.m_processing = False
-                    thread=reduce.ExecTaskThread(mathOp, 
+                    thread = reduce.ExecTaskThread(mathOp, 
                                                  self._task_info_list, 
                                                  self.m_popup_l_sel, 
                                                  '/',  str(outFilename))
@@ -3188,11 +3199,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Now, compute the sky-subtraction
         # ##################################
                             
-        #Change to working directory
+        # Change to working directory
         os.chdir(self.m_tempdir)
-        #Change cursor
+        # Change cursor
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        #Create working thread that compute sky-frame
+        # Create working thread that compute sky-frame
         try:
             self._task = RS.ReductionSet( [str(item) for item in near_list], 
                                           self.m_outputdir,
@@ -3211,7 +3222,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                            )
             thread.start()
         except:
-            #Anyway, restore cursor
+            # Anyway, restore cursor
             # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
             # thus the ExecTaskThread can't restore the cursor
             QApplication.restoreOverrideCursor() 
@@ -3898,6 +3909,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             msg = "Astrometric calibration should be done with reduced SCIENCE images. Are you OK ?"
             resp = QMessageBox.information(self, "Info", msg,
                                         QMessageBox.Ok, QMessageBox.Cancel)
+            
             if resp == QMessageBox.Cancel:
                 return
             
