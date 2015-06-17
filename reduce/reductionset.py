@@ -1314,35 +1314,46 @@ class ReductionSet(object):
         For 'each' (really not each, depend on dither pattern, e.g., 
         extended sources) input image, a sky frame is computed by combining a 
         certain number of the closest images, then this sky frame is subtracted
-        to the image and the result is divided by the master flat; 
+        to the image and the result is divided by the master flat(??); 
         
         
         Parameters
         ----------
         list_file: str
-            a text file containing the suited structure in 
-            function of the observing_mode (the list shall be sorted by obs-date)
+            A text file containing the suited structure in function of the 
+            observing_mode and mask value (the list shall be sorted by obs-date).
+
+            - With no-mask objects:
+
+                /path/filename1.fits
+                ...
+                /path/filenameN.fits
+
+            - With mask objects:
+                /path/filename1.fits   /path/maskObject.fits 0.0  0.0
+                ...
+                /path/filenameN.fits   /path/maskObject.fits offset_X  offset_Y
 
         gain_file: str
-            gain map file used as bad pixel mask
+            Gain map file used as bad pixel mask
         
         mask: str
-            [mask|nomask] flag used to indicate if a object mask was 
+            [mask|nomask] Flag used to indicate if a object mask was 
             especified into the 'list_file'
         
         obs_mode: str
-            [dither|other] dither or other(e.g., nodding) pattern 
+            [dither|other] Dither or other(e.g., nodding) pattern 
             to process
           
         skymodel: str
-            [median|min] sky model used for sky subtraction. Only 
+            [median|min] Sky model used for sky subtraction. Only 
             required if obs_mode=dither. (median=coarse fields, min=crowded fields)
            
         Returns
         -------
         The function generate a set of sky subtrated images (*.skysub.fits) and
-        Return ONLY filtered images; when extended-source-mode ,sky 
-        frames are not included in the returned file list. 
+        Return ONLY filtered images; when extended-source-mode ,sky frames are 
+        not included in the returned file list. 
         The out-file-list is previously ordered by obs-data.             
 
         Notes
@@ -2473,6 +2484,7 @@ class ReductionSet(object):
         """
         return self.reduceSingleObj(*args)
       
+    
     def reduceSeq(self, sequence, type):
         """
         Reduce/process a produced OT-sequence of files (calibration, science).
@@ -3482,6 +3494,7 @@ class ReductionSet(object):
         # No obstante, con Astrometry.net igual si se puede conseguir algo estable ...
         # 6b - Computer dither offsets and coadd
         ########################################################################
+<<<<<<< HEAD
         #self.coadd_mode = 'swarp'
         #self.coadd_mode = 'dithercubemean'
         if self.coadd_mode == 'swarp':
@@ -3490,8 +3503,17 @@ class ReductionSet(object):
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                               coadded_file=output_file, config_dict=self.config_dict)
+=======
+        _astrowarp = True
+        if _astrowarp:
+            if self.obs_mode!='dither' or self.red_mode=="quick":
+                log.info("**** Doing Astrometric calibration and coaddition result frame ****")
+                #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
+                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
+                        coadded_file=output_file, config_dict=self.config_dict)
+>>>>>>> d393761ca0a36149e4969cc6f48ca485e453f704
                 try:
-                    aw.run(engine=self.config_dict['astrometry']['engine'])
+                    aw.run(engine = self.config_dict['astrometry']['engine'])
                 except Exception,e:
                     log.error("Some error while running Astrowarp....")
                     raise e
@@ -3571,7 +3593,8 @@ class ReductionSet(object):
         ########################################################################
         if self.obs_mode!='dither' or self.red_mode=="quick":
             log.info("**** Doing Astrometric calibration of coadded result frame ****")
-           
+            
+            # Astrometric calibration with SCAMP
             if self.config_dict['astrometry']['engine']=='SCAMP':
                 try:
                     reduce.astrowarp.doAstrometry(out_dir+'/coadd1.fits', output_file, 
@@ -3580,6 +3603,7 @@ class ReductionSet(object):
                                            do_votable=False)
                 except Exception,e:
                     raise Exception("[astrowarp] Cannot solve Astrometry %s"%str(e))
+            # Astrometric calibration with Astrometry.net
             else:
                 try:
                     solved = reduce.solveAstrometry.solveField(out_dir+'/coadd1.fits', 
@@ -3741,7 +3765,11 @@ class ReductionSet(object):
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         #######################################################################
+<<<<<<< HEAD
         if self.coadd_mode=='swarp':
+=======
+        if _astrowarp:
+>>>>>>> d393761ca0a36149e4969cc6f48ca485e453f704
             print "astrowarp--->LAST_FILES=",self.m_LAST_FILES
             
             log.info("**** Astrometric calibration and stack of individual \
@@ -3779,6 +3807,7 @@ class ReductionSet(object):
         #######################################################################
         log.info("**** Computing Astrometric calibration of coadded (2nd) result frame ****")
         
+        # Astrometric calibration with SCAMP
         if self.config_dict['astrometry']['engine']=='SCAMP':
             try:
                 reduce.astrowarp.doAstrometry(out_dir+'/coadd2.fits', output_file, 
@@ -3789,6 +3818,7 @@ class ReductionSet(object):
                                       subtract_back=True)
             except Exception,e:
                 raise Exception("[reductionset] Cannot solve Astrometry %s"%str(e))
+        # Astrometric calibration with Astrometry.net
         else:
             try:
                 solved = reduce.solveAstrometry.solveField(out_dir + '/coadd2.fits', 
