@@ -307,12 +307,16 @@ def getBestFocus(data, output_file):
     
     if telescope == 'CA-2.2':
         foclimits = [-1, 27]
+        pix_scale = 0.45
         print "Assuming CA-2.2 TELESCOPE"
     elif telescope == 'CA-3.5':
         foclimits = [10, 60]
+        pix_scale = 0.23
         print "Assuming CA-3.5 TELESCOPE"
     else:
-        foclimits = None
+        print "Asumming CA-2.2 TELESCOPE"
+        foclimits = [-1, 27]
+        pix_scale = 0.45
         
     d = np.array(data, dtype=np.float32)
     good_focus_values = d[:, 3] # focus
@@ -356,8 +360,8 @@ def getBestFocus(data, output_file):
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
     plt.plot(xp + m_foc, pol(xp), '-')
     plt.axvline(best_focus + m_foc, ls='--', c='r')
-    plt.title("Best Focus=%6.3f mm - FWHM=%6.3f pix" 
-        %((best_focus + m_foc), min_fwhm ))
+    plt.title("Best Focus=%6.3f mm - FWHM=%6.3f pix / %2.2f\"" 
+        %((best_focus + m_foc), min_fwhm , min_fwhm * pix_scale))
     
     plt.xlabel("T-FOCUS (mm)")
     plt.ylabel("FWHM (pixels)")
