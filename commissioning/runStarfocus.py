@@ -354,7 +354,7 @@ def getBestFocus(data, output_file):
         best_focus_out_of_range = False
     
     # Write best focus for OT
-    writeValueForOT(best_focus)
+    writeValueForOT(best_focus + m_foc)
     
     # Plotting
     plt.plot(good_focus_values + m_foc, fwhm_values, '.')
