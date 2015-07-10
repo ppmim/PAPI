@@ -28,8 +28,8 @@ import astropy.io.fits as fits
 def removefiles(*patterns):
 
     """
-        Remove files with UNIX-like filename pattern matching.
-        No questions asked, so be careful!
+    Remove files with UNIX-like filename pattern matching.
+    No questions asked, so be careful!
     """
     
     # 'patterns' is an array or tuple of filename patterns. Can, of course,
@@ -47,7 +47,7 @@ def removefiles(*patterns):
         except OSError, errstr:
             # Succeed even if the directory was not there (and put warning in log)
             log.warning(errstr)
-            raise Exception('Cannot list dir %s' % dirname)
+            #raise Exception('Cannot list dir %s' % dirname)
         
         # Check each file in the directory list
         for file in filelist:
@@ -61,8 +61,8 @@ def removefiles(*patterns):
                     #print "removefiles[DEBUG]: file %s removed"%os.path.join(dirname, file)
                 except OSError, errstr:
                     # Succeed even if there were no files (and put warning in log)
-                    log.error(errstr)
-                    raise
+                    log.warning(errstr)
+                    # Exception is not re-raised
 
 ################################################################################
 

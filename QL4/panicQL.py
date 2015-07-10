@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/panic/DEVELOP/papi/QL4/panicQL.ui'
+# Form implementation generated from reading ui file '/home/panic/DEVELOP/spyderworkspace/papi/QL4/panicQL.ui'
 #
 # Created by: PyQt4 UI code generator 4.10.3
 #
@@ -1281,11 +1281,14 @@ class Ui_panicQL(object):
         self.listView_dataS.headerItem().setText(0, _translate("panicQL", "Filename", None))
         self.listView_dataS.headerItem().setText(1, _translate("panicQL", "ImageType", None))
         self.listView_dataS.headerItem().setText(2, _translate("panicQL", "Filter", None))
-        self.listView_dataS.headerItem().setText(3, _translate("panicQL", "ExpT", None))
-        self.listView_dataS.headerItem().setText(4, _translate("panicQL", "Date-Obs", None))
-        self.listView_dataS.headerItem().setText(5, _translate("panicQL", "Object", None))
-        self.listView_dataS.headerItem().setText(6, _translate("panicQL", "RA", None))
-        self.listView_dataS.headerItem().setText(7, _translate("panicQL", "Dec", None))
+        self.listView_dataS.headerItem().setText(3, _translate("panicQL", "Nimgs", None))
+        self.listView_dataS.headerItem().setToolTip(3, _translate("panicQL", "Number of images of the cube (=1 if integrated)", None))
+        self.listView_dataS.headerItem().setText(4, _translate("panicQL", "TExpFile", None))
+        self.listView_dataS.headerItem().setToolTip(4, _translate("panicQL", "Total integration time of the file (=Nimg*TEXP)", None))
+        self.listView_dataS.headerItem().setText(5, _translate("panicQL", "DateObs", None))
+        self.listView_dataS.headerItem().setText(6, _translate("panicQL", "Object", None))
+        self.listView_dataS.headerItem().setText(7, _translate("panicQL", "RA", None))
+        self.listView_dataS.headerItem().setText(8, _translate("panicQL", "Dec", None))
         self.lineEdit_queue_size.setToolTip(_translate("panicQL", "Number of task currently queued", None))
         self.lineEdit_queue_size.setText(_translate("panicQL", "0", None))
         self.label.setText(_translate("panicQL", "#Tasks in the queue", None))

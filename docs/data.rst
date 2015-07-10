@@ -1,6 +1,8 @@
 Data formats
 ============
-This section gives a description of the raw data produced by PANIC.
+This section gives a description of the raw data produced by PANIC and how they 
+are organized. However, for a deeper description, see the GEIRS_ manual.
+
 
 Detector
 --------
@@ -18,9 +20,9 @@ FITS
 ----
 
 GEIRS_, the software part in charge of the data acquisition and saving, is 
-capable of saving the frames in different modes (integrated, FITS-cubes,
-MEF, etc ). Next ones are available in the Observation Tool when an OP (Observing Program) 
-is defined:
+capable of saving the frames in different FITS_ (Flexible Image Transport System) 
+formats (integrated, FITS-cubes, MEF, etc ). Next ones are available in the 
+Observation Tool (OT_) when an OP (Observing Program) is defined:
 
  - Multi-Extension FITS (MEF) - Integrated
  - Multi-Extension FITS (MEF) - Cube
@@ -29,7 +31,7 @@ is defined:
  - Individual (SEF - Individual)
  
 
-However, PAPI does not accept any kind of FITS data files available in GEIRS_, only
+However, PAPI does not accept any kind of FITS_ data files available in GEIRS_, only
 the configured in the OT, except `Individual`. As result, PAPI accepts 
 the next type of FITS files (in order of preference):
 
@@ -68,7 +70,7 @@ next figure:
 
 .. image:: _static/standard_full_q.jpg
    :align: center
-   :scale: 30%
+   :scale: 60%
 
 |
 
@@ -76,16 +78,15 @@ next figure:
 Next table shows the mapping of extension/quadrant names and detectors:
 
 
-.. tabularcolumns:: |r|l|
-
-=====================    ===  ===  ===  ===
-Extension Name           Q1   Q2   Q3   Q4
-=====================    ===  ===  ===  ===
-Detector Hardware id     SG1  SG2  SG3  SG4
-=====================    ===  ===  ===  ===
++------------------------+------+------+------+-------+
+| Extension Name         | Q1   |  Q2  |  Q3  |  Q4   |
++========================+======+======+======+=======+
+| Detector Hw ID         | SG1  | SG2  | SG3  |  SG4  |
++------------------------+------+------+------+-------+
 
 
-Note that the order of the extensions in the FITS file is Q1 (ext. 1) , Q2 (ext. 2), Q3 (ext. 3) and Q4 (ext. 4).
+Note that the order of the extensions in the FITS file is Q1 (ext. 1), 
+Q2 (ext. 2), Q3 (ext. 3) and Q4 (ext. 4).
 
 
 Headers
@@ -340,6 +341,26 @@ The header keywords currently used in a raw PANIC FITS file is as shown bellow:
     BZERO   =                   0.                                                  
     END                      
 
+.. _otkeywords:
+
+Observation Tool keywords
+-------------------------
+Next keywords are automatically added to the FITS header by the PANIC Observation Tool (OT_),
+as each file is created. If these are not saved, neither PAPI nor PQL will work correctly::
+
+
+    OBS_TOOL= 'OT_V1.1 '           / PANIC Observing Tool Software version          
+    PROG_ID = '        '           / PANIC Observing Program ID                     
+    OB_ID   = '6       '           / PANIC Observing Block ID                       
+    OB_NAME = 'OB CU Cnc Ks 2'     / PANIC Observing Block Name                     
+    OB_PAT  = '5-point '           / PANIC Observing Block Pattern Type             
+    PAT_NAME= 'OS Ks 2 '           / PANIC Observing Secuence Pattern Name          
+    PAT_EXPN=                    1 / PANIC Pattern exposition number                
+    PAT_NEXP=                    5 / PANIC Pattern total number of expositions      
+    IMAGETYP= 'SCIENCE '           / PANIC Image type                         
+
+
+
 Data
 ----
 Raw images pixels are coded with 32-bit signed integers (BITPIX=32), however
@@ -353,12 +374,36 @@ Any raw frame can be classified on the basis of a set of keywords read from its 
 Data classification is typically carried out by the Pipeline at start or by PQL, 
 that apply the same set of classification rules. The association of a raw frame 
 with calibration data (e.g., of a science frame with a master dark frame) can be
-obtained by matching the values of a different set of header keywords.
+obtained by matching the values of a different set of header keywords 
+(filter, texp, ncoadds, itime, readmode, date-obs, etc).
 Each kind of raw frame is typically associated to a single PAPI pipeline recipe, 
 i.e., the recipe assigned to the reduction of that specific frame type. In the 
 pipeline environment this recipe would be launched automatically.
 In the following, all PANIC raw data frames are listed, together with the 
 keywords used for their classification and correct association. 
+
+.. tabularcolumns:: |r|J|
+
+=======================     ===========
+Type                        Description
+=======================     ===========
+``DARK``                    Dark frame 
+``DOME_FLAT``               Dome flat-field frame (lamp on/lamp off)
+``SKY_FLAT``                Sky flat-field frame
+``FOCUS``                   Focus frame of a focus series
+``SCIENCE``                 Science frame
+``SKY``                     Sky frame (mostly clear) used for extended object reduction
+=======================     ===========
+
+
+Data grouping
+-------------
+
+Once the raw files are classified, they are grouped into observing sequences, taking
+into account the :ref:`keywords <otkeywords>` added by the Observation Tool (OT_), and
+finding out the dither sequences observed.
+This way, all files beloging to the same observing sequence will be processed 
+together.
 
 
 
@@ -368,3 +413,5 @@ keywords used for their classification and correct association.
 .. _swarp: http://www.astromatic.net/software/swarp
 .. _HAWAII-2RG: http://panic.iaa.es/detectors
 .. _GEIRS: http://www2.mpia-hd.mpg.de/~mathar/public/PANIC-SW-DCS-01.pdf
+.. _OT: http://www.iaa.es/~agsegura/PANIC_OT/PANIC_Observation_Tool.html
+.. _FITS: http://fits.gsfc.nasa.gov

@@ -72,7 +72,7 @@ import datahandler.dataset
 import misc.collapse
 import correctNonLinearity
 import misc.cleanBadPix as cleanBadPix
-
+import montage
 
 
 # If your parallel tasks are going to use the same instance of PyRAF (and thus 
@@ -276,18 +276,14 @@ class ReductionSet(object):
         
         # Main output file resulted from the data reduction process
         if out_file == None: 
-            # if no filename, we take the DATE-OBS of the first file of the SEQ
-            with fits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
-                if 'DATE-OBS' in myhdulist[0].header:
-                    self.out_file = self.out_dir + "/PANIC." + \
-                            myhdulist[0].header['DATE-OBS'] +".fits"
-                else:
-                    output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', 
-                                                        prefix='PANIC_RED_', 
-                                                        dir=self.out_dir)
-                    os.close(output_fd)
-                    os.unlink(self.out_file) # we only need the name
-        else:    
+            self.out_file = None
+            # the output filename will be set later at the end 
+            # of the reduction of each sequence of the DataSet, taking the DATE-OBS
+            # for the first file of the sequence.
+            # It cannnot be set here because we need a different name for
+            # each sequence.
+        else:
+            # Otherwise
             self.out_file = out_file  # final reduced data file (out)
             
         
@@ -413,7 +409,7 @@ class ReductionSet(object):
         #               http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         self.ext_db_files = []
         if external_db_files == None:
-            if self.config_dict !=None:
+            if self.config_dict != None:
                 cal_dir = self.config_dict['general']['ext_calibration_db']
                 if os.path.isdir(cal_dir):
                     for ifile in dircache.listdir(cal_dir):
@@ -460,9 +456,9 @@ class ReductionSet(object):
         
         self.m_LAST_FILES = self.rs_filelist # Later properly initialized in reduceSingleObj()
         
-        if self.master_dark!=None: self.db.insert(self.master_dark)
-        if self.master_flat!=None: self.db.insert(self.master_flat)
-        if self.master_bpm !=None: self.db.insert(self.master_bpm)
+        if self.master_dark != None: self.db.insert(self.master_dark)
+        if self.master_flat != None: self.db.insert(self.master_flat)
+        if self.master_bpm  != None: self.db.insert(self.master_bpm)
         
         # self.db.ListDataSet()
         
@@ -1918,15 +1914,15 @@ class ReductionSet(object):
         out_dir = self.out_dir
         tmp_dir = self.temp_dir
                  
-        misc.fileUtils.removefiles(out_dir+"/*.ldac",out_dir+"/py-sex*",
-                                   out_dir+"/*.objs")
-        misc.fileUtils.removefiles(out_dir+"/coadd1*", out_dir+"/*_D.fits",
-                                       out_dir+"/*_F.fits", out_dir+"/*_D_F.fits" )
-        misc.fileUtils.removefiles(out_dir+"/gain*.fits", out_dir+"/masterObjMask.fits",
-                                       out_dir+"/*.pap", out_dir+"/*.list", 
-                                       out_dir+"/superFlat.fits")
-        misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
-                                       out_dir+"/*.xml")#, out_dir+"/*.png")
+        misc.fileUtils.removefiles(out_dir + "/*.ldac", out_dir+"/py-sex*",
+                                   out_dir + "/*.objs")
+        misc.fileUtils.removefiles(out_dir + "/coadd1*", out_dir+"/*_D.fits",
+                                       out_dir + "/*_F.fits", out_dir + "/*_D_F.fits" )
+        misc.fileUtils.removefiles(out_dir + "/gain*.fits", out_dir + "/masterObjMask.fits",
+                                       out_dir + "/*.pap", out_dir + "/*.list", 
+                                       out_dir + "/superFlat.fits")
+        misc.fileUtils.removefiles(out_dir + "/*.head", out_dir + "/*.txt",
+                                       out_dir + "/*.xml")#, out_dir+"/*.png")
        
         misc.fileUtils.removefiles(out_dir + "/*.Q0?.fits")
  
@@ -1937,8 +1933,8 @@ class ReductionSet(object):
         
         # Remove extension directories
         for i in range(4):
-            if os.path.exists(self.out_dir+"/Q%02d"%(i+1)):
-                shutil.rmtree(self.out_dir+"/Q%02d"%(i+1), True)
+            if os.path.exists(self.out_dir + "/Q%02d"%(i+1)):
+                shutil.rmtree(self.out_dir + "/Q%02d"%(i+1), True)
         
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
@@ -2248,8 +2244,9 @@ class ReductionSet(object):
                     
                     task = reduce.calTwFlat.MasterTwilightFlat(group, 
                                                                master_dark[-1], 
-                                                               outfile, lthr=10000, 
-                                                               hthr=40000, 
+                                                               outfile, 
+                                                               lthr=5000, 
+                                                               hthr=60000, 
                                                                bpm=None)
                     out = task.createMaster()
                     
@@ -2718,8 +2715,8 @@ class ReductionSet(object):
                                                                master_dark_model,
                                                                master_darks,
                                                                outfile, 
-                                                               lthr=10000, 
-                                                               hthr=40000, 
+                                                               lthr=5000, 
+                                                               hthr=60000, 
                                                                bpm=None,
                                                                normal=True, # it is also done in calGainMap
                                                                temp_dir=self.temp_dir,
@@ -2840,7 +2837,7 @@ class ReductionSet(object):
                     if detector == 'Q1': q = 0   # SG1
                     elif detector == 'Q2': q = 1 # SG2
                     elif detector == 'Q3': q = 2 # SG3
-                    elif detector == 'Q4': q = 4 # SG4
+                    elif detector == 'Q4': q = 3 # SG4
                     elif detector == 'Q123': q = -4 # all except SG4
                     else: q = -1 # all detectors
                     if q >=0 :
@@ -3019,29 +3016,62 @@ class ReductionSet(object):
                                             __version__, 'PANIC Pipeline version')
                     #TBD: add images of the sequence reduced to the history keyword
                     if not self.out_file:
+                        prefix = os.path.splitext(os.path.basename(obj_ext[0][0]))[0]
                         if 'DATE-OBS' in myhdulist[0].header:
-                            seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                            #seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                            seq_result_outfile = self.out_dir + "/" + prefix + "-" + myhdulist[0].header['DATE-OBS'] +".fits"
                         else:
                             output_fd, seq_result_outfile = tempfile.mkstemp(suffix='.fits', 
-                                                                prefix='PANIC_RED_', 
+                                                                prefix=prefix, 
                                                                 dir=self.out_dir)
                             os.close(output_fd)
                             os.unlink(seq_result_outfile) # we only need the name
                     else:
                         seq_result_outfile = self.out_file
+                        # To avoid overwriting of an already created out_file 
+                        # from a previous reduction, we check if out_file exists,
+                        # and then, add a suffix
+                        if os.path.exists(seq_result_outfile):
+                            suffix = "_%s.fits" % myhdulist[0].header['DATE-OBS']
+                            seq_result_outfile = seq_result_outfile.replace(".fits", suffix)
                         
             except Exception,e:
-                log.error("Error: %s"%str(e))
+                log.error("Error: %s" % str(e))
                 raise e
             
             if len(out_ext) > 1:
-                log.debug("[reduceSeq] *** Creating final output file *WARPING* single output frames....***")
-                #option 1: create a MEF with the results attached, but not warped
+                log.debug("[reduceSeq] *** Creating final MOSAIC *WARPING* single output frames....***")
+                # option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
                 #mef.createMEF(seq_result_outfile)
                 #option 2(current): SWARP result images to register the N-extension into one wide-single extension
-                log.debug("*** Coadding/Warping overlapped files....")
+                #log.debug("*** Warping overlapped files....")
                 
+                # Build Mosaic using SWARP
+                """aw = reduce.astrowarp.AstroWarp(out_ext, catalog="2MASS", 
+                         coadded_file=seq_result_outfile, config_dict=self.config_dict,
+                         resample=True, subtract_back=True)
+                try:
+                    aw.run(engine=self.config_dict['astrometry']['engine'])
+                except Exception, ex:
+                    log.error("Some error while running Astrowarp to build final mosaic....")
+                    raise ex
+                """
+                # Build Mosaic using Montage
+                try:
+                    montage.mosaic(out_ext, 
+                               raw_dir=self.temp_dir, 
+                               output_dir=self.temp_dir,
+                               tmp_dir=self.temp_dir,
+                               background_match=True,
+                               out_mosaic=seq_result_outfile)
+                except Exception, ex:
+                    log.error("Some error while building final Mosaic (Montage)")
+                    raise ex
+                
+                
+                #----
+                """
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
                 # Note: copy_keywords must be without spaces between keys and 'coma'
@@ -3059,11 +3089,13 @@ class ReductionSet(object):
                 try:
                     swarp.run(out_ext, updateconfig=False, clean=False)
                 except SWARPException, e:
-                    log.error("Error while running SWARP")
+                    log.error("Error while running SWARP from final mosaic")
                     raise e
                 except Exception, e:
                     log.error("Unknow error while running SWARP: %s",str(e))
                     raise e
+                """
+                #---
                 
                 files_created.append(seq_result_outfile)
                 log.info("*** Obs. Sequence reduced. File %s created.  ***", 
@@ -3082,11 +3114,17 @@ class ReductionSet(object):
                 data reduction ....review your logs files")
             
             # Add the list of original raw-files to the result image header
-            if len(out_ext)>0:
+            if len(out_ext) > 0:
                 new_frame = fits.open(seq_result_outfile, 'update')
                 raw_frames = [os.path.basename(f) for f in sequence]
-                new_frame[0].header.add_history("RAW_FRAMES= %s"%str(raw_frames))
+                new_frame[0].header.add_history("RAW_FRAMES= %s" % str(raw_frames))
                 new_frame.close()
+                
+            # Insert INSTRUMET/FILTER/TELESCOPE (montage does not include them)
+            with fits.open(seq_result_outfile, 'update') as hd:
+                hd[0].header.set('INSTRUME', fits.getval(sequence[0], 'INSTRUME', 0))
+                hd[0].header.set('FILTER', fits.getval(sequence[0], 'FILTER', 0))
+                hd[0].header.set('TELESCOP', fits.getval(sequence[0], 'TELESCOP', 0))
                 
         else:
             log.error("[reduceSeq] Cannot identify the type of the sequence to reduce ...")
@@ -4168,13 +4206,15 @@ class ReductionSet(object):
             log.info("**** Preliminary Astrometric calibration ****")
             new_files = []
             for my_file in self.m_LAST_FILES:
+                print "MY_FILE=", my_file
+                print "LAST_FILES=", self.m_LAST_FILES
                 # Run astrometric calibration
                 try:
                     solved = reduce.solveAstrometry.solveField(my_file, 
                                 out_dir, # self.temp_dir produces collision
                                 self.temp_dir,
                                 self.config_dict['general']['pix_scale'])
-                except Exception,e:
+                except Exception, e:
                     raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
                 else:
                     # Rename the file

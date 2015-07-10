@@ -53,17 +53,15 @@ except ImportError:
 # - Add support for MEF files:
 #   Currently Astrometry.net only support --extension option to give the FITS 
 #    extension to read image from.
-# - Comprobacion tipo de imagen no es bias, dark, flat, test  ---DONE
-# - Contabilidad de ficheros resueltos y no  ---DONE
 # - Tiempo límite de resolución de un fichero --cpulimit (default to 300s)
 # - Opcion de añadir header wcs a la cabecera (image.new) 
-# - Multiprocessing     --- DONE
 # - Estadísicas de errores de calibracion
 # - distorsion promedio (encontre un mail de Dustin donde hablaba de eso)
-# - limpiar de ficheros temporales/salida creados excepto el .wcs
 # - calibracion "fuerza bruta" 
 # - log file
 
+
+#logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 def readHeader(filename, extension=1):
     """
@@ -205,7 +203,7 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
         --scale-high %s -D %s --temp-dir %s %s %s --downsample 2\
         "%(path_astrometry, scale - 0.1, scale + 0.1, out_dir, tmp_dir, filename, ext_str)
     # 3) None is known -- blind calibration
-    if (ra==-1 or dec==-1) and scale==-1:
+    if (ra == -1 or dec ==- 1) and scale == -1:
         logging.debug("Nothing is known")
         str_cmd = "%s/solve-field -O -p -D %s --temp-dir %s %s %s --downsample 2\
         "%(path_astrometry, out_dir, tmp_dir, filename, ext_str)
@@ -265,12 +263,18 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
         fits.setval(out_file, keyword="ROTANGLE", value=ROT_ANGLE, comment="degrees E of N", ext=0)
         
         # in any case try to remove the files created by astrometry.net
-        basename = os.path.join(out_dir, os.path.splitext(os.path.basename(filename))[0])
-        cleanUp(basename)
-        # and now, tmp.sanitized.* that is not removed by astrometry.net
-        for fl in glob.glob(tmp_dir + "/tmp.sanitized.*"):
-            os.remove(fl)
-        
+        try:
+            basename = os.path.join(out_dir, os.path.splitext(os.path.basename(filename))[0])
+            cleanUp(basename)
+            # Cannot delete tmp.sanitized.* (that are not removed by astrometry.net)
+            # because we cannot distinguish which ones belong to the current 
+            # execution, and we could be removing tmp.sanitized files from current
+            # in parallel executions.
+            #for fl in glob.glob(tmp_dir + "/tmp.sanitized.*"):
+            #    os.remove(fl)
+        except Exception, e:
+            log.warning("Some error while deleting temporal files for file %s"%filename)
+            
         return out_file
     
     else:
@@ -306,7 +310,7 @@ def cleanUp(path):
         fl = path + ext
         try:
             os.remove(fl)
-        except Exception,e:
+        except Exception, e:
             pass
             
 def calc(args):

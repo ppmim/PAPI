@@ -7368,15 +7368,200 @@ reparación de PANIC.
 ------------
 - Continuo con la documentación del QL.
 
+01-04-Junio-2015
+----------------
++ Continuación del commissioning de PANIC en el 2.2m.
++ Cambios relevantes:
+  - do_astrometry en QL fallaba por el indice del los cuandrantes
+  - algun fallo por instalación incompleta de PAPI para usuario obs22
+  - hago algunas modificaciones en la GUI y algunas mejoras 
+  
+
+  
+15-Jun-2015
+-----------
++ Instalo en panic1 los siguientes modulos de cara a la documentación:
+
+sudo zypper install texlive-threeparttable
+sudo zypper install texlive-cjk-latex-extras
+sudo zypper install texlive-wrapfig
+sudo zypper install texlive-multirow
+sudo zypper install texlive-upquote
+sudo pip install sphinx_bootstrap_theme
+sudo pip install sphinx_rtd_theme
+
+Definitivamente, el tema rtd es que mejor queda, mucho más bonito y 
+fácil de navegar. Para activarlo despues de instarlo, hay que
+modificar el fichero docs/conf.py.
+Sin embargo, el .pdf aún no queda bien, hay que ver como retocalo
+o cambiar algunas cosas para que quede bien....
+
+
+17-Jun-2015
+-----------
+- Continuo con la documentacion
+- Aniado pedir confirmacion antes de salir del QL
+- Creo la rama "stable", el hago "merge" con la rama master y actualizo Github.
+- Le pregunto a BD si para la proxima campania van a lanzar el Archivo.
+- Mando links con docs de PAPI y QL (Klaus, Matilde, BD, JR, AGS)
+
+
+22-Jun-2015
+-----------
++ Pruebas de PAPI con datos de la última campaña (2015-06-05):
+
+ - python ./papi.py -c config_files/papi.cfg -s /data1/PANIC/2015-06-05/ -d /data2/out/2015-06-05/ -t /data2/tmp/ -W Q1 -M science
+    
+    apply_dark_flat = 0
+    apply_nonlin = False
+    apply_bpm = False
+    remove_xtalk = True
+    
+    
+
+24-Jun-2015
+-----------
+- BugFix: BD encuentra el problema en el envío del best_focus al OT; se
+soluciona y parece que ya no falla.
+
+01-Jul-2015
+-----------
+- BUGFIX: Klaus detectó que para Declinaciones altas, QL no reducia las secuencias;
+el problema era debido a que en el QL, cuando se selecciona manualmente en el QL 
+para reducir, el agrupamiento el "by filter", y entonces se comprueba si se supera
+la máxima distancia RA/DEC o la máxima distancia temporal (MJD); ocurria lo primero
+debido al coseno(Dec) y por tanto se "partian" (split) las secuencias, y en consecuencia
+el QL no procesaba porque se quejaba e nro. insuficiente de imágenes (<5); 
+para solucionarlo incrementé el valor max_ra_dec_offset en
+el fichero de configuración, pero lo mejor es tener en cuenta el cos(dec) para medir
+distancias más "reales" sobre el plano (ver mail 28-Jun).
+
+ -->> Introduzco corrección por cos(Dec) en el dataset::GetFilterFiles()
+ cuando uso max_ra_dec_diff.
+
+- Modifico fileUtils::removefiles() para que no lance exception 
+si no puede borrar un fichero.
+
+- Instalo Montage (en usuario panic) para comparar con SWARP y ver si 
+se resuelve el problema de estrellas dobles reportado por Klaus.
+Encuentro información muy intersante sobre la diferencias entre
+Montage y SWARP en :
+
+http://www.astrobetter.com/blog/2009/10/21/better-ways-to-make-large-image-mosiacs/
+http://www.astromatic.net/forum/showthread.php?tid=732
+
+
+02-Jul-2015
+-----------
+- BUGFIX: encuentro importante bug en solveAstrometry.py al borrar 
+los tmp.sanitized.* files, porque en el caso de reducción en paralelo
+de los cuantro detectores, no podemos distinguir cuales son de uno
+y cuales de otro, con lo que borrariamos los ficheros temporales
+de otra ejecución de Astrometry.net.
+(Nota:El borrado de los tmp.sanitized. lo debería hacer sólo Astrometry.net,
+pero parece que hay un bug y no lo hace; lo añadí yo hace poco a PAPI,
+pero no llegó a instalarse en panic22, y por eso no falló allí).
+
+
+- Prueba para comparar Montage con SWARP: el mosaico (all FOV) resultado es
+mucho mejor, y no presenta estrellas dobles.
+Revisando PAPI, me doy cuenta que el SWARP final de los 4 detectores se 
+hace con la imagenes calibradas (finalmente) con Astrometry.net, con su
+cabecera correspondiente con el modelo SIP, y eso puede que no lo
+entienda SWARP al menos para el tema de la distorsión del campo.
+Para usar SWARP con mejor es darle los .head que genera SCAMP y que
+contienen la información e la distorsión del campo.
+Hago la prueba correspondiente, eliminado en astrowarp la calibración
+astrométrica final y el resultado es mucho mejor, hay muchas menos
+estrellas dobles, pero aun queda alguna. No obstante, aún sigue siendo
+mejor el resultado con Montage...
+
+
+Prueba Montage
+==============
+
+mImgtbl rawdir images-rawdir.tbl
+mMakeHdr images-rawdir.tbl template.hdr
+mProjExec -p rawdir images-rawdir.tbl template.hdr projdir stats.tbl
+mImgtbl projdir images.tbl
+mAdd -p projdir images.tbl template.hdr final/NEP_mosaic_uncorrected.fits
+
+mOverlaps images.tbl diffs.tbl
+mDiffExec -p projdir diffs.tbl template.hdr diffdir
+mFitExec diffs.tbl fits.tbl diffdir
+mBgModel images.tbl fits.tbl corrections.tbl
+mBgExec -p projdir images.tbl corrections.tbl corrdir
+mAdd -p corrdir images.tbl template.hdr final/NEP_mosaic_corr.fits
+
+
+03-Jul-2015
+-----------
+- Continuando con el tema de los mosiacos con estrellas dobles, 
+me doy cuenta de que el mosiaco se hace llamando directamente 
+a SWARP con los PANIC_SEQ_Q0X.fits, que aunque tienen la astrometría
+de Astrometry.net con el modelo SIP que incluye la distorsión,
+dicho modelo/astrometría no la reconoce SWARP, y por tanto no
+hará bien el mosaico. Habría que llamar a astrowarp con los 
+PANIC_SEQ_Q0X.fits para que se use Sex + SCAMP + SWARP.
+
+También, y como comenta en el manual de THELI, me doy cuenta
+de que un parametro muy importante a la hora de lanzar SCAMP
+es el siguiente:
+
+POSITION_MAXERR        10.0             # 1min default: Max positional uncertainty (arcmin)
+
+If the true solution lies outside the search range specified, e.g. 
+the offset between nominal and sky coordinates is 3 arcminutes but 
+you set POSITION_MAXERR=2, you can vary all other parameters as much 
+as you want, the correct solution will never be found. Same holds for 
+the pixel scale or the sky position angle.
+
+SWarp does not understand SIP polynomials.
+
+
+- Tras darle muchas vueltas y hacer varias pruebas, no consigo que
+en el DS /data1/PANIC/2015-06-25/ (seq 28) --> /data1/PANIC/2015-06-25/NEP_sqdeg2_Ks_0016-20.fits,
+el Q2 y Q3 queden bien, siguen apareciendo estrellas dobles a pesar
+de que ahora uso astrowarp (Sex+SCAMP+SWARP) en lugar de usar directamente SWARP.
+En el foro de Astromatic encuentro algunas referencias a esto, pero sin solución:
+
+http://www.astromatic.net/forum/showthread.php?tid=122&highlight=double+stars
+
+
+Parece que tendré que migrar a Montage: instalo el python-wrapper y 
+parece que va bien, y es bastante fácil de usar:
+
+ montage.mosaic('/data2/tmp/prueba_montage/raw', '/data2/tmp/prueba_montage/out22',  background_match=True)
+ 
+si embargo, no obtengo un mosaico tan bueno (básicamente en el background) como si lo hago a mano usando
+los comando de propio de Montage desde la CL.
+El MPI no funciona, da un error durante la ejecución --> "Matching background"
+
+
+
+06-Jul-2015
+-----------
+- Implementation de interfaz de PAPI con wrapper de Montage: montage.py;
+- Añado a reductionset::reduceSeq() la llamada a montage.mosaic() 
+para crear el mosaico en lugar de con astrowarp, pues no consigo encontrar
+el problema en SCAMP+SWARP que causa las estrellas dobles reportadas por Klaus....
+
+
+
+07-Jul-2015
+-----------
+
+- Añado al QL la sugerencia de BD:
+"QL could show the columns Nimg and Tfile=EXPTIME*Nimg with Nimg 
+  being the number of images in the cube (1 for individual images). "
+  (see email 3-Jul-2015)
+
+
 
 
 TODO
 - Ver que valores serían buenos para GainMap (low,high).
 - Ver si puedo instalar Lemon  probarlo con datos de WASP-XX de PANIC.
-
-
-
-
 
 
 
@@ -7452,8 +7637,6 @@ está solucionado (en principio...).
 
 
 
-
-
 Posibles causas del problema del Transito WASP:
 ==============================================
 0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
@@ -7469,6 +7652,15 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Añadir a documentación la nueva implementación sugerida por BD:
+
+- BUG: en los mosaicos all-FOV Klaus ha detectado estrellas dobles en las zonas de overlap.
+Parace que puede ser que la astrometría no esté bien resuelta en los bordes de los
+detectores individuales (ver mail 27-Jun)
+
+- bug & improvement: BD informa que en el gráfico de pointing_offsets los offsets
+están cambiados de signo; además sugiere dibujar el gap entre los detectores.
+
 - ver como hacer de forma opcional la comprobacion con check_open() en clfits.py para que
 se acelere la lectura de FITS, sobre todo cuando se carga un directorio completo de una noche
 ya observada....speed up the QL load !!!
@@ -7478,12 +7670,13 @@ todos los cálculos cuando se haga la NLC. Además, cuando no se haga la NLC, ha
 la BPM sea con NaNs, pues parece que es el valor que puede funcionar mejor ya que lo ignoran Sextractor, SWARP, Numpy, etc...
 Queda ver como corregir skyfilter para que los 0s del gainmap se conviertan en NaNs en lugar de bck_level !!!
 
+- usar os.path.abspath() para las llamadas a las funciones de IRAF !!! en lugar
+de la eliminacion manual de los "//".
 
 - mejorar dxtalk ala SIMPLE (https://www.asiaa.sinica.edu.tw/~whwang/idl/SIMPLE/WIRCAM/Doc/simple.pdf)
 - hacer algo para que Sextractor tenga en cuenta los BPM, o al menos multiplicar la ObjectMask por la BPM (O's).
  extraido de SNAP: the object mask are multiplied by the bad pixel mask to remove false detections;
 - OJO, en reductionset.py, tengo en el multiprocesing.pool.get(N) N=1 !!!!! para una prueba !!! que parece que no funciona...
-- Cambiar en mef.py lineas 750 y 795 para grabar MEF con nuevos det_id=Qi (buscar TODO)
 - un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
 la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina la ejecución actual.
 - intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararlo (do_raw_astrometry) !!

@@ -1,13 +1,24 @@
 .. _papi:
 
-Running PAPI
-************
+PAPI
+****
 
 .. index:: quickstart, running
 
-This chapter gives an introduction in how to get started with PAPI, showing the steps that 
-would normally be necessary to reduce a data set from PANIC. In particular, this example 
-assumes that we have a series of FITS images from an observation of the object [TBD]
+Purpose
+=======
+
+PANIC pipeline (hereafter PAPI) performs the automatic data processing both for
+quick-look and for science quality of the data produced by PANIC. The automated 
+processing steps include basic calibration (removeing instrumental signature, dark 
+and flat-fielding), cosmic-ray removal, treatment for electronic ghosts (cross-talk), 
+sky subtraction, non-linear count-rate correction, robust alignment and registration
+removing the field distortion.
+
+
+This chapter gives an introduction in how to get started with PAPI, showing the 
+steps that would normally be necessary to reduce a data set from PANIC. In particular, 
+this example assumes that we have a series of FITS images from an observation run.
 
 Quickstart
 ==========
@@ -148,7 +159,7 @@ the next type of FITS files (in order of preference):
    planes, where N is the number of coadds or expositions.
  
  
- .. Note:: Currently PAPI is **not working** with non-integrated individual files of an 
+ .. Note:: Currently PAPI is **not working** with non-integrated *individual* files of an 
     exposition. In case you are interested in no-integrated files and wish to reduce 
     the data with PAPI, you should use SEF of MEF non-integrated FITS-cube mode.
 
@@ -306,10 +317,10 @@ Command::
 Reduce a specificied number of sequences of the group list 
 ---------------------------------------------------------
 To reduce the sequneces from N1 to N2 from the group list obtained with a '-p' command,
-you have to use the `-S` parameter with two values, N1 and N2, where 
+you have to use the `-S` parameter with two values, N1 and N2, where:
 
-   N1: number of the first sequnece to reduce
-   N2: number of the last sequence to reduce
+   - N1: number of the first sequnece to reduce
+   - N2: number of the last sequence to reduce
 
 Command::
 
@@ -344,8 +355,9 @@ Command::
     
 With this command, the pipeline will reduce all the detected sequences in the /my/raw_data/directory
 using the default values set in the $PAPI_CONFIG file, and with the reduction mode specified in 
-`reduction_mode` (quick, science, quick-lemon, lemon, lab) 
-However, if you can specify the reduction mode using the `-M` option as follow:
+`reduction_mode` (quick, science, quick-lemon, lemon, lab).
+However, you can specify the **reduction mode** (quick, science, quick-lemon, lemon) 
+using the `-M` option as follow:
 
 ::
     
@@ -374,7 +386,19 @@ you should create an script to do that; for example see next bash script:
     done
 
 
+Reduction modes
+===============
 
+PAPI currectly supports next reduction modes:
+
+  - quick (default): single pass for sky background subtraction 
+  - science: double pass for sky background subtraction
+  - quick-lemon: single pass for sky background and neither alignment nor coadd is done.
+  - lemon: double pass for sky background subtraction, and neither alignment nor coadd is done.
+  - lab: for laboratory purposes
+
+  
+For more details, see :ref:`processing`.
 
 How NOT to use PAPI
 ===================
@@ -414,6 +438,7 @@ ones:
 
 Examples
 ========
+TBD
 
 .. _config:
 
@@ -991,11 +1016,30 @@ File papi.cfg::
     )
 
 
+Principal parameters to set
+---------------------------
+Although all parameteres of the config file ($PAPI_CONFIG) are important, some of them have special 
+relevance to the right execution and in the results obtained (in bold are default values):
+
+- apply_dark_flat: (0 | **1** | 2)
+
+- remove_crosstalk: (**True** | False)  
+
+- nonlinearity::apply: (True | **False**)
+
+- ext_calibration_db: (path)
+
+- group_by: (**ot** | group)
+
+- bpm::mode (**none** | fix | grab ) 
+
+
+
 
 Getting PAPI Data
 =================
 
-The PAPI pipeline requires the full set of uncalibrated data products 
+PAPI requires the full set of uncalibrated data products 
 and best reference files for each observation in the input image set. These files 
 can be readily obtained through the CAHA_ archive. When
 requesting data from CAHA you need to specify:

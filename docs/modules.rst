@@ -11,7 +11,7 @@ as they are needed in order to accomplish a complete data reduction of a set of 
 
 .. index:: modules
 
-.. tabularcolumns:: |r|l|
+.. tabularcolumns:: |r|J|
 
 =======================     ===========
 Main Modules                Description
@@ -32,27 +32,34 @@ Main Modules                Description
 ``makeobjmask``             Creates a objects mask (SExtractor OBJECTS images) for a list of FITS images.
 ``photometry``              Performs a photometric calibration comparison with 2MASS
 ``solveAstrometry``         Performs a astrometric calibration using Astrometry.net and 42xx index files
-``remove_cosmics``          Detects and clean cosmic ray hits on images based on Pieter van Dokkum's L.A.Cosmic algorithm.
+``remove_cosmics``          Detects and clean cosmic ray hits on images based on Pieter van 
+                            Dokkum's L.A.Cosmic algorithm.
 ``eval_focus_serie``        Estimates the best focus value of a focus exposures
 ``cleanBadPix``             Cleans masked (bad) pixels from an input image. 
 =======================     ===========
 
 
-.. tabularcolumns:: |r|l|
+.. tabularcolumns:: |r|J|
 
 =======================     ===========
 Utilities                   Description
 =======================     ===========
-``createDataSeq``           Modifies headers of a set of FITS files to create a Data Sequece compliant with PAPI
-``getBPM``                  Creates the BPM file from the NonLinearity correction MEF file. The bad pixels will be saved as 1's
-``mef``                     Tool to convert from SEF to MEF and viceversa; also allows to give splits of the extensions or join SEFs.
-``collapse``                Collapses (add them up arithmetically) each cube of a list files into a single 2D image.
+``createDataSeq``           Modifies headers of a set of FITS files to create a Data Sequece compliant 
+                            with PAPI
+``getBPM``                  Creates the BPM file from the NonLinearity correction MEF file. 
+                            The bad pixels will be saved as 1's
+``mef``                     Tool to convert from SEF to MEF and viceversa; also allows to give splits 
+                            of the extensions or join SEFs.
+``collapse``                Collapses (add them up arithmetically) each cube of a list files into a 
+                            single 2D image.
 ``genLogsheet``             Generates a text file as a log sheet from a set of images.
 ``imtrim``                  Crops/cuts the input image edges
 ``modFITS``                 Allows to perfom the modification of any FITS keyword
-``runStarfocus``            Run IRAF.starfocus for a focus sequece and return the best focus value and a plot of the fit.
+``runStarfocus``            Run IRAF.starfocus for a focus sequece and return the best focus value and 
+                            a plot of the fit.
 ``runPsfmeasure``           Run IRAF.psfmeasure for a focus sequece and get field FWHM of given stars
-``getDarks``                Gives the unique values of [read_mode, itime, ncoadd, save_mode] of a set of files of a given directory. 
+``getDarks``                Gives the unique values of [read_mode, itime, ncoadd, save_mode] of a set 
+                            of files of a given directory. 
                             Used to know the DARKS required from them.
 ``getImageOffsets``         Gives the image offsets (arcsecs) based on the WCS of the image headers
 =======================     ===========
@@ -448,23 +455,23 @@ The flatfield will be normalized to make a gainmap and set bad pixels to 0.
 
 Usage::
 
-Options:
-  -h, --help            show this help message and exit
-  -s SOURCE_FILE, --source=SOURCE_FILE
-                        Flat Field image NOT normalized. It has to be a fullpath file name (required)
-  -o OUTPUT_FILENAME, --output=OUTPUT_FILENAME
-                        output file to write the Gain Map
-  -L MINGAIN, --low=MINGAIN
-                        pixel below this gain value  are considered bad (default=0.5)
-  -H MAXGAIN, --high=MAXGAIN
-                        pixel above this gain value are considered bad (default=1.5)
-  -x NXBLOCK, --nx=NXBLOCK
-                        X dimen. (pixels) to compute local bkg (even) (default=16)
-  -y NYBLOCK, --ny=NYBLOCK
-                        Y dimen. (pixels) to compute local bkg (even) (default=16)
-  -n NSIGMA, --nsigma=NSIGMA
-                        number of (+|-)stddev from local bkg to be bad pixel (default=5)
-  -N, --normal          if true, the input flat-field will be normalized before build the gainmap (default=True)
+    Options:
+    -h, --help            show this help message and exit
+    -s SOURCE_FILE, --source=SOURCE_FILE
+                            Flat Field image NOT normalized. It has to be a fullpath file name (required)
+    -o OUTPUT_FILENAME, --output=OUTPUT_FILENAME
+                            output file to write the Gain Map
+    -L MINGAIN, --low=MINGAIN
+                            pixel below this gain value  are considered bad (default=0.5)
+    -H MAXGAIN, --high=MAXGAIN
+                            pixel above this gain value are considered bad (default=1.5)
+    -x NXBLOCK, --nx=NXBLOCK
+                            X dimen. (pixels) to compute local bkg (even) (default=16)
+    -y NYBLOCK, --ny=NYBLOCK
+                            Y dimen. (pixels) to compute local bkg (even) (default=16)
+    -n NSIGMA, --nsigma=NSIGMA
+                            number of (+|-)stddev from local bkg to be bad pixel (default=5)
+    -N, --normal          if true, the input flat-field will be normalized before build the gainmap (default=True)
 
 
 Example::
@@ -476,56 +483,40 @@ Example::
 .. index:: flat-field, super-flat 
 
 
-``calNonLinearity``
-*******************
-In the moment of writing this manual is not known if PANIC detectors (HAWAII-2RG_) 
-will need a non-linearity correction, thus that procedure is not completed yet.
-During the commissioning phase of the instrument will be decided if the correction
-is needed and what is the correction to apply.  
-
-The ``calNonLinearity`` module corrects PANIC images for their count-rate dependent 
-non-linearity. It used the header keywords READMODE and FILTER to determine the 
-non-linearity parameter. It corrects the first image, and in the case of a 
-multi-extension image, the second image as well, with the appropriate power law. 
-For details see `Correcting the PANIC count-rate 
-dependent non-linearity <http://www.iaa.es/PANIC/papi/documents/nonlinearity.pdf>`_
-
-.. index:: mask, masking, applymask, ds9
-
-
 ``dxtalk``               
 **********
-In the moment of writing this manual is not known if PANIC detectors (HAWAII-2RG_) 
-will have a crosstalk effect between the data transfer lines of the different
-channels. However, because PAPI can be also used to reduce Omega2000 images which show
-this effect and in order to be ready to remove this crosstalk effect if it appears
-in PANIC, a de-crosstalk routine has been included in the pipeline. It can be activated 
-or deactivated in the :ref:`config` (remove_crosstalk=True|False).
 
-During the commissioning phase of the instrument will be checked if there is any
-crosstalk effect and this routine could be debugged and tuned.
+PANIC HAWAII-2RG_ sensors with multiple parallel readout sections show crosstalk 
+in form of compact positive and negative ghost images whose amplitude varies between 
+readout sections. PAPI has a optional de-crosstalk module that assumes that the 
+amplitude is the same, therefore the correction will only partially remove the 
+effect (if at all). If you know in advance that this will be a problem for your 
+science case, then consider choosing different camera rotator angles for your 
+observations.
 
+It can be activated or deactivated in the :ref:`config` (remove_crosstalk=True|False).
 
+.. _note::
 
-"Characterization, Testing and Operation of Omega2000 Wide Field Infrared
-Camera", Zoltan Kovacs et.al.
+    "Characterization, Testing and Operation of Omega2000 Wide Field Infrared
+    Camera", Zoltan Kovacs et.al.
 
-Although bright stars can saturate the detector, resetting of the full array
-prevents this excess in the pixel values from causing any residual image 
-effects in the following image of the dithering. Nevertheless, the satured
-pixels generate a crosstalk between the data transfer lines of the different
-channels of the quadrant in which they are situated. The data lines of the 
-channels are organized in parallel and there might be an interference between 
-the data lines transferring the high video signal and the neighbour ones. As a 
-result of this crosstalk, a series of spots with the distances of 128 pixels 
-from each other appeares in the whole quadrant, corresponding to each channel. 
-The average values of the spots were lower than the background signal and their
-difference was few percent, which is large enough to degrade the photometric
-correctness at the place they are situated. These spots could not be measured
-in the raw images but they were well discernible in the reduced frames (Fig. 9). 
-This effect was a general feature of the operation of all the  HAWAII-2 detectors 
-we tested and should be considered for the choice of pointing positions in any 
-field of next observations.  
+    Although bright stars can saturate the detector, resetting of the full array
+    prevents this excess in the pixel values from causing any residual image 
+    effects in the following image of the dithering. Nevertheless, the satured
+    pixels generate a crosstalk between the data transfer lines of the different
+    channels of the quadrant in which they are situated. The data lines of the 
+    channels are organized in parallel and there might be an interference between 
+    the data lines transferring the high video signal and the neighbour ones. As a 
+    result of this crosstalk, a series of spots with the distances of 128 pixels 
+    from each other appeares in the whole quadrant, corresponding to each channel. 
+    The average values of the spots were lower than the background signal and their
+    difference was few percent, which is large enough to degrade the photometric
+    correctness at the place they are situated. These spots could not be measured
+    in the raw images but they were well discernible in the reduced frames (Fig. 9). 
+    This effect was a general feature of the operation of all the  HAWAII-2 detectors 
+    we tested and should be considered for the choice of pointing positions in any 
+    field of next observations.  
 
 Usage::
 
@@ -580,7 +571,7 @@ Example::
 ``photometry``
 **************
 This module receives a reduced image of any known NIR filter and match to 2MASS 
-catalog performing a fit in order to get a estimation of the  Zero Point.
+catalog performing a fit in order to get a estimation of the Zero Point.
 It is based on the method followed here ::
 
     http://www.ast.cam.ac.uk/ioa/research/vdfs/docs/reports/2masscal.pdf
@@ -605,8 +596,21 @@ Example::
 
 ``correctNonLinearity``
 ***********************
-Performs the non-linearity correction of the PANIC raw data files using the 
-proper NL-Model (FITS file).
+HAWAII-2RG_ near-IR detectors exhibit an inherent non-linear response. 
+It is caused by the change of the applied reverse bias voltage due to the 
+accumulation of generated charge.
+The effect increases with signal levels, so that the measured signal deviates stronger 
+from the incident photon number at higher levels, and eventually levels out when 
+the  pixel well reaches saturation.
+
+
+The ``correctNonLinearity`` module corrects PANIC images for their count-rate dependent 
+non-linearity. It used the header keywords READMODE and DET_ID to determine the 
+correction. It corrects the first image, and in the case of a 
+multi-extension image, the second image as well, with the appropriate power law. 
+For details see 
+`PANIC detector non-linearity correction data <http://panic.iaa.es/sites/default/files/PANIC-DET-TN-02_1_0_Nonlinearity_small.pdf>`_.
+
 
 Usage::
   
@@ -627,38 +631,43 @@ Usage::
 ``solveAstrometry``
 *******************
 Performs the astrometric calibration of a set of images, in principle previously 
-reduced, but not mandatory; Astromety.net tool is used.
+reduced, but not mandatory; this routine is built on top of Astromety.net tool.
 
-Options:
+Usage::
 
-  -h, --help            show this help message and exit
-  -s SOURCE_FILE, --source=SOURCE_FILE
-                        Source file list of data frames. It can be a file or directory name.
-  -o OUTPUT_DIR, --output_dir=OUTPUT_DIR
-                        Place all output files in the specified directory [default=/tmp]
-  -p PIXEL_SCALE, --pixel_scale=PIXEL_SCALE
-                        Pixel scale of the images
-  -r, --recursive       Recursive subdirectories (only first level)
+    Options:
+
+    -h, --help            show this help message and exit
+    -s SOURCE_FILE, --source=SOURCE_FILE
+                            Source file list of data frames. It can be a file or directory name.
+    -o OUTPUT_DIR, --output_dir=OUTPUT_DIR
+                            Place all output files in the specified directory [default=/tmp]
+    -p PIXEL_SCALE, --pixel_scale=PIXEL_SCALE
+                            Pixel scale of the images
+    -r, --recursive       Recursive subdirectories (only first level)
 
 
 ``remove_cosmics``
 ******************
-Remove the cosmic ray hits in the input image.
+Remove the cosmic ray hits in the input image; it is built on top of 
+Pieter van Dokkum's `L.A.Cosmic  <http://www.astro.yale.edu/dokkum/lacosmic/>`_ algorithm.
 
-Options:
+Usage::
 
-  -h, --help            show this help message and exit
-  -i INPUT_IMAGE, --input_image=INPUT_IMAGE
-                        input image to remove cosmics
-  -o OUTPUT_IMAGE, --output=OUTPUT_IMAGE
-                        output filename (default = without_cosmics.fits)
-  -O, --overwrite       overwrite the original image with the corrected one
-  -m, --mask            If true, the mask with cosmics detected and removed is written into a FITS file.
+    Options:
+
+    -h, --help            show this help message and exit
+    -i INPUT_IMAGE, --input_image=INPUT_IMAGE
+                            input image to remove cosmics
+    -o OUTPUT_IMAGE, --output=OUTPUT_IMAGE
+                            output filename (default = without_cosmics.fits)
+    -O, --overwrite       overwrite the original image with the corrected one
+    -m, --mask            If true, the mask with cosmics detected and removed is written into a FITS file.
 
 .. _astromatic: http://www.astromatic.net/
 .. _SExtractor: http://www.astromatic.net/software/sextractor
 .. _scamp: http://www.astromatic.net/software/scamp
 .. _swarp: http://www.astromatic.net/software/swarp
 .. _SQLite: http://www.sqlite.org
-.. _HAWAII-2RG: http://w3.iaa.es/PANIC/index.php/gb/workpackages/detectors
+.. _HAWAII-2RG: http://panic.iaa.es/detectors
 

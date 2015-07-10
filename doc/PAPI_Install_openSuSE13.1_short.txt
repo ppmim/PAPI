@@ -572,7 +572,16 @@ zypper install libXmu6-32bit  (needed by xgterm)
 zypper install cfitsio libcfitsio-devel
 zypper install python-pip
 zypper install mupdf ( para mostrar pdfs desde QL de forma rápida )
+zypper install gsl gsl-devel
 
++ And for sphinx (latex2pdf):
+sudo zypper install texlive-threeparttable
+sudo zypper install texlive-cjk-latex-extras
+sudo zypper install texlive-wrapfig
+sudo zypper install texlive-multirow
+sudo zypper install texlive-upquote
+sudo pip install sphinx_bootstrap_theme
+sudo pip install sphinx_rtd_theme
 
 + LEMON Requirements:
 sudo zypper install openmpi-devel python-gtk p7zip

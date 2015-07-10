@@ -1,7 +1,7 @@
 Citation
 ========
 
-If your research uses PAPI, we'd appreciate it if you could acknowledge the fact by including the following citation:
+If your research uses PAPI, we would appreciate it if you could acknowledge the fact by including the following citation:
 
     "This research made use of PAPI, the pipeline of PANIC instrument. It is funded by the Spanish Ministry of Economy and 
     Competitiveness with funds from the European Union (FEDER) and the Spanish national budget, through the grants 

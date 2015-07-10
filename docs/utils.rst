@@ -3,6 +3,9 @@ Utilities
 Besides the modules for data reduction, PAPI has a set of utilities than
 can be used as tools for preparing the data reduction execution; they are:
 
+
+.. tabularcolumns:: |r|J|
+
 ======================   ===========
 Utilities                Description
 ======================   ===========
@@ -23,6 +26,8 @@ Utilities                Description
 **********************
 Check whether all Python modules required by PAPI are installed. The modules
 currently required are:
+
+.. tabularcolumns:: |l|l|
 
 ======================   ===========
 Module                   Version
@@ -90,17 +95,18 @@ Example::
 ************
 Sum the planes of each cube of a list files into a single plane 2D-image.
 
+::
 
-Usage: collapse.py [options] arg1 arg2 ...
+    Usage: collapse.py [options] arg1 arg2 ...
 
-Options:
-  -h, --help            show this help message and exit
-  -i INPUT_IMAGE, --input_image=INPUT_IMAGE
-                        input cube image to collapse into a 2D image
-  -l INPUT_IMAGE_LIST, --input_image_list=INPUT_IMAGE_LIST
-                        input image list to collapse into a single 2D image
-  -o OUTPUT_FILE, --output_file=OUTPUT_FILE
-                        output filename (default = /tmp/out.fits)
+    Options:
+    -h, --help            show this help message and exit
+    -i INPUT_IMAGE, --input_image=INPUT_IMAGE
+                            input cube image to collapse into a 2D image
+    -l INPUT_IMAGE_LIST, --input_image_list=INPUT_IMAGE_LIST
+                            input image list to collapse into a single 2D image
+    -o OUTPUT_FILE, --output_file=OUTPUT_FILE
+                            output filename (default = /tmp/out.fits)
 
 Example::
 
