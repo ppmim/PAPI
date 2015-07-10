@@ -44,7 +44,9 @@ optimized for them.
 In addition to this html version of the manual, there is also a pdf_ version to download.
 
 
-**Development Team:** José M. Ibáñez (IAA-CSIC)
+**Development:** José M. Ibáñez (IAA-CSIC)
+
+**Contribution:** PANIC Team
 
 Caveat
 ======

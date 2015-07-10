@@ -1016,6 +1016,25 @@ File papi.cfg::
     )
 
 
+Principal parameters to set
+---------------------------
+Although all parameteres of the config file ($PAPI_CONFIG) are important, some of them have special 
+relevance to the right execution and in the results obtained (in bold are default values):
+
+- apply_dark_flat: (0 | **1** | 2)
+
+- remove_crosstalk: (**True** | False)  
+
+- nonlinearity::apply: (True | **False**)
+
+- ext_calibration_db: (path)
+
+- group_by: (**ot** | group)
+
+- bpm::mode (**none** | fix | grab ) 
+
+
+
 
 Getting PAPI Data
 =================

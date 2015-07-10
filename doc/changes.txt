@@ -1,3 +1,10 @@
+2015-06-22:
+
+- updated high/low levels for MasterTwilightFlat(); now lthr=5000,hthr=60000; 
+  it was done due it was observed that OT takes skyflats upto 56k ADUs.
+  
+
+
 2015-05-12:
 
 PAPI & QL: main changes from last commissioning

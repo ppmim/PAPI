@@ -322,8 +322,11 @@ Filename
   Full path name of the file found in the 
 Image type
   The type of the FITS file detected: DARK, DOME_FLAT, SKY_FLAT, FOCUS, SCIENCE 
-ExpT
-  Exposition time of the file (EXPTIME keyword)
+Nimgs
+  Number of images (layers) of the cube; if image is integrated (no cube), then = 1.
+TExpFile
+  Total Exposition time of the file (= Nimgs * EXPTIME)
+  (Thus, EXPTIME = TExpFile / Nimgs)
 Date-Obs
   Observation data of the file (DATE-OBS keyword)
 Object
