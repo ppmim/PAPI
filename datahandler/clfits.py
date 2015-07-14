@@ -138,7 +138,6 @@ class ClFits (object):
 
         self.instrument = ""
         self.processed = False
-        self.exptime = -1
         self.filter = ""
         self.mef = False
         self.next = 0
@@ -155,9 +154,15 @@ class ClFits (object):
 
         self.object = ""
         self.chipcode = 1
-        self.ncoadds = -1
+        self.exptime = -1
         self.itime = 0.0
+        self.ncoadds = -1
+        self.nexp = -1 # number cycle repeat count
+        # if nexp == ncoadd, then saving mode is integrated,
+        # otherwise, it is a cube (non-integrated)
+        
         self.readmode = ""
+        
         # pointer to the primary-main header
         self.my_header = None
         self.obs_tool = False
@@ -672,7 +677,18 @@ class ClFits (object):
         except KeyError:
             log.warning('NCOADDS keyword not found. Taken default value (=1)')
             self.ncoadds  = 1
-                 
+        
+        # Number of expositions (cycle repeat count) - only PANIC/O2k
+        try:
+            if 'NEXP' in myfits[0].header:
+                self.nexp = myfits[0].header['NEXP']
+            else:
+                self.nexp = 1
+        except KeyError:
+            log.warning('NEXP keyword not found. Taken default value (=1)')
+            self.nexp  = 1
+            
+            
         # Read-Mode
         try:
             if self.instrument == 'panic':

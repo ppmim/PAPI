@@ -405,7 +405,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         
         #self.listView_dataS.headerItem().resizeSection(3, 10)
-        for i in range(0,8):
+        for i in range(0, 9):
             self.listView_dataS.resizeColumnToContents(i)
         
         
@@ -583,7 +583,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         log.debug("[processLazy] Starting to process the file %s",filename)
         
         (date, ut_time, type, filter, texp, detector_id, 
-         run_id, ra, dec, object, mjd) = self.inputsDB.GetFileInfo(filename)
+         run_id, ra, dec, object, mjd, _, _, _) = self.inputsDB.GetFileInfo(filename)
         
         
         # ONLY SCIENCE frames will be pre-processed 
@@ -1638,7 +1638,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 # Get file info
                 (date, ut_time, type, filter, texp, detector_id, run_id, 
-                        ra, dec, object, mjd) = self.inputsDB.GetFileInfo(self.m_listView_item_selected)
+                        ra, dec, object, mjd, _, _, _) = self.inputsDB.GetFileInfo(self.m_listView_item_selected)
                 with fits.open(filename) as hdu:
                     if len(hdu) > 1:
                         shape = hdu[1].data.shape
@@ -1752,32 +1752,35 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 #elem.setText(0, "OB_ID="+str(seq[0])+" ** OB_PAT="+str(seq[1])+" ** FILTER="+str(seq[2]) + " ** #imgs="+str(len(fileList[k])) ) # OB_ID + OB_PAT + FILTER
                 for file in seq:
                     (date, ut_time, type, filter, texp, detector_id, run_id, 
-                     ra, dec, object, mjd) = self.inputsDB.GetFileInfo(file)
+                     ra, dec, object, mjd, nexp, ncoadds, itime) = self.inputsDB.GetFileInfo(file)
 		    #nCoadd = fits.getval(file, "NCOADDS", ext=0)
-                    if file==seq[0]:
-			nCoadd = fits.getval(file, "NCOADDS", ext=0)
+                    if file == seq[0]:
+			#nCoadd = fits.getval(file, "NCOADDS", ext=0)
 			nObject = fits.getval(file,"OBJECT", ext=0) 
                         #the first time, fill the "tittle" of the group 
                         elem.setText(0, "TYPE="+str(seq_types[k]) + 
                                      "  ** FILTER=" + str(filter) + 
                                      "  ** TEXP=" + str(texp) + 
                                      "  ** OBJ=" + str(nObject) + 
-                                     " ** #imgs=" + str(len(seq)))
+                                     " ** #imgsSeq=" + str(len(seq)))
                         
                     e_child = QTreeWidgetItem(elem)
                     e_child.setText(0, str(file))
                     e_child.setText(1, str(type))
                     e_child.setText(2, str(filter))
-                    e_child.setText(3, str(texp))
-                    e_child.setText(4, str(date) + "::" + str(ut_time))
-                    e_child.setText(5, str(object))
+                    nimg = nexp / ncoadds # if >1, then number of layers of the cube
+                    tfile = nimg * texp 
+                    elem.setText(3, str(nimg))
+                    e_child.setText(4, str(tfile))
+                    e_child.setText(5, str(date) + "::" + str(ut_time))
+                    e_child.setText(6, str(object))
                     if dec < 0: sign = -1;
                     else: sign = 1;
                     c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
                     str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
                     str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1]*sign, c.dec.dms[2]*sign)
-                    e_child.setText (6, str(str_ra))
-                    e_child.setText (7, str(str_dec))
+                    e_child.setText (7, str(str_ra))
+                    e_child.setText (8, str(str_dec))
                 k+=1
         else:
             #############################################    
@@ -1822,21 +1825,24 @@ class MainGUI(QtGui.QMainWindow, form_class):
             for file in fileList:
                 elem = QTreeWidgetItem( self.listView_dataS )
                 (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
-                 dec, object, mjd)= db.GetFileInfo(file)
+                 dec, object, mjd, nexp, ncoadds, _) = db.GetFileInfo(file)
                 elem.setText(0, str(file))
                 elem.setText(1, str(type))
                 elem.setText(2, str(filter))
                 #elem.setSizeHint(2, QSize(2,2))
-                elem.setText(3, str(texp))
-                elem.setText(4, str(date) + "::" + str(ut_time))
-                elem.setText(5, str(object))
+                nimg =  nexp / ncoadds # if >1, then number of layers of the cube
+                tfile = nimg * texp 
+                elem.setText(3, str(nimg))
+                elem.setText(4, str(tfile))
+                elem.setText(5, str(date) + "::" + str(ut_time))
+                elem.setText(6, str(object))
                 c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
                 if dec < 0: sign = -1
                 else: sign = 1
                 str_ra = "%02d:%02d:%04.1f" % (c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
                 str_dec = "%02d:%02d:%02.0f" % (c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
-                elem.setText(6, str(str_ra))
-                elem.setText(7, str(str_dec))
+                elem.setText(7, str(str_ra))
+                elem.setText(8, str(str_dec))
             
             # In addition, if "ALL" is selected, we show the OUTS as well
             if str(self.comboBox_classFilter.currentText()) == "ALL":
@@ -1846,28 +1852,31 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 for file in fileList:
                     elem = QTreeWidgetItem( self.listView_dataS )
                     (date, ut_time, type, filter, texp, detector_id, run_id, ra, 
-                     dec, object, mjd) = db.GetFileInfo(file)
+                     dec, object, mjd, nexp, ncoadds, _) = db.GetFileInfo(file)
                     elem.setText(0, str(file))
                     elem.setText(1, str(type.split()[0]))
                     elem.setText(2, str(filter.split()[0]))
-                    elem.setText(3, str(texp))
-                    elem.setText(4, str(date) + "::" + str(ut_time))
-                    elem.setText(5, str(object))
+                    nimg = nexp / ncoadds # if >1, then number of layers of the cube
+                    tfile = nimg * texp 
+                    elem.setText(3, str(nimg))
+                    elem.setText(4, str(tfile))
+                    elem.setText(5, str(date) + "::" + str(ut_time))
+                    elem.setText(6, str(object))
                     c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
                     if dec < 0: sign = -1
                     else: sign = 1
                     str_ra =  "%02d:%02d:%04.1f" % (c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
                     str_dec = "%02d:%02d:%02.0f" % (c.dec.dms[0], c.dec.dms[1] * sign, c.dec.dms[2] * sign)
-                    elem.setText(6, str(str_ra))
-                    elem.setText(7, str(str_dec))
+                    elem.setText(7, str(str_ra))
+                    elem.setText(8, str(str_dec))
             
             if elem:
                 self.listView_dataS.setCurrentItem(elem)
             
             # Resize the columns and set sort column
-            for i in range(0,8):
+            for i in range(0, 9):
                 self.listView_dataS.resizeColumnToContents(i)
-            self.listView_dataS.sortItems(4, Qt.DescendingOrder)
+            self.listView_dataS.sortItems(5, Qt.DescendingOrder)
                       
 #########################################################################
 ###### Pop-Up ###########################################################

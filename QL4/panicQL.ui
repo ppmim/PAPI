@@ -1230,12 +1230,23 @@
       </column>
       <column>
        <property name="text">
-        <string>ExpT</string>
+        <string>Nimgs</string>
+       </property>
+       <property name="toolTip">
+        <string>Number of images of the cube (=1 if integrated)</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>Date-Obs</string>
+        <string>TExpFile</string>
+       </property>
+       <property name="toolTip">
+        <string>Total integration time of the file (=Nimg*TEXP)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>DateObs</string>
        </property>
       </column>
       <column>

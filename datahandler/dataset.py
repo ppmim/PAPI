@@ -38,8 +38,9 @@ class DataSet(object):
     """
 
     ############################################################
-    TABLE_COLUMNS="(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
-                    ut_time, mjd, type, filter, texp, ra, dec, object, detector_id)"
+    TABLE_COLUMNS = "(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
+                    ut_time, mjd, type, filter, texp, ra, dec, object, detector_id, \
+                    crepeat, ncoadds, itime)"
                 
     # Maximum seconds (10min=600secs aprox) of temporal distant allowed between 
     # two consecutive frames (1/86400.0)*10*60
@@ -140,10 +141,11 @@ class DataSet(object):
         """
 
         #log.debug("Inserting file %s into dataset" % filename)
-        if filename==None: return False
+        if filename == None: 
+            return False
         
         try:
-            if self.GetFileInfo(filename)!=None:
+            if self.GetFileInfo(filename) != None:
                 log.error("File %s not inserted, it is already in Database."%filename)
                 return False
         except Exception,e:
@@ -160,7 +162,8 @@ class DataSet(object):
                 fitsf.obID, fitsf.obPat, fitsf.pat_expno, fitsf.pat_noexp, 
                 filename, fitsf.date_obs, fitsf.time_obs, fitsf.mjd, fitsf.type, 
                 fitsf.filter, fitsf.exptime, fitsf.ra, fitsf.dec, fitsf.object,
-                fitsf.detectorID)
+                fitsf.detectorID,
+                fitsf.nexp, fitsf.ncoadds, fitsf.itime)
         
         #print "dataDB_tuple = ", data
          
@@ -171,7 +174,7 @@ class DataSet(object):
             (self.instrument==fitsf.getInstrument().lower())):
             try:
                 cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +
-                            "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
+                            "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
                 self.con.commit()
     
             except sqlite.DatabaseError,e:
@@ -515,6 +518,7 @@ class DataSet(object):
         if max_ra_dec_diff == None:
             max_ra_dec_diff = DataSet.MAX_RA_DEC_DIFF
         
+        
         if max_nfiles == None:
             max_nfiles = DataSet.MAX_NFILES
     
@@ -578,14 +582,14 @@ class DataSet(object):
         for seq in filter_file_list:
             group = []
             mjd_0 = self.GetFileInfo(seq[0])[10] # reference for temporal gap
-            ra_0 = self.GetFileInfo(seq[0])[7]*3600  # reference for spatial gap
-            dec_0 = self.GetFileInfo(seq[0])[8]*3600 # reference for spatial gap
+            ra_0 = self.GetFileInfo(seq[0])[7] * 3600  # reference for spatial gap
+            dec_0 = self.GetFileInfo(seq[0])[8] * 3600 # reference for spatial gap
             #print "RA_0=",ra_0
             #print "DEC_0=",dec_0
             for file in seq:
                 t = self.GetFileInfo(file)[10]
-                ra = self.GetFileInfo(file)[7]*3600 # arcsecs
-                dec = self.GetFileInfo(file)[8]*3600 #arcsecs
+                ra = self.GetFileInfo(file)[7] * 3600 # arcsecs
+                dec = self.GetFileInfo(file)[8] * 3600 #arcsecs
                 #print "DIF_RA=",math.fabs(ra-ra_0)
                 #print "MaxRADecDiff=",max_ra_dec_diff
                 #print "RA0=",ra_0
@@ -603,20 +607,23 @@ class DataSet(object):
                 # both will be classified as dark_model sequences, but
                 # if max_nfiles=3, then they will be distinguished, although
                 # it will also affect the other sequences. 
-                if (math.fabs(t-mjd_0) < max_mjd_diff and
-                    math.fabs(ra-ra_0) < max_ra_dec_diff and
-                    math.fabs(dec-dec_0) < max_ra_dec_diff and
+                
+                # Note: To avoid problems at high declinations, we 'flat' 
+                # the maximum distance multiplying with the cos(dec).
+                if (math.fabs(t - mjd_0) < max_mjd_diff and
+                    math.fabs(ra - ra_0) < (max_ra_dec_diff / math.cos((dec / 3600.0) * 2 * math.pi / 360.0) ) and
+                    math.fabs(dec - dec_0) < max_ra_dec_diff and
                     len(group) < max_nfiles):
                     group.append(file)
                     mjd_0 = t
                 # Darks do not have coordinates restrictions
                 elif (self.GetFileInfo(seq[0])[2] == 'DARK' and 
-                      math.fabs(t-mjd_0)< max_mjd_diff and len(group) < max_nfiles):
+                      math.fabs(t - mjd_0) < max_mjd_diff and len(group) < max_nfiles):
                     group.append(file)
                     mjd_0 = t
                 # Flats (dome or sky) do not have coordinates restrictions
                 elif (self.GetFileInfo(seq[0])[2].find("FLAT")>=0 and 
-                      math.fabs(t-mjd_0)< max_mjd_diff and len(group) < max_nfiles):
+                      math.fabs(t - mjd_0)< max_mjd_diff and len(group) < max_nfiles):
                     group.append(file)
                     mjd_0 = t
                 else:
@@ -910,23 +917,23 @@ class DataSet(object):
         A list with some database fields, i.e.:
                       
             date(0), ut_time(1), type(2), filter(3), texp(4), detector_id(5),
-            run_id(6), ra(7), dec(8), object(9), mjd(10)
+            run_id(6), ra(7), dec(8), object(9), mjd(10), nexp(18), ncoadds(19), itime(20)
         """
 
         try:
             # CAUTION: if we modify the query values in the SELECT, it will 
             # affect a lot of code in PAPI !!!! need to be re-writed !!
             s_select = "select date, ut_time, type, filter, texp, detector_id,\
-             run_id, ra, dec, object, mjd from dataset where filename=?"
+             run_id, ra, dec, object, mjd, crepeat, ncoadds, itime from dataset where filename=?"
              
             cur = self.con.cursor()
             cur.execute(s_select, (filename,))
             
             rows = cur.fetchall()
-            if len(rows)==0:
+            if len(rows) == 0:
                 # Any match
                 return None
-            elif len(rows)>1: # it should not happen !!
+            elif len(rows) > 1: # it should not happen !!
                 for row in rows:
                     print "Two rows were found !!: ", row #only for debug
                 return rows[0] # return only the first

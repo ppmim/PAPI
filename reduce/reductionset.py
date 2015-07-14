@@ -72,7 +72,7 @@ import datahandler.dataset
 import misc.collapse
 import correctNonLinearity
 import misc.cleanBadPix as cleanBadPix
-
+import montage
 
 
 # If your parallel tasks are going to use the same instance of PyRAF (and thus 
@@ -276,18 +276,14 @@ class ReductionSet(object):
         
         # Main output file resulted from the data reduction process
         if out_file == None: 
-            # if no filename, we take the DATE-OBS of the first file of the SEQ
-            with fits.open(rs_filelist[0], ignore_missing_end=True) as myhdulist:
-                if 'DATE-OBS' in myhdulist[0].header:
-                    self.out_file = self.out_dir + "/PANIC." + \
-                            myhdulist[0].header['DATE-OBS'] +".fits"
-                else:
-                    output_fd, self.out_file = tempfile.mkstemp(suffix='.fits', 
-                                                        prefix='PANIC_RED_', 
-                                                        dir=self.out_dir)
-                    os.close(output_fd)
-                    os.unlink(self.out_file) # we only need the name
-        else:    
+            self.out_file = None
+            # the output filename will be set later at the end 
+            # of the reduction of each sequence of the DataSet, taking the DATE-OBS
+            # for the first file of the sequence.
+            # It cannnot be set here because we need a different name for
+            # each sequence.
+        else:
+            # Otherwise
             self.out_file = out_file  # final reduced data file (out)
             
         
@@ -413,7 +409,7 @@ class ReductionSet(object):
         #               http://www.sqlite.org/cvstrac/wiki?p=MultiThreading
         self.ext_db_files = []
         if external_db_files == None:
-            if self.config_dict !=None:
+            if self.config_dict != None:
                 cal_dir = self.config_dict['general']['ext_calibration_db']
                 if os.path.isdir(cal_dir):
                     for ifile in dircache.listdir(cal_dir):
@@ -460,9 +456,9 @@ class ReductionSet(object):
         
         self.m_LAST_FILES = self.rs_filelist # Later properly initialized in reduceSingleObj()
         
-        if self.master_dark!=None: self.db.insert(self.master_dark)
-        if self.master_flat!=None: self.db.insert(self.master_flat)
-        if self.master_bpm !=None: self.db.insert(self.master_bpm)
+        if self.master_dark != None: self.db.insert(self.master_dark)
+        if self.master_flat != None: self.db.insert(self.master_flat)
+        if self.master_bpm  != None: self.db.insert(self.master_bpm)
         
         # self.db.ListDataSet()
         
@@ -1929,15 +1925,15 @@ class ReductionSet(object):
         out_dir = self.out_dir
         tmp_dir = self.temp_dir
                  
-        misc.fileUtils.removefiles(out_dir+"/*.ldac",out_dir+"/py-sex*",
-                                   out_dir+"/*.objs")
-        misc.fileUtils.removefiles(out_dir+"/coadd1*", out_dir+"/*_D.fits",
-                                       out_dir+"/*_F.fits", out_dir+"/*_D_F.fits" )
-        misc.fileUtils.removefiles(out_dir+"/gain*.fits", out_dir+"/masterObjMask.fits",
-                                       out_dir+"/*.pap", out_dir+"/*.list", 
-                                       out_dir+"/superFlat.fits")
-        misc.fileUtils.removefiles(out_dir+"/*.head", out_dir+"/*.txt",
-                                       out_dir+"/*.xml")#, out_dir+"/*.png")
+        misc.fileUtils.removefiles(out_dir + "/*.ldac", out_dir+"/py-sex*",
+                                   out_dir + "/*.objs")
+        misc.fileUtils.removefiles(out_dir + "/coadd1*", out_dir+"/*_D.fits",
+                                       out_dir + "/*_F.fits", out_dir + "/*_D_F.fits" )
+        misc.fileUtils.removefiles(out_dir + "/gain*.fits", out_dir + "/masterObjMask.fits",
+                                       out_dir + "/*.pap", out_dir + "/*.list", 
+                                       out_dir + "/superFlat.fits")
+        misc.fileUtils.removefiles(out_dir + "/*.head", out_dir + "/*.txt",
+                                       out_dir + "/*.xml")#, out_dir+"/*.png")
        
         misc.fileUtils.removefiles(out_dir + "/*.Q0?.fits")
  
@@ -1948,8 +1944,8 @@ class ReductionSet(object):
         
         # Remove extension directories
         for i in range(4):
-            if os.path.exists(self.out_dir+"/Q%02d"%(i+1)):
-                shutil.rmtree(self.out_dir+"/Q%02d"%(i+1), True)
+            if os.path.exists(self.out_dir + "/Q%02d"%(i+1)):
+                shutil.rmtree(self.out_dir + "/Q%02d"%(i+1), True)
         
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
@@ -2259,8 +2255,9 @@ class ReductionSet(object):
                     
                     task = reduce.calTwFlat.MasterTwilightFlat(group, 
                                                                master_dark[-1], 
-                                                               outfile, lthr=10000, 
-                                                               hthr=40000, 
+                                                               outfile, 
+                                                               lthr=5000, 
+                                                               hthr=60000, 
                                                                bpm=None)
                     out = task.createMaster()
                     
@@ -2730,8 +2727,8 @@ class ReductionSet(object):
                                                                master_dark_model,
                                                                master_darks,
                                                                outfile, 
-                                                               lthr=10000, 
-                                                               hthr=40000, 
+                                                               lthr=5000, 
+                                                               hthr=60000, 
                                                                bpm=None,
                                                                normal=True, # it is also done in calGainMap
                                                                temp_dir=self.temp_dir,
@@ -2852,7 +2849,7 @@ class ReductionSet(object):
                     if detector == 'Q1': q = 0   # SG1
                     elif detector == 'Q2': q = 1 # SG2
                     elif detector == 'Q3': q = 2 # SG3
-                    elif detector == 'Q4': q = 4 # SG4
+                    elif detector == 'Q4': q = 3 # SG4
                     elif detector == 'Q123': q = -4 # all except SG4
                     else: q = -1 # all detectors
                     if q >=0 :
@@ -3031,29 +3028,62 @@ class ReductionSet(object):
                                             __version__, 'PANIC Pipeline version')
                     #TBD: add images of the sequence reduced to the history keyword
                     if not self.out_file:
+                        prefix = os.path.splitext(os.path.basename(obj_ext[0][0]))[0]
                         if 'DATE-OBS' in myhdulist[0].header:
-                            seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                            #seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
+                            seq_result_outfile = self.out_dir + "/" + prefix + "-" + myhdulist[0].header['DATE-OBS'] +".fits"
                         else:
                             output_fd, seq_result_outfile = tempfile.mkstemp(suffix='.fits', 
-                                                                prefix='PANIC_RED_', 
+                                                                prefix=prefix, 
                                                                 dir=self.out_dir)
                             os.close(output_fd)
                             os.unlink(seq_result_outfile) # we only need the name
                     else:
                         seq_result_outfile = self.out_file
+                        # To avoid overwriting of an already created out_file 
+                        # from a previous reduction, we check if out_file exists,
+                        # and then, add a suffix
+                        if os.path.exists(seq_result_outfile):
+                            suffix = "_%s.fits" % myhdulist[0].header['DATE-OBS']
+                            seq_result_outfile = seq_result_outfile.replace(".fits", suffix)
                         
             except Exception,e:
-                log.error("Error: %s"%str(e))
+                log.error("Error: %s" % str(e))
                 raise e
             
             if len(out_ext) > 1:
-                log.debug("[reduceSeq] *** Creating final output file *WARPING* single output frames....***")
-                #option 1: create a MEF with the results attached, but not warped
+                log.debug("[reduceSeq] *** Creating final MOSAIC *WARPING* single output frames....***")
+                # option 1: create a MEF with the results attached, but not warped
                 #mef=misc.mef.MEF(outs)
                 #mef.createMEF(seq_result_outfile)
                 #option 2(current): SWARP result images to register the N-extension into one wide-single extension
-                log.debug("*** Coadding/Warping overlapped files....")
+                #log.debug("*** Warping overlapped files....")
                 
+                # Build Mosaic using SWARP
+                """aw = reduce.astrowarp.AstroWarp(out_ext, catalog="2MASS", 
+                         coadded_file=seq_result_outfile, config_dict=self.config_dict,
+                         resample=True, subtract_back=True)
+                try:
+                    aw.run(engine=self.config_dict['astrometry']['engine'])
+                except Exception, ex:
+                    log.error("Some error while running Astrowarp to build final mosaic....")
+                    raise ex
+                """
+                # Build Mosaic using Montage
+                try:
+                    montage.mosaic(out_ext, 
+                               raw_dir=self.temp_dir, 
+                               output_dir=self.temp_dir,
+                               tmp_dir=self.temp_dir,
+                               background_match=True,
+                               out_mosaic=seq_result_outfile)
+                except Exception, ex:
+                    log.error("Some error while building final Mosaic (Montage)")
+                    raise ex
+                
+                
+                #----
+                """
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
                 # Note: copy_keywords must be without spaces between keys and 'coma'
@@ -3071,11 +3101,13 @@ class ReductionSet(object):
                 try:
                     swarp.run(out_ext, updateconfig=False, clean=False)
                 except SWARPException, e:
-                    log.error("Error while running SWARP")
+                    log.error("Error while running SWARP from final mosaic")
                     raise e
                 except Exception, e:
                     log.error("Unknow error while running SWARP: %s",str(e))
                     raise e
+                """
+                #---
                 
                 files_created.append(seq_result_outfile)
                 log.info("*** Obs. Sequence reduced. File %s created.  ***", 
@@ -3094,11 +3126,17 @@ class ReductionSet(object):
                 data reduction ....review your logs files")
             
             # Add the list of original raw-files to the result image header
-            if len(out_ext)>0:
+            if len(out_ext) > 0:
                 new_frame = fits.open(seq_result_outfile, 'update')
                 raw_frames = [os.path.basename(f) for f in sequence]
-                new_frame[0].header.add_history("RAW_FRAMES= %s"%str(raw_frames))
+                new_frame[0].header.add_history("RAW_FRAMES= %s" % str(raw_frames))
                 new_frame.close()
+                
+            # Insert INSTRUMET/FILTER/TELESCOPE (montage does not include them)
+            with fits.open(seq_result_outfile, 'update') as hd:
+                hd[0].header.set('INSTRUME', fits.getval(sequence[0], 'INSTRUME', 0))
+                hd[0].header.set('FILTER', fits.getval(sequence[0], 'FILTER', 0))
+                hd[0].header.set('TELESCOP', fits.getval(sequence[0], 'TELESCOP', 0))
                 
         else:
             log.error("[reduceSeq] Cannot identify the type of the sequence to reduce ...")
@@ -3122,8 +3160,8 @@ class ReductionSet(object):
         # Only one file it is expected to be returned
         return files_created
  
-        
-    def reduceSingleObj_NOT_USED_(self, obj_frames, master_dark, master_flat, master_bpm, 
+
+    def reduceSingleObj(self, obj_frames, master_dark, master_flat, master_bpm, 
                   red_mode, out_dir, output_file):
         
         """ 
@@ -3173,26 +3211,24 @@ class ReductionSet(object):
         
         """
         
-        log.info("##################################")
+        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
+        log.info("#########################################")
         log.info("#### Starting Object Data Reduction #####")
         log.info("#### MODE = %s  ", self.red_mode)
         log.info("#### OUT_DIR = %s ",out_dir)
         log.info("#### OUT_FILE = %s ", output_file)
         log.info(" ----------------------------------")
-        c_filter = datahandler.ClFits(obj_frames[0]).getFilter()
         log.info("#### FILTER = %s", c_filter)
         log.info("#### MASTER_DARK = %s ", master_dark)
         log.info("#### MASTER_FLAT = %s ", master_flat)
         log.info("#### MASTER_BPM = %s ", master_bpm)
-        log.info("##################################")
-        #print "OBJS =",obj_frames
+        log.info("#########################################")
         
-        # set the reduction mode
+        # if given, set the reduction mode, else use default mode.
         if red_mode != None: self.red_mode = red_mode
-        #else, keep the red_mode value from the object
         
         
-        # Clean old files 
+        # Clean old files
         #self.cleanUpFiles()
         
         # Change cwd to self.out_dir
@@ -3203,14 +3239,10 @@ class ReductionSet(object):
         # and Initialize self.m_LAST_FILES
         if not os.path.abspath(os.path.join(obj_frames[0], os.pardir)) == out_dir:
             misc.fileUtils.linkSourceFiles(obj_frames, out_dir)
-            self.m_LAST_FILES = [out_dir+"/"+os.path.basename(file_i) for file_i in obj_frames]
+            self.m_LAST_FILES = [out_dir + "/" + os.path.basename(file_i) for file_i in obj_frames]
         else:
             self.m_LAST_FILES = obj_frames
             
-        #print "\nSOURCES TO BE REDUCED:"
-        #print   "====================="
-        #print self.m_LAST_FILES
-        #print   "====================="
         
         ########################################################################
         # 0 - Some checks (filter, ....) 
@@ -3239,7 +3271,13 @@ class ReductionSet(object):
         ########################################################################
         try:
             # overwrite initial given observing mode
-            self.obs_mode = self.getObsMode()  
+            self.obs_mode = self.getObsMode()
+            # Check if we have an extended object; in that case, only 'quick' 
+            # reduction modes are supported.
+            if red_mode == 'lemon' and self.obs_mode != 'dither':
+                log.warning("Reduction mode 'lemon' not supported for extended"\
+                    "object sequences, 'quick-lemon' will be used.")
+                self.red_mode = 'quick-lemon'
         except:
             raise
         
@@ -3251,18 +3289,19 @@ class ReductionSet(object):
         self.m_rawFiles = self.m_LAST_FILES        
 
         ########################################################################
-        # 0 - Bad Pixels; two options:
-        # To Fix: replace with a bi-linear interpolation from nearby pixels.
-        # To add to gainmap:  to set bad pixels to bkg level 
+        # 0 - Bad Pixels; three options:
+        # 'none': nothing to do, BPM is ignored.
+        # 'fix': replace with a bi-linear interpolation from nearby pixels.
+        # 'grab': to add to gainmap and then set bad pixels to bkg level (skyfilter)
         # Both options are incompatible.
         ########################################################################
-        if self.config_dict['bpm']['mode'].lower()=='none':
+        if self.config_dict['bpm']['mode'].lower() == 'none':
             master_bpm_4gain = None
             master_bpm_4fix = None
-        elif self.config_dict['bpm']['mode'].lower()=='fix':
+        elif self.config_dict['bpm']['mode'].lower() == 'fix':
             master_bpm_4gain = None
             master_bpm_4fix = master_bpm
-        elif self.config_dict['bpm']['mode'].lower()=='grab':
+        elif self.config_dict['bpm']['mode'].lower() == 'grab':
             master_bpm_4gain = master_bpm
             master_bpm_4fix = None
         else:
@@ -3288,26 +3327,26 @@ class ReductionSet(object):
         #      can come from the 'master_flat' provided by the user or from the 
         #      just created 'super_flat' with sci images 
         ########################################################################
-        if master_flat==None:
+        if master_flat == None:
             try:
                 # - Find out what kind of observing mode we have (dither, ext_dither, ...)
                 log.info('**** Computing Super-Sky Flat-Field (local_master_flat) ****')
-                local_master_flat = out_dir+"/superFlat.fits"
-                if self.obs_mode=="dither":
+                local_master_flat = out_dir + "/superFlat.fits"
+                if self.obs_mode == "dither":
                     log.debug("---> dither sequece <----")
                     misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                    superflat = reduce.SuperSkyFlat(out_dir + "/files.list", 
                                                     local_master_flat, bpm=None, 
                                                     norm=True, 
                                                     temp_dir=self.temp_dir)
                     superflat.create()
-                elif (self.obs_mode=="dither_on_off" or
-                      self.obs_mode=="dither_off_on" or
-                      self.obs_mode=="other"):
+                elif (self.obs_mode == "dither_on_off" or
+                      self.obs_mode == "dither_off_on" or
+                      self.obs_mode == "other"):
                     log.debug("----> EXTENDED SOURCE !!! <----")
                     sky_list = self.getSkyFrames()
-                    misc.utils.listToFile(sky_list, out_dir+"/files.list")
-                    superflat = reduce.SuperSkyFlat(out_dir+"/files.list", 
+                    misc.utils.listToFile(sky_list, out_dir + "/files.list")
+                    superflat = reduce.SuperSkyFlat(out_dir + "/files.list", 
                                                     local_master_flat, bpm=None, 
                                                     norm=True, 
                                                     temp_dir=self.temp_dir)
@@ -3316,7 +3355,7 @@ class ReductionSet(object):
                     log.error("Dither mode not supported")
                     raise Exception("Error, dither mode not supported")
             except Exception,e:
-                raise e    
+                raise e
         else:
             local_master_flat = master_flat 
             log.info("Using the given (dome or twlight) master flat")
@@ -3338,17 +3377,18 @@ class ReductionSet(object):
             maxgain = 1.8
             nxblock = 16
             nyblock = 16
-            nsigma = 5
+            nsigma = 10
             
         # When gainmap is created (from dome or sky flats), it must be normalized
         # wrt mode of chip 1 to get gain differences, set bad pixels, 
         # outlier set =0 (e.g. pixels deviating >5 sigma from local median,
         # pixels deviating >30%(?),...
         # do_normalization=False because it is suppossed that FF is already 
-        # normalized.
+        # normalized, however the flat-field is checked (median > 100) to 
+        # find out if it was already normalized.
         g = reduce.calGainMap.GainMap(local_master_flat, gainmap, 
                                     bpm=master_bpm_4gain, 
-                                    do_normalization=False,  
+                                    do_normalization=False,
                                     mingain=mingain, maxgain=maxgain,
                                     nxblock=nxblock, nyblock=nyblock,
                                     nsigma=nsigma)
@@ -3360,24 +3400,27 @@ class ReductionSet(object):
         # GainMap ===> Bad pixels <=0, Good pixels = 1
         # Later, in skyfilter procedure bad pixels are set to bkg level.
         ########################################################################
-        if master_bpm_4gain !=None:
+        if master_bpm_4gain != None:
             log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm_4gain, gainmap))
             if not os.path.exists( master_bpm_4gain ):
                 log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
             else:
                 # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
                 bpm_data = fits.getdata(master_bpm_4gain, header=False)
-                badpix_p = numpy.where(bpm_data>0)
+                badpix_p = numpy.where(bpm_data > 0)
+                log.debug("Number of Bad Pixels to combine from BPM: %d", (bpm_data > 0).sum())
                 gain_data, gh = fits.getdata(gainmap, header=True)
+                log.debug("Initial number of Bad Pixels in GainMap: %d", (gain_data ==0).sum())
                 gain_data[badpix_p] = 0
-                gh.set('HISTORY','Combined with BPM:%s'%master_bpm_4gain)
+                log.debug("Final number of Bad Pixels in GainMap: %d", (gain_data==0).sum())
+                gh.set('HISTORY','Combined with BPM:%s' % master_bpm_4gain)
                 fits.writeto(gainmap, gain_data, header=gh, clobber=True)
         
         ########################################################################
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
-        #      each raw frame.  
+        #      each raw frame.
         ########################################################################
-        if self.red_mode=='lab':
+        if self.red_mode == 'lab':
             log.info("**** Computing FWHM of each pre-reduced image ****")
             # First, get input parameter for FWHM estimation
             satur_level = self.config_dict['astrometry']['satur_level']
@@ -3392,7 +3435,7 @@ class ReductionSet(object):
                     log.warning("Cannot get NCOADDS. Taken default (=1)")
                     satur_level = satur_level
                 
-                # Note that we could computer FWHM for a well-defined area
+                # Note that we could compute FWHM for a well-defined area
                 # using edge_x and edge_y parameters.    
                 cq = reduce.checkQuality.CheckQuality(r_file, isomin=10.0,
                     ellipmax=0.3, edge_x=100, edge_y=100, pixsize=pix_scale, 
@@ -3413,8 +3456,8 @@ class ReductionSet(object):
                     raise e
             
             log.info("**********************************")
-            log.info("*** Mean-FWHM = %s"%numpy.mean(fwhm_t))
-            log.info("*** Mean-STD = %s"%numpy.mean(std_t))
+            log.info("*** Mean-FWHM = %s" % numpy.mean(fwhm_t))
+            log.info("*** Mean-STD = %s" % numpy.mean(std_t))
             log.info("*** END of Lab data reduction ****")
             return self.m_LAST_FILES[0]
             
@@ -3424,27 +3467,29 @@ class ReductionSet(object):
         #     (and set bad pixels to bkg lvl)
         ########################################################################
         log.info("**** 1st Sky subtraction (without object mask) ****")
-        misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/skylist1.list")
-        # Return only filtered images; in exteded-sources, sky frames  are not 
+        misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/skylist1.list")
+        # Return only filtered images; in extended-sources, sky frames  are not 
         # included.
         #  
-        self.m_LAST_FILES = self.skyFilter(out_dir+"/skylist1.list",
+        self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist1.list",
                                            gainmap, 'nomask', self.obs_mode)
         
         ########################################################################
         # 4.1 - Remove crosstalk - (only if bright stars are present)
         #       (if red_mode!=quick, then crosstalk will be done later)
         ########################################################################
-        if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
-            self.config_dict['general']['remove_crosstalk']):
+        # Always remove crosstalk if enabled in config.
+        if self.config_dict['general']['remove_crosstalk']:
+        #if ((self.red_mode=='quick' or self.red_mode=='quick-lemon') and 
+        #    self.config_dict['general']['remove_crosstalk']):
             log.info("**** Removing crosstalk ****")
             try:
                 res = map(reduce.dxtalk.remove_crosstalk, self.m_LAST_FILES, 
-                            [None]*len(self.m_LAST_FILES), 
-                            [True]*len(self.m_LAST_FILES))
+                            [None] * len(self.m_LAST_FILES), 
+                            [True] * len(self.m_LAST_FILES))
                 self.m_LAST_FILES = res
             except Exception,e:
-                raise e
+                raise e      
 
         ########################################################################
         # 4.2 - Divide by the master flat after sky subtraction ! 
@@ -3457,7 +3502,7 @@ class ReductionSet(object):
         # For further details, check TN and Wei-Hao (SIMPLE) mails. 
         # So, it is implemented here only for academic purposes !
         ########################################################################
-        if self.apply_dark_flat==2 and master_flat!=None:
+        if self.apply_dark_flat == 2 and master_flat != None:
             log.info("**** Applying Flat AFTER sky subtraction ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        None,  
@@ -3494,7 +3539,6 @@ class ReductionSet(object):
         # No obstante, con Astrometry.net igual si se puede conseguir algo estable ...
         # 6b - Computer dither offsets and coadd
         ########################################################################
-<<<<<<< HEAD
         #self.coadd_mode = 'swarp'
         #self.coadd_mode = 'dithercubemean'
         if self.coadd_mode == 'swarp':
@@ -3503,15 +3547,6 @@ class ReductionSet(object):
                 #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
                 aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                               coadded_file=output_file, config_dict=self.config_dict)
-=======
-        _astrowarp = True
-        if _astrowarp:
-            if self.obs_mode!='dither' or self.red_mode=="quick":
-                log.info("**** Doing Astrometric calibration and coaddition result frame ****")
-                #misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
-                aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="GSC-2.3", 
-                        coadded_file=output_file, config_dict=self.config_dict)
->>>>>>> d393761ca0a36149e4969cc6f48ca485e453f704
                 try:
                     aw.run(engine = self.config_dict['astrometry']['engine'])
                 except Exception,e:
@@ -3523,10 +3558,6 @@ class ReductionSet(object):
                 log.info("#########################################")
                 return output_file
         
-        ## -- fin prueba !!
-        ########################################################################
-        # 6new - Compute dither offsets from the first sky subtracted/filtered 
-        # images using astrometric calibration (Astrometric.Net).
         ########################################################################
         misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files_skysub.list")
         new_files = []
@@ -3765,11 +3796,7 @@ class ReductionSet(object):
         #       2-Coaddition of corrected field distortion images (SWARP)
         #       3-Final Astrometric calibration (SCAMP) of the coadded image
         #######################################################################
-<<<<<<< HEAD
-        if self.coadd_mode=='swarp':
-=======
         if _astrowarp:
->>>>>>> d393761ca0a36149e4969cc6f48ca485e453f704
             print "astrowarp--->LAST_FILES=",self.m_LAST_FILES
             
             log.info("**** Astrometric calibration and stack of individual \
@@ -4192,19 +4219,23 @@ class ReductionSet(object):
             self.m_LAST_FILES = res.apply()
         
         ########################################################################
+=======
+>>>>>>> master
         # Preliminary Astrometric calibration of sky-subtracted frames.
         # ######################################################################
         if self.config_dict['offsets']['method'] == 'wcs':
             log.info("**** Preliminary Astrometric calibration ****")
             new_files = []
             for my_file in self.m_LAST_FILES:
+                print "MY_FILE=", my_file
+                print "LAST_FILES=", self.m_LAST_FILES
                 # Run astrometric calibration
                 try:
                     solved = reduce.solveAstrometry.solveField(my_file, 
                                 out_dir, # self.temp_dir produces collision
                                 self.temp_dir,
                                 self.config_dict['general']['pix_scale'])
-                except Exception,e:
+                except Exception, e:
                     raise Exception("[solveAstrometry] Cannot solve Astrometry for file: %s \n%s"%(my_file, str(e)))
                 else:
                     # Rename the file
