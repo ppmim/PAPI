@@ -7652,6 +7652,14 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Añadir a documento de instalación el paquete Montage y su wrapper para Python
+- Actualizar bash_rc con nueva configuración para Montage
+- Añadir a documentación el problema de KDE y la variable KDE_FORK_SLAVES para solucionar 
+el problema de "Cannot talk to klauncher: Not connected to D-Bus server".
+
+http://www.linuxito.com/nix/494-resolver-error-could-not-start-process-cannot-talk-to-klauncher-not-connected-to-d-bus-server-en-freebsd-con-kde
+
+
 - Añadir a documentación la nueva implementación sugerida por BD:
 
 - BUG: en los mosaicos all-FOV Klaus ha detectado estrellas dobles en las zonas de overlap.

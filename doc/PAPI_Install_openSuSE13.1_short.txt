@@ -615,6 +615,9 @@ again all the python modules, ie:
  * matplotlib
  * stsci_python
  * PyQt4
+ * Astropy
+ * montage-wrapper-0.9.8.tar.gz (optional?)
+ 
 
 
 2a-Astrometry.net (v0.50)
