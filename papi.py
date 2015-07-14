@@ -195,7 +195,7 @@ def main(arguments = None):
                   help = "if true, check data properties matching (type, expt, "
                   "filter, ncoadd, mjd)")
     
-    parser.add_option("-e", "--Check",
+    parser.add_option("-e", "--check",
                       action = "store_true", dest = "check_modules",
                       help = "Check if versions of PAPI modules are right.",
                        default = False)

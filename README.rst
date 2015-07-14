@@ -41,7 +41,7 @@ and also depends on next packages:
  - `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (> v7.3b5)
 
 
-Note that, for PyRAF_ you have to install IRAF_ (v2.16 or later), what can be a 
+Note that, for PyRAF_ you have to install IRAF_(v2.16 or later), what can be a 
 tricky task. However, is has been simplified in recent versions.
 
 
