@@ -4,7 +4,7 @@
 # User Configurable Settings
 #------------------------------------------------------------------------------
 # path to PAPI source directory
-export PAPI_HOME=${HOME}/DEVELOP/papi
+export PAPI_HOME=${HOME}/papi
 export PAPI_BIN=${HOME}/bin
 
 # path to PAPI output data products
@@ -58,7 +58,7 @@ mkdir $PAPI_BIN
 cp $PAPI_HOME/scripts/start_ql.sh $PAPI_BIN/start_ql
 chmod a+x $PAPI_BIN/start_ql
 cp $PAPI_HOME/scripts/start_iraf.sh $PAPI_BIN/start_iraf
-chmod $PAPI_BIN/start_iraf
+chmod a+x $PAPI_BIN/start_iraf
 
 # To check the PANIC temperatures and press
 cp -av $PAPI_HOME/scripts/panic_status $PAPI_BIN/
@@ -82,7 +82,6 @@ ln -s $PAPI_HOME/reduce/correctNonLinearity.py $PAPI_BIN/correctNonLinearity
 ln -s $PAPI_HOME/reduce/dxtalk.py $PAPI_BIN/dxtalk
 ln -s $PAPI_HOME/reduce/eval_focus_serie.py $PAPI_BIN/eval_focus
 ln -s $PAPI_HOME/reduce/makeobjmask.py $PAPI_BIN/makaobjmask
-ln -s $PAPI_HOME/reduce/refPixelCorrection.py $PAPI_BIN/refPixelCorrection
 ln -s $PAPI_HOME/reduce/remove_cosmics.py $PAPI_BIN/remove_cosmics
 ln -s $PAPI_HOME/reduce/solveAstrometry.py $PAPI_BIN/solveAstrometry
 
@@ -113,17 +112,9 @@ chmod a+x $PAPI_BIN/edhead
 # ---------------------------------------
 cp ${PAPI_HOME}/scripts/bashrc ${HOME}/.bashrc
 
-
-#echo "export PAPI_HOME=${HOME}/papi" >> ~/.bashrc
-#echo "export PAPI_BIN=${HOME}/bin" >> ~/.bashrc 
-#echo "export PAPI_PROD=${HOME}/DataProd" >> ~/.bashrc
-#echo "export PAPI_CONFIG=${PAPI_HOME}/config_files/papi_panic2_PANIC.cfg" >> ~/.bashrc
-#echo "export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}" >> ~/.bashrc
-#echo "export PATH=\$PATH:${PAPI_BIN}" >> ~/.bashrc
-
 source ~/.bashrc
 
 echo "--------------------"
 echo "PAPI was installed !"
-echo "Run 'papi --test' to check all is succesful installed."
-echo "------------------------------------------------------"
+echo "Run 'papi -e' to check all is succesful installed."
+echo "--------------------------------------------------"
