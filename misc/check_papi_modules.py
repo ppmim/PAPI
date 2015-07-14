@@ -77,7 +77,7 @@ def check_modules():
     PAPImodules = { 'numpy' : '1.6', 'pyraf' : '1.1',   
                    'matplotlib' : '0.98.1', 'scipy': '0.10', 
                    'PyQt4.QtCore': '4.8',
-                   'astropy': '0.3' }
+                   'astropy': '0.3', 'montage_wrapper': '0.9.8' }
     
     # -----------------
     # Check the modules
