@@ -3057,6 +3057,7 @@ class ReductionSet(object):
                     log.error("Some error while running Astrowarp to build final mosaic....")
                     raise ex
                 """
+                
                 # Build Mosaic using Montage
                 try:
                     montage.mosaic(out_ext, 
@@ -3070,7 +3071,7 @@ class ReductionSet(object):
                     raise ex
                 
                 
-                #----
+                #---- Build Mosaic using SWARP (not always work !)
                 """
                 swarp = astromatic.SWARP()
                 swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
