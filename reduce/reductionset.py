@@ -36,6 +36,7 @@ import tempfile
 import dircache
 import multiprocessing
 import math
+import subprocess
 
 # IRAF packages
 import pyraf
