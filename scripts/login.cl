@@ -31,7 +31,7 @@ set	stdimage	= imt4096
 #set	filewait	= yes
 #set	cmbuflen	= 512000
 #set	min_lenuserarea	= 64000
-#set	imtype		= "imh"
+set	imtype		= "fits"
 set	imextn		= "oif:imh fxf:fits,fit fxb:fxb plf:pl qpf:qp stf:hhh,??h"
 
 

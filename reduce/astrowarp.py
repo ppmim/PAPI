@@ -90,8 +90,8 @@ def initWCS(input_image, pixel_scale):
                 # Transform RA,Dec to J2000 -->fk5prec(epoch0, 2000.0, &ra, &dec);
                 # EQUINOX precessing is DONE by SCAMP !!!
                 #equinox0 = f.getEquinox()
-                WCS_J2000 = 1  #J2000(FK5) right ascension and declination
-                WCS_B1950 = 2  #B1950(FK4) right ascension and declination
+                #WCS_J2000 = 1  #J2000(FK5) right ascension and declination
+                #WCS_B1950 = 2  #B1950(FK4) right ascension and declination
                 #[new_ra, new_dec]=wcscon.wcscon(WCS_J2000, WCS_J2000, equinox0, 2000.0, ra, dec, 0)
                 # Find out PIXSCALE
                 if "PIXSCALE" in header:
@@ -567,7 +567,7 @@ class AstroWarp(object):
             self.papi_home = os.environ['PAPI_HOME']
             if self.papi_home[-1] != '/':
                 self.papi_home += '/'
-        except Exception,e:
+        except Exception:
             log.error("Error, variable PAPI_HOME not defined.")
             raise Exception("Error, variable PAPI_HOME not defined")
 
