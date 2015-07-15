@@ -1,0 +1,30 @@
+# Sample .bashrc for PANIC software
+
+test -s ~/.alias && . ~/.alias || true
+
+
+### PAPI environment ###
+
+PAPI_HOME=${HOME}/papi
+PYTHONPATH=$PYTHONPATH:$PAPI_HOME
+PAPI_CONFIG=$PAPI_HOME/config_files/papi.cfg
+QT_GRAPHICSSYSTEM=native
+ASTROMETRY=/usr/local/astrometry/bin
+
+# Proxy required for cdsclient at MPIA
+if [[ ($HOST =~ panic22) || ($HOST =~ panic35) ]] ; then
+    export http_proxy=derfel.caha.es:3128
+fi
+
+
+MONTAGE=$HOME/Montage_v3.3/bin
+PATH=$PATH:$ASTROMETRY:$HOME/bin:$MONTAGE
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
+
+export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy ASTROMETRY
+export LD_LIBRARY_PATH QT_GRAPHICSSYSTEM PATH
+
+
+
+
+

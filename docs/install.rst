@@ -29,7 +29,8 @@ are required:
     * `SWarp <http://www.astromatic.net/software/swarp>`_ (> v2.19.1)
     * `Astrometry.net <http://astrometry.net/>`_ with 42xx index files (optional to SCAMP)
     * `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (> v7.3b5)
-
+    * `Montage <http://montage.ipac.caltech.edu/download/Montage_v3.3.tar.gz>`_ (v3.3)
+ 
 Additional packages are optionally required:
     * `sphinx`_  to build the documentation
 

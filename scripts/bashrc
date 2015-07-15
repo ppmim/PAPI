@@ -1,34 +1,9 @@
-# Sample .bashrc for SuSE Linux
-# Copyright (c) SuSE GmbH Nuernberg
-
-# There are 3 different types of shells in bash: the login shell, normal shell
-# and interactive shell. Login shells read ~/.profile and interactive shells
-# read ~/.bashrc; in our setup, /etc/profile sources ~/.bashrc - thus all
-# settings made here will also take effect in a login shell.
-#
-# NOTE: It is recommended to make language settings in ~/.profile rather than
-# here, since multilingual X sessions would not work properly if LANG is over-
-# ridden in every subshell.
-
-# Some applications read the EDITOR variable to determine your favourite text
-# editor. So uncomment the line below and enter the editor of your choice :-)
-#export EDITOR=/usr/bin/vim
-#export EDITOR=/usr/bin/mcedit
-
-# For some news readers it makes sense to specify the NEWSSERVER variable here
-#export NEWSSERVER=your.news.server
-
-# If you want to use a Palm device with Linux, uncomment the two lines below.
-# For some (older) Palm Pilots, you might need to set a lower baud rate
-# e.g. 57600 or 38400; lowest is 9600 (very slow!)
-#
-#export PILOTPORT=/dev/pilot
-#export PILOTRATE=115200
+# Sample .bashrc for PANIC software
 
 test -s ~/.alias && . ~/.alias || true
 
 alias panic='cd ${PAPI_HOME}'
-alias data='cd /data1/'
+alias data='cd /data1/PANIC'
 
 ### GEIRS environment ###
 ###
@@ -47,23 +22,24 @@ TECS_SCRIPT=$HOME/TECS/scripts
 
 ### PAPI environment ###
 ##
-export PAPI_HOME=${HOME}/papi
+PAPI_HOME=${HOME}/papi
 PYTHONPATH=$PYTHONPATH:$PAPI_HOME
 PAPI_CONFIG=$PAPI_HOME/config_files/papi.cfg
-PAPI_PROD=/data2/out
-export QT_GRAPHICSSYSTEM=native
-export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy
+QT_GRAPHICSSYSTEM=native
 ASTROMETRY=/usr/local/astrometry/bin
+
 # Proxy required for cdsclient at MPIA
-http_proxy=derfel.caha.es:3128
-
-
-PATH=$PATH:$HOME/GEIRS/scripts:$HOME/GEIRS/binrjm:$ASTROMETRY:$HOME/bin:$HOME/TECS/scripts
-export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_UTIL PANIC_SCI
+if [[ ($HOST =~ panic22) || ($HOST =~ panic35) ]] ; then
+    export http_proxy=derfel.caha.es:3128
+fi
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
-export LD_LIBRARY_PATH
-export QT_GRAPHICSSYSTEM=native
+MONTAGE=$HOME/Montage_v3.3/bin
+PATH=$PATH:$HOME/GEIRS/scripts:$HOME/GEIRS/binrjm:$ASTROMETRY:$HOME/bin:$HOME/TECS/scripts:$MONTAGE
+
+export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy ASTROMETRY
+export TECS_SCRIPT LD_LIBRARY_PATH QT_GRAPHICSSYSTEM PATH
+
 
 ### OT environment ###
 export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'
