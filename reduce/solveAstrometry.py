@@ -34,8 +34,6 @@ import glob
 from optparse import OptionParser
 from distutils import spawn
 
-import astropy.io.fits as fits
-import sys
 import time
 import re
 
@@ -172,7 +170,7 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
         path_astrometry = os.path.dirname(spawn.find_executable("solve-field"))  
     except Exception, e:
         msg = "Cannot find the pathname for solve-field"
-        log.error(msg)
+        logging.error(msg)
         raise Exception(msg)
     
     if not os.path.exists(path_astrometry + "/solve-field"):
@@ -273,7 +271,7 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
             #for fl in glob.glob(tmp_dir + "/tmp.sanitized.*"):
             #    os.remove(fl)
         except Exception, e:
-            log.warning("Some error while deleting temporal files for file %s"%filename)
+            logging.warning("Some error while deleting temporal files for file %s"%filename)
             
         return out_file
     
@@ -310,7 +308,7 @@ def cleanUp(path):
         fl = path + ext
         try:
             os.remove(fl)
-        except Exception, e:
+        except Exception:
             pass
             
 def calc(args):

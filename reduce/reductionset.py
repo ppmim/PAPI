@@ -35,7 +35,6 @@ import shutil
 import tempfile
 import dircache
 import multiprocessing
-import itertools
 import math
 
 # IRAF packages
@@ -66,8 +65,6 @@ import reduce.remove_cosmics
 import reduce.astrowarp
 import reduce.solveAstrometry
 import misc.mef 
-import astromatic
-from astromatic.swarp import *
 import datahandler.dataset
 import misc.collapse
 import correctNonLinearity
@@ -990,13 +987,12 @@ class ReductionSet(object):
         
         """
 
-        candidate = None
         with fits.open(src_frame) as src_fd:
             for iframe in framelist:
                 with fits.open(iframe) as ifd:
                     # not MEF
-                    if len(ifd)==len(src_fd) and len(ifd)==1:
-                        if ifd[0].data.shape==src_fd[0].shape:
+                    if len(ifd) == len(src_fd) and len(ifd) == 1:
+                        if ifd[0].data.shape == src_fd[0].shape:
                             return iframe
                         elif datahandler.ClFits(iframe).isMasterDarkModel():
                             # Exception,  DarkModel will have always 2 layers 
@@ -1005,10 +1001,10 @@ class ReductionSet(object):
                         else: 
                             continue
                     # MEF 
-                    elif len(ifd)==len(src_fd) and len(ifd)>1:
+                    elif len(ifd) == len(src_fd) and len(ifd) > 1:
                         # We should check each extension, but it would be strange
                         # to have extension with different shapes.
-                        if ifd[1].data.shape==src_fd[1].shape:
+                        if ifd[1].data.shape == src_fd[1].shape:
                             return iframe
                         elif datahandler.ClFits(iframe).isMasterDarkModel():
                             # Exception, DarkModel will have always 2 layers 
@@ -1580,7 +1576,6 @@ class ReductionSet(object):
       pix_scale = self.config_dict['general']['pix_scale']
       # Init variables
       i = 0 
-      offsets_mat = None
       ra0 = -1
       dec0 = -1
       offsets = numpy.zeros([len(images_in), 2] , dtype=numpy.float32)
@@ -2040,7 +2035,6 @@ class ReductionSet(object):
         # 3. take the first group having the same FILTER
         last_filter = sorted_list[0][1]
         group = []
-        build_master = False
         k = 0
         while k<len(sorted_list):
             while k<len(sorted_list) and sorted_list[k][1]==last_filter:
@@ -3717,7 +3711,6 @@ class ReductionSet(object):
             log.warning("Maximum dither offset exceeded %f > %f"\
                 %(numpy.nanmax(numpy.absolute(offset_mat)), self.config_dict['offsets']['max_dither_offset']))
             log.warning("Individual (multiple) object masks will be used...")
-            single_obj_mask = False
             # Then, the offsets of object masks will be 0,0
             offset_mat.fill(0)
             # Create a object mask for each sky-subtracted file
@@ -3729,7 +3722,6 @@ class ReductionSet(object):
         else:
             # Only a common and deeper object mask
             log.info("Single (and deeper) object mask will be used")
-            single_obj_mask = True
             obj_mask_skysub = [obj_mask] * len(self.m_LAST_FILES)
             
         ########################################################################

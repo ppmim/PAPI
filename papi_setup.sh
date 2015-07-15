@@ -4,19 +4,10 @@
 # User Configurable Settings
 #------------------------------------------------------------------------------
 # path to PAPI source directory
-export PAPI_HOME=${HOME}/papi
-export PAPI_BIN=${HOME}/bin
+PAPI_HOME=${HOME}/papi
+PAPI_BIN=${HOME}/bin
+PAPI_CONFIG=${PAPI_HOME}/config_files/papi.cfg
 
-# path to PAPI output data products
-export PAPI_PROD=${HOME}/DataProd
-
-#------------------------------------------------------------------------------
-# Settings
-#------------------------------------------------------------------------------
-# path to PAPI reference files
-export PAPI_CONFIG=${PAPI_HOME}/config_files/papi.cfg
-export PATH=${PATH}:${PAPI_BIN}
-export PYTHONPATH=${PYTHONPATH}:${PAPI_HOME}
 
 #--------------------------------
 # IRAF settings
@@ -31,17 +22,6 @@ cp ${PAPI_HOME}/scripts/papi_ql_user.cl ${HOME}/iraf
 user=$(whoami)
 sed -i "s/panic/$user/g" ${HOME}/iraf/login.cl
 
-
-# comment-out chkupdate on login.cl
-# and add the next:
-# set stdimage        = imt4096
-# set imtype          = "fits"
-#if (access ("home$papi_ql_user.cl"))
-#   if (access ("/tmp/focus_seq.txt"))
-#      cl < "home$papi_ql_user.cl"
-#;
- 
-## To be done
 
 #-------------------------------
 # IRDR build
@@ -110,9 +90,11 @@ chmod a+x $PAPI_BIN/edhead
 # ---------------------------------------
 # Add Environment Variables to bash shell
 # ---------------------------------------
-cp ${PAPI_HOME}/scripts/bashrc ${HOME}/.bashrc
+cp ${PAPI_HOME}/scripts/bashrc.papi ${HOME}/.papirc
 
+echo "if [ -f ~/.papirc ]; then . ~/.papirc; fi">> ~/.bashrc
 source ~/.bashrc
+
 
 echo "--------------------"
 echo "PAPI was installed !"
