@@ -3011,10 +3011,10 @@ class ReductionSet(object):
                                             __version__, 'PANIC Pipeline version')
                     #TBD: add images of the sequence reduced to the history keyword
                     if not self.out_file:
-                        prefix = os.path.splitext(os.path.basename(obj_ext[0][0]))[0]
+                        prefix = os.path.splitext(os.path.basename(obj_ext[0][0].split('.Q01')[0]))[0]
                         if 'DATE-OBS' in myhdulist[0].header:
                             #seq_result_outfile = self.out_dir + "/PANIC." + myhdulist[0].header['DATE-OBS'] +".fits"
-                            seq_result_outfile = self.out_dir + "/" + prefix + "-" + myhdulist[0].header['DATE-OBS'] +".fits"
+                            seq_result_outfile = self.out_dir + "/" + prefix + "_" + myhdulist[0].header['DATE-OBS'] + ".fits"
                         else:
                             output_fd, seq_result_outfile = tempfile.mkstemp(suffix='.fits', 
                                                                 prefix=prefix, 
@@ -3029,7 +3029,10 @@ class ReductionSet(object):
                         if os.path.exists(seq_result_outfile):
                             suffix = "_%s.fits" % myhdulist[0].header['DATE-OBS']
                             seq_result_outfile = seq_result_outfile.replace(".fits", suffix)
-                        
+                    
+                    # Normalize the final path name 
+                    os.path.abspath(seq_result_outfile)
+            
             except Exception,e:
                 log.error("Error: %s" % str(e))
                 raise e
