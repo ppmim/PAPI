@@ -865,6 +865,7 @@ char	*image;		/* FITS image pixels */
 		}
 	    }
 	}
+
 #ifndef VMS
     else
 	fd = STDOUT_FILENO;
@@ -924,6 +925,7 @@ char	*image;		/* FITS image pixels */
 	}
     bytepix = bitpix / 8;
     if (bytepix < 0) bytepix = -bytepix;
+    
 
     /* If either dimension is one and image is 3-D, read all three dimensions */
     if (naxis == 3 && (naxis1 ==1 || naxis2 == 1)) {

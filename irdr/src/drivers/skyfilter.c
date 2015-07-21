@@ -38,7 +38,7 @@ static void readdata(int i, int usemask);
 static void freedata(int i, int usemask);
 
 static void usage(void);
-static debug = 1;
+static debug = 0; /* 1 = write sky_xxxxx.fits debug files, 0 = nothing is written */
 
 int main(int argc, char *argv[])
 {
