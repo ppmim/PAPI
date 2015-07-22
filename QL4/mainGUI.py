@@ -660,7 +660,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         calibration files (master dark,flat,bpm) in order to reduce the sequence.
         The search of the calibration files is done, firstly in the local DB, but
         if no results, then in the external DB if it was provided.
-          
+        
+        For darks, EXPTIME and NCOADDS is checked.
+        
         Returns
         -------
           
@@ -684,6 +686,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # have the same features (expT,filter,ncoadd, readout-mode, ...)
         expTime = obj_frame.expTime()
         filter = obj_frame.getFilter()
+        ncoadds = obj_frame.getNcoadds()
         
         #self.inputsDB.ListDataSet()
         #self.outputsDB.ListDataSet()
@@ -691,10 +694,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # DARK - Do NOT require equal EXPTIME Master Dark ???
         # First, look for a DARK_MODEL, then MASTER_DARK
         master_dark = self.inputsDB.GetFilesT('MASTER_DARK_MODEL', -1) 
-        if len(master_dark) == 0 and self.outputsDB!=None:
+        if len(master_dark) == 0 and self.outputsDB != None:
             master_dark = self.outputsDB.GetFilesT('MASTER_DARK_MODEL', -1)
             if len(master_dark) == 0:
-                master_dark = self.outputsDB.GetFilesT('MASTER_DARK', expTime)
+                master_dark = self.outputsDB.GetFilesT('MASTER_DARK',
+                                                       expTime, 'ANY',
+                                                       ncoadds)
+                
         
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.inputsDB.GetFilesT('MASTER_DOME_FLAT', -1, filter)
@@ -2969,6 +2975,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 dark_model = self.outputsDB.GetFilesT('MASTER_DARK_MODEL')
                 # If no files, returns an empy list
                 darks = self.outputsDB.GetFilesT('MASTER_DARK', -1)
+                # The right master darks will be found in calTwFlat.MasterTwilightFlat()
                 
                 #print "DARKS=", darks
                 #print "DM=",dark_model

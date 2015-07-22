@@ -874,10 +874,12 @@ class ReductionSet(object):
     def getCalibFor(self, sci_obj_list):
         """
         Given a list of frames belonging to a observing sequence for 
-        a given object (star, galaxy, whatever),return the most recently created 
-        calibration files (master dark,flat,bpm) in order to reduce the sequence.
+        a given object (star, galaxy, whatever), return the most recently created 
+        calibration files (master dark, flat, bpm) in order to reduce the sequence.
         The search of the calibration files is done, firstly in the local DB, 
         but if no results, then in the external DB if it was provided.
+        
+        For darks, EXPTIME and NCOADDS is checked.
         
         This routine is also used (copy) on the QL (mainGUI.py)
 
@@ -915,11 +917,11 @@ class ReductionSet(object):
         
         # Secondly (hopefully), try to find a MASTER_DARK with equal expTime
         if len(master_dark) == 0:
-            log.info("Now, trying to find a MASTER_DARK (expTime=%f)" % expTime)
-            master_dark = self.db.GetFilesT('MASTER_DARK', expTime)
+            log.info("Now, trying to find a MASTER_DARK (expTime=%f, ncoadds=%d)" % (expTime, ncoadds))
+            master_dark = self.db.GetFilesT('MASTER_DARK', expTime, 'ANY', ncoadds)
         if len(master_dark) == 0 and self.ext_db != None:
-            log.info("Last chance to find a MASTER_DARK in ext_DB (%s) with (expTime=%f)" % (self.ext_db_files, expTime))
-            master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime)
+            log.info("Last chance to find a MASTER_DARK in ext_DB (%s) with (expTime=%f, ncoadds=%d)" % (self.ext_db_files, expTime, ncoadds))
+            master_dark = self.ext_db.GetFilesT('MASTER_DARK', expTime, 'ANY', ncoadds)
         
              
         # FLATS - Do NOT require equal EXPTIME, but FILTER
@@ -945,12 +947,7 @@ class ReductionSet(object):
         if len(master_dark) > 0:
             r_dark = master_dark[-1]
             log.debug("First DARK candidate: %s" % r_dark)
-            # check if have the same NCOADDS
-            with fits.open(r_dark) as hdu:
-                if 'NCOADDS' in hdu[0].header and ncoadds == hdu[0].header['NCOADDS']:
-                    r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
-                else:
-                    r_dark = None
+            r_dark = self.getBestShapedFrame(master_dark, sci_obj_list[0])
             log.debug("Second DARK candidate: %s" % r_dark)            
         else: 
             r_dark = None
@@ -1018,7 +1015,7 @@ class ReductionSet(object):
                     else:
                         continue
 
-            # If this point is reached, it means that any suitable file was found.
+            # If this point is reached, it means that no suitable file was found.
             return None
 
 
@@ -1812,7 +1809,7 @@ class ReductionSet(object):
             return (None,None)
         
         e = misc.utils.runCmd( cmd )
-        if e==0:
+        if e == 0:
             log.debug("Some error while running command %s", cmd)
             return (None,None)
         else:
@@ -1903,6 +1900,9 @@ class ReductionSet(object):
         """
         Purge the output directory in order to remove all the intermediate files.
         It is called just after finishing a data sequence reduction.
+        
+        Note that neither reduced output files nor .weight.fits files
+        are removed.
         """
         
         log.info("Purging the output dir ...")
@@ -1929,8 +1929,8 @@ class ReductionSet(object):
         
         # Remove extension directories
         for i in range(4):
-            if os.path.exists(self.out_dir + "/Q%02d"%(i+1)):
-                shutil.rmtree(self.out_dir + "/Q%02d"%(i+1), True)
+            if os.path.exists(self.out_dir + "/Q%02d" % (i+1)):
+                shutil.rmtree(self.out_dir + "/Q%02d" % (i+1), True)
         
     ############# Calibration Stuff ############################################
     def buildCalibrations(self):
@@ -2376,6 +2376,10 @@ class ReductionSet(object):
         if len(sequences) == 0:
             raise Exception("No well-defined sequence to process was found")
         
+        # WARNING : Purging output before start !!
+        if self.config_dict['general']['purge_output']:
+            self.purgeOutput()
+            
         k = 0
         for seq,type in zip(sequences, seq_types):
             if k in seqs_to_reduce and ('all' in types_to_reduce or type in types_to_reduce):
@@ -2411,8 +2415,8 @@ class ReductionSet(object):
             log.debug("Seq. failed: \t    - %s\n"%seq_failed) 
 
         # WARNING : Purging output !!
-        if self.config_dict['general']['purge_output']:
-            self.purgeOutput()
+        #if self.config_dict['general']['purge_output']:
+        #    self.purgeOutput()
         
         # In order to have a complete track of the processing, copy log to the 
         # output directory.    
@@ -2685,7 +2689,8 @@ class ReductionSet(object):
                     master_dark_model = master_dark_model[-1]
                     master_darks = []
 
-                # If some kind of master darks were found, then go to MasterTwilightFlat
+                # If some kind of master darks were found, no matter the NCOADD/EXPTIME because
+                # they will be checked in calTwFlat, then go to MasterTwilightFlat
                 if len(master_darks) > 0 or master_dark_model != None:
                     log.debug("MASTER_DARKs = %s" % master_darks)
                     log.debug("MASTER_DARK_MODEL = %s" % master_dark_model)
@@ -2812,7 +2817,7 @@ class ReductionSet(object):
                     if self.apply_dark_flat == 1 or self.apply_dark_flat == 2: 
                         dark, flat, bpm = self.getCalibFor(sequence)
                 else:
-                    # Science-Mode: always calibration are required !
+                    # Science-Mode: always calibration are required or at least tried to find !
                     # but if not found, it continues without them.
                     dark, flat, bpm = self.getCalibFor(sequence)
                     # Return 3 filenames of master calibration frames (dark, flat, bpm), 
@@ -2896,7 +2901,7 @@ class ReductionSet(object):
                             
                             # async call to procedure
                             #extension_outfilename = l_out_dir + "/" + os.path.basename(self.out_file.replace(".fits",".Q%02d.fits"% (n+1)))
-                            extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext
+                            extension_outfilename = os.path.abspath(l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext)
                             ##calc( obj_ext[n], mdark, mflat, mbpm, self.red_mode, l_out_dir, extension_outfilename)
                             
                             red_parameters = (obj_ext[n], mdark, mflat, mbpm, 
@@ -2975,8 +2980,9 @@ class ReductionSet(object):
                                 os.mkdir(l_out_dir)
                             except OSError:
                                 log.error("[reduceSeq] Cannot create output directory %s",l_out_dir)
-                        else: self.cleanUpFiles([l_out_dir])
-                        extension_outfilename = l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext
+                        else: 
+                            self.cleanUpFiles([l_out_dir])
+                        extension_outfilename = os.path.abspath(l_out_dir + "/" + "PANIC_SEQ_Q%02d.fits"% q_ext)
                         
                         try:
                             out_ext.append(self.reduceSingleObj(obj_ext[n],
@@ -3031,7 +3037,7 @@ class ReductionSet(object):
                             seq_result_outfile = seq_result_outfile.replace(".fits", suffix)
                     
                     # Normalize the final path name 
-                    os.path.abspath(seq_result_outfile)
+                    seq_result_outfile = os.path.abspath(seq_result_outfile)
             
             except Exception,e:
                 log.error("Error: %s" % str(e))

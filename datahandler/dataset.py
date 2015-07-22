@@ -41,6 +41,8 @@ class DataSet(object):
     TABLE_COLUMNS = "(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
                     ut_time, mjd, type, filter, texp, ra, dec, object, detector_id, \
                     crepeat, ncoadds, itime)"
+                    # ncoadds can be diff from crepeat; if crepeat = ncoadds, then 
+                    # coaddition was done.
                 
     # Maximum seconds (10min=600secs aprox) of temporal distant allowed between 
     # two consecutive frames (1/86400.0)*10*60
@@ -311,9 +313,9 @@ class DataSet(object):
             return None
 
     ############################################################        
-    def GetFiles( self, detectorId='ANY', type='ANY', texp=-1, filter='ANY', 
+    def GetFiles(self, detectorId='ANY', type='ANY', texp=-1, filter='ANY', 
                   mjd=55000, ra=0, dec=0, delta_pos=360*3600/2, 
-                  delta_time=9999999, runId=None):
+                  delta_time=9999999, runId=None, ncoadds=-1):
         """
         Return the filenames (with path) from the data set with specified 
         fields. We can ask for any type of file (calib, science, master calib, 
@@ -341,6 +343,9 @@ class DataSet(object):
           delta_time: float
               secs for data-time obs search time window
           runId : str
+              Identifier of observation run.
+          ncoadds: int
+              Number of coadds (can be != crepeat)
           
 
         Returns
@@ -389,6 +394,12 @@ class DataSet(object):
                 ROUND = 0.1  # We do not need an accurate value !
                 s_texp = "texp>=%f and texp<=%f" %(texp - ROUND, texp + ROUND)
 
+            # NCOADDS: Any 'ncoadds' requirement 
+            if  ncoadds == -1:
+                s_ncoadds = "ncoadds>=%f" % ncoadds
+            else:
+                s_ncoadds = "ncoadds=%d" %ncoadds
+                
             # FILTER: The master dark does not have a 'filter' requirement
             if type == 'MASTER_DARK' or filter == "ANY":
                 s_filter = "filter>=?"
@@ -403,8 +414,10 @@ class DataSet(object):
             # MJD
             s_mjd = "mjd>%s and mjd<%s" %(mjd-delta_time, mjd+delta_time)
             
-            s_select = "select filename from dataset where %s and %s and %s and %s and %s and %s and %s order by mjd" %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd)
+            s_select = "select filename from dataset where %s and %s and %s and %s and %s and %s and %s and %s order by mjd"\
+                        %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd, s_ncoadds)
             print s_select
+            
             cur = self.con.cursor()
             #cur.execute("select filename from dataset where detector_id=? and  type=? and texp>? and texp<?  and filter=? and date=? and run_id=?",
             #                 (detectorId, type, texp-ROUND, texp+ROUND, filter, date, runId))
@@ -425,14 +438,16 @@ class DataSet(object):
             raise Exception("Error in DataSet.GetFile: %s",str(e))
             return []
 
-    def GetFilesT( self, type, texp=-1, filter="ANY"):
-        """ Get all the files which match with the specified type, texp and filter
-            If query does not match, then return a empty list []
+    def GetFilesT( self, type, texp=-1, filter="ANY", ncoadds=-1):
+        """ 
+        Get all the files which match with the specified type, texp, ncoadd,
+        and filter.
+        If query does not match, then return a empty list []
         """
               
-        return self.GetFiles( "ANY", type, texp, filter, mjd=55000 , ra=0, 
+        return self.GetFiles("ANY", type, texp, filter, mjd=55000 , ra=0, 
                               dec=0, delta_pos=360*3600/2, delta_time=9999999,
-                               runId=None)
+                              runId=None, ncoadds=ncoadds)
           
     def GetOBFiles(self, filter=None):
         """ Get all the files for each Observation Block found. 
@@ -770,7 +785,7 @@ class DataSet(object):
             seqs = []
             seq_types = []
             seqs = [self.GetFiles()]
-            if len(seqs)>0:
+            if len(seqs) > 0:
                 seq_types = [str(self.GetFileInfo(seqs[0][0])[2])]*len(seqs)
             return seqs, seq_types
         else:
@@ -893,7 +908,7 @@ class DataSet(object):
         for lista in seq_list:
             temp = temp.union(set(lista))
         un_groupped = set(self.GetFiles()) - temp
-        if len(un_groupped)>0:
+        if len(un_groupped) > 0:
             seq_list.append(list(un_groupped))
             seq_types.append('UNKNOWN')
 
