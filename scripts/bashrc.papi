@@ -3,6 +3,14 @@
 test -s ~/.alias && . ~/.alias || true
 
 
+# To give all access permissions to the group and allow other 
+# users read and write permission
+# This subtracts 002 from the sytem defaults to give a default 
+# access permission for your files of 664 (rw-rw-r--) and for 
+# your directories of 775 (rwxrwxr-x)
+
+umask 002
+
 ### PAPI environment ###
 
 PAPI_HOME=${HOME}/papi
