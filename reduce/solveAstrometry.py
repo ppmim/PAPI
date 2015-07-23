@@ -40,6 +40,8 @@ import re
 # Project modules
 from astropy import wcs
 import astropy.io.fits as fits
+import misc.robust as robust
+import numpy
 
 try: 
     import clfits
@@ -129,7 +131,7 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
 
     extension: int
         In case of MEF file, extension to be used to solve field. Default 0
-        extension means 'no-mef', and then one single extension.
+        extension means 'no-mef', and thus one single extension.
 
     Returns
     -------
@@ -144,7 +146,27 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
     
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
-        
+    
+    # Check the number of NaNs: Astrometry.net may fail if a large number of 
+    # NAN pixels is present. In this case, NaNs are replaced by mean value
+    # in order to run the astrometric calibration. After that, we revert
+    # the NAN values.
+    MAX_N_NAN = 10000
+    nan_replaced = False
+    with fits.open(filename, 'update') as hdu:
+        n_nan = numpy.count_nonzero(numpy.isnan(hdu[extension].data))
+        logging.info("Number of NANs found: %d" % n_nan)
+        if n_nan > MAX_N_NAN:
+            median = robust.mean(hdu[extension].data)
+            logging.info("Replacing NANs with median value : %f" % median)
+            p_nan = numpy.isnan(hdu[extension].data)
+            hdu[extension].data[p_nan] = median
+            hdu.flush()
+            hdu.close()
+            #fits.writeto(filename, hdu[extension].data, header=hdu[0].header, clobber=True)
+            nan_replaced = True
+            
+    
     #
     # Read header parameters
     #    
@@ -243,6 +265,15 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
         out_file = new_file.replace(".new", ".ast.fits")
         shutil.move(new_file, out_file)
         
+        # Revert NANs values
+        if nan_replaced:
+            with fits.open(out_file) as hdu:
+                logging.info("Reverting NANs...")
+                hdu[0].data[p_nan] = numpy.NaN
+                #fits.writeto(out_file, hdu[0].data, header=hdu[0].header, clobber=True)
+                hdu.flush()
+                hdu.close()
+                
         # Get rotation angle
         # Extract rotation angle from a line like the following one:
         # Field rotation angle: up is 0.214027 degrees E of N
