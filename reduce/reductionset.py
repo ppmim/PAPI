@@ -3045,62 +3045,36 @@ class ReductionSet(object):
             
             if len(out_ext) > 1:
                 log.debug("[reduceSeq] *** Creating final MOSAIC *WARPING* single output frames....***")
-                # option 1: create a MEF with the results attached, but not warped
-                #mef=misc.mef.MEF(outs)
-                #mef.createMEF(seq_result_outfile)
-                #option 2(current): SWARP result images to register the N-extension into one wide-single extension
-                #log.debug("*** Warping overlapped files....")
-                
-                # Build Mosaic using SWARP
-                """aw = reduce.astrowarp.AstroWarp(out_ext, catalog="2MASS", 
-                         coadded_file=seq_result_outfile, config_dict=self.config_dict,
-                         resample=True, subtract_back=True)
-                try:
-                    aw.run(engine=self.config_dict['astrometry']['engine'])
-                except Exception, ex:
-                    log.error("Some error while running Astrowarp to build final mosaic....")
-                    raise ex
-                """
-                
-                # Build Mosaic using Montage
-                try:
-                    montage.mosaic(out_ext, 
-                               raw_dir=self.temp_dir, 
-                               output_dir=self.temp_dir,
-                               tmp_dir=self.temp_dir,
-                               background_match=True,
-                               out_mosaic=seq_result_outfile)
-                except Exception, ex:
-                    log.error("Some error while building final Mosaic (Montage)")
-                    raise ex
-                
-                
-                #---- Build Mosaic using SWARP (not always work !)
-                """
-                swarp = astromatic.SWARP()
-                swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf'] 
-                # Note: copy_keywords must be without spaces between keys and 'coma'
-                swarp.ext_config['COPY_KEYWORDS'] = "OBJECT,INSTRUME,TELESCOPE,FILTER"\
-                "IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,HISTORY,NCOADDS,"\
-                "NDIT,PAPIVERS"
-                swarp.ext_config['IMAGEOUT_NAME'] = seq_result_outfile
-                swarp.ext_config['WEIGHTOUT_NAME'] = seq_result_outfile.replace(".fits",".weight.fits")
-                # TBC
-                #swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-                #swarp.ext_config['WEIGHT_SUFFIX'] = '.weight.fits'
-                swarp.ext_config['RESAMPLE'] = 'Y'
-                
-                
-                try:
-                    swarp.run(out_ext, updateconfig=False, clean=False)
-                except SWARPException, e:
-                    log.error("Error while running SWARP from final mosaic")
-                    raise e
-                except Exception, e:
-                    log.error("Unknow error while running SWARP: %s",str(e))
-                    raise e
-                """
-                #---
+                if self.config_dict['general']['mosaic_engine'] == 'swarp':
+                    # Build Mosaic using SWARP
+                    log.debug("Building final mosaic using SWARP")
+                    aw = reduce.astrowarp.AstroWarp(out_ext, catalog="2MASS", 
+                            coadded_file=seq_result_outfile, config_dict=self.config_dict,
+                            resample=True, subtract_back=True)
+                    try:
+                        aw.run(engine=self.config_dict['astrometry']['engine'])
+                    except Exception, ex:
+                        log.error("Some error while running Astrowarp to build final mosaic....")
+                        raise ex
+                    
+                elif self.config_dict['general']['mosaic_engine'] == 'montage':
+                    # Build Mosaic using Montage
+                    log.debug("Building final mosaic using Montage")
+                    try:
+                        montage.mosaic(out_ext, 
+                                raw_dir=self.temp_dir, 
+                                output_dir=self.temp_dir,
+                                tmp_dir=self.temp_dir,
+                                background_match=True,
+                                out_mosaic=seq_result_outfile)
+                    except Exception, ex:
+                        log.error("Some error while building final Mosaic (Montage)")
+                        raise ex
+                else:
+                    # Default: no mosaic is built
+                    log.warning("No final mosaic is built, but a MEF file")
+                    mef = misc.mef.MEF(out_ext)
+                    mef.createMEF(seq_result_outfile)
                 
                 files_created.append(seq_result_outfile)
                 log.info("*** Obs. Sequence reduced. File %s created.  ***", 
@@ -3511,8 +3485,6 @@ class ReductionSet(object):
             log.info("**** Preliminary Astrometric calibration ****")
             new_files = []
             for my_file in self.m_LAST_FILES:
-                print "MY_FILE=", my_file
-                print "LAST_FILES=", self.m_LAST_FILES
                 # Run astrometric calibration
                 try:
                     solved = reduce.solveAstrometry.solveField(my_file, 
