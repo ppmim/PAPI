@@ -267,7 +267,7 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
         
         # Revert NANs values
         if nan_replaced:
-            with fits.open(out_file) as hdu:
+            with fits.open(out_file, 'update') as hdu:
                 logging.info("Reverting NANs...")
                 hdu[0].data[p_nan] = numpy.NaN
                 #fits.writeto(out_file, hdu[0].data, header=hdu[0].header, clobber=True)
