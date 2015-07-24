@@ -40,7 +40,8 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainma
             imgout[i] = bpm[i]; /* NAN macro does not work, but 0./.0 is equivalent*/
         }
         else if (bpm[i] <= 0)
-            imgout[i] = bkg;  /* set bad pixels to bkg lvl */
+        {
+            imgout[i] = 0.0/0.0; /*bkg;*/   /* set bad pixels to bkg lvl */
             /* JMIM: I thik bad pixels should be set to __local__ bkg level to take into account when the pixel is in a star !! */
             /* compute local bkg, but probably only valid for isolated badpixels. !!*/
             /* TBC --> next probably only works fine for isolated pixels !!
@@ -51,6 +52,7 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainma
             else 
                 imgout[i] = bkg;
             */
+        }
         else
         {    
             if (skyw[i] > 0)
@@ -91,9 +93,9 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm /*
         {
             imgout[i] = bpm[i]; /* NAN macro does not work, but 0./.0 is equivalent*/
         }
-    	else if (bpm[i] <= 0)
-            imgout[i] = bkg;  /* set bad pixels to bkg lvl */
-    	
+    	else if (bpm[i] <= 0){
+            imgout[i] = 0.0/0.0; /*bkg;*/  /* set bad pixels to bkg lvl */
+        }
     	else{
             imgout[i] = img[i] + (skybkg - sky[i]); /* add constant (skybkg) to preserve original count level */
                 

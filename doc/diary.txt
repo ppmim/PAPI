@@ -7477,6 +7477,7 @@ estrellas dobles, pero aun queda alguna. No obstante, aún sigue siendo
 mejor el resultado con Montage...
 
 
+
 Prueba Montage
 ==============
 
@@ -7557,16 +7558,251 @@ el problema en SCAMP+SWARP que causa las estrellas dobles reportadas por Klaus..
   (see email 3-Jul-2015)
 
 
+  
+14-Jul-2015
+-----------
+- Corrijo/actualizo la versión de PAPI en github (ahora con Montage)
+y le escribo al IT del MPIA para que continue con la instalación de PAPI.
+Me responde por la tarde que lo ha podido instalar todo sin problemas,
+que avisará a Klaus para que lo pruebe.
+
+- Hago alguna limpieza (varibles, modulos).
+
+15-Jul-2015
+-----------
+- Modifico el script de instalación para que no sobreescriba el .bashrc;
+en su lugar creo un .papirc que se lee desde el .bashrc del usuario.
+
+- Aprovecho para limpiar la variables que se usan en el .papirc, para
+que sólo tenga las que se usan para PAPI. El resto de variables de GEIRS, OT
+y de PANIC en general, quizás habría que tenerlas en otro fichero independiente
+o documentarlo en el documento del sistema.
+
+- Lanzo la reducción de 2015-06-27 a ver que tal va...:
+
+  Al día siguiente compruebo que han fallado las secuencias de:
+  
+    --> Skyflat_dawn
+    --> field2s_J_000[1-5].fits
+    --> Algunos dome flats no tienen el filtro bien, en su lugar
+    aparece 'NO'
+  
+ (continua 17-Jul) 
+
+
+
+17-Jul-2015
+-----------
+- Además encuentro varios DomeFlat con Filter='NO'; 
+
+/data1/PANIC/2015-06-27/domeflats_0024.fits
+/data1/PANIC/2015-06-27/domeflats_0023.fits
+/data1/PANIC/2015-06-27/domeflats_0016.fits
+/data1/PANIC/2015-06-27/domeflats_0015.fits
+/data1/PANIC/2015-06-27/domeflats_0014.fits
+/data1/PANIC/2015-06-27/domeflats_0013.fits
+/data1/PANIC/2015-06-27/domeflats_0012.fits
+/data1/PANIC/2015-06-27/domeflats_0011.fits
+/data1/PANIC/2015-06-27/domeflats_0004.fits
+/data1/PANIC/2015-06-27/domeflats_0003.fits
+/data1/PANIC/2015-06-27/domeflats_0002.fits
+/data1/PANIC/2015-06-27/domeflats_0001.fits
+
+eso fue un falló que apareció en el último commisioning de PANIC, pero yo pensaba que lo había resuelto.
+Le escribo a BD para preguntarle.
+
+BD me responde que el debido a un fallo en la comunicación con el telescopio al hacer GEIRS el
+ajuste del foco al cambiar de filtro, y como GEIRS no puede terminar la macro de filtros, 
+entonces deja un 'NO'. BD dice que el usuario debe estar atento a los mesajes de GEIRS y 
+darle a ... de forma que así si se escriba el nombrel de filtro correcto en el header.
+--> RM implementa una modifcación (trunk-r739M-30) que en principio evita este problema:
+
+mail RM 17-Julio-2015:
+""
+In GEIRS version trunk-r739M-30 an error from the telescope while correcting
+the focus  has a reduced impact on the wheel status. The usuall popup of the
+error GUI happens, but the error from this function is not translated into an
+error of the wheel motion. This should leave the wheel properties unharmed
+if the telescope returns focus motion errors.
+(This is switched on with -DGEIRS_IGNORE_FOCUS_ERR in
+Makefile.am). 
+""
+
+
+- La secuencia field2s_J_000[1-5].fits había fallado porque al crear skyfilter.c los ficheros temporales
+/data2/tmp/sky_*, no había podido crearlos debido que que había ya unos creado por el usuario obs22 en
+la máquina panic1. Dichos fichero son sólo de debug, y no debería crearse en circustancias normales,
+pero no obstante sería bueno quizás tener un umask 
+
+
+
+- Añado umask 002 al bashrc.papi para evitar problemas con los permisos.
+- Me doy cuenta que la versión de PAPI que hay en panic22 no crea los ficheros
+de debug de skifilter.c en /data2/tmp/; debe ser por que no está compilado (28-Mayo)
+el skyfilter con dicho modo de debug; pero no se si habrá más cambios que no
+estén compilados y como podrían afectar  :-((.
+
+
+- Modifico sky_filter.c (debug=0) para que no se escriban los ficheros.
+
+- Encuentro (creo) un problema en la generación automática de los darks !!!
+no coinciden para nada con los que hay creados !!!! --> pendiente comprobar con el OT
+(ver debajo)
+
+20-Jul-2015
+-----------
+- Tras revisar getDarks.py y el OT, veo que todo está bien. Sin embargo el
+problema es debido a que durante la campaña del 22-28 Junio, han usado 
+el mismo fichero /data1/PANIC/2015-06-22/darks.xml para los darks; eso 
+podría servir para las imágenes de ciencia si fuesen todas la noches 
+"iguales", pero no para los sky_flats.
+Le escribo a Klaus y BD sobre esto, pero parece que están de vacaciones.
+
+
+
+- Encuentro un problema al usar x2goclient desde udit22 hacia panic1/panic22/panic35.
+Parece que es un problema de Ubuntu (udit22):
+http://lists.x2go.org/pipermail/x2go-user/2012-April/000808.html
+
+
+21-Jul-2015
+-----------
++ Modifico el nombre del mosaico que genera para evitar que aparezca 'Q01'; (reductionset.py)
++ Comienzo la reducción de la noche 2015-06-03, a ver que 
+resultados obtenemos, y si hay suerte con los darks y los skyflats:
+
+ - veo que hay algunos skyflats [dawn/dusk] que no se han procesado
+ por tener distingo número de capas en el cubo de datos. Mirando
+ en el documento 'PANIC Sky flatfield procedure' (https://powerfolder.gwdg.de/download/W1BCNzJnVlB4MXRwdmVYdkZiOThzXQ==/Documents/Generic/PANIC-GEN-SP-03_Skyflat_procedure/PANIC-GEN-SP-03_1_0_Skyflat_procedure.pdf?inline)
+ me doy cuenta de que si el ITIME > ITIMEmax (15s tipicamente), entonces se hace un 'split'
+ de la integración (para evitar tener integraciones muy largas que saturen ??).
+ 
+ --> Para solucionar esto, modifico calTwFlat para que admita skyflat con 
+ distinto numero de NCOADDS. Los darks los encuentra bien (con igual NCOADDS)
+ y se han tomado correctamente por getDarks.py
+ 
+ 
++ Lanzo de nuevo la reducción de 2015-06-03 para ver que todo OK,
+y lo guardo en /data2/out/2015-06-03_B; además esta vez lo he lanzado
+con apply_dark_flat = 1;
+
+
+22-Jul-2015
+-----------
++ Analisis de reducción de 2015-06-03 con apply_dark_flat=1:
+
+  - Los sky_flat se han procesado bien, o al menos sin errores
+  - Han fallado dos secuencias por no encontrar el dark adecuado, aunque 
+  dicho dark si existía:
+  
+[PAPI]: 2015-07-21 11:31:52,114 DEBUG    reductionset:2411: Seq. failed:        - ['/data1/PANIC/2015-06-03/CygX_DR21_Ks0001.fits', '/data1/PANIC/2015-06-03/CygX_DR21_Ks0002.fits', '/data1/PANIC/2015-06-03/CygX_DR21_Ks0003.fits', '/data1/PANIC/2015-06-03/CygX_DR21_Ks0004.fits', '/data1/PANIC/2015-06-03/CygX_DR21_Ks0005.fits']
+
+[PAPI]: 2015-07-21 11:31:52,114 DEBUG    reductionset:2411: Seq. failed:        - ['/data1/PANIC/2015-06-03/CygX_DR17_Ks_0001.fits', '/data1/PANIC/2015-06-03/CygX_DR17_Ks_0002.fits', '/data1/PANIC/2015-06-03/CygX_DR17_Ks_0003.fits', '/data1/PANIC/2015-06-03/CygX_DR17_Ks_0004.fits', '/data1/PANIC/2015-06-03/CygX_DR17_Ks_0005.fits']
+
+
+  El problema es debido a un bug en getCalibFor(), que despues de
+  comprobar el NCOADDS **solo** con el primero de la lista de darks
+  con = TEXP, llama a getBestShapedFrame() !!!
+  Para solucionar esto, modifico dataset::GetFilesT() para que 
+  se pueda buscar en la BD por NCOADDS a demás de TEXP.
+  Actualizo también getCalibFor() en mainGUI.py.
+  
+  Ya se reduce las secuencia bien con el DARK y FLAT correctos.
+  
+  Sin embargo, al probar el modo science, me encontré con un problema
+  derivado de un fichero .weight.fits antiguo, lo que provocó que
+  fallara la reducción en la creación de la objectMask.
+  Para eso, quizás lo mejor sea limpiar el directorio de salida
+  justo antes de empezar la reducción de una DS; para ello
+  modifico RS.reduceSet() y pongo el purgeOutput() al principio
+  en lugar de al final.
+  Espero que esto no de problemas con la reducción concurrente
+  de los 4 detectores, aunque si lo podría dar al reducir
+  simultaneamente varias secuencias, por ejemplo con varias
+  llamadas a papi.py con el mismo directorio de salida.
+  
+  
+  - Comparando el resultado de reducir una secuencia con y sin D_F,
+  observo que con D_F se ven mucho más las zonas de pixeles malos !!!!
+  ¿ por que ????
+  Me doy cuenta que el master dark que se resta tiene valores negativos 
+  (en general), y eso mismo ocurre en los darks simples.... es eso correcto ???
+  son los raw darks correctos con valores negativos ??
+  
+  
+  - De vuelta con los NaNs que deja la NLC, compruebo
+  que Astrometry.net no funciona con Q4, aunque parece que si con Q1.
+  Si embargo, si sustituyo los NaNs por 0s en el Q4, si
+  funciona Astrometry.net. Abro una issue en Github para ver si
+  se puede resolver.
+  Sino, habrá que hacer algo para sustituir los NaNs por Os,
+  por ejemplo usando mFixNaN de Montage.
+  
+  
+23-Jul-2015
+-----------
+- Para solucionar el problema de los NANs en astrometry.net,
+modifico solveAstrometry.py para que en caso de que el 
+número de NAN de la imagen supere a MAX_N_NAN, los 
+sustituya por la robust.mean y luego al finalizar la 
+astrometría vuelva a poner los NANs para que sigan
+propagandose por el pipeline.
+Lo he probado con todos los cuandrantes y funciona correctamente.
+NOTA: la sustitución de los NANs se hace sobre la propia imagen
+.skysub.fits, pero no pasa nada en caso de un error intermedio,
+pues la imagen .skysub.fits en definitiva es una imagen temporal.
+
+- Detecto que en la imagenes final generada (modo quick, por ejemplo),
+las estrellas brillantes presentan en el centro valores **negativos** 
+o extraños; eso es debido a que con la NLC, y a pesar de tener en cuenta
+el NCOADDS, se marcan como NAN los pixeles que superan maximum correction limit
+(ver tabla 2 document LNC de BD), y por tanto, se propagan en las siguientes
+etapas, aunque algunos se puedan "resolver" debido al coadd+dithering.
+¿ qué hacer ? pregunto via email a BD y Klaus;
+
+- Añado al fichero de configuración una nueva keyword 'mosaic_engine'
+para decidir si usar SWARP o Montage o Nada para el mosaic final.
+
+
+- Observo una cosa rara la mosarar los 4 detectores juntos (ds9 -imagemosaic)
+sin construir el mosaico. Parece que el Q2 está demasiado rotado....
+Puede ser esa la causa de que SWARP no funcione bien ???
+TBC
+
+24-Jul-2015
+-----------
+- Me pongo a probar en skysub.c, para ver que pasa si los BP (=0),
+los trata como si fuesen buenos, que es lo que entendí de Klaus, BD y Matilde.
+El resultado es que por ejemplo, en el Q4, al haber tantos, la calibración
+astrometríca falla y no se pude completar. Quizás para Q1 de un resultado,
+pero creo que en cualqueir caso no tendría sentido. Hay que identificarlos 
+como NaN y simplemente ignorarlos en los calculos o darles un peso 0.
+
+- Modifico las rutinas skysub_nomask/skysub para que los BP se les de el valor NaN (0.0/0.0).
+El resultado es visualmente peor; escribo un email a KM, BD y MF para preguntar
+sobre esto.
+Sin embargo, en el modo 'science' el resultado es horrible, no se por que ???? TBC !!!!
+
+
+
+
+
+
+Ver ejemplo: /data1/PANIC/2015-06-03/CygX_DR21_Ks0001.fits
 
 
 TODO
 - Ver que valores serían buenos para GainMap (low,high).
-- Ver si puedo instalar Lemon  probarlo con datos de WASP-XX de PANIC.
 
 
 
 Tratamiento NaNs
 ----------------
+- Astrometry.net no funciona muy bien con ellos; si son pocos 
+no hay problema, pero por ejemplo con el Q4 no funciona!
+Para ello modifiqué solveAstrometry.py para que reemplace los NAN
+por la media y despues de la calibración reestablezca los NANs.
+
 - iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado 
 - numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
   que te permiten tratarlos como 0's (numpy.nansum)
@@ -7634,6 +7870,7 @@ forma "aproximada" dividiendo por NCOADDS !!
 - No hay DARKs para todo, debido al tema de los cubos y getDarks.py, y que ahora ya
 está solucionado (en principio...).
 
+    float *imgout, skybkg;
 
 
 
@@ -7652,15 +7889,34 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
-- Añadir a documento de instalación el paquete Montage y su wrapper para Python
-- Actualizar bash_rc con nueva configuración para Montage
-- Añadir a documentación el problema de KDE y la variable KDE_FORK_SLAVES para solucionar 
+- Ver por que en modo 'science' el Q4 se reduce horrible cuando se tratan
+los BP como NANs.
+
+- Aunque Herve me lo confirmo por email, ver si encuentro algo de información
+acerca de como trata SWARP/Montage los NaNs.
+
+- Ver finalmente como tratar los BP en skysub.c; el 24-Julio modifiqué las
+rutinas skysub_nomask/skysub para que los BP se les de el valor NaN (0.0).
+El resultado es visualmente peor; escribo un email a KM, BD y MF para preguntar
+sobre esto.
+
+- Observo una cosa rara la mosarar los 4 detectores juntos (ds9 -imagemosaic)
+sin construir el mosaico. Parece que el Q2 está demasiado rotado....
+Puede ser esa la causa de que SWARP no funcione bien ???
+TBC
+
+
+- Añadir a la doc de PAPI como se tratan los NaNs y los BP , y cuales son
+las ventajas e inconvenientes.
+
+- Actualizar doc con lo nuevo de Montage, sobre todo el esquema del pipeline de PAPI, 
+y comentar las diferencias que puede haber con usar SWARP (mosaic_engine) !!!
+
+- Añadir a documentación el problema de KDE y la variable KDE_FORK_SLAVES=1 para solucionar 
 el problema de "Cannot talk to klauncher: Not connected to D-Bus server".
 
 http://www.linuxito.com/nix/494-resolver-error-could-not-start-process-cannot-talk-to-klauncher-not-connected-to-d-bus-server-en-freebsd-con-kde
 
-
-- Añadir a documentación la nueva implementación sugerida por BD:
 
 - BUG: en los mosaicos all-FOV Klaus ha detectado estrellas dobles en las zonas de overlap.
 Parace que puede ser que la astrometría no esté bien resuelta en los bordes de los
@@ -7684,21 +7940,30 @@ de la eliminacion manual de los "//".
 - mejorar dxtalk ala SIMPLE (https://www.asiaa.sinica.edu.tw/~whwang/idl/SIMPLE/WIRCAM/Doc/simple.pdf)
 - hacer algo para que Sextractor tenga en cuenta los BPM, o al menos multiplicar la ObjectMask por la BPM (O's).
  extraido de SNAP: the object mask are multiplied by the bad pixel mask to remove false detections;
-- OJO, en reductionset.py, tengo en el multiprocesing.pool.get(N) N=1 !!!!! para una prueba !!! que parece que no funciona...
-- un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
+
+ - un problema de usar ExecTaskThread es que sólo se puede ejecutar una "operación", pues
 la clase tiene un cerrojo "lock.acquire()" que no se suelta hasta que no termina la ejecución actual.
+
 - intentar implementar un "Abort" para por ejemplo, en una Astrometria que no resuelve, pode pararlo (do_raw_astrometry) !!
+
 - Averiguar para que se necesita ENOISE y EGAIN !!!
+
 - Me surge la duda de que diferencia entre SuperFlat y TwFlat; básicamente son iguales,
 excepto que en TwFlat que resta el dark y en SuperFlat no se hace nada de dark subtraction.
+
 - Cuestionarse donde usar ExecTaskThread, pues de esa forma si podemos obtener el
 error que se pueda producir (via Excepcion).
+
 - Comprobar que el tipo TW_FLAT no se usa, sólo se usa SKY_FLAT; en principio no es necesario distinguir DUSK/DAWN FLATS
+
 - Probar a instalar PAPI en un directorio del sistema único y ver si lo pueden ejecutar todos los usuarios.
+
 - Ver la opción de añadir a "todas" la llamadas de SExtractor la máscaras de pixeles malos como un WEIGHT_MAP
+
 - Añadir a astrowarp la opcion de usar ajuste PSF para la astrometría (ala http://pythonhosted.org/pyplate/index.html); antes 
 tendría que tener algun input más de Hervé para ver que merece la pena...pues ahora mismo con las pruebas que he hecho
 no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
+
 - En los cubos de datos, al hacer el coadd, el TEXP resultante puede que no coincida con ningun dark tomado de forma automática por el OT ??
   Ejemp:
    > papi.py -c config_files/papi.cfg -s /data1/PANIC/2015-03-07/ -S 20 20 -W Q1 -M quick-lemon
@@ -7709,21 +7974,27 @@ no obtengo diferencias...probablemente por que no sepa usar correctamente PSFEx.
    
 - Retomar el tema de mejorar y añadir a PAPI la suma de cubos con alineado (align_stack_cube.py), o al menos 
 que la suma sea un combine+sigclip.
+
 - Añadir quizas una opción genérica applyCalibs y que ahí pregunte que quieres hacer (DARK, FLAT, BPM, NLC)
+
 - Realizar analisis astrometría ala Hervé (ver notas teleconf) con psfex --partly done
+
 - Probar reboot como usuario panic
+
 - Añadir opcion de dar estimación del cielo de un conjunto de imagenes con dithering:
 básicamente es hacer un combine con un sigma reject de los objetos : 
    ---> Esto está ya implementado ya en el QL: Math-->Combine Images (median+sigclip)
 
 - Resolver tratamiento BP en gainmap (level, etc...); ahora lo mejor es no detectarlos
 poniendo el umbral muy alto !!
+
 - Quitar todos los debugs (ficheros temporales) de skyfilter.c
    OJO !!! --> los ficheros /data2/tmp/sky** y /data2/tmp/skyw* de depuración
    que se generan en skyfilter son creado por el usuario panic y si lanzaramos las misma
    reducción (modo science) como obs35 (o cualquier otro) no podrían sobreescribirlos y fallaría !!
    Por tanto hay que hacer algo para oborrarlos !!!
-- idem con dithercubemean con las imagenes shifted!
+
+   - idem con dithercubemean con las imagenes shifted!
 
 
 - DITHERCUBEMEAN no funciona bien para offsets grandes (>300 o >600) !!! o eso me parece, pues
@@ -7733,9 +8004,13 @@ funciona bien, y por tanto la mascara de objectos para el skyfilter de la segund
 se hace correctamente.
 
 - Intentar pintar en getWCSImageOffsets con los 4 cuadrantes.
+
 - ver si CreateCalibs puede incluso hacer la NLC !!
+
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
+
 - Que pregunte que Qi reducir en el PQL (ahora sólo está en el tab 'configuración'
+
 - Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
 de objetos no hace bien su función, pues en la imagen final salen manchas negras....
 Ejemplo: /data1/PANIC/2015-03-03/EPerez_UGC9128_March3_0026-50.fits
@@ -7745,14 +8020,19 @@ Además la segunda pasada con el Q2 casca !!! el skyfilter da un SF !!!
 ejemplo, si applyNLC desde el QL falla, sólo devuelve 'No value returned'.
 
 - Ver como permitir mod. parámetros del iraf.starfocus para el focus_evaluation.
+
 - ver si el pix_scale que tiene el config del RS se puede actualizar
 con el que realmente tienen los ficheros en la cabecera para así evitar 
 olvidar actualizar el fichero de configuración.
 
 - Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)! -- no veo problemas !
+
 - reducir datos de OmegaCass para VT
+
 - ver si dilate crea buenas objectMask dilatadas adecuadamente...ala ESOREX
+
 - Tratamiento de BP en PAPI (Skyfilter) y "anular" BP detection en GainMap !!!
+
 - (IMPORTANTE) Solucionar el tema del GAINMAP-->estimación erronea de BP !!!!
 
 - TODO: la segunda pasada de skyfilter para objetos extensos no está

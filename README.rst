@@ -40,7 +40,7 @@ and also depends on next packages:
  - `Astrometry.net <http://astrometry.net/>`_ with 42xx index files (optional to SCAMP)
  - `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (> v7.3b5)
  - `Montage <http://montage.ipac.caltech.edu/download/Montage_v3.3.tar.gz>`_ (v3.3)
- 
+ - `montage_wrapper <https://pypi.python.org/pypi/montage-wrapper>`_ (0.9.8)
 
 
 Note that, for PyRAF_ you have to install IRAF_(v2.16 or later), what can be a 
