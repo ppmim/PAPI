@@ -7784,15 +7784,60 @@ sobre esto.
 Sin embargo, en el modo 'science' el resultado es horrible, no se por que ???? TBC !!!!
 
 
-
-
-
-
 Ver ejemplo: /data1/PANIC/2015-06-03/CygX_DR21_Ks0001.fits
 
 
-TODO
-- Ver que valores serían buenos para GainMap (low,high).
+27-Jul-2015
+-----------
+- Me pongo a ver como implementar la sugerencia de Matilde en respuesta
+a mi email sobre qué hacer con los BP; ella sugería tener las 2 opciones:
+  a) sustituir BP con background_level
+  b) dejarlos como NaN y no tratarlos de ningún modo, sólo ignorar su valor.
+
+Me doy cuenta que en el superflat (iraf.imcobine), los NaN de la NLC se 
+convierten a 0s (IRAF behaviour) !!!
+  
+
+
+28-Jul-2015
+-----------
++ Continuo con el tema de los BP y skyfilter:
+  - modifico todos los drivers skyfilter para acepten el nuevo
+  parametro 'fix_type' y además le añado el flag de compilación -DSKY_DEBUG
+  para los ficheros temporales de depuración del sky obtenido.
+  
+  - Me surgen de nuevo dudas acerca de como trata SWARP/SExtractor/SCAMP 
+  los NaN; me descargo el código fuente de los mismos, y efectivamente
+  compara on -BIG en lugar de usar isnan(), pero parece que lo hacen 
+  bien a pesar de todo.
+  
+  - pruebo la nueva implementación de skyfilter con bpm.mode='none | grab | fix'
+  y la cosa pinta bien, aunque en el modo 'grab|none' la imagen
+  coadd (SWARP) final tiene valores negativos algo raros....
+  En modo 'science', curiosamente (al menos en el Q4) la imagen
+  resultado con fix_type=1 (bpm.mode=fix) tiene muchas menos estrellas
+  y es 'peor'; con fix_type=0 (bpm.mode=grab) es horriblemente peor,
+  con muchas sombras de objectos no bien enmarcarados, pero curiosamente 
+  mas profunda !!!
+  Además creo que Sextractor obvia los objetos que tienen muchos NaNs,
+  por eso no se hace una máscara muy buena en modo science+grab,
+  y sin embargo science+fix si produce una máscara muy (demasaido) poblada...
+  Puedo entender que modo science+fix=1 obtengamos menos objetos
+  debido a que enmascaramos muuuuchos pixeles (objetos+badpix) y
+  entonces no podamos obtener una buena sustracción de cielo en
+  la segunda pasada (que usa mascara)...
+  Esta mismo prueba (fixpix=grab) con Q1, da un resultado correcto, de echo
+  no veo diferencia entre el modo quick y el science ;-).
+  Con el Q3, 
+  Por tanto, creo que el mal resultado obtenido con Q4 en modo
+  science hay que atribuirlo a que no se puede generar una buena
+  máscara de objetos (SExtractros) debido a los NaN, y si usamos 
+  el modo fix=1, entonces la máscara es buena, pero unido a los NaN....
+
+  En fin, que como para Q1 y Q2 sale bien, no le voy a dar más vueltas
+  de momento...
+  
+  
 
 
 
@@ -7804,18 +7849,34 @@ Para ello modifiqué solveAstrometry.py para que reemplace los NAN
 por la media y despues de la calibración reestablezca los NANs.
 
 - iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado 
+
+http://iraf.net/forum/viewtopic.php?showtopic=135439
+"""
+As far as I know there isn't a way for an IRAF task to write a NaN 
+to the file: On input FITS NaNs are mapped to zero (or maybe INDEF) 
+and while there is no mapping on output the generation of a NaN from 
+a task would trigger an FPE.If what you want in to flag certain pixels 
+as bad values then setting the value to something clearly outside the 
+data range is the usual course, otherwise there are a number of tasks 
+for creating bad pixel masks that can be used with various tasks. If 
+you could explain more about why you want to do this I might have other 
+suggestions.
+Cheers,
+-Mike
+"""
+
 - numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
   que te permiten tratarlos como 0's (numpy.nansum)
   Además, tengo una rutina muy util en misc.statutils, llamada nan2num(a, replace)
   
 - SExtractor: leido en el foro que los reconoce y los sabe tratar (como ?).
-  Si embargo, he leido que aconsejan sustituirlos por -BIG (-1e+30)
+  Si embargo, he leido (doc. 2003?) que aconsejan sustituirlos por -BIG (-1e+30)
   """
   Sextractor incorrectly registers the background level as NAN and finds no sources for images with NAN values.  Two workarounds for this problem that we found to be effective are:
   Edit image so that NANs are changed to a value less than or equal to –BIG.  BIG is defined in the sextractor header files as 1e+30, if a pixel is smaller than this then sextractor will ignore it.
   Perform manual estimation of background by editing default.sex configuration file parameters as follows: “BACK_TYPE MANUAL”, “BACK_VALUE  <background value>”
   """
-  En el log de Sextractor (r20), encuentro el siguiente comentario de E.Bertin: 
+  En el log de Sextractor (r20-2006, r290, r305-2013), encuentro el siguiente comentario de E.Bertin: 
   "Discard NaN pixels in non-weighted background measurements (as in SWarp)."
   
 - Hervé me confirma (12-Mayo-2015) que Sextractor, PSFEx, SWARP ignora los pixeles con NaN, es decir, les da un peso 0, como si le hubiesemos dado un mapa de pesos con 0.
@@ -7889,6 +7950,8 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Ver que valores serían buenos para GainMap (low,high).
+
 - Ver por que en modo 'science' el Q4 se reduce horrible cuando se tratan
 los BP como NANs.
 

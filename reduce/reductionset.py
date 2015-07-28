@@ -1351,26 +1351,32 @@ class ReductionSet(object):
         # get the skymodel
         if skymodel == None:
             skymodel = self.config_dict['skysub']['skymodel']
+        
+        # Fix type
+        if self.config_dict['bpm']['mode'] == 'fix':
+            fix_type = '1'
+        else:
+            fix_type = '0'
             
         if obs_mode == 'dither':
             # It comprises any dithering pattern for point-like objects
             skyfilter_cmd = self.m_irdr_path + '/skyfilter '+ list_file + \
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' +  \
-            destripe + '  ' + skymodel
+            destripe + '  ' + skymodel + ' ' + fix_type
         elif obs_mode == 'other':
             # It comprises nodding pattern for extended objects 
             # The detection of SKY/TARGET frames is done in 'skyfilter_general' based
             # on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
             skyfilter_cmd = self.m_irdr_path + '/skyfilter_general ' + list_file \
-            + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe
+            + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe + ' ' + fix_type
         elif obs_mode == 'dither_on_off': 
             # actually not used
             skyfilter_cmd = self.m_irdr_path + '/skyfilteronoff ' + list_file + \
-            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe 
+            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe + ' ' + fix_type
         elif obs_mode == 'dither_off_on':
             # actually not used 
             skyfilter_cmd = self.m_irdr_path + '/skyfilteroffon ' + list_file +\
-            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe
+            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe + ' ' + fix_type
         else:
             log.error("Observing mode not supported")
             raise
@@ -1379,16 +1385,6 @@ class ReductionSet(object):
         print "SKY_FILTER_CMD = ", skyfilter_cmd
         print "CMD_ARGS = ", skyfilter_cmd.split()
         args = skyfilter_cmd.split()
-        
-        """
-        args = [self.m_irdr_path + '/skyfilter',
-                list_file,
-                gain_file,
-                str(halfnsky), 
-                mask,
-                destripe
-                ,skymodel]
-        """
         
         output_lines = []
         try:
@@ -1498,6 +1494,12 @@ class ReductionSet(object):
         # it must return a list of list (one per each extension) 
         out_ext = []
         
+        # Fix type
+        if self.config_dict['bpm']['mode'] == 'fix':
+            fix_type = '1'
+        else:
+            fix_type = '0'
+        
         # 2. Process each extension
         for n in range(next):
             log.debug("===> Processing extension %d", n+1)
@@ -1510,8 +1512,8 @@ class ReductionSet(object):
             # Call external app skyfilter (irdr)
             hwidth = self.HWIDTH
             
-            cmd = self.m_irdr_path + "/skyfilter_single %s %s %d nomask none %d %s"\
-                        %(listfile, gain_ext[n][0], hwidth, file_pos, self.out_dir)
+            cmd = self.m_irdr_path + "/skyfilter_single %s %s %d nomask none %d %s %d"\
+                        %(listfile, gain_ext[n][0], hwidth, file_pos, self.out_dir, fix_type)
             print "CMD=",cmd
             e = misc.utils.runCmd( cmd )
             if e==1: # success
@@ -1706,11 +1708,11 @@ class ReductionSet(object):
         try:
             pf = datahandler.ClFits(filelist[0])
             satur_level = int(satur_level) * int(pf.getNcoadds())
-            log.critical("SAT_LEVEL=%s"%satur_level)
+            log.debug("SAT_LEVEL = %s" % satur_level)
         except:
             log.warning("Error read NCOADDS value. Taken default value (=1)")
             satur_level = satur_level
-            log.critical("SAT_LEVEL(def)=%s"%satur_level)
+            log.debug("SAT_LEVEL(def)=%s"%satur_level)
 
         if images_in==None:
             # we use the images ending with suffing in the output directory
@@ -3265,15 +3267,19 @@ class ReductionSet(object):
         if self.config_dict['bpm']['mode'].lower() == 'none':
             master_bpm_4gain = None
             master_bpm_4fix = None
+            bpm_action = 'none'
         elif self.config_dict['bpm']['mode'].lower() == 'fix':
             master_bpm_4gain = None
             master_bpm_4fix = master_bpm
+            bpm_action = 'fix'
         elif self.config_dict['bpm']['mode'].lower() == 'grab':
             master_bpm_4gain = master_bpm
             master_bpm_4fix = None
+            bpm_action = 'grab'
         else:
             master_bpm_4gain = None
             master_bpm_4fix = None
+            bpm_action = 'none'
 
         ########################################################################
         # 1 - Apply dark, flat to ALL files 
@@ -3301,7 +3307,7 @@ class ReductionSet(object):
                 local_master_flat = out_dir + "/superFlat.fits"
                 if self.obs_mode == "dither":
                     log.debug("---> dither sequece <----")
-                    misc.utils.listToFile(self.m_LAST_FILES, out_dir+"/files.list")
+                    misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/files.list")
                     superflat = reduce.SuperSkyFlat(out_dir + "/files.list", 
                                                     local_master_flat, bpm=None, 
                                                     norm=True, 
@@ -3321,7 +3327,7 @@ class ReductionSet(object):
                 else:
                     log.error("Dither mode not supported")
                     raise Exception("Error, dither mode not supported")
-            except Exception,e:
+            except Exception, e:
                 raise e
         else:
             local_master_flat = master_flat 
@@ -3367,21 +3373,23 @@ class ReductionSet(object):
         # GainMap ===> Bad pixels <=0, Good pixels = 1
         # Later, in skyfilter procedure bad pixels are set to bkg level.
         ########################################################################
-        if master_bpm_4gain != None:
-            log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm_4gain, gainmap))
-            if not os.path.exists( master_bpm_4gain ):
-                log.error("No external Bad Pixel Mask found. Cannot find file : %s"%master_bpm_4gain)
+        if bpm_action != 'none':
+            log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm, gainmap))
+            if not os.path.exists(master_bpm):
+                log.error("No external Bad Pixel Mask found. Cannot find file : %s" % master_bpm)
             else:
                 # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
-                bpm_data = fits.getdata(master_bpm_4gain, header=False)
+                bpm_data = fits.getdata(master_bpm, header=False)
                 badpix_p = numpy.where(bpm_data > 0)
                 log.debug("Number of Bad Pixels to combine from BPM: %d", (bpm_data > 0).sum())
                 gain_data, gh = fits.getdata(gainmap, header=True)
                 log.debug("Initial number of Bad Pixels in GainMap: %d", (gain_data ==0).sum())
+                # Set all BPs to 0
                 gain_data[badpix_p] = 0
                 log.debug("Final number of Bad Pixels in GainMap: %d", (gain_data==0).sum())
-                gh.set('HISTORY','Combined with BPM:%s' % master_bpm_4gain)
+                gh.set('HISTORY','Combined (to 0) with BPM:%s' % master_bpm)
                 fits.writeto(gainmap, gain_data, header=gh, clobber=True)
+                    
         
         ########################################################################
         # 3b - Lab mode: it means only D,FF and FWHM estimation is done for 
@@ -3409,11 +3417,11 @@ class ReductionSet(object):
                     gain=1, sat_level=satur_level)
                 try:
                     (fwhm, std, k, k) = cq.estimateFWHM()
-                    if fwhm>0 and fwhm<20:
+                    if fwhm > 0 and fwhm < 20:
                         log.info("File %s - FWHM = %s (pixels) std= %s"%(r_file, fwhm, std))
                         fwhm_t.append(fwhm)
                         std_t.append(std)
-                    elif fwhm<0 or fwhm>20:
+                    elif fwhm < 0 or fwhm > 20:
                         log.error("Wrong estimation of FWHM of file %s"%r_file)
                         log.error("Please, review your data.")           
                     else:
@@ -3661,7 +3669,7 @@ class ReductionSet(object):
         # 8 - Create master object mask of the 1st stack coadd.
         ########################################################################
         log.info("************************")
-        log.info(" START SECOND PASS      ")
+        log.critical(" START SECOND PASS      ")
         log.info("************************")
 
         # Build masterObjMask of the first coadded stack
@@ -3690,7 +3698,7 @@ class ReductionSet(object):
         # the first coadd.
         if numpy.nanmax(numpy.absolute(offset_mat)) > \
             self.config_dict['offsets']['max_dither_offset']:
-            log.warning("Maximum dither offset exceeded %f > %f"\
+            log.critical("Maximum dither offset exceeded %f > %f"\
                 %(numpy.nanmax(numpy.absolute(offset_mat)), self.config_dict['offsets']['max_dither_offset']))
             log.warning("Individual (multiple) object masks will be used...")
             # Then, the offsets of object masks will be 0,0

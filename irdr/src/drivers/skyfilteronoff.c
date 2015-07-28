@@ -119,26 +119,36 @@ int main(int argc, char *argv[])
         if (usemask) {
             sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
             fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
-                            wdata[i], argv[5]);
+                            wdata[i], argv[5], atoi(argv[6]));
+#ifdef SKY_DEBUG
+            strcpy(aux, "/data2/tmp/sky_");
+            strcat(aux, basename(fn[i]));
+            writefits(aux, fn[i], (char*)sky, -32, nx, ny);
+                
+            strcpy(aux, "/data2/tmp/skyw_");
+            strcat(aux, basename(fn[i]));
+            writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
+                
+#endif
         } else {
             sky = cube_median_cl(dbuf, nsky, nx, ny, scale, 1);
             /*sky = cube_mean_nw(dbuf, nsky, nx, ny, scale, 1);*/
-            /*DEBUG*/
-            strcpy(aux,"/tmp/sky_");
-            strcat(aux, basename(fn[i]));
-            writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
-            /* END_DEBUG */
             fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
-                                   argv[5]);
+                                   argv[5], atoi(argv[6]));
+#ifdef SKY_DEBUG
+           strcpy(aux, "/data2/tmp/sky_");
+           strcat(aux, basename(fn[i]));
+           writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
+#endif
         }
 
         /*skysubimg = shortint(fimg, nx, ny);*/
 
         /* For PANIC, we need 32 bits images, so we write  -32 (float) FITS*/
         writefits(outfn(fn[i]), fn[i], (char*)fimg, -32, nx, ny);
-        /*writefits(outfn(fn[i]), fn[i], (char*)skysubimg, 16, nx, ny);*/
-
-        free(sky);  /*free(skysubimg);  */ free(fimg);
+        
+        free(sky);   
+        free(fimg);
 
         if (skyw != NULL)
             free(skyw);
@@ -208,7 +218,7 @@ static void usage(void)
     static char *usage = "\n"
     "skyfilter - do running sky frame subtraction\n\n"
     "usage: skyfilter listfn gainfn hwidth mask|nomask "
-    "row|col|rowcol|colrow|none\n\n"
+    "row|col|rowcol|colrow|none fix_type\n\n"
     "where listfn - if object masking is used, then listfn should contain:\n"
     "               img_filename objmask_filename dither_x_off dither_y_off\n"
     "               where objmask is the master object mask per dither set\n"
@@ -229,7 +239,8 @@ static void usage(void)
     "               rowcol for row offsets then column offsets,\n"
     "               colrow for column offsets then row offsets,\n"
     "               none for no correction\n\n"
-    "example: skyfilter filelist gain.fits 4 mask rowcol\n\n";
+    "     fix_type- type of behaviour with bad pixel (1=replace with bcklvl, 0=nan)"
+    "example: skyfilter filelist gain.fits 4 mask rowcol 1\n\n";
 
     printf("%s", usage);
     exit(0);

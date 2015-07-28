@@ -1246,6 +1246,7 @@ x2go
 2) Install x2go packages
 
 > zypper install x2goserver
+
 Note: If nxclient was already installed (eg. nomachine_4.2.27_1_x86_64.rpm), there is a conflict with 
 the colormap; in this case, we must copy the /usr/share/X11/rgb.txt to  /usr/NX/share/rgb
 in order to substitute the NX (wrong) rgb file. Otherwise, we could get error messages as below:

@@ -203,22 +203,22 @@ class BadPixelMask(object):
         # STEP 4: Loop for all input images and divide each by the master norm Flat
         tmpf = numpy.zeros([nx1, nx2], dtype=numpy.float32)
         for flat in good_flats:
-            log.debug("*** Processing file %s"%flat)
+            log.debug("*** Processing file %s" % flat)
             f_i = fits.open(flat)
             for i_nExt in range(0, nExt):
-                log.info("*** Detector %d"%(i_nExt+1))
+                log.info("*** Detector %d" % (i_nExt + 1))
                 if nExt==1:
                     # to avoid zero division error
                     mydata = numpy.where(flat_comb_hdu[0].data<__epsilon, 
                                         numpy.NaN, 
                                         flat_comb_hdu[0].data) 
-                    tmpf = f_i[0].data/mydata
+                    tmpf = f_i[0].data / mydata
                 else:
                     # to avoid zero division error
                     mydata = numpy.where(flat_comb_hdu[i_nExt+1].data<__epsilon, 
                                         numpy.NaN, 
                                         flat_comb_hdu[i_nExt+1].data) 
-                    tmpf = f_i[i_nExt+1].data/mydata
+                    tmpf = f_i[i_nExt+1].data / mydata
 
                 #mdat = numpy.ma.masked_array(tmpf, numpy.isnan(tmpf))
                 mdat = tmpf
@@ -235,7 +235,7 @@ class BadPixelMask(object):
                 log.info("    MAD: %s"%mad)
             
                 # Normalize the flattened image
-                tmpf = tmpf/median
+                tmpf = tmpf / median
                 r_std2 = robust.std(tmpf)
                 #print ">>R_STD2=",r_std2
 

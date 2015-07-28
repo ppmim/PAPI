@@ -38,7 +38,6 @@ static void readdata(int i, int usemask);
 static void freedata(int i, int usemask);
 
 static void usage(void);
-static debug = 0; /* 1 = write sky_xxxxx.fits debug files, 0 = nothing is written */
 
 int main(int argc, char *argv[])
 {
@@ -48,6 +47,7 @@ int main(int argc, char *argv[])
     unsigned int *skysubimg = NULL;
     float *sky = NULL, *skyw = NULL, *fimg;
     char aux[256];
+    int fix_type=1;
     
     fprintf(stderr, "\nStart of skyfilter...\b");
     
@@ -70,7 +70,12 @@ int main(int argc, char *argv[])
             usage();
     else skymodel = 1;    
 
-
+    /* fix type */
+    if (argc==8)
+        fix_type = atoi(argv[7]); /* if >0, some BadPix fix is done (replace with backlvl)*/
+    else
+        fix_type = 0; /* default: no BadPix fix is done (NaNs) */
+    
     if (usemask)
         nplanes = readlist(argv[1], fn, mfn, xshift, yshift, MAXNPLANES);
     else
@@ -85,7 +90,7 @@ int main(int argc, char *argv[])
     hwid = atoi(argv[3]);
 
     if (hwid > MAXHWID) {
-      hwid=MAXHWID;
+      hwid = MAXHWID;
       printf("[skyfilter] HALFNSKY reduced to %d \n", hwid);
     }
 
@@ -143,22 +148,18 @@ int main(int argc, char *argv[])
             else
                 sky = cube_mean_min_w(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1, nsky/2);
 
-            /* DEBUG */
-            if (debug)
-            {
-                strcpy(aux, "/data2/tmp/sky_");
-                strcat(aux, basename(fn[i]));
-                writefits(aux, fn[i], (char*)sky, -32, nx, ny);
+#ifdef SKY_DEBUG
+            strcpy(aux, "/data2/tmp/sky_");
+            strcat(aux, basename(fn[i]));
+            writefits(aux, fn[i], (char*)sky, -32, nx, ny);
                 
-                strcpy(aux, "/data2/tmp/skyw_");
-                strcat(aux, basename(fn[i]));
-                writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
+            strcpy(aux, "/data2/tmp/skyw_");
+            strcat(aux, basename(fn[i]));
+            writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
                 
-            }
-            /* END_DEBUG */
-            
+#endif
             fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
-                            wdata[i], argv[5]);
+                            wdata[i], argv[5], fix_type);
         } else {
             if (skymodel==1) 
                 sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
@@ -169,29 +170,15 @@ int main(int argc, char *argv[])
                 /* find median value of the nsky/2-smallest values */
                 sky = cube_median_min(dbuf, nsky, nx, ny, scale, 1, nsky/2);
                  
-            /*DEBUG*/
-            if (debug)
-            {
-                strcpy(aux, "/data2/tmp/sky_");
-                strcat(aux, basename(fn[i]));
-                writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
-            }
-            /* END_DEBUG */
-            
-            fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
-                                   argv[5]);
+#ifdef SKY_DEBUG
+           strcpy(aux, "/data2/tmp/sky_");
+           strcat(aux, basename(fn[i]));
+           writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
+#endif
+           
+           fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
+                                   argv[5], fix_type);
         }
-
-        /* UNA PRUEBA !!!! Apply master flat: divide by gainmap ===>NO DA BUEN RESULTADO !!!!!!*/
-        int flat = 0;
-        int ind = 0;
-        if (flat)
-        {
-            for (ind = 0; ind< nx*ny; ind++)
-                if (gainmap[ind]>0)
-                    fimg[ind] = fimg[ind] / gainmap[ind];
-                /*else , we do not correct */
-        }        
 
         /*skysubimg = longint(fimg, nx, ny);*/
         /* For PANIC, we need 32 bits images, so we write  -32 (float) FITS*/
@@ -236,13 +223,11 @@ static void readdata(int i, int usemask)
            Thus, wdata includes 'object & bad' pixels.
          */
         wdata[i] = getmask(wmap, nx, ny, mfn[i], xshift[i], yshift[i]);
-        /* DEBUG */
-        if (debug)
-        {
-            sprintf(aux, "/data2/tmp/wmask_%d.fits", i);
-            writefits(aux, fn[i], (char*)wdata[i], -32, nx, ny);
-        }
-        /* DEBUG */
+
+#ifdef SKY_DEBUG
+        sprintf(aux, "/data2/tmp/wmask_%d.fits", i);
+        writefits(aux, fn[i], (char*)wdata[i], -32, nx, ny);
+#endif
         free(wmap);
     }
 
@@ -279,7 +264,7 @@ static void usage(void)
     static char *usage = "\n"
     "skyfilter - do running sky frame subtraction\n\n"
     "usage: skyfilter listfn gainfn hwidth mask|nomask "
-    "row|col|rowcol|colrow|none skymode\n\n"
+    "row|col|rowcol|colrow|none skymode fix_type\n\n"
     "where listfn - if object masking is used, then listfn should contain:\n"
     "               img_filename objmask_filename dither_x_off dither_y_off\n"
     "               where objmask is the master object mask per dither set\n"
@@ -302,8 +287,9 @@ static void usage(void)
     "               none for no correction\n\n"
     "     skymodel- sky background model to use (optional, defaul=median"
     "               'median'/'mean' for normal/sparse fields"
-    "               'min' for crowded fields"   
-    "example: skyfilter filelist gain.fits 4 mask rowcol\n\n";
+    "               'min' for crowded fields"
+    "     fix_type- type of behaviour with bad pixel (1=replace with bcklvl, 0=nan)"
+    "example: skyfilter filelist gain.fits 4 mask rowcol mean 1\n\n";
 
     printf("%s", usage);
     exit(0);

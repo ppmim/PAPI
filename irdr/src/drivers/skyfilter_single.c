@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
     int hwid, skybeg, usemask = 0;
     /*unsigned int *skysubimg = NULL;*/
     float *sky = NULL, *skyw = NULL, *fimg;
+    char aux[256];
 
     if (argc!=8)
         usage();
@@ -143,14 +144,27 @@ int main(int argc, char *argv[])
         if ( filen<=0 || (filen>0 && i==filen-1) ) {
             if (usemask) {
                 sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
-                /*DEBUG writefits("/tmp/sky_2nd.fits", fn[i], (char*)sky, -32, nx, ny);*/
                 fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
-                                wdata[i], argv[5]);
+                                wdata[i], argv[5], atoi(argv[8]));
+#ifdef SKY_DEBUG
+                strcpy(aux, "/data2/tmp/sky_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)sky, -32, nx, ny);
+                
+                strcpy(aux, "/data2/tmp/skyw_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
+                
+#endif
             } else {
                 sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
-                /*DEBUG writefits("/tmp/sky_1st.fits", fn[i], (char*)sky, -32, nx, ny); */
                 fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
-                                    argv[5]);
+                                    argv[5], atoi(argv[8]));
+#ifdef SKY_DEBUG
+                strcpy(aux, "/data2/tmp/sky_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
+#endif
             }
     
             /*skysubimg = longint(fimg, nx, ny);*/
@@ -227,8 +241,8 @@ static void usage(void)
 {
     static char *usage = "\n"
     "skyfilter_single - do running sky frame subtraction\n\n"
-    "usage: skyfilter_single listfn gainfn hwidth mask|nomask /path/out_dir"
-    "row|col|rowcol|colrow|none\n\n"
+    "usage: skyfilter_single listfn gainfn hwidth mask|nomask"
+    "row|col|rowcol|colrow|none filN /path/out_dir\n\n"
     "where listfn - if object masking is used, then listfn should contain:\n"
     "               img_filename objmask_filename dither_x_off dither_y_off\n"
     "               where objmask is the master object mask per dither set\n"
@@ -251,7 +265,8 @@ static void usage(void)
     "               none for no correction\n\n"
     "      filen|0  - file number (1-N) from the listfn to filter (0=, all will be filtered)n"
     "      /path/out_dir path to output dir for sky subtracted images \n\n"
-    "example: skyfilter_single filelist gain.fits 4 mask rowcol 1 /tmp \n\n";
+    "     fix_type- type of behaviour with bad pixel (1=replace with bcklvl, 0=nan)"
+    "example: skyfilter_single filelist gain.fits 2 mask rowcol 1 /tmp 1\n\n";
 
     printf("%s", usage);
     exit(0);
