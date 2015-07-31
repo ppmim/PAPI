@@ -166,7 +166,6 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
             #fits.writeto(filename, hdu[extension].data, header=hdu[0].header, clobber=True)
             nan_replaced = True
             
-    
     #
     # Read header parameters
     #    
@@ -353,7 +352,7 @@ def calc(args):
     """
     return solveField(*args)
         
-def runMultiSolver(files, out_dir, tmp_dir, pix_scale=None, extension=1):
+def runMultiSolver(files, out_dir, tmp_dir, pix_scale=None, extension=0):
     """
     Run a parallel proceesing to solve astrometry for the input files taking
     advantege of multi-core CPUs.
@@ -371,6 +370,7 @@ def runMultiSolver(files, out_dir, tmp_dir, pix_scale=None, extension=1):
     results = []
     solved = []
     for file in files:
+        logging.debug("File: %s" % file)
         red_parameters = (file, out_dir, tmp_dir, pix_scale, extension)
         try:
             # Instead of pool.map() that blocks until
@@ -441,9 +441,9 @@ in principle previously reduced, but not mandatory; Astromety.net tool is used.
                   help="Pixel scale of the images")
     
     parser.add_option("-e", "--extension",
-                  action="store", dest="extension", type=float, 
+                  action="store", dest="extension", type=float, default=0,
                   help="If file is a MEF, extension to be used for solving the field ("
-                  "1=SG4, 2=SG1, 3=SG3, 4=SG2)")
+                  "1=SG1, 2=SG2, 3=SG3, 4=SG4, 0=non MEF)")
                   
     parser.add_option("-r", "--recursive",
                   action="store_true", dest="recursive", default=False,

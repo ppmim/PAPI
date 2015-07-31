@@ -1299,7 +1299,7 @@ class ReductionSet(object):
         
         
     def skyFilter( self, list_file, gain_file, mask='nomask', 
-                   obs_mode='dither', skymodel=None ):
+                   obs_mode='dither', skymodel=None, fix_type=None):
         """
         For 'each' (really not each, depend on dither pattern, e.g., 
         extended sources) input image, a sky frame is computed by combining a 
@@ -1327,7 +1327,12 @@ class ReductionSet(object):
         skymodel: str
             [median|min] sky model used for sky subtraction. Only 
             required if obs_mode=dither. (median=coarse fields, min=crowded fields)
-           
+        
+        fix_type: int
+            Behaviour of skyfilter concerning bad pixles;
+            0 = replaced with NaN (default)
+            1 = replaced with background level
+            
         Returns
         -------
         The function generate a set of sky subtrated images (*.skysub.fits) and
@@ -1352,34 +1357,35 @@ class ReductionSet(object):
         if skymodel == None:
             skymodel = self.config_dict['skysub']['skymodel']
         
-        # Fix type
-        if self.config_dict['bpm']['mode'] == 'fix':
-            fix_type = '1'
-        else:
-            fix_type = '0'
-            
+        # Fix type for bad pixels
+        if fix_type == None:
+            if self.config_dict['bpm']['mode'] == 'fix':
+                fix_type = 1
+            else:
+                fix_type = 0
+        
         if obs_mode == 'dither':
             # It comprises any dithering pattern for point-like objects
             skyfilter_cmd = self.m_irdr_path + '/skyfilter '+ list_file + \
             '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' +  \
-            destripe + '  ' + skymodel + ' ' + fix_type
+            destripe + '  ' + skymodel + ' ' + str(fix_type)
         elif obs_mode == 'other':
             # It comprises nodding pattern for extended objects 
             # The detection of SKY/TARGET frames is done in 'skyfilter_general' based
             # on next header keywords: OBJECT=SKY or IMAGETYP=SKY.
             skyfilter_cmd = self.m_irdr_path + '/skyfilter_general ' + list_file \
-            + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe + ' ' + fix_type
+            + '  ' + gain_file +' '+ str(halfnsky)+' '+ mask + '  ' + destripe + ' ' + str(fix_type)
         elif obs_mode == 'dither_on_off': 
             # actually not used
             skyfilter_cmd = self.m_irdr_path + '/skyfilteronoff ' + list_file + \
-            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe + ' ' + fix_type
+            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe + ' ' + str(fix_type)
         elif obs_mode == 'dither_off_on':
             # actually not used 
             skyfilter_cmd = self.m_irdr_path + '/skyfilteroffon ' + list_file +\
-            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe + ' ' + fix_type
+            '  ' + gain_file + ' ' + str(halfnsky) + ' ' + mask + '  ' + destripe + ' ' + str(fix_type)
         else:
             log.error("Observing mode not supported")
-            raise
+            raise Exception("Observing mode not supported in skyFilter")
                   
         
         print "SKY_FILTER_CMD = ", skyfilter_cmd
@@ -1394,7 +1400,7 @@ class ReductionSet(object):
             sys.stdout.flush()
             sys.stderr.flush()
         except subprocess.CalledProcessError, e:
-            log.critical("Error running skyfilter: %s"%output_lines)
+            log.critical("Error running skyfilter: %s" % output_lines)
             log.debug("Exception: %s"%str(e))
             raise Exception("Error running skyfilter")
         
@@ -2824,7 +2830,10 @@ class ReductionSet(object):
                     dark, flat, bpm = self.getCalibFor(sequence)
                     # Return 3 filenames of master calibration frames (dark, flat, bpm), 
 
-
+                # We could set apply_dark_flat = 0, but bpm!=none
+                if bpm == None and self.config_dict['bpm']['mode'] != 'none':
+                    bpm = self.config_dict['bpm']['bpm_file']
+                    
                 # Check and split files if required
                 obj_ext, next = self.split(sequence) # it must return a list of list (one per each extension)
                 dark_ext, cext = self.split([dark])
@@ -3370,12 +3379,12 @@ class ReductionSet(object):
         ########################################################################
         # Add/combine external Bad Pixel Map to gainmap (maybe from master DARKS,FLATS ?)
         # BPMask ==> Bad pixeles >0, Good pixels = 0
-        # GainMap ===> Bad pixels <=0, Good pixels = 1
+        # GainMap ===> Bad pixels =0, Good pixels > 1
         # Later, in skyfilter procedure bad pixels are set to bkg level.
         ########################################################################
         if bpm_action != 'none':
-            log.info("Combinning external BPM (%s) and Gainmap (%s)"%(master_bpm, gainmap))
-            if not os.path.exists(master_bpm):
+            log.info("Combinning external BPM (%s) and Gainmap (%s)" % (master_bpm, gainmap))
+            if not master_bpm or not os.path.exists(master_bpm):
                 log.error("No external Bad Pixel Mask found. Cannot find file : %s" % master_bpm)
             else:
                 # Convert badpix (>0) to 0 value, and goodpix (=0) to >1.0
@@ -3445,9 +3454,24 @@ class ReductionSet(object):
         misc.utils.listToFile(self.m_LAST_FILES, out_dir + "/skylist1.list")
         # Return only filtered images; in extended-sources, sky frames  are not 
         # included.
-        #  
+        #
+        
+        # Fix type
+        if self.red_mode == 'science':
+            # In order to get a good object mask, for
+            # first skyFilter pass we 'fix' bad pixels
+            fix_type = 1
+        else:
+            if self.config_dict['bpm']['mode'] == 'fix':
+                fix_type = 1
+            else:
+                fix_type = 0
+                
         self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist1.list",
-                                           gainmap, 'nomask', self.obs_mode)
+                                           gainmap, 'nomask', 
+                                           self.obs_mode,
+                                           None,
+                                           fix_type)
         
         ########################################################################
         # 4.1 - Remove crosstalk - (only if bright stars are present)
@@ -3510,7 +3534,7 @@ class ReductionSet(object):
             self.m_LAST_FILES = new_files
 
         ########################################################################
-        # 4.3 - Clean Bad Pixels (probably only required for LEMON)    
+        # 4.3 - TEST - Clean Bad Pixels (probably only required for LEMON)    
         ########################################################################
         if self.config_dict['bpm']['mode'].lower() == 'fix2':
             new_files = []
@@ -3580,8 +3604,9 @@ class ReductionSet(object):
                                            self.obs_mode != 'dither'):
             log.info("**** Doing 1st Stack Coaddition (swarp)****")
             # astrometric calibration + coadd
-            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
-                        coadded_file=output_file, config_dict=self.config_dict)
+            aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="2MASS", 
+                        coadded_file=output_file, config_dict=self.config_dict,
+                        weight_maps=[gainmap])
             try:
                 aw.run(engine=self.config_dict['astrometry']['engine'])
             except Exception,e:
@@ -3761,6 +3786,7 @@ class ReductionSet(object):
         fs.flush()
         os.fsync(fs.fileno())
         fs.close()
+        
         self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist2.pap", gainmap, 
                                            'mask', self.obs_mode)
         
@@ -3872,7 +3898,8 @@ class ReductionSet(object):
             # Build stack using SWARP
             aw = reduce.astrowarp.AstroWarp(self.m_LAST_FILES, catalog="USNO-B1", 
                          coadded_file=output_file, config_dict=self.config_dict,
-                         resample=True, subtract_back=True)
+                         resample=True, subtract_back=True,
+                         weight_maps=[gainmap])
             try:
                 aw.run(engine=self.config_dict['astrometry']['engine'])
             except Exception,e:

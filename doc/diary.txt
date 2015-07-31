@@ -7837,12 +7837,138 @@ convierten a 0s (IRAF behaviour) !!!
   En fin, que como para Q1 y Q2 sale bien, no le voy a dar más vueltas
   de momento...
   
+29-Jul-2015
+-----------
+
+- Definitivamente tengo claro que en modo science y fix_type=0 ( NaNs),
+la mascara de objetos para los Q3 y sobre todo Q4 no se genera bien,
+pues los objetos de las imagenes .skysub (2da pasada) tienen "bocados" debido a 
+los pixeles con NaN, y por tanto a la hora de hacer la sustracción no
+se enmascaran bien. Este problema no ocurre si tenemos fix_type=1,
+pues las máscaras que se generan tienen los objetos completos.
+Todo esto ocurre porque tengo una máscara por cada
+skysub.fits, debido a que el offsets supera a 'max_dither_offset';
+si tuviesemos una máscara única del coadd de todos los skysub.fits 
+quizás no ocurriría esto.
+Otra solución podría ser modificar createMasterObjMask para que
+corregir los NaN por algo que permita a SExtractor crear máscaras
+de objetos buenas.
+
+Para intentar solucionar eso, modifico reducetionset.py para
+que en la primera pasada de skyfilter del modo science se
+use fix_type=1 independientemente del valor del fichero
+de configuración, y así poder tener una máscara de objetos
+buena. LA MEJORA ES MUY NOTABLE !!!!, ahora la máscara
+es buena, y no presenta objetos "incompletos", u por tanto
+las imagenes .skysub.fits tampoco presentan (apenas) "sombras" 
+debido a objetos no enmascarados correctamente !
+
+
+- Pruebo Montage para el coadd de los Qx, y observo que la diferencia
+es muy notable para el caso del Q4 !!! Tiene toda la pinta de que
+SWARP no trata bien los NaNs !!! Me planteo dejar SWARP y pasarme
+a Montage.
+
+
+
+30-Jul-2015
+-----------
+- Instalado scamp 2.2.5 (trunk-scamp-342) en papi1; 
+- Pruebo las sugenrencias de Hervé, y mejora algo, sobre todo
+que ahora no aparecen falsas estrellas, pero sigue siendo una
+imagen muy fea.
+- Respondo a Hervé sobre los resultados y le paso las imágenes 
+por si el quiere probar.
+
+- Encontrado y solucionado bug en reductionset.py que causaba
+que si apply_dark_flat=0, no se encotrara el BPM a pesar de existir
+y bpm.mode !=none; Ahora, aunque apply_dark_flat=0, el BPM se puede
+encontrar y usar.
+
+- Añado -ASTR_FLAGSMASK 0xf0 -WEIGHTFLAGS_MASK 0 a las llamadas
+a SCAMP en Astrowarp, según sugerencia de Hervé para que
+SCAMP use tambien los objetos con pixeles malos y no falle;
+sin embargo, me da la impresión que no está funcionando, pues
+no funciona muy bien SCAMP con los BP....
+
+
+31-Jul-2015
+-----------
+- Modifico Astrowarp() para que accepte weight maps, 
+de forma que le podamos pasar el gainmap (con bad pixels)
+y así seguir la sugerencia de Hervé.
+Podemos darle una lista de weight_maps (uno para cada
+fichero del coadd) o bien uno comun para todos (lo más normal).
+Además, si no le damos ningun weight map, Astrowarp
+buscará cualquier .weight.fits con el mismo basename (metodo SWARP)
+y is los encuentra los usará (tienen prioridad los dados por el
+usuario a Astrowarp).
+
+- Prueba de reducción seq. #28 de 2015-06-25 (Klaus: problema estrellas dobles ) 
+para ver si tras la modificación en Astrowarp se soluciona el problema
+de las estrellas dobles. Sin embargo, topo con otro problema, y 
+es que ahora, si bpm.mode=grab, el SCAMP no puede resolver Q4 debido
+a tantos NaNs en la imagen !!!, sin embargo, si bpm.mode=fix,
+si lo resuelve. 
+El mosaico final con swarp, aunque parece que ya no tiene
+estrellas dobles, es muy feo, con muchas zonas "grises" en 
+los bordes de unión y mucho peor que con Montage !!! Esas
+zonas ya aparecen en los coadd de los Qi.
+Observo que si ejecuto de nuevo swarp sin los weight_maps(gainmap),
+entonces los coadd individuales (Qi) no tienen esas zonas 
+"grises" (0s) en los bordes. 
+==> Parece que SWarp no está usando bien los weight_maps,
+o bien que los que yo le doy no les gusta, aunque según 
+he leido, si estaría bien:
+
+    "Weight map images: FITS weight map image. There is one weight map 
+    image for each FITS image. Input weight maps are generated during 
+    the QualityFITS-in process (by WeightWatcher) and output weight maps 
+    are produced during the image stacking using SWarp. Weights are 
+    proportional to the inverse of the local sky background flux variance. 
+    The input weight-maps are generated using flat field and bad pixel 
+    mask FITS images delivered by CFHT. When used during co-addition, 
+    the weighting scheme takes into account the image-to-image flux 
+    rescaling, as described in the SWarp User's manual.
+    "
+http://www.astromatic.net/2009/06/02/playing-the-weighting-game-i
+
+
+En resumen:
+
+  1) usando los weight maps, desaparece en problema de las
+  estrellas dobles/falsas que reportó Klaus.
   
+  2) al usar bpm.mode=grab, SCAMP falla debido a tantos NaN,
+  y a pesar de tener ya las astrometría inicial de astrometry.net
+  Se podría hacer como en solveAstrometry, sustituirlos por la mediana
+  **solo** para correr SCAMP y luego volver a ponerle los NaN.
+  
+  3) Otra solución quizás sería dejar bpm.mode=fix, de forma
+  que las skysub estarían bonitas, pero al hacer el coadd con SWARP
+  darle el gainmap con los BP de forma.-->NO funciona bien, el
+  coadd de los Qi tiene los bordes mal, y en el mosaico final
+  se ve fatal !!
+  
+  4) Otra solución, pasar de SWARP y usar sólo Montage,
+  que no usa nada de weight_maps (aunque Hervé dice que es un tremendo error!)
+  
+  
+Lo mejor será esperar la respuesta de Hervé al último mail
+que le mandé a ver si así nos aclaramos. Quizás leer la
+comparación entre SWARP y Montage de AstroBetter.
+
 
 
 
 Tratamiento NaNs
 ----------------
+- En Montage, veo que los NaN los representa por una union C,
+con 8 bytes todos con el valor 255.
+Viendo el código de Montage, todo indica que si trata bien
+los NaNs, ignorando su valor cuando corresponde, por ejemplo
+en mAdd.
+
 - Astrometry.net no funciona muy bien con ellos; si son pocos 
 no hay problema, pero por ejemplo con el Q4 no funciona!
 Para ello modifiqué solveAstrometry.py para que reemplace los NAN
@@ -7915,7 +8041,8 @@ Revision de funciones de QL
  8- Do photmetry: bug !! fixed 
  9- Do astrometry: OK; now solve-field --cpulimit works due 'inparallel' parameter in astrometry config file.
  
- 
+ skymodel=None, # use value of config file
+                                           fix_type)
    
 Comentarios sobre reducción y datos tomados para Matilde
 --------------------------------------------------------
@@ -7950,10 +8077,21 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
-- Ver que valores serían buenos para GainMap (low,high).
+- Implementar el uso de weight_map en SWARP usando el gainmap y
+ver si así se resuelve el problema de las estrellas dobles 
+que me comentó Klaus.
 
-- Ver por que en modo 'science' el Q4 se reduce horrible cuando se tratan
-los BP como NANs.
+
+- TODO: ver si quitar la opción 'none' de bpm.mode ???
+
+- TODO: migrar a Montage para el codadd final de las imágenes,
+pues da resultado mucho mejores!!! (ver email Herve), o la menos
+como opción en el fichero de configuración.
+
+- Actualización de astromatic tools **desde trunks** en panic1 y panic22 !!!
+
+- dithercubemean no funciona bien con NANs; ver como los trata.
+- Ver que valores serían buenos para GainMap (low,high).
 
 - Aunque Herve me lo confirmo por email, ver si encuentro algo de información
 acerca de como trata SWARP/Montage los NaNs.
