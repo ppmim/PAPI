@@ -399,7 +399,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     swarp.ext_config['IMAGEOUT_NAME'] = output_image
     swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
     basename_o, extension_o = os.path.splitext(output_image)
-    #"Projected" weight-maps are created too, even if no weight-maps were given in input.
+    #"Projected" weight-maps are created too, even if no weight-maps were given in input (SWarp manual).
     swarp.ext_config['WEIGHTOUT_NAME'] = basename_o + ".weight" + extension_o
     basename, extension = os.path.splitext(input_image)
     swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"
@@ -544,8 +544,8 @@ class AstroWarp(object):
 
     def __init__(self, input_files, catalog=None, 
                  coadded_file="/tmp/astrowarp.fits", config_dict=None, 
-                 do_votable=False, resample=True, subtract_back=True
-                 ):
+                 do_votable=False, resample=True, subtract_back=True,
+                 weight_maps=None):
         """ 
         Instantiation method for AstroWarp class.
 
@@ -554,10 +554,14 @@ class AstroWarp(object):
         input_files  - the set of overlapping reduced frames, i.e., dark 
                        subtracted, flatted and sky subtracted. 
         catalog      - the catalog to use for the astrometric calibration (by default, 2MASS).
-        coadded_file - the output final coadded image.
+        coadded_file - the output final coadded image
+        config_dict  - configuration dictionary
+        do_votable   - whether to generata a VO-table with the Sextractor catalog of coadded image
         resample     - Resample image when scamp is executed (RESAMPLE).
         subtract_back - Subtract sky background when scamp is executed (SUBTRACT_BACK)
-        pixel_scale   - default pixel scale of the image used for initWCS().
+        weight_maps   - List of input weight-map filenames; if the list has a single file,
+                        it will be used for all the input files. 
+                        0 = bad pixel, >1 = good pixels
 
         """
         
@@ -590,7 +594,7 @@ class AstroWarp(object):
         self.pix_scale = config_dict['general']['pix_scale']
         self.temp_dir = config_dict['general']['temp_dir']
         self.output_dir = config_dict['general']['output_dir']
-
+        self.weight_maps = weight_maps
 
     def run(self, engine='SCAMP'):
         """
@@ -690,6 +694,11 @@ class AstroWarp(object):
         scamp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['scamp_conf']
         scamp.ext_config['ASTREF_CATALOG'] = self.catalog
         scamp.ext_config['SOLVE_PHOTOM'] = "N"
+        # Herve ads to consider even stars with bad pixles (scamp > 2.x)
+        scamp.ext_config['WEIGHTFLAGS_MASK'] = 0
+        scamp.ext_config['ASTR_FLAGSMASK'] = '0xf0'
+        # end Herve ads
+        
         cat_files = [(f + ".ldac") for f in solved_files]
         #updateconfig=False means scamp will use the specified config file instead of the single config parameters
         
@@ -722,13 +731,31 @@ class AstroWarp(object):
         swarp.ext_config['IMAGEOUT_NAME'] = output_path
         swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
                                                                  
-        # "Projected" weight-maps are created only if weight-maps were given in input.
-        # Weight are very important to get a good coadd/mosaic !!
-        if os.path.isfile(basename + ".weight" + extension):
+        # "Projected" weight-maps are created only if weight-maps were given in input (SWarp manual).
+        # Weight maps are very important to get a good coadd/mosaic, mostly due to BadPixels !!
+        # Case 1: specific weight_maps are provided or single one common for all input files
+        if self.weight_maps != None and len(self.weight_maps) > 0:
+            # A weight map for each input file to coadd
+            if len(self.weight_maps) == len(solved_files):
+                list_weight_maps = ''
+                for wm in self.weight_maps:
+                    list_weight_maps += ' ' + wm + ','
+                swarp.ext_config['WEIGHT_IMAGE'] = list_weight_maps[:-1]
+                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            # A common weight map for all input files to coadd (bad pixel mask or gainmap)
+            elif len(self.weight_maps) == 1:
+                swarp.ext_config['WEIGHT_IMAGE'] = self.weight_maps[0]
+                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            else:
+                raise Exception("Wrong number of weight maps provided")
+            log.debug("Using given weight maps: %s " % swarp.ext_config['WEIGHT_IMAGE'])
+        # Case 2: default weight_maps are provided
+        elif os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
             swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
-        
+            log.debug("Using default weight maps: %s " % (basename + ".weight" + extension))
+            
         if not self.resample:
             swarp.ext_config['RESAMPLE'] = 'N' # then, no field distortion removing is done
   
@@ -859,33 +886,61 @@ class AstroWarp(object):
         ## STEP 3: Make the coadding with SWARP, and using .head files created by SCAMP
         # It requires the files are overlapped, i.e., have an common sky-area
         log.debug("*** Coadding overlapped files (SWARP)....")
+        
+        
+        root, ext = os.path.splitext(os.path.basename(self.coadded_file))
+        # Path to the temporary FITS file containing the WCS header
+        kwargs = dict(prefix = '%s_coadd_' % root, suffix = ext, dir=self.temp_dir)
+        with tempfile.NamedTemporaryFile(**kwargs) as fd:
+            output_path = fd.name
+        
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf']
-        basename, extension = os.path.splitext(self.input_files[0])
+        basename, extension = os.path.splitext(solved_files[0])
         swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"  # very important !
-        if not os.path.isfile(self.input_files[0]+".head"):
+        if not os.path.isfile(solved_files[0] + ".head"):
             raise Exception ("Cannot find required .head file")
-            
+        
+        
         swarp.ext_config['COPY_KEYWORDS'] = 'OBJECT,INSTRUME,TELESCOPE,IMAGETYP,FILTER,FILTER1,FILTER2,SCALE,MJD-OBS,RA,DEC,HISTORY,NCOADDS,NDIT'
-        # Note: we use os.path.abspath(os.path.join(yourpath, os.pardir)) as a trick to get the parent dir 
-        swarp.ext_config['IMAGEOUT_NAME'] = os.path.abspath(os.path.join(self.coadded_file, os.pardir))  + "/coadd_tmp.fits"
-        #"Projected" weight-maps are created only if weight-maps were given in input.
-        if os.path.isfile(basename + ".weight" + extension):
+        swarp.ext_config['IMAGEOUT_NAME'] = output_path
+        swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
+                                                                 
+        # "Projected" weight-maps are created only if weight-maps were given in input (SWarp manual).
+        # Weight maps are very important to get a good coadd/mosaic, mostly due to BadPixels !!
+        # Case 1: specific weight_maps are provided or single one common for all input files
+        if self.weight_maps != None and len(self.weight_maps) > 0:
+            # A weight map for each input file to coadd
+            if len(self.weight_maps) == len(solved_files):
+                list_weight_maps = ''
+                for wm in self.weight_maps:
+                    list_weight_maps += ' ' + wm + ','
+                swarp.ext_config['WEIGHT_IMAGE'] = list_weight_maps[:-1]
+                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            # A common weight map for all input files to coadd (bad pixel mask or gainmap)
+            elif len(self.weight_maps) == 1:
+                swarp.ext_config['WEIGHT_IMAGE'] = self.weight_maps[0]
+                swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            else:
+                raise Exception("Wrong number of weight maps provided")
+        # Case 2: default weight_maps are provided
+        elif os.path.isfile(basename + ".weight" + extension):
             swarp.ext_config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
             swarp.ext_config['WEIGHT_SUFFIX'] = '.weight' + extension
-            swarp.ext_config['WEIGHTOUT_NAME'] =  os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.weight.fits"
-        
+            swarp.ext_config['WEIGHTOUT_NAME'] = output_path.replace(".fits", ".weight.fits")
+            
+            
         if not self.resample:
             swarp.ext_config['RESAMPLE'] = 'N' # then, no field distortion removing is done
   
         if not self.subtract_back:
             swarp.ext_config['SUBTRACT_BACK'] = 'N'
-
-        #To avoid any problem concerning SWARP because by chance could exist
-        #a old file about IMAGEOUT_NAME.head what would cause a bad resampling
-        #and combination of files, we remove any IMAGEOUT_NAME.head
-        if os.path.exists(swarp.ext_config['IMAGEOUT_NAME']+".head"):
-            os.remove(swarp.ext_config['IMAGEOUT_NAME']+".head")
+            
+        # To avoid any problem concerning SWARP because by chance could exist
+        # a old file about IMAGEOUT_NAME.head what would cause a bad resampling
+        # and combination of files, we remove any IMAGEOUT_NAME.head
+        if os.path.exists(swarp.ext_config['IMAGEOUT_NAME'] + ".head"):
+            os.remove(swarp.ext_config['IMAGEOUT_NAME'] + ".head")
                 
         """
         #IMPORTANT: Rename the .head files in order to be found by SWARP
@@ -895,10 +950,9 @@ class AstroWarp(object):
             shutil.move(aFile+".head", basename +".head")  # very important !!
         """    
         try:
-            swarp.run(self.input_files, updateconfig=False, clean=False)
+            swarp.run(solved_files, updateconfig=False, clean=False)
         except Exception,e:    
-            raise e
-        
+            raise e        
         
         ## STEP 4: Make again the final astrometric calibration (only 
         ## if we coadded more that one file) to the final coadd)

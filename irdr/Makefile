@@ -14,6 +14,7 @@ AR        = ar
 ARFLAGS   = rcv
 LDFLAGS   = -L./lib   -L./extern/wcstools/libwcs
 LDLIBS    = -lirdr -lc -lm -lwcs 
+#COMPFLAGS = $(CFLAGS) $(IFLAGS) -DSKY_DEBUG
 COMPFLAGS = $(CFLAGS) $(IFLAGS)
 LINKFLAGS = $(LDFLAGS) $(LDLIBS)
 COMPILE.c = $(CC) $(CFLAGS) $(IFLAGS) -c

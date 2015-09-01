@@ -314,8 +314,8 @@ Command::
     $papi.py -s /my/raw_data/directory -g filter -p 
 
 
-Reduce a specificied number of sequences of the group list 
----------------------------------------------------------
+Reduce (quick) a specificied number of sequences of the group list 
+------------------------------------------------------------------
 To reduce the sequneces from N1 to N2 from the group list obtained with a '-p' command,
 you have to use the `-S` parameter with two values, N1 and N2, where:
 
@@ -329,6 +329,16 @@ Command::
 Example::
 
     $papi.py -s /data2/2015-03-10/ -S 14 20
+
+By default, PAPI process the files in quick mode (single pass for sky subtraction), 
+however if you can use the 'science' mode (double pass for sky subtraction) adding
+the '-M science' when you run PAPI:
+
+Example::
+
+    $papi.py -s /data2/2015-03-10/ -S 14 20 -M science
+    
+
     
 If you only want to reduce a specific sequence, for example number 14, you should type:
 
@@ -364,6 +374,9 @@ using the `-M` option as follow:
     $papi.py -s /my/raw_data/directory -d /my/output/directory -M quick
 
 
+Reduce all the sequences of a given set of directories
+------------------------------------------------------
+
 If you need to reduce all the sequences of a given set of directories, then
 you should create an script to do that; for example see next bash script:
 
@@ -386,6 +399,45 @@ you should create an script to do that; for example see next bash script:
     done
 
 
+Use a specific calibration directory for data reduction
+-------------------------------------------------------
+To reduce a complete directory using the calibration found in an specific 
+directory (master dark and flat-field calibrations previously processed), 
+you have to use the '-C path' option. This way, if PAPI cannot find the 
+required calibrations into the input directory (/my/raw/directory), will 
+look for them into the external calibration directory provided (/my/calibration/dir).
+
+Command::
+
+    $papi.py -s /my/raw_data/directory -d /my/output/directory -C /my/calibrations/dir
+
+Enable the Non-Linearity correction for the data processing
+-----------------------------------------------------------
+If you need to enable to Non-Linearity correction (see `PANIC detector non-linearity correction data`),
+you only have to edit the $PAPI_CONFIG file and set 'nonlinearity.apply' parameter
+to 'True'.
+
+Note::
+    Be ware that when using Non-Linearity correction, all the files used and calibrations,
+    must be non-linearity corrected. Otherwise, you don't get an consistent result.
+
+
+Reduce a single detector
+------------------------
+By default PAPI processes all the detector and builds the mosaic with the reduced detectors.
+However, if you do not need to reduce all the detectors, but only one of them (Q1...Q4), you
+can use the option '-W Qx'::
+
+    -W DETECTOR, --window_detector=DETECTOR
+                                Specify which detector to process:Q1(SG1), Q2(SG2),
+                                Q3(SG3), Q4(SG4), Q123(all except SG4), all [default:
+                                all]
+
+Example::
+
+    $papi.py -s /my/raw_data/directory -d /my/output/directory -W Q1
+    
+    
 Reduction modes
 ===============
 
@@ -456,8 +508,8 @@ keyword is missing, the application will fail and inform about that.
 File papi.cfg::
 
 
-    # Default configuration file for PAPI 1.0
-    # updated 20 May 2015  
+    # Default configuration file for PAPI 1.3
+    # updated 24 Jul 2015
 
     ##############################################################################
     [general]
@@ -559,7 +611,7 @@ File papi.cfg::
     # (.list, .objs., .ldac, .xml, ...) will be removed from the output directory
     # just after the end of the RS reduction.
     #
-    purge_output = False
+    purge_output = True
 
 
     #
@@ -596,7 +648,7 @@ File papi.cfg::
     #                      skysubtraction, but no DARK will be subtracted (it is 
     #                      supposed to be done by the skysubtraction) 
     #                      (some people think they are not required !)
-    apply_dark_flat = 0 
+    apply_dark_flat = 1 
 
     #
     # some other values (really required ?)
@@ -604,7 +656,7 @@ File papi.cfg::
 
     # Maximum seconds (10min=600secs aprox) of temporal distant allowed between two consecutive frames. To convert to days -> (1/86400.0)*10*60
     max_mjd_diff = 900
-    max_ra_dec_offset = 602 # Maximum distance (arcsecs) allowed for two consecutives frames into a sequence (only for 'filter' grouping)
+    max_ra_dec_offset = 2602 # Maximum distance (arcsecs) allowed for two consecutives frames into a sequence (only for 'filter' grouping)
     max_num_files = 50 # Maximum number of files allowed in a sequence (only for 'filter' grouping)
 
 
@@ -644,6 +696,13 @@ File papi.cfg::
     # is 0.5 (ie, make 50% larger)
     dilate = 0.2
 
+    # Mosaic engine: tool to be used to build the final mosaic with the 4 detectors
+    # 'swarp': use SWARP from Astromatic.net - not always work
+    # 'montage': use Montage tool - in principle, the best option
+    # 'other': no mosaic is built, but a MEF with 4 extensions
+    # For more information see: http://www.astrobetter.com/blog/2009/10/21/better-ways-to-make-large-image-mosiacs/
+    mosaic_engine = none
+
 
     ##############################################################################
     [config_files]
@@ -679,12 +738,12 @@ File papi.cfg::
     #   into account in GainMaps. 
     # - none: no action will be done with the BPM
     # BPMask ==> Bad pixeles >0, Good pixels = 0
-    mode = none
+    mode = grab
 
     # FITS file containing the BPM (bad pixels > 0, good_pixels = 0)
     #bpm_file = /data1/Calibs/bpm_lir_v01.00.fits
     bpm_file = /data1/Calibs/mBPM_LIR_01.01.mef.fits
-
+    #bpm_file = /data1/Calibs/master_bpm_lir_ones.join.fits
     ##############################################################################
     [dark]  
     ##############################################################################
@@ -1013,7 +1072,7 @@ File papi.cfg::
 
     # Run parameters
     run_mode = Lazy # default (initial) run mode of the QL; it can be (None, Lazy, Prereduce)
-    )
+
 
 
 Principal parameters to set

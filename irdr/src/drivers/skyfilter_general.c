@@ -129,12 +129,12 @@ int main(int argc, char *argv[])
     /* NEW CODE */
     for (i=0;i<nplanes;i++)
     {
-        nskies_pre=0;
-        nskies_post=0;
-        nskies_pend=0;
-        last_pre=-1;
-        last_post=-1;
-        nsky=0;
+        nskies_pre = 0;
+        nskies_post = 0;
+        nskies_pend = 0;
+        last_pre = -1;
+        last_post = -1;
+        nsky = 0;
         avgscale = 0.0;
         
         if (isTarget(i))
@@ -232,19 +232,28 @@ int main(int argc, char *argv[])
             */ 
             if (usemask) {
                 sky = cube_mean(dbuf, wbuf, nsky, nx, ny, &skyw, scale, 1);
-                /*DEBUG writefits("/tmp/sky_2nd.fits", fn[i], (char*)sky, -32, nx, ny);*/
                 fimg = skysub(data[i], nx, ny, bkgs[i], gainmap, sky, skyw, 
-                                wdata[i], argv[5]);
+                                wdata[i], argv[5], atoi(argv[6]));
+#ifdef SKY_DEBUG
+                strcpy(aux, "/data2/tmp/sky_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)sky, -32, nx, ny);
+                
+                strcpy(aux, "/data2/tmp/skyw_");
+                strcat(aux, basename(fn[i]));
+                writefits(aux, fn[i], (char*)skyw, -32, nx, ny);
+                
+#endif
             } else {
                 sky = cube_median(dbuf, nsky, nx, ny, scale, 1);
-                /*DEBUG*/
-                /*strcpy(aux,"/tmp/sky_");
+
+                fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
+                                    argv[5], atoi(argv[6]));
+#ifdef SKY_DEBUG
+                strcpy(aux, "/data2/tmp/sky_");
                 strcat(aux, basename(fn[i]));
                 writefits(aux, fn[i], (char*)sky, -32, nx, ny); 
-                */
-                /* END_DEBUG */
-                fimg = skysub_nomask(data[i], nx, ny, bkgs[i], gainmap, sky, 
-                                    argv[5]);
+#endif
             }
     
             /*skysubimg = longint(fimg, nx, ny);*/
@@ -357,7 +366,7 @@ static void usage(void)
     static char *usage = "\n"
     "skyfilter_general - do running sky frame subtraction\n\n"
     "usage: skyfilter_general listfn gainfn hwidth mask|nomask "
-    "row|col|rowcol|colrow|none\n\n"
+    "row|col|rowcol|colrow|none fix_type\n\n"
     "where listfn - if object masking is used, then listfn should contain:\n"
     "               img_filename objmask_filename dither_x_off dither_y_off\n"
     "               where objmask is the master object mask per dither set\n"
@@ -378,7 +387,8 @@ static void usage(void)
     "               rowcol for row offsets then column offsets,\n"
     "               colrow for column offsets then row offsets,\n"
     "               none for no correction\n\n"
-    "example: skyfilter_general filelist gain.fits 4 mask rowcol\n\n";
+    "     fix_type- type of behaviour with bad pixel (1=replace with bcklvl, 0=nan)"
+    "example: skyfilter_general filelist gain.fits 4 mask rowcol 1\n\n";
 
     printf("%s", usage);
     exit(0);

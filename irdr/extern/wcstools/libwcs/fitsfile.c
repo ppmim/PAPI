@@ -1358,7 +1358,6 @@ char	*image;		/* FITS image pixels */
 
 {
     int fd;
-
     /* Open the output file */
     if (strcasecmp (filename,"stdout") ) {
 
@@ -1381,7 +1380,6 @@ char	*image;		/* FITS image pixels */
     else
 	fd = STDOUT_FILENO;
 #endif
-
     return (fitswhdu (fd, filename, header, image));
 }
 

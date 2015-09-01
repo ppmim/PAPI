@@ -2,8 +2,8 @@
 
 extern float * 
 skysub(float *img, int nx, int ny, float bkg, float *bpm, 
-       float *sky, float *skyw, float *mask, char *type);
+       float *sky, float *skyw, float *mask, char *type, int fix_type);
 
 extern float *
 skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm, 
-              float *sky, char *type);
+              float *sky, char *type, int fix_type);

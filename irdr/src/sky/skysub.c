@@ -17,7 +17,7 @@
 
 /* sky subtraction and image destriping using object masking */
 extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainmap*/, 
-                     float *sky, float *skyw, float *mask, char *type)
+                     float *sky, float *skyw, float *mask, char *type, int fix_type)
 {
     int i;
     float skybkg, l_sky, *imgout = (float *) emalloc(nx * ny * sizeof(float));
@@ -40,7 +40,12 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainma
             imgout[i] = bpm[i]; /* NAN macro does not work, but 0./.0 is equivalent*/
         }
         else if (bpm[i] <= 0)
-            imgout[i] = bkg;  /* set bad pixels to bkg lvl */
+        {
+            if (fix_type==1) /* fix bad pixels with bkg level */
+                imgout[i] = bkg;   /* set bad pixels to bkg lvl */
+            else 
+                imgout[i] = 0.0 / 0.0; /* grab bad pixels to NaN - default */
+                
             /* JMIM: I thik bad pixels should be set to __local__ bkg level to take into account when the pixel is in a star !! */
             /* compute local bkg, but probably only valid for isolated badpixels. !!*/
             /* TBC --> next probably only works fine for isolated pixels !!
@@ -51,6 +56,7 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainma
             else 
                 imgout[i] = bkg;
             */
+        }
         else
         {    
             if (skyw[i] > 0)
@@ -72,7 +78,7 @@ extern float *skysub(float *img, int nx, int ny, float bkg, float *bpm /* gainma
    representing the median sky level is added to all pixels.
 */
 extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm /* gainmap*/,
-                            float *sky, char *type)
+                            float *sky, char *type, int fix_type)
 {
     int i;
     float *imgout, skybkg;
@@ -91,9 +97,12 @@ extern float *skysub_nomask(float *img, int nx, int ny, float bkg, float *bpm /*
         {
             imgout[i] = bpm[i]; /* NAN macro does not work, but 0./.0 is equivalent*/
         }
-    	else if (bpm[i] <= 0)
-            imgout[i] = bkg;  /* set bad pixels to bkg lvl */
-    	
+    	else if (bpm[i] <= 0){
+            if (fix_type==1) /* fix bad pixels with bkg level */
+                imgout[i] = bkg;   /* set bad pixels to bkg lvl */
+            else 
+                imgout[i] = 0.0/0.0; /* grab bad pixels to NaN - default !*/
+        }
     	else{
             imgout[i] = img[i] + (skybkg - sky[i]); /* add constant (skybkg) to preserve original count level */
                 

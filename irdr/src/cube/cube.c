@@ -92,6 +92,7 @@ cube_median(float *planes[MAXNPLANES], int np, int nx, int ny, float *scale,
         }
     }
 
+    
     return medplane;
 }
 

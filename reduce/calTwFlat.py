@@ -236,7 +236,7 @@ class MasterTwilightFlat(object):
             log.error("Error converting Flats to MEF file: %s", str(e))
             raise e
             
-        # STEP 1: Check the  TYPE(twilight) and FILTER,READEMODE of each Flat frame
+        # STEP 1: Check the  TYPE(twilight) and FILTER, READEMODE of each Flat frame
         # If any frame on list missmatch the FILTER, then the master twflat will be aborted
         # EXPTIME do not need be the same, so EXPTIME scaling will be done
         f_expt = -1
@@ -282,9 +282,12 @@ class MasterTwilightFlat(object):
             myfits.close()            
             
             if ( f_expt!=-1 and (f.getFilter()!=f_filter or f.getType()!=f_type 
-                                 or f.getReadMode() != f_readmode
-                                 or f.getNcoadds() != f_ncoadds)):
-                log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE or NCOADDS")
+                                 or f.getReadMode() != f_readmode)):
+                # The number of coadds can be different, because the sky flatfield
+                # routine split the total exposure time by the max_integration_time value
+                # See 'PANIC sky flatfield procedure' doc. by BD.
+                #or f.getNcoadds() != f_ncoadds)):
+                log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE")
                 raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
                 #continue
             else: 

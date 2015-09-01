@@ -441,6 +441,9 @@ def read_config_file(config_file = default_config_file()):
     general["dilate"] = read_parameter(config, "general", "dilate", float, True, config_file)
     general["verbose"] = read_parameter(config, "general", "verbose", bool, False, config_file)
     
+    general["mosaic_engine"] = read_parameter(config, "general", "mosaic_engine", str, False, config_file)
+    
+    
     filter_prefix = "filter_name_"
     for filter_letter in ["Z", "Y", "J", "H", "K", "Ks"]:
         general[filter_prefix + filter_letter] = read_list_of_strings(config, "general", filter_prefix + filter_letter)
