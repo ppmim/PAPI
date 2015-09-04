@@ -229,6 +229,15 @@ http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
 
 - CDSclient package 
 
+Note on SCAMP v2.2.0: Refactored astrometric reference catalog download mechanism: does not require CDSclient anymore, now relies on libcurl.
+(also http://www.astromatic.net/forum/showthread.php?tid=1015)
+
+If you are using a SCAMP version <= 2.0.4 (lastest stable version), then you need to install the CDSClient. Otherwise, if you are using SCAM version > 2.0.4, CDSClient is no longer needed, but then SCAMP requires **libcurl-devel** package. 
+
+Anycase, if you are behind a proxy, you need to set the proxy server in your system::
+    
+    http_proxy=http//your_proxy:your_port; export http_proxy
+
 > wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz
 > tar xvfz cdsclient.tar.gz
 > cd cdsclient-V.vv

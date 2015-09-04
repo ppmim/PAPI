@@ -37,7 +37,7 @@ and also depends on next packages:
  - `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (> v2.8.6)
  - `SCAMP <http://www.astromatic.net/software/scamp>`_ (> v1.7.0)
  - `SWarp <http://www.astromatic.net/software/swarp>`_ (> v2.19.1)
- - `Astrometry.net <http://astrometry.net/>`_ with 42xx index files (optional to SCAMP)
+ - `Astrometry.net <http://astrometry.net/>`_ with `42xx index files <http://broiler.astrometry.net/~dstn/4200/>`_
  - `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (> v7.3b5)
  - `Montage <http://montage.ipac.caltech.edu/download/Montage_v3.3.tar.gz>`_ (v3.3)
  - `montage_wrapper <https://pypi.python.org/pypi/montage-wrapper>`_ (0.9.8)
@@ -54,22 +54,24 @@ version:
 
 	* ``git clone https://github.com/ppmim/PAPI ~/papi``
 
-#. Build the sources:
+#. Once you have installed the required packages described above, you are ready to install
+PAPI; for this, follow the next steps::
 
-    * cd papi/irdr/src
-    * make all
+    $ cd papi
+    $ ./papi_setup.sh
 
-#. Edit papi_setup.sh script:
+.. warning::
+    
+    The script papi_setup.sh is currently implemented **only** for the Bash shell, and will modify your .bashrc file adding a new line at the end.
 
-    * Modify the PAPI_HOME and PAPI_PROD in the papi_setup.[sh] file in the papi 
-    directory
-    * Run the papi_setup.sh 
-    * Re-load your new profile (.bashrc or .cshrc ) 
-
-        - Bash: . ~/.bashrc
-        - CSH: source ~/.cshrc
 
 #. Go to config_files/ directory to setup the config file to use.
+
+.. note::
+    
+    If you are behind a proxy, you need to set the proxy in your system::
+    
+    http_proxy=http//your_proxy:your_port; export http_proxy 
 
 
 Supported Platforms

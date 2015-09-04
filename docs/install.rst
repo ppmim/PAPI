@@ -27,7 +27,7 @@ are required:
     * `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (> v2.8.6)
     * `SCAMP <http://www.astromatic.net/software/scamp>`_ (> v1.7.0)
     * `SWarp <http://www.astromatic.net/software/swarp>`_ (> v2.19.1)
-    * `Astrometry.net <http://astrometry.net/>`_ with 42xx index files (optional to SCAMP)
+    * `Astrometry.net <http://astrometry.net/>`_ with `42xx index files <http://broiler.astrometry.net/~dstn/4200/>`_
     * `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (> v7.3b5)
     * `Montage <http://montage.ipac.caltech.edu/download/Montage_v3.3.tar.gz>`_ (v3.3)
     * `montage_wrapper <https://pypi.python.org/pypi/montage-wrapper>`_ (0.9.8)
@@ -35,6 +35,15 @@ are required:
 Additional packages are optionally required:
     * `sphinx`_  to build the documentation
 
+.. note::
+    
+    If you are using a SCAMP version <= 2.0.4 (lastest stable version), then you need to install the CDSClient. Otherwise, if you are using SCAM version > 2.0.4, then you need **libcurl**. 
+
+    Anycase, if you are behind a proxy, you need to set the proxy server in your system::
+    
+    http_proxy=http//your_proxy:your_port; export http_proxy
+
+    
 .. index:: installing, building, source, downloading
 
 Download
@@ -52,6 +61,9 @@ PAPI; for this, follow the next steps::
     $ cd papi
     $ ./papi_setup.sh
 
+.. warning::
+    
+    The script papi_setup.sh is currently implemented **only** for the Bash shell, and will modify your .bashrc file adding a new line at the end.
 
 Building the documentation
 --------------------------
