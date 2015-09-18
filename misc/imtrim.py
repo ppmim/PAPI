@@ -87,12 +87,13 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     
     try:
         indata = fits.open(file, ignore_missing_end=True)
-        if len(indata)>1:
+        if len(indata) > 1:
             raise Exception("MEF files currently not supported")
         indata[0].verify()
-    except Exception,e:
+    except Exception, e:
         log.error('Could not open frame - something wrong with input data')
         raise e
+    
     try:
         nx = indata[0].header['NAXIS1']
         ny = indata[0].header['NAXIS2']

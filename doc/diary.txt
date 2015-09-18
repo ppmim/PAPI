@@ -7901,7 +7901,7 @@ Podemos darle una lista de weight_maps (uno para cada
 fichero del coadd) o bien uno comun para todos (lo más normal).
 Además, si no le damos ningun weight map, Astrowarp
 buscará cualquier .weight.fits con el mismo basename (metodo SWARP)
-y is los encuentra los usará (tienen prioridad los dados por el
+y si los encuentra los usará (tienen prioridad los dados por el
 usuario a Astrowarp).
 
 - Prueba de reducción seq. #28 de 2015-06-25 (Klaus: problema estrellas dobles ) 
@@ -7946,7 +7946,7 @@ En resumen:
   
   3) Otra solución quizás sería dejar bpm.mode=fix, de forma
   que las skysub estarían bonitas, pero al hacer el coadd con SWARP
-  darle el gainmap con los BP de forma.-->NO funciona bien, el
+  y darle el gainmap con los BP de forma.-->NO funciona bien, el
   coadd de los Qi tiene los bordes mal, y en el mosaico final
   se ve fatal !!
   
@@ -7958,6 +7958,12 @@ Lo mejor será esperar la respuesta de Hervé al último mail
 que le mandé a ver si así nos aclaramos. Quizás leer la
 comparación entre SWARP y Montage de AstroBetter.
 
+
+
+4-Sep-2015
+-----------
+- Depués de los errores en la instalación de PAPI en el ordenador de Klaus,
+añado algunos comentarios/correcciones al doc. de instalación. 
 
 
 

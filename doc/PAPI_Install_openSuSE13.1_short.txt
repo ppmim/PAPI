@@ -662,20 +662,25 @@ http://www.astromatic.net/download/sextractor/sextractor-2.19.5-1.x86_64.rpm
 
 2.2.1- CDSclient package 
 
+Note on SCAMP v2.2.0: Refactored astrometric reference catalog download mechanism: does not require CDSclient anymore, now relies on libcurl.
+(also http://www.astromatic.net/forum/showthread.php?tid=1015)
+
+If you are using a SCAMP version <= 2.0.4 (lastest stable version), then you need to install the CDSClient. Otherwise, if you are using SCAM version > 2.0.4, CDSClient is no longer needed, but then SCAMP requires **libcurl-devel** package. 
+
+Anycase, if you are behind a proxy, you need to set the proxy server in your system::
+    
+    http_proxy=http//your_proxy:your_port; export http_proxy
+
+    MPIA --> ftp-proxy.mpia.de:3128  (21-Nov-2011)
+
 > wget http://cdsarc.u-strasbg.fr/ftp/pub/sw/cdsclient.tar.gz
 > tar xvfz cdsclient.tar.gz
-> cd cdsclient-3.77
+> cd cdsclient-V.vv
 > ./configure
 > make
 > make install
 
-If CDSclient is to be run behind a firewall, it need to be configurared to run
-with a proxy using 'http_proxy' environment:
 
-  >http_proxy=http//your_proxy:your_port; 
-  >export http_proxy
-
-  MPIA --> ftp-proxy.mpia.de:3128  (21-Nov-2011)
 
 For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
 
@@ -937,7 +942,7 @@ to build and install the package. For more on installing from source code, see t
 
 
 12.1) IRAF v2.16.1 x86_64
-----------------------
+-------------------------
 Doc --> http://iraf.noao.edu/iraf//ftp/ftp/v216/PCIX/RELEASE.txt
 
 wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
@@ -982,7 +987,7 @@ the files needed.
 12.1.2) x11iraf (xgterm) 
 ---------------------
 > sudo mkdir /iraf/x11iraf
->cd /iraf/x11iraf (temporal directory used only for packege installation)
+> cd /iraf/x11iraf (temporal directory used only for packege installation)
 > sudo wget http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v2.0BETA-bin.linux.tar.gz
 ( or wget http://iraf.net/ftp/iraf/x11iraf/x11iraf-v1.5DEV-bin.redhat.tar.gz) 
 > sudo tar -zxf x11iraf-v2.0BETA-bin.linux.tar.gz

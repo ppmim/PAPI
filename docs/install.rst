@@ -21,7 +21,8 @@ are required:
     * `Astropy <http://www.astropy.org/>`_ (> v0.3.1)
     * `Matplotlib <http://matplotlib.org/>`_ (> v1.3.0)
     * `PyQt4 <http://www.riverbankcomputing.co.uk/software/pyqt/download>`_
-    * `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (< v2.16 or higher)
+    * `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (v2.16)
+    * `x11iraf <http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v2.0BETA-bin.linux.tar.gz>`_ for xgterm
     * `stsci_python <http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python>`_ (> v2.14)
     * `CDSClient <http://cdsarc.u-strasbg.fr/doc/cdsclient.html>`_
     * `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (> v2.8.6)
@@ -53,6 +54,10 @@ The latest stable version of PAPI can be downloaded from `GitHub repository <htt
 
 Building and Installation
 -------------------------
+PAPI installation is thought to be done as a 'personal user' (non-root), however it should work
+under any system directory (ie., /usr/local/). 
+
+1. To install PAPI as a "personal user" (non-root), follow the next steps:
 
 Once you have installed the required packages described above, you are ready to install
 PAPI; for this, follow the next steps::
@@ -61,9 +66,23 @@ PAPI; for this, follow the next steps::
     $ cd papi
     $ ./papi_setup.sh
 
+
+2. To install PAPI as root on your system, follow the next steps::
+
+    $ cd /usr/local
+    $ git clone https://github.com/ppmim/PAPI.git papi
+    $ cd papi
+    
+    Edit the papi_setup.sh and set the right values to PAPI_HOME and PAPI_BIN variables, and then run the script as an user:
+    
+    $ ./papi_setup.sh
+
+
 .. warning::
     
     The script papi_setup.sh is currently implemented **only** for the Bash shell, and will modify your .bashrc file adding a new line at the end.
+
+    
 
 Building the documentation
 --------------------------

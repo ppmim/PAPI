@@ -405,7 +405,7 @@ None
 
 Lazy (**default**)
   If the end of a calibration (DARK, FLAT) sequence is detected, the master 
-  file is built. Otherwise, and the SCIENCE files are processed as specified 
+  file is built. Otherwise, the SCIENCE files are processed as specified 
   in the 'Setup->Lazy Mode':
   
   + Apply DARK + FLAT + BPM
@@ -848,11 +848,57 @@ get the best focus value for that serie is as follow:
    type **q**.
 
 5. Then, an IRAF interactive graphics with the first fit will appear, and the best focus obtained.
-   On that graphics, you should remove the images/stars/focus/points thay you consider are not
+   On that graphics, you should remove the images/stars/focus/points that you consider are not
    good for the focus evaluation (outliers); for this, type **x** and then i/s/f/p.
    Type **u** to undo the removing of the outliers.
    If you need more info about this commands see starfocus_
 
+   Starfocus Cursor Commands::
+   
+        When selecting objects with the image cursor the following commands are available.
+
+        ?  Page cursor command summary
+        g  Measure object and graph the results.
+        m  Measure object.
+        q  Quit object marking and go to next image.
+        At the end of all images go to analysis of all measurements.
+
+        :show  Show current results.
+        When in the interactive graphics the following cursor commands are available. All plots may not be available depending on the number of focus values and the number of stars.
+
+        ?  Page cursor command summary
+        a  Spatial plot at a single focus
+        b  Spatial plot of best focus values
+        d  Delete star nearest to cursor
+        e  Enclosed flux for stars at one focus and one star at all focus
+        f  Size and ellipticity vs focus for all data
+        i  Information about point nearest the cursor
+        m  Size and ellipticity vs relative magnitude at one focus
+        n  Normalize enclosed flux at x cursor position
+        o  Offset enclosed flux to by adjusting background
+        p  Radial profiles for stars at one focus and one star at all focus
+        q  Quit
+        r  Redraw
+        s  Toggle magnitude symbols in spatial plots
+        t  Size and ellipticity vs radius from field center at one focus
+        u  Undelete all deleted points
+        x  Delete nearest point, star, or focus (selected by query)
+        z  Zoom to a single measurement
+        <space> Step through different focus or stars in current plot type
+
+
+        :beta <val>     Beta parameter for Moffat fit
+        :level <val>    Level at which the size parameter is evaluated
+        :overplot <y|n> Overplot the profiles from the narrowest profile?
+        :radius <val>   Change profile radius
+        :show <file>    Page all information for the current set of objects
+        :size <type>    Size type (Radius|FWHM)
+        :scale <val>    Pixel scale for size values
+        :xcenter <val>  X field center for radius from field center plots
+        :ycenter <val>  Y field center for radius from field center plots
+
+        The profile radius may not exceed the initial value set by the task
+        parameter.
 |
 
 .. image:: _static/PQL_GUI_focus_eval_3.png

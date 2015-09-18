@@ -476,7 +476,7 @@ yourself as one of the following users and follow the steps described:
         2)  Define $iraf in your environment
         3)  Run the $iraf/unix/hlib/install script to install the system
 
-x11iraf (xgterm)
+x11iraf (xgterm) -- mandatory !!
 ----------------
 mkdir x11iraf
 cd x11iraf
@@ -491,6 +491,15 @@ sudo ./install
 
  > sudo zypper install libXmu6-32bit
  
+NOTE about: stsdas, tables, mscred, nmisc
+=========================================
+
+Since IRAF v2.15, the system is shipped with no defined external packages,
+instead we assume packages will be installed using this new feature.  To
+begin, simply execute the 'configure' script in this directory to create
+the files needed.
+(see $iraf/extern/README) 
+
 
 2.1) STSDAS & TABLES (v.3.15)
 --------------------------

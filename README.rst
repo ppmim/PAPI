@@ -31,7 +31,8 @@ and also depends on next packages:
  - `Astropy <http://www.astropy.org/>`_ (> v0.3.1)
  - `Matplotlib <http://matplotlib.org/>`_ (> v1.3.0)
  - `PyQt4 <http://www.riverbankcomputing.co.uk/software/pyqt/download>`_
- - `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (< v2.16 or higher)
+ - `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (v2.16)
+ - `x11iraf <http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v2.0BETA-bin.linux.tar.gz>`_ for xgterm
  - `stsci_python <http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python>`_ (> v2.14)
  - `CDSClient <http://cdsarc.u-strasbg.fr/doc/cdsclient.html>`_
  - `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (> v2.8.6)
@@ -47,7 +48,7 @@ Note that, for PyRAF_ you have to install IRAF_(v2.16 or later), what can be a
 tricky task. However, is has been simplified in recent versions.
 
 
-To install PAPI, follow the next steps:
+To install PAPI as a "personal user" (non-root), follow the next steps:
 
 1. Clone the PAPI files in a suitable location. Note that, it is a development 
 version:

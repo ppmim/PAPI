@@ -6,6 +6,8 @@ Check the existence of necessary Python modules for PAPI
 
 import sys
 import string
+import os
+from distutils import spawn
 
 
 bold = "\033[1m"         # print bold
@@ -84,10 +86,37 @@ def check_modules():
     # -----------------
     for modulename in PAPImodules.keys():
         testmodule(modulename, PAPImodules[modulename])
+
+
+def check_install():
+    """
+    Check PAPI installation (external tools as Astrometry.net, SExtractor, SCAMP,...)
+    """
+    
+    print bold + "PAPI checking external tools" + reset
+    print bold + "============================" + reset
+    print
+    # Check external tools (Astromatic.net, IRAF, xgterm, Astrometry.net, ...)
+    astromatic = ['sex', 'scamp', 'swarp','aclient',
+                  'cl','mkiraf','xgterm',
+                  'solve-field',
+                  'ds9', 'xpaaccess',
+                  'montage','mProjExec']
+    for tool in astromatic:
+        if not spawn.find_executable(tool):
+            print probbold + "Tool %s was not found in your path" % tool + reset
+        else:
+            # check libs dependencies (eg., libplplot) 
+            tool_path = spawn.find_executable(tool)
+            # TBD
+            print tool_path
+       
+    
     
 ################################################################################
 # main
 if __name__ == "__main__":
     check_modules()
+    check_install()
     sys.exit(0)
     
