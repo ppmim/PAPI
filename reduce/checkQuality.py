@@ -102,7 +102,7 @@ class CheckQuality(object):
             if 'NCOADDS' in hdu[0].header:
                 self.satur_level = hdu[0].header['NCOADDS'] * 50000
             else:
-                self.satur_level = satur_level
+                self.satur_level = sat_level
                 
     def estimateFWHM(self, psfmeasure=False):
         """ 
