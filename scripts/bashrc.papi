@@ -25,7 +25,7 @@ if [[ ($HOST =~ panic22) || ($HOST =~ panic35) ]] ; then
 fi
 
 
-MONTAGE=$HOME/Montage_v3.3/bin
+MONTAGE=/usr/local/Montage_v3.3/bin
 PATH=$PATH:$ASTROMETRY:$HOME/bin:$MONTAGE
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
 

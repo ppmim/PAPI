@@ -917,7 +917,7 @@ class ReductionSet(object):
         
         # Secondly (hopefully), try to find a MASTER_DARK with equal expTime
         if len(master_dark) == 0:
-            log.info("Now, trying to find a MASTER_DARK (expTime=%f, ncoadds=%d)" % (expTime, ncoadds))
+            log.info("Now, trying to find a (output) MASTER_DARK (expTime=%f, ncoadds=%d)" % (expTime, ncoadds))
             master_dark = self.db.GetFilesT('MASTER_DARK', expTime, 'ANY', ncoadds)
         if len(master_dark) == 0 and self.ext_db != None:
             log.info("Last chance to find a MASTER_DARK in ext_DB (%s) with (expTime=%f, ncoadds=%d)" % (self.ext_db_files, expTime, ncoadds))
@@ -926,13 +926,19 @@ class ReductionSet(object):
              
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+        log.info("Now, trying to find a (output) MASTER_DOME_FLAT for filter %s" %filter)
         if master_flat == []:
+            log.info("Now, trying to find a (output) MASTER_TW_FLAT for filter %s" %filter)
             master_flat = self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
         if len(master_flat) == 0 and self.ext_db != None:
+            log.info("Now, trying to find (external) a MASTER_DOME_FLAT for filter %s" %filter)
             master_flat = self.ext_db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
             if len(master_flat) == 0:
-                master_flat=self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
-
+                log.info("Now, trying to find a (external) MASTER_TW_FLAT for filter %s" %filter)
+                master_flat = self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
+        
+        self.ext_db.ListDataSet()
+        
         # BPM
         master_bpm = self.db.GetFilesT('MASTER_BPM')
         if len(master_bpm) == 0 and self.ext_db != None:

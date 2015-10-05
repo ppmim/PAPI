@@ -987,7 +987,7 @@ in principle previously reduced, but not mandatory.
     parser = OptionParser(usage, description=desc)
     
     parser.add_option("-c", "--config_file",
-                  action="store", dest="config_file", help="Mandatory PAPI configuration file.")
+                  action="store", dest="config_file", help="Optional PAPI configuration file.")
                   
     parser.add_option("-s", "--source",
                   action="store", dest="source_file",
@@ -1028,6 +1028,8 @@ in principle previously reduced, but not mandatory.
             sys.exit()
     else:
         config_file = options.config_file
+    
+    log.info('Using config file: %s' % config_file)
         
     cfg_options = misc.config.read_config_file(config_file)
     

@@ -101,7 +101,8 @@ def check_install():
                   'cl','mkiraf','xgterm',
                   'solve-field',
                   'ds9', 'xpaaccess',
-                  'montage','mProjExec']
+                  'mAdd','mProjExec','mProject',
+                  'skyfilter']
     for tool in astromatic:
         if not spawn.find_executable(tool):
             print probbold + "Tool %s was not found in your path" % tool + reset

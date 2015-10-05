@@ -244,7 +244,7 @@ class CheckQuality(object):
             #fa=a[i,13]
             #fea=a[i,14]
             if flux_err!=0:
-                snr = flux/flux_err
+                snr = flux / flux_err
                 #print "SNR=",snr
             else:
                 continue

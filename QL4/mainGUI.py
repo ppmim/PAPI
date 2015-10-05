@@ -3851,10 +3851,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             view_list = ""
             i = 1
             for file in near_list:
-                if file==self.m_listView_item_selected: 
-                    file_n=i
+                if file == self.m_listView_item_selected: 
+                    file_n = i
                 else: 
-                    i=i+1
+                    i = i + 1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", 
                                          QString("File %1 is not a science frame")
@@ -3867,22 +3867,22 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                          QString("Selected near frames are:\n %1")
                                          .arg(view_list),
                                          QMessageBox.Ok, QMessageBox.Cancel)
-            if resp==QMessageBox.Cancel:
+            if resp == QMessageBox.Cancel:
                 return
                     
         # CASE 2: Stack frames selected by user in the list_view
-        elif len(self.m_popup_l_sel)>1 and len(self.m_popup_l_sel)<5:
+        elif len(self.m_popup_l_sel) > 1 and len(self.m_popup_l_sel) < 5:
             QMessageBox.information(self,"Info","Error, not enough frames selected to reduce (>4) !")
             return    
-        elif len(self.m_popup_l_sel)>=5:
+        elif len(self.m_popup_l_sel) >= 5:
             # Create file list from current selected science files
-            for file in self.m_popup_l_sel :
-                if (datahandler.ClFits(file).getType()!='SCIENCE'):
+            for file in self.m_popup_l_sel:
+                f_type = datahandler.ClFits(file).getType()
+                if f_type != 'SCIENCE' and f_type != 'SKY':
                     QMessageBox.critical(self, "Error", QString("File %1 is not a science frame")
                                          .arg(file))
                     return
                 else: file_list.append(file)
-            file_n=-1 # actually, not used
             
         # Select the name of the output result file
         outfileName = QFileDialog.getSaveFileName(self,

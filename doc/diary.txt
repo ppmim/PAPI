@@ -7966,6 +7966,19 @@ comparación entre SWARP y Montage de AstroBetter.
 añado algunos comentarios/correcciones al doc. de instalación. 
 
 
+18-Sep-2015
+-----------
+- Instalo la nueva version de PAPI en obs22@panic22; creo el directorio
+~/papi_src/ donde estarán las distintas versiones de PAPI, y creo un 
+enlace para la versión nueva/ultima.
+
+BUG: si la latencia de red es grande, el ds9 tarda en abrirse remotantemnte,
+y eso puede hacer que falle el "Focus evaluation" del QL; o bien se añade un retardo
+mayor despues de lanzar el ds9 o bien se espera hasta que esté lanzado....
+Esto lo detecte probando el "Focus evaluation" remotamente desde udit22 hacia
+la máquina panic22.caha.es.
+
+
 
 Tratamiento NaNs
 ----------------
@@ -8083,6 +8096,16 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- BUG: si la latencia de red es grande, el ds9 tarda en abrirse remotantemnte,
+y eso puede hacer que falle el "Focus evaluation" del QL; o bien se añade un retardo
+mayor despues de lanzar el ds9 o bien se espera hasta que esté lanzado....
+Esto lo detecte probando el "Focus evaluation" remotamente desde udit22 hacia
+la máquina panic22.caha.es.
+
+- Script para comprobar PAPI está bien instalado
+- Script para tener dos versiones de PAPI instaladas y poder lanzar/mover de una a otra
+
+
 - Implementar el uso de weight_map en SWARP usando el gainmap y
 ver si así se resuelve el problema de las estrellas dobles 
 que me comentó Klaus.
@@ -8738,6 +8761,8 @@ PIPELINE
  
 NEXT TODOs
 ==========
+
+
 - Solucinar problema cálculo de offsets en datos 12-Nov-2014
 - Implementar sugerencias de Klaus.
 - Añadir ruta en panic2 para tráfico hacia el archvio2.caha.es

@@ -1126,7 +1126,23 @@ Requirement already satisfied (use --upgrade to upgrade): numpy in /usr/lib64/py
 --
 
 
-13. Aladin software tool (v7.5)
+
+13. Montage (v3.3)
+===================
+Used for build mosaics; an alternative to SWARP.
+
+zypper install openmpi-devel
+
+cd /usr/local/
+wget http://montage.ipac.caltech.edu/download/Montage_v3.3.tar.gz
+cd Montage_v3.3
+make
+
+export MONTAGE=/usr/local/Montage_v3.3/bin
+
+
+
+14. Aladin software tool (v7.5)
 ===============================
 Not mandatory, but it might be useful for the observer during the observation 
 or data inspection/analysis.
