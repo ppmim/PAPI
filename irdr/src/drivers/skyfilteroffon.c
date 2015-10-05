@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     float *sky = NULL, *skyw = NULL, *fimg;
     char aux[256];
 
-    if (argc != 6)
+    if (argc != 7)
         usage();
 
     if (!strcmp(argv[4], "mask"))
