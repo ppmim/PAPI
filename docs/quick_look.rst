@@ -231,6 +231,8 @@ To set the value, the user must push the 'Input Dir' button:
 
 Note that the value in this field has only effect when the checkbox on the right is clicked.
 
+.. _output_directory:
+
 Output directory
 ^^^^^^^^^^^^^^^^
 
@@ -458,8 +460,9 @@ Create calibrations button
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This button will start the processing of all the **calibration**
-sequences received. As result, a list of master calibrations (combined darks or flats) will be generated
-in the output directory. 
+sequences received in the input directory. As result, a list of master 
+calibrations (combined darks or flats) will be generated in the output directory.
+
 
 START button
 ^^^^^^^^^^^^
@@ -467,7 +470,7 @@ START button
 This button starts the processing of **all** the sequences received. You will be 
 asked whether to proccess all the current images or only the new ones. 
 As result, a list of master calibrations and science calibrated images will be generated
-in the output directory. 
+in the :ref:`output directory <output_directory>`. 
 
 Add button
 ^^^^^^^^^^
@@ -576,7 +579,51 @@ the available and exclusive operations are:
 Calibrations panel
 ------------------
 
-**TBD**
+This panel allows the user to set some of values for the search of **master** calibration files. 
+
+.. image:: _static/PQL_GUI_calibration_panel.png
+   :align: center
+   :scale: 80 %
+
+.. _external_calibrations:
+
+Set Calibs Dir
+^^^^^^^^^^^^^^
+Pushing this button the user select the additional (external) directory from which the
+QL will look for **master** calibration files. Normally, it is used to provide
+to the QL with additional calibrations (dark, flat) from previous nights. Master 
+calibrations found in the :ref:`output directory <output_directory>` will have 
+higher priority than those ones.
+
+
+This directory is also called 'external calibration' in PAPI command line::
+
+    -C EXT_CALIBRATION_DB, --ext_calibration_db=EXT_CALIBRATION_DB
+                            External calibration directory (library of Dark & Flat
+                            calibrations)
+
+Or `ext_calibration_db` in the :ref:`config file <config>`.
+
+Then, if during the reduction of a ReductionSet(RS) no calibrations (dark, flat) 
+are found in the current RS, then PAPI will look for them into this directory.
+If the directory does not exists, or no calibration are found, then no calibrations
+will be used for the data reduction.
+Note that the calibrations into the current RS have always higher priority than
+the ones in the external calibration directory.
+
+Load last 
+^^^^^^^^^
+When this button is pushed, the most recent **master** calibration files found
+in :ref:`output directory <output_directory>` and external calibrations are shown
+in the fields below.
+
+If `Use as default` is click-checked, then the displayed files will be used
+as default calibrations when `Apply Dark_FlatField_BPM` is run. Otherwise, 
+Apply Dark_FlatField_BPM routine will ask the user for the master calibration 
+files to be used.
+
+
+
 
 Log panel
 ---------
@@ -1155,7 +1202,30 @@ There are two options:
 For the quick reducion, the pipeline will use the preferences established 
 on 'Setup' tab.
 
+How do I quick-reduce an observed sequence using dark and flat master calibration files ?
+-----------------------------------------------------------------------------------------
+You should follow the next steps:
 
+1. Check your sequences are right,ie., they are well-formed and there were no interruption.
+It some sequece (calibration or science) is not well-formed, the you should use 'FITS->Create DataSeq' 
+menu option in order to fix not well-formed sequence.
+
+.. image:: _static/PQL_GUI_create_dataseq.png
+   :align: center
+   :scale: 80 %
+
+2. Create the output directory for the calibrations; then create the calibration pushing 'Create calibrations' button in the main panel. 
+
+3. When 'Create calibrations' have finished, go to 'Calibration' tab and select the directory having the master
+calibrations created just in setep #2.
+
+4. Go to the 'Setup->Pre-reduction Mode' tab and check the option 'Dark/Flat' and select the detectors
+you want to process (SG1-SG4).
+
+5. Finally, select the sequence you want to reduce, either selecting one by one the files in the :ref:`Data List View <data_list_view>` or 
+selecting the sequence with the 'Group' classification; then run 'Quick-reduction' from the Pop-up menu.
+
+    
 How do I make mosaics with PQL? 
 -------------------------------
 By default, PQL proccess or pre-reduce only the SG1 detector (Q1), 
@@ -1164,8 +1234,9 @@ and modify in the `Detector to reduce` combo box the detector/s to reduce;
 in case of selecting `All` or `SG123` (all less SG4), the corresponding 
 mosaic will be generated.
 
-Currently, PAPI aligns and coadds (using SWARP) the images as they are 
-located on the sky to build the mosaic. 
+Currently, PAPI aligns and coadds (using SWARP or Montage, 
+see **mosaic_engine** in :ref:`config file <config>`) the images as they are located on the sky 
+to build the mosaic. 
 
 How do I make use of parallelisation ?
 --------------------------------------

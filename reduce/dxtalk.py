@@ -609,7 +609,7 @@ if __name__ == "__main__":
                                 
     (options, args) = parser.parse_args()
     
-    if len(sys.argv[1:])<1:
+    if len(sys.argv[1:]) < 1:
        parser.print_help()
        sys.exit(0)
        

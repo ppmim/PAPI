@@ -111,3 +111,61 @@ def mosaic(files_to_mosaic, raw_dir, output_dir, tmp_dir,
         return out_mosaic
     else:
         return os.path.join(m_out_dir, "mosaic.fits")
+
+
+# #######################################################    
+# main
+# #######################################################
+if __name__ == "__main__":
+    
+    
+    usage = "usage: %prog [options]"
+    desc = "Build mosaic from input images using Montage tool."
+    parser = OptionParser(usage, description=desc)
+    
+    parser.add_option("-l", "--source_file_list",
+                  action="store", dest="source_file_list", 
+                  help="file listing the input images ")
+                  
+    parser.add_option("-o", "--output",
+                  action="store", dest="output_image", 
+                  help="output filename for mosaic (default = %default)",
+                  default="mosaic.fits")
+    
+    parser.add_option("-d", "--working_directory",
+                  action="store", dest="working_directory", 
+                  help="Working directory (default = %default)",
+                  default="/tmp")
+    
+    parser.add_option("-O", "--overwrite",
+                  action="store_true", dest="overwrite", default=False,
+                  help="overwrite the original image with the corrected one")
+
+                                   
+    (options, args) = parser.parse_args()
+    
+    if len(sys.argv[1:]) < 1:
+       parser.print_help()
+       sys.exit(0)
+       
+    if not options.source_file_list or len(args) != 0: 
+    # args is the leftover positional arguments after all options have been processed
+        parser.print_help()
+        parser.error("wrong number of arguments " )
+    
+    if not options.output_image:
+        options.output_image = None
+        
+    if options.source_file_list and os.path.isfile(options.source_file_list):
+        # Read the source file list     
+        files_to_mosaic = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
+    try:
+        mosaic(files_to_mosaic, options.working_directory, options.working_directory, 
+               options.working_directory,
+               background_match=True, 
+               out_mosaic=options.output_image)
+        
+    except Exception, e:
+        log.error("Fail of Montage-Mosaic procedure: %s"%str(e))
+    else:
+        log.info("Well done!")

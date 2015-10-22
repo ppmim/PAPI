@@ -7817,7 +7817,7 @@ convierten a 0s (IRAF behaviour) !!!
   En modo 'science', curiosamente (al menos en el Q4) la imagen
   resultado con fix_type=1 (bpm.mode=fix) tiene muchas menos estrellas
   y es 'peor'; con fix_type=0 (bpm.mode=grab) es horriblemente peor,
-  con muchas sombras de objectos no bien enmarcarados, pero curiosamente 
+  con muchas sombras de objectos no bien enmascarados, pero curiosamente 
   mas profunda !!!
   Además creo que Sextractor obvia los objetos que tienen muchos NaNs,
   por eso no se hace una máscara muy buena en modo science+grab,
@@ -7831,7 +7831,7 @@ convierten a 0s (IRAF behaviour) !!!
   Con el Q3, 
   Por tanto, creo que el mal resultado obtenido con Q4 en modo
   science hay que atribuirlo a que no se puede generar una buena
-  máscara de objetos (SExtractros) debido a los NaN, y si usamos 
+  máscara de objetos (SExtractror) debido a los NaN, y si usamos 
   el modo fix=1, entonces la máscara es buena, pero unido a los NaN....
 
   En fin, que como para Q1 y Q2 sale bien, no le voy a dar más vueltas
@@ -7859,7 +7859,7 @@ que en la primera pasada de skyfilter del modo science se
 use fix_type=1 independientemente del valor del fichero
 de configuración, y así poder tener una máscara de objetos
 buena. LA MEJORA ES MUY NOTABLE !!!!, ahora la máscara
-es buena, y no presenta objetos "incompletos", u por tanto
+es buena, y no presenta objetos "incompletos", y por tanto
 las imagenes .skysub.fits tampoco presentan (apenas) "sombras" 
 debido a objetos no enmascarados correctamente !
 
@@ -7980,6 +7980,79 @@ la máquina panic22.caha.es.
 
 
 
+06-Oct-2015
+-----------
+- A Matilde le vuelve a salir el error (con ds9_v7.2)
+
+    IRAF "Warning: Pixels out of bound" 
+
+al abrir las imagenes (no multiextension) con iraf.display + imexam
+Se soluciona si abrimos directamente las imagenes al lanzar el ds9
+y luego iraf.imexam.
+
+20-Oct-2015
+-----------
+Summary: Bad Pixel treatment
+
+- mode = None
+
+No bpm file will be read. Bad Pixels will be determined using the
+GainMap obtained from the Superflat or Skyflat.
+During skyfiltering, the bad pixel (from GainMap) will be replaced
+with NaNs. However, in science mode, on the first pass of skyfilter
+and in order to get a good object mask, the bad pixels will be
+replaced by the background level.
+
+- mode = grab
+
+Read (if exists) BPM file; read bad pixels will be added to bad pixels
+detected in Gainmap.
+During sky-filtering, the bad pixels will be replaced by NaN. However,
+in science mode, on the first pass of skyfilter and in order to get a
+good object mask, the bad pixels will be replaced by the background
+level.
+
+- mode = fix
+Read (if exists) BPM file; read bad pixels will be replaced by
+bi-linear interpolation during dark and flatfielding and before sky
+filtering (sky subtraction).
+During sky-filtering, bad pixels detected in GainMap will be replaced
+with the background level.
+
+
+The prefered mode is grab is you want to use the BPM file, or
+none if you dont.
+
+21-Oct-2015
+-----------
+- Encuentro varios Bugs en astrowarp.py cuando el engine=SCAMP; lo soluciono.
+
+- Implemento createMEFs.py, un script para crear MEF de las skysub.ast.fits
+de forma que pueda correr Sex+SCAMP y sacar el mapa de distorsión con los 4
+detectores en la misma imagen:
+
+/data2/NorthAmerica_J_23_Oct_2015
+/data2/NorthAmerica_Sky_J_23_Oct_2015
+/data2/NorthAmerica_H_24_Oct_2015
+
+básicamente lo que hago es:
+
+1- lanzar la reducción de un DataSet de un campo/cúpula que se resuelva bien la 
+astrometría para los 4 detectores.
+
+2- ejecutar createMEF.py con el pattern (filename) adecuado; pare ello edito el createMEF.py;
+para esto uso los .skysub.ast.fits que hemos obtenido en el paso 1)
+
+3- Una vez createMEFs.py nos ha creado los MEFs con los .skysub.ast.fits,
+ejecuto astrowarp.py y lo "corto" justo después de ejecutar SCAMP para todos los mefs juntos.
+
+
+
+
+
+
+
+
 Tratamiento NaNs
 ----------------
 - En Montage, veo que los NaN los representa por una union C,
@@ -8096,6 +8169,12 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+- Buscar/detectar trazas de satélites en imagenes: Alfredo Sota tiene una rutina,
+y un ejemplo en PANIC lo tenemos en:
+
+/data2/out_24Sep/Q02/NorthA_J_0016_coadd.Q02_F.skysub.ast.fits (imagen del 23-Sep-2015)
+
+
 - BUG: si la latencia de red es grande, el ds9 tarda en abrirse remotantemnte,
 y eso puede hacer que falle el "Focus evaluation" del QL; o bien se añade un retardo
 mayor despues de lanzar el ds9 o bien se espera hasta que esté lanzado....

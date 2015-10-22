@@ -34,6 +34,10 @@ type:
 
 > papi -s /data1/PANIC/my_program/ 
 
+How does PAPI treat bad pixels ?
+--------------------------------
+
+See :ref:`Bad Pixel Treatment <bad_pixel_treatment>`.
 
 How can we reach hundredth of magnitude accuracy in photometry ?
 ----------------------------------------------------------------

@@ -94,6 +94,9 @@ The map of all bad pixels (hot, low QE) are derived from the non-linearity tests
 the nonlinearity analysis provides a list of non-correctable pixels, which always will be
 considered invalid. 
 
+So, currently there is no procedure in PAPI to compute the right bad pixel mask (BPM).
+
+
 
 First pass sky subtraction
 **************************

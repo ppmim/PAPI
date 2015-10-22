@@ -261,19 +261,21 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     # 
     # Look for weight and objs images
     #
-    ima_sec = file.replace(".fits", ".weight.fits").replace("//", "/")
-    if os.path.exists(ima_sec):
-        log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_sec, xmin, xmax, ymin, ymax))
-        iraf.imcopy(input=ima_sec + "[" + str(xmin) + ":" + str(xmax) + "," +
-            str(ymin) + ":" + str(ymax) + "]", output=ima_sec)
-    
-    ima_objs = file.replace(".fits", "objs.fits").replace("//", "/")
-    if os.path.exists( ima_objs ):
-        log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_objs, xmin, xmax, ymin, ymax))
-        iraf.imcopy(input=ima_objs + "[" + str(xmin) + ":" + str(xmax) + "," +
-            str(ymin) + ":" + str(ymax) + "]", output=ima_objs)
-            
-    
+    try:
+        ima_sec = file.replace(".fits", ".weight.fits").replace("//", "/")
+        if os.path.exists(ima_sec):
+            log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_sec, xmin, xmax, ymin, ymax))
+            iraf.imcopy(input=ima_sec + "[" + str(xmin) + ":" + str(xmax) + "," +
+                str(ymin) + ":" + str(ymax) + "]", output=ima_sec)
+        ima_objs = file.replace(".fits", "objs.fits").replace("//", "/")
+        if os.path.exists( ima_objs ):
+            log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_objs, xmin, xmax, ymin, ymax))
+            iraf.imcopy(input=ima_objs + "[" + str(xmin) + ":" + str(xmax) + "," +
+                str(ymin) + ":" + str(ymax) + "]", output=ima_objs)
+                
+    except Exception,e:
+        log.debug("Some error trimming image %s . Probaby input image is wrong." % ima_sec)
+
     log.debug("....End of imgTrim --> XMIN= %d YMIN=%d XMAX= %d YMAX=%d"
             %(xmin, ymin, xmax, ymax))
     

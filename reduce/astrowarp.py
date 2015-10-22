@@ -826,7 +826,7 @@ class AstroWarp(object):
         
         """
         
-        log.info("*** Start Astrowarp ***")
+        log.info("*** Start Astrowarp (SCAMP engine) ***")
 
         ## STEP 0: Run IRDR::initwcs to initialize rough WCS header, thus modify the file headers
         # initwcs also converts to J2000.0 EQUINOX
@@ -879,7 +879,7 @@ class AstroWarp(object):
         
         try:
             scamp.run(cat_files, updateconfig=False, clean=False)
-        except Exception,e:
+        except Exception, e:
             raise e
         
         
@@ -896,9 +896,9 @@ class AstroWarp(object):
         
         swarp = astromatic.SWARP()
         swarp.config['CONFIG_FILE'] = self.papi_home + self.config_dict['config_files']['swarp_conf']
-        basename, extension = os.path.splitext(solved_files[0])
+        basename, extension = os.path.splitext(self.input_files[0])
         swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"  # very important !
-        if not os.path.isfile(solved_files[0] + ".head"):
+        if not os.path.isfile(self.input_files[0] + ".head"):
             raise Exception ("Cannot find required .head file")
         
         
@@ -911,7 +911,7 @@ class AstroWarp(object):
         # Case 1: specific weight_maps are provided or single one common for all input files
         if self.weight_maps != None and len(self.weight_maps) > 0:
             # A weight map for each input file to coadd
-            if len(self.weight_maps) == len(solved_files):
+            if len(self.weight_maps) == len(self.input_files):
                 list_weight_maps = ''
                 for wm in self.weight_maps:
                     list_weight_maps += ' ' + wm + ','
@@ -950,21 +950,21 @@ class AstroWarp(object):
             shutil.move(aFile+".head", basename +".head")  # very important !!
         """    
         try:
-            swarp.run(solved_files, updateconfig=False, clean=False)
-        except Exception,e:    
+            swarp.run(self.input_files, updateconfig=False, clean=False)
+        except Exception, e:    
             raise e        
         
         ## STEP 4: Make again the final astrometric calibration (only 
         ## if we coadded more that one file) to the final coadd)
         ## TODO: I am not sure if it is needed to do again ?????
-        if (len(self.input_files)>1):
+        if (len(self.input_files) > 1):
             log.debug("*** Doing final astrometric calibration....")
-            doAstrometry(os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.fits", 
+            doAstrometry(output_path, 
                          self.coadded_file, self.catalog, 
                          self.config_dict, self.do_votable,
                          self.resample, self.subtract_back)
         else:
-            shutil.move(os.path.abspath(os.path.join(self.coadded_file, os.pardir)) + "/coadd_tmp.fits", 
+            shutil.move(output_path, 
                         self.coadded_file)
         
         log.info("Lucky you ! file %s created", self.coadded_file)

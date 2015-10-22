@@ -701,7 +701,7 @@ File papi.cfg::
     # 'montage': use Montage tool - in principle, the best option
     # 'other': no mosaic is built, but a MEF with 4 extensions
     # For more information see: http://www.astrobetter.com/blog/2009/10/21/better-ways-to-make-large-image-mosiacs/
-    mosaic_engine = none
+    mosaic_engine = montage
 
 
     ##############################################################################
@@ -1093,6 +1093,39 @@ relevance to the right execution and in the results obtained (in bold are defaul
 - bpm::mode (**none** | fix | grab ) 
 
 
+.. _bad_pixel_treatment:
+
+Bad Pixel treatment
+-------------------
+
+- mode = None
+
+No BPM file will be read. Bad Pixels will be determined using the
+GainMap obtained from the Superflat or Skyflat.
+During sky-filtering, the computed bad pixels (from gainMap) will be replaced
+with NaNs. However, in science mode, on the first pass of skyfilter
+and in order to get a good object mask, the bad pixels will be
+replaced by the background level.
+
+- mode = grab
+
+Read (if exists) BPM file; read bad pixels will be added to bad pixels
+computed in the gainmap.
+During sky-filtering, the bad pixels (read + computed) will be replaced 
+by NaN. However, in science mode, on the first pass of skyfilter and in 
+order to get a good object mask, the bad pixels will be replaced by the 
+background level.
+
+- mode = fix
+
+Read (if exists) BPM file; read bad pixels will be replaced by
+bi-linear interpolation during dark and flat-fielding and before sky
+filtering (sky subtraction).
+During sky-filtering, bad pixels computed in the gainMap will be 
+replaced with the background level.
+
+The prefered mode is 'grab' whether you want to use a BPM file, or
+none if you do not.
 
 
 Getting PAPI Data

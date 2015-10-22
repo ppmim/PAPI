@@ -294,8 +294,7 @@ class ReductionSet(object):
         #
         # Bad Pixel Maks
         # 
-        self.bpm_mode = self.config_dict['bpm']['mode']
-        if self.bpm_mode != 'none':
+        if self.config_dict['bpm']['mode'] != 'none':
             self.master_bpm  = self.config_dict['bpm']['bpm_file']
         else:
             self.master_bpm  = bpm  
@@ -3274,7 +3273,7 @@ class ReductionSet(object):
 
         ########################################################################
         # 0 - Bad Pixels; three options:
-        # 'none': nothing to do, BPM is ignored.
+        # 'none': nothing to do, BPM file is ignored.
         # 'fix': replace with a bi-linear interpolation from nearby pixels.
         # 'grab': to add to gainmap and then set bad pixels to bkg level (skyfilter)
         # Both options are incompatible.
@@ -3299,8 +3298,8 @@ class ReductionSet(object):
         ########################################################################
         # 1 - Apply dark, flat to ALL files 
         ########################################################################
-        if self.apply_dark_flat==1 and \
-            (master_dark!=None or master_flat!=None or master_bpm_4fix!=None):
+        if self.apply_dark_flat == 1 and \
+            (master_dark != None or master_flat != None or master_bpm_4fix != None):
             log.info("**** Applying Dark, Flat and BPM ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        master_dark, 
@@ -3466,6 +3465,7 @@ class ReductionSet(object):
         if self.red_mode == 'science':
             # In order to get a good object mask, for
             # first skyFilter pass we 'fix' bad pixels
+            # independently of the 'bpm.mode' set in the config file.
             fix_type = 1
         else:
             if self.config_dict['bpm']['mode'] == 'fix':
@@ -3547,7 +3547,9 @@ class ReductionSet(object):
             for my_file in self.m_LAST_FILES:
                 try:
                     out = my_file.replace(".fits", ".cl.fits.")
-                    out = cleanBadPix.cleanBadPixels( my_file, gainmap, output_file=out, is_gainmap=True)
+                    out = cleanBadPix.cleanBadPixels( my_file, gainmap, 
+                                                     output_file=out, 
+                                                     is_gainmap=True)
                 except Exception, e:
                     log.error("Error in call to cleanBadPix: %s" % str(e))
                     raise e
