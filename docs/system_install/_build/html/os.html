@@ -32,7 +32,7 @@
   
     <link rel="top" title="PANIC Software System Installation 1.0.0 documentation" href="index.html"/>
         <link rel="next" title="3. GEIRS" href="geirs.html"/>
-        <link rel="prev" title="1. PANIC Computer system" href="system.html"/> 
+        <link rel="prev" title="1. System" href="system.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -75,12 +75,16 @@
           
           
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="system.html">1. PANIC Computer system</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="system.html#description">1.1. Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="system.html">1. System</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="system.html#installation">1.1. Installation</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">2. Operating System</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#description">2.1. Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">2.1. Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#boot">2.1.1. Boot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#welcome">2.1.2. Welcome</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="geirs.html">3. GEIRS</a><ul>
@@ -138,8 +142,26 @@
             
   <div class="section" id="operating-system">
 <span id="os"></span><h1>2. Operating System<a class="headerlink" href="#operating-system" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="description">
-<h2>2.1. Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="installation">
+<h2>2.1. Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Once you have configured the computer system, the next step is to install the operating system <a class="reference external" href="https://en.opensuse.org/Portal:13.1">openSUSE 13.1</a>.
+To do this, you only have to follow the instructions found <a class="reference external" href="https://en.opensuse.org/SDB:DVD_installation">here</a>.</p>
+<p>Basically, the steps are:</p>
+<div class="section" id="boot">
+<h3>2.1.1. Boot<a class="headerlink" href="#boot" title="Permalink to this headline">¶</a></h3>
+<p>Insert the openSUSE13.1 x64 DVD into the DVD drive and restart the computer. After the power-on self test (POST),
+the boot screen should appear. Use the keyboard up and down buttons to select Installation and press enter to confirm.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The power-on self test (POST) can last several minutes, mainly because the kernel must recognize the PowerEdge RAID Controller (PERC) H710 card.</p>
+</div>
+<a class="reference internal image-reference" href="_static/131-installer-2.png"><img alt="_static/131-installer-2.png" class="align-center" src="_static/131-installer-2.png" /></a>
+<p>The kernel will load and some debugging messages may appear. These can usually be ignored unless there is an issue
+starting the installation. In that event, these messages may make debugging easier.</p>
+</div>
+<div class="section" id="welcome">
+<h3>2.1.2. Welcome<a class="headerlink" href="#welcome" title="Permalink to this headline">¶</a></h3>
+</div>
 </div>
 </div>
 
@@ -152,7 +174,7 @@
         <a href="geirs.html" class="btn btn-neutral float-right" title="3. GEIRS" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="system.html" class="btn btn-neutral" title="1. PANIC Computer system" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="system.html" class="btn btn-neutral" title="1. System" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
