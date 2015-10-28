@@ -54,10 +54,8 @@ Outline
 
 Main configuration file
 ***********************
- 
+See :ref:`Main config file <config>`
 
-Image selection
-***************
 
 Data-set classification
 ***********************
@@ -77,15 +75,29 @@ althouth with some limitations. Let's see how it works:
 
 [...]
 
+Data Preparation
+****************
+Firstly, each FITS file is linearity corrected if it was enabled in the configuration 
+file (nonlinearity:apply). If integrations where done with repetitions >1 and saved as
+a cube with N-planes, then the FITS cube is collapsed doing a simple arithmetich sum of
+N-planes.
+
+Then the image is divided into the number of chips in the FPA (which constitutes 4 chips 
+in a mosaic). From this step on, the pipeline works on individual chips rather than whole 
+images, thereby enhancing the speed and enabling us to do multi-chip processing on multi CPUs.
+
 
 Calibrations
 ************
+In next sections we describe the main calibration to be done by PAPI.
 
 Computing the master dark
 -------------------------
+TBC
 
 Computing the master flat-field
 -------------------------------
+TBC
 
 Computing the Bad Pixel Mask
 ----------------------------
@@ -103,6 +115,7 @@ First pass sky subtraction
 
 Sky model
 ---------
+TBC
 
 Object detection
 ****************

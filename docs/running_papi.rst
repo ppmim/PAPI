@@ -934,13 +934,30 @@ File papi.cfg::
     #
     # sex:SATUR_LEVEL: level (in ADUs) for a single exposure image at which the pixel
     # arises saturation. Note than that value should be updated with NCOADDS or NDIT
-    # keywords when present in the header. So, the value specified here is for a
+    # keywords when present in the header. So, 
+
+Image selection
+***************
+
+
+Data-set classification
+***********************
+
+One of the main featthe value specified here is for a
     # single image with NCOADD = 1.
     # Of course, this values will be specific for each detector, and in case of 
     # a multi-detector instrument, should be the lowest value of all detectors.
     #  
     satur_level = 55000 
 
+Image selection
+***************
+
+
+Data-set classification
+***********************
+
+One of the main feat
     # skymodel : sky model used used during the sky subtraction. It will be a 
     #             parameter for the IRDR::skyfilter() executable
     #             (median) the normal way for coarse fields [default]

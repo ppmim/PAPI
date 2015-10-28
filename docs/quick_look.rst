@@ -47,7 +47,7 @@ FITS files and headers
 ======================
 
 PQL **only** supports FITS_ (Flexible Image Transport System) with two-dimensional 
-image formats. Due PANIC has a FPA of four detector, the FITS files can be ``Single Extension FITS (SEF)`` 
+image formats. Because PANIC has a FPA of four detector, the FITS files can be ``Single Extension FITS (SEF)`` 
 or ``Multi-Extension FITS (MEF)``, however MEF are prefered.
 
 The complete definition of the FITS headers can be found on the GEIRS_ documentation.

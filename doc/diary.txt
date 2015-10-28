@@ -8048,7 +8048,62 @@ ejecuto astrowarp.py y lo "corto" justo después de ejecutar SCAMP para todos lo
 
 
 
+26-Oct-2015
+-----------
+- Comienzo planificación sustitución discos en panic22;
+la idea es sustituir los dos discos de 2TB (RAID1) del volumen de /data1 por
+dos discos de 4TB también en RAID1, de forma que dupliquemos el tamaño
+disponible en disco.
 
+Actualmente la configuración en el /etc/fstab es la siguiente:
+
+panic@panic22:~> vi /etc/fstab
+
+/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part1    swap    swap    defaults 0 0 
+/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part2    /       ext3    acl,user_xattr 1 1 
+/dev/disk/by-id/scsi-36848f690ece3d000191a499923dffbd6-part1    /data1  ext3    defaults 1 2 
+/dev/disk/by-id/scsi-36848f690ece3d000191a4af1386968b1-part1    /data2  ext4    acl,user_xattr 1 2 
+archivo2:/ARCHIVE/PANICCALIBS   /data1/ARCHIVE  nfs     defaults,mountvers=3,nfsvers=3 0 0 
+meteoserv.caha.es:/meteo        /meteo  nfs     defaults 0 0
+
+panic@panic22:~> more  /boot/grub2/device.map
+(hd1)   /dev/disk/by-id/scsi-36848f690ece3d000191a499923dffbd6
+(hd2)   /dev/disk/by-id/scsi-36848f690ece3d000191a4af1386968b1
+(hd0)   /dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41
+
+panic@panic22:~>grep scsi /boot/grub2/grub.cfg
+linux   /boot/vmlinuz-3.11.6-4-desktop root=UUID=4f7d19c4-3a57-4441-b513-a68cf03ec9ae   resume=/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part1 splash=verbose quiet showopts
+                linux   /boot/vmlinuz-3.11.6-4-desktop root=UUID=4f7d19c4-3a57-4441-b513-a68cf03ec9ae   resume=/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part1 splash=verbose quiet showopts
+
+> sudo /usr/sbin/blkid /dev/sda1
+
+Los pasos serían los siguientes: 
+
+1- Copiar (rsync) todos los datos a la partición /data2 y/o /data1/ARCHIVE;
+2- Reiniciar la máquina y entrar en la BIOS para eliminar el volumen correspondiente;
+3- Apagar la máquina y desinstalar físicamente los discos;
+4- Instalar los dos nuevos discos en las mismas bahias;
+5- Arrancar la máquina y configurar en la BIOS de la PERC el nuevo volumen de discos en RAID1;
+6- Re-iniciar la máquina y ver como lo ve el SO y formatearlo con ext3
+7- Modificar el /etc/fstab, bien con el id/uuid/device_name;
+quizás también modificar el /boot/grub2/device.map
+
+
+27-Oct-2015
+-----------
+- Reviso los TODOs y hago un poco de limpieza.
+
+- Actualización de Astropy (v1.0.6) en panic1.iaa.es:
+
+>>sudo pip install --no-deps astropy
+>>import astropy
+>>astropy.test()
+=== 8554 passed, 186 skipped, 43 xfailed, 2 xpassed in 174.56 seconds ==
+
+28-Oct-2015
+-----------
+- Pruebo PAPI (QL & CL) con la nueva versión de Astropy v1.0.6 en panic1
+y parece que todo va bien.
 
 
 
@@ -8156,7 +8211,8 @@ está solucionado (en principio...).
 
 Posibles causas del problema del Transito WASP:
 ==============================================
-0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no los trata bien en la reducción (=bkg lvl)!!!
+0- Bad pixels !! en GainMap marcamos falsos BP y demasiados y además no 
+   los trata bien en la reducción (=bkg lvl)!!!
    ¿ que hacer con los BP ????
 1- fueron reducidas con modo quick
 2- no tiene ni Dark y Flat
@@ -8169,6 +8225,18 @@ pequeño y razonable y con más puntos.
 
 TODOs - urgentes
 ================
+
+- DUDA: cómo se usa el ext_calibration_db en el QL ???
+
+- Documento instalación de PANIC-SW
+
+- Actualizar doc con lo nuevo de Montage, sobre todo el esquema del pipeline de PAPI, 
+y comentar las diferencias que puede haber con usar SWARP (mosaic_engine) !!!
+
+- Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF 
+desde IRAF.display; hay que configurar el IMTDEV también !!
+
+
 - Buscar/detectar trazas de satélites en imagenes: Alfredo Sota tiene una rutina,
 y un ejemplo en PANIC lo tenemos en:
 
@@ -8182,8 +8250,8 @@ Esto lo detecte probando el "Focus evaluation" remotamente desde udit22 hacia
 la máquina panic22.caha.es.
 
 - Script para comprobar PAPI está bien instalado
-- Script para tener dos versiones de PAPI instaladas y poder lanzar/mover de una a otra
 
+- Script para tener dos versiones de PAPI instaladas y poder lanzar/mover de una a otra
 
 - Implementar el uso de weight_map en SWARP usando el gainmap y
 ver si así se resuelve el problema de las estrellas dobles 
@@ -8199,7 +8267,8 @@ como opción en el fichero de configuración.
 - Actualización de astromatic tools **desde trunks** en panic1 y panic22 !!!
 
 - dithercubemean no funciona bien con NANs; ver como los trata.
-- Ver que valores serían buenos para GainMap (low,high).
+
+- Ver que valores serían buenos para GainMap (low, high).
 
 - Aunque Herve me lo confirmo por email, ver si encuentro algo de información
 acerca de como trata SWARP/Montage los NaNs.
@@ -8209,17 +8278,14 @@ rutinas skysub_nomask/skysub para que los BP se les de el valor NaN (0.0).
 El resultado es visualmente peor; escribo un email a KM, BD y MF para preguntar
 sobre esto.
 
-- Observo una cosa rara la mosarar los 4 detectores juntos (ds9 -imagemosaic)
+- Observo una cosa rara al mostrar los 4 detectores juntos (ds9 -imagemosaic)
 sin construir el mosaico. Parece que el Q2 está demasiado rotado....
 Puede ser esa la causa de que SWARP no funcione bien ???
 TBC
 
-
-- Añadir a la doc de PAPI como se tratan los NaNs y los BP , y cuales son
+- Añadir a la doc de PAPI como se tratan los NaNs y los BP, y cuales son
 las ventajas e inconvenientes.
 
-- Actualizar doc con lo nuevo de Montage, sobre todo el esquema del pipeline de PAPI, 
-y comentar las diferencias que puede haber con usar SWARP (mosaic_engine) !!!
 
 - Añadir a documentación el problema de KDE y la variable KDE_FORK_SLAVES=1 para solucionar 
 el problema de "Cannot talk to klauncher: Not connected to D-Bus server".
@@ -8238,10 +8304,6 @@ están cambiados de signo; además sugiere dibujar el gap entre los detectores.
 se acelere la lectura de FITS, sobre todo cuando se carga un directorio completo de una noche
 ya observada....speed up the QL load !!!
 
-- como conclusión de la videocon del 13-Mayo, hay que ver como hacer para que los NaNs se conserven y se ignoren en
-todos los cálculos cuando se haga la NLC. Además, cuando no se haga la NLC, hace falta que si se aplica
-la BPM sea con NaNs, pues parece que es el valor que puede funcionar mejor ya que lo ignoran Sextractor, SWARP, Numpy, etc...
-Queda ver como corregir skyfilter para que los 0s del gainmap se conviertan en NaNs en lugar de bck_level !!!
 
 - usar os.path.abspath() para las llamadas a las funciones de IRAF !!! en lugar
 de la eliminacion manual de los "//".
@@ -8318,7 +8380,7 @@ se hace correctamente.
 
 - Añadir tipo SKY_BKG a PAPITYPE para los skysub.fits
 
-- Que pregunte que Qi reducir en el PQL (ahora sólo está en el tab 'configuración'
+- Que pregunte que Qi reducir en el PQL (ahora sólo está en el tab 'configuración')
 
 - Sigue sin funcionar muy bien el la segunda pasada de PAPI; parece que la máscara
 de objetos no hace bien su función, pues en la imagen final salen manchas negras....
@@ -8334,8 +8396,6 @@ ejemplo, si applyNLC desde el QL falla, sólo devuelve 'No value returned'.
 con el que realmente tienen los ficheros en la cabecera para así evitar 
 olvidar actualizar el fichero de configuración.
 
-- Ver posibles problemas de PAPI en 3.5m (PIXEL_SCALE, comprobar GEIRS)! -- no veo problemas !
-
 - reducir datos de OmegaCass para VT
 
 - ver si dilate crea buenas objectMask dilatadas adecuadamente...ala ESOREX
@@ -8344,7 +8404,219 @@ olvidar actualizar el fichero de configuración.
 
 - (IMPORTANTE) Solucionar el tema del GAINMAP-->estimación erronea de BP !!!!
 
-- TODO: la segunda pasada de skyfilter para objetos extensos no está
+
+
+
+- Modificar dataset::GetFilterFiles() para que agrupe correctamente las SKY + SCIENCE en
+el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un apaño
+en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
+si se detecta bien los SKY de los SCIENCE
+
+- Revisar/permitir D+F+BPM en QL de modo automatico
+
+- refactorizar la astrometría en RS
+
+- comparar los Flat/Dark de HAWKI y de PANIC
+
+- Reducir WASP19: todos los cuadrantes, sin D ni F, con irdr:offsets, ...
+
+
+- adaptar Nuevo interfaz de calTwFlat en PAPI !!
+- aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
+en QL y demás candidatas.
+- ver que se puede hacer para forzar NCOADD, ITIME, EXPTIME en applyDark y applyDarkFlat
+- en astrowarp: parece que shutil.move no borrar la src !! noooo! no que pasa es que
+If the destination is on the current filesystem, then os.rename()
+y como el PANIC_SEQ_Q01.fits suele existir de una reducción anterior, pues no borra el src, 
+sólo renombra el PANIC_SEQ_Q01.fits.
+
+- mejorar rutina de logsheet para ver los ficheros que tenemos y su tipo.
+
+- Resolver el problema del llenado del / a causa de la escritura en el /tmp, 
+lo cual deja la máquina sin recursos. Habría que haber creado la partición / 
+más grande. Ahora sólo queda intentar crear un link para el /tmp, pero
+eso hay que hacerlo arrancando con un disco de sistema, pues en el /tmp
+hay muchos ficheros temporales que usa el propio sistem...
+
+
+
+- en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
+pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
+
+- iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado ==> estudiar como puede afectar !!!
+  numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
+  que te permiten tratarlos como 0's (numpy.nansum)
+- limpiar fichero de configuración de variables que no usamos.
+- Mejorar Ordenamiento por campos (columnas, ejem. TExp) numéricos en la ListView del QL;
+parece que habría que sobreescribir la clase:
+
+http://stackoverflow.com/questions/363200/is-it-possible-to-sort-numbers-in-a-qtreewidget-column
+
+
+- BUg: al decirle al QL que haga la fotometría a una imagen (un cubo), lo hace 
+pero al final, al mostrar el plot, da un SF y se cierra el QL; el ultimo 
+mensaje fue:
+QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
+                   
+
+- ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'
+
+- ver el tema de los WEIGHT_MAPS, al construir el mosaico final; ahora
+están comentados, pero ver si realmente son necesarios y que diferencia hay en usarlos !!
+Tal y como estaba implementado parece que no funciona (probar con HAWKI)
+
+- Ver como reducir todos los cuandrantes de NGC752_focus000[1-5].fits !!
+
+- crear instalación en obs22 del control de PANIC, de forma que no pueda
+modificar ficheros sensibles ni los fuentes del software de PANIC.
+
+- Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
+
+
+- Solucinar problema cálculo de offsets en datos 12-Nov-2014
+
+- Implementar sugerencias de Klaus.
+
+- ¿ cómo de importante es el gainmap en skyfilter ?
+- Añadir en el QL una vista para las estadísticas de las imágenes (mean, median, std, fwhm)
+- Mejorar el calculo/estimación del FWHM (psfmesure, imexam ), sobre todo para
+las pruebas del commissioning y para el cálculo del mejor foco (eval_focus_serie)
+  ==> Ya he trabajado bastante sobre eso, pero no consigo encontrar algo que 
+  funcione para cualquier tipo de imagenes, depende mucho de:
+
+       - DETECT_THRESH, DETEC_MINAREA, SATUR_LEVEL
+
+- Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
+modificarlo para que use astropy.io.fits !!
+
+- modificar calBPM.applyBPM() para MEF y subwindows !!
+
+- IDEA de WFCAM: 
+"""
+The wings of stellar sources (under the 1.5 sigma threshold) can bias the sky 
+construction and produce dark rings after sky subtraction. To prevent this, the idea is 
+to enlarge each masked star to make sure no wing signal creeps in. The fastest 
+way to do this is to apply smoothing using a box of 5x5 (the smooth command in IDL).
+"""
+
+- Ver como puede influir para photometría el usar FLUX_AUTO o FLUX_APER o FLUX_BEST
+en lugar de MAG_AUTO (Kron-like elliptical aperture magnitude).
+
+- Ver como usar FLAG_IMAGE/WEIGHT_IMAGE en Sextractor con los BPM !!!
+
+- Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
+
+- ver donde se está usando cosas como image[200:naxis1-200,200:naxis2-200] para que
+no de problemas con subwindows !!
+
+- $CAMHOME/scripts/QueueFiles: Considerar su posible uso para el QL, para la detección
+de nuevos ficheros; por lo visto se llama después de que termina el "save". Ver
+documentación GEIRS (3.3 Postprocessing) 
+
+- Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
+
+- "Collapsar" los cubos de PANIC con un average + sigmaclip en lugar de una
+simple suma aritmética !!! --> imcobine !
+
+- Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
+
+- Rutina para copiar datos de varios directorios a un único directorio y renombrando
+los ficheros de forma única (DATE + TIMESTAMP)!!
+
+- Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
+
+- Support for sub-windows (not tested, but probably does not work properly) 
+
+- Method to empiricaly determine the geometric distortion based an auto-calibration 
+approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
+
+- Photometry: currently only 2MASS filters (J, H, Ks) supported. No color 
+coefficients neither extinction taken into account.
+
+- Data Quality Control (frames to reject, ...)
+
+- Ver si merece la pena implementar el metodo crclean() de image.py
+de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
+para la eliminacion de CR. Esta basado en el algorimo LACOSMIC. Yo ahora estoy
+usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
+
+- Solucionar problemas en skyfilter para valores raros en las imágenes:
+ Note: skyfilter could fail if corrected image has wrong values 
+ (e.g.: negative mean, very big/small float values)
+  De esto me di cuenta cuando estaba probando la NL correction.
+
+- En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
+
+- Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m).
+
+- Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
+  ==> de momento creo que no merece la pena; es mucho más sencillo el módulo catalog_query.py,
+  y aún no esta integrado en astropy, es un modulo que hay que instalar a parte
+  y que tiene dependencias adicionales.
+
+- Configurar sonidos (pulseaudio)
+
+- Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, DET_ID = 'SGi'...)
+
+
+- Apply Gaussian Kernel to yield the final sky model to subtract !!! (see THELI paper, point 7.1 )
+
+- Fotometría con SCAMP !!! (ver THELI) ??? todavia no tengo claro si se puede hacer !!
+
+- Quizás habría que añadir otro parametro para indicar si queremos que la
+distorsión del campo se elimine antes del coadd (a nivel individual en cada imagen
+del dithering) o bien despues del coadd final. Yo creo que con hacerla al final
+debería bastar, pues la diferencia de distorsión en cada uno de las imagenes
+de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho.
+ 
+
+- PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
+sin embargo, parece que calDark.py no se queja !
+
+- doc. y script de instalación de PAPI --> (Distribute vs distutils)
+
+
+- Añadir los principales parametros del fich. de configuración al QL de forma gráfica!
+
+- como tratar en PAPI las imágenes de subwindows ??? -> _win.fits !!! mejor MEF !!
+
+- mejorar interfaz de ETC en Web( Ejemplo--> http://www.cefca.es/jplusetc/etcjplus.cgi)
+
+- eliminar del todo RS::self.out_file
+
+- crear "bateria" de tests para lanzar de forma automatica con un conjunto de
+datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
+
+- usar fit.polyfitr() en photometry 
+
+- ver notas libreta sobre si se reduce o no HAWK-I-4
+
+- ver notas libreta sobre si se reduce o no HAWK-I-5; 
+en el portatil lo hace, pero el resultado no es muy bueno, 
+incluso la astrometria no parece funcionar
+
+- escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
+
+- PANIC Tesis ala O2000 !!!
+
+- En una imagen de un detector solo, si le decimos que calcule el background 
+de esa imagen (ella sola), la imagen FITS de background que genera Sextractor
+no cumple el standard FITS y es rechazada por PAPI. Lo compruebo con fitsverify 
+y da error. Es un bug en Sextractor que habría que informar a E.Bertin.
+
+- En QL si seleccionamos varios science con distinto filtro y le decimos "reduce",
+no lo hace pero no dice el porqué !
+PAPI> NaN values in Numpy computations ! need to be checked previosuly as in
+applyDarkFlat.py
+
+- Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
+
+- Documento (TN) Data Grouping algorithms
+
+
+**** DONE ****
+
+- la segunda pasada de skyfilter para objetos extensos no está
 resuelto; si llamo a skyfilter_general, tendría que pasarle todos las
 imágenes, y no sólo las SCIENCE como hace ahora mismo !!!! 
 pero, ¿ qué sentido tiene entonces pasarle la máscara de objectos ?
@@ -8367,88 +8639,40 @@ hacerlo ahora mismo...implicararía cambiar el esquema de reducción para object
 es trivial...
 --
 
+- como conclusión de la videoconf del 13-Mayo, hay que ver como hacer para que los NaNs se conserven y se ignoren en
+todos los cálculos cuando se haga la NLC. Además, cuando no se haga la NLC, hace falta que si se aplica
+la BPM sea con NaNs, pues parece que es el valor que puede funcionar mejor ya que lo ignoran Sextractor, SWARP, Numpy, etc...
+Queda ver como corregir skyfilter para que los 0s del gainmap se conviertan en NaNs en lugar de bck_level !!!--> DONE
 
-- Modificar dataset::GetFilterFiles() para que agrupe correctamente las SKY + SCIENCE en
-el mismo grupo; ahora mismo los divide en dos grupos; para solucionarlo hago un apaño
-en clfits.py para que los SKY los considere como SCIENCE. No obstante, en skyfilter 
-si se detecta bien los SKY de los SCIENCE
+- ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; 
+ahora permite un MASTER_DARK también... ==> los MASTER_DARK_MODEL no se va a usar !!! (27-Oct-2015)
 
-- Revisar/permitir D+F+BPM en QL de modo automatico
-- refactorizar la astrometría en RS
-- cambiar directorio temporal de astrometry.net (/tmp/) para los /tmp/tmp.sanitized.ZDkbmU !!
-- comparar los Flat/Dark de HAWKI y de PANIC
-- Reducir WASP19: todos los cuadrantes, sin D ni F, con irdr:offsets, ...
-- revisar/mejorar ApplyDarkFlat en QL
-- Añadir NCOADD, ITIME, MEF ? a la ListView del QL
-- DUDA: cómo se usa el ext_calibration_db en el QL ???
-- adaptar Nuevo interfaz de calTwFlat en PAPI !!
-- Sacar algún mapa de distorsión decence !! (datos Tilt y/o 10-Dic-2014)
-- aplicar la misma lógica que tengo en RS para los TwFlats (line 2610ss)
-en QL y demás candidatas.
-- ver que se puede hacer para forzar NCOADD, ITIME, EXPTIME en applyDark y applyDarkFlat
-- en astrowarp: parece que shutil.move no borrar la src !! noooo! no que pasa es que
-If the destination is on the current filesystem, then os.rename()
-y como el PANIC_SEQ_Q01.fits suele existir de una reducción anterior, pues no borra el src, 
-sólo renombra el PANIC_SEQ_Q01.fits.
+- ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, SExtractor, Numpy...):
 
-- mejorar rutina de logsheet para ver los ficheros que tenemos y su tipo.
+    - SExtractor los sabe tratar (o eso encontré en el foro de Astrometic), y
+    supongo que simplemente los ignora.
+    - IRAF, aunque no he encontrado información al respecto, según las pruebas
+    que he hecho con una imagen 4kx4k de PANIC con los BP=NaN, imstat me da
+    unos valores sensatos, y muy parecidos a los que puedo obtener con misc.robust.mean().
+    - Numpy: en principio los reconoce, pero a la hora de trabajar con ellos,
+    por ejemplo, numpy.mean() no es capaz de dar un resultado. En cambio, 
+    con la rutina Numpy que tengo misc.robust.mean() si lo hace bien !!
 
-- Resolver el problema del llenado del / a causa de la escritura en el /tmp, 
-lo cual deja la máquina sin recursos. Habría que haber creado la partición / 
-más grande. Ahora sólo queda intentar crear un link para el /tmp, pero
-eso hay que hacerlo arrancando con un disco de sistema, pues en el /tmp
-hay muchos ficheros temporales que usa el propio sistem...
+- Support for incomplete sequences (ie. aborted, corrupted, ...): a kind of 
+fix method to update the headers in order to build a valid sequence for PAPI.
+  >>>Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
+  Alguna otra solución ???
 
-- Actualizar ds9v7.3.2 en panic1 y panic22 para que se puedan ver los MEF desde IRAF.display; hay que configurar el IMTDEV también !!
+- No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
+El problema surge cuando se mezcan distintos tipos de formatos FITS (MEF, single, ...),
+pues display.py tiene en cuenta eso, y además los Darks se muestran de forma distintan
+según el instrumento (HAWK-I no tiene WCS en los Darks!)
+--> problema reportado con DS9. RM modificará DATASEC al formato IRAF (DETSEC, ...) ver email
 
-- Ojo, el fichero offsets1.pap se crea en /data2/out/ en lugar de /data2/out/Q0X) !!!! conflicto entre detectores en reducción paralelo !!
-nooo, creo que fue por que use el modo serial !! y por eso no usa los Q01 ???
-
-
-- Probar createMasterTwFlat_slot() en QL; nueva implemtentación !!
-- ver si realmente es necesario un MASTER_DARK_MODEL en calTwFlat; ahora permite un MASTER_DARK también...
-- en calTwFlat.py tengo que sustituir numpy.mean por robust.mean,
-pues numpy.mean() no trabaja bien con los NaN (los que vienen de la NLC !!).
-
-- iraf.imcombine: los NaN los "cambia" por 0s !!! --> confirmado ==> estudiar como puede afectar !!!
-  numpy: los operaciones con NaNs, dan simpre como resultado un NaN, aunque hay funciones 
-  que te permiten tratarlos como 0's (numpy.nansum)
-- ver que hace irdr.skyfilter con NaNs que genera la NLC !! 
-- ver que hace en general PAPI con los NaN de la NLC y BPM !!!
-- limpiar fichero de configuración de variables que no usamos.
-- Mejorar Ordenamiento por campos (columnas, ejem. TExp) numéricos en la ListView del QL;
-parece que habría que sobreescribir la clase:
-
-http://stackoverflow.com/questions/363200/is-it-possible-to-sort-numbers-in-a-qtreewidget-column
-
-
-TODO:
-====
-- BUg: al decirle al QL que haga la fotometría a una imagen (un cubo), lo hace 
-pero al final, al mostrar el plot, da un SF y se cierra el QL; el ultimo 
-mensaje fue:
-QMessageBox.information(self, "Info", "Selected frame is not a science frame") 
-                   
-- Eliminar el primer coadd que se crea en: /tmp/PANIC_SEQ_Q01_coadd_RADMON.fits 
-- Habría que ver que hace exactamente la rutina fixpix de IRAF, y/o
-hacer una propia en Python.
-- ver si se pueden ordenar por MJD las sequencias que muestra PAPI/QL con el flag '-p'
-- (P) Habría que revisar dicha rutina (cube_median) !!
-- ver el tema de los WEIGHT_MAPS, al construir el mosaico final; ahora
-están comentados, pero ver si realmente son necesarios y que diferencia hay en usarlos !!
-Tal y como estaba implementado parece que no funciona (probar con HAWKI)
-
-- Ver como reducir todos los cuandrantes de NGC752_focus000[1-5].fits !!
-(bug)- Astrowarp no genera el .weight.fits con el mismo nombre que coadd_tmp.fits, sino coadd.weight.fits !!! pero
+- (bug) Astrowarp no genera el .weight.fits con el mismo nombre que coadd_tmp.fits, sino coadd.weight.fits !!! pero
 luego para construir todo el mosaico si lo necesita !!!
-- Añadir reloj de busy a la rutina MEF2Single.
-- crear instalación en obs22 del control de PANIC, de forma que no pueda
-modificar ficheros sensibles ni los fuentes del software de PANIC.
-- Ver en GINGA ./util/iqcalc.py, puede ser super-interesate y util.
 
-
-
-
+    
 PANIC computers installation
 ============================
 0) Introduction
@@ -8488,66 +8712,6 @@ URL http://www.mpia.de/~mathar/public/PANIC-SW-DCS-01.pdf
 
 4.3 PAPI & QL installation
 
-
-
-FOR NEXT VIDEOCONF
-==================
-- Implemented procedure to set telescope focus after QL-processing; confirmation
-required by user on the OT.
-- Reviewed of BPM and compared with BD procedure.
-- Taken into account new flags CAM_DETROT90 y CAM_DETXYFLIP (bueno, este aún no)
-en BPM_3 and split of MEF for processing, so specific values for calibration
-of each detector can be used.
-
-
-
-
-OLD_NEXT_VIDEOCONF
-==================
-- New version of TN about FITS headers
-- Fast vs slow readout mode --> Fast-readout not implemented in GEIRS
-- Disc array for PANIC at the CAHA Archive
-- Network bounding for CAHA Archive link
-- Data Quality Control/Assesment (when data processing must not be done ?)
-- DUDAS LEMON:
-   - quieren que las imagenes tengan la astrometría ?
-   - quieren que elimine la distorsion del campo ? (si no, todas tendrán la misma distorsion, y yo creo que no importa ???)
-   - esto enlaza con la eterna pregunta de cuando hacer la correción de distorion, 
-   antes o despues del coadd (hubo un tipo que decia que era mejor después, pues 
-   tienes menos errores, pues al fin y al cabo, todas la imagenes tienen la misma distorsion
-   y para sumar no importa siempre que el dither-offset sea pequeño )
-
-
-IMPORTANTE: Aclarar muy bien que tipo de datos (FITS) aceptará PAPI & QL !!!
-- SATUR_LEVEL parametrized with NDIT
-- New 'lab' reduction mode: dark, flat and FWHM. 
-- Check of INSTRUME keyword added and now checked on QL and PAPI: only
-data files from INSTRUME=config.instrument will be added to PAPI DB.
-- Next basic WCS keywords should be added by default by GEIRS. Currently,
-only added by external program geirs2Panic:
-
-    CUNIT1  = 'deg     '           / WCS units along axis 1                         
-    CUNIT2  = 'deg     '           / WCS units along axis 2                         
-    CTYPE1  = 'RA---TAN'           / WCS axis 1                                     
-    CTYPE2  = 'DEC--TAN'           / WCS axis 2                                     
-    CRVAL1  =                   0. / [deg] RA in center                             
-    CRVAL2  =                   0. / [deg] DEC in center                            
-    CRPIX1  =                 2047 /  RA and DEC center along axis 1                
-    CRPIX2  =                 2047 /  RA and DEC center along axis 2                
-    CD1_1   = -5.84166664339136E-05 /  [deg/px] WCS matrix diagonal                 
-    CD2_2   = 5.84166664339136E-05 /  [deg/px] WCS matrix diagonal                  
-    CD1_2   = 3.57687104420465E-21 /  [deg/px] WCS matrix outer diagonal            
-    CD2_1   = 3.57687104420465E-21 /  [deg/px] WCS matrix outer diagonal   
-
-- New 'workaround' to add keywords to headers --> ~/tmp/geirsPhduAdd.panic 
-- MEF are going to be finnaly implemted ? RM says is in 'experimental'
-(see RM's email by 29-Jul-2013)
-- Finally, will GEIRS add basic WCS keywords (see above) ?
-It might need to implement MEF, because we need 4 separate WCS headers due
-to gaps!
-- Focus eval added to QL
-- PANIC hardware equipment is ready ? (see mail 23-Sep-2013 from JM)
-- New astrometric module with astrometry.net (under optimization/debuggin) - much more robust, blind computing.
 
 
 Questions:
@@ -8729,22 +8893,13 @@ se calculan con un master_dark_model.
 FAQ:
 ===
 1) ¿ para que se usa en PAPI los gainmap ? 
-   - skyfilter
-   - dithercubemean
+    - skyfilter
+    - dithercubemean
 
-2) Como funciona el workaround the Clemens para keys del OT: (esto ya no es así)
-
-Escribir en ~/tmp/fitsheader_panic.txt la keys y en el fichero 
-GEIRS/scripts/QueueFiles tenemos una linea tq:
-
-   modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
-
-
-DEPENDENCIAS DE IRDR
-====================
-- skyfilter
-- dithercubemean
-- offsets
+2) Dependendias de IRDR:
+    - skyfilter
+    - dithercubemean
+    - offsets
 
 
 ASTROMETRIA con Astrometry.net 
@@ -8838,159 +8993,6 @@ PIPELINE
 7-Incluyo la estadística en la cabecera de la imagen con las ftools
 
  
-NEXT TODOs
-==========
-
-
-- Solucinar problema cálculo de offsets en datos 12-Nov-2014
-- Implementar sugerencias de Klaus.
-- Añadir ruta en panic2 para tráfico hacia el archvio2.caha.es
- 
-
-(P)- Elaborar procedimiento de Test para CAHA !!
-(P)- Elaborar pruebas/Test PAPI/QL durante el commissioning!
-
-- ¿ cómo de importante es el gainmap en skyfilter ?
-- Añadir en el QL una vista para las estadísticas de las imágenes (mean, median, std, fwhm)
-- Mejorar el calculo/estimación del FWHM (psfmesure, imexam ), sobre todo para
-las pruebas del commissioning y para el cálculo del mejor foco (eval_focus_serie)
-  ==> Ya he trabajado bastante sobre eso, pero no consigo encontrar algo que 
-  funcione para cualquier tipo de imagenes, depende mucho de:
-
-       - DETECT_THRESH, DETEC_MINAREA, SATUR_LEVEL
-
-
-- Ver si hay actualización del modulo cosmics, pues usa pyfits !!! o bien
-modificarlo para que use astropy.io.fits !!
-- modificar calBPM.applyBPM() para MEF y subwindows !!
-- IDEA de WFCAM: 
-"""
-The wings of stellar sources (under the 1.5 sigma threshold) can bias the sky 
-construction and produce dark rings after sky subtraction. To prevent this, the idea is to enlarge each masked star to make sure no wing signal creeps in. The fastest way to do this is to apply smoothing using a box of 5x5 (the smooth command in IDL).
-"""
-
-- Ver como puede influir para photometría el usar FLUX_AUTO o FLUX_APER o FLUX_BEST
-en lugar de MAG_AUTO (Kron-like elliptical aperture magnitude).
-- Ver como usar FLAG_IMAGE/WEIGHT_IMAGE en Sextractor con los BPM !!!
-- ver como pueden afectar los NaN que crea NLC en PAPI (IRAF, SExtractor, Numpy...):
-
-    - SExtractor los sabe tratar (o eso encontré en el foro de Astrometic), y
-    supongo que simplemente los ignora.
-    - IRAF, aunque no he encontrado información al respecto, según las pruebas
-    que he hecho con una imagen 4kx4k de PANIC con los BP=NaN, imstat me da
-    unos valores sensatos, y muy parecidos a los que puedo obtener con misc.robust.mean().
-    - Numpy: en principio los reconoce, pero a la hora de trabajar con ellos,
-    por ejemplo, numpy.mean() no es capaz de dar un resultado. En cambio, 
-    con la rutina Numpy que tengo misc.robust.mean() si lo hace bien !!
-
-
-- Revisar opciones (checkboxes) del modo "Pre-Reduction" en QL
-- ver donde se está usando cosas como image[200:naxis1-200,200:naxis2-200] para que
-no de problemas con subwindows !!
-- $CAMHOME/scripts/QueueFiles: Considerar su posible uso para el QL, para la detección
-de nuevos ficheros; por lo visto se llama después de que termina el "save". Ver
-documentación GEIRS (3.3 Postprocessing) 
-
-- Probar PAPI con subwindows (Dark subtraction, FF, etc ....)
-- Dejar muy claro en la documentación que tipo de ficheros son los mejores para
-PAPI, es decir, MEF full-frame en modo NCOADDS=1 (NLC??), etc....
-
-- Ver y evaluar la posibilidad de usar Montage para coadd en lugar de dithercubemean
-o SWARP (VTerrón lo está usando y está contento...)
-
-- Actualizar TN de FITS headers:
-
-   DET_ID = 'SGi'
-   ...
-
-- "Collapsar" los cubos de PANIC con un average + sigmaclip en lugar de una
-simple suma aritmética !!! --> imcobine !
-
-- Revisar lectura con QL de directorio con >5000 ficheros !!! muy lento !!!
-- Rutina para copiar datos de varios directorios a un único directorio y renombrando
-los ficheros de forma única (DATE+TIMESTAMP)!!
-
-- Revisar GUI QL !!! y quitar lo que no sirva !!
-- Support for non-integrated frames as individual frames (not as cubes),ie. detection/grouping and coadd 
-- Support for sub-windows (not tested, but probably does not work properly) 
-- Method to empiricaly determine the geometric distortion based an auto-calibration 
-approach analogous to the one described in Anderson et al. (2006, A&A, 454, 1029)
-- Photometry: currently only 2MASS filters (J, H, Ks) supported. No color 
-coefficients neither extinction taken into account.
-- Data Quality Control (frames to reject, ...)
-- Support for incomplete sequences (ie. aborted, corrupted, ...): a kind of 
-fix method to update the headers in order to build a valid sequence for PAPI.
-  >>>Debería haber alguna forma de poder reducirlos ?? en modo group_by='filter' si !!!
-  Alguna otra solución ???
-
-- Ver si merece la pena implementar el metodo crclean() de image.py
-de http://www.astro.umd.edu/~msk/computing/python/src/mskpy1-1.7.0.tar.gz
-para la eliminacion de CR. Esta basado en el algorimo LACOSMIC. Yo ahora estoy
-usando en PAPI el original http://www.astro.yale.edu/dokkum/lacosmic/.
-
-- Solucionar problemas en skyfilter para valores raros en las imágenes:
- Note: skyfilter could fail if corrected image has wrong values 
- (e.g.: negative mean, very big/small float values)
-  De esto me di cuenta cuando estaba probando la NL correction.
-
-- En calGainMap hay que quitar el bpm, pues no se usa para nada !!!
-- Revisar/parametrizar todas la dependencias de PIX_SCALE para (2.2m y 3.5m).
-- Migrar catalog_query.py para usar Astroquery (http://www.astropy.org/astroquery/)
-  ==> de momento creo que no merece la pena; es mucho más sencillo el módulo catalog_query.py,
-  y aún no esta integrado en astropy, es un modulo que hay que instalar a parte
-  y que tiene dependencias adicionales.
-
-
-- Configurar sonidos (pulseaudio)
-- Actualizar TN de FITS con las ultimas novedades de RM (DATASEC, FILE_ID, ...)
-- No se muestran bien en el QL las imágenes MEF, la primera bien, pero el resto mal !!!
-El problema surge cuando se mezcan distintos tipos de formatos FITS (MEF, single, ...),
-pues display.py tiene en cuenta eso, y además los Darks se muestran de forma distintan
-según el instrumento (HAWK-I no tiene WCS en los Darks!)
---> problema reportado con DS9. RM modificará DATASEC al formato IRAF (DETSEC, ...) ver email
-- Apply Gaussian Kernel to yield the final sky model to subtract !!! (see THELI paper, point 7.1 )
-- Opcion en solveAstrometry para usar SExtractor en lugar de imagexy
-- Fotometría con SCAMP !!! (ver THELI) ??? todavia no tengo claro si se puede hacer !!
-- Quizás habría que añadir otro parametro para indicar si queremos que la
-distorsión del campo se elimine antes del coadd (a nivel individual en cada imagen
-del dithering) o bien despues del coadd final. Yo creo que con hacerla al final
-debería bastar, pues la diferencia de distorsión en cada uno de las imagenes
-de dithering no debe ser grande, y por tanto el coadd no se verá afectado mucho.
-- Probar bien solveAstrometry() con HAWK-I
- 
-- Comprender bien el valor (unidades) de ASTRRMS1 que da SCAMP, pues parece que 
-son arcsec, pero me parecen valores muy pequeños (4.731352954E-05)---> NOOO, son el grados !!! y parece correcto !! ver notas Herve
-- cuando RM nos pase la r711M, probar los MEF integrados, los subwindows con MEF, etc , etc ...
-- Estudiar/Probar el Algoritmo de registrado de imagenes ---> https://github.com/t-brandt/acorns-adi
-- Documento (TN) Data Grouping algorithms
-- Documento instalación de PANIC-SW
-
-- PAPI se queja si el fichero de entrada (files.txt) tiene una linea en blanco al final !!!
-sin embargo, parece que calDark.py no se queja !
-- doc. y script de instalación de PAPI --> (Distribute vs distutils)
-- implementar procesamiento (detección y suma) de 'individual images' en 
-varios ficheros;
-- Añadir los principales parametros del fich. de configuración al QL de forma gráfica!
-- como tratar en PAPI las imágenes de subwindows ??? -> _win.fits !!! mejor MEF !!
-- mejorar interfaz de ETC en Web( Ejemplo--> http://www.cefca.es/jplusetc/etcjplus.cgi)
-- eliminar del todo RS::self.out_file
-- crear "bateria" de tests para lanzar de forma automatica con un conjunto de
-datos fijo (Ok2, PANIC, HAWK-I) de forma que se prueben "todas" los modulos de PAPI !!!
-- usar fit.polyfitr() en photometry 
-- ver notas libreta sobre si se reduce o no HAWK-I-4
-- ver notas libreta sobre si se reduce o no HAWK-I-5; 
-en el portatil lo hace, pero el resultado no es muy bueno, 
-incluso la astrometria no parece funcionar
-- escribir al Chino sobre el dxtalk.py --> probar su sugerencia !!
-- PANIC Tesis ala O2000 !!!
-
-
-BUGS
-====
-QL> Si seleccionamos varios science con distinto filtro y le decimos "reduce",
-no lo hace pero no dice el porqué !
-PAPI> NaN values in Numpy computations ! need to be checked previosuly as in
-applyDarkFlat.py
 
 
 Troubleshooting
@@ -9005,277 +9007,7 @@ over-estimation of skybackground when no object masking is done (see skyfilter).
   'skymodel=min' instead of 'skymodel=median'.
   JM (2014-11-19): creo que el problema también puede estar en cube_median() (cube/cube.c) !!!
 
-Paper
-=====
-AUTOMATIC DATA REDUCTION ALGORITHMS FOR THE PANORAMIC NEAR INFRA-RED CAMERA (PANIC) INSTRUMENT
 
-Abstract:
-In this paper we describe the main algorithms of the software package for the
-data reduction for the Panoramic near infra-red camera (PANIC) on 2.2m and 3.5m 
-telescopes at the Calar Alto observatory, intended as a image processing pipeline.
-PAPI takes as input raw images and does a detrending of them (dark,flat fielding,
-sky subtraction). Then the software does a astrometric and photometric calibration
-of the detrended images. The astrometric calibration of the output images is 
-accurate to within 0.15" relative to external reference frames and 0.04" internally.
-The photometric calibration is good to within 0.03 mag. The staked images and
-catalogs derived from these images are available through the Calar Alto archive.
-
-
-Things To Be Done on PAPI 
-=========================
-
-
- (Known) Things To Be Done on GEIRS
- ==================================
- - fast readout mode 
-
-Problemas/bugs detectados GEIRS
-===============================
-
-
-Problemas/bugs detectados en OT 
-===============================
-25-02-2014) La copia de OB no se hace bien, pues luego repite el número del OB 
-y el orden de ejecución de los OBs se altera notablemente .... --> Fixed!
-25-02-2014) S abre dialogo de grabar
-25-02-2014) Telescope iterator con cycles=5 por defecto !!! debería ser =1 -->Fixed!
-
-25-02-2014) Timeline nada preciso, o solucionar o quitar ! --> In progress
-25-02-2014) PROG_ID en headers no se rellena; debería rellenarse con campo 
-"Proposal ID" y/o quizás cambiarle el nombre a "Program ID" --> Fixed!
-
-25-02-2014) En los OB, Nro. repetitions es "comun" para todos los OBs !
-26-02-2014) Los subwindows con Detecto1-4 no están bien definidos en el OT. 
-Lemando a AGS la definición correcta.
-07-03-2014) Error por 'timeout' (creo, según log de GEIRS) que provoca la 
-terminación prematura de un OB en el OT. --> Fixed
-14-03-2014) Confirmado que el OT a veces se para tras un OB de forma inesperada,
-sin continuar con los otros OBs. AGS ha visto que a él también le pasa. --> Fixed
-18-03-2014) No se puede seleccionar el telescopio en el OT. AGS mirará a ver si
-hay comando/modo de hacerlo ....
-Por lo que he visto, sólo se puede cambiar en el script GENERIC, en la variable
-TELESCOPE.
-
-
-
-Problemas/bugs detectados en QL 
-===============================
-- En una imagen de un detector solo, si le decimos que calcule el background 
-de esa imagen (ella sola), la imagen FITS de background que genera Sextractor
-no cumple el standard FITS y es rechazada por PAPI. Lo compruebo con fitsverify 
-y da error. Es un bug en Sextractor que habría que informar a E.Bertin.
-
-
-THINGS TO DO ON panic1.mpia.de al llegar a CAHA
-===============================================
-- Actualzar la version del DS9 a la 7.3b5
-wget http://ds9.si.edu/download/linux64/ds9.linux64.7.3b5.tar.gz
-
-
-
-DOCUMENATION
-============
-
-+ How to reduce a sequence with PAPI observed from the CL ?
-
-To reduce a observing sequence of PANIC there are two options; the first and most
-convenient way is when the sequence has been observed with the OT through the
-execution of an OB. Then the steps to follow shoudl be the next ones:
-
-
-0) First, we must configure the configuration file of PAPI. It comes with a set
-of defaults values, but likely you may to modify some of them.
-The configuration file is pointed by the environment variable PAPI_CONFIG, and
-it is under papi/config_files/papi.cfg.
-
-
-1) Next, we need to find out the sequence to reduce. For this, we must
-type the next command:
-
-> papi -s /source/raw/data_directory -p
-
-for example:
-
-> papi -s /data1/PANIC/calibrationTest/ -p
-
-and we get the next output:
-
-    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1033: Found 11 groups of files
-    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1040: =========================================================
-    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1041: =========== GROUPED SEQUENCES (by ot) ==============
-    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1042: =========================================================
-    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1047: SEQUENCE #[0]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 1.370302  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,232 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0001.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0002.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0003.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0004.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0005.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1047: SEQUENCE #[1]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 5.000000  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,233 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0006.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0007.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0008.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0009.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0010.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1047: SEQUENCE #[2]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 1.370302  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0011.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,234 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0012.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0013.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0014.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0015.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1047: SEQUENCE #[3]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 5.000000  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0016.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0017.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,235 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0018.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0019.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0020.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1047: SEQUENCE #[4]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 1.370302  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0021.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0022.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0023.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,236 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0024.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0025.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1047: SEQUENCE #[5]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 8.000000  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0026.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0027.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0028.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,237 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0029.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0030.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1047: SEQUENCE #[6]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 1.370302  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0031.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0032.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0033.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0034.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,238 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0035.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1047: SEQUENCE #[7]  - TYPE= DARK   FILTER= W4BLANK  TEXP= 5.000000  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0036.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0037.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0038.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0039.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0040.fits type = DARK
-    [PAPI]: 2014-09-24 13:43:03,239 DEBUG    reductionset:1047: SEQUENCE #[8]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 1.370302  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0041.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0042.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0043.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0044.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0045.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,240 DEBUG    reductionset:1047: SEQUENCE #[9]  - TYPE= DOME_FLAT   FILTER= KS  TEXP= 8.000000  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0046.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0047.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0048.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0049.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0050.fits type = DOME_FLAT
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1047: SEQUENCE #[10]  - TYPE= SCIENCE   FILTER= KS  TEXP= 2.740604  #files = 5 
-    [PAPI]: 2014-09-24 13:43:03,241 DEBUG    reductionset:1048: -------------------------------------------------------------------
-    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0051.fits type = SCIENCE
-    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0052.fits type = SCIENCE
-    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0053.fits type = SCIENCE
-    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0054.fits type = SCIENCE
-    [PAPI]: 2014-09-24 13:43:03,242 DEBUG    reductionset:1050: /data1/PANIC/calibrationTest/calibration0055.fits type = SCIENCE
-
-
-2) Now, for example, let suppose that we want to reduce the sequences from 
-number 1 to 5. Then we type:
-
-> papi -s /data1/PANIC/calibrationTest/ -S 1 5
-
-If we want to reduce only the sequence number 10, we type:
-
-> papi -s /data1/PANIC/calibrationTest/ -S 10 10
-
-3) However, if we would like to reduce all the sequences included in the source
-directory, we should type:
-
-> papi -s /data1/PANIC/calibrationTest/ 
-
-
-If we did not used the OT to run the observation (ie., used GEIRS macros or whatever),
-then the successful reduction is not asured. In this case, we must indicate to PAPI
-that try to group the data using FILTER, DATE-OBS, and RA,DEC coordinates. It is
-done with the '-G filter' parameter as follow:
-
-> papi -s /data1/PANIC/calibrationTest/ -g filter
-
-Then we should get the list of sequences found and select what we want to reduce:
-
-
-> papi -s /data1/PANIC/calibrationTest/ -g filter -S 1 5
-
-
-
-PAPI FAQ
-========
-
-0) Are there any known problems with PANIC data?
-
-Please, go to www.iaa.es/PANIC to get the list of last known problems.
-
-1) Where can I get PAPI ?
-
-The stable version can be dowloaded from https://github.com/ppmim/PAPI/.
-
-
-2) Where can I find tutorial on PANIC data reduction?
-
-Please, visit http://www.iaa.es/~jmiguel/PANIC/PAPI/html/index.html for a detaild
-description.
-
-
-2) I have a problem with the Hawk-I pipeline. What should I do?
-
-The PANIC pipeline is continuosly under development; please, follow the changes
-and publish issues on https://github.com/ppmim/PAPI/issues.
-
-
-3) What is the best way to reduce PAPI data?
-
-The recommend to use the OT and execute the OBs. That way the headers will include
-meta-data about the observetion, and thus the pipeline can group the data and
-find the required calibrations for a successful reduction. Then, you only have to
-type:
-
-> papi -s /data1/PANIC/my_program/ 
-
-
-4) How can we reach hundredth of magnitude accuracy in photometry ?
-
-The best way to accurately photometrically calibrate PANIC images is to use 2MASS 
-stars in the field itself to derive the photometric solution. The accuracy 
-strongly depends on the number of bright 2MASS stars within the filed of view, 
-but ranges from a few 1/100th of a magnitude to 0.1 magnitudes if only faint 
-stars are contained in the field. Additionally, observing supplementary standard
-star fields can be asked for when preparing the observations. To perform the 2MASS 
-photometric calibration on an image you should use the 'photometry' command as 
-follow:
-
->  photometry -i /directory/prereducedField.fits -o test.pdf
-
-
-5) How good is PAPI astrometry and how are PSF variations corrected ?
-
-At present the pipeline applies a correction for PSF distortions based on a 
-distortion map derived during the astrometric calibration done with SCAMP (a 
-software developped by Emmanuel Bertin) and 2MASS.
-This way, the reached accuracy ranges from 0.1 to 0.3 pixels (TBC).
-
-
-
-COSAS A PREPARAR PARA EL COMMISSIONING
-======================================
-- Limpiar la GUI del QL !!! dejar sólo lo que funciona.
-- Preparar batería de pruebas de PAPI en CAHA !! 
-- Instalar x2go en panic2
-- Hacer copias de seguridad !!
-- Terminar documentación de PAPI !!
 
 
 TESTs QL en CAHA
@@ -9305,42 +9037,19 @@ TESTs QL en CAHA
 
 TODO @ CAHA
 ===========
-*- Update PAPI/QL on panic1
-- Sync panic1 & panic2
-*- Config proxy web: check OT, SCAMP, Aladin Catalogs
-*- config NTP sync
-- Create obs22 account and install software (GEIRS/OT/PAPI)
-- DOME control from OT: Dome Flat-Fields
-- Pruebas archivo CAHA: definir configuración FTP server y usuario, etc...
 
+Paper
+=====
+AUTOMATIC DATA REDUCTION ALGORITHMS FOR THE PANORAMIC NEAR INFRA-RED CAMERA (PANIC) INSTRUMENT
 
+Abstract:
+In this paper we describe the main algorithms of the software package for the
+data reduction for the Panoramic near infra-red camera (PANIC) on 2.2m and 3.5m 
+telescopes at the Calar Alto observatory, intended as a image processing pipeline.
+PAPI takes as input raw images and does a detrending of them (dark,flat fielding,
+sky subtraction). Then the software does a astrometric and photometric calibration
+of the detrended images. The astrometric calibration of the output images is 
+accurate to within 0.15" relative to external reference frames and 0.04" internally.
+The photometric calibration is good to within 0.03 mag. The staked images and
+catalogs derived from these images are available through the Calar Alto archive.
 
-COSAS MODIFICADAS PARA PRUEBA EN PAPI
--------------------------------------
-- check_ncoadd=False en RS
-- calSuperFlat(c_ncoadds=False)
-- Modificar collapse para que no renombre los que no son cubos (line 68 collapse.py)
-- Limpiar RS::skyFilter
-
-
-
-"""
->>> import re
->>> re.findall("\d+.\d+", "Current Level: 13.4 db.")
-['13.4']
-may suffice.
-
-A more robust version would be:
-
->>> re.findall(r"[-+]?\d*\.\d+|\d+", "Current Level: -13.2 db or 14.2 or 3")
-['-13.2', '14.2', '3']
-If you want to validate user input, you could alternatively also check for a float by stepping to it directly:
-
-user_input = "Current Level: 1e100 db"
-for token in user_input.split():
-    try:
-        # if this succeeds, you have your (first) float
-        print float(token), "is a float"
-    except ValueError:
-        print token, "is something else"
-"""

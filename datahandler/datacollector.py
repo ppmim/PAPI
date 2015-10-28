@@ -401,7 +401,7 @@ class DataCollector (object):
                     self.remove(file)
                     self.bad_files_found.append(file)
                 else:
-                    print "New File to be inserted : %s"%file
+                    #print "New File to be inserted : %s"%file
                     self.callback_func(file)
                     # Only then, send message to the receiver client
                     #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12

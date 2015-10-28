@@ -38,7 +38,7 @@ Additional packages are optionally required:
 
 .. note::
     
-    If you are using a SCAMP version <= 2.0.4 (lastest stable version), then you need to install the CDSClient. Otherwise, if you are using SCAM version > 2.0.4, then you need **libcurl**. 
+    If you are using a SCAMP version <= 2.0.4 (lastest stable version), then you need to install the CDSClient. Otherwise, if you are using SCAMP version > 2.0.4, then you need **libcurl**. 
 
     Anycase, if you are behind a proxy, you need to set the proxy server in your system::
     
