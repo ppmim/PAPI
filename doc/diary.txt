@@ -5805,8 +5805,25 @@ en otra máquina diferente a la que corre IRAF !! con lo cual ganamos en velocid
 de refresco !!
 
 Para más información:
+https://twitter.com/saoimageds9/status/543125635989008384
 http://iraf.noao.edu/docs/src/pcix/unixsmg-N-4.4.html
 ftp://iraf.noao.edu/ftp/web/projects/sitemail.2003/2301.html
+
+
+La última versión oficial de ds9 (7.3.2) tiene 'otro' bug' que la hace bastante 
+engorrosa de usar con IRAF, pues hay que lanzarlar así:
+
+https://twitter.com/saoimageds9/status/543125635989008384
+$ ds9 -port 5138
+$ setenv IMTDEV inet:5138:localhost
+
+
+Si embargo, lo han solucionado en la última-beta de ds9 (7.4b7):
+
+
+http://ds9.si.edu/download/linux64/ds9.linux64.7.4b7.tar.gz
+
+
 
 - Pruebo las nuevas rutinas de BD para el tilt y funcionan sin problemas; 
 le enseño a Conchi e Irene como funcionan.
@@ -8106,6 +8123,23 @@ quizás también modificar el /boot/grub2/device.map
 y parece que todo va bien.
 
 
+30-Oct-2015
+-----------
+- La última versión oficial de ds9 (7.3.2) tiene 'otro' bug' que la hace bastante 
+engorrosa de usar con IRAF, pues hay que lanzarlar así:
+
+https://twitter.com/saoimageds9/status/543125635989008384
+
+$ ds9 -port 5138
+$ setenv IMTDEV inet:5138:localhost
+
+
+Si embargo, lo han solucionado en la última-beta de ds9 (7.4b7):
+
+
+http://ds9.si.edu/download/linux64/ds9.linux64.7.4b7.tar.gz
+
+La he instalado en panic1.iaa.es y parece que se entiende bien con IRAF.
 
 
 Tratamiento NaNs

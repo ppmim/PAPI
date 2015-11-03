@@ -12,10 +12,14 @@ Welcome to PANIC Software System Installation's documentation!
    is not organized, and several aspects of PANIC software system installation
    are not yet covered with sufficient detail.
 
-Welcome! This is the documentation for the PANIC software system. PANIC is 
-the `PAnoramic Near Infrared Camera (PANIC) <http://www.iaa.es/PANIC>`_ for the 2.2m 
-and 3.5m Telescopes at `Calar Alto Observatory (CAHA) <http://www.caha.es>`_. 
-The software in compound of next parts:
+Welcome! PANIC is the `PAnoramic Near Infrared Camera (PANIC) <http://www.iaa.es/PANIC>`_ for the 2.2m 
+and 3.5m Telescopes at `Calar Alto Observatory (CAHA) <http://www.caha.es>`_.
+This is the documentation for the PANIC software system. We  describe how 
+to perform the complete PANIC computer system  installation, from  RAID configuration  
+and OS installation on the PANIC computers (PowerEdge R720) to whole PANIC software.
+
+ 
+The **software** is compound of next main parts:
 
 - GEIRS_: in charge of then instrument control of the wheels, temperature of cryostat and acquistion software for the ROE (Read Out Electronic).
 
@@ -25,9 +29,6 @@ The software in compound of next parts:
 
 - LEMON_ (Long-tErm photometric MONitoring): and astronomical pipeline for automated time-series reduction and analysis.
 
-
-This manual is a complete description of the installation and configuration procedure 
-of the computer system and the software components used by PANIC. 
 
 
 In addition to this html version of the manual, there is also a pdf_ version to download.

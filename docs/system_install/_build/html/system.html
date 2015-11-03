@@ -77,6 +77,7 @@
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="">1. System</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation">1.1. Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#raid-configuration">1.2. RAID configuration</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="os.html">2. Operating System</a><ul>
@@ -145,7 +146,7 @@
 <p>PANIC computer system is compound by the <strong>Dell PowerEdge R720</strong> 12th Generation. It is a 2-socket, 2U server that features the
 Intel Xeon E5-2600 processor family and supports up to 768GB of DDR3 memory. Dell offers the R720 in various backplane configurations
 with up to 16 2.5-inch internal hard drives or 8 3.5-inch drives.</p>
-<p>The PANIC computer features are:</p>
+<p>The PANIC computer specifications are:</p>
 <ul class="simple">
 <li>2 x Intel Xeon E5-2643 (3.3 GHz, QPI 8.0 GT/s, 10M cache, 130W, 4C) Turbo</li>
 <li>3.5&#8221; chassis with up 8 Hard Drives</li>
@@ -153,11 +154,152 @@ with up to 16 2.5-inch internal hard drives or 8 3.5-inch drives.</p>
 <li>PERC H710p RAID Controller 1 GB cache</li>
 <li>2 x 500 GB SATA 7200 3.5&#8221;</li>
 <li>6 x 2 TB SAS nearline 6 Gb/s 7.2K rpm 3.5&#8221;</li>
+<li>16X DVD+/-RW unidad SATA</li>
+<li>iDRAC7 Enterprise</li>
+<li>3Yr Basic Warranty - Next Business Day</li>
+<li>Network card Broadcom 5720 quad port 1Gb</li>
+<li>6 PCIe x8 + 1 PCIe x16 slots</li>
+<li>5Yr ProSupport and Next Business Day On-Site Service</li>
 </ul>
+<p>There are two identical computers, one for each telescope (2.2m and 3.5m). At the same time, each one can works as a spare of the other.</p>
 <div class="section" id="installation">
 <h2>1.1. Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>For the complete installation description of System, please go to
-<a class="reference external" href="http://www2.mpia-hd.mpg.de/~mathar/public/PANIC-SW-DCS-01.pdf">DELL R720 - Instalation and User&#8217;s Manual</a>.</p>
+<a class="reference external" href="http://www.dell.com/support/manuals/us/en/19/topic/poweredge-r720/720720XDOM-v3/en-us">Dell PowerEdge R720 and R720xd Owner&#8217;s Manual</a>.</p>
+</div>
+<div class="section" id="raid-configuration">
+<h2>1.2. RAID configuration<a class="headerlink" href="#raid-configuration" title="Permalink to this headline">¶</a></h2>
+<p>Next we describe the creation of the RAID(s) using the PERC H710 integrated BIOS configuration utility.</p>
+<ol class="arabic simple">
+<li>Launch PERC H710 Integrated BIOS Configuration Utility</li>
+</ol>
+<p>After the disks are inserted, reboot the server. When the server is starting up, press Ctrl-R to
+launch the PowerEdge Expandable RAID Controller BIOS. Press Ctrl-R when it is displaying
+the following message on the console:</p>
+<a class="reference internal image-reference" href="_static/dell720_1-press-ctrl-r.png"><img alt="_static/dell720_1-press-ctrl-r.png" class="align-center" src="_static/dell720_1-press-ctrl-r.png" /></a>
+<p>This will launch the H710 Integrated BIOS Configuration Utility. This utility will have
+the following three TABs on the top.</p>
+<ul class="simple">
+<li>VD Mgmt – Virtual Disk Management, which is selected by default</li>
+<li>PD Mgmt – Physical Disk Management</li>
+<li>Ctrl Mgmt – Controller Management</li>
+</ul>
+<p>You’ll see the 8 new disks that we added in the “Unconfigured Physical Disks”
+section under “VD Mgmt” tab.</p>
+<ol class="arabic simple" start="2">
+<li>Launch the Operations Menus</li>
+</ol>
+<p>From the Virtual Disk Management, use arrow key and select
+‘PERC H710 Integrated (Bus 0x03, Dev 0x00)’. Press F2 to show available operations.
+This will display a pop-up menu with following choices. Select “Create New VD”:</p>
+<ul class="simple">
+<li>Create New VD</li>
+<li>Clear Config</li>
+<li>Foreign Config</li>
+<li>Manage Preserved Cache</li>
+<li>Security Key Management</li>
+</ul>
+<ol class="arabic simple" start="3">
+<li>Create a Virtual Disk with RAID-1 (for Operating System and PANIC software):</li>
+</ol>
+<p>This will display a new screen. In it, do the following:</p>
+<p>Press Enter on the RAID option, which will display the available RAID choices. In this case, I choose RAID-1.</p>
+<p>Use Tab key and scroll to the “Physical Disks” section, which will display all the new disks available.</p>
+<p>Press space-bar which will select the highlighted disks. In this case, we select the 1st two disks. The “X”
+in front of the disk indicates that it is selected to be included in this particular virtual disk creation.</p>
+<p>In the “01:00:00″ and “01:00:01″ that is displayed in the front of the disks, the last two digits
+represent the slot number. This indicates that we have selected the disks that were inserted in
+the slot number 0 and 1 for this virtual disk creation.</p>
+<p>Based on the number of disks selected, and the RAID type selected, the “VD Size” will show you how
+much usable disk space you will be getting out of this virtual disk. Since we used RAID-1, this will
+give usable disk space of only one disk (the other disk will be used for mirroring the data).</p>
+<p>Keep all the following options to the default values, and press enter when ‘OK’ is selected.</p>
+<ul class="simple">
+<li>Element Size: 64KB</li>
+<li>Read Policy: Adaptive Read</li>
+<li>Write Policy: Write Back</li>
+<li>Force WB with no battery unchecked</li>
+<li>Initialize checked</li>
+<li>Configure HotSpare unchecked</li>
+</ul>
+<p>You might get a pop-up with the following message. Just click ‘OK’ on it:</p>
+<p>“It is recommended that all newly created logical drives be initialized unless
+you are attempting to recreate a previous configuration and recover data as
+initialization is a destructive process.”</p>
+<ol class="arabic simple" start="4">
+<li>Review the new RAID-1 Disk Group</li>
+</ol>
+<p>This will create the “Disk Group 1″ (with RAID-1). This displays the following information:</p>
+<ul class="simple">
+<li>Virtual Disks: This indicates that there is only one virutal disk in this disk group, with size of roughly 500 GB.</li>
+<li>Physical Disks: This indicates all the physical disks that are part of this virtual disk group.</li>
+<li>Total Free Capacity: This indicates the free capacity available in the virutal disks</li>
+<li>Hot Spare: This is empty in this example.</li>
+</ul>
+<p>Since we have used 2 disks out of the 8 new disks that we inserted, we only see 6 disks under
+the “Unconfigured Physical Disks” section.</p>
+<ol class="arabic simple" start="5">
+<li>Create a Virtual Disk with RAID-1 (for raw data from GEIRS)</li>
+</ol>
+<p>Use the arrow key and select “PERC H710 Integrated (Bus 0x03, Dev 0x00)”, Press F2, select “Create New VD”.</p>
+<p>Again, use RAID-1 and select the next two disks (2 x 2 TB). Since we used RAID-1, this will give usable disk space
+of only one disk (the other disk will be used for mirroring the data). Keep all the following options
+to the next values, and press enter when ‘OK’ is selected.</p>
+<ul class="simple">
+<li>Element Size: 1 MB</li>
+<li>Read Policy: Adaptive Read</li>
+<li>Write Policy: Write Through</li>
+<li>Force WB with no battery unchecked</li>
+<li>Initialize checked</li>
+<li>Configure HotSpare unchecked</li>
+</ul>
+<ol class="arabic simple" start="6">
+<li>Review the new RAID-1 Disk Group</li>
+</ol>
+<p>This will create the “Disk Group 2″ (with RAID-1). This displays the following information:</p>
+<ul class="simple">
+<li>Virtual Disks: This indicates that there is only one virutal disk in this disk group, with size of roughly 1.8 TB.</li>
+<li>Physical Disks: This indicates all the physical disks that are part of this virtual disk group.</li>
+<li>Total Free Capacity: This indicates the free capacity available in the virutal disks</li>
+<li>Hot Spare: This is empty in this example.</li>
+</ul>
+<p>Since we have used 2 disks out of the 6 unused disks, we only see 4 disks under
+the “Unconfigured Physical Disks” section.</p>
+<ol class="arabic simple" start="7">
+<li>Create a Virtual Disk with RAID-5 (for data from Pipeline and Quick-Look)</li>
+</ol>
+<p>Use the arrow key and select “PERC H710 Integrated (Bus 0x03, Dev 0x00)”, Press F2, select “Create New VD”.</p>
+<p>This time, we use RAID-5 and select the next four disks (4 x 2 TB). Since we used RAID-5, this will
+give usable disk space of only 3 disks (the other disk will be used for data parity).
+Keep all the following options to the next values, and press enter when ‘OK’ is selected.</p>
+<ul class="simple">
+<li>Element Size: 1 MB</li>
+<li>Read Policy: Adaptive Read</li>
+<li>Write Policy: Write Back</li>
+<li>Force WB with no battery unchecked</li>
+<li>Initialize checked</li>
+<li>Configure HotSpare unchecked</li>
+</ul>
+<ol class="arabic simple" start="8">
+<li>Review the new RAID-5 Disk Group</li>
+</ol>
+<p>This will create the “Disk Group 3″ (with RAID-5). This displays the following information:</p>
+<ul class="simple">
+<li>Virtual Disks: This indicates that there is only one virutal disk in this disk group, with size of roughly 5.5 TB.</li>
+<li>Physical Disks: This indicates all the physical disks that are part of this virtual disk group.</li>
+<li>Total Free Capacity: This indicates the free capacity available in the virutal disks</li>
+<li>Hot Spare: This is empty in this example.</li>
+</ul>
+<p>Since we have used 4 disks out of the 4 unused disks, we do not see any other disks under
+the “Unconfigured Physical Disks” section.</p>
+<ol class="arabic simple" start="9">
+<li>Physical Disk Management (PD Mgmt)</li>
+</ol>
+<p>To manage the physical disks themselves, Press Ctrl-N, which will take you to the “PD Mgmt” tab
+and display all the disks that are available on the server.</p>
+<p>To perform any operations on these disks, use arrow keys and select a disk, and press “F2″.
+For most part, you don’t have to do anything here. Just be aware of what operations can be
+done on the disks, just in case, if you need it for any future use.</p>
 </div>
 </div>
 
