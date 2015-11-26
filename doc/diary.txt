@@ -8142,6 +8142,57 @@ http://ds9.si.edu/download/linux64/ds9.linux64.7.4b7.tar.gz
 La he instalado en panic1.iaa.es y parece que se entiende bien con IRAF.
 
 
+18-Nov-2015
+-----------
+- Visita a CAHA para sustituir en panic22 los dos discos de 2TB (/data1) por otros
+dos discos de 4 TB en RAID-1;
+
+Los pasos fueron los siguientes: 
+
+1- Copiar (rsync) todos los datos de /data1 a la partición /data2/BACKUP_DATA1;
+2- Reiniciar la máquina y entrar en la BIOS de la PERC 710P (CTRL-R) para eliminar el volumen correspondiente;
+3- Apagar la máquina y desinstalar físicamente los discos;
+4- Instalar los dos nuevos discos en las mismas bahias;
+5- Arrancar la máquina y configurar en la BIOS de la PERC (CTRL-R) el nuevo volumen de discos en RAID1:
+   - Situarnos sobre PERC H710P Mini y pulsar F2 (Operations)
+   - Crear el nuevo VD y ahí seleccionar las siguientes opciones:
+     RAID-1
+     Seleccionamos los discos que formarán el RAID-1 (los dos nuevos)
+     Stripe Element Size = 1MB
+     Read Policy = Adaptative Read Ahead
+     Write Policy = Write Through
+     Initialize = checked
+     La inicialización del RAID llevó un buen rato (~7 horas)
+     
+6- Una vez terminada la inicialización del RAID, re-iniciamos la máquina 
+y comprobamos que la controladora reconoce los tres VDs.
+Sin embargo, el SO no pudo arranca pues intentaba montar al anterior /dev/sdb1
+pero como no tenía el mismo UUID pues no arrancaba.
+Para solucionar este problema tuvimos que arrancar con un Live-CD de openSuSE13.1
+en 'Rescue Mode'; entramos como root (no pide passwd) y hacer lo siguiente:
+  > mkdir /mnt/my_disk
+  > mount -t ext3 /dev/sda2 /mn/my_disk
+  > chroot /mnt/my_disk /bin/bash
+  > vi /etc/fstab y comentar la linea siguiente para que no monte al anterior partición
+  
+   /dev/disk/by-id/scsi-36848f690ece3d000191a499923dffbd6-part1    /data1  ext3    defaults 1 2 
+   
+Salimos y reiniciamos la máquina; entonces si arrancó el SO.
+Entramos como root en modo gráfico y nos fuimos al yast2->Partitioner
+y desde ahí creamos la nueva paritición primaria /dev/sdb1 y le decimos
+que la formatee con ext3 y que la monte en /data1 (esto implica
+que modifica el /etc/fstab y no tenemos que hacer nada más).
+
+Nota: todo esto también se podía haber hecho desde la línea de comandos con 'parted',
+pero no es tan inmediato.
+
+7- Tras esto, reiniciamos la máquina y arrancó son problemas; 
+copié/restauré los datos de /data2/BACKUP_DATA1 al nuevo /data1;
+
+Sobre las 21:15 salimos de CAHA.
+
+
+
 Tratamiento NaNs
 ----------------
 - En Montage, veo que los NaN los representa por una union C,

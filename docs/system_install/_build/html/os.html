@@ -84,6 +84,11 @@
 <li class="toctree-l2"><a class="reference internal" href="#installation">2.1. Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#boot">2.1.1. Boot</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#welcome">2.1.2. Welcome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation-mode">2.1.3. Installation Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clock-and-time-zone">2.1.4. Clock and Time Zone</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desktop-selection">2.1.5. Desktop Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#partitioning">2.1.6. Partitioning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-new-users">2.1.7. Create New Users</a></li>
 </ul>
 </li>
 </ul>
@@ -156,12 +161,58 @@ the boot screen should appear. Use the keyboard up and down buttons to select In
 <p class="first admonition-title">Note</p>
 <p class="last">The power-on self test (POST) can last several minutes, mainly because the kernel must recognize the PowerEdge RAID Controller (PERC) H710 card.</p>
 </div>
-<a class="reference internal image-reference" href="_static/131-installer-2.png"><img alt="_static/131-installer-2.png" class="align-center" src="_static/131-installer-2.png" /></a>
+<a class="reference internal image-reference" href="_images/131-installer-1.png"><img alt="_images/131-installer-1.png" class="align-center" src="_images/131-installer-1.png" /></a>
 <p>The kernel will load and some debugging messages may appear. These can usually be ignored unless there is an issue
 starting the installation. In that event, these messages may make debugging easier.</p>
+<a class="reference internal image-reference" href="_images/131-installer-2.png"><img alt="_images/131-installer-2.png" class="align-center" src="_images/131-installer-2.png" /></a>
 </div>
 <div class="section" id="welcome">
 <h3>2.1.2. Welcome<a class="headerlink" href="#welcome" title="Permalink to this headline">¶</a></h3>
+<p>This page provides a choice of languages and keyboard layouts. The installer will choose a keyboard layout automatically after selecting a language.
+For PANIC we will select English (US) as Language and Spanish(ES) as Keyboard Layout.</p>
+<p>The license agreement is below the language options. Language translations are available below. Click Next to accept the license and continue.</p>
+<a class="reference internal image-reference" href="_images/131-installer-3.png"><img alt="_images/131-installer-3.png" class="align-center" src="_images/131-installer-3.png" /></a>
+</div>
+<div class="section" id="installation-mode">
+<h3>2.1.3. Installation Mode<a class="headerlink" href="#installation-mode" title="Permalink to this headline">¶</a></h3>
+<p>This guide only covers new installations. Leave the default options and click Next to continue.</p>
+</div>
+<div class="section" id="clock-and-time-zone">
+<h3>2.1.4. Clock and Time Zone<a class="headerlink" href="#clock-and-time-zone" title="Permalink to this headline">¶</a></h3>
+<p>Set the computer&#8217;s time zone to <strong>UTC</strong>, which can be selected from the drop down box below the map.</p>
+<p>Leave Hardware Clock Set to UTC enabled.</p>
+<p>If the Date and Time shown below the menu is incorrect, click Change to enter the correct date and UTC time manually.</p>
+<p>If the computer has an active internet connection, select Synchronize with NTP Server to obtain a
+date and time automatically from a time server. The default server is usually the best selection. Later we will set the CAHA NTP server (derfel.caha.es).
+If the Date and Time shown below the menu is incorrect, click Change to enter the correct date and time manually.</p>
+</div>
+<div class="section" id="desktop-selection">
+<h3>2.1.5. Desktop Selection<a class="headerlink" href="#desktop-selection" title="Permalink to this headline">¶</a></h3>
+<p>Select <cite>KDE Desktop</cite> and click Next.</p>
+</div>
+<div class="section" id="partitioning">
+<h3>2.1.6. Partitioning<a class="headerlink" href="#partitioning" title="Permalink to this headline">¶</a></h3>
+<p>By default, the installer will provide a suggested partition setup, however we will select <code class="docutils literal"><span class="pre">Edit</span> <span class="pre">Partition</span> <span class="pre">Setup</span></code>.
+It will open the <cite>Expert Partitioner</cite> where drive layouts and installation can be customized. The partitions to
+create are:</p>
+<div class="highlight-python"><div class="highlight"><pre>- /dev/sda1             swap (   2 GB)
+- /dev/sda2   /         ext3 ( 456 GB)
+- /dev/sdb1   /data1    ext3 ( 1,8 TB)
+- /dev/sdc1   /data2    ext4 ( 5,5 TB)
+</pre></div>
+</div>
+<p>For swap partition, we use the default suggested size of only 2 GB (in principle we do not need a larger swap parittion
+because we have a large amount of RAM and we are not going to use the suspend mode to allow the contents of the
+computer&#8217;s RAM to be stored in disk).</p>
+</div>
+<div class="section" id="create-new-users">
+<h3>2.1.7. Create New Users<a class="headerlink" href="#create-new-users" title="Permalink to this headline">¶</a></h3>
+<p>Create next users:</p>
+<div class="highlight-python"><div class="highlight"><pre>- panic     /home/panic   (bash shell) --&gt; for tests
+- obs22     /home/obs22   (bash shell) --&gt; for observations
+</pre></div>
+</div>
+<p>and in both cases, disable <code class="docutils literal"><span class="pre">Automatic</span> <span class="pre">Login</span></code> to be prompted for a password when the computer starts.</p>
 </div>
 </div>
 </div>
