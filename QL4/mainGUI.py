@@ -1656,6 +1656,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     ncoadds = hdu[0].header['NCOADDS']
                     if 'OBS_TOOL' in hdu[0].header:
                         is_ot = True
+                        try:
+                            pat_expn = hdu[0].header['PAT_EXPN']
+                            pat_nexp = hdu[0].header['PAT_NEXP']
+                            ob_name = hdu[0].header['OB_NAME']
+                        except KeyError, ex:
+                            pat_expn = -1
+                            pat_nexp = -1
+                            ob_name = 'unknown'
                     else:
                         is_ot = False
                         
@@ -1675,6 +1683,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.logConsole.info("EXPTIME : %f " % texp)
             self.logConsole.info("TYPE : %s " % type)
             self.logConsole.info("OT keywords : %s " % is_ot)
+            self.logConsole.info("  OB_NAME: %s " % ob_name)
+            self.logConsole.info("  PAT_EXPN: %s " % pat_expn)
+            self.logConsole.info("  PAT_NEXP: %s " % pat_nexp)
             self.logConsole.info("---------------")
                                  
             
@@ -3870,7 +3881,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if resp == QMessageBox.Cancel:
                 return
                     
-        # CASE 2: Stack frames selected by user in the list_view
+        # CASE 2: Use frames selected by user in the list_view
         elif len(self.m_popup_l_sel) > 1 and len(self.m_popup_l_sel) < 5:
             QMessageBox.information(self,"Info","Error, not enough frames selected to reduce (>4) !")
             return    
@@ -4362,10 +4373,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
             else:
                 self.config_opts['astrometry']['engine'] = "AstrometryNet"
             #
-            if self.comboBox_pre_skyWindow.currentText()=="2-frames": nhw = 1
-            elif self.comboBox_pre_skyWindow.currentText()=="4-frames": nhw = 2
-            elif self.comboBox_pre_skyWindow.currentText()=="6-frames": nhw = 3
-            elif self.comboBox_pre_skyWindow.currentText()=="8-frames": nhw = 4
+            if self.comboBox_pre_skyWindow.currentText() == "2-frames": nhw = 1
+            elif self.comboBox_pre_skyWindow.currentText() == "4-frames": nhw = 2
+            elif self.comboBox_pre_skyWindow.currentText() == "6-frames": nhw = 3
+            elif self.comboBox_pre_skyWindow.currentText() == "8-frames": nhw = 4
             else: nhw = 2
             self.config_opts['skysub']['hwidth'] = nhw
             

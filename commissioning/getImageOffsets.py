@@ -38,13 +38,14 @@ import matplotlib.patches as patches
 import datahandler
 
 
-def draw_offsets(offsets, pix_scale = 0.23, scale_factor=1.0):
+def draw_offsets(offsets, pix_scale = 0.45, scale_factor=1.0):
     
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111, aspect='equal')
     max_x = numpy.abs(offsets[: , 0]).max()
     max_y = numpy.abs(offsets[: , 1]).max()
-    i = 0
+    detector_id = 1
+    # The width of the rectangle simulate the full detector with the gap (4096x4096 + 167) 
     r_width = (4096 + 167) / 1.0 * pix_scale * scale_factor
     plt.xlim(offsets[: , 0].min() - (4096 + 167) / 2.0 * pix_scale - 100, offsets[: , 0].max() + (4096 + 167) / 2.0 * pix_scale + 100)
     plt.ylim(offsets[: , 1].min() - (4096 + 167) / 2.0 * pix_scale - 100, offsets[: , 1].max() + (4096 + 167) / 2.0 * pix_scale + 100)
@@ -53,6 +54,35 @@ def draw_offsets(offsets, pix_scale = 0.23, scale_factor=1.0):
     plt.title("Ditther offsets (magnification = %02.1f, pix_scale = %02.2f)" % (scale_factor, pix_scale))
     plt.grid()
     
+    # To align offsets with sky-orientation
+    offsets = offsets * (-1)
+    print "offsets =", offsets
+    offsets_q1 = [1024 + 84, -(1024 + 84)]
+    offsets_q2 = [1024 + 84, 1024 + 84]
+    offsets_q3 = [-(1024 + 84), 1024 + 84]
+    offsets_q4 = [-(1024 + 84), -(1024 + 84)]
+    
+    q_offsets = [offsets_q1, offsets_q2, offsets_q3, offsets_q4]
+    q_offsets = numpy.asarray(q_offsets) * pix_scale * scale_factor
+    
+    q_width = 2048 * pix_scale * scale_factor
+    
+    for o in q_offsets:
+        # Draw offsets for quadrant/detector-i
+        for x,y in (offsets + o):
+            print "X=%s , Y=%s" % (x, y)
+            ax2.add_patch(
+                patches.Rectangle(
+                    (x - q_width / 2.0, y - q_width / 2.0),
+                    q_width,
+                    q_width,
+                    fill=True, alpha=0.3  # remove background
+                )
+            )
+            ax2.annotate('%s'%detector_id, xy=(x,y), xytext=(x,y), size=8)
+        detector_id+=1
+        
+    """
     for x,y in offsets:
         print "X=%s , Y=%s" % (x, y)
         ax2.add_patch(
@@ -65,7 +95,7 @@ def draw_offsets(offsets, pix_scale = 0.23, scale_factor=1.0):
         )
         ax2.annotate('%s'%i, xy=(x,y), xytext=(x,y), size=8)
         i+=1
-        
+    """    
     plt.show(block=True)
     fig2.savefig('offsets.png', dpi=360, bbox_inches='tight')
 
@@ -200,7 +230,7 @@ if __name__ == "__main__":
                   help="Output file to write the offset matrix")
     
     parser.add_option("-p", "--pix_scale", type=float,
-                  action="store", dest="pix_scale", default=0.23,
+                  action="store", dest="pix_scale", default=0.45,
                   help="Pixel scale")
     
     parser.add_option("-d", "--draw_scale", type=float,

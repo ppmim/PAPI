@@ -1225,6 +1225,7 @@ export GEIRSLSTABORT CA_FFLTEST AUPLAY GEIRS_DIR FLAT_COMMAND TECS_SCRIPT PANIC_
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
 export LD_LIBRARY_PATH
 export QT_GRAPHICSSYSTEM=native
+export KDE_FORK_SLAVES=1
 
 ### OT environment ###
 export _JAVA_OPTIONS='-Dhttp.proxyHost=derfel.caha.es -Dhttp.proxyPort=3128'

@@ -8383,7 +8383,8 @@ Parace que puede ser que la astrometría no esté bien resuelta en los bordes de
 detectores individuales (ver mail 27-Jun)
 
 - bug & improvement: BD informa que en el gráfico de pointing_offsets los offsets
-están cambiados de signo; además sugiere dibujar el gap entre los detectores.
+están cambiados de signo; además sugiere dibujar el gap entre los detectores.==> cambiado signo, ahora OK !
+
 
 - ver como hacer de forma opcional la comprobacion con check_open() en clfits.py para que
 se acelere la lectura de FITS, sobre todo cuando se carga un directorio completo de una noche
