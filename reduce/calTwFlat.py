@@ -353,7 +353,9 @@ class MasterTwilightFlat(object):
                 raise Exception("Not enough number of master darks found")
             
             t_darks = {}
-            for idark in self.__master_dark_list:
+            # Check if darks are cubes, then collapse them.
+            darks_frames = misc.collapse.collapse(self.__master_dark_list, out_dir=self.__temp_dir)
+            for idark in darks_frames:
                 try:
                     cdark = datahandler.ClFits(idark)
                     if not cdark.isDark() and not cdark.isMasterDark():
@@ -389,7 +391,7 @@ class MasterTwilightFlat(object):
             my_frame = self.__temp_dir + "/" + os.path.basename(iframe.replace(".fits", "_D.fits"))
             misc.fileUtils.removefiles(my_frame)
             
-            log.debug("Look for proper master dark (master dark model or simple master dark)")
+            log.debug("Looking for proper master dark (master dark model or simple master dark)")
             # Build master dark with proper (scaled) EXPTIME and subtract 
             # (I don't know how good is this method of scaling !!!)
             f = fits.open(iframe, ignore_missing_end=True)
@@ -402,7 +404,7 @@ class MasterTwilightFlat(object):
                         log.info("Scaling MASTER_DARK_MODEL")
                         scaled_dark = mdark[i].data[1] * f[0].header['EXPTIME'] + mdark[i].data[0]
                     else:
-                        msg = "Using proper master DARK for FLAT with ITIME=%f, NCOADDS=%d"%(i_flat, nc_flat)
+                        msg = "Looking for master DARK for FLAT with ITIME=%f, NCOADDS=%d"%(i_flat, nc_flat)
                         log.info(msg)
                         # Get filename of the master dark to use
                         try:
