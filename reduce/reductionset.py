@@ -936,7 +936,7 @@ class ReductionSet(object):
                 log.info("Now, trying to find a (external) MASTER_TW_FLAT for filter %s" %filter)
                 master_flat = self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
         
-        self.ext_db.ListDataSet()
+        if self.ext_db: self.ext_db.ListDataSet()
         
         # BPM
         master_bpm = self.db.GetFilesT('MASTER_BPM')
