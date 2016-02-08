@@ -58,6 +58,7 @@ import numpy
 # PAPI modules
 import misc.fileUtils
 import misc.utils as utils
+import misc.robust as robust
 from misc.version import __version__
 
 import datahandler
@@ -287,26 +288,26 @@ class MasterDark(object):
             medians = []
             for i_frame in good_frames:
                 pf = fits.open(i_frame)
-                if len(pf)==1:
+                if len(pf) == 1:
                     #print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
-                    medians.append(numpy.median(pf[0].data[512:1536,512:1536]))
+                    medians.append(robust.r_nanmedian(pf[0].data[512 : 1536, 512 : 1536]))
                 else:
                     print "MEF files now is supported !"
                     for i_ext in range(1, len(pf)):
-                        medians.append(numpy.median(pf[i_ext].data[512:1536,512:1536]))
+                        medians.append(robust.r_nanmedian(pf[i_ext].data[512 : 1536, 512 : 1536]))
                 
                 # Get some stats from master dark (mean/median/rms)
-                print "I_FRAME=",i_frame
+                print "I_FRAME=", i_frame
                 values = (iraf.mscstat(images=i_frame,
                                 fields="image,mean,mode,midpt,stddev,min,max",
                                 format='yes',Stdout=1))
                 for line in values:
                     print line
             print "-----------------------------------"
-            print "MEDIANS=",medians    
-            print "QC DARK MEAN =",numpy.mean(medians)
-            print "QC DARK MED =",numpy.median(medians)
-            print "QC DARK STDEV =",numpy.std(medians)
+            print "MEDIANS=", medians    
+            print "QC DARK MEAN =", numpy.mean(medians)
+            print "QC DARK MED =", numpy.median(medians)
+            print "QC DARK STDEV =", numpy.std(medians)
             print "QC DARK MAD =", numpy.median(numpy.abs(medians - numpy.median(medians)))
             
             #print "QC RONi",

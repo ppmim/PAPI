@@ -3469,9 +3469,9 @@ class ReductionSet(object):
             fix_type = 1
         else:
             if self.config_dict['bpm']['mode'] == 'fix':
-                fix_type = 1
+                fix_type = 1 # replace with bckg_level in skyFilter
             else:
-                fix_type = 0
+                fix_type = 0 # bpm_mode = none or grab; set to NaNs in skyFilter
                 
         self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist1.list",
                                            gainmap, 'nomask', 

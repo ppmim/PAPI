@@ -231,18 +231,18 @@ class SuperSkyFlat(object):
                 naxis2 = f[1].header['NAXIS2']
                 offset1 = int(naxis1 * 0.1)
                 offset2 = int(naxis2 * 0.1)
-                median = numpy.median(f[ext_name].data[offset1:naxis1 - offset1,
-                                                    offset2:naxis2 - offset2])
-                mean = numpy.mean(f[ext_name].data[offset1:naxis1 - offset1, 
-                                                  offset2:naxis2 - offset2])
+                median = robust.r_nanmedian(f[ext_name].data[offset1 : naxis1 - offset1,
+                                                    offset2 : naxis2 - offset2])
+                mean = robust.r_nanmean(f[ext_name].data[offset1 : naxis1 - offset1, 
+                                                  offset2 : naxis2 - offset2])
             
                 mode = 3 * median - 2 * mean
-                rob_mean = robust.mean(f[ext_name].data[offset1:naxis1-offset1, 
-                                                  offset2:naxis2-offset2])
-                log.debug("MEDIAN = %f"%median)
-                log.debug("MEAN = %f"%mean)
-                log.debug("ROB_MEAN = %f"%rob_mean)
-                log.debug("MODE (estimated) = %f"%mode)
+                rob_mean = robust.r_nanmean(f[ext_name].data[offset1 : naxis1 - offset1, 
+                                                  offset2 : naxis2 - offset2])
+                log.debug("MEDIAN = %f" % median)
+                log.debug("MEAN = %f" % mean)
+                log.debug("ROB_MEAN = %f" % rob_mean)
+                log.debug("MODE (estimated) = %f" % mode)
                 
                 # Select the robust estimator for normalization 
                 if self.norm_value == "median":
@@ -254,9 +254,9 @@ class SuperSkyFlat(object):
                 # Do the normalization wrt chip 1
                 for i_ext in xrange(1, len(f)):
                     f[i_ext].data = robust.r_divisionN(f[i_ext].data, norm_value)
-                    norm_mean = robust.mean(f[i_ext].data)
+                    norm_mean = robust.r_nanmean(f[i_ext].data)
                     if norm_mean < 0.5 or norm_mean > 1.5:
-                        log.warning("Suspicious normalized SuperFlat obtained. Mean value =%f"%norm_mean)
+                        log.warning("Suspicious normalized SuperFlat obtained. Mean value =%f" % norm_mean)
                 
             # PANIC multi-chip full frame
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower() == 'panic'
@@ -266,11 +266,11 @@ class SuperSkyFlat(object):
                 # Note that in Numpy, arrays are indexed as rows X columns (y, x),
                 # contrary to FITS standard (NAXIS1=columns, NAXIS2=rows).
                 #
-                median = numpy.median(f[0].data[200 : 2048-200, 2048+200 : 4096-200])
+                median = robust.r_nanmedian(f[0].data[200 : 2048-200, 2048+200 : 4096-200])
                 #
-                mean = numpy.mean(f[0].data[200 : 2048-200, 2048+200 : 4096-200])
+                mean = robust.r_nanmean(f[0].data[200 : 2048-200, 2048+200 : 4096-200])
                 #
-                rob_mean = robust.mean(f[0].data[200 : 2048-200, 2048+200 : 4096-200])
+                rob_mean = robust.r_nanmean(f[0].data[200 : 2048-200, 2048+200 : 4096-200])
 
                 mode = 3 * median - 2 * mean
                 log.debug("MEDIAN = %s" % median)
@@ -286,7 +286,7 @@ class SuperSkyFlat(object):
                 
                 #f[0].data = f[0].data / rob_mean
                 f[0].data = robust.r_division(f[0].data, norm_value)
-                norm_mean = robust.mean(f[0].data)
+                norm_mean = robust.r_nanmean(f[0].data)
                 if norm_mean < 0.5 or norm_mean > 1.5:
                     log.warning("Suspicious normalized SuperFlat obtained. Mean value =%f" % norm_mean)
                     
@@ -296,14 +296,14 @@ class SuperSkyFlat(object):
                 naxis2 = f[0].header['NAXIS2']
                 offset1 = int(naxis1 * 0.1)
                 offset2 = int(naxis2 * 0.1)
-                median = numpy.median(f[0].data[offset1 : naxis1 - offset1,
+                median = robust.r_nanmedian(f[0].data[offset1 : naxis1 - offset1,
                                                     offset2 : naxis2 - offset2])
-                mean = numpy.mean(f[0].data[offset1 : naxis1 - offset1,
+                mean = robust.r_nanmean(f[0].data[offset1 : naxis1 - offset1,
                                                   offset2 : naxis2 - offset2])
-                rob_mean = robust.mean(f[0].data[offset1:naxis1-offset1,
-                                                  offset2:naxis2-offset2])
+                rob_mean = robust.r_nanmean(f[0].data[offset1 : naxis1 - offset1,
+                                                  offset2 : naxis2 - offset2])
                 mode = 3 * median - 2 * mean
-                log.debug("MEDIAN = %s" % median)
+                log.debug("MEDIAN = %f" % median)
                 log.debug("MEAN = %f" % mean)
                 log.debug("MEAN_ROB = %f" % rob_mean)
                 log.debug("MODE (estimated) = %f" % mode)
@@ -316,7 +316,7 @@ class SuperSkyFlat(object):
                 msg = "Normalization of master (PANIC single detector frame or O2k) flat frame by value = %d)" % norm_value
                 
                 f[0].data = robust.r_division(f[0].data, norm_value)
-                norm_mean = robust.mean(f[0].data)
+                norm_mean = robust.r_nanmean(f[0].data)
                 log.debug("NORM_MEAN = %f" % norm_mean)
                 if norm_mean < 0.5 or norm_mean > 1.5:
                     log.warning("Suspicious normalized SuperFlat obtained. Mean value = %f" % norm_mean)

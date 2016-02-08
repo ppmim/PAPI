@@ -234,8 +234,8 @@ class ApplyDarkFlat(object):
                 # dat[numpy.isnan(dat)]= 0.0 #
 
                 # Normalization is done with a robust estimator --> np.median()
-                median = numpy.median(dat)
-                mean = numpy.mean(dat)
+                median = robust.r_nanmedian(dat)
+                mean = robust.r_nanmean(dat)
                 mode = 3 * median - 2 * mean
                 
                 log.info("Flat stats: MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
@@ -387,7 +387,7 @@ class ApplyDarkFlat(object):
                                 else:
                                     log.debug("DarkModel found: Scaling dark with dark model...")
                                     dark_data = dark[0].data[1] * exp_time + dark[0].data[0]
-                                    log.info("AVG(scaled_dark)=%s"%numpy.mean(dark_data))
+                                    log.info("AVG(scaled_dark)=%s"% robust.r_nanmean(dark_data))
                             else:
                                 dark_data = dark[0].data
                         else: dark_data = 0

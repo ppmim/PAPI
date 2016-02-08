@@ -1,0 +1,56 @@
+Actualmente la configuración en el /etc/fstab es la siguiente:
+panic@panic22:~> df -h
+df: ‘/run/user/1005/gvfs’: Permission denied
+df: ‘/var/run/user/1005/gvfs’: Permission denied
+Filesystem                     Size  Used Avail Use% Mounted on
+/dev/sda2                      456G   53G  403G  12% /
+devtmpfs                        32G  100K   32G   1% /dev
+tmpfs                           32G  156K   32G   1% /dev/shm
+tmpfs                           32G  273M   32G   1% /run
+tmpfs                           32G     0   32G   0% /sys/fs/cgroup
+tmpfs                           32G  273M   32G   1% /var/lock
+tmpfs                           32G  273M   32G   1% /var/run
+/dev/sdc1                      5,5T  500G  4,7T  10% /data2
+/dev/sdb1                      1,8T  734G  1,1T  41% /data1
+archivo2:/ARCHIVE/PANICCALIBS   33T  5,0T   28T  16% /data1/ARCHIVE
+meteoserv.caha.es:/meteo        40G  9,8G   28G  27% /meteo
+
+panic@panic22:~> df -i /dev/sdb1
+Filesystem        Inodes IUsed     IFree IUse% Mounted on
+/dev/sdb1      122060800  6033 122054767    1% /data1
+
+
+panic@panic22:~> vi /etc/fstab
+
+/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part1    swap    swap    defaults 0 0 
+/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part2    /       ext3    acl,user_xattr 1 1 
+/dev/disk/by-id/scsi-36848f690ece3d000191a499923dffbd6-part1    /data1  ext3    defaults 1 2 
+/dev/disk/by-id/scsi-36848f690ece3d000191a4af1386968b1-part1    /data2  ext4    acl,user_xattr 1 2 
+archivo2:/ARCHIVE/PANICCALIBS   /data1/ARCHIVE  nfs     defaults,mountvers=3,nfsvers=3 0 0 
+meteoserv.caha.es:/meteo        /meteo  nfs     defaults 0 0
+
+panic@panic22:~> more  /boot/grub2/device.map
+(hd1)   /dev/disk/by-id/scsi-36848f690ece3d000191a499923dffbd6
+(hd2)   /dev/disk/by-id/scsi-36848f690ece3d000191a4af1386968b1
+(hd0)   /dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41
+
+panic@panic22:~>grep scsi /boot/grub2/grub.cfg
+linux   /boot/vmlinuz-3.11.6-4-desktop root=UUID=4f7d19c4-3a57-4441-b513-a68cf03ec9ae   resume=/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part1 splash=verbose quiet showopts
+                linux   /boot/vmlinuz-3.11.6-4-desktop root=UUID=4f7d19c4-3a57-4441-b513-a68cf03ec9ae   resume=/dev/disk/by-id/scsi-36848f690ece3d000191a48b516504a41-part1 splash=verbose quiet showopts
+
+> sudo /usr/sbin/blkid /dev/sda1
+
+Los pasos serían los siguientes: 
+
+1- Copiar (rsync) todos los datos a la partición /data2 y/o /data1/ARCHIVE;
+2- Reiniciar la máquina y entrar en la BIOS para eliminar el volumen correspondiente;
+3- Apagar la máquina y desinstalar físicamente los discos;
+4- Instalar los dos nuevos discos en las mismas bahias;
+5- Arrancar la máquina y configurar en la BIOS de la PERC el nuevo volumen de discos en RAID1;
+6- Re-iniciar la máquina y ver como lo ve el SO y formatearlo con ext3
+7- Modificar el /etc/fstab, bien con el id/uuid/device_name;
+quizás también modificar el /boot/grub2/device.map
+8- Formatear con ext3 el nuevo volumen/particion
+   mkfs -t ext3 /dev/sdb1
+   mke2fs -c /dev/sdb1  (check for bad blocks)
+   

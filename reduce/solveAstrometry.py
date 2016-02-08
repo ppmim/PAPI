@@ -157,7 +157,7 @@ def solveField(filename, out_dir, tmp_dir="/tmp", pix_scale=None, extension=0):
         n_nan = numpy.count_nonzero(numpy.isnan(hdu[extension].data))
         logging.info("Number of NANs found: %d" % n_nan)
         if n_nan > MAX_N_NAN:
-            median = robust.mean(hdu[extension].data)
+            median = robust.r_nanmean(hdu[extension].data)
             logging.info("Replacing NANs with median value : %f" % median)
             p_nan = numpy.isnan(hdu[extension].data)
             hdu[extension].data[p_nan] = median

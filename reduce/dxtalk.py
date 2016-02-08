@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Copyright (c) 2011-2012 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2011-2016 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -27,7 +27,7 @@
 # dxtalk.py
 #
 # Created    : 23/02/2012    jmiguel@iaa.es -
-# Last update: 
+# Last update: 08/02/2016    Use of nanmedian to avoid NaNs (bug in numpy > 1.8)
 # TODO
 #   - object rejection in median cube computation
 #   - smooth the cube ??
@@ -64,6 +64,7 @@ import sys
 
 import astropy.io.fits as fits
 import numpy
+import misc.robust as robust
 
 # Logging
 from misc.paLog import log
@@ -151,7 +152,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         log.error("Error opening FITS file : %s"%in_image)
         raise e
     
-    background = numpy.median(data_in)
+    background = robust.r_nanmedian(data_in)
     #print "Image background estimation = ", background
     
     #### Q1 #### left-bottom, horizontal stripes 
@@ -169,14 +170,14 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
     
-    med_cube = numpy.median(cube, 0)
-    median[0] = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median[0] = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN[0] = ", median[0]
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j] - med_cube) + background # median[0]
+        data_out[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                 y_orig + 0 : y_orig + width_st] = (cube[j] - med_cube) + background # median[0]
         
     #### Q3 #### right-top, horizontal stripes 
     x_orig = 1024
@@ -189,14 +190,14 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
                            y_orig+0:y_orig+width_st]
 
-    med_cube = numpy.median(cube, 0)
-    median[2] = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median[2] = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN[2] = ", median[2]
         
-    for j in range(0,n_stripes):
+    for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j] - med_cube) + background #median[2]
+        data_out[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                 y_orig + 0 : y_orig + width_st] = (cube[j] - med_cube) + background #median[2]
         
     
     #### Q2 #### right-bottom, vertical stripes 
@@ -209,17 +210,17 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     cube = cube.reshape((n_stripes, height_st, width_st))
     
     for j in range (0,n_stripes):
-        cube [j] = data_in[x_orig:x_orig+height_st, 
-                           y_orig+j*width_st:y_orig+(j+1)*width_st]
+        cube [j] = data_in[x_orig : x_orig + height_st, 
+                           y_orig + j * width_st : y_orig + (j + 1) * width_st]
     
-    med_cube = numpy.median(cube, 0)
-    median[1] = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median[1] = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN[1] = ", median[1]
     
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig:x_orig+height_st, 
-                 y_orig+j*width_st:y_orig+(j+1)*width_st] = (cube[j] - med_cube) + background #median[1]
+        data_out[x_orig : x_orig + height_st, 
+                 y_orig + j * width_st : y_orig + (j + 1) * width_st] = (cube[j] - med_cube) + background #median[1]
 
     #### Q4 #### left-top, vertical stripes  
     n_stripes = 8
@@ -228,18 +229,18 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     x_orig = 1024
     y_orig = 0
     
-    for j in range (0,n_stripes):
-        cube [j] = data_in[x_orig:x_orig+height_st, 
-                           y_orig+j*width_st:y_orig+(j+1)*width_st]
+    for j in range (0, n_stripes):
+        cube [j] = data_in[x_orig : x_orig + height_st, 
+                           y_orig + j * width_st : y_orig + (j + 1) * width_st]
 
-    med_cube = numpy.median(cube, 0)
-    median[3] = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median[3] = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN[3] = ", median[3]
     
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig:x_orig+height_st, 
-                 y_orig+j*width_st:y_orig+(j+1)*width_st] = (cube[j] - med_cube) + background #median[3]
+        data_out[x_orig : x_orig + height_st, 
+                 y_orig + j * width_st : y_orig + (j + 1) * width_st] = (cube[j] - med_cube) + background #median[3]
 
 
     ##TODO: In order not normalize wrt quadrant Q1, we should divide by the 
@@ -361,7 +362,7 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
         log.error("Error openning FITS file : %s"%in_image)
         raise e
     
-    background = numpy.median(data_in)
+    background = robust.r_nanmedian(data_in)
     #print "Image background estimation = ", background
 
     #### Q1 #### left-bottom, horizontal stripes 
@@ -374,20 +375,20 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
     
     
     cube = numpy.zeros([n_stripes, height_st, width_st], dtype=numpy.float)
-    data_out = numpy.zeros([n_stripes*height_st*2, width_st*2], dtype=numpy.float32)
+    data_out = numpy.zeros([n_stripes * height_st * 2, width_st * 2], dtype=numpy.float32)
     
     for j in range (0, n_stripes):
-        cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                           y_orig+0:y_orig+width_st]
+        cube [j] = data_in[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                           y_orig + 0 : y_orig + width_st]
     
-    med_cube = numpy.median(cube, 0)
-    median = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN = ", median
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
+        data_out[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                 y_orig + 0 : y_orig + width_st] = (cube[j] - med_cube) + background #median
         
     #### Q3 #### right-top, horizontal stripes 
     n_stripes = 32 # = no. channels
@@ -397,17 +398,17 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
     y_orig = 2048
 
     for j in range (0, n_stripes):
-        cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                           y_orig+0:y_orig+width_st]
+        cube [j] = data_in[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                           y_orig + 0 : y_orig + width_st]
 
-    med_cube = numpy.median(cube, 0)
-    median = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN = ", median
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
+        data_out[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                 y_orig + 0 : y_orig + width_st] = (cube[j] - med_cube) + background #median
         
     
     #### Q2 #### right-bottom, horizontal stripes 
@@ -420,18 +421,18 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
     cube = cube.reshape((n_stripes, height_st, width_st))
     
     for j in range (0, n_stripes):
-        cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                           y_orig+0:y_orig+width_st]
+        cube [j] = data_in[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                           y_orig + 0 : y_orig + width_st]
 
-    med_cube = numpy.median(cube, 0)
-    median = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN = ", median
 
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
+        data_out[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                 y_orig + 0 : y_orig + width_st] = (cube[j] - med_cube) + background #median
 
     #### Q4 #### left-top, horizontal stripes 
     n_stripes = 32 # = no. channels
@@ -440,19 +441,19 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
     x_orig = 2048
     y_orig = 0
     
-    for j in range (0,n_stripes):
-        cube [j] = data_in[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                           y_orig+0:y_orig+width_st]
+    for j in range (0, n_stripes):
+        cube [j] = data_in[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                           y_orig + 0 : y_orig + width_st]
 
-    med_cube = numpy.median(cube, 0)
-    median = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median = robust.r_nanmedian(med_cube)
     #print "CUBE_MEDIAN = ", median
 
         
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig+j*height_st:x_orig+(j+1)*height_st, 
-                 y_orig+0:y_orig+width_st] = (cube[j]-med_cube) + background #median
+        data_out[x_orig + j * height_st : x_orig + (j + 1) * height_st, 
+                 y_orig + 0 : y_orig + width_st] = (cube[j] - med_cube) + background #median
 
     ### write FITS ###
     
@@ -532,7 +533,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         log.error("Error openning FITS file : %s"%in_image)
         raise e
     
-    background = numpy.median(data_in)
+    background = robust.r_nanmedian(data_in)
     print "Image background estimation = ", background
 
     # All detectors have 32 vertical_stripes of 2048x64 (rows x columns) each one
@@ -544,19 +545,19 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     y_orig = 0
     
     cube = numpy.zeros([n_stripes, height_st, width_st], dtype=numpy.float32)
-    data_out = numpy.zeros([height_st, n_stripes*width_st], dtype=numpy.float32)
+    data_out = numpy.zeros([height_st, n_stripes * width_st], dtype=numpy.float32)
     
     for j in range (0,n_stripes):
-        cube [j] = data_in[x_orig:x_orig+height_st, 
-                           y_orig+j*width_st:y_orig+(j+1)*width_st]
+        cube [j] = data_in[x_orig : x_orig + height_st, 
+                           y_orig + j * width_st : y_orig + (j + 1) * width_st]
 
-    med_cube = numpy.median(cube, 0)
-    median = numpy.median(med_cube)
+    med_cube = robust.r_nanmedian(cube, 0)
+    median = robust.r_nanmedian(med_cube)
     
     for j in range(0, n_stripes):
         # subtract cube_median and add constant (skybkg) to preserve original count level
-        data_out[x_orig:x_orig+height_st, 
-                 y_orig+j*width_st:y_orig+(j+1)*width_st] = (cube[j] - med_cube) + background #median
+        data_out[x_orig : x_orig + height_st, 
+                 y_orig + j * width_st : y_orig + (j + 1) * width_st] = (cube[j] - med_cube) + background #median
         
 
     ### write FITS ###

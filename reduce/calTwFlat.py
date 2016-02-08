@@ -260,7 +260,7 @@ class MasterTwilightFlat(object):
                 log.debug("Found a MEF file")
                 try:
                     for i in range(1,f.next + 1):
-                        mean+=robust.mean(myfits[i].data)
+                        mean += robust.r_nanmean(myfits[i].data)
                     mean = float(mean / f.next)
                 except Exception, e:
                     log.error("Error computing MEAN of image")
@@ -273,7 +273,7 @@ class MasterTwilightFlat(object):
                 log.debug("MEAN value of TwFlat (MEF) = %f", mean)
             else:
                 myfits = fits.open(iframe, ignore_missing_end=True)
-                mean = robust.mean(myfits[0].data)
+                mean = robust.r_nanmean(myfits[0].data)
                 # take into account cubes (they will be summed aritmetically)
                 if len(myfits[0].data.shape) > 2:
                     mean = mean * myfits[0].data.shape[0]
@@ -440,7 +440,7 @@ class MasterTwilightFlat(object):
                     mdark = fits.open(n_dark)
                     scaled_dark = mdark[0].data
                     
-                log.info("AVG(dark)=%s"%robust.mean(scaled_dark)) 
+                log.info("AVG(dark)=%s" % robust.r_nanmean(scaled_dark)) 
                 f[0].data = f[0].data - scaled_dark
                 log.info("Dark Subtraction done")
             
@@ -535,26 +535,26 @@ class MasterTwilightFlat(object):
                 offset1 = int(naxis1 * 0.1)
                 offset2 = int(naxis2 * 0.1)
                 
-                median = numpy.median(f[ext_name].data[offset2:naxis2-offset2,
-                                                    offset1:naxis1-offset1])
-                msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)"%(ext_name,median)
+                median = robust.r_nanmedian(f[ext_name].data[offset2 : naxis2 - offset2,
+                                                    offset1 : naxis1 - offset1])
+                msg = "Normalization of MEF master flat frame wrt chip %s. (MEDIAN=%d)" % (ext_name, median)
             elif ('INSTRUME' in f[0].header and f[0].header['INSTRUME'].lower() == 'panic'
                   and f[0].header['NAXIS1'] == 4096 and f[0].header['NAXIS2'] == 4096):
                 # It supposed to have a full frame of PANIC in one single 
                 # extension (GEIRS default). Normalize wrt detector SG1_1
                 # Note that in Numpy, arrays are indexed as rows X columns (y, x),
                 # contrary to FITS standard (NAXIS1=columns, NAXIS2=rows).
-                median = numpy.median(f[0].data[200 : 2048-200, 2048+200 : 4096-200 ])
-                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)"%median
+                median = robust.r_nanmedian(f[0].data[200 : 2048-200, 2048+200 : 4096-200 ])
+                msg = "Normalization of (full) PANIC master flat frame wrt chip 1. (MEDIAN=%d)" % median
             else:
                 # Not MEF, not PANIC full-frame, but could be a PANIC subwindow
                 naxis1 = f[0].header['NAXIS1']
                 naxis2 = f[0].header['NAXIS2']
                 offset1 = int(naxis1 * 0.1)
                 offset2 = int(naxis2 * 0.1)
-                median = numpy.median(f[0].data[offset2:naxis2 - offset2,
-                                                    offset1:naxis1 - offset1])
-                msg = "Normalization of master (O2k?) flat frame. (MEDIAN=%d)"%median 
+                median = robust.r_nanmedian(f[0].data[offset2 : naxis2 - offset2,
+                                                    offset1 : naxis1 - offset1])
+                msg = "Normalization of master (O2k?) flat frame. (MEDIAN=%d)" % median 
  
 
             f.close()
