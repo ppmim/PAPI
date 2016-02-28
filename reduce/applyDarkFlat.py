@@ -50,6 +50,7 @@ from scipy import interpolate, ndimage
 import misc.fileUtils
 import misc.statutils
 import misc.utils as utils
+import misc.robust as robust
 import datahandler
 
 # Logging

@@ -113,8 +113,8 @@ def combineFF(domeFF, skyFF, combinedFF=None):
     
     
     if not datahandler.isaFITS(domeFF) or not datahandler.isaFITS(skyFF):
-        log.error("Some input FF is not a R/W FITS file")
-        raise Exception("Some input FF is not a R/W FITS file")
+        log.error("Some input FF is not a FITS file")
+        raise Exception("Some input FF is not a FITS file")
         
     try:
         #smooth the domeFF
@@ -125,7 +125,10 @@ def combineFF(domeFF, skyFF, combinedFF=None):
                     output=domeFF.replace(".fits", "_smooth.fits"),
                     xwindow=20,
                     ywindow=20,
-                    outtype="median")
+                    outtype="median",
+                    fmedian='no',
+                    zloreject=0.2,
+                    zhireject=2.0)
 
         #Or using scipy ( a bit slower then iraf...)
         #from scipy import ndimage
@@ -140,22 +143,21 @@ def combineFF(domeFF, skyFF, combinedFF=None):
                     output=skyFF.replace(".fits", "_smooth.fits"),
                     xwindow=20,
                     ywindow=20,
-                    outtype="median"
+                    outtype="median",
+                    fmedian='no',
+                    zloreject=0.2,
+                    zhireject=2.0
                     )
                        
         # Divide domeFF by smoothed version
         misc.fileUtils.removefiles(domeFF.replace(".fits", "_div_smooth.fits"))
-        print "domFF=",domeFF
-        print "domeFF_s=",domeFF.replace(".fits", "_smooth.fits")
         iraf.mscarith(operand1=domeFF,
                     operand2=domeFF.replace(".fits", "_smooth.fits"),
                     op='/',
                     pixtype='real',
                     result=domeFF.replace(".fits", "_div_smooth.fits"),
                     )
-        
-        print "combined=",combinedFF
-        
+
         # Combine skyFF with domeFF
         misc.fileUtils.removefiles(combinedFF)
         iraf.mscarith(operand1=skyFF.replace(".fits", "_smooth.fits"),
@@ -169,9 +171,9 @@ def combineFF(domeFF, skyFF, combinedFF=None):
             value=__version__, comment="PANIC Pipeline version")
 
         # Remove all temporal
-        #misc.fileUtils.removefiles(domeFF.replace(".fits", "_smooth.fits"))
-        #misc.fileUtils.removefiles(skyFF.replace(".fits", "_smooth.fits"))
-        #misc.fileUtils.removefiles(domeFF.replace(".fits", "_div_smooth.fits"))
+        misc.fileUtils.removefiles(domeFF.replace(".fits", "_smooth.fits"))
+        misc.fileUtils.removefiles(skyFF.replace(".fits", "_smooth.fits"))
+        misc.fileUtils.removefiles(domeFF.replace(".fits", "_div_smooth.fits"))
         
     except Exception,e:
         raise e
