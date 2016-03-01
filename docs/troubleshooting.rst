@@ -28,8 +28,12 @@ of them have no proper headers (ie. they were not observed with OT).
   of 'ot'. It means PAPI will not use any OT header information, but RA, DEC, 
   DATE-OBS and FILTER.
 
-* Use the 'build_sequence' tool which will create a new sequence adding the
-  required header keywords.  
+* Use the 'Create Data Seq' option which will create/fix a new sequence adding the
+  required header keywords:
+  
+.. image:: _static/PQL_GUI_create_dataseq.png
+   :align: center
+   :scale: 80 %
 
 PAPI can not run the astrometric calibration
 ============================================

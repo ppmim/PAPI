@@ -125,7 +125,10 @@ def combineFF(domeFF, skyFF, combinedFF=None):
                     output=domeFF.replace(".fits", "_smooth.fits"),
                     xwindow=20,
                     ywindow=20,
-                    outtype="median")
+                    outtype="median",
+                    fmedian='no',
+                    zloreject=0.2,
+                    zhireject=2.0)
 
         #Or using scipy ( a bit slower then iraf...)
         #from scipy import ndimage
@@ -140,12 +143,15 @@ def combineFF(domeFF, skyFF, combinedFF=None):
                     output=skyFF.replace(".fits", "_smooth.fits"),
                     xwindow=20,
                     ywindow=20,
-                    outtype="median"
+                    outtype="median",
+                    fmedian='no',
+                    zloreject=0.2,
+                    zhireject=2.0
                     )
                        
         # Divide domeFF by smoothed version
         misc.fileUtils.removefiles(domeFF.replace(".fits", "_div_smooth.fits"))
-        iraf.imarith(operand1=domeFF,
+        iraf.mscarith(operand1=domeFF,
                     operand2=domeFF.replace(".fits", "_smooth.fits"),
                     op='/',
                     pixtype='real',
@@ -154,7 +160,7 @@ def combineFF(domeFF, skyFF, combinedFF=None):
 
         # Combine skyFF with domeFF
         misc.fileUtils.removefiles(combinedFF)
-        iraf.imarith(operand1=skyFF.replace(".fits", "_smooth.fits"),
+        iraf.mscarith(operand1=skyFF.replace(".fits", "_smooth.fits"),
                     operand2=domeFF.replace(".fits", "_div_smooth.fits"),
                     op='*',
                     pixtype='real',

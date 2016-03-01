@@ -608,7 +608,7 @@ def fixPix(im, mask, iraf=False):
 
     
     #
-    # Next approach is too slow !!!
+    # Next approach is too slow !!! Please do not use it !!
     #
 
     # interp2d = interpolate.interp2d
@@ -639,8 +639,8 @@ def fixPix(im, mask, iraf=False):
         # extract the sub-image
         x0, x1 = x[i].min(), x[i].max() + 1
         y0, y1 = y[i].min(), y[i].max() + 1
-        subim = im[y0:y1, x0:x1]
-        submask = mask[y0:y1, x0:x1]
+        subim = im[y0 : y1, x0 : x1]
+        submask = mask[y0 : y1, x0 : x1]
         subgood = (submask == False)
 
         cleaned[i * mask] = subim[subgood].mean()

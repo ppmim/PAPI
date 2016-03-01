@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PAPI'
-copyright = u'2008-2015, J.M.Ibanez (IAA-CSIC)'
+copyright = u'2008-2015, J.M.Ibáñez-Mengual (IAA-CSIC)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -212,7 +212,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'PAPI.tex', u'PAPI Documentation',
-   u'J.M.Ibanez (IAA-CSIC)', 'manual'),
+   u'J.M.Ibáñez-Mengual (IAA-CSIC)', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

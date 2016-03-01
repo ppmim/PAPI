@@ -27,7 +27,7 @@ from __future__ import division
 import math
 import numpy
 
-__version__ = '0.3'
+__version__ = '0.4'
 __revision__ = '$Rev$'
 __all__ = ['biweightMean', 'mean', 'std', 'checkfit', 'linefit', 'polyfit', 
            '__version__', '__revision__', '__all__']
@@ -103,6 +103,84 @@ def biweightMean(inputData):
     return y0
 
 
+def r_nanmean(inputData, axis=None):
+    """
+    Compute the arithmetic mean of a data set ignoring the NaNs values
+    and checking what numpy and scipy versions are installed.
+    
+    Note: Because numpy.nanmean() was implemented in v1.8.0,
+    and scipy.nanmean() is deprecated in scipy 0.15.0 in favour of 
+    numpy.nanmean(), we check the version and then decide the function
+    to use.
+
+    Note2: PAPI@panic22.caha.es has numpy 1.7.x and scipy 0.12.x
+ 
+ 
+    Parameters:
+    -----------
+    inputDat : array_like
+        Input array or object that can be converted to an array.
+    axis : int, optional
+        Axis along which the medians are computed. The default (axis=None) is 
+        to compute the median along a flattened version of the array.
+        axis: axis=None is to compute the median along a flattened version of 
+        the array.
+        
+        
+    """ 
+
+    try:
+        from numpy import nanmean as nanmean
+        # fastest option
+        return nanmean(inputData, axis=axis)
+    except ImportError:
+        try:
+            from scipy.stats import nanmean as nanmean
+            return nanmean(inputData, axis=axis)    
+        except ImportError:
+            # no built-it function, then compute mean masking NaNs
+            # slower option: numpy.ma.masked_invalid(inputData).median()
+            return numpy.mean(inputData[~numpy.isnan(inputData)], axis=axis)
+          
+def r_nanmedian(inputData, axis=None):
+    """
+    Compute the arithmetic median of a data set ignoring the NaNs values
+    and checking what numpy and scipy versions are installed.
+    
+    Note: Because numpy.nanmedian() was implemented in v1.9.0,
+    and scipy.nanmedian() is deprecated in scipy 0.15.0 in favour of 
+    numpy.nanmedian(), we check the version and then decide the function
+    to use.
+
+    Note2: PAPI@panic22.caha.es has numpy 1.7.x and scipy 0.12.x
+ 
+    Parameters:
+    -----------
+    inputDat : array_like
+        Input array or object that can be converted to an array.
+    axis : int, optional
+        Axis along which the medians are computed. The default (axis=None) is 
+        to compute the median along a flattened version of the array.
+        axis: axis=None is to compute the median along a flattened version of 
+        the array.
+    
+ 
+    """     
+    
+    try:
+        from numpy import nanmedian as nanmedian
+        # fastest option
+        return nanmedian(inputData, axis=axis)
+    except ImportError:
+        try:
+            from scipy.stats import nanmedian as nanmedian
+            return nanmedian(inputData, axis=axis)    
+        except ImportError:
+            # no built-it function, then compute median masking NaNs
+            # slower option: numpy.ma.masked_invalid(inputData).median()
+            return numpy.median(inputData[~numpy.isnan(inputData)], axis=axis)
+
+
 def mean(inputData, Cut=3.0):
     """
     Robust estimator of the mean of a data set.  Based on the 
@@ -110,22 +188,26 @@ def mean(inputData, Cut=3.0):
 
     .. seealso::
         :func:`lsl.misc.mathutil.robustmean`
+        
+    2016-Feb-4: modified for use of r_nanmean
+    
     """
 
     data = inputData.ravel()
     if type(data).__name__ == "MaskedArray":
         data = data.compressed()
 
-    data0 = numpy.median(data)
-    maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
+    data0 = r_nanmedian(data)
+    
+    maxAbsDev = r_nanmedian(numpy.abs(data-data0)) / 0.6745
     if maxAbsDev < __epsilon:
-        maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
+        maxAbsDev = r_nanmean(numpy.abs(data-data0)) / 0.8000
 
     cutOff = Cut*maxAbsDev
     good = numpy.where( numpy.abs(data-data0) <= cutOff )
     good = good[0]
-    dataMean = data[good].mean()
-    dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
+    dataMean = r_nanmean(data[good])
+    dataSigma = math.sqrt( ((data[good] - dataMean)**2.0).sum() / len(good) )
 
     if Cut > 1.0:
         sigmaCut = Cut
@@ -137,9 +219,9 @@ def mean(inputData, Cut=3.0):
     cutOff = Cut*dataSigma
     good = numpy.where(  numpy.abs(data-data0) <= cutOff )
     good = good[0]
-    dataMean = data[good].mean()
+    dataMean = r_nanmean(data[good])
     if len(good) > 3:
-        dataSigma = math.sqrt( ((data[good]-dataMean)**2.0).sum() / len(good) )
+        dataSigma = math.sqrt( ((data[good] - dataMean)**2.0).sum() / len(good) )
 
     if Cut > 1.0:
         sigmaCut = Cut
@@ -158,6 +240,9 @@ def std(inputData, Zero=False):
     Robust estimator of the standard deviation of a data set.  
     
     Based on the robust_sigma function from the AstroIDL User's Library.
+    
+    2016-Feb-4: modified for use of r_nanmean
+    
     """
 
     data = inputData.ravel()
@@ -167,15 +252,15 @@ def std(inputData, Zero=False):
     if Zero:
         data0 = 0.0
     else:
-        data0 = numpy.median(data)
-    maxAbsDev = numpy.median(numpy.abs(data-data0)) / 0.6745
+        data0 = r_nanmedian(data)
+    maxAbsDev = r_nanmedian(numpy.abs(data-data0)) / 0.6745
     if maxAbsDev < __epsilon:
-        maxAbsDev = (numpy.abs(data-data0)).mean() / 0.8000
+        maxAbsDev = r_nanmean(numpy.abs(data-data0)) / 0.8000
     if maxAbsDev < __epsilon:
         sigma = 0.0
         return sigma
 
-    u = (data-data0) / 6.0 / maxAbsDev
+    u = (data - data0) / 6.0 / maxAbsDev
     u2 = u**2.0
     good = numpy.where( u2 <= 1.0 )
     good = good[0]

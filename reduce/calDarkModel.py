@@ -187,12 +187,12 @@ class MasterDarkModel(object):
                     else:
                         log.debug("Found MEF file")
                         temp[counter, i_ext, :,:] = file[i_ext+1].data
-                _mean = numpy.mean(temp[counter])
-                _robust_mean = robust.mean(temp[counter].reshape(naxis1*naxis2*f_n_extensions))
-                _median = numpy.median(temp[counter])
-                _mode = 3*_median - 2*_mean
+                _mean = numpy.r_nanmean(temp[counter])
+                _robust_mean = robust.r_nanmean(temp[counter].reshape(naxis1 * naxis2 * f_n_extensions))
+                _median = robust.r_nanmedian(temp[counter])
+                _mode = 3 * _median - 2 * _mean
                 if self.show_stats:
-                    log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s ROBUST_MEAN=%s"%(f.expTime(), f.getItime(), _mean, _median, _robust_mean))
+                    log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s ROBUST_MEAN=%s" % (f.expTime(), f.getItime(), _mean, _median, _robust_mean))
                 times[counter] = float(f.expTime())
                 counter = counter+1
                 file.close()
@@ -202,14 +202,14 @@ class MasterDarkModel(object):
         # polyfit returns polynomial coefficients ordered from low to high.
         # It means, 0-coeff => bias, 1-coeff => dark_current 
         fit = numpy.polynomial.polynomial.polyfit(times, 
-                            temp.reshape(len(times), naxis1*naxis2*f_n_extensions), deg=1)
+                            temp.reshape(len(times), naxis1 * naxis2 * f_n_extensions), deg=1)
 
         # Get the median value of the dark current                 
-        median_dark_current = numpy.median(fit[1])
-        median_bias = numpy.median(fit[0])
+        median_dark_current = robust.r_nanmedian(fit[1])
+        median_bias = robust.r_nanmedian(fit[0])
 
-        log.info("MEDIAN_DARK_CURRENT = %s"%median_dark_current)
-        log.info("MEDIAN BIAS = %s"% median_bias)    
+        log.info("MEDIAN_DARK_CURRENT = %s" % median_dark_current)
+        log.info("MEDIAN BIAS = %s" % median_bias)    
         
         misc.fileUtils.removefiles( self.__output_filename )               
 

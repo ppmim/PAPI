@@ -1,0 +1,286 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>2. Operating System &mdash; PANIC Software System Installation 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="PANIC Software System Installation 1.0.0 documentation" href="index.html"/>
+        <link rel="next" title="3. GEIRS" href="geirs.html"/>
+        <link rel="prev" title="1. System" href="system.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> PANIC Software System Installation
+        
+
+        
+          
+          <img src="_static/logo_PANIC_s.png" class="logo" />
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="system.html">1. System</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="system.html#installation">1.1. Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system.html#raid-configuration">1.2. RAID configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">2. Operating System</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">2.1. Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#boot">2.1.1. Boot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#welcome">2.1.2. Welcome</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation-mode">2.1.3. Installation Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clock-and-time-zone">2.1.4. Clock and Time Zone</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desktop-selection">2.1.5. Desktop Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#partitioning">2.1.6. Partitioning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-new-users">2.1.7. Create New Users</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="geirs.html">3. GEIRS</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="geirs.html#installation">3.1. Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ot.html">4. Observation Tool (OT)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ot.html#installation">4.1. Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="papi.html">5. PAPI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="papi.html#installation">5.1. Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lemon.html">6. LEMON</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lemon.html#installation">6.1. Installation</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">PANIC Software System Installation</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>2. Operating System</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/os.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="operating-system">
+<span id="os"></span><h1>2. Operating System<a class="headerlink" href="#operating-system" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installation">
+<h2>2.1. Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Once you have configured the computer system, the next step is to install the operating system <a class="reference external" href="https://en.opensuse.org/Portal:13.1">openSUSE 13.1</a>.
+To do this, you only have to follow the instructions found <a class="reference external" href="https://en.opensuse.org/SDB:DVD_installation">here</a>.</p>
+<p>Basically, the steps are:</p>
+<div class="section" id="boot">
+<h3>2.1.1. Boot<a class="headerlink" href="#boot" title="Permalink to this headline">¶</a></h3>
+<p>Insert the openSUSE13.1 x64 DVD into the DVD drive and restart the computer. After the power-on self test (POST),
+the boot screen should appear. Use the keyboard up and down buttons to select Installation and press enter to confirm.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The power-on self test (POST) can last several minutes, mainly because the kernel must recognize the PowerEdge RAID Controller (PERC) H710 card.</p>
+</div>
+<a class="reference internal image-reference" href="_images/131-installer-1.png"><img alt="_images/131-installer-1.png" class="align-center" src="_images/131-installer-1.png" /></a>
+<p>The kernel will load and some debugging messages may appear. These can usually be ignored unless there is an issue
+starting the installation. In that event, these messages may make debugging easier.</p>
+<a class="reference internal image-reference" href="_images/131-installer-2.png"><img alt="_images/131-installer-2.png" class="align-center" src="_images/131-installer-2.png" /></a>
+</div>
+<div class="section" id="welcome">
+<h3>2.1.2. Welcome<a class="headerlink" href="#welcome" title="Permalink to this headline">¶</a></h3>
+<p>This page provides a choice of languages and keyboard layouts. The installer will choose a keyboard layout automatically after selecting a language.
+For PANIC we will select English (US) as Language and Spanish(ES) as Keyboard Layout.</p>
+<p>The license agreement is below the language options. Language translations are available below. Click Next to accept the license and continue.</p>
+<a class="reference internal image-reference" href="_images/131-installer-3.png"><img alt="_images/131-installer-3.png" class="align-center" src="_images/131-installer-3.png" /></a>
+</div>
+<div class="section" id="installation-mode">
+<h3>2.1.3. Installation Mode<a class="headerlink" href="#installation-mode" title="Permalink to this headline">¶</a></h3>
+<p>This guide only covers new installations. Leave the default options and click Next to continue.</p>
+</div>
+<div class="section" id="clock-and-time-zone">
+<h3>2.1.4. Clock and Time Zone<a class="headerlink" href="#clock-and-time-zone" title="Permalink to this headline">¶</a></h3>
+<p>Set the computer&#8217;s time zone to <strong>UTC</strong>, which can be selected from the drop down box below the map.</p>
+<p>Leave Hardware Clock Set to UTC enabled.</p>
+<p>If the Date and Time shown below the menu is incorrect, click Change to enter the correct date and UTC time manually.</p>
+<p>If the computer has an active internet connection, select Synchronize with NTP Server to obtain a
+date and time automatically from a time server. The default server is usually the best selection. Later we will set the CAHA NTP server (derfel.caha.es).
+If the Date and Time shown below the menu is incorrect, click Change to enter the correct date and time manually.</p>
+</div>
+<div class="section" id="desktop-selection">
+<h3>2.1.5. Desktop Selection<a class="headerlink" href="#desktop-selection" title="Permalink to this headline">¶</a></h3>
+<p>Select <cite>KDE Desktop</cite> and click Next.</p>
+</div>
+<div class="section" id="partitioning">
+<h3>2.1.6. Partitioning<a class="headerlink" href="#partitioning" title="Permalink to this headline">¶</a></h3>
+<p>By default, the installer will provide a suggested partition setup, however we will select <code class="docutils literal"><span class="pre">Edit</span> <span class="pre">Partition</span> <span class="pre">Setup</span></code>.
+It will open the <cite>Expert Partitioner</cite> where drive layouts and installation can be customized. The partitions to
+create are:</p>
+<div class="highlight-python"><div class="highlight"><pre>- /dev/sda1             swap (   2 GB)
+- /dev/sda2   /         ext3 ( 456 GB)
+- /dev/sdb1   /data1    ext3 ( 1,8 TB)
+- /dev/sdc1   /data2    ext4 ( 5,5 TB)
+</pre></div>
+</div>
+<p>For swap partition, we use the default suggested size of only 2 GB (in principle we do not need a larger swap parittion
+because we have a large amount of RAM and we are not going to use the suspend mode to allow the contents of the
+computer&#8217;s RAM to be stored in disk).</p>
+</div>
+<div class="section" id="create-new-users">
+<h3>2.1.7. Create New Users<a class="headerlink" href="#create-new-users" title="Permalink to this headline">¶</a></h3>
+<p>Create next users:</p>
+<div class="highlight-python"><div class="highlight"><pre>- panic     /home/panic   (bash shell) --&gt; for tests
+- obs22     /home/obs22   (bash shell) --&gt; for observations
+</pre></div>
+</div>
+<p>and in both cases, disable <code class="docutils literal"><span class="pre">Automatic</span> <span class="pre">Login</span></code> to be prompted for a password when the computer starts.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="geirs.html" class="btn btn-neutral float-right" title="3. GEIRS" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="system.html" class="btn btn-neutral" title="1. System" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, J.M.Ibáñez-Mengual.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

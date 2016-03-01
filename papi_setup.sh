@@ -92,6 +92,17 @@ chmod a+x $PAPI_BIN/edhead
 # ---------------------------------------
 cp ${PAPI_HOME}/scripts/bashrc.papi ${HOME}/.papirc
 
+# Create a backup of current files
+if [ -f ~/.bashrc ]; then
+    cp -av ~/.bashrc ~/.bashrc.bak
+else
+    echo "***Error***: no ~/.bashrc found"
+fi
+
+if [ -f ~/.papirc ]; then
+    cp -av ~/.papirc ~/.papirc.bak
+fi
+
 echo "if [ -f ~/.papirc ]; then . ~/.papirc; fi">> ~/.bashrc
 source ~/.bashrc
 

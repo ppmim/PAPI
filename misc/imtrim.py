@@ -87,12 +87,13 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     
     try:
         indata = fits.open(file, ignore_missing_end=True)
-        if len(indata)>1:
+        if len(indata) > 1:
             raise Exception("MEF files currently not supported")
         indata[0].verify()
-    except Exception,e:
+    except Exception, e:
         log.error('Could not open frame - something wrong with input data')
         raise e
+    
     try:
         nx = indata[0].header['NAXIS1']
         ny = indata[0].header['NAXIS2']
@@ -260,19 +261,21 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
     # 
     # Look for weight and objs images
     #
-    ima_sec = file.replace(".fits", ".weight.fits").replace("//", "/")
-    if os.path.exists(ima_sec):
-        log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_sec, xmin, xmax, ymin, ymax))
-        iraf.imcopy(input=ima_sec + "[" + str(xmin) + ":" + str(xmax) + "," +
-            str(ymin) + ":" + str(ymax) + "]", output=ima_sec)
-    
-    ima_objs = file.replace(".fits", "objs.fits").replace("//", "/")
-    if os.path.exists( ima_objs ):
-        log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_objs, xmin, xmax, ymin, ymax))
-        iraf.imcopy(input=ima_objs + "[" + str(xmin) + ":" + str(xmax) + "," +
-            str(ymin) + ":" + str(ymax) + "]", output=ima_objs)
-            
-    
+    try:
+        ima_sec = file.replace(".fits", ".weight.fits").replace("//", "/")
+        if os.path.exists(ima_sec):
+            log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_sec, xmin, xmax, ymin, ymax))
+            iraf.imcopy(input=ima_sec + "[" + str(xmin) + ":" + str(xmax) + "," +
+                str(ymin) + ":" + str(ymax) + "]", output=ima_sec)
+        ima_objs = file.replace(".fits", "objs.fits").replace("//", "/")
+        if os.path.exists( ima_objs ):
+            log.debug("Trimming image %s [ %d : %d, %d : %d ]" % (ima_objs, xmin, xmax, ymin, ymax))
+            iraf.imcopy(input=ima_objs + "[" + str(xmin) + ":" + str(xmax) + "," +
+                str(ymin) + ":" + str(ymax) + "]", output=ima_objs)
+                
+    except Exception,e:
+        log.debug("Some error trimming image %s . Probaby input image is wrong." % ima_sec)
+
     log.debug("....End of imgTrim --> XMIN= %d YMIN=%d XMAX= %d YMAX=%d"
             %(xmin, ymin, xmax, ymax))
     

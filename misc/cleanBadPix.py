@@ -117,6 +117,7 @@ def test( im, mask ):
     """
     Other way to clean Bad Pixels, however it's extremely slow !!!
     and not sure if it works fine...
+    LOOP over images pixels is forbiden in python !!!!
     
     """
     from scipy import interpolate, ndimage

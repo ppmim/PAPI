@@ -50,6 +50,7 @@ from scipy import interpolate, ndimage
 import misc.fileUtils
 import misc.statutils
 import misc.utils as utils
+import misc.robust as robust
 import datahandler
 
 # Logging
@@ -234,8 +235,8 @@ class ApplyDarkFlat(object):
                 # dat[numpy.isnan(dat)]= 0.0 #
 
                 # Normalization is done with a robust estimator --> np.median()
-                median = numpy.median(dat)
-                mean = numpy.mean(dat)
+                median = robust.r_nanmedian(dat)
+                mean = robust.r_nanmean(dat)
                 mode = 3 * median - 2 * mean
                 
                 log.info("Flat stats: MEDIAN= %f  MEAN=%f MODE(estimated)=%f ", \
@@ -336,7 +337,7 @@ class ApplyDarkFlat(object):
                                 (not numpy.isclose(time_scale, 1.0, atol=1e-02) 
                                  or f_ncoadd != dark_ncoadd)
                                 ): # for dark_model time_scale==-1
-                                log.debug("Dark EXPTIME mismatch ! looking for DarkModel ...")
+                                log.debug("Dark EXPTIME or NCOADD mismatch ! looking for DarkModel ...")
                                 if not cdark.isMasterDarkModel():
                                     log.error("Cannot find out a scaled dark to apply")
                                     raise Exception("Cannot find a scaled dark to apply")
@@ -387,7 +388,7 @@ class ApplyDarkFlat(object):
                                 else:
                                     log.debug("DarkModel found: Scaling dark with dark model...")
                                     dark_data = dark[0].data[1] * exp_time + dark[0].data[0]
-                                    log.info("AVG(scaled_dark)=%s"%numpy.mean(dark_data))
+                                    log.info("AVG(scaled_dark)=%s"% robust.r_nanmean(dark_data))
                             else:
                                 dark_data = dark[0].data
                         else: dark_data = 0
@@ -476,7 +477,10 @@ class ApplyDarkFlat(object):
                 # Write output to outframe (data object actually still points 
                 # to input data)
                 try:
-                    f[0].scale('float32')
+                    if n_ext == 1: f[0].scale('float32')
+                    else:
+                         for chip in range(0, n_ext):
+                             f[chip + 1].scale('float32')
                     f.writeto(newpathname, output_verify='ignore')
                 except IOError:
                     raise ExError('Cannot write output to %s' % newpathname)

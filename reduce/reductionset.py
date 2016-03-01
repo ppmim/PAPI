@@ -294,8 +294,7 @@ class ReductionSet(object):
         #
         # Bad Pixel Maks
         # 
-        self.bpm_mode = self.config_dict['bpm']['mode']
-        if self.bpm_mode != 'none':
+        if self.config_dict['bpm']['mode'] != 'none':
             self.master_bpm  = self.config_dict['bpm']['bpm_file']
         else:
             self.master_bpm  = bpm  
@@ -917,7 +916,7 @@ class ReductionSet(object):
         
         # Secondly (hopefully), try to find a MASTER_DARK with equal expTime
         if len(master_dark) == 0:
-            log.info("Now, trying to find a MASTER_DARK (expTime=%f, ncoadds=%d)" % (expTime, ncoadds))
+            log.info("Now, trying to find a (output) MASTER_DARK (expTime=%f, ncoadds=%d)" % (expTime, ncoadds))
             master_dark = self.db.GetFilesT('MASTER_DARK', expTime, 'ANY', ncoadds)
         if len(master_dark) == 0 and self.ext_db != None:
             log.info("Last chance to find a MASTER_DARK in ext_DB (%s) with (expTime=%f, ncoadds=%d)" % (self.ext_db_files, expTime, ncoadds))
@@ -926,13 +925,19 @@ class ReductionSet(object):
              
         # FLATS - Do NOT require equal EXPTIME, but FILTER
         master_flat = self.db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
+        log.info("Now, trying to find a (output) MASTER_DOME_FLAT for filter %s" %filter)
         if master_flat == []:
+            log.info("Now, trying to find a (output) MASTER_TW_FLAT for filter %s" %filter)
             master_flat = self.db.GetFilesT('MASTER_TW_FLAT', -1, filter)
         if len(master_flat) == 0 and self.ext_db != None:
+            log.info("Now, trying to find (external) a MASTER_DOME_FLAT for filter %s" %filter)
             master_flat = self.ext_db.GetFilesT('MASTER_DOME_FLAT', -1, filter)
             if len(master_flat) == 0:
-                master_flat=self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
-
+                log.info("Now, trying to find a (external) MASTER_TW_FLAT for filter %s" %filter)
+                master_flat = self.ext_db.GetFilesT('MASTER_TW_FLAT', -1, filter)
+        
+        if self.ext_db: self.ext_db.ListDataSet()
+        
         # BPM
         master_bpm = self.db.GetFilesT('MASTER_BPM')
         if len(master_bpm) == 0 and self.ext_db != None:
@@ -3268,7 +3273,7 @@ class ReductionSet(object):
 
         ########################################################################
         # 0 - Bad Pixels; three options:
-        # 'none': nothing to do, BPM is ignored.
+        # 'none': nothing to do, BPM file is ignored.
         # 'fix': replace with a bi-linear interpolation from nearby pixels.
         # 'grab': to add to gainmap and then set bad pixels to bkg level (skyfilter)
         # Both options are incompatible.
@@ -3293,8 +3298,8 @@ class ReductionSet(object):
         ########################################################################
         # 1 - Apply dark, flat to ALL files 
         ########################################################################
-        if self.apply_dark_flat==1 and \
-            (master_dark!=None or master_flat!=None or master_bpm_4fix!=None):
+        if self.apply_dark_flat == 1 and \
+            (master_dark != None or master_flat != None or master_bpm_4fix != None):
             log.info("**** Applying Dark, Flat and BPM ****")
             res = reduce.ApplyDarkFlat(self.m_LAST_FILES, 
                                        master_dark, 
@@ -3460,12 +3465,13 @@ class ReductionSet(object):
         if self.red_mode == 'science':
             # In order to get a good object mask, for
             # first skyFilter pass we 'fix' bad pixels
+            # independently of the 'bpm.mode' set in the config file.
             fix_type = 1
         else:
             if self.config_dict['bpm']['mode'] == 'fix':
-                fix_type = 1
+                fix_type = 1 # replace with bckg_level in skyFilter
             else:
-                fix_type = 0
+                fix_type = 0 # bpm_mode = none or grab; set to NaNs in skyFilter
                 
         self.m_LAST_FILES = self.skyFilter(out_dir + "/skylist1.list",
                                            gainmap, 'nomask', 
@@ -3541,7 +3547,9 @@ class ReductionSet(object):
             for my_file in self.m_LAST_FILES:
                 try:
                     out = my_file.replace(".fits", ".cl.fits.")
-                    out = cleanBadPix.cleanBadPixels( my_file, gainmap, output_file=out, is_gainmap=True)
+                    out = cleanBadPix.cleanBadPixels( my_file, gainmap, 
+                                                     output_file=out, 
+                                                     is_gainmap=True)
                 except Exception, e:
                     log.error("Error in call to cleanBadPix: %s" % str(e))
                     raise e

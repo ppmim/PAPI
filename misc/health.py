@@ -259,8 +259,8 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
             listToFile(packet, tmp_file)
             try:
                 stack_frames(tmp_file, 'median', f_from, f_to, 
-                    temp_dir+"/stack%02d.fits"%n,
-                    temp_dir+"/stack_sigma%02d.fits"%n, 
+                    temp_dir + "/stack%02d.fits" % n,
+                    temp_dir + "/stack_sigma%02d.fits" % n, 
                     10, 100000, 3)    
             except Exception, e:
                 raise e
@@ -281,8 +281,8 @@ def run_health_check ( input_file, packet_size, f_from, f_to,  window='full-fram
         except Exception, e:
             log.error("Cannot open file %s"%(temp_dir+"/stack%02d.fits"%i))
             continue
-        signal[i] = robust.mean(pf[0].data[x1:x2, y1:y2])
-        std[i] = robust.mean(pf2[0].data[x1:x2, y1:y2])
+        signal[i] = robust.r_nanmean(pf[0].data[x1:x2, y1:y2])
+        std[i] = robust.r_nanmean(pf2[0].data[x1:x2, y1:y2])
         if kw_time in pf[0].header: 
             itime[i] = pf[0].header[kw_time]
         else:

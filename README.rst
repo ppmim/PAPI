@@ -31,13 +31,14 @@ and also depends on next packages:
  - `Astropy <http://www.astropy.org/>`_ (> v0.3.1)
  - `Matplotlib <http://matplotlib.org/>`_ (> v1.3.0)
  - `PyQt4 <http://www.riverbankcomputing.co.uk/software/pyqt/download>`_
- - `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (< v2.16 or higher)
+ - `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (v2.16)
+ - `x11iraf <http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v2.0BETA-bin.linux.tar.gz>`_ for xgterm
  - `stsci_python <http://www.stsci.edu/resources/software_hardware/pyraf/stsci_python>`_ (> v2.14)
  - `CDSClient <http://cdsarc.u-strasbg.fr/doc/cdsclient.html>`_
  - `SExtractor <http://astromatic.iap.fr/software/sextractor/>`_ (> v2.8.6)
  - `SCAMP <http://www.astromatic.net/software/scamp>`_ (> v1.7.0)
  - `SWarp <http://www.astromatic.net/software/swarp>`_ (> v2.19.1)
- - `Astrometry.net <http://astrometry.net/>`_ with 42xx index files (optional to SCAMP)
+ - `Astrometry.net <http://astrometry.net/>`_ with `42xx index files <http://broiler.astrometry.net/~dstn/4200/>`_
  - `SAO DS9 and XPA <http://hea-www.harvard.edu/RD/ds9>`_ (> v7.3b5)
  - `Montage <http://montage.ipac.caltech.edu/download/Montage_v3.3.tar.gz>`_ (v3.3)
  - `montage_wrapper <https://pypi.python.org/pypi/montage-wrapper>`_ (0.9.8)
@@ -47,29 +48,31 @@ Note that, for PyRAF_ you have to install IRAF_(v2.16 or later), what can be a
 tricky task. However, is has been simplified in recent versions.
 
 
-To install PAPI, follow the next steps:
+To install PAPI as a "personal user" (non-root), follow the next steps:
 
 1. Clone the PAPI files in a suitable location. Note that, it is a development 
 version:
 
 	* ``git clone https://github.com/ppmim/PAPI ~/papi``
 
-#. Build the sources:
+#. Once you have installed the required packages described above, you are ready to install
+PAPI; for this, follow the next steps::
 
-    * cd papi/irdr/src
-    * make all
+    $ cd papi
+    $ ./papi_setup.sh
 
-#. Edit papi_setup.sh script:
+.. warning::
+    
+    The script papi_setup.sh is currently implemented **only** for the Bash shell, and will modify your .bashrc file adding a new line at the end.
 
-    * Modify the PAPI_HOME and PAPI_PROD in the papi_setup.[sh] file in the papi 
-    directory
-    * Run the papi_setup.sh 
-    * Re-load your new profile (.bashrc or .cshrc ) 
-
-        - Bash: . ~/.bashrc
-        - CSH: source ~/.cshrc
 
 #. Go to config_files/ directory to setup the config file to use.
+
+.. note::
+    
+    If you are behind a proxy, you need to set the proxy in your system::
+    
+    http_proxy=http//your_proxy:your_port; export http_proxy 
 
 
 Supported Platforms
