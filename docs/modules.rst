@@ -17,7 +17,7 @@ as they are needed in order to accomplish a complete data reduction of a set of 
 Main Modules                Description
 =======================     ===========
 ``papi``                    Main pipeline script to start the entire data reduction process 
-``applyDarkFlat``           Finds out the best Focus value from a focus series
+``applyDarkFlat``           Applies basic calibration (dark and flat-field) to the given list of files.
 ``astrowarp``               Creates final aligned and coadded frame using SEx, SCAMP and SWARP 
 ``calBPM``                  Creates a master Bad Pixel Mask from a set of darks and flats calibration files
 ``calCombineFF``            Combine a dome Flat-field and a sky Flat-field into a new Flat-field
