@@ -26,9 +26,9 @@ if [[ ($HOST =~ panic22) || ($HOST =~ panic35) ]] ; then
     export http_proxy=derfel.caha.es:3128
 fi
 
-
+XPA_HOME=/usr/loca/bin
 MONTAGE=/usr/local/Montage_v3.3/bin
-PATH=$PATH:$ASTROMETRY:$HOME/bin:$MONTAGE
+PATH=$PATH:$ASTROMETRY:$HOME/bin:$MONTAGE:$XPA_HOME
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
 
 export PYTHONPATH PAPI_HOME PAPI_CONFIG http_proxy ASTROMETRY

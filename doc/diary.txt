@@ -8192,7 +8192,53 @@ copié/restauré los datos de /data2/BACKUP_DATA1 al nuevo /data1;
 Sobre las 21:15 salimos de CAHA.
 
 
+27-Enero-2016
+-------------
+- Klaus me da acceso a la máquina aiad40148 del MPIA en la que está instalado PAPI. 
+De esta forma podré evaluar y diagnosticar mejor los problemas en PAPI.
 
+ssh -N -L 12345:aida40148:22 miguel@rigel.mpia-hd.mpg.de
+ssh -p 12345 miguel@localhost
+
+
+1-Marzo-2016
+------------
+
+- Varias modificaciones (días atrás) en PAPI debido a problemas (bugs) encontrados
+por Klaus M. en la versioń que tienen instalado en el MPIA. Los principales 
+problemas resueltos ha sido:
+
+- sustitución de numpy.mean() y numpy.median() por misc.robust.r_nanmean() 
+y misc.robust.r_nanmedian(). La razón fue la siguiente:
+    
+    
+    Hay una nueva versión de numpy.nanmean() implementada in v1.8.0,
+    and scipy.nanmean() is deprecated in scipy 0.15.0 in favour of 
+    numpy.nanmean(); la versión numpy.mean() que en versiones anteriores (1.7.x)
+    funciona bien con NaNs, ahora no funciona bien con NaNs en numpy v1.8.x o superiores,
+    y recomiendan usar numpy.nanmean(). 
+    Como en el MPIA (aida40148) tienen numpy 1.10.4 y scipy 0.17.0, tuve
+    que implementar una versión (robust.r_nanmean) que funcionase tanto
+    en panic22 como iada40148.mpia.de (Klaus M.).
+    
+    Note2: PAPI@panic22.caha.es has numpy 1.7.x and scipy 0.12.x
+    
+- Bug en calCombineFF: no funcionaba con MEF files, hay que usar mscarith en lugar de imarith.
+- Fine tunning the los parametros de filtro mediana (smooth): Klaus me dice que para que 
+el flat combinado quede bien, hay que usar:
+
+                    fmedian='no',
+                    zloreject=0.2,
+                    zhireject=2.0
+
+Para más detalles, ver email con Klaus, pero básicamente eso fueron los cambios más importantes.
+Después de eso, Klaus me dijo que le funcionaba correctamente.
+
+- Hago merge con la version stable y la subo a github.
+
+
+                    
+                    
 Tratamiento NaNs
 ----------------
 - En Montage, veo que los NaN los representa por una union C,

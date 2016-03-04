@@ -531,7 +531,7 @@ to heade files in order to compile the sources.
 or manually with 
 
 > wget jdk-7u55-linux-x64.tar.gz
-> tar -xvzf jdk-7u51-linux-x64.tar.gz /usr/local/
+> tar -xvzf jdk-7u51-linux-x64.tar.gz -C /usr/local/
 > update-alternatives --install /usr/bin/java java /usr/local/jdk1.7.0_55/bin/java 300
 > update-alternatives --install /usr/bin/javac javac /usr/local/jdk1.7.0_55/bin/javac 300
 > update-alternatives --config java
