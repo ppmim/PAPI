@@ -568,7 +568,7 @@ zypper install python-numpy python-numpy-devel
 zypper install python-scipy
 zypper install python-matplotlib python-matplotlib-tk
 zypper install python-qt4 
-zypper install libXmu6-32bit  (needed by xgterm)
+zypper install libXmu6-32bit  (needed by xgterm) (Ubuntu: sudo apt-get install libXmu6:i386)
 zypper install cfitsio libcfitsio-devel
 zypper install python-pip
 zypper install mupdf ( para mostrar pdfs desde QL de forma rápida )
@@ -589,6 +589,11 @@ sudo zypper install openmpi-devel python-gtk p7zip
 In one single line:
 
 zypper install tcl tk  tcl-devel tk-devl python-tk python-sphinx python-qt4-devel python-devel ipython python-numpy python-numpy-devel python-scipy python-matplotlib python-matplotlib-tk python-qt4 libXmu6-32bit cfitsio libcfitsio-devel python-pip openmpi-devel python-gtk
+
++Ubuntu/debian:
+For iraf, we need:
+sudo apt-get install tcsh libxss1 lib32z1 lib32ncurses5 lib32bz2-1.0 libXmu6:i386
+
 
 1-Python v2.7.5 : (default in openSuSE13.1)
 ===============
@@ -814,7 +819,7 @@ For more info visit http://cdsarc.u-strasbg.fr/doc/cdsclient.html
   - el .rpm no se deja instalar por dos dependencias de libcsironn, libqhull que no consigo resolver,
   por lo que decido compilar el fuente de SCAMP tal que:
 
-./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
+./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-atlas-incdir=/usr/include/atlas --with-plplot-libdir=/usr/local/plplot599/lib/ --with-plplot-incdir=/usr/local/plplot599/include/plplot/ --enable-static --enable-threads
 ./make
 ./make install
 (todo OK sin problemas)
@@ -963,7 +968,7 @@ yourself as one of the following users and follow the steps described:
 
 > sudo mkdir -p /iraf/iraf
 > cd /iraf/iraf
-> export iraf=/iraf/iraf/
+> export iraf=/iraf/iraf/ (muy importate la / final !!!!!)
 > wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
 > tar -xvzf iraf.lnux.x86_64.tar.gz
 > sudo ./install --system

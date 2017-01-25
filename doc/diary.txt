@@ -8237,8 +8237,163 @@ Después de eso, Klaus me dijo que le funcionaba correctamente.
 - Hago merge con la version stable y la subo a github.
 
 
+4-Marzo-2016
+------------
+- Tras una peticion de Klaus (ver mail del 3-Marzo-2016), creo un nuevo script papi_setup_user.sh
+para ser ejecutado por un usuario que quiera utilizar una instalacion  de PAPI de un tercero 
+(root por ejemplo, cuando se instala en modo sistema en lugar en modo single-user).
+El script papi_setup.sh sigue teniendo sentido pero para el usuario que realmente instala PAPI
+en el sistema, pues compila IRDR y da permisos de ejecución.
+La verdad es que se podrían fusionar ambos ficheros preguntando si PAPI ya está instalado y
+lo único que se quiere es configurar el entorno.
+
+- Además, añado a .papirc (bash.panic) la variable XPA_PATH pues si el XPA no está 
+instalado en un directorio "visible", PAPI no funcionará. 
+Y en este mismo sentido, modifico display.py de forma que de un mensaje de error y 
+la excepción correspondiente si no encuentra el ds9 o los binarios de XPA. Hasta ahora
+daba un error raro bastante confuso.
+
+TODO: incluir esto en la documentación !!!
+
+18-Marzo-2016
+-------------
+- Mail de KM sobre un cambio en la keyword IDLETYPE de las cabeceras de PANIC
+que provoca que no se pueda aplicar la NonLinearityCorrection pues no
+coindide. Parece que el problema es que Klaus estaba usando un NL map distinto, y
+a raiz de eso le pidio a RM que cambiara el IDLETYPE, pero está por ver si
+eso puede afectar a los datos de PANIC. 
+Para más detalles ver email de esa fecha (23-Marzo)
+
+
+28-Marzo-2016
+-------------
+- Instalao PAPI en mi máquina Ubuntu 14.04; todo fue bien, salvo un problema
+tonto con IRAF debido a que se me olvidó añadir '/' al path de iraf durante
+la instalación (iraf=/iraf/iraf/).
+
+- SCAMP tuve compilarlo (sin la plplot) pues no existe el binario en los repositorios
+de debian/ubuntu; se compiló bien, pero antes hay que instalar los paquetes
+correspondientes de blas, atlas, etc...e indicarle en el config donde están los 
+includes:
+./configure --with-atlas-libdir=/usr/lib64/atlas/ --with-atlas-incdir=/usr/include/atlas --enable-static --enable-threads
+
+
+
+21-Dic-2016
+-----------
+- KM me informa el 7-Dic de un bug en calDomeFlat.py: genera ficheros MEF FITS 
+corruptos a los que les falta el END tras el header la primera extensión, además
+de que el fichero generado tiene el doble de tamaño al que debería (64MB).
+
+Una vez lo miro, parece que es un problema de la versión de astropy.io.fits 
+que está usando, pues en panic1 no ocurre:
+
+             aida        udit22        panic1       panic22
+pyfits       3.3           3.4           3.3          3.1.3.dev 
+
+astropy      1.1.1        1.1.2->1.2.1   1.0.6        0.3
+
+numpy        1.11.0        1.11.1        1.7.1        1.7.1 
+
+python       2.7.6         2.7.6         2.7.6        2.7.5
+
+
+El mismo problema ocurre en mi maquina local (udit22). Sin embargo,
+si en lugar de usar astropy.io.fits uso pyfits, el fichero se genera
+correctamente. 
+
+Ejempo:
+
+from astropy.io import fits
+hdulist = fits.open('test.fits', 'update')
+hdulist[0].header.set("MYKEY", "myvalue")
+hdulist.close()
+
+==> Como solución provisional hasta que encuentre la solución definitiva,
+le paso a KM una versión de calDomeFlat.py con pyfits en lugar de astropy.
+No obstante, es algo urgente a resolver, pues puede ocurrir en más rutinas
+del PIPELINE, pues todas usan astropy.io.fits !!!!
+Creo un issue en astropy para ver si me dan algo de luz !!
+
+https://github.com/astropy/astropy/issues/5633
+
+
+22-Dic-2016
+-----------
+
+- KM me dice que calDomeFlat funciona con el workaround de pyfits, pero que ahora
+le falla también calTwFlat.py. Lo modifico igualmente pero me dice que le sigue fallando, sin embargo
+a mi en aida40148 no me falla. Le pido que repita la prueba con el comando que lo he pasado.
+
+23-Dic-2016
+-----------
+- Para evitar más problemas y mientras solucionan el bug en astropy.io.fits, creo una versión
+(a partir de la que tiene KM en aida40148) en la que sustituyo todos los astropy.io.fits por pyfits.
+
+No obstante, y aunque he echo alguna prueba y parece que funciona, es un cambio que podría dar algún 
+problema si el interfaz de pyfits es distinto o bien si el sustitución con 'sed' no se ha hecho correctamente:
+
+find . -name *.py |xargs sed -iv 's/astropy.io.fits/pyfits/g'
+
+
+10-Ene-2017
+-----------
+- Tras varias pruebas, llego a la conclusión de que el problema con los FITS está en numpy_v1.11.[0,1],
+pues al actualizar sólo numpy a 1.11.3, y dejando astropy 1.2.x y python 2.7.x, el problema se resuelve.
+
+Para todas la pruebas me serví de los virtualenv y con distintas configuraciones:
+
+$virtualenv MyVE -p $HOME/.localpython/bin/python27
+$source MyVE/bin/activate
+
+y dentro del entorno (MyVE) instalamos con (pip o con python setup.py) lo que queramos/necesitemos.
+
+
+Como resultado, le envío un mail a KM deciendole que lo mejor es que actualice en aida40148 astropy (>=1.3), que le
+actualizará también numpy (v1.11.3) del siguiente modo:
+
+$pip install --upgrade astropy
+
+De esta forma no hay que modificar PAPI (workarounds) para solucinar el problema.
+
+
+Yo pruebo a crearme un VE en aida40148, pero al actulizar numpy me da un error por una dependencia de CBLAS:
+
+multiarray.so: undefined symbol: cblas_sgemm
+
+Por lo que no puedo probarlo, pues parece que hay que instalar la CBLAS etc, etcjplus
+
+25-Ene-2017
+-----------
+- Tras el (triste) mail de KM sobre un bug en el QL después de actualizar astropy1.3,
+modifico mainQL.py para solucionar el bug.
+c = coord.SkyCoord(ra=ra, dec=dec, frame='icrs', unit=u.deg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     
-                    
+
 Tratamiento NaNs
 ----------------
 - En Montage, veo que los NaN los representa por una union C,

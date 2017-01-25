@@ -1,0 +1,109 @@
+= IRAF Setup on Ubuntu/Debian Linux =
+
+This page describes how to setup IRAF on a 64-bit Ubuntu/Debian machine.
+Installation of X11IRAF, DS9 and key packages are also included. 
+
+It will be easiest if you just copy-paste the instructions one by one except 
+for the parts in [[ ]].
+
+For 32-bit installation, see -
+http://www.astronomy.ohio-state.edu/~khan/iraf/iraf_step_by_step_installation
+
+An excellent and easy alternative installation option is provided by the Ureka project -
+http://ssb.stsci.edu/ureka/
+
+- Rubab Khan
+khan@astronomy.ohio-state.edu
+
+---------------------------------------------------------------------------------------
+
+sudo apt-get install tcsh libxss1 lib32z1 lib32ncurses5 lib32bz2-1.0 libXmu6:i386
+
+wget ftp://iraf.noao.edu/iraf/v216/PCIX/iraf.lnux.x86_64.tar.gz
+
+[[If the prompt does not return after 100% then hit ctrl+c and proceed]]
+
+sudo mkdir /iraf
+
+sudo mkdir /iraf/iraf
+
+sudo mv iraf.lnux.x86_64.tar.gz /iraf/iraf/.
+
+cd /iraf/iraf
+
+sudo tar -zxf iraf.lnux.x86_64.tar.gz
+
+sudo rm iraf.lnux.x86_64.tar.gz
+
+sudo ./install
+
+[[Keep hitting Enter for all prompts]]
+
+sudo mkdir /iraf/x11iraf
+
+cd /iraf/x11iraf
+
+sudo wget http://iraf.noao.edu/iraf/ftp/iraf/x11iraf/x11iraf-v2.0BETA-bin.linux.tar.gz
+
+sudo tar -zxf x11iraf-v2.0BETA-bin.linux.tar.gz
+
+sudo rm x11iraf-v2.0BETA-bin.linux.tar.gz
+
+sudo ./install
+
+[[Keep hitting Enter for all prompts]]
+
+sudo wget http://ds9.si.edu/archive/linux64/ds9.linux64.7.2.tar.gz
+
+sudo tar -zxf ds9.linux64.7.2.tar.gz
+
+sudo rm ds9.linux64.7.2.tar.gz
+
+sudo mv ds9 /usr/local/bin/.
+
+cd
+
+wget http://www.astronomy.ohio-state.edu/~khan/iraf/iraf
+
+sudo chmod u=rwx iraf
+
+mkdir IRAF
+
+cd IRAF
+
+mkiraf
+
+[[Select "xgterm" as your IRAF shell when prompted]]
+
+exit
+
+----------------------------------------------------------------------------------------------
+
+The command ./iraf from home directory will now launch a complete IRAF session containing DS9,
+xgterm and ecl, based in the IRAF direcory. Alternately, start "xgterm' (typing xgterm), 
+cd into the directory where you did "mkiraf", type "ecl" for enhanced IRAF or 
+"cl" for VO IRAF, and "ds9" for standalone DS9 launch. 
+
+The following steps show how to add external packages. If you don't need extra packages, 
+then you are done already.
+
+----------------------------------------------------------------------------------------------
+
+cd /iraf/iraf/extern
+
+sudo ./configure
+
+[[The next two lines will take some time to complete, even with fast internet. Be patient.]]
+
+sudo make adccdrom ctio cfh12k esowfi mscdb mscred stsdas nfextern optic
+
+sudo make deitab euv mem0 mtools rvsao song sqiid stecf ucsclris upsqiid xdimsum
+
+exit
+
+----------------------------------------------------------------------------------------------
+
+Next time you start IRAF, the available packages will be listed.
+
+= END =
+

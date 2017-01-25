@@ -256,7 +256,7 @@ class MasterDomeFlat(object):
         # - Build the frame list for IRAF
         log.debug("Combining Flat LAMP-ON frames...")
         flat_lampon = self.__temp_dir + "/flat_lampON.fits"
-        misc.fileUtils.removefiles(flat_lampon)
+        #misc.fileUtils.removefiles(flat_lampon)
         misc.utils.listToFile(domelist_lampon, self.__temp_dir + "/files_on.list") 
         # - Call IRAF task
         # Combine the images to find out the median using sigma-clip algorithm;
@@ -281,7 +281,7 @@ class MasterDomeFlat(object):
         # - Build the frame list for IRAF
         log.debug("Combining Flat LAMP-OFF frames...")    
         flat_lampoff = self.__temp_dir + "/flat_lampOFF.fits"
-        misc.fileUtils.removefiles(flat_lampoff)
+        #misc.fileUtils.removefiles(flat_lampoff)
         misc.utils.listToFile(domelist_lampoff, self.__temp_dir+"/files_off.list") 
         # - Call IRAF task
         # Combine the images to find out the median using sigma-clip algorithm;
@@ -419,7 +419,7 @@ class MasterDomeFlat(object):
         
         
         # Cleanup: Remove temporary files
-        misc.fileUtils.removefiles(flat_lampoff, flat_lampon, flat_diff)
+        #misc.fileUtils.removefiles(flat_lampoff, flat_lampon, flat_diff)
         #Remove temp list files
         misc.fileUtils.removefiles(self.__temp_dir+"/files_off.list")
         misc.fileUtils.removefiles(self.__temp_dir+"/files_on.list")

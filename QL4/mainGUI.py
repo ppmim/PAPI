@@ -1793,7 +1793,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     e_child.setText(6, str(object))
                     if dec < 0: sign = -1;
                     else: sign = 1;
-                    c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                    c = coord.SkyCoord(ra=ra, dec=dec, frame='icrs', unit=u.deg)
                     str_ra = "%02d:%02d:%04.1f"%(c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
                     str_dec = "%02d:%02d:%02.0f"%(c.dec.dms[0], c.dec.dms[1]*sign, c.dec.dms[2]*sign)
                     e_child.setText (7, str(str_ra))
@@ -1853,7 +1853,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 elem.setText(4, str(tfile))
                 elem.setText(5, str(date) + "::" + str(ut_time))
                 elem.setText(6, str(object))
-                c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                c = coord.SkyCoord(ra=ra, dec=dec, frame='icrs', unit=u.deg)
                 if dec < 0: sign = -1
                 else: sign = 1
                 str_ra = "%02d:%02d:%04.1f" % (c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])
@@ -1879,7 +1879,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     elem.setText(4, str(tfile))
                     elem.setText(5, str(date) + "::" + str(ut_time))
                     elem.setText(6, str(object))
-                    c = coord.ICRS(ra=ra, dec=dec ,unit=(u.degree, u.degree))
+                    c = coord.SkyCoord(ra=ra, dec=dec, frame='icrs', unit=u.deg)
                     if dec < 0: sign = -1
                     else: sign = 1
                     str_ra =  "%02d:%02d:%04.1f" % (c.ra.hms[0], c.ra.hms[1], c.ra.hms[2])

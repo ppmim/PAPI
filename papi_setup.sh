@@ -55,6 +55,7 @@ ln -s $PAPI_HOME/reduce/calCombineFF.py $PAPI_BIN/calCombineFF
 ln -s $PAPI_HOME/reduce/calDark.py $PAPI_BIN/calDark
 ln -s $PAPI_HOME/reduce/calDarkModel.py $PAPI_BIN/calDarkModel
 ln -s $PAPI_HOME/reduce/calDomeFlat.py $PAPI_BIN/calDomeFlat
+ln -s $PAPI_HOME/reduce/calTwFlat.py $PAPI_BIN/calTwFlat
 ln -s $PAPI_HOME/reduce/calGainMap.py $PAPI_BIN/calGainMap
 ln -s $PAPI_HOME/reduce/calSuperFlat.py $PAPI_BIN/calSuperFlat
 ln -s $PAPI_HOME/reduce/checkQuality.py $PAPI_BIN/checkQuality
