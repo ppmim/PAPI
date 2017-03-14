@@ -167,6 +167,10 @@ def main(arguments = None):
     
     # file calibration options
     
+    parser.add_option("-A", "--apply_dark_flat",
+                  action="store_true", dest = "applyDarkFlat", default = False,
+                  help="Apply dark and flat calibration to source files [default: %default]")
+    
     parser.add_option("-C", "--ext_calibration_db", type = "str",
                   action = "store", dest = "ext_calibration_db", 
                   default = None, 
@@ -225,7 +229,7 @@ def main(arguments = None):
     else:
         config_file = init_options.config_file
     
-    
+        
     # Now, we "mix" the invokation parameter values with the values in the 
     # config file, having priority the invokation values over config file values
     # Note: only values of the 'general' section can be invoked
@@ -235,6 +239,10 @@ def main(arguments = None):
     # file value.
     if init_options.bpm_file != None:
       options['bpm']['bpm_file'] = init_options.bpm_file
+    
+    # Manually, mix apply_dark_flat, having priority the command line given value
+    if init_options.applyDarkFlat:
+        options['general']['apply_dark_flat'] = 1
     
     # Add the configuration filename as an extra value to the dictionary
     options['general']['config_filename'] = config_file
@@ -296,7 +304,7 @@ def main(arguments = None):
     
     
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    log.debug(">> Starting PAPI....")
+    log.debug(">> Starting PAPI...")
     log.debug("   + source  : %s",general_opts['source'])
     log.debug("   + out_dir : %s",general_opts['output_dir'])
     log.debug("   + Master Dark : %s",general_opts['master_dark'])

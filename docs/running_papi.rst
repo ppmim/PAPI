@@ -398,12 +398,33 @@ you should create an script to do that; for example see next bash script:
         ${PAPI} -c $CONFIG_FILE -s /data1/PANIC/${dir} -g ot -d /data2/out/${dir} -R science
     done
 
+Calibrations
+------------
+In principle PAPI can be run without specifying any calibration (Dark, Flat, BPM, NonLinearity);
+in that case, it is assumed that dark subtraction is intrinsically done during sky subtration and
+flat-fielding is done building a superflat with the source images themselves.
+For this behaviour, user must set *apply_dark_flat = 0* in the PAPI :ref:`config <config>` file. 
 
-Use a specific calibration directory for data reduction
--------------------------------------------------------
-To reduce a complete directory using the calibration found in an specific 
-directory (master dark and flat-field calibrations previously processed), 
-you have to use the '-C path' option. This way, if PAPI cannot find the 
+However, PAPI can look for and use specific calibration files. In this case, user must 
+set *apply_dark_flat = 1* in the PAPI :ref:`config <config>` file.
+
+Location of calibrations
+^^^^^^^^^^^^^^^^^^^^^^^^
+By default, PAPI look for master calibration files (if apply_dark_flat=[1,2]) into 
+the same directory of the source data to be proceesed. However, the user can 
+specify an anternative directory to look for calibrations using two different methods:
+
+  * in the config file keyword *ext_calibration_db*
+  * in the command line parameter *--ext_calibration_db*
+  
+The second method has higher priority if both are used.
+
+
+Example: use a specific calibration directory for data reduction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+To reduce a complete directory using the :ref:`calibrations <calibrations>` 
+found in an specific directory (master dark and flat-field calibrations previously processed), 
+you can use the '-C path' command line option. This way, if PAPI cannot find the 
 required calibrations into the input directory (/my/raw/directory), will 
 look for them into the external calibration directory provided (/my/calibration/dir).
 
@@ -412,10 +433,10 @@ Command::
     $papi.py -s /my/raw_data/directory -d /my/output/directory -C /my/calibrations/dir
 
 Enable the Non-Linearity correction for the data processing
------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If you need to enable to Non-Linearity correction (see `PANIC detector non-linearity correction data`),
-you only have to edit the $PAPI_CONFIG file and set 'nonlinearity.apply' parameter
-to 'True'.
+you only have to edit the $PAPI_CONFIG file and set **nonlinearity.apply** parameter
+to *True*.
 
 Note::
     Be ware that when using Non-Linearity correction, all the files used and calibrations,
@@ -934,30 +955,13 @@ File papi.cfg::
     #
     # sex:SATUR_LEVEL: level (in ADUs) for a single exposure image at which the pixel
     # arises saturation. Note than that value should be updated with NCOADDS or NDIT
-    # keywords when present in the header. So, 
-
-Image selection
-***************
-
-
-Data-set classification
-***********************
-
-One of the main featthe value specified here is for a
+    # keywords when present in the header. So,the value specified here is for a
     # single image with NCOADD = 1.
     # Of course, this values will be specific for each detector, and in case of 
     # a multi-detector instrument, should be the lowest value of all detectors.
     #  
     satur_level = 55000 
 
-Image selection
-***************
-
-
-Data-set classification
-***********************
-
-One of the main feat
     # skymodel : sky model used used during the sky subtraction. It will be a 
     #             parameter for the IRDR::skyfilter() executable
     #             (median) the normal way for coarse fields [default]
@@ -1091,6 +1095,7 @@ One of the main feat
     run_mode = Lazy # default (initial) run mode of the QL; it can be (None, Lazy, Prereduce)
 
 
+.. _calibrations:
 
 Principal parameters to set
 ---------------------------
