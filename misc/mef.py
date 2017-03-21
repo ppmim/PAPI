@@ -337,6 +337,56 @@ class MEF (object):
         log.info("End of SplitMEF. %d files created", n)
         return n_ext, out_filenames
                     
+    def doSlice(self, out_filename_suffix = ".P%02d.fits", out_dir = None,):
+        """
+        Method used to slice a MEF cube into individual MEFs, i.e., a 
+        a MEF with only one 2 dimensions.
+        """
+        
+        log.debug("Start of doSlice...")
+        
+        out_filenames = []
+        n = 0 
+        for file in self.input_files:
+            log.debug("Slicing file %s", file)
+            try:
+                in_hdulist = fits.open(file)
+            except IOError:
+                print 'Error, can not open file %s' % (file)
+                raise MEF_Exception ("Error, can not open file %s" % file)
+            
+            # Check if is a MEF-cube file 
+            if len(in_hdulist) > 1 and len(in_hdulist[1].data.shape) > 2:
+                n_ext = len(in_hdulist) - 1
+                n_planes = in_hdulist[1].data.shape[0]
+                log.debug("MEF file with %d extensions and %d planes." %(n_ext, n_planes))
+            else:
+                n_ext = 1
+                log.error("Found a simple FITS file, not a MEF file")
+                raise MEF_Exception("File %s is not a MEF" % file)
+            
+            primaryHeader = in_hdulist[0].header.copy()
+            for i_plane in range(0, n_planes):
+                out_hdulist = fits.HDUList()
+                # Create primary HDU (without data, only the common header)
+                prihdu = fits.PrimaryHDU(data=None, header = primaryHeader)
+                out_hdulist.append(prihdu)
+                # Add the other HDU with header+data
+                for i_ext in range(1, n_ext + 1):
+                    log.debug("i_ext=%d" % i_ext)
+                    hdu_i = fits.ImageHDU(header=in_hdulist[i_ext].header, 
+                                          data=in_hdulist[i_ext].data[i_plane,:,:])
+                    out_hdulist.append(hdu_i)
+                    
+                new_filename =  file.replace(".fits", out_filename_suffix % i_plane)
+                out_hdulist.writeto(new_filename, 
+                                    output_verify = 'ignore',
+                                    clobber=True)
+                del out_hdulist
+                log.info("MEF file created: %s" % new_filename) 
+        
+        log.info("End of odSlice")
+            
     def createMEF (self, output_file = "mef.fits" , out_dir = None,
                    primaryHeader = None):
         """ 
@@ -401,10 +451,12 @@ class MEF (object):
         prihdu.header.set('FILTER', orig_filter)
         
         prihdu.header.add_history("[MEF.createMEF] MEF created with files %s"%str(self.input_files))
-        if os.path.exists(output_file): os.unlink(output_file)
+        if os.path.exists(output_file): 
+            os.unlink(output_file)
+        
         fo.writeto(output_file, output_verify ='ignore')
         fo.close(output_verify = 'ignore')
-        del fo            
+        del fo
         
         log.info ("MEF file %s created" % (output_file))
         
@@ -514,7 +566,7 @@ class MEF (object):
             # Start by updating PRIMARY header keywords...
             prihdu.header.set('EXTEND', True, after = 'NAXIS')
             prihdu.header.set('NEXTEND', n_ext, after = 'EXTEND')
-            prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s"%file)
+            prihdu.header.add_history("[MEF.convertGEIRSToMEF] MEF created from original filename %s" % file)
             
             # In the Primary Header we do not need the WCS keywords, only RA,DEC
             # Althought, the simple-images full-frames should not have any WCS 
@@ -1200,8 +1252,8 @@ if __name__ == "__main__":
     
     parser.add_option ("-l", "--input",
                   action = "store", dest = "input_file_list",
-                  help = "Source file list of data frames. \
-                  It has to be a fullpath file name")
+                  help = "Source file list of data frames. "\
+                  "It has to be a fullpath file name.")
     
     parser.add_option ("-s", "--suffix",
                   action = "store", dest = "out_suffix", \
@@ -1209,34 +1261,44 @@ if __name__ == "__main__":
     
     parser.add_option ("-J", "--join",
                   action = "store_true", dest = "join", \
-                  help = "make a join/stitch of the FITS extensions \
-                  creating a single FITS file", default = False)
+                  help = "make a join/stitch of the FITS extensions " \
+                  "creating a single FITS file", default = False)
                                  
     parser.add_option ("-S", "--split",
                   action = "store_true", dest = "split", \
-                  help = "make a split of MEF files, adding a suffix \
-                  for each extension", default = False)
+                  help = "make a split of MEF files, adding a suffix " \
+                  "for each extension", default = False)
+    
+    parser.add_option ("-P", "--slice",
+                  action = "store_true", dest = "slice", \
+                  help = "Slice a MEF-cube, adding a suffix " \
+                  "for each plane", default = False)
     
     parser.add_option ("-G", "--geirs-split",
                   action = "store_true", dest = "geirs_split", \
-                  help = "make a split of GEIRS SEF file, creating \
-                  4-single files and adding a suffix for each extension", \
+                  help = "make a split of GEIRS SEF file, creating "\
+                  "4-single files and adding a suffix for each extension", \
                   default = False)
     
     parser.add_option ("-C", "--create",
                   action = "store_true", dest = "create", \
-                  help = "create a MEF (with N extensions) from a \
-                  set N single FITS files", default = False)
+                  help = "create a MEF (with N extensions) from a " \
+                  "set N single FITS files", default = False)
    
     parser.add_option ("-g", "--geirs-convert",
                   action = "store_true", dest = "geirs_convert", \
-                  help = "convert a GEIRS SEF file to a \
-                  MEF FITS file with 4 extensions", default = False)
+                  help = "convert a GEIRS SEF file to a " \
+                  "MEF FITS file with 4 extensions", default = False)
     
     parser.add_option ("-d", "--output_dir",
                   action = "store", dest = "output_dir",
                   help = "Directory where output files will be saves.",
                   default = None)
+    
+    parser.add_option ("-o", "--output_file",
+                  action = "store", dest = "output_file",
+                  help = "Filename of the output file created [default = %default].",
+                  default = "mef.fits")
     
     (options, args) = parser.parse_args()
     
@@ -1255,15 +1317,20 @@ if __name__ == "__main__":
     if options.join:
         if not options.out_suffix: 
             options.out_suffix = ".join.fits"
-        myMEF.doJoin( options.out_suffix , output_dir=options.output_dir)
+        myMEF.doJoin(options.out_suffix , output_dir=options.output_dir)
         
     elif options.split:
         if not options.out_suffix: 
             options.out_suffix = ".Q%02d.fits"
-        myMEF.doSplit( options.out_suffix, out_dir=options.output_dir)
+        myMEF.doSplit(options.out_suffix, out_dir=options.output_dir)
+    
+    elif options.slice:
+        if not options.out_suffix: 
+            options.out_suffix = ".P%02d.fits"
+        myMEF.doSlice(options.out_suffix, out_dir=options.output_dir)
     
     elif options.create:
-        myMEF.createMEF(out_dir=options.output_dir)
+        myMEF.createMEF(output_file=options.output_file, out_dir=options.output_dir)
     
     elif options.geirs_split:
         myMEF.splitGEIRSToSimple(out_dir=options.output_dir)
