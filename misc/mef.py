@@ -368,6 +368,8 @@ class MEF (object):
             primaryHeader = in_hdulist[0].header.copy()
             for i_plane in range(0, n_planes):
                 out_hdulist = fits.HDUList()
+                primaryHeader['FRAMENUM'] = i_plane + 1
+                primaryHeader.comments['FRAMENUM'] = 'of %d saved' %n_planes
                 # Create primary HDU (without data, only the common header)
                 prihdu = fits.PrimaryHDU(data=None, header = primaryHeader)
                 out_hdulist.append(prihdu)
