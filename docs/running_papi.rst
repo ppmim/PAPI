@@ -146,9 +146,14 @@ the next type of FITS files (in order of preference):
  
  - Non-integrated Multi-Extension-FITS (MEF): a unique FITS file with four extensions (MEF), 
    one per each detector (or window), having each extension N planes, where N is the number 
-   of coadds (NCOADDS), ie. a cube of N planes.  
+   of coadds (NCOADDS), i.e., a cube of N planes.  
    This mode will be also used when the software or hardware subwindowing is set up and 
    the no-integrated option is selected.
+   
+   **Note**: Currently when PAPI finds a MEF-cube, it is collapsed adding the planes up 
+   arithmetically without any kind of image registration.
+ 
+   |
  
  - Single integrated FITS file: the four detectors are saved in single file and in a 
    single extension FITS image (SEF). If the number of coadds (NCOADDS) is > 0, then 
@@ -159,7 +164,7 @@ the next type of FITS files (in order of preference):
    planes, where N is the number of coadds or expositions.
  
  
- .. Note:: Currently PAPI is **not working** with non-integrated *individual* files of an 
+ .. Note:: Currently PAPI is **not working** with non-integrated **individual** files of an 
     exposition. In case you are interested in no-integrated files and wish to reduce 
     the data with PAPI, you should use SEF of MEF non-integrated FITS-cube mode.
 

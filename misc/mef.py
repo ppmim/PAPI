@@ -337,13 +337,17 @@ class MEF (object):
         log.info("End of SplitMEF. %d files created", n)
         return n_ext, out_filenames
                     
-    def doSlice(self, out_filename_suffix = ".P%02d.fits", out_dir = None,):
+    def doSlice(self, out_filename_suffix = ".P%03d.fits", out_dir = None,):
         """
         Method used to slice a MEF cube into individual MEFs, i.e., a 
         a MEF with only one 2 dimensions.
         """
         
         log.debug("Start of doSlice...")
+        
+        if out_dir and not os.path.isdir(out_dir):
+            log.debug("Output dir %s does not exist" % out_dir)
+            raise MEF_Exception("Output dir %s does not exist" % out_dir)
         
         out_filenames = []
         n = 0 
@@ -381,6 +385,10 @@ class MEF (object):
                     out_hdulist.append(hdu_i)
                     
                 new_filename =  file.replace(".fits", out_filename_suffix % i_plane)
+                if out_dir != None:
+                    new_filename = new_filename.replace( 
+                                    os.path.abspath(os.path.join(new_filename, os.pardir)), out_dir
+                                    )
                 out_hdulist.writeto(new_filename, 
                                     output_verify = 'ignore',
                                     clobber=True)
@@ -1328,7 +1336,7 @@ if __name__ == "__main__":
     
     elif options.slice:
         if not options.out_suffix: 
-            options.out_suffix = ".P%02d.fits"
+            options.out_suffix = ".P%03d.fits"
         myMEF.doSlice(options.out_suffix, out_dir=options.output_dir)
     
     elif options.create:
