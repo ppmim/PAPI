@@ -2602,7 +2602,7 @@ class ReductionSet(object):
                     result.wait()
                     out = result.get()
                     
-                    log.critical("OUTPUT file generated %s"%out)
+                    log.result("OUTPUT file generated %s"%out)
                     pool.close()
                     pool.join()
                     
@@ -2957,7 +2957,7 @@ class ReductionSet(object):
                         # Wait for the worker processes to exit. One must call 
                         #close() or terminate() before using join().
                         pool.join()
-                        log.critical("[reduceSeq] DONE PARALLEL REDUCTION ")
+                        log.result("[reduceSeq] DONE PARALLEL REDUCTION ")
                     except Exception,e:
                         log.error("[reduceSeq] Error while parallel data reduction ! --> %s",str(e))
                         raise e
@@ -3702,7 +3702,7 @@ class ReductionSet(object):
         # 8 - Create master object mask of the 1st stack coadd.
         ########################################################################
         log.info("************************")
-        log.critical(" START SECOND PASS      ")
+        log.result(" START SECOND PASS      ")
         log.info("************************")
 
         # Build masterObjMask of the first coadded stack

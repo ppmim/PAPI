@@ -222,7 +222,7 @@ def main(arguments = None):
     if not init_options.config_file:
         try:
             config_file = os.environ['PAPI_CONFIG']
-            log.info("Using PAPI_CONFIG : %s" %config_file) 
+            log.info("Using PAPI_CONFIG : %s" %config_file)
         except KeyError:
             print 'Environment variable PAPI_CONFIG not found!'
             sys.exit()
