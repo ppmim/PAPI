@@ -24,7 +24,6 @@ Data reduction
 ---------------
 
 
-
 What is the best way to reduce PAPI data?
 -----------------------------------------
 The recommend to use the OT and execute the OBs. That way the headers will include
@@ -33,6 +32,28 @@ find the required calibrations for a successful reduction. Then, you only have t
 type:
 
 > papi -s /data1/PANIC/my_program/ 
+
+How can process a broken, interrupted or non OT sequence ?
+----------------------------------------------------------
+PAPI is prepared to work with complete data sequences taken with the OT. Sequences
+are defined mainly by the PAT_EXPN, PAT_NEXP keywords:
+
+ - PAT_EXPN: Seq. exposition number (1 to N)
+ - PAT_NEXP: Total number of expositions (N) of the sequence
+
+In case you need to process a broken, interrupted or sequence not taken using
+the OT, you can build a PAPI compliant sequence using one of the next options:
+
+ - the Quick-Look option in the pop-up menu (FITS->Create DataSeq) over a set
+   of seletect files on the list view. 
+ - the *createDataSeq* command line tool, as follow:
+
+Example::
+    
+    $createDataSeq -s /tmp/my_files.txt -t SKY_FLAT -o /mydata
+
+
+
 
 How does PAPI treat bad pixels ?
 --------------------------------
