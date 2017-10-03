@@ -150,7 +150,13 @@ def getWCSPointingOffsets(images_in,
       dataset = []
       sorted_files = []
       for ifile in images_in:
-        mjd = fits.getval(ifile, "MJD-OBS", ext=0)
+        try:
+            mjd = fits.getval(ifile, "MJD-OBS", ext=0)
+        except KeyError:
+            try:
+                mjd = fits.getval(ifile, "JD", ext=0)
+            except KeyError:
+                raise Exception("Cannot find neither MJD-OBS nor JD")
         dataset.append((ifile, mjd))
       # Sort out the files
       dataset = sorted(dataset, key=lambda data_file: data_file[1])
@@ -184,28 +190,35 @@ def getWCSPointingOffsets(images_in,
                 
                 # Assummed that North is up and East is left
                 # To give the results in arcsec, set pix_scale=1.0
-                pix_scale = 1.0
+                pix_scale = 1
                 #offsets[i][0] = ((ra - ra0)*3600) / float(pix_scale)
                 offsets[i][0] = ((ra - ra0)*3600 * math.cos(dec/57.29578)) / float(pix_scale)
                 offsets[i][1] = ((dec0 - dec)*3600) / float(pix_scale)
                 
-                log.debug("offset_ra  = %s"%offsets[i][0])
-                log.debug("offset_dec = %s"%offsets[i][1])
+                log.debug("offset_ra  = %s" % offsets[i][0])
+                log.debug("offset_dec = %s" % offsets[i][1])
                 
                 offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
                 i+=1
-            except Exception,e:
+            except Exception, e:
                 log.error("Error computing the offsets for image %s. \n %s"%(my_image, str(e)))
                 raise e
-        
+            
       offset_txt_file.close()
       
       # Write out offsets to file
       # numpy.savetxt(p_offsets_file, offsets, fmt='%.6f')
-      log.debug("(WCS) Image Offsets (arcsecs): ")
+      log.debug("(WCS) -> Image Offsets (arcsecs): ")
       log.debug(offsets)
       
-      
+      # Some stats
+      print "MEAN_X=", numpy.mean(offsets[:,0])
+      print "STD_X=", numpy.std(offsets[:,0])
+      print "RMS_X", numpy.sqrt(numpy.mean(numpy.absolute(offsets[:,0][2])**2))
+
+      print "MEAN_Y=", numpy.mean(offsets[:, 1])
+      print "STD_Y=", numpy.std(offsets[:, 1])
+      print "RMS_Y", numpy.sqrt(numpy.mean(numpy.absolute(offsets[:, 1])**2))
       
       return offsets
   
