@@ -260,8 +260,10 @@ class ApplyDarkFlat(object):
             if self.__mdark == None and self.__mflat == None:
                 with fits.open(self.__bpm) as bp:
                     n_ext = len(bp) - 1
-            
-
+        elif self.__mdark == None and self.__mflat == None and self.__bpm != None and self.__bpm_action == 'none':
+            log.error("Please, choose a BPM action (grab or fix)")
+            raise Exception("No BPM action selected")
+        
         # Get the user-defined list of flat frames
         framelist = self.__sci_files
         
@@ -326,7 +328,7 @@ class ApplyDarkFlat(object):
                         chip_name = 'Q%d' % (chip + 1)
                         try:
                             f[chip_name].header
-                        except KeyError:
+                        except KeyError, e:
                             chip_name = 'SG%i_1' % (chip + 1)
                         
                         log.info("Processing extension %s" % chip_name)

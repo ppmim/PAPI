@@ -131,7 +131,7 @@ class MasterTwilightFlat(object):
         master_dark_model : string or list
             Master dark model to subtract (required, exclusive with master_dark_list) 
         
-        master_dark_list : list
+        master_dark_list: list
             List of master dark to subtract (required, exclusive with master_dark_model) 
         
         output_filename: string
@@ -178,7 +178,8 @@ class MasterTwilightFlat(object):
         """
         Create a master Tw FLAT from the flat file list
         """
-        log.debug("Start createMasterTwilightFlat")       
+        log.debug("===> Start createMasterTwilightFlat")
+        log.debug("     Flats files: %s" % self.__input_files)
     
         # Cleanup old files
         

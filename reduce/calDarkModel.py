@@ -147,7 +147,7 @@ class MasterDarkModel(object):
                 darks[i] = 0
             else:
                 # Check READMODE
-                if ( f_readmode!=-1 and (f_readmode!= myfits.getReadMode() )):
+                if (f_readmode !=-1 and (f_readmode != myfits.getReadMode() )):
                     log.error("Error: Task 'createMasterDark' finished. Found a DARK frame with different  READMODE")
                     darks[i] = 0  
                     #continue
@@ -158,14 +158,14 @@ class MasterDarkModel(object):
                     #log.debug("NEXT= %s"%(f_n_extensions))
                     darks[i] = 1
                 
-            i = i+1
+            i = i + 1
         log.debug('All frames checked')   
         
         naxis1 = myfits.naxis1
         naxis2 = myfits.naxis2            
         ndarks = (darks==1).sum()
         
-        if ndarks<2:
+        if ndarks < 2:
             log.error('Dark frameset doesnt have enough frames. At least 2 dark frames are needed')
             raise Exception("Dark sequence is too short. Al least 2 dark frames are needed !")
         
@@ -175,26 +175,26 @@ class MasterDarkModel(object):
         out = numpy.zeros([2, f_n_extensions, naxis1, naxis2], dtype=numpy.float32)
         
 
-        #loop the images
-        counter = 0
+        # Loop the images
+        counter = 0 # counter for the number of darks
         for i in range(0, nframes):
             file = fits.open(framelist[i])
-            f = datahandler.ClFits ( framelist[i] )
-            if darks[i]==1:
+            f = datahandler.ClFits(framelist[i])
+            if darks[i] == 1: # is a good dark
                 for i_ext in range(0, f_n_extensions):
-                    if f_n_extensions==1:
+                    if f_n_extensions == 1:
                         temp[counter, 0, :,:] = file[0].data
                     else:
                         log.debug("Found MEF file")
-                        temp[counter, i_ext, :,:] = file[i_ext+1].data
-                _mean = numpy.r_nanmean(temp[counter])
+                        temp[counter, i_ext, :,:] = file[i_ext + 1].data
+                _mean = numpy.mean(temp[counter])
                 _robust_mean = robust.r_nanmean(temp[counter].reshape(naxis1 * naxis2 * f_n_extensions))
                 _median = robust.r_nanmedian(temp[counter])
-                _mode = 3 * _median - 2 * _mean
+                _mode = 3 * _median - 2 * _robust_mean
                 if self.show_stats:
-                    log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN_VALUE=%s , MEDIAN=%s ROBUST_MEAN=%s" % (f.expTime(), f.getItime(), _mean, _median, _robust_mean))
+                    log.info("Dark frame TEXP=%s , ITIME=%s ,MEAN(not used)=%s , ROBUST_MEDIAN=%s ROBUST_MEAN=%s" % (f.expTime(), f.getItime(), _mean, _median, _robust_mean))
                 times[counter] = float(f.expTime())
-                counter = counter+1
+                counter = counter + 1
                 file.close()
 
         log.debug("Now fitting the dark model...")

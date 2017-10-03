@@ -31,8 +31,21 @@ import time
 from misc.paLog import log
 import datahandler
 
-ds9_path = os.path.dirname(spawn.find_executable("ds9"))
-xpa_path = os.path.dirname(spawn.find_executable("xpaaccess"))
+
+try:
+    ds9_path = os.path.dirname(spawn.find_executable("ds9"))
+except Exception:
+    msg = "Cannot find DS9 binary. Check your ~/.papirc config file"
+    log.error(msg)
+    raise Exception(msg)
+
+try:
+    xpa_path = os.path.dirname(spawn.find_executable("xpaaccess"))
+except Exception:
+    msg = "Cannot find XPA bin directory. Check your ~/.papirc config file"
+    log.error(msg)
+    raise Exception(msg)
+
 frame_no = 0
 created_frames = 0
 MAX_FRAMES_NO = 10

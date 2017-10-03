@@ -31,11 +31,12 @@ class ColorFormatter(logging.Formatter):
     def color(self, level=None):
         codes = {\
             None:       (0,   0),
-	    'DEBUG':    (1,  32), # green
+	    'DEBUG':    (0,  32), # green
             'INFO':     (0,  33), # yellow
-            'WARNING':  (1,  34), # blue
+            'WARNING':  (0,  34), # blue
             'ERROR':    (1,  31), # red
-            'CRITICAL': (1, 101), # negro, fondo rojo
+            'CRITICAL': (1, 101), # blanco, fondo rojo
+            'RESULT':   (0, 104)  # blanco, fondo cian
             }
         return (chr(27)+'[%d;%dm') % codes[level]
  
@@ -56,6 +57,15 @@ console.setLevel(logging.DEBUG) # here we set the level for console handler
 ## each handler determines which messages that handler will send on.
 console.setFormatter(ColorFormatter('    [%(name)s]: %(asctime)s %(levelname)-8s %(module)s:%(lineno)d: %(message)s'))
 logging.getLogger('PAPI').addHandler(console)
+
+# Add a custom level for result messages
+RESULT_LEVEL_NUM = 60 
+logging.addLevelName(RESULT_LEVEL_NUM, "RESULT")
+def result(self, message, *args, **kws):
+    # Yes, logger takes its '*args' as 'args'.
+    if self.isEnabledFor(RESULT_LEVEL_NUM):
+        self._log(RESULT_LEVEL_NUM, message, args, **kws) 
+logging.Logger.result = result
 
 ## File
 datetime_str = str(datetime.datetime.utcnow()).replace(" ","T")

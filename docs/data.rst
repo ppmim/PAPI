@@ -88,6 +88,8 @@ Next table shows the mapping of extension/quadrant names and detectors:
 Note that the order of the extensions in the FITS file is Q1 (ext. 1), 
 Q2 (ext. 2), Q3 (ext. 3) and Q4 (ext. 4).
 
+.. Note:: The above extension name and order are only valid from version GEIRS-r731M-18 onwards.
+
 
 Headers
 -------
