@@ -110,9 +110,7 @@ def createBPM(input_nlc, output_dir=None, joined=False):
         tmp[p] = 1 
         hdui = fits.ImageHDU(data = tmp, header = None)
         hdui.header.set('EXTNAME', 'Q%d' % iExt)
-        hdui.header.set('DET_ID',  'Q%d' % iExt)
-        #hdui.header.set('EXTNAME', 'SG%d_1' % iExt)
-        #hdui.header.set('DET_ID',  'SG%d' % iExt)
+        hdui.header.set('DET_ID',  'SG%d' % iExt)
         
         
         hdulist.append(hdui)
