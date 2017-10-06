@@ -117,8 +117,8 @@ def collapse_mef_cube(inputfile, out_filename=None):
  
     # Sum each extension
     for ext in range(1,len(f)):
-        hdu = fits.ImageHDU (data = f[ext].data.sum(0), header = f[ext].header)
-        hdu.scale('float32') 
+        hdu = fits.ImageHDU (data = numpy.float32(f[ext].data.sum(0)), header = f[ext].header)
+        #hdu.scale('float32') --> bug con astropy 1.3 !!! 
         out_hdulist.append(hdu)    
     
     # Now, write the new collapsed file
@@ -182,7 +182,7 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     out_hdulist = fits.HDUList()
                    
     prihdu = fits.PrimaryHDU (data = sum, header = header1)
-    prihdu.scale('float32') 
+    #prihdu.scale('float32') bug con astropy 1.3 !!! 
         
     # Updating PRIMARY header keywords...
     prihdu.header.set('NCOADDS', len(new_frame_list))
