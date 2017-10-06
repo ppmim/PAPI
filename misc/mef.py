@@ -163,9 +163,9 @@ class MEF (object):
             height = fits.getval(file, "NAXIS2", ext=1) # 2048
             
             if n_planes > 1:
-                temp = numpy.zeros((n_planes, height*2, width*2), dtype = numpy.float32)
+                temp = numpy.zeros((n_planes, height*2, width*2), dtype = hdulist[1].data.dtype)
             else: #n_planes==1:
-                temp = numpy.zeros((height*2, width*2), dtype = numpy.float32)
+                temp = numpy.zeros((height*2, width*2), dtype = hdulist[1].data.dtype)
                 
             # Since GEIRS-r731M-18 version, new MEF extension naming:
             #    EXTNAME = 'Qi'
@@ -689,7 +689,7 @@ class MEF (object):
                         hdu_i.header.set('CUNIT2', 'deg')
                         
                     # Force BITPIX=-32
-                    prihdu.scale('float32')
+                    #prihdu.scale('float32')
 
                     # Determination of DET_ID(=SGi) and DETSEC;
                     if 'DETXYFLI' in primaryHeader:
@@ -847,8 +847,8 @@ class MEF (object):
                     copy_keyword.remove('EGAIN%d'%det_id)
                     copy_keyword.remove('ENOISE%d'%det_id)
                     # Append new HDU to MEF
-                    # Force BITPIX=-32
-                    hdu_i.scale('float32')
+                    # Force BITPIX=-32 (gives error under astropy 1.3.3)
+                    #hdu_i.scale(type='float32', bzero=0, bscale=1.0)
                     tmp_hdus.append(hdu_i)
                     ##out_hdulist.append(hdu_i)
                     ##out_hdulist.verify('ignore')
@@ -1107,7 +1107,7 @@ class MEF (object):
                         detflipxy = 0
 
                     # Force BITPIX=-32
-                    prihdu.scale('float32')
+                    #prihdu.scale('float32')
                     # Default --> DETROT90=2, DETXYFLI=0
                     if 'DETROT90' in primaryHeader:
                         log.debug("Found DETROT90=%s in header"%primaryHeader['DETROT90'])
