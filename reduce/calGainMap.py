@@ -424,9 +424,7 @@ class GainMap(object):
             fo.append(prihdu)
             # Add each extension
             for chip in range(0, nExt):
-                hdu = fits.ImageHDU(data=gain[chip], header=myflat[chip + 1].header)
-                hdu.scale('float32') # important to set first data type ??
-                #hdu.header.update('EXTVER',1)
+                hdu = fits.ImageHDU(data=gain[chip].astype('float32'), header=myflat[chip + 1].header)
                 fo.append(hdu)
                 del hdu
         else:
