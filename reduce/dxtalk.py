@@ -285,8 +285,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     
             
     hdu = fits.PrimaryHDU()
-    hdu.scale('float32') # important to set first data type
-    hdu.data = data_out
+    hdu.data = data_out.astype('float32')
     hdulist = fits.HDUList([hdu])
     
     hdr0 = fits.getheader(in_image)
@@ -459,8 +458,7 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
     
             
     hdu = fits.PrimaryHDU()
-    hdu.scale('float32') # important to set first data type
-    hdu.data = data_out
+    hdu.data = data_out.astype('float32')
     hdulist = fits.HDUList([hdu])
     
     hdr0 = fits.getheader(in_image)
@@ -563,8 +561,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     ### write FITS ###
     
     hdu = fits.PrimaryHDU()
-    hdu.scale('float32') # important to set first data type
-    hdu.data = data_out
+    hdu.data = data_out.astype('float32')
     hdulist = fits.HDUList([hdu])
     
     hdr0 = fits.getheader(in_image)
