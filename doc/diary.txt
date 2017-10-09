@@ -8356,7 +8356,13 @@ $pip install --upgrade astropy
 
 De esta forma no hay que modificar PAPI (workarounds) para solucinar el problema.
 
+desactives el modo "local" de Python, basta que corras PAPI en una shell con la variable  PYTHONNOUSERSITE=NO, por ejemplo:
 
+    $export PYTHONNOUSERSITE=NO
+
+El modo local se vuelve a activar borrando dicha variable:
+
+    $unset  PYTHONNOUSERSITE
 Yo pruebo a crearme un VE en aida40148, pero al actulizar numpy me da un error por una dependencia de CBLAS:
 
 multiarray.so: undefined symbol: cblas_sgemm
@@ -8370,6 +8376,79 @@ modifico mainQL.py para solucionar el bug.
 c = coord.SkyCoord(ra=ra, dec=dec, frame='icrs', unit=u.deg)
 
 
+03-Oct-2017
+-----------
+- Modificación de applyDarkFlat para que obligue a tener una 
+opción (grab / fix) para el caso de aplicar una BPM, que se puede hacer sin
+que se haga/proporcione dark/flat-field.
+Esta actualización la hago en panic@panic22 y en panic@panic1, pero no en obs22@panic22,
+pues conlleva muchos más cambio (versiones anteriores) que pueden implicar 
+algún problema colateral y dejar de funcionar durante la observación en CAHA.
+
+
+- A raiz de lo anterior, modifico el fichero mBPM_LIR_01.01.mef.fits para que 
+tenga los nombre de extensiones correctos (EXTNAME) en el header, pues si no
+applyDarkFlat no puede usarlo (ver mail de G.Bergond de 29-Sep-2017).
+Lo actualizo (mBPM_LIR_01.02.mef.fits) en panic1 y panic22.
+
+
+04-Oct-2017
+-----------
+- Actualizao la versión 'stable' después de hacer un merge y la subo a Github y a
+https://bitbucket.org/ppmime/papi.
+Antes tuve que borrar los ficheros en cache:
+
+git filter-branch --index-filter 'git rm -r --cached --ignore-unmatch Calibs/*' HEADER_SUFFIX
+
+pues me daba error con los .FITS (aunque estaban borrados de dicha rama 'stable')
+al ser demasaido grandes para Github/Bitbucket.
+
+- En panic@panic1 instalo astropy1.3.3 en modo --user para que no interfiera con
+la instalación del sistema e ir probando PAPI con dicha versión:
+
+>python setup.py build
+>python setup.py install --user
+
+NOTA: para desactivar el modo "local" de Python, basta que corras PAPI en una 
+shell con la variable  PYTHONNOUSERSITE=NO, por ejemplo:
+
+    $export PYTHONNOUSERSITE=NO
+
+El modo local se vuelve a activar borrando dicha variable:
+
+    $unset  PYTHONNOUSERSITE
+
+    
+
+- Me pongo a depurar el problema que le dió a Matilde con astropy1.3 y PAPI:
+
+[PAPI]: 2017-10-04 17:32:33,986 ERROR    collapse:65: Some error collapsing MEF cube: bad operand type for unary -: 'NoneType'
+[PAPI]: 2017-10-04 17:32:33,991 ERROR    reductionset:2410: [reduceSet] Error, cannot reduce sequence : 
+ ['/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0001.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0002.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0003.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0004.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0005.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0006.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0007.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0008.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0009.fits', '/data1/PANIC/2015-11-29/Martin_NGC6888_2015_11_29_0010.fits'] 
+
+ 
+ ==> Parece que el problema está en hdu.scale('float32')
+ 
+ http://voplus.obspm.fr/apericubes/scripts/fits2fits.py
+ 
+ 
+05-Oct-2017
+-----------
+- Modificado temporalmente linea 120 de collapse.py
+
+06-Oct-2017
+-----------
+
+- Modifico mef.py para quen no use hdu.scale() debido al bug que tiene astropy1.3.3
+Notifico dicho bug en astropy y me dicen que está resuelto en astropy2.x;  intento
+instalar astropy2.0.x, pero antes tengo que actualizar numpy a > 1.9, pero me da un error
+con cblas_sgemm, así que lo dejo de momento y modifico collapse.py para evitar
+el uso de hdu.scale()
+
+09-Oct-2017
+-----------
+- Termino la modificación de PAPI eliminando los hdu.scale("float32") para que
+sea compatible con astropy1.3.x, aunque en astropy2.0 ya se ha solucionado el bug.
 
 
 
