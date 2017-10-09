@@ -444,8 +444,6 @@ class ApplyDarkFlat(object):
                     # Now, apply BPM
                     if self.__bpm != None:
                         if sci_data.shape != bpm_data.shape:
-                            print "SCI = ",sci_data.shape
-                            print "BPM = ",bpm_data.shape
                             log.error("Source data and BPM do not match image shape")
                             raise Exception("Source data and BPM do not match image shape")
                         
