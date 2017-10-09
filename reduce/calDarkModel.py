@@ -237,20 +237,18 @@ class MasterDarkModel(object):
         prihdu.header.add_history('Dark model based on %s' % framelist)
         prihdu.header.add_history('Plane 0: bias ; Plane 1: dark current')
         
-        if f_n_extensions>1:
+        if f_n_extensions > 1:
             prihdu.header.set('EXTEND', True, after = 'NAXIS')
             prihdu.header.set('NEXTEND', f_n_extensions)
             prihdu.header.set('FILENAME', self.__output_filename)
             hdulist.append(prihdu)
             for i_ext in range(0, f_n_extensions):
                 hdu = fits.PrimaryHDU()
-                hdu.scale('float32') # important to set first data type
-                hdu.data = fit.reshape(2, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :]
+                hdu.data = fit.reshape(2, f_n_extensions, naxis1, naxis2)[:, i_ext, :, :].astype('float32')
                 hdulist.append(hdu)
                 del hdu
         else:
-            prihdu.scale('float32') # important to set first data type
-            prihdu.data = fit.reshape(2, 1, naxis1, naxis2)[:, 0, :, :]
+            prihdu.data = fit.reshape(2, 1, naxis1, naxis2)[:, 0, :, :].astype('float32')
             hdulist.append(prihdu)
          
         
