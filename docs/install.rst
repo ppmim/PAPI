@@ -18,7 +18,7 @@ are required:
 
     * `NumPy <http://numpy.scipy.org/>`_ (> v1.6)
     * `SciPy <http://www.scipy.org>`_ (> v0.12.2)
-    * `Astropy <http://www.astropy.org/>`_ (> v0.3.1)
+    * `Astropy <http://www.astropy.org/>`_ (> v0.3.1, v2.x not tested)
     * `Matplotlib <http://matplotlib.org/>`_ (> v1.3.0)
     * `PyQt4 <http://www.riverbankcomputing.co.uk/software/pyqt/download>`_
     * `IRAF <http://iraf.noao.edu/>`_ with STSDAS and MSCRED (v2.16)

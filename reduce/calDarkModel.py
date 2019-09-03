@@ -204,6 +204,8 @@ class MasterDarkModel(object):
         fit = numpy.polynomial.polynomial.polyfit(times, 
                             temp.reshape(len(times), naxis1 * naxis2 * f_n_extensions), deg=1)
 
+        log.debug("Fitting finished, now some stats and save results")
+
         # Get the median value of the dark current                 
         median_dark_current = robust.r_nanmedian(fit[1])
         median_bias = robust.r_nanmedian(fit[0])

@@ -138,7 +138,7 @@ def getWCSPointingOffsets(images_in,
 
       
       # Very important the pixel scale in order to find out good offsets values !!
-      pix_scale = 0.45
+      pix_scale = 0.233
       # Init variables
       i = 0 
       offsets_mat = None
@@ -171,8 +171,8 @@ def getWCSPointingOffsets(images_in,
       try:
             ref = datahandler.ClFits(ref_image)
             # If present, pix_scale in header is prefered
-            pix_scale = ref.pixScale
-            print "PIXSCALE = ",pix_scale
+            pix_scale = 0.233 # ref.pixScale
+            print "-->PIXSCALE = ",pix_scale
             ra0 = ref.ra    
             dec0 = ref.dec
             log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f" % (ref_image, ra0, dec0, pix_scale))
