@@ -4,7 +4,7 @@
 
 export QT_GRAPHICSSYSTEM=native
 
-pyuic4 panicQL.ui > panicQL.py
-pyrcc4 -o panicQL_resources_rc.py panicQL_resources.qrc
+pyuic5 panicQL.ui > panicQL.py
+pyrcc5 -o panicQL_resources_rc.py panicQL_resources.qrc
 
 python runQL.py  -c ../config_files/papi.cfg

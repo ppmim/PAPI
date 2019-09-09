@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright (c) 2008-2015 IAA-CSIC  - All rights reserved. 
+# Copyright (c) 2008-2019 IAA-CSIC  - All rights reserved. 
 # Author: Jose M. Ibanez. 
 # Instituto de Astrofisica de Andalucia, IAA-CSIC
 #
@@ -116,15 +116,18 @@ from iraf import mscred
 # Multiprocessing
 from multiprocessing import Process, Queue
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import QString, QSize
-from PyQt4.QtCore import QTimer
-from PyQt4.QtGui import QFileDialog
-from PyQt4.QtGui import QTreeWidgetItem
-from PyQt4.QtGui import QTreeWidgetItemIterator
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QCursor
-from PyQt4.QtGui import *
+#from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets, QtGui, uic
+#from PyQt4.QtCore import QString, QSize
+from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QTreeWidgetItem
+from PyQt5.QtWidgets import QTreeWidgetItemIterator
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import *
 
 
 import commissioning.runStarfocus as focus
@@ -178,11 +181,18 @@ copy_reg.pickle(types.MethodType,
 #-------------------------------------------------------------------------------
 
 
-from PyQt4 import QtCore, QtGui, uic
+# from PyQt4 import QtCore, QtGui, uic
 
-#compile on-the-fly the .ui file
-form_class, base_class = uic.loadUiType('panicQL.ui')
+# get the directory of this script
+path = os.path.dirname(os.path.abspath(__file__))
 
+# compile on-the-fly the .ui file
+form_class, base_class = uic.loadUiType(os.path.join(path,
+                                                     'UI/panicQL.ui'))
+
+# set locale
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+locale.setlocale(locale.LC_NUMERIC, 'C')
 
 class MainGUI(QtGui.QMainWindow, form_class):
     def __init__(self, source_dir="/tmp/data", output_dir="/tmp/out", 

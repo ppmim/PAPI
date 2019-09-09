@@ -24,7 +24,7 @@
 #
 # runQL.py
 #
-# Last update 25/Jul/2012
+# Last update 09/Sep/2019
 #
 ################################################################################
 
@@ -49,12 +49,13 @@ import shutil
 import tempfile
 import dircache
 
-#Log
+# Log
 #import misc.paLog
 from misc.paLog import log    
 
-#PAPI packages
-from PyQt4 import QtCore, QtGui
+# PAPI packages
+# from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets, QtGui, uic
 
 # If ~/iraf/focus_seq.txt exists, QL fails because it try to launch iraf.obsutil.starfocus() 
 try:
@@ -157,3 +158,4 @@ def main(arguments = None):
 ######################################################################
 if __name__ == "__main__":
     sys.exit(main())
+
