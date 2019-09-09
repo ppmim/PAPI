@@ -8451,27 +8451,148 @@ el uso de hdu.scale()
 sea compatible con astropy1.3.x, aunque en astropy2.0 ya se ha solucionado el bug.
 
 
+03/04-Sep-2019
+-----------
+- Comienzo de migración PAPI a openSUSE15.1 con objeto de crear luego
+una version para el nuevo detector 4kx4k.
+
++ Creo una MV en udit43 con openSUSE15.1-64bit:
+
+1. La creo en udit22 con VirtualBox y la iso correspondiente
+2. Copio el .vdi a udit43
+3. Creo una MV con el .vdi en udit43 y VBox
+   (yo realmente la cree con VBoxManage createvm siguiendo el ejemplo:
+
+    https://www.perkin.org.uk/posts/create-virtualbox-vm-from-the-command-line.html
+   )
+4. Una vez creada la MV, creamos el Box:
+
+vagrant package --base openSUSE15.1-64bit --output openSUSE15.1-64bit.box
+
+Nota: la “base” ELT-Dev1 corresponde con el nombre de una MV que ya esté definida en VBox; para ver los nombres de las máquinas definidas en VBox, VBoxManage list vms; si la copiamos de otro VBox, podemos importarla/registrarla con: VBoxManage registervm /full/path/to/.vbox/file
+
+
+5. Añadimos el Box a Vagrant:
+
+vagrant box add --name=openSUSE15.1-64bit  /home/osn/openSUSE15.1-64bit.box
+
+6. Inicializamos
+
+vagrant init
+
+7. Editamos el Vagrantfile creado con el ‘init’ y añadimos 
+
+    config.vm.box=openSUSE15.1-64bit
+    config.vm.network "public_network"
+      
+    config.ssh.username = "panic"
+    config.ssh.password = "uPanic1"
+    config.ssh.forward_x11 = true
+
+
+8. vagrant up
+
+
+04-Sep-2019
+-----------
+- Comienzo la instalación de PAPI y TODAS sus dependencias !!!, en principio 
+para Python2.
+Cuando voy a instalar PyRAF, veo que desde el 1st-Oct-2019 lo van de dejar
+de soportar en STSCI, y recomiendas Astroconda.
+
+- Instalación de Astroconda:
+
+
+1. Instalar Miniconda2
+
+Download and run .sh file
+
+Al final dice:
+
+If you'd prefer that conda's base environment not be activated on startup, 
+   set the auto_activate_base parameter to false: 
+
+conda config --set auto_activate_base false
+
+Thank you for installing Miniconda2!
+
+2. Instalar astroconda
+
+https://astroconda.readthedocs.io/en/latest/installation.html#configure-astroconda-channel
+
+
+Due to Python 3.x incompatibilities present in several tasks, it is recommended to install IRAF alongside Python 2.7.
+
+
+--> Legacy Software Stack (with IRAF):
+> conda create -n iraf27 python=2.7 iraf-all pyraf-all stsci
+
+#
+# To activate this environment, use
+#
+#     $ conda activate iraf27
+#
+# To deactivate an active environment, use
+#
+#     $ conda deactivate
+
+- Instalación de Montage_v3.3
+
+Aunque el paquete montage ha migrado a v6.0 y MontagePy,
+en primera instancia instalo v3.3
+
+
+06-Sep-2019
+-----------
+- Continuo con la instalación de PAPI; me topo con el problema de PyQt4,
+que no están instalado en astroconda. Lo instento instalar como:
+
+  > conda install -c terradue pyqt4
+
+pero al hacer el import (import PyQt4.core) desde python2.7 me da un SF.
+
+- También tuve que modificar el fichero pyuic4 pues apuntaba a un directorio
+erroneo.
+
+- Dado que no puedo instalarlo de forma automática, pruebo a compilar PyQt4:
+
+PyQt-x11-gpl-4.11.4  (la última version PyQt-X11-gpl-4.12.3 da un error de incompatibilidad con sip >=4.19.12)
+
+Tengo que comentar las lineas que chequean el tipo de licencia, pues da un error.
+
+Durante el python configure-ng.py da el siguiente error:
+
+"Generating the C++ source for the QtGui module...
+Error: Unable to create the C++ code."
+
+
+09-Sep-2019
+-----------
+- Con objeto si Anaconda2 me deja/instala PyQt4 para Python2, instalo
+Anaconda2:
+
+> /home/panic/anaconda2/bin/conda init
+
+
+Instalo de nuevo PyQt4:
+
+> conda install -c terradue pyqt4
+
+y al probar de nuevo:
+>>> import PyQt4.QtCore
+Segmentation fault (core dumped)
+
+>>> from PyQt4 import Qt
+Segmentation fault (core dumped)                    
+
+- Decido aparcar de momento el tema de PyQt4 (todo indica que es un problema
+de incompatibilidad de SIP y PyQt4), y que habrá que portar a PyQt5 el QL !!.
+
+- Me pongo con el resto de paquetes necesarios:
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    
 
 Tratamiento NaNs
 ----------------

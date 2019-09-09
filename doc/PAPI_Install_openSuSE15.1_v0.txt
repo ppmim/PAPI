@@ -1,195 +1,57 @@
 ========================================
 PANIC SOFTWARE INSTALLATION INSTRUCTIONS 
 ========================================
-21.May.2013
+3.Sep.2019
 
 The next are the installation instructions for the PANIC software on the
-openSuSE 12.2-64 bit
-
- 
-***********
-** GEIRS **
-***********
-Requirements
-------------
-
-*) sudo zypper install readline5
+openSuSE 15.1-64 bit
 
 
-*) system setu
-root> echo 134217728  > /proc/sys/kernel/shmmax
-
-From Clemens:
-"""
-I needed to use as root:
-- install gnuplot ==> sudo zypper install gnuplot
-- set /proc/sys/kernel/shm* to larger sizes
-- set kernel.shm* in /etc/sysctl.conf to get correct shm-setting after a reboot:
-
-kernel.shmall = 128000000000
-kernel.shmmax = 4000000000
-kernel.shmseg = 40960
-
-
-- install /usr/src/PlxLinux[_v6.50]
-"""
-
-Tras email con RM el 3-Feb-2014, los valores mas adecuados serían:
-
-kernel.shmall = 15728640   # 60 GB
-kernel.shmmax = 4294967296  # 4 GB
-kernel.shmseg = 40960
-
-y lo más importante, CAMSHMSZ en GEIRS/scripts/GENERIC:
-
-setenv CAMSHMSZ `cat /proc/meminfo | fgrep MemTotal | awk '{printf "%d",$2/3072}'` 
-
-
-
-
-* after launch GEIRS (start_panic_new), create next empty file:
-
-    ~/tmp/fitsheader_panic.txt  (ESTO YA NO ES NECESARIO, ahora usamos geirsPhduAdd.panic !!!)
-
-
-* Actualizar el fichero ~/GEIRS/QueueFiles para que escriba el fichero de log para el QL:
-
-
-
-#!/bin/bash
-#
-# removing and or adding luci instrument lab-fits to fits-data-file
-#
-#
-echo `date +%FT%H:%M:%S` $1 $2 >> ~/tmp/fitsGeirsWritten
-#modify_fits_hdr -v -a ~/tmp/fitsheader_panic.txt $1 >>~/GEIRS/log/add_panic_fits.log
-export ret=$?
-if [ $ret -eq 0 ]; then
-    echo `date '+%Y-%m-%d_%Hh%Mm%S'` $1   >>~/tmp/fitsfiles.corrected
-else
-    echo `date '+%Y-%m-%d_%Hh%Mm%S'` "ERROR $ret in modifying fits-header of $1"  >>~/tmp/fitsfiles.corrected
-fi
-exit $ret
-
-
-
-
-
-* Remove  ~/tmp/irmotor_lfpos.panic for simulation mode ???
-
-*) geirs2Panic 
-
---
-Install external packages first:
-  - cfitsio from http://heasarc.gsfc.nasa.gov/fitsio/
-  - CCfits from http://heasarc.gsfc.nasa.gov/fitsio/CCfits/
-
-cd src
-
-Edit Makefile to have the compiler and linker find the associate
-headers and libraries.
-
-Type
-    make
-
-Move the executable geirs2Panic according to your PATH
-or link it to a directory so your shell will find it.
-
-R. J. Mathar, www.mpia.de/~mathar, 2012-10-23
---
-
-wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio3310.tar.gz
-wget http://heasarc.gsfc.nasa.gov/fitsio/CCfits/CCfits-2.4.tar.gz
-wget http://www.mpia-hd.mpg.de/~mathar/progs/geirs2Panic.tar.gz
-
-Note: 
-----
-On openSuSE12.2 I had to add the lines
-
-#include <unistd.h>
-
-to heade files in order to compile the sources.
-
- 
-********
-** OT **
-********
-
-1-Java Development Kit 7
-========================
-- As root, you must download and install the next package:
-
-http://download.oracle.com/otn-pub/java/jdk/7u1-b08/jdk-7u1-linux-x64.rpm
-
-
-2-NetBeans IDE 7.0.1
-====================
-- It is not required for the execution of the OT, but for the debuging and development is advised.
-- As root or panic user, you must download and install the next package:
-http://download.netbeans.org/netbeans/7.0.1/final/bundles/netbeans-7.0.1-ml-javase-linux.sh
-
-
-3-OT Sources
-============
-
-> svn co svn://arch.osn.iaa.es/PANIC/PANICObservationTool OT
-
-
-**************
-** PIPELINE **
-**************
+*******************
+** PAPI PIPELINE **
+*******************
 
 0-Some system modules:
 ======================
 zypper install tcl tk  tcl-devel tk-devl python-tk
 zypper install python-sphinx
-zypper install python-qt4-devel
+zypper install python2-qt4-devel
 
 -- summary of zypper install --
-zypper install libreadline5
+#zypper install libreadline5
 zypper install tcl tk  tcl-devel tk-devl python-tk
 zypper install python-sphinx
-zypper install python-qt4-devel
-zypper install python-devel
-zypper install ipython
-zypper install python-numpy python-numpy-devel
-zypper install python-scipy
-zypper install python-matplotlib python-matplotlib-tk
-zypper install python-qt4 
-zypper install libXmu6-32bit
+zypper install python2-qt4-devel
+zypper install python2-devel
+#zypper install ipython (error) --> pip install ipython
+zypper install python2-numpy python2-numpy-devel
+zypper install python2-scipy
+zypper install python2-matplotlib python2-matplotlib-tk
+zypper install python2-qt4 
+zypper install libXmu6-32bit ==> MUY IMPORTANTE PARA ejecturar IRAF-32bit en la 
+máquina con 64-bit !!!
+
 --
 
-1-Python v2.7.3 : (default in openSuSE12.2)
+1-Python v2.7.14 : (default in openSUSE15.1)
 ===============
 
-1.1 python-devel 
+1.1 python2-devel 
 
 > zypper install python-devel
 
-1.2 IPython 0.12.1 (optional)
+1.2 IPython 7.8.0 (optional)
 
-> zypper install ipython
-
-
-1B-Python v2.7.x : (if no default in openSuSE12.x)
-=================
-Python 2.7 is mandatory because a bug with PyRAF routines (imcombine, imstats, ...)
-when executed by the multiprocessing module (Pool.apply_async, map_async, ...)
-
-1.1 wget http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz
-
->tar -xvzf
->mkdir /usr/local/python273
->cd python-src-dir
->./configure --prefix=/usr/local/python273
->make install
+> pip install ipython
 
 1.2 Python Modules
 -------------------
 - Then, after install the new version of Python interpreter, we must install
 again all the python modules, ie:
 
- * IPython 0.12.1 (optional)
+ * astropy-2.0.3  (zypper install python2-astropy)
+ ( si hacemos pip install astropy nos instala astropy 3.x para python3)
+ * IPython 7.8.0 (optional)
  * numpy > 1.6
  * scipy
  * matplotlib
@@ -210,13 +72,18 @@ A) Binary packages
 2.1 SExtractor v2.8.6: from astromatic get rpm for 64 bit
 ---------------------------------------------------------
 - Download from astromatic.net -->
-http://www.astromatic.net/download/sextractor/sextractor-2.8.6-1.x86_64.rpm
+https://www.astromatic.net/download/sextractor/sextractor-2.19.5-1.x86_64.rpm
 
 > rpm -ivl sextractor-2.8.6-1.x86_64.rpm
 
 
 2.2 SCAMP v1.7.0 
 ----------------
+
+> zypper install plplot
+> zypper install fftw3-devel
+> zypper install cblas-devel
+
 
 - Hard dependende of libplplot9. We have to get libplplot9 rpm build for
   OpenSuSE from :
@@ -347,9 +214,9 @@ PLPLOT para SCAMP (para generar ficheros png's):
 
 2.3 SWARP v2.19.1 : 
 ------------------
-- Download from astromatic.net --> http://www.astromatic.net/download/swarp/swarp-2.19.1-1.x86_64.rpm
+- Download from astromatic.net --> https://www.astromatic.net/download/swarp/swarp-2.38.0-1.x86_64.rpm
 
-> rpm -ivl swarp-2.19.1-1.x86_64.rpm
+> rpm -ivl swarp-2.38.0-1.x86_64.rpm
 
 
 
@@ -359,13 +226,13 @@ PLPLOT para SCAMP (para generar ficheros png's):
 ===============
 * With zypper:
 
-> zypper install python-numpy python-numpy-devel
+> zypper install python2-numpy python2-numpy-devel
 
 
 
 4.Scipy v0.10.1 (default in openSUSE-12.2) 
 ===============
-> zypper install python-scipy
+> zypper install python2-scipy
 
 - Currently only used in applyDistort.py and third party software 'cosmics', 
 but  not required for PAPI.
@@ -387,15 +254,15 @@ BLAS/Lapack
 =====================
 * With zypper:
 
-openSuSE12.2 --> zypper install python-matplotlib python-matplotlib-tk
+openSuSE15.1 --> zypper install python2-matplotlib python2-matplotlib-tk
 
 
 
 7. PyQt4 (default in openSUSE12.2)
 ========
 
-zypper install python-qt4 
-zypper install python-qt4-devel (optional, pero necesario para pyuic4)
+zypper install python2-qt4 
+zypper install python2-qt4-devel (optional, pero necesario para pyuic4)
 (The following NEW packages are going to be installed:
   python-qt4-devel python-qt4-utils python-sip-bin python-sip-devel)
   
@@ -448,7 +315,7 @@ ATpy
 > python setup.py install
 
 
-12. STSCI_PYTHON
+12. STSCI_PYTHON  --> Astroconda !!!
 ================
 
 
