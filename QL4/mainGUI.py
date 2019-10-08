@@ -128,6 +128,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QMessageBox
 
 
 import commissioning.runStarfocus as focus
@@ -234,7 +235,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.papi_home = os.environ['PAPI_HOME']
             if self.papi_home[-1]!='/':
                 self.papi_home+='/'
-        except Exception,e:
+        except Exception as e:
             log.error("Error, variable PAPI_HOME not defined.")
             raise e
 
@@ -245,12 +246,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Check we have R/W access to temp and out directories
         if not os.access(self.m_tempdir, os.R_OK|os.W_OK):
             log.error("Directory %s has not R/W access",self.m_tempdir)
-            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access")
-                                      .arg(self.m_tempdir)))
+            self.logConsole.error("[WARNING] Directory %s has not R/W access" % self.m_tempdir)
         if not os.access(self.m_outputdir,os.R_OK|os.W_OK):
             log.error("Directory %s has not R/W access",self.m_outputdir)
-            self.logConsole.error(str(QString("[WARNING] Directory %1 has not R/W access")
-                                      .arg(self.m_outputdir)))
+            self.logConsole.error("[WARNING] Directory %s has not R/W access" % self.m_outputdir)
             
     
         self.m_frameList_dark = ''
@@ -390,7 +389,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """This method initializes some values in the GUI and in the members variables"""
 
         ## Some signal-connections
-        _fromUtf8 = QtCore.QString.fromUtf8
+        _fromUtf8 = lambda s: s
         QtCore.QObject.connect(self.listView_dataS, 
                                QtCore.SIGNAL(_fromUtf8("itemClicked(QTreeWidgetItem*,int)")), 
                                self.selected_file_slot)
@@ -408,10 +407,10 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.lineEdit_calibsD.setText(self.ext_calib_dir)
         
         ## Init calibration files
-        self.lineEdit_masterDark.setText(QString(self.m_masterDark))
-        self.lineEdit_masterFlat.setText(QString(self.m_masterFlat))
-        self.lineEdit_masterMask.setText(QString(self.m_masterMask))
-        self.lineEdit_masterNLC.setText(QString(self.m_masterNLC))
+        self.lineEdit_masterDark.setText(self.m_masterDark)
+        self.lineEdit_masterFlat.setText(self.m_masterFlat)
+        self.lineEdit_masterMask.setText(self.m_masterMask)
+        self.lineEdit_masterNLC.setText(self.m_masterNLC)
         
         
         #self.listView_dataS.headerItem().resizeSection(3, 10)
@@ -432,7 +431,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             self.inputsDB = datahandler.dataset.DataSet(None, instrument)
             self.inputsDB.createDB()
-        except Exception,e:
+        except Exception as e:
             log.error("Error while INPUT data base initialization: \n %s"%str(e))
             raise Exception("Error while INPUT data base initialization")
         
@@ -442,7 +441,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.outputsDB.createDB()
             # Insert/load the external calibration files
             self.load_external_calibs(self.ext_calib_dir)
-        except Exception,e:
+        except Exception as e:
             log.error("Error during OUTPUT data base initialization: \n %s"%str(e))
             raise Exception("Error during OUTPUT data base initialization")    
         
@@ -518,7 +517,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             if fromOutput: inserted = self.outputsDB.insert(filename)
             else: inserted = self.inputsDB.insert(filename)
-        except Exception,e:
+        except Exception as e:
             log.error("Error while inserting file %s"%filename)
             self.logConsole.warning("Error inserting file [%s]"%(str(e)))
             raise e
@@ -625,8 +624,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     #QMessageBox.critical(self, 
                     #                     "Error", 
                     #                     "Error, cannot find the master calibration files")
-            except Exception, e:
-                QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
+            except Exception as e:
+                QMessageBox.critical(self, "Error", "Error while processing file.  %s" %str(e))
                 #self.m_processing = False
                 #QApplication.restoreOverrideCursor()
                 raise e    
@@ -649,7 +648,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     
                 else:
                     log.debug("Cannot find the previous file to subtract by")
-            except Exception,e:
+            except Exception as e:
                 QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
                 #self.m_processing = False
                 #QApplication.restoreOverrideCursor()
@@ -658,7 +657,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         elif self.checkBox_subSky.isChecked():
             try:
                 self.subtract_nearSky_slot(True)
-            except Exception,e:
+            except Exception as e:
                 self.m_processing = False # ANY MORE REQUIRED ?
                 raise e    
         
@@ -934,7 +933,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.m_sourcedir = "/data1/PANIC/" + currentDate
             if not os.path.exists(self.m_sourcedir):
                 res = QMessageBox.information(self, "Info", 
-                                            QString("Current INPUT night directory does not exist. Do you want to create it ?"), 
+                                            "Current INPUT night directory does not exist. Do you want to create it ?",
                                             QMessageBox.Ok, QMessageBox.Cancel)
                 if res == QMessageBox.Ok:
                     os.makedirs(self.m_sourcedir)
@@ -954,7 +953,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.m_outputdir = "/data2/out/" + currentDate
             if not os.path.exists(self.m_outputdir):
                 res = QMessageBox.information(self, "Info", 
-                                            QString("Current OUTPUT night directory does not exist. Do you want to create it ?"), 
+                                            "Current OUTPUT night directory does not exist. Do you want to create it ?",
                                             QMessageBox.Ok, QMessageBox.Cancel)
                 if res == QMessageBox.Ok:
                     os.makedirs(self.m_outputdir)
@@ -987,7 +986,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             self.checkBox_outDir_autocheck.setChecked(False)
             # Stop the DataCollector timer
             self.timer_dc.stop()
-            print "*** Stopped DataCollector ***"
+            print("*** Stopped DataCollector ***")
             
     def checkOutDir_slot(self):
         """Called when check-button for Output dir is clicked"""
@@ -1022,7 +1021,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         self.logConsole.error("No processing results obtained")
                     elif type(r) == type(list()):
                         if len(r) == 0 :
-                            self.logConsole.info(str(QString("No value returned")))
+                            self.logConsole.info("No value returned")
                         else:
                             str_list = ""
                             #print "FILES CREATED=",self._task_info._return
@@ -1035,7 +1034,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                     # Show PDF
                                     try:
                                         display.showPDF(i_file)
-                                    except Exception, e:
+                                    except Exception as e:
                                         msg = "Cannot display PDF file, cannot find PDF client mupdf"
                                         self.logConsole.info(msg)
                                         log.debug(msg + str(e))
@@ -1060,19 +1059,18 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                     log.debug("Updating DB...")
                                     self.outputsDB.insert(i_file)
                                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                            self.logConsole.debug(str(QString("%1 file/s created : \n %2")
-                                                      .arg(len(r))
-                                                      .arg(str(str_list))))
-                    elif type(r)==type("") and os.path.isfile(r):
-                        self.logConsole.debug(str(QString("New file %1 created ")
-                                                  .arg(r)))
+                            self.logConsole.debug("%s file/s created : \n %s"
+                                                      %(len(r), str(str_list)))
+                    elif type(r) == type("") and os.path.isfile(r):
+                        self.logConsole.debug("New file %s created " % r)
+
                         if r.endswith(".fits"):
                             if self.getDisplayMode() >= 2: display.showFrame(r)
                         elif r.endswith(".pdf"):
                             # Show PDF
                             try:
                                 display.showPDF(r)
-                            except Exception, e:
+                            except Exception as e:
                                 msg = "Cannot display PDF file, cannot find PDF client mupdf"
                                 self.logConsole.info(msg)
                                 log.debug(msg + str(e))
@@ -1094,7 +1092,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         self.logConsole.error("No processing results obtained")
                 else:
                     self.logConsole.warning("Nothing returned; processing maybe failed !")
-            except Exception,e:
+            except Exception as e:
                 raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:
                 # Anyway, restore cursor
@@ -1122,7 +1120,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     if self._task_info._return!=None:
                         if type(self._task_info._return)==type(list()):
                             if len(self._task_info._return)==0 :
-                                self.logConsole.info(str(QString("No value returned")))
+                                self.logConsole.info("No value returned")
                                 #QMessageBox.information(self, "Info", "No value returned")
                             else:
                                 str_list = ""
@@ -1149,19 +1147,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                             file.endswith(".fit")):
                                             self.outputsDB.insert(file)
                                     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                self.logConsole.debug(str(QString("%1 files created: \n %2")
-                                                          .arg(len(self._task_info._return))
-                                                          .arg(str(str_list))))
+                                self.logConsole.debug("%s files created: \n %s" % (len(self._task_info._return), str(str_list)))
+
                                 QMessageBox.information(self,"Info", 
-                                                        QString("%1 files created: \n %2")
-                                                        .arg(len(self._task_info._return))
-                                                        .arg(str(str_list)))
-                        elif type(self._task_info._return)==type("") and \
+                                                        "%s files created: \n %s" % (len(self._task_info._return), str(str_list)))
+                        elif type(self._task_info._return) == type("") and \
                             os.path.isfile(self._task_info._return):
-                            self.logConsole.debug(str(QString("New file %1 created.")
-                                                      .arg(self._task_info._return)))
+                            self.logConsole.debug("New file %s created." % self._task_info._return)
                             if self._task_info._return.endswith(".fits"):
-                                if self.getDisplayMode()>=2:
+                                if self.getDisplayMode() >= 2:
                                     display.showFrame(self._task_info._return)
                             # Keep updated the out-DB for future calibrations
                             # See comments above
@@ -1177,18 +1171,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             # Cannot identify the type of the results...for sure
                             # something was wrong...
                             # Anycase, we show it !
-                            self.logConsole.info(str(QString("Value returned : %1")
-                                                      .arg(str(self._task_info._return))))
+                            self.logConsole.info("Value returned : " % str(self._task_info._return))
+
                             #self.logConsole.error("No processing results obtained !")
                     else:
                         self.logConsole.info("Nothing returned !")
                 else:
-                    self.logConsole.error(str(QString("Sequence processing failed \n %1")
-                                              .arg(str(self._task_info._exc))))
+                    self.logConsole.error("Sequence processing failed \n %s" % str(self._task_info._exc))
                     QMessageBox.critical(self, 
                                          "Error", 
-                                         "Error while running task. "+ str(self._task_info._exc))
-            except Exception,e:
+                                         "Error while running task. " + str(self._task_info._exc))
+            except Exception as e:
                 raise Exception("Error while checking_task_info_list: %s"%str(e))
             finally:
                 #Anyway, restore cursor
@@ -1255,28 +1248,26 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # Return the most recently created (according to MJD order)
         if len(master_dark) > 0: 
             self.m_masterDark = master_dark[-1]
-            self.lineEdit_masterDark.setText(QString(self.m_masterDark))
+            self.lineEdit_masterDark.setText(self.m_masterDark)
             texp = self.outputsDB.GetFileInfo(self.m_masterDark)[4]
-            self.lineEdit_masterDark_texp.setText(QString(texp))
+            self.lineEdit_masterDark_texp.setText(texp)
         #else: self.m_masterDark = None
         if len(master_flat) > 0: 
             self.m_masterFlat = master_flat[-1]
-            self.lineEdit_masterFlat.setText(QString(self.m_masterFlat))
+            self.lineEdit_masterFlat.setText(self.m_masterFlat)
             filter = self.outputsDB.GetFileInfo(self.m_masterFlat)[3]
-            self.lineEdit_masterFlat_Filter.setText(QString(filter))
+            self.lineEdit_masterFlat_Filter.setText(filter)
         #else: self.m_masterFlat = None
         if master_bpm: 
             self.m_masterMask = master_bpm
-            self.lineEdit_masterMask.setText(QString(self.m_masterMask))
+            self.lineEdit_masterMask.setText(self.m_masterMask)
         if master_nlc: 
             self.m_masterNLC = master_nlc
-            self.lineEdit_masterNLC.setText(QString(self.m_masterNLC))
-            self.lineEdit_readout_mode.setText(QString("unknown"))
+            self.lineEdit_masterNLC.setText(self.m_masterNLC)
+            self.lineEdit_readout_mode.setText("unknown")
         #else: self.m_masterMask = None
                 
 
-        
-         
     def checkEndObsSequence(self, filename):
         """
         Check if the given filename is the end of an observing sequence (calib or science),
@@ -1543,7 +1534,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                 "FITS files (*.fit*)")
         
         
-        print "FL=", str(filelist.first())
+        print("FL=", str(filelist.first()))
         a = []
         for fs in filelist:
             a.append(str(fs))
@@ -1670,14 +1661,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                             pat_expn = hdu[0].header['PAT_EXPN']
                             pat_nexp = hdu[0].header['PAT_NEXP']
                             ob_name = hdu[0].header['OB_NAME']
-                        except KeyError, ex:
+                        except KeyError as ex:
                             pat_expn = -1
                             pat_nexp = -1
                             ob_name = 'unknown'
                     else:
                         is_ot = False
                         
-            except Exception, e:
+            except Exception as  e:
                 msg = "Error reading file %s " % filename
                 log.error(msg)
                 self.logConsole.error(msg)
@@ -2273,7 +2264,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         try:
             self.processFiles(group_files, interactive=True)
-        except Exception,e:
+        except Exception as e:
             QMessageBox.critical(self, "Error", 
                                  "Error while group data reduction: \n%s"%str(e))
             raise e
@@ -2331,7 +2322,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # in getWCSPointingOffsets().
         try:    
             offsets = off.getWCSPointingOffsets(self.m_popup_l_sel, "/dev/null")
-        except Exception,e:
+        except Exception as e:
             msg = "Error, cannot find out the image offsets. %s"%str(e)
             log.error(msg)
             QMessageBox.information(self, "Info", msg)
@@ -2357,12 +2348,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 mef = misc.mef.MEF([file])
                 res = mef.doJoin(".join.fits", output_dir=self.m_outputdir)[1]
-            except Exception,e:
+            except Exception as e:
                 log.debug("Cannot convert MEF to Single file %s. Maybe it's not a MEF file", str(e))
-                QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file"%(file))
+                QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file" % (file))
             else:
                 line = "File generated: %s"%res
-                self.logConsole.info(QString(str(line)))
+                self.logConsole.info(str(line))
         
         QApplication.restoreOverrideCursor()
                 
@@ -2378,12 +2369,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 mef = misc.mef.MEF([file])
                 res = mef.convertGEIRSToMEF(out_dir=self.m_outputdir)[1]
-            except Exception,e:
+            except Exception as e:
                 log.debug("Cannot convert Single to MEF file %s. Maybe it's not a single file", file)
                 QMessageBox.critical(self, "Error", "Cannot convert Single to MEF file : %s \n Maybe it's not a single file" % (file))
             else:
                 line = "File generated: %s" % res
-                self.logConsole.info(QString(str(line)))
+                self.logConsole.info(str(line))
         
         QApplication.restoreOverrideCursor()
         
@@ -2399,13 +2390,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 mef = misc.mef.MEF([file])
                 res = mef.doSplit(".Q%02d.fits", out_dir=self.m_outputdir)[1]
-            except Exception,e:
+            except Exception as e:
                 log.debug("Cannot split file %s. Maybe it's not a MEF file.", file)
                 QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file" % (file))
                 #self.logConsole.info(QString(str(line)))
             else:
                 line = "File generated: %s" % res
-                self.logConsole.info(QString(str(line)))
+                self.logConsole.info(line)
                 
         QApplication.restoreOverrideCursor()
     
@@ -2422,14 +2413,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 mef = misc.mef.MEF([file])
                 res = mef.splitGEIRSToSimple(out_dir=self.m_outputdir)[1]
-            except Exception, e:
+            except Exception as e:
                 msg = "Cannot split file %s. Maybe it's not a 4kx4k Single file. %s" % (file, str(e))
                 log.debug(msg)
                 QMessageBox.critical(self, "Error", msg)
-                self.logConsole.info(QString(str(msg)))
+                self.logConsole.info(msg)
             else:
                 line = "New file generated: %s" % res
-                self.logConsole.info(QString(str(line)))
+                self.logConsole.info(line)
         
         QApplication.restoreOverrideCursor()
     
@@ -2486,14 +2477,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                          seq_type, 
                                                          overwrite=overwrite, 
                                                          output_dir=self.m_outputdir)
-        except Exception,e:
+        except Exception as e:
             msg = "Cannot create Data Sequece of type [%s]: %s"%(seq_type, str(e))
             log.debug(msg)
             QMessageBox.critical(self, "Error", msg)
-            self.logConsole.info(QString(str(msg)))
+            self.logConsole.info(msg)
         else:
             line = "Files generated: %s"%new_files
-            self.logConsole.info(QString(str(line)))
+            self.logConsole.info(line)
         
         QApplication.restoreOverrideCursor()
     
@@ -2509,14 +2500,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
         for file in self.m_popup_l_sel:
             try:
                 new_file = misc.collapse.collapse([file], out_dir=self.m_outputdir)[0]
-            except Exception,e:
+            except Exception as e:
                 msg = "Cannot split file %s. Maybe it's not a Cube file"%(file, str(e))
                 log.debug(msg)
                 QMessageBox.critical(self, "Error", msg)
-                self.logConsole.info(QString(str(msg)))
+                self.logConsole.info(msg)
             else:
-                line = "File generated: %s"%new_file
-                self.logConsole.info(QString(str(line)))
+                line = "File generated: %s" % new_file
+                self.logConsole.info(line)
         
         QApplication.restoreOverrideCursor()
     
@@ -2543,7 +2534,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                            self._task_info_list, 
                                            self.m_popup_l_sel[0] )
             thread.start()
-        except Exception,e:
+        except Exception as e:
             QMessageBox.critical(self, "Error", 
                                  "Error while Imexam with image %s"%(self.m_popup_l_sel[0]))
             raise e
@@ -2573,7 +2564,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             # It's a sync call, i mean, a blocking call that doesn't return 
             # until is finished
             iraf.imexam(filename) 
-        except Exception,e:
+        except Exception as e:
             log.error("Error while Imexam with image %s",filename)
             raise e
             
@@ -2664,7 +2655,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             if fits.getType()!='MASTER_DARK' or \
                 fits.getType()!='MASTER_DARK_MODEL':
                 res = QMessageBox.information(self, "Info", 
-                                            QString("Selected frame does not look an MASTER DARK.\n Continue anyway?"), 
+                                            "Selected frame does not look an MASTER DARK.\n Continue anyway?",
                                             QMessageBox.Ok, QMessageBox.Cancel)
                 if res == QMessageBox.Cancel:
                     return
@@ -2688,7 +2679,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 fits.getType()!='MASTER_DOME_FLAT' or \
                 fits.getType()!='MASTER_TW_FLAT':
                 res = QMessageBox.information(self, "Info", 
-                                            QString("Selected frame does not look an MASTER FLAT.\n Continue anyway?"), 
+                                            "Selected frame does not look an MASTER FLAT.\n Continue anyway?",
                                             QMessageBox.Ok, QMessageBox.Cancel)
                 if res==QMessageBox.Cancel:
                     return
@@ -2918,7 +2909,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                 self._task_info_list)
                 thread.start()
-            except Exception, e:
+            except Exception as e:
                 QApplication.restoreOverrideCursor() 
                 QMessageBox.critical(self, "Error", 
                                       "Error while creating master Dark. \n"+str(e))
@@ -3012,7 +3003,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     thread = reduce.ExecTaskThread(self._task.createMaster, 
                                                  self._task_info_list)
                     thread.start()
-                except Exception,e:
+                except Exception as e:
                     QApplication.restoreOverrideCursor()
                     msg = "Error creating master Twilight Flat file: %s" % str(e)
                     log.error(msg)
@@ -3049,7 +3040,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                               None, self.m_tempdir)
                     thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
-                except Exception, e:
+                except Exception as e:
                     QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "Error", "Error while creating Gain Map. "+str(e))
                     raise e
@@ -3061,7 +3052,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                               None)
                     thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
-                except Exception, e:
+                except Exception as e:
                     QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "Error", "Error while creating Gain Map. " + str(e))
                     raise e
@@ -3075,7 +3066,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                               None, self.m_tempdir)
                     thread = reduce.ExecTaskThread(self._task.create, self._task_info_list)
                     thread.start()
-                except Exception, e:
+                except Exception as e:
                     QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "Error", "Error while creating Gain Map. " + str(e))
                     raise e
@@ -3135,7 +3126,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 updateconfig = True
                 clean = False
                 sex.run(input_file, updateconfig, clean)
-            except Exception,e:
+            except Exception as e:
                 QMessageBox.critical(self, "Error", "Error while running Sextractor"+str(e))
                 raise e
             else:
@@ -3200,16 +3191,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 my_list = ""
                 for file in near_list:
                     my_list = my_list + file + "\n"
-                    if (file == self.m_listView_item_selected): 
+                    if file == self.m_listView_item_selected:
                         file_n = p
                     else: 
                         p+=1
                 
                 # Ask user validation
                 res = QMessageBox.information(self, "Info", 
-                                              QString("Selected near frames are:\n %1")
-                                              .arg(my_list), 
-                                              QMessageBox.Ok, QMessageBox.Cancel)
+                                        "Selected near frames are:\n %s" % my_list,
+                                        QMessageBox.Ok, QMessageBox.Cancel)
                 if res == QMessageBox.Cancel:
                     return
                      
@@ -3260,7 +3250,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
             thread.start()
         except:
             # Anyway, restore cursor
-            # Although it should be restored in checkLastTask, could happend an exception while creating the class RS,
+            # Although it should be restored in checkLastTask, could happen an
+            # exception while creating the class RS,
             # thus the ExecTaskThread can't restore the cursor
             QApplication.restoreOverrideCursor() 
             QMessageBox.critical(self, "Error", "Error while subtracting near sky")
@@ -3421,9 +3412,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     
                     # Show message with calibrations found
                     # Ask for confirmation
-                    msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(mDark, mFlat, mBPM)
+                    msg = "DARK= %s \n FLAT= %s \n BPM= %s" % (mDark, mFlat, mBPM)
                     resp = QMessageBox.information(self, "Info",
-                        QString("Calibrations found are: \n %1").arg(str(msg)),
+                        "Calibrations found are: \n %s" % msg,
                                      QMessageBox.Ok, QMessageBox.Cancel)
                     if resp==QMessageBox.Cancel:
                         return
@@ -3432,8 +3423,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     log.debug("Source file: %s"%filename)
                     log.debug("Calibrations to use - DARK: %s   FLAT: %s  BPM: %s"%(mDark, mFlat, mBPM))
                     self.logConsole.info("Calibrations to use for file [%s] : "%filename)
-                    self.logConsole.info("+ Dark :%s"%mDark)
-                    self.logConsole.info("+ Flat :%s"%mFlat)
+                    self.logConsole.info("+ Dark :%s" % mDark)
+                    self.logConsole.info("+ Flat :%s" % mFlat)
                     self.logConsole.info("+ BPM (mode=%s) :%s"%(bpm_mode, mBPM))
                     
                     # Note that both master_dark and master_flat and BPM are OPTIONAL
@@ -3453,8 +3444,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         #QMessageBox.critical(self, 
                         #                     "Error", 
                         #                     "Error, cannot find the master calibration files")
-                except Exception, e:
-                    QMessageBox.critical(self, "Error", "Error while processing file.  %s"%str(e))
+                except Exception as e:
+                    QMessageBox.critical(self, "Error",
+                                         "Error while processing file.  %s" % str(e))
                     #self.m_processing = False
                     #QApplication.restoreOverrideCursor()
                     raise e 
@@ -3524,7 +3516,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 else:
                     msg = "Master BPM '%s' does not exist."%master_bpm
                     QMessageBox.critical(self, "Error", msg)
-            except Exception,e:
+            except Exception as e:
                 msg = "Error applying BPM: '%s'"%(str(e))
                 self.logConsole.info(msg)
                 QMessageBox.critical(self, "Error", msg)
@@ -3561,13 +3553,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
                         params = ()
                         log.debug("Inserting in queue the task ....")
                         self._task_queue.put([(func_to_run, params)])
-                    except Exception,e:
+                    except Exception as e:
                         log.error("Error while applying NL model: %s"%str(e))
                         raise e
                 else:
                     msg = "Master NLC '%s' does not exist."%master_nlc
                     QMessageBox.critical(self, "Error", msg)
-            except Exception,e:
+            except Exception as e:
                 msg = "Error applying NLC: '%s'"%(str(e))
                 self.logConsole.info(msg)
                 QMessageBox.critical(self, "Error", msg)
@@ -3612,17 +3604,17 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     # Convert MEF-files to join-files (iraf.starfocus only support that kind of files)
                     try:
                         msg = "Converting MEF files to SEF format..."
-                        self.logConsole.info(QString(str(msg)))
+                        self.logConsole.info(msg)
                         log.debug(msg)
                         mef = misc.mef.MEF(self.m_popup_l_sel)
                         my_files = mef.doJoin(".join.fits", output_dir=self.m_outputdir)[1]
-                    except Exception,e:
+                    except Exception as e:
                         self.logConsole.error("Error convering MEF to SEF format")
                         log.debug("Cannot convert MEF to Single file %s. Maybe it's not a MEF file", str(e))
                         QMessageBox.critical(self, "Error", "Cannot convert MEF to Single file : %s \n Maybe it's not a MEF file"%(file))
                     else:
                         line = "Files SEF files generated: \n%s\n" % my_files
-                        self.logConsole.info(QString(str(line)))
+                        self.logConsole.info(line)
                 else:
                     # We have non-MEF files
                     my_files = list(self.m_popup_l_sel)
@@ -3646,7 +3638,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # Launch IRAF; note that next call is asynchronous, that is,
                 # it returns inmediately after launch IRAF.
                 self.iraf_console_slot(isForFocus=True)
-            except Exception, e:
+            except Exception as e:
                 os.unlink(text_file)
                 log.error("Error, cannot run iraf.obsutil.starfocus(): %s" % str(e))
                 QMessageBox.critical(self, "Error", str(e))
@@ -3715,15 +3707,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                                                                window=detector)
 
                     best_focus, outfile = self._task.eval_serie()
-                    self.logConsole.info(str(QString("Best Focus (mm)= %1 --> File = %2")
-                                            .arg(best_focus)
-                                            .arg(os.path.basename(outfile))))
+                    self.logConsole.info("Best Focus (mm)= %s --> File = %s" % (
+                                            best_focus,
+                                            os.path.basename(outfile)))
                     QApplication.restoreOverrideCursor()
                     
                     #thread = reduce.ExecTaskThread(self._task.eval_serie, 
                     #                                  self._task_info_list)
                     #thread.start()
-                except Exception,e:
+                except Exception as e:
                     # Restore the cursor
                     QApplication.restoreOverrideCursor()
                     msg = "Cannot evaluate focus series: %s"%(str(e))
@@ -3765,13 +3757,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
             values = (iraf.mscstat(images=img,
             fields="image,mean,mode,stddev,min,max", format='yes', Stdout=1))
             #file,mean,mode,stddev,min,max=values[0].split()
-            self.logConsole.info(str(QString("Background estimation :")))
+            self.logConsole.info("Background estimation :")
             for line in values:
                 self.logConsole.info(str(line))
                 #self.logConsole.info(QString("Background estimation MEAN= %1   MODE=%2    STDDEV=%3    MIN=%4         MAX=%5").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
             if self.getDisplayMode() >= 2:
                 display.showFrame(img)
-        except Exception, e:
+        except Exception as e:
             msg = "Something was wrong while computing background image. %s" % str(e)
             self.logConsole.error(msg)
             log.error(msg)
@@ -3823,14 +3815,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
             try:
                 fwhm, std, k, k = cq.estimateFWHM()
                 if fwhm > 0:
-                    self.logConsole.info(str(QString("%1  FWHM = %2 (pixels) std= %3 detector= %4")
-                                             .arg(os.path.basename(ifile))
-                                             .arg(fwhm)
-                                             .arg(std)
-                                             .arg(detector)))
+                    self.logConsole.info("%s  FWHM = %s (pixels) std= %s detector= %s" % (
+                                             os.path.basename(ifile),
+                                             fwhm,
+                                             std,
+                                             detector))
                 else:
                     self.logConsole.error("ERROR: Cannot estimate FWHM of selected image.")           
-            except Exception,e:
+            except Exception as e:
                 self.logConsole.error("ERROR: Cannot estimate FWHM of selected image: %s" % str(e))
                 #raise e
     
@@ -3878,15 +3870,14 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     i = i + 1
                 if (datahandler.ClFits(file).getType()!='SCIENCE'):
                     QMessageBox.critical(self, "Error", 
-                                         QString("File %1 is not a science frame")
-                                         .arg(file))
+                                         "File %s is not a science frame" % file)
                 else:
                     file_list.append(file)
                     view_list +=  file + "\n"
             
             resp = QMessageBox.information(self, "Info", 
-                                         QString("Selected near frames are:\n %1")
-                                         .arg(view_list),
+                                         "Selected near frames are:\n %s" %
+                                         view_list,
                                          QMessageBox.Ok, QMessageBox.Cancel)
             if resp == QMessageBox.Cancel:
                 return
@@ -3900,8 +3891,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             for file in self.m_popup_l_sel:
                 f_type = datahandler.ClFits(file).getType()
                 if f_type != 'SCIENCE' and f_type != 'SKY':
-                    QMessageBox.critical(self, "Error", QString("File %1 is not a science frame")
-                                         .arg(file))
+                    QMessageBox.critical(self, "Error", "File %s is not a science frame" % file)
                     return
                 else: file_list.append(file)
             
@@ -3919,7 +3909,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 #set group_by to 'filter'
                 self.processFiles(file_list, group_by='filter', 
                                   outfilename=str(outfileName))
-            except Exception, e:
+            except Exception as e:
                 QMessageBox.critical(self, "Error", "Error while building stack")
                 raise e
         
@@ -3976,7 +3966,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     try:
                         mef = misc.mef.MEF([file_to_calib])
                         res = mef.doSplit(".Q%02d.fits", out_dir=self.m_outputdir)[1][detector]
-                    except Exception, e:
+                    except Exception as e:
                         log.debug("Cannot split file %s. Maybe it's not a MEF file", str(e))
                         QMessageBox.critical(self, "Error", "Cannot split file : %s \n Maybe it's not a MEF file"%(file_to_calib))
                         raise e
@@ -3984,11 +3974,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     try:
                         mef = misc.mef.MEF([file_to_calib])
                         res = mef.splitGEIRSToSimple(out_dir=self.m_outputdir)[1][detector]
-                    except Exception,e:
+                    except Exception as e:
                         msg = "Cannot split file %s. Maybe it's not a 4kx4k Single file"%(file_to_calib, str(e))
                         log.debug(msg)
                         QMessageBox.critical(self, "Error", msg)
-                        self.logConsole.info(QString(str(msg)))
+                        self.logConsole.info(msg)
             
                 file_to_calib = res   
             if file_to_calib: # fits.getType()=='SCIENCE': 
@@ -4034,7 +4024,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     QMessageBox.critical(self, "Error", "Error while computing astrometry.")
                     raise
             else:
-                QMessageBox.information(self,"Info", QString("Sorry, but you need a science frame."))
+                QMessageBox.information(self,"Info", "Sorry, but you need a science frame.")
         
     def do_raw_photometry(self):
         """
@@ -4119,12 +4109,16 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     
                     #QApplication.restoreOverrideCursor()
                     #return
-                except Exception, e:
+                except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    QMessageBox.critical(self, "Error", "Error while computing photometry: %s" % str(e))
+                    QMessageBox.critical(self,
+                                         "Error",
+                                         "Error while computing photometry: %s" % str(e))
                     raise e
             else:
-                QMessageBox.information(self,"Info", QString("Sorry, but you need a science frame."))
+                QMessageBox.information(self,
+                                        "Info",
+                                        "Sorry, but you need a science frame.")
             
     def createCalibs_slot(self):
         
@@ -4138,7 +4132,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         if len(fileList) > 1:
             # Ask for confirmation
             resp = QMessageBox.information(self, "Info", 
-                                         QString("All calibrations will be built into OutDir using files of InputDir"),
+                                         "All calibrations will be built into OutDir using files of InputDir",
                                          QMessageBox.Ok, QMessageBox.Cancel)
             if resp==QMessageBox.Cancel:
                 return
@@ -4160,12 +4154,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self._task_queue.put([(func_to_run,())])
                 log.debug("New task queued")
 
-            except Exception,e:
+            except Exception as e:
                 QMessageBox.critical(self, "Error", "Error while building master calibrations files")
-                print e
+                print(e)
                 raise Exception("Error creating calibrations")
         else:
-            QMessageBox.information(self,"Info", QString("No files found"))
+            QMessageBox.information(self,"Info", "No files found")
 
 
     def helpIndex(self):
@@ -4178,8 +4172,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         url = "http://www.iaa.es/~jmiguel/PANIC/PAPI/html/index.html"
         try:
             webbrowser.open(url,new=new)
-        except Exception,e:
-            log.erro("Cannot open URL: %s"%str(e))
+        except Exception as e:
+            log.erro("Cannot open URL: %s" % str(e))
 
         # open an HTML file on my own (Windows) computer
         #url = "file://X:/MiscDev/language_links.html"
@@ -4422,15 +4416,15 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 if interactive:
                     msg = "DARK= %s \n FLAT= %s \n BPM= %s"%(md, mf, mb)
                     resp = QMessageBox.information(self, "Info", 
-                            QString("Calibrations found are: \n %1").arg(str(msg)),
+                            "Calibrations found are: \n %s" % msg,
                                         QMessageBox.Ok, QMessageBox.Cancel)
                     if resp == QMessageBox.Cancel:
                         return
                 
                 self.logConsole.info("Calibrations to use:")
-                self.logConsole.info("+ Dark=%s"%md)
-                self.logConsole.info("+ Flat=%s"%mf)
-                self.logConsole.info("+ BPM =%s"%mb)
+                self.logConsole.info("+ Dark=%s" % md)
+                self.logConsole.info("+ Flat=%s" % mf)
+                self.logConsole.info("+ BPM =%s" % mb)
             else:
                 self.logConsole.info("No calibrations used.")
 
@@ -4443,7 +4437,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             ##Process(target=self.worker, 
             ##        args=(self._task_queue, self._done_queue)).start()
                     
-        except Exception,e:
+        except Exception as e:
             QMessageBox.critical(self, "Error", "Error while processing Obs. Sequence: \n%s"%str(e))
             raise e # Para que seguir elevando la excepcion ?
         
@@ -4473,7 +4467,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 self._process = Process(target=self.worker, 
                     args=(self._task_queue, self._done_queue))
                 self._process.start()
-            except Exception,e:
+            except Exception as e:
                 #NOTE: I think this point will never be reached !!!
                 log.error("Error in task Runner: %s"%(str(e)))
                 self.logConsole.debug("Error in taskRunner")
@@ -4493,7 +4487,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             output.put(RS.ReductionSet(*(args[0])).reduceSet())
             log.info("[workerd] task done !")
-        except Exception,e:
+        except Exception as e:
             log.error("[worker] Error while processing task")
             output.put(None) # the DoneQueue will detect it
         finally:
@@ -4524,7 +4518,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         try:
             output.put(func(*args))
             log.info("[worker] task done !")
-        except Exception,e:
+        except Exception as e:
             log.error("[worker] Error while processing task: %s"%str(e))
             # Because excetions cannot be catched in taskRunner due to a 
             # multiprocessing.Process exception is inserted in output queue 
@@ -4536,40 +4530,40 @@ class MainGUI(QtGui.QMainWindow, form_class):
     
     # Menus stuff functions 
     def editCopy(self):
-        print "panicQL.editCopy(): Not implemented yet"
+        print("panicQL.editCopy(): Not implemented yet")
 
     def fileSave(self):
-        print "panicQL.fileSave(): Not implemented yet"
+        print("panicQL.fileSave(): Not implemented yet")
 
     def fileSaveAs(self):
-        print "panicQL.fileSaveAs(): Not implemented yet"
+        print("panicQL.fileSaveAs(): Not implemented yet")
 
     def filePrint(self):
-        print "panicQL.filePrint(): Not implemented yet"
+        print("panicQL.filePrint(): Not implemented yet")
 
     def editUndo(self):
-        print "panicQL.editUndo(): Not implemented yet"
+        print("panicQL.editUndo(): Not implemented yet")
 
     def editRedo(self):
-        print "panicQL.editRedo(): Not implemented yet"
+        print("panicQL.editRedo(): Not implemented yet")
 
     def editCut(self):
-        print "panicQL.editCut(): Not implemented yet"
+        print("panicQL.editCut(): Not implemented yet")
 
     def editPaste(self):
-        print "panicQL.editPaste(): Not implemented yet"
+        print("panicQL.editPaste(): Not implemented yet")
 
     def editFind(self):
-        print "panicQL.editFind(): Not implemented yet"
+        print("panicQL.editFind(): Not implemented yet")
 
     def helpContents(self):
-        print "panicQL.helpContents(): Not implemented yet"
+        print("panicQL.helpContents(): Not implemented yet")
 
     def helpAbout(self):
         QMessageBox.about(self,
                           "PANIC Quick-Look Tool",
 """
-PQL version: %s\nCopyright (c) 2009-2014 IAA-CSIC  - All rights reserved.\n
+PQL version: %s\nCopyright (c) 2009-2019 IAA-CSIC  - All rights reserved.\n
 Author: Jose M. Ibanez. (jmiguel@iaa.es)
 Instituto de Astrofisica de Andalucia, IAA-CSIC
 
@@ -4590,7 +4584,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """%__version__)
 
     def setSFlat_slot(self):
-        print "panicQL.setSFlat_slot(): Not implemented yet"
+        print("panicQL.setSFlat_slot(): Not implemented yet")
 
 ################################################################################
 
@@ -4623,25 +4617,24 @@ class LoggingConsole (object):
     def debug(self, message):
         self.append(message, "DEBUG")
     
-    
     def logMsg(self, msg, tag=None):
         """
         Format a msg in order to appear as a log message
         """
         
-        if tag=="INFO":
+        if tag == "INFO":
             if self.textEdit_w1 is not None:
                 self.textEdit_w1.setTextColor(QColor("blue"))
                 self.textEdit_w2.setTextColor(QColor("blue"))
-        elif tag=="WARNING":
+        elif tag == "WARNING":
             if self.textEdit_w1 is not None:
                 self.textEdit_w1.setTextColor(QColor("darkRed"))
                 self.textEdit_w2.setTextColor(QColor("darkRed"))
-        elif tag=="ERROR":
+        elif tag == "ERROR":
             if self.textEdit_w1 is not None:
                 self.textEdit_w1.setTextColor(QColor("red"))
                 self.textEdit_w2.setTextColor(QColor("red"))
-        elif tag=="DEBUG":
+        elif tag == "DEBUG":
             if self.textEdit_w1 is not None:
                 self.textEdit_w1.setTextColor(QColor("darkGreen"))
                 self.textEdit_w2.setTextColor(QColor("darkGreen"))
@@ -4671,12 +4664,12 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
     
     log.debug("Start mathOp")
     
-    if tempDir == None:
+    if tempDir is None:
         t_dir = "/tmp"
     else:
         t_dir = tempDir
     
-    if outputFile == None:
+    if outputFile is None:
         output_fd, outputFile = tempfile.mkstemp(suffix='.fits', dir=t_dir)
         os.close(output_fd)
 
@@ -4688,7 +4681,7 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         # Remove an old output file (might it happen ?)
         misc.fileUtils.removefiles(outputFile)
         ## MATH operation '+'
-        if (operator == 'combine' and len(files) > 1):
+        if operator == 'combine' and len(files) > 1:
             log.debug("Files to combine = [%s]", files )
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
             # Very important to not scale the frames, because it could 
@@ -4708,8 +4701,8 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
                      #expname='EXPTIME'
                      #ParList = _getparlistname ('flatcombine')
                      )
-        elif (operator == '+' and len(files) > 1):
-            log.debug("Files to sum = [%s]", files )
+        elif operator == '+' and len(files) > 1:
+            log.debug("Files to sum = [%s]", files)
             misc.utils.listToFile(files, t_dir+"/files.tmp") 
             # Very important to not scale the frames, because it could 
             # produce wrong combined images due to outliers (bad pixels)
@@ -4740,7 +4733,7 @@ def mathOp(files, operator, outputFile=None, tempDir=None):
         else:
             log.error("Operation not allowed")
             return None
-    except Exception, e:
+    except Exception as e:
         log.error("[mathOp] An error happened while math operation with FITS files")
         raise e
     

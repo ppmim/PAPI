@@ -6,7 +6,7 @@
 #
 # runDS.py
 #
-# Last update 11/Sep/2008
+# Last update 08/Oct/2019
 #
 ################################################################################
 
@@ -28,7 +28,7 @@ import os
 
 class MyDS(DataSimulator):
     def source_directory(self):
-        dir=QFileDialog.getExistingDirectory("/disk-a/caha/", self,
+        dir = QFileDialog.getExistingDirectory("/disk-a/caha/", self,
                                              "get existing directory", "Choose a directory",True )
         self.lineEdit_sourceD.setText(dir)
 

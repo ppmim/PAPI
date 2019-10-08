@@ -8469,7 +8469,11 @@ una version para el nuevo detector 4kx4k.
 
 vagrant package --base openSUSE15.1-64bit --output openSUSE15.1-64bit.box
 
-Nota: la “base” ELT-Dev1 corresponde con el nombre de una MV que ya esté definida en VBox; para ver los nombres de las máquinas definidas en VBox, VBoxManage list vms; si la copiamos de otro VBox, podemos importarla/registrarla con: VBoxManage registervm /full/path/to/.vbox/file
+Nota: la “base” openSUSE15.1-64bit corresponde con el nombre de una MV que ya
+esté definida en VBox; para ver los nombres de las máquinas definidas en VBox,
+  > VBoxManage list vms
+si la copiamos de otro VBox, podemos importarla/registrarla con:
+  > VBoxManage registervm /full/path/to/.vbox/file
 
 
 5. Añadimos el Box a Vagrant:
@@ -8589,6 +8593,30 @@ Segmentation fault (core dumped)
 de incompatibilidad de SIP y PyQt4), y que habrá que portar a PyQt5 el QL !!.
 
 - Me pongo con el resto de paquetes necesarios:
+
+08-Oct-2019
+-----------
+- Como la maquina con OpenSUSE15.1 que había creado no consigo que arranque,
+creo una nueva con el siguiente id:
+
+opensuse151_default_1570531247399_19079
+
+El fichero de configuración Vagrantfile se encuentra en:
+
+/home/osn/opensuse151
+
+Para conectarse, una vez en el directorio anterior:
+
+> vagrant ssh
+
+(cuando la levantas, no se por qué no consigue entrar con ssh; la razón parece
+que es porque lo intenta por el interfaz eth1, que está configurado por defecto
+y en el puerto 2222 ...???)
+
+
+- Instalo trunk-r787M-3.tar.xz
+
+
 
 
 

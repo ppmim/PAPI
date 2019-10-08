@@ -37,21 +37,12 @@
     ####################################################################
 
 
-#From system
 import sys
-import os
 import os.path
 from optparse import OptionParser
-from optparse import IndentedHelpFormatter
-import fileinput
-import glob
-import shutil
-import tempfile
-import dircache
 
 # Log
-#import misc.paLog
-from misc.paLog import log    
+from misc.paLog import log
 
 # PAPI packages
 # from PyQt4 import QtCore, QtGui
@@ -61,7 +52,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 try:
     if os.path.exists(os.path.expanduser("~") + "/iraf/focus_seq.txt"):
         os.unlink(os.path.expanduser("~") + "/iraf/focus_seq.txt")
-except Exception,e:
+except Exception as e:
     log.warning("Cannot delete ~/iraf/focus_seq.txt")
 
 import mainGUI
@@ -70,6 +61,8 @@ import misc.config
 ################################################################################
 # main
 ################################################################################
+
+
 def main(arguments = None):
     
     if arguments is None:
@@ -77,14 +70,12 @@ def main(arguments = None):
     
     # Get and check command-line options
     
-    description = \
-    "This module in the main application for the PANIC Quick Loook (PQL) data reduction system "
+    description = ("This module in the main application for the PANIC"
+                   "Quick Look (PQL) data reduction system")
 
-    #wider_format = IndentedHelpFormatter(max_help_position = 50, width = 79)
-    parser = OptionParser(description = description, 
-                                   #formatter = wider_format, 
-                                   usage = "%prog [OPTION]... DIRECTORY...", 
-                                   version = "%prog 1.0")
+    parser = OptionParser(description=description,
+                          usage="%prog [OPTION]... DIRECTORY...",
+                          version="%prog 1.0")
     # general options
     
     parser.add_option("-c", "--config", type="str",
@@ -119,18 +110,18 @@ def main(arguments = None):
     else:
         config_file = init_options.config_file
     
-    # now, we "mix" the invokation parameter values with the values in the config file,
-    # having priority the invokation values over config file values
+    # now, we "mix" the invokation parameter values with the values in the
+    # config file having priority the invokation values over config file values
     # note: only values of the 'quicklook' section can be invoked
     options = misc.config.read_options(init_options, 'quicklook', config_file)
 
-    #print "options=",options
-
-    if  i_args: # i_args is the leftover positional arguments after all options have been processed
+    # i_args is the leftover positional arguments after all options have been
+    # processed
+    if i_args:
         parser.print_help()
         sys.exit(2) 
     
-    ql_opts  = options['quicklook'] 
+    ql_opts = options['quicklook']
     
     if not ql_opts['source'] or not ql_opts['output_dir'] or not ql_opts['temp_dir']: 
         parser.print_help()
@@ -138,10 +129,10 @@ def main(arguments = None):
     
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     log.debug(">> Starting Quick-Look....")
-    log.debug("   + source  : %s",ql_opts['source'])
-    log.debug("   + out_dir : %s",ql_opts['output_dir'])
-    log.debug("   + temp_dir : %s",ql_opts['temp_dir'])
-    log.debug("   + run_mode: %s",ql_opts['run_mode'])
+    log.debug("   + source  : %s", ql_opts['source'])
+    log.debug("   + out_dir : %s", ql_opts['output_dir'])
+    log.debug("   + temp_dir : %s", ql_opts['temp_dir'])
+    log.debug("   + run_mode: %s", ql_opts['run_mode'])
     log.debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     
     app = QtGui.QApplication(sys.argv)
@@ -149,7 +140,6 @@ def main(arguments = None):
         f = mainGUI.MainGUI(ql_opts['source'], ql_opts['output_dir'], 
                             ql_opts['temp_dir'], config_opts=options)
         f.show()
-        #app.setMainWidget(f)
         app.exec_()
     except:
         log.debug("Some error while running mainGUI")
