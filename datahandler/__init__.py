@@ -1,3 +1,3 @@
-from datacollector import *
-from clfits import *
-from dataset import *
+from datahandler.datacollector import *
+from datahandler.clfits import *
+from datahandler.dataset import *

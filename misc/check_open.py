@@ -8,6 +8,7 @@ import os.path
 import pipes
 import subprocess
 
+
 def check_open(path, process):
     """ 
     Check whether the file is open by a process.
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     fd, path = tempfile.mkstemp()
     os.close(fd)
 
-    print check_open(path, 'python')
+    print(check_open(path, 'python'))
     with open(path, "wt") as fd:
-        print check_open(path, 'python')
-    print check_open(path, 'python')
+        print(check_open(path, 'python'))
+    print(check_open(path, 'python'))

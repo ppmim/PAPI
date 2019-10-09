@@ -15,7 +15,6 @@
 ################################################################################
 
 # Import requered modules
-#from pysqlite2 import dbapi2 as sqlite
 import sqlite3 as sqlite
 import datahandler
 import os
@@ -25,18 +24,18 @@ import fileinput
 from optparse import OptionParser
 
 
-###### Enable logging
+# Enable logging
 from misc.paLog import log
 
 __docformat__ = "restructuredtext"  
 
 ############################################################
-class DataSet(object):  
 
+
+class DataSet(object):
     """
     Class used to define a data set of frames load from a local directory or a Data Base  
     """
-
     ############################################################
     TABLE_COLUMNS = "(id, run_id, ob_id, ob_pat, expn, nexp, filename, date, \
                     ut_time, mjd, type, filter, texp, ra, dec, object, detector_id, \
@@ -75,14 +74,14 @@ class DataSet(object):
         self.source = source
         self.id = 0
         
-        if instrument!=None:
+        if instrument is not None:
             self.instrument = instrument.lower()
         else:
             self.instrument = None
             
 
     ############################################################    
-    def createDB (self):
+    def createDB(self):
         """
         Create the dataset table
         """
@@ -93,7 +92,7 @@ class DataSet(object):
         self.id = 0
 
     ############################################################    
-    def load( self , source=None ):
+    def load(self, source=None ):
 
         """
         Load the source for files and insert them into the dataset DB
@@ -101,10 +100,10 @@ class DataSet(object):
 
         log.debug("Loading DB ...")
         
-        if source==None: source = self.source
+        if source == None: source = self.source
         
         # 1. Load the source
-        if type(source) == type(list()): 
+        if isinstance(source, list):
             contents = source 
         elif os.path.isdir(source):
             log.debug("Loadding Source Directory %s" %source)
@@ -121,14 +120,14 @@ class DataSet(object):
         #    -Insert into 'dataset' table a new row with data from FITS file
         for file in contents:
             try:
-                self.insert( file )
-            except Exception,e:
+                self.insert(file)
+            except Exception as e:
                 log.error("Error while inserting file %s " %file)
                 #raise
                 continue
                         
     ############################################################
-    def insert( self, filename ):
+    def insert(self, filename):
         """
         Insert new FITS file into dateset
 
@@ -150,14 +149,14 @@ class DataSet(object):
             if self.GetFileInfo(filename) != None:
                 log.error("File %s not inserted, it is already in Database."%filename)
                 return False
-        except Exception,e:
-            log.exception( "Unexpected error reading FITS file %s" %filename )
+        except Exception as e:
+            log.exception("Unexpected error reading FITS file %s" %filename)
             raise e
         
         try:
             fitsf = datahandler.ClFits(filename, check_integrity=False)
-        except Exception,e:
-            log.exception( "Unexpected error reading FITS file %s" %filename )
+        except Exception as e:
+            log.exception("Unexpected error reading FITS file %s" %filename)
             raise e
         
         data = (self.id, fitsf.runID, 
@@ -172,19 +171,19 @@ class DataSet(object):
         cur = self.con.cursor()
 
         # Check instrument id
-        if (self.instrument==None or 
-            (self.instrument==fitsf.getInstrument().lower())):
+        if (self.instrument == None or
+            (self.instrument == fitsf.getInstrument().lower())):
             try:
                 cur.execute("insert into dataset" + DataSet.TABLE_COLUMNS +
                             "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
                 self.con.commit()
     
-            except sqlite.DatabaseError,e:
+            except sqlite.DatabaseError as e:
                 self.con.rollback()
                 log.exception("error inserting into DB")
                 raise e
     
-            self.id+=1
+            self.id += 1
             #log.debug("File %s inserted correctly in DB:"%filename)
             
             return True
@@ -268,41 +267,41 @@ class DataSet(object):
 
         try:
             #The run id may no be specified
-            if runId==None or runId=='*':
+            if runId == None or runId == '*':
                 s_run_id = "run_id like '%'"
                 runId = ""
             else:
                 s_run_id = "run_id=?"
             
             #The master flat does not have a 'texp' requirement 
-            if type=='MASTER_DOME_FLAT' or type=='MASTER_SKY_FLAT':
-                s_texp="texp>? and texp<?"
+            if type == 'MASTER_DOME_FLAT' or type == 'MASTER_SKY_FLAT':
+                s_texp = "texp>? and texp<?"
                 ROUND = 10000
             else:
                 s_texp = "texp>? and texp<?"
                 ROUND = 0.5  # We do not need an accurate value !
 
-            #The master dark does not have a 'filter' requirement
-            if type=='MASTER_DARK' or filter=="ANY":
+            # The master dark does not have a 'filter' requirement
+            if type =='MASTER_DARK' or filter == "ANY":
                 s_filter = "filter like '%'"
                 filter = ""
             else:
-                s_filter="filter=?"
+                s_filter = "filter=?"
 
             s_select = "select filename from dataset where detector_id=? and  type=? and %s and %s and date=? and %s" %(s_texp,s_filter, s_run_id)
-            print s_select
+            print(s_select)
             cur = self.con.cursor()
             #cur.execute("select filename from dataset where detector_id=? and  type=? and texp>? and texp<?  and filter=? and date=? and run_id=?",
             #                 (detectorId, type, texp-ROUND, texp+ROUND, filter, date, runId))
             cur.execute(s_select,(detectorId, type, texp-ROUND, texp+ROUND, filter, date, runId))
             
             rows = cur.fetchall()
-            if len(rows)==0:
+            if len(rows) == 0:
                 # Any match
                 return None
-            elif len(rows)>1:
+            elif len(rows) > 1:
                 for row in rows:
-                    print row #only for debug
+                    print(row) #only for debug
                 return rows
             else:
                 return rows
@@ -361,7 +360,7 @@ class DataSet(object):
         try:
             # NOT USED !!! RUN_ID !!! NOT USED 
             #RUNID: The run id may no be specified
-            if runId==None or runId=='*':
+            if runId == None or runId == '*':
                 s_run_id = "run_id like '%'"
                 runId = ""
             else:
@@ -416,7 +415,7 @@ class DataSet(object):
             
             s_select = "select filename from dataset where %s and %s and %s and %s and %s and %s and %s and %s order by mjd"\
                         %(s_detectorId, s_type, s_filter, s_texp, s_ar, s_dec, s_mjd, s_ncoadds)
-            print s_select
+            print(s_select)
             
             cur = self.con.cursor()
             #cur.execute("select filename from dataset where detector_id=? and  type=? and texp>? and texp<?  and filter=? and date=? and run_id=?",
@@ -425,7 +424,7 @@ class DataSet(object):
             
             rows = cur.fetchall()
             res_list = []
-            if len(rows)>0:
+            if len(rows) > 0:
                 res_list = [str(f[0]) for f in rows] # important to apply str() !!
             
             #print "Total rows selected:  %d" %(len(res_list))
@@ -433,12 +432,12 @@ class DataSet(object):
             
             return res_list
                              
-        except sqlite.DatabaseError,e:
+        except sqlite.DatabaseError as e:
             log.exception("Error in DataSet.GetFile function...")
-            raise Exception("Error in DataSet.GetFile: %s",str(e))
+            raise Exception("Error in DataSet.GetFile: %s", str(e))
             return []
 
-    def GetFilesT( self, type, texp=-1, filter="ANY", ncoadds=-1):
+    def GetFilesT(self, type, texp=-1, filter="ANY", ncoadds=-1):
         """ 
         Get all the files which match with the specified type, texp, ncoadd,
         and filter.
@@ -461,23 +460,23 @@ class DataSet(object):
         ob_id_list=[]
         ob_file_list=[]
 
-        if filter==None:
-            s_filter="filter>=?"
-            filter=""
+        if filter == None:
+            s_filter = "filter>=?"
+            filter = ""
         else:
-            s_filter="filter=?"
+            s_filter = "filter=?"
               
         # First, look for OB_IDs
         #s_select="select ob_id from dataset where %s group by ob_id" %(s_filter)
-        s_select="select DISTINCT ob_id from dataset where %s" %(s_filter)
+        s_select = "select DISTINCT ob_id from dataset where %s" %(s_filter)
         #print s_select
         cur = self.con.cursor()
         cur.execute(s_select,(filter,))
         rows = cur.fetchall()
         if len(rows)>0:
             ob_id_list = [str(f[0]) for f in rows] # important to apply str() !!
-        print "Total rows selected:  %d" %(len(ob_id_list))
-        print "OB_IDs found :\n ", ob_id_list
+        print("Total rows selected:  %d" %(len(ob_id_list)))
+        print("OB_IDs found :\n ", ob_id_list)
         
         # Finally, look for files of each OB_ID
         for ob_id in ob_id_list:
@@ -487,7 +486,7 @@ class DataSet(object):
             cur.execute(s_select,(int(ob_id),))
             #print "done !"
             rows = cur.fetchall()
-            if len(rows)>0:
+            if len(rows) > 0:
                 ob_file_list.append([str(f[0]) for f in rows]) # important to apply str() !!
             #print "%d files found in OB %d" %(len(rows), int(ob_id))
             
@@ -552,8 +551,8 @@ class DataSet(object):
         
         if len(rows) > 0:
             par_list = [[str(f[0]), str(f[1])] for f in rows] # important to apply str() ??
-        print "Total rows selected:  %d"%(len(par_list))
-        print "Filters found :\n ", par_list
+        print("Total rows selected:  %d"%(len(par_list)))
+        print("Filters found :\n ", par_list)
         
         # Look for DOME_FLATS_ON/OFF
         s_select = "select DISTINCT filter from dataset where type='DOME_FLAT_LAMP_OFF' or type='DOME_FLAT_LAMP_ON' order by mjd"
@@ -565,8 +564,8 @@ class DataSet(object):
         if len(rows) > 0:
             par_list2 = [[str(f[0]), "DOME_FLAT"] for f in rows] # important to apply str() ??
         
-        print "(2nd) Total rows selected:  %d" %(len(par_list2))
-        print "(2nd) Filters found :\n ", par_list2
+        print("(2nd) Total rows selected:  %d" %(len(par_list2)))
+        print("(2nd) Filters found :\n ", par_list2)
 
         # Concatenate the two list (dome_flat, the rest)
         par_list = par_list + par_list2
@@ -677,7 +676,7 @@ class DataSet(object):
             
         """
         
-        if max_mjd_diff==None: max_mjd_diff=DataSet.MAX_MJD_DIFF
+        if max_mjd_diff == None: max_mjd_diff=DataSet.MAX_MJD_DIFF
         
         par_list = [] # parameter tuple list (filter,texp)
         filter_file_list = [] # list of file list (one per each filter)
@@ -692,8 +691,8 @@ class DataSet(object):
         rows = cur.fetchall()
         if len(rows)>0:
             par_list = [ [str(f[0]),f[1]] for f in rows] # important to apply str() ??
-        print "Total rows selected:  %d" %(len(par_list))
-        print "Filters found :\n ", par_list
+        print("Total rows selected:  %d" %(len(par_list)))
+        print("Filters found :\n ", par_list)
         
         # Finally, look for files of each Filter
         for par in par_list:
@@ -824,13 +823,13 @@ class DataSet(object):
             
         """
         
-        if filter == None:
+        if filter is None:
             s_filter = "filter>=?"
             filter = ""
         else:
             s_filter = "filter=?"
               
-        if type == None:
+        if type is None:
             s_type = "type>=''" # any type (all)
         elif type == "SCIENCE":
             s_type = "type='SCIENCE' or type='SKY'"
@@ -861,11 +860,11 @@ class DataSet(object):
         seq_list = [] # list of lists of files from each sequence
         seq_types =[] # list of types for each sequence
         for fits in rows:
-            print "%s  %s  %s  %s  %s %s  %s  %s  %s"%(fits[0], fits[1], fits[2], # filename, ob_id, ob_pat 
+            print ("%s  %s  %s  %s  %s %s  %s  %s  %s" % (fits[0], fits[1], fits[2], # filename, ob_id, ob_pat
                                        fits[3], fits[4], fits[5], fits[6], fits[7], # expn, nexp, filter, texp, type
-                                       fits[3]==fits[4]) # true/false
+                                       fits[3]==fits[4])) # true/false
             if fits[7].count('MASTER'):
-                print "--------> Found a MASTER calibration file; it will not be grouped !!!<----------"
+                print("--------> Found a MASTER calibration file; it will not be grouped !!!<----------")
                 continue
             # Note: if the beginning (fits[3]==1) or the end of a sequence is 
             # not found (fits[3]==fits[4]), then their files (incomplete sequence) 
@@ -874,7 +873,7 @@ class DataSet(object):
                 group = [str(fits[0])] # filename
                 found_first = True # update flag
                 # special case of only-one-file sequences
-                if fits[3]==fits[4]:
+                if fits[3] == fits[4]:
                     #detected end of the sequence
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
@@ -887,7 +886,7 @@ class DataSet(object):
                     found_first = False  # reset flag
             elif found_first: 
                 group.append(str(fits[0]))
-                if fits[3]==fits[4]:
+                if fits[3] == fits[4]:
                     # Detected end of the sequence
                     seq_list.append(group[:]) # very important ==> lists are mutable !
                     # Set the 'nice' type
@@ -950,7 +949,7 @@ class DataSet(object):
                 return None
             elif len(rows) > 1: # it should not happen !!
                 for row in rows:
-                    print "Two rows were found !!: ", row #only for debug
+                    print("Two rows were found !!: ", row) #only for debug
                 return rows[0] # return only the first
             else:
                 return rows[0]
@@ -982,9 +981,9 @@ class DataSet(object):
         ROUND = 0.5
         type = 'MASTER_DARK'
         try:
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             #The run id may no be specified
-            if runId==None or runId=='*':
+            if runId is None or runId == '*':
                 cur.execute("select filename from dataset where detector_id=? and  type=? and texp>? and texp<?  and date=? ",
                             (detectorId, type, texp-ROUND, texp+ROUND, date))
             else:
@@ -992,7 +991,7 @@ class DataSet(object):
                             (detectorId, type, texp-ROUND, texp+ROUND, date, runId))
                 
             rows=cur.fetchall()
-            if len(rows)>0:
+            if len(rows) > 0:
                 res_list = [str(f[0]) for f in rows] # important to apply str() !!
             #print "Total rows selected:  %d" %(len(res_list))
             #print "Files found :\n ", res_list
@@ -1022,14 +1021,14 @@ class DataSet(object):
           \return A list with the filenames that match the specified fields, otherwise None
         """
 
-        if (type!='MASTER_DOME_FLAT' and type!='MASTER_SKY_FLAT'):
+        if type != 'MASTER_DOME_FLAT' and type != 'MASTER_SKY_FLAT':
             log.error("Wrong Master Flat type specified in GetMasterFlat")
             return None
 
         try:
-            cur=self.con.cursor()
+            cur = self.con.cursor()
             #The run id may no be specified
-            if runId==None or runId=='*':
+            if runId == None or runId=='*':
                 cur.execute("select filename from dataset where detector_id=? and  type=? and filter=? and date=?",
                             (detectorId, type, filter, date))
             else:
@@ -1037,13 +1036,13 @@ class DataSet(object):
                             (detectorId, type, filter, date, runId))
                 
             rows=cur.fetchall()
-            if len(rows)==0 and create==True:
+            if len(rows) == 0 and create == True:
                 #Then, we try to compute it
                 #TODO
                 pass
-            elif len(rows)>1:
+            elif len(rows) > 1:
                 for row in rows:
-                    print row #only for debug
+                    print(row) #only for debug
                 return rows
             else:
                 return rows
@@ -1067,9 +1066,9 @@ class DataSet(object):
         
         # Print a header.
         for fieldDesc in cur.description:
-            print fieldDesc[0].ljust(FIELD_MAX_WIDTH) ,
-        print # Finish the header with a newline.
-        print '-' * 120
+            print(fieldDesc[0].ljust(FIELD_MAX_WIDTH))
+        print("\n") # Finish the header with a newline.
+        print('-' * 120)
             
         # For each row, print the value of each field left-justified within
         # the maximum possible width of that field.
@@ -1077,9 +1076,9 @@ class DataSet(object):
         for row in cur:
             for fieldIndex in fieldIndices:
                 fieldValue = str(row[fieldIndex])
-                print fieldValue.ljust(FIELD_MAX_WIDTH) ,
+                print(fieldValue.ljust(FIELD_MAX_WIDTH))
                     
-            print # Finish the row with a newline.
+            print("\n")# Finish the row with a newline.
      
     def ListDataSetNames( self ):
         """
@@ -1094,9 +1093,9 @@ class DataSet(object):
         
         # Print a header.
         for fieldDesc in cur.description:
-            print fieldDesc[0].ljust(FIELD_MAX_WIDTH) ,
-        print # Finish the header with a newline.
-        print '-' * 120
+            print(fieldDesc[0].ljust(FIELD_MAX_WIDTH))
+        print("\n")# Finish the header with a newline.
+        print('-' * 120)
             
         # For each row, print the value of each field left-justified within
         # the maximum possible width of that field.
@@ -1104,9 +1103,9 @@ class DataSet(object):
         for row in cur:
             for fieldIndex in fieldIndices:
                 fieldValue = str(row[fieldIndex])
-                print fieldValue.ljust(FIELD_MAX_WIDTH) ,
+                print(fieldValue.ljust(FIELD_MAX_WIDTH))
                     
-            print # Finish the row with a newline.
+            print("\n") # Finish the row with a newline.
   
 
 ################################################################################
@@ -1142,7 +1141,7 @@ This module load into a SQLite databse the files found in the input source.
             ds = DataSet("file")
             ds.createDB()
             ds.load(options.source)
-        except Exception,e:
+        except Exception as e:
             log.erro("Error running task %s"%str(e))
             sys.exit(0)
     elif os.path.isdir(options.source):
@@ -1150,7 +1149,7 @@ This module load into a SQLite databse the files found in the input source.
             ds = DataSet("directory")
             ds.createDB()
             ds.load(options.source)
-        except Exception,e:
+        except Exception as e:
             log.erro("Error running task %s"%str(e))
             sys.exit(0)
 

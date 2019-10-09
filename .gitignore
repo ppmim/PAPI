@@ -43,4 +43,8 @@ nosetests.xml
 *.dll
 *.a
 *.so
-
+# DATA Files
+*.fits
+*.fit
+D
+# Dat

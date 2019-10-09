@@ -33,15 +33,13 @@
 # Import necessary modules
 
 # System modules
-import os
 import time
 import subprocess
 import fileinput
-
+import tempfile
 
 # PAPI modules
 from misc.paLog import log
-
 
 class clock:
 
@@ -60,7 +58,7 @@ class clock:
 # Some useful functions for string handling (IRAF related)
 ################################################################################
 
-def stringToList( a_string_list ):
+def stringToList(a_string_list ):
     """ This function converts string list from IRAF format to python
         list format, using as separator ','
     """
@@ -69,12 +67,12 @@ def stringToList( a_string_list ):
     ret = a_string_list.split(',')
     #Then, strip blanks from begining and end
     ret = [elem.strip() for elem in ret]
-    if ret.count('')>0:
+    if ret.count('') > 0:
         ret.remove('')
     
     return ret
     
-def listToString( a_list ):
+def listToString(a_list):
     """ This function convert a list of string into a single string separating
         each list element with a ',' (IRAF file input format)
     """
@@ -82,40 +80,41 @@ def listToString( a_list ):
     n_tot = len(a_list)
     n=0
     for elem in a_list:
-        n=n+1
-        if n!=n_tot:
+        n = n + 1
+        if n != n_tot:
             a_string += elem + ' , '
         else:
             a_string += elem
     
     return a_string
         
-def listToFile ( a_list, output_file=None ):
+def listToFile(a_list, output_file=None):
     """ This function write a list of filenames into a file """
     
-    if output_file==None:
+    if output_file == None:
         temp_fd, temp_path = tempfile.mkstemp()
     else:        
-        temp_fd=open(output_file,"w+") # truncate the file if exists
+        temp_fd=open(output_file, "w+") # truncate the file if exists
     
     for filename in a_list:
-        temp_fd.write(filename.replace('//','/')+"\n")
+        temp_fd.write(filename.replace('//', '/') + "\n")
     
     temp_fd.close()
     
-    if output_file!=None: return output_file
-    else: return temp_path
-              
-def fileToList ( input_file, out_filenames_list=None):
+    if output_file is not None:
+        return output_file
+    else:
+        return temp_path
+
+
+def fileToList (input_file):
     """ This function dump the filenames from a input_file into a list"""
                   
-    filelist=[line.replace( "\n", "") for line in fileinput.input(input_file)]
-    if out_filenames_list!=None:
-        out_filenames_list=filelist              
-    
+    filelist = [line.replace("\n", "") for line in fileinput.input(input_file)]
+
     return filelist
      
-def runCmd( str_cmd, p_shell=True ):
+def runCmd(str_cmd, p_shell=True ):
     """ 
         DESCRIPTION
                 A wrapper to run system commands  
@@ -140,21 +139,21 @@ def runCmd( str_cmd, p_shell=True ):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
                              close_fds=True)
         # new, added 2015-01-26
-        #p.wait()
+        # p.wait()
     except:
         log.error("Some error while running command...")
         raise 
     
-    #Warning
-    #We use communicate() rather than .stdin.write, .stdout.read or .stderr.read 
-    #to avoid deadlocks due to any of the other OS pipe buffers filling up and 
-    #blocking the child process.(Python Ref.doc)
+    # Warning
+    # We use communicate() rather than .stdin.write, .stdout.read or .stderr.read
+    # to avoid deadlocks due to any of the other OS pipe buffers filling up and
+    # blocking the child process.(Python Ref.doc)
 
     (stdoutdata, stderrdata) = p.communicate()
     err = stdoutdata + " " + stderrdata
 
     if len(err)>1:
-        print "[runCmd]: STDOUT + STDERR = ", err
+        print("[runCmd]: STDOUT + STDERR = ", err)
     
     
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
@@ -164,8 +163,8 @@ def runCmd( str_cmd, p_shell=True ):
       or err.count("No such file or directory")
       ):
         log.error("An error happened while running command --> %s \n" %err)
-        return 0 # ERROR
+        return 0  # ERROR
     else:
-        return 1 # NO ERROR
+        return 1  # NO ERROR
 
 

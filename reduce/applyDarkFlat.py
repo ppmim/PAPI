@@ -39,13 +39,12 @@
 ################################################################################
 # Import necessary modules
 
-import getopt
 import sys
 import os
 import fileinput
 import time
 from optparse import OptionParser
-from scipy import interpolate, ndimage
+from scipy import ndimage
 
 import misc.fileUtils
 import misc.statutils
@@ -328,13 +327,13 @@ class ApplyDarkFlat(object):
                         chip_name = 'Q%d' % (chip + 1)
                         try:
                             f[chip_name].header
-                        except KeyError, e:
+                        except KeyError as e:
                             chip_name = 'SG%i_1' % (chip + 1)
                         
                         log.info("Processing extension %s" % chip_name)
                         
                         # Get DARK
-                        if self.__mdark != None: 
+                        if self.__mdark is not None:
                             if (not self.__force_apply and 
                                 (not numpy.isclose(time_scale, 1.0, atol=1e-02) 
                                  or f_ncoadd != dark_ncoadd)
@@ -518,8 +517,9 @@ def fixpix( image_data, mask_data):
     try:
         #mask = numpy.where( mask_data == 0, 1, 0)
         #mask = numpy.logical_not(mask_data)
-        return cleanBadPix._clean_masked_pixels(image_data, mask_data, size=5, exclude_mask=None)
-    except Exception,e:
+        return cleanBadPix._clean_masked_pixels(image_data, mask_data,
+                                                size=5, exclude_mask=None)
+    except Exception as e:
         log.error("Error cleanning bad pixels...")
         raise e
     
@@ -672,8 +672,7 @@ same image size.
     if not options.source_file_list:
         parser.print_help()
         parser.error("Incorrect number of arguments " )
-    
-    
+
     if os.path.isdir(options.source_file_list):
         parser.print_help()
         parser.error("Source must be a file, not a directory")
@@ -695,8 +694,7 @@ same image size.
                             options.bpm_action, options.force_apply,
                             options.normalize)
         res.apply() 
-    except Exception,e:
+    except Exception as e:
         log.error("Error running task: %s" % str(e))
         sys.exit(0)
-    
-    
+

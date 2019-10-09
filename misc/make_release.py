@@ -23,8 +23,8 @@ from __future__ import print_function
 import os
 import time
 
-major = 1
-minor = 2
+major = 2 
+minor = 0
 
 rlfile = 'version.py'
 backup = 'version.py.bak'

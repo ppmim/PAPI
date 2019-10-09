@@ -4,30 +4,19 @@
 #
 # display.py
 #
-# Last update 17/04/2008
+# Last update 09/10/2019
 #
 ################################################################################
 """
   Interface and basic operations with the Display tool (DS9)
 """
 
-
-
-# Import necessary modules
-
 # System modules
 import os
 from distutils import spawn
-
-# Other modules with which communication is needed (the logging facility
-# and the helper to autoload configuration files)
-#import messageLog
-
-# Utilities
-import sys
 import time
 
-#Log
+# papi
 from misc.paLog import log
 import datahandler
 
@@ -59,15 +48,15 @@ def startDisplay():
     """
 
     # First all, check if already is running
-    #stdout_handle = os.popen("/sbin/pidofproc ds9","r")
+    # stdout_handle = os.popen("/sbin/pidofproc ds9","r")
     stdout_handle = os.popen("%s/xpaaccess ds9"%xpa_path, "r")
-    if stdout_handle.read() =='no\n':
-        #print "DS9 not running "
+    if stdout_handle.read() == 'no\n':
+        # print "DS9 not running "
         # DS9 is not running, so we start it  
         os.system(("%s/ds9 &" % ds9_path))
         time.sleep(2)
         stdout_handle = os.popen("%s/xpaaccess ds9"%xpa_path, "r")
-        if stdout_handle.read() =='no\n':
+        if stdout_handle.read() == 'no\n':
             time.sleep(3)
         time.sleep(1)
         #for i in range(0, MAX_FRAMES_NO-1): # when ds9 start, it has already one frame
@@ -88,7 +77,7 @@ def showFrame(frame, del_all=False):
   Show in DS9 display the file/s given in the input
   """
   
-  #Check display
+  # Check display
   startDisplay()
   
   global frame_no
@@ -105,9 +94,9 @@ def showFrame(frame, del_all=False):
   
   for file in fileList:
         f = datahandler.ClFits(file)
-        if (f.mef==True):
+        if f.mef:
                 # Multi-Extension FITS files
-                if f.getInstrument()=='hawki':
+                if f.getInstrument() == 'hawki':
                     # HAWK-I Dark files don't have WCS information required by ds9 mosaicimage
                     # PANIC  Dark files do have WCS information.  
                     if delete_all: os.system(("%s/xpaset -p ds9 frame delete all" % (xpa_path)))
@@ -186,7 +175,8 @@ def stopDisplay():
     os.system(("%s/xpaset -p ds9 exit" % xpa_path))
 
 ################################################################################
-#
+
+
 def showPDF(filename):
     """
     Display a PDF file with the default PDF viewer (mupdf)
@@ -197,7 +187,7 @@ def showPDF(filename):
         try:
             pdf_path = os.path.dirname(spawn.find_executable("mupdf"))
             os.system(pdf_path + "/mupdf %s" % filename)
-        except Exception, e:
+        except Exception as e:
             msg = "Cannot display PDF file, cannot find PDF client mupdf"
             log.error(msg)
             raise e
@@ -205,8 +195,10 @@ def showPDF(filename):
     else:
         log.info("Give file %s does not look a PDF file" % filename)
 
-############################
+################################################################################
 if __name__ == "__main__":
-   startDisplay()
-   
-   
+    # test
+    startDisplay()
+    f = "../data_test/panic.20191008_0001.fits"
+    showFrame(f)
+

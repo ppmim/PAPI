@@ -3,9 +3,9 @@ Statistics procedures.
 """
 
 
-import math
 import numpy
 import scipy.stats
+
 
 def mad(data, sigma=True):
     """
@@ -13,7 +13,7 @@ def mad(data, sigma=True):
     """
     med = numpy.median(data)
     mad = numpy.median(numpy.abs(data - med))
-    if sigma==False:
+    if sigma == False:
         return mad
     else:
         return mad*1.4826
@@ -34,7 +34,7 @@ def sig_n_outliers(n_data, n_out=1.0, pos_only=True):
     n_data points.
     """
     perc = float(n_out) / float(n_data)
-    if pos_only == False:
+    if not pos_only:
         perc *= 2.0
     return abs(scipy.stats.norm.ppf(perc))
 
@@ -60,7 +60,7 @@ def MAD(a, c=0.6745, axis=0):
     
     """
 
-    good = (a==a)
+    good = (a == a)
     a = numpy.asarray(a, numpy.float64)
     if a.ndim == 1:
         d = numpy.median(a[good])
@@ -80,7 +80,7 @@ def nanmedian(arr):
     """
     Returns median ignoring NAN values
     """
-    return numpy.median(arr[arr==arr])
+    return numpy.median(arr[arr == arr])
 
 def nan2num(a, replace=0):
     """ Replace `nan` or `inf` entries with the `replace` keyword

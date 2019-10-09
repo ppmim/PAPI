@@ -32,7 +32,7 @@ def createMEFs(input_pattern, start, end):
     """
     for i in range(start, end + 1):
         frame_list = []
-        for det in range (1, 5):
+        for det in range(1, 5):
             frame_list.append(input_pattern %(det, i, det))
         
         mef = misc.mef.MEF(frame_list)

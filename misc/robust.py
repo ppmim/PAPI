@@ -265,13 +265,13 @@ def std(inputData, Zero=False):
     good = numpy.where( u2 <= 1.0 )
     good = good[0]
     if len(good) < 3:
-        print "WARNING:  Distribution is too strange to compute standard deviation"
+        print("WARNING:  Distribution is too strange to compute standard deviation")
         sigma = -1.0
         return sigma
 
     numerator = ((data[good]-data0)**2.0 * (1.0-u2[good])**2.0).sum()
     nElements = (data.ravel()).shape[0]
-    denominator = ((1.0-u2[good])*(1.0-5.0*u2[good])).sum()
+    denominator = ((1.0-u2[good])*(1.0-5.0 * u2[good])).sum()
     sigma = nElements*numerator / (denominator*(denominator-1.0))
     if sigma > 0:
         sigma = math.sqrt(sigma)
@@ -688,19 +688,19 @@ def linefit(x,y):
     a,b,SEa,SEb,chi2 = linefit(x)
     """
     n=len(x)
-    SSxx = n*np.var(x,dtype='double')
-    SSyy = n*np.var(y,dtype='double')
-    ybar = np.mean(y,dtype='double')
-    xbar = np.mean(x,dtype='double')
-    SSxy = np.sum(x*y,dtype='double') - n*xbar*ybar
+    SSxx = n*numpy.var(x,dtype='double')
+    SSyy = n*numpy.var(y,dtype='double')
+    ybar = numpy.mean(y,dtype='double')
+    xbar = numpy.mean(x,dtype='double')
+    SSxy = numpy.sum(x*y,dtype='double') - n*xbar*ybar
     b = SSxy/SSxx
     a = ybar - b*xbar
-    s = np.sqrt((SSyy-SSxy**2/SSxx)/(n-2))
-    SEa = s*np.sqrt(1/n+xbar**2/SSxx)
-    SEb = s/np.sqrt(SSxx)
-    SStot = np.sum((y-ybar)**2,dtype='double')
+    s = numpy.sqrt((SSyy-SSxy**2/SSxx)/(n-2))
+    SEa = s*numpy.sqrt(1/n+xbar**2/SSxx)
+    SEb = s/numpy.sqrt(SSxx)
+    SStot = numpy.sum((y-ybar)**2,dtype='double')
     f = a + b*x
-    SSerr = np.sum((y-f)**2,dtype='double')
+    SSerr = numpy.sum((y-f)**2,dtype='double')
     Rsq = 1-SSerr/SStot
     return a,b,SEa,SEb,Rsq
 
@@ -714,7 +714,7 @@ See NR chapter 15
 """
 
 def linfit(xx,yy,yyerr):
-    if len(yy[np.abs(yy)>0]) < 10:
+    if len(yy[numpy.abs(yy)>0]) < 10:
         b=0
         a=0
         SEa=0
@@ -727,18 +727,18 @@ def linfit(xx,yy,yyerr):
         y = yy[ok]
         yerr = yyerr[ok]
         n=len(x)
-        S=np.sum(1/yerr**2,dtype='double')
-        Sx = np.sum(x/yerr**2,dtype='double')
-        Sy = np.sum(y/yerr**2,dtype='double')
-        Sxx = np.sum(x**2/yerr**2,dtype='double')
-        Sxy = np.sum((x*y)/(yerr**2),dtype='double')
+        S=numpy.sum(1/yerr**2,dtype='double')
+        Sx = numpy.sum(x/yerr**2,dtype='double')
+        Sy = numpy.sum(y/yerr**2,dtype='double')
+        Sxx = numpy.sum(x**2/yerr**2,dtype='double')
+        Sxy = numpy.sum((x*y)/(yerr**2),dtype='double')
         delta = S*Sxx - Sx**2
         a = (Sxx*Sy-Sx*Sxy)/delta
         b = (S*Sxy-Sx*Sy)/delta
-        SEa = np.sqrt(Sxx/delta)
-        SEb = np.sqrt(S/delta)
-        chi2 = np.sum((y-(a + b*x))**2/yerr**2,dtype='double')/(n-2.)
-        return a,b,SEa,SEb,chi2
+        SEa = numpy.sqrt(Sxx/delta)
+        SEb = numpy.sqrt(S/delta)
+        chi2 = numpy.sum((y-(a + b*x))**2/yerr**2,dtype='double')/(n-2.)
+        return a, b, SEa, SEb, chi2
 
 def MAD(a, c=0.6745, axis=None):
     """

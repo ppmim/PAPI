@@ -41,7 +41,6 @@
 # Import necessary modules
 
 import os
-import shutil
 import fileinput
 from optparse import OptionParser
 
@@ -131,11 +130,11 @@ class MEF (object):
         for file in self.input_files:        
             if output_dir == None:
                 output_dir = os.path.abspath(os.path.join(file, os.pardir))
-                print "OUT_DIR=",output_dir
+                print("OUT_DIR=", output_dir)
                 if output_dir == "": output_dir = "."
             try:
                 hdulist = fits.open(file)
-            except IOError, ex:
+            except IOError as ex:
                 log.error("Cannot open  file %s" % file)
                 raise ex
             
@@ -145,8 +144,8 @@ class MEF (object):
                 log.debug("Found a MEF file with %d extensions", n_ext)
             else:
                 n_ext = 1
-                msg = "Found a simple FITS file. Join operation only\
-                           supported to MEF files"
+                msg = ("Found a simple FITS file. Join operation only"
+                           "supported to MEF files")
                 log.error(msg)
                 raise Exception(msg)
                 
@@ -213,7 +212,7 @@ class MEF (object):
             hdu.close(output_verify = 'ignore')
             del hdu
             new_files.append(out_filename)
-            print "New File %s created " % (out_filename)
+            print("New File %s created " % (out_filename))
         
         log.info("End of JoinMEF. %d extensions joined", n_ext)
         
@@ -254,7 +253,7 @@ class MEF (object):
             try:
                 hdulist = fits.open(file)
             except IOError:
-                print 'Error, can not open file %s' % (file)
+                print('Error, can not open file %s' % (file))
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
             # Check if is a MEF file 
@@ -275,7 +274,7 @@ class MEF (object):
                     extname = 'Q%i' %iSG
                     try:
                         hdulist[extname].header
-                    except KeyError, e:
+                    except KeyError as e:
                         extname = 'SG%i_1' %iSG
                 else:
                     # We suppose a HAWKI MEF file
@@ -356,7 +355,7 @@ class MEF (object):
             try:
                 in_hdulist = fits.open(file)
             except IOError:
-                print 'Error, can not open file %s' % (file)
+                print('Error, can not open file %s' % (file))
                 raise MEF_Exception ("Error, can not open file %s" % file)
             
             # Check if is a MEF-cube file 
@@ -423,7 +422,7 @@ class MEF (object):
             try:
                 f = fits.open(file)
             except IOError:
-                print 'Error, can not open file %s' %(file)
+                print('Error, can not open file %s' % (file))
                 raise MEF_Exception ("Error, can not open file %s"%file)
 
             # Check if is a MEF file 
@@ -647,7 +646,7 @@ class MEF (object):
                         new_wcs.wcs.cunit = ['deg', 'deg']
                         try:
                             pix_scale = primaryHeader['PIXSCALE']
-                        except Exception, e:
+                        except Exception as e:
                             raise Exception("Cannot find PIXSCALE keyword")
 
                         # We suppose no rotation, and North is up and East at left.
@@ -982,13 +981,13 @@ class MEF (object):
 
             # Taking into account the gap (167pix), we set the new CRPIXi values
             # for each extension, refered to the center of the focal plane.
-            #new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
+            # new_crpix_center = numpy.array ([[2132, 2132], [2132, -81], [-81, 2132],
             #                            [-81, -81] ], numpy.float_)
-	    
+
             # We must take into account that FITS(NAXISi) and Numpy arrays follow different convention:
             # FITS : NAXIS1 = x = column; NAXIS2 = y = row
             # Numpy arrays : [y,x]  y=row, x=column 
-	    new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
+            new_crpix_center = numpy.array ([[2132, 2132], [-81, 2132], [2132, -81],
                                         [-81, -81] ], numpy.float_)
             for i in range (0, n_ext/2):
                 for j in range (0, n_ext/2):
@@ -1006,9 +1005,9 @@ class MEF (object):
                                                               hdu_data_i.shape))
                     else:
                         log.error("Wrong frame shape found, that's why" 
-                        "cannot convert file %"%file)
+                        "cannot convert file %s" % file)
                         raise MEF_Exception("Error, file %s has wrong image"
-                            "shape."%file)
+                            "shape." % file)
 
                     # Create primary HDU (data + header)
                     out_hdulist = fits.HDUList()               
@@ -1052,7 +1051,7 @@ class MEF (object):
                         
                         try:
                             pix_scale = primaryHeader['PIXSCALE']
-                        except Exception,e:
+                        except Exception:
                             raise Exception("Cannot find PIXSCALE keyword")
 
                         # We suppose no rotation, and North is up and East at left.
@@ -1317,7 +1316,7 @@ if __name__ == "__main__":
     elif options.input_file_list:
         filelist = [line.replace( "\n", "") 
                     for line in fileinput.input(options.input_file_list)]
-        print filelist
+        print(filelist)
     else:
         parser.print_help()
         parser.error("incorrect number of arguments " )

@@ -1,7 +1,7 @@
 # this file was automatically generated
-major = 1
-minor = 2
-release = 20170321095735
+major = 2
+minor = 0
+release = 20191009090945
 
 __version__ = '%d.%d.%d' % (major, minor, release)
 
