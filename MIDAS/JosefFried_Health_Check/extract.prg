@@ -1,9 +1,0 @@
-DEFI/PAR P1 ? C "input file=?"
-DEFI/PAR P2 z C "output file=?"
-DEFI/PAR P3 100,100 N "size of output file=?"
-DEFI/PAR P4 1,1,1,1,0 N "XS,YS,DX,DY,PHI=?"
-WRITE/KEYW IN_A/C/1/20 'P1'
-WRITE/KEYW OUT_A/C/1/20 'P2'
-WRITE/KEYW INPUTI/I/1/2 'P3'
-WRITE/KEYW INPUTR/R/1/5 'P4'
-RUN FMP:extract
