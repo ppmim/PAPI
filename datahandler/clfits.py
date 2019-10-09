@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #encoding:UTF-8
 
-# Copyright (c) 2008-2015 Jose M. Ibanez All rights reserved.
+# Copyright (c) 2008-2019 Jose M. Ibanez All rights reserved.
 # Institute of Astrophysics of Andalusia, IAA-CSIC
 #
 # This file is part of PAPI
@@ -29,7 +29,7 @@
 #                                             Reanamed isSkyFlat() by isTwFlat()
 #              02/03/2010    jmiguel@iaa.es   Added READMODE checking
 #              20/08/2013    jmiguel@iaa.es   Addapted to support OSN CCDs. 
-#
+#              09/10/2019    jmiguel@iaa.es   Migration to Python3
 ###############################################################################
 
 """
@@ -42,7 +42,6 @@ Module containing all basic operation with FITS files.
 import os.path
 import sys
 import time
-from time import strftime
 
 from astropy import wcs
 import astropy.io.fits as fits
@@ -210,58 +209,58 @@ class ClFits (object):
         return self.pathname
     
     def isDark(self):
-        return (self.type=="DARK")
+        return self.type=="DARK"
 
     def isDomeFlat(self):
-        return (self.type=="DOME_FLAT_LAMP_ON" or 
-                self.type=="DOME_FLAT_LAMP_OFF" or self.type=="DOME_FLAT")
+        return (self.type == "DOME_FLAT_LAMP_ON" or
+                self.type == "DOME_FLAT_LAMP_OFF" or self.type == "DOME_FLAT")
     
     def isDomeFlatON(self):
-        return (self.type=="DOME_FLAT_LAMP_ON")
+        return self.type == "DOME_FLAT_LAMP_ON"
     
     def isDomeFlatOFF(self):
-        return (self.type=="DOME_FLAT_LAMP_OFF")
+        return self.type == "DOME_FLAT_LAMP_OFF"
     
     def isTwFlat(self):
-        return (self.type=="TW_FLAT_DUSK" or self.type=="TW_FLAT_DAWN" 
-                or self.type=="TW_FLAT" or self.type=="SKY_FLAT")
+        return (self.type == "TW_FLAT_DUSK" or self.type == "TW_FLAT_DAWN"
+                or self.type == "TW_FLAT" or self.type == "SKY_FLAT")
     
     def isFocusSerie(self):
-        return (self.type=="FOCUS") 
+        return self.type == "FOCUS"
     
     def isScience(self):
-        return (self.type.count("SCIENCE") or self.type.count("STD"))
+        return self.type.count("SCIENCE") or self.type.count("STD")
     
     def isRawScience(self):
-        return (self.type=="SCIENCE_RAW")
+        return self.type == "SCIENCE_RAW"
 
     def isReducedScience(self):
-        return (self.type=="SCIENCE_REDUCED")
+        return self.type == "SCIENCE_REDUCED"
     
     def isMasterDark(self):
-        return (self.type=="MASTER_DARK")
+        return self.type == "MASTER_DARK"
     
     def isMasterDarkModel(self):
-        return (self.type=="MASTER_DARK_MODEL")
+        return self.type == "MASTER_DARK_MODEL"
     
     def isMasterFlat(self):
-        return (self.type=="MASTER_DOME_FLAT" or self.type=="MASTER_TW_FLAT"
-                or self.type=="MASTER_SKY_FLAT")
+        return (self.type == "MASTER_DOME_FLAT" or self.type=="MASTER_TW_FLAT"
+                or self.type == "MASTER_SKY_FLAT")
     
     def isSky(self):
-        return (self.type=="SKY")
+        return self.type =="SKY"
     
     def isObject(self):
-        return (self.isScience())
+        return self.isScience()
     
     def isMEF(self):
-        return (self.mef)
+        return self.mef
 
     def getNExt(self):
-        return (self.next)
+        return self.next
     
     def isFromOT(self):
-        return (self.obs_tool)
+        return self.obs_tool
     
     def isFromGEIRS(self):
         if self.softwareVer.count("GEIRS"):
@@ -270,14 +269,15 @@ class ClFits (object):
             return False
     
     def isFromPANIC(self):
-        return self.instrument=='panic'
+        return self.instrument == 'panic'
 
     def isPANICFullFrame(self):
         # Raw PANIC full frame
-        return (self.instrument=='panic' and self.naxis1==4096 and self.naxis2==4096)
+        return (self.instrument == 'panic' and self.naxis1 == 4096
+                and self.naxis2 == 4096)
                 
     def expTime(self):
-        return (self.exptime)
+        return self.exptime
     
     @property
     def shape(self):
@@ -331,9 +331,9 @@ class ClFits (object):
     def getMJD(self):
         return self.mjd
     
-    def getData(self,ext=0):
+    def getData(self, ext=0):
         """No tested, to check !!!"""
-        if ext!=0 and not self.mef:
+        if ext != 0 and not self.mef:
             log.error("Wrong extension number especified. Not a MEF file.")
         else:
             try:
@@ -345,7 +345,6 @@ class ClFits (object):
             except:
                 log.error('Could not open frame - something wrong with input data')
                 raise
-    
 
     def recognize(self, retries=5):
      
@@ -400,13 +399,13 @@ class ClFits (object):
                     # large arrays that cannot fit entirely into physical memory. 
                     # memmap=True is the default value as of PyFITS v3.1.0.
                     myfits = fits.open(self.pathname, mode='readonly', memmap=True,
-                                     ignore_missing_end=False) # since some problems with O2k files 
-                except Exception, e:
+                                       ignore_missing_end=False) # since some problems with O2k files
+                except Exception as e:
                     log.warning("Error reading FITS : %s" % self.pathname)
                     if nTry < retries:
-                        nTry +=1
+                        nTry += 1
                         time.sleep(nTry * 0.5)
-                        log.warning("Error reading FITS. Trying to read again file : %s\n %s"%(self.pathname, str(e)))
+                        log.warning("Error reading FITS. Trying to read again file : %s\n %s" %(self.pathname, str(e)))
                     else:
                         log.error("Finally, FITS-file could not be read with data integrity:  %s\n %s" % (self.pathname, str(e)))
                         log.error("File discarded : %s" % self.pathname)
@@ -456,8 +455,7 @@ class ClFits (object):
 
         # pointer to the primary-main header
         self.my_header = myfits[0].header
-          
-        
+
          
         # INSTRUMENT
         try:
@@ -465,7 +463,7 @@ class ClFits (object):
                 self.instrument = myfits[0].header['INSTRUME'].lower()
             else:
                 self.instrument = "Unknown"
-        except Exception,e:
+        except Exception as e:
             log.warning("INSTRUME keyword not found")
             self.instrument = "Unknown"
         
@@ -486,22 +484,22 @@ class ClFits (object):
         
         # IMAGE TYPE
         try:
-            if self.instrument=='omega2000' and 'PAPITYPE' in myfits[0].header:
+            if self.instrument == 'omega2000' and 'PAPITYPE' in myfits[0].header:
                 keyword_with_frame_type = 'PAPITYPE'
                 # It happens if the image is product of PAPI 
-            elif self.instrument=='omega2000' and 'IMAGETYP' in myfits[0].header:
+            elif self.instrument == 'omega2000' and 'IMAGETYP' in myfits[0].header:
                 keyword_with_frame_type = 'IMAGETYP'
-            elif self.instrument=='omega2000' and 'OBJECT' in myfits[0].header:
+            elif self.instrument == 'omega2000' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
-            elif self.instrument=='hawki' and 'IMAGETYP' in myfits[0].header:
+            elif self.instrument == 'hawki' and 'IMAGETYP' in myfits[0].header:
                 keyword_with_frame_type = 'IMAGETYP'
-            elif self.instrument=='hawki' and 'OBJECT' in myfits[0].header:
+            elif self.instrument == 'hawki' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
-            elif self.instrument=='omegacass_mpia' and 'IMAGETYP' in myfits[0].header:
+            elif self.instrument == 'omegacass_mpia' and 'IMAGETYP' in myfits[0].header:
                 keyword_with_frame_type = 'IMAGETYP'    
-            elif self.instrument=='omegacass_mpia' and 'OBJECT' in myfits[0].header:
+            elif self.instrument == 'omegacass_mpia' and 'OBJECT' in myfits[0].header:
                 keyword_with_frame_type = 'OBJECT'
-            elif self.instrument=='panic': # current ID in GEIRS for PANIC
+            elif self.instrument == 'panic': # current ID in GEIRS for PANIC
                 if self.obs_tool:
                     keyword_with_frame_type = 'IMAGETYP'
                     #keyword_with_frame_type = 'OBJECT'
@@ -555,7 +553,7 @@ class ClFits (object):
             except KeyError:
                 log.warning('PAPITYPE/OBJECT/IMAGETYP keyword not found')
                 self.type = 'UNKNOW'
-        elif self.instrument=='hawki':
+        elif self.instrument == 'hawki':
             try:
                 # Self-typed file, created by PAPI (master calibrations)
                 if 'PAPITYPE' in myfits[0].header:
@@ -644,7 +642,7 @@ class ClFits (object):
                     log.warning("Cannot find out FILTER")
                     self.filter = 'UNKNOWN'
             else: # PANIC, O2000, Roper, ...
-                self.filter  = myfits[0].header['FILTER']
+                self.filter = myfits[0].header['FILTER']
         except KeyError:
             log.warning('Cannot find out FILTER')
             self.filter  = 'UNKNOWN'
@@ -654,15 +652,15 @@ class ClFits (object):
             self.exptime = myfits[0].header['EXPTIME']
         except KeyError:
             log.warning('EXPTIME keyword not found')
-            self.exptime  = -1
+            self.exptime = -1
 
         # Integration Time
         try:
             self.itime = myfits[0].header['ITIME']
         except KeyError:
-            if self.instrument=='panic':
+            if self.instrument == 'panic':
                 log.warning('ITIME keyword not found')
-            self.itime  = -1
+            self.itime = -1
             
         # Number of coadds
         try:
@@ -676,7 +674,7 @@ class ClFits (object):
                 self.ncoadds = 1
         except KeyError:
             log.warning('NCOADDS keyword not found. Taken default value (=1)')
-            self.ncoadds  = 1
+            self.ncoadds = 1
         
         # Number of expositions (cycle repeat count) - only PANIC/O2k
         try:
@@ -686,7 +684,7 @@ class ClFits (object):
                 self.nexp = 1
         except KeyError:
             log.warning('NEXP keyword not found. Taken default value (=1)')
-            self.nexp  = 1
+            self.nexp = 1
             
             
         # Read-Mode
@@ -697,7 +695,7 @@ class ClFits (object):
                 self.readmode = myfits[0].header['HIERARCH ESO DET NCORRS NAME']
         except KeyError:
             log.warning('READMODE keyword not found')
-            self.readmode  = ""
+            self.readmode = ""
                      
         # UT-date of observation
         try:
@@ -709,8 +707,8 @@ class ClFits (object):
                 self.time_obs = ''
         except KeyError:
             log.warning('DATE-OBS keyword not found')
-            self.date_obs  = ''
-            self.time_obs  = ''
+            self.date_obs = ''
+            self.time_obs = ''
             self.datetime_obs = ''
         
         # ############################
@@ -736,9 +734,9 @@ class ClFits (object):
                 self._ra = self._ra * 360.0 / 24.0
             else:
                 raise Exception("No valid RA coordinate found")
-        except Exception,e:
+        except Exception as e:
             log.warning('Error reading RA keyword :%s',str(e))
-            self._ra  = -1
+            self._ra = -1
         finally:
             #log.debug("RA = %s"%str(self._ra))
             pass
@@ -766,7 +764,7 @@ class ClFits (object):
                     self._dec =  float(a.split()[0]) + float(a.split()[1])/60.0 + float(a.split()[2])/3600.0
             else:
                 raise Exception("No valid DEC coordinates found")
-        except Exception,e:
+        except Exception as e:
             log.warning('Error reading DEC keyword : %s', str(e))
             self._dec  = -1
         finally:
@@ -798,7 +796,7 @@ class ClFits (object):
         try:
             self.chipcode = myfits[0].header['CHIPCODE']
         except KeyError:
-            self.chipcode  = 1  # default
+            self.chipcode = 1  # default
         
         # DetectorID
         try:
@@ -810,18 +808,18 @@ class ClFits (object):
                 self.detectorID = 'UNKNOWN'
         except:
             log.warning("Cannot find HIERARCH ESO DET CHIP NAME")
-            self.detectorID='unknown'
+            self.detectorID = 'unknown'
                
         # RunID
         self.runID=-1
         
         # OB_ID : Observation Block Id
         try:
-            if self.instrument=='hawki' and 'HIERARCH ESO OBS ID' in myfits[0].header:
+            if self.instrument == 'hawki' and 'HIERARCH ESO OBS ID' in myfits[0].header:
                 self.obID = myfits[0].header['HIERARCH ESO OBS ID']
-            elif self.instrument=='omega2000':
+            elif self.instrument == 'omega2000':
                 self.obID = myfits[0].header['POINT_NO'] # for O2000
-            elif self.instrument=='panic':
+            elif self.instrument == 'panic':
                 # check how was observed
                 if self.obs_tool:
                     self.obID = myfits[0].header['OB_ID'] # for PANIC using OT
@@ -829,51 +827,51 @@ class ClFits (object):
                     self.obID = myfits[0].header['POINT_NO'] # for PANIC using MIDAS or whatever
             else:
                 self.obID = -1
-        except Exception,e:
+        except Exception as e:
             log.warning("Cannot find OB_ID keyword : %s:",str(e))
             self.obID = -1
                
         # OB_PAT : Observation Block Pattern
         try:
-            if self.instrument=='hawki':
+            if self.instrument == 'hawki':
                 self.obPat = myfits[0].header['HIERARCH ESO TPL ID']
-            elif self.instrument=='omega2000':
+            elif self.instrument == 'omega2000':
                 self.obPat = myfits[0].header['POINT_NO'] # for O2000
-            elif self.instrument=='panic':
+            elif self.instrument == 'panic':
                 if self.obs_tool:
                     self.obPat = myfits[0].header['OB_PAT'] # for PANIC using OT
                 else:
                     self.obPat = myfits[0].header['POINT_NO'] # for PANIC using MIDAS or whatever
             else:
                 self.obPat = -1
-        except Exception,e:
+        except Exception as e:
             log.warning("Cannot find keyword : %s:",str(e))
             self.obPat = -1
                    
         #PAT_EXPN : Pattern Exposition Number (expono of noexp)
         try:
-            if self.instrument=='hawki':
+            if self.instrument == 'hawki':
                 self.pat_expno = myfits[0].header['HIERARCH ESO TPL EXPNO']
-            elif self.instrument=='omega2000':
+            elif self.instrument == 'omega2000':
                 self.pat_expno = myfits[0].header['DITH_NO']
-            elif self.instrument=='panic':
+            elif self.instrument == 'panic':
                 if self.obs_tool:
                     self.pat_expno = myfits[0].header['PAT_EXPN'] # for PANIC using OT
                 else:
                     self.pat_expno = myfits[0].header['DITH_NO'] # for PANIC using MIDAS or whatever
             else:
                 self.pat_expno = -1
-        except Exception,e:
+        except Exception as e:
             log.warning("Cannot find keyword : %s:",str(e))
             self.pat_expno = -1
             
         #PAT_NEXP : Number of Expositions of Pattern (expono of noexp)
         try:
-            if self.instrument=='hawki':
+            if self.instrument == 'hawki':
                 self.pat_noexp = myfits[0].header['HIERARCH ESO TPL NEXP']
-            elif self.instrument=='omega2000':
+            elif self.instrument == 'omega2000':
                 self.pat_noexp = -1 # not available
-            elif self.instrument=='panic':
+            elif self.instrument == 'panic':
                 if self.obs_tool:
                     self.pat_noexp = myfits[0].header['PAT_NEXP'] # for PANIC using OT
                 else:
@@ -881,17 +879,17 @@ class ClFits (object):
                     self.pat_noexp = -1 # for PANIC using MIDAS or whatever
             else:
                 self.pat_noexp = -1
-        except Exception,e:
+        except Exception as e:
             log.warning("Cannot find keyword : %s:",str(e))
             self.pat_noexp = -1
             
         # Try Fix PRESS1 and PRESS2 wrong keyword values of Omega2000 headers
         # Has no sense, because file is not opened with 'update' flag
         try:
-            if self.instrument=='omega2000':
+            if self.instrument == 'omega2000':
                 myfits[0].header.update('PRESS1', 0.0)
                 myfits[0].header.update('PRESS2', 0.0)
-        except Exception,e:
+        except Exception as e:
             log.warning("Keyword not found : %s ->", str(e))
 
 
@@ -932,7 +930,7 @@ class ClFits (object):
         #            
         try:
             myfits.close(output_verify='ignore')
-        except Exception, e:
+        except Exception as  e:
             log.error("Error while closing FITS file %s   : %s",
                       self.pathname, str(e))
         
@@ -940,22 +938,22 @@ class ClFits (object):
         
 
     def print_info(self):
-        print "---------------------------------"
-        print "Fichero   : ", self.pathname
-        print "Data class: ", self.type
-        print "Filter    : ", self.filter
-        print "Processed : ", self.processed 
-        print "TEXP      : ", self.exptime
-        print "MEF       : ", self.mef
-        print "Date-Obs  : ", self.date_obs
-        print "Time-Obs  : ", self.time_obs
-        print "RA        : ", self.ra
-        print "Dec       : ", self.dec
-        print "MJD       : ", self.mjd
-        print "OB_ID     : ", self.getOBId()
-        print "NoExp     : ", self.getNoExp()
-        print "ExpNo     : ",self.getExpNo()
-        print "---------------------------------"
+        print("---------------------------------")
+        print("Fichero   : ", self.pathname)
+        print("Data class: ", self.type)
+        print("Filter    : ", self.filter)
+        print("Processed : ", self.processed)
+        print("TEXP      : ", self.exptime)
+        print("MEF       : ", self.mef)
+        print("Date-Obs  : ", self.date_obs)
+        print("Time-Obs  : ", self.time_obs)
+        print("RA        : ", self.ra)
+        print("Dec       : ", self.dec)
+        print("MJD       : ", self.mjd)
+        print("OB_ID     : ", self.getOBId())
+        print("NoExp     : ", self.getNoExp())
+        print("ExpNo     : ",self.getExpNo())
+        print("---------------------------------")
       
 ################################################################################            
 #  Useful function to check data integrity
@@ -989,13 +987,13 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True,
             f = ClFits ( file )
             debug = 0
             if debug:
-                print 'FILE=',file
-                print '------------------------'
-                print 'TYPE=', f.getType()
-                print 'FILTER=', f.getFilter()
-                print 'TEXP=', f.expTime()
-                print 'NCOADDS=', f.getNcoadds()
-                print 'READMODE=', f.getReadMode()
+                print('FILE=', file)
+                print('------------------------')
+                print('TYPE=', f.getType())
+                print('FILTER=', f.getFilter())
+                print('TEXP=', f.expTime())
+                print('NCOADDS=', f.getNcoadds())
+                print('READMODE=', f.getReadMode())
             
             if (  (c_type and m_type!=f.getType()) or 
                   (c_filter and m_filter!=f.getFilter()) or 
@@ -1013,6 +1011,7 @@ def checkDataProperties( file_list, c_type=True, c_filter=True, c_texp=True,
 ################################################################################
 ####### fits tools #############################################################
 ################################################################################
+
 def isaFITS(filepath):
     """
     Check if a given filepath is a FITS file
@@ -1029,6 +1028,7 @@ def isaFITS(filepath):
             return False
     else:
         return False
+
 
 def fits_simple_verify(fitsfile):
     """
@@ -1050,9 +1050,7 @@ def fits_simple_verify(fitsfile):
     if not os.path.exists(fitsfile):
         raise IOError("file '%s' doesn't exist" % fitsfile)
 
-
-    f = open(fitsfile, "readonly")
-        
+    f = open(fitsfile, "r")
     FITS_BLOCK_SIZE = 2880
 
     try:
@@ -1063,12 +1061,13 @@ def fits_simple_verify(fitsfile):
 
         # check file size
         file_size = os.stat(fitsfile).st_size
-        #time.sleep(0.1)
-        #while file_size != os.stat(fitsfile).st_size:
+        # time.sleep(0.1)
+        # while file_size != os.stat(fitsfile).st_size:
         #    time.sleep(0.1)
         #    file_size = os.stat(fitsfile).st_size
 
-        # check that file_size>fits_block_size*5 to be sure all the header/s content can be read     
+        # check that file_size>fits_block_size*5 to be sure all the header/s
+        # content can be read
         if (file_size < FITS_BLOCK_SIZE * 4) or (file_size % FITS_BLOCK_SIZE) != 0:
             log.warning("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
             raise ValueError("FITS file is not 2880 byte aligned (corrupted?) or file_size too small")
@@ -1077,25 +1076,27 @@ def fits_simple_verify(fitsfile):
         f.close()
             
     return file_size
-		
-################################################################################            
+
+################################################################################
 #  Main for Testing
 ################################################################################
+
+
 def usage():
     """Print help """
-    print "Usage: %s filename", sys.argv[0]
-    
+    print("Usage: %s filename", sys.argv[0])
+
+
 if __name__ == "__main__": 
     log.debug("Starting the tests.....")
     
-    if len(sys.argv)>1:
+    if len(sys.argv) > 1:
         try:
             dr = ClFits(sys.argv[1])
             dr.print_info()
-            print dr.isTwFlat()
-        except Exception, e:
+            print("IsTwFlat:", dr.isTwFlat())
+            print("Veriry FITS (file_size): %s" % fits_simple_verify(sys.argv[1]))
+        except Exception as e:
             log.error("Error reading fits File %s", str(e))
     else:
         usage()
-
-        
