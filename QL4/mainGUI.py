@@ -60,7 +60,6 @@ import math
 import tempfile
 from optparse import OptionParser
 import datetime
-import dircache
 from distutils import spawn
 
 # Tell PyRAF to skip all graphics initialization and run in terminal-only mode (=1).
@@ -453,7 +452,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         log.info("Loading External Calibrations into DB from: %s "%calib_dir)
         
         if os.path.isdir(calib_dir):
-            for ifile in dircache.listdir(calib_dir):
+            for ifile in os.listdir(calib_dir):
                 if ifile.endswith(".fits") or ifile.endswith(".fit"):
                     log.debug("Inserting file %s"%(calib_dir + "/" + ifile))
                     self.outputsDB.insert(calib_dir + "/" + ifile)
@@ -466,7 +465,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         log.info("Unloading External Calibrations into DB from: %s "%calib_dir)
         
         if os.path.isdir(calib_dir):
-            for ifile in dircache.listdir(calib_dir):
+            for ifile in os.listdir(calib_dir):
                 if ifile.endswith(".fits") or ifile.endswith(".fit"):
                     log.debug("Inserting file %s"%(calib_dir + "/" + ifile))
                     self.outputsDB.delete(calib_dir + "/" + ifile)
@@ -1771,12 +1770,12 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 for file in seq:
                     (date, ut_time, type, filter, texp, detector_id, run_id, 
                      ra, dec, object, mjd, nexp, ncoadds, itime) = self.inputsDB.GetFileInfo(file)
-		    #nCoadd = fits.getval(file, "NCOADDS", ext=0)
+                    #nCoadd = fits.getval(file, "NCOADDS", ext=0)
                     if file == seq[0]:
-			#nCoadd = fits.getval(file, "NCOADDS", ext=0)
-			nObject = fits.getval(file,"OBJECT", ext=0) 
+                        #nCoadd = fits.getval(file, "NCOADDS", ext=0)
+                        nObject = fits.getval(file,"OBJECT", ext=0)
                         #the first time, fill the "tittle" of the group 
-                        elem.setText(0, "TYPE="+str(seq_types[k]) + 
+                        elem.setText(0, "TYPE="+str(seq_types[k]) +
                                      "  ** FILTER=" + str(filter) + 
                                      "  ** TEXP=" + str(texp) + 
                                      "  ** OBJ=" + str(nObject) + 
@@ -2616,7 +2615,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         # the file is removed if the call to this routine is not for
         # the focus evaluation with iraf.starfocus.
         if not isForFocus and os.path.exists(self.focus_tmp_file):
-	    os.unlink(self.focus_tmp_file)
+            os.unlink(self.focus_tmp_file)
 	    
         os.system("cd $HOME/iraf;/usr/local/bin/xgterm -title IRAF -cr red -ms blue -sb -sl 1000 -geometry 100x30 -bg grey -fg black -e cl &")
         
@@ -3838,8 +3837,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
         
         ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0]/3600.0
         time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0
-        print "RA_DEC_OFFSET", ra_dec_near_offset
-        print "TIME_NEAR_OFFSET", time_near_offset
+        print("RA_DEC_OFFSET", ra_dec_near_offset)
+        print("TIME_NEAR_OFFSET", time_near_offset)
         
         # CASE 1: Automatic search for nearest frames (ra, dec, mjd) 
         if len(self.m_popup_l_sel) == 1:
@@ -4195,13 +4194,13 @@ class MainGUI(QtGui.QMainWindow, form_class):
         msgBox.exec_()
         
         if msgBox.clickedButton()== button1:
-            print "Button1"
+            print("Button1")
         elif msgBox.clickedButton()== button2:
-            print "Button2"
+            print("Button2")
         elif msgBox.clickedButton()== button3:
-            print "Button3"
+            print("Button3")
         else:
-            print "[Default] button3"
+            print("[Default] button3")
         
         pass
     
@@ -4211,7 +4210,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         
         # Change the button color and label
-        if self.proc_started == True:
+        if self.proc_started:
             self.proc_started = False
             self.pushButton_start_proc.setText("Start Processing")
             #Set Green background
@@ -4266,7 +4265,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         #print "arg_1=",input.get()
         for func, args in iter(input.get, 'STOP'):
             #result = calculate(func, args)
-            print "ARGS=", args
+            print("ARGS=", args)
             output.put(RS.ReductionSet(args).func())
             
     def processFiles(self, files=None, group_by=None, outfilename=None,
@@ -4482,7 +4481,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         
         args = input.get()
-        print "ARGS=",args
+        print("ARGS=",args)
         
         try:
             output.put(RS.ReductionSet(*(args[0])).reduceSet())

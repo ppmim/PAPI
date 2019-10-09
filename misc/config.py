@@ -22,12 +22,14 @@
 # Adapted to PAPI by jmiguel@iaa.es 29-Nov-2010
 
 import sys
-import ConfigParser
+import configparser
+from configparser import ConfigParser
 import os.path
 import tempfile
+import io
 
 # PAPI modules
-import style
+import misc.style as style
 
 
 def default_config_file():
@@ -53,7 +55,7 @@ def check_required_option(option_name, option_value):
     """
 
     if not option_value:
-        print style.prefix() + "The option '" + option_name + "' cannot be left empty"
+        print(style.prefix() + "The option '" + option_name + "' cannot be left empty")
         sys.exit(style.error_exit_message())
 
 
@@ -87,9 +89,9 @@ def read_parameter(config_object, section, parameter, type, required = False,
             if not required:
                 return None
             else:
-                print style.prefix() + "[" + config_file + "] " + \
+                print(style.prefix() + "[" + config_file + "] " + \
                 "The parameter '" + parameter + "' in section '" + section + \
-                "' cannot be left empty."
+                "' cannot be left empty.")
                 sys.exit(style.error_exit_message())    
 
 
@@ -106,22 +108,21 @@ def read_parameter(config_object, section, parameter, type, required = False,
         
     # Is an exception is raised, show error message and abort execution
     except ValueError:
-        print style.prefix() + "Error while parsing parameter '" + parameter + "' in " \
-              "section '" + section + "'."
-        print style.prefix() + "Is it a " + str(type) + " data type?"
+        print(style.prefix() + "Error while parsing parameter '" + parameter + "' in " \
+              "section '" + section + "'.")
+        print(style.prefix() + "Is it a " + str(type) + " data type?")
         sys.exit(style.error_exit_message())
     except ConfigParser.NoSectionError:
-        print style.prefix() + "The section '" + section + "' could not be found."
+        print(style.prefix() + "The section '" + section + "' could not be found.")
         sys.exit(style.error_exit_message())
     except ConfigParser.NoOptionError:
         if  not required: return None
         else:
-            print style.prefix() + "The parameter '" + parameter + "' could not be found in section '" + section + "'."
+            print(style.prefix() + "The parameter '" + parameter + "' could not be found in section '" + section + "'.")
             sys.exit(style.error_exit_message())
     except ConfigParser.Error: 
-        print style.prefix() + "An error occurred while parsing parameter '" + parameter +"."
+        print(style.prefix() + "An error occurred while parsing parameter '" + parameter +".")
         sys.exit(style.error_exit_message())    
-
 
 def read_file_parameter(config_object, section, parameter, \
                         config_file = default_config_file(), check_exist=False):
@@ -144,12 +145,12 @@ def read_file_parameter(config_object, section, parameter, \
                                 True, config_file)
     if check_exist:
         if not os.path.exists(file_path):
-            print style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',"
-            print style.prefix() + "section '" + section + "' does not exist."
+            print(style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',")
+            print(style.prefix() + "section '" + section + "' does not exist.")
             sys.exit(style.error_exit_message())
         elif not os.path.isfile(file_path):
-            print style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',"
-            print style.prefix() + "section '" + section + "' does not refer to an existing file."
+            print(style.prefix() + "The path '" + file_path + "' specified in parameter '" + parameter + "',")
+            print(style.prefix() + "section '" + section + "' does not refer to an existing file.")
             sys.exit(style.error_exit_message())
         else:
             return file_path
@@ -198,21 +199,21 @@ def read_list_of_strings(config_object, section, parameter, required = False):
         line = config_object.get(section, parameter)
         
     except ConfigParser.NoSectionError:
-        print style.prefix() + "The section '" + section + "' could not be found."
+        print(style.prefix() + "The section '" + section + "' could not be found.")
         sys.exit(style.error_exit_message())
     except ConfigParser.NoOptionError:
-        print style.prefix() + "The parameter '" + parameter + "' could not be found in " \
-              "section '" + section + "'."
+        print(style.prefix() + "The parameter '" + parameter + "' could not be found in " \
+              "section '" + section + "'.")
         sys.exit(style.error_exit_message())
     except ConfigParser.Error: 
-        print style.prefix() + "An error occurred while parsing parameter '" + parameter +"."
+        print(style.prefix() + "An error occurred while parsing parameter '" + parameter + ".")
         sys.exit(style.error_exit_message())
 
     if not line:    # if empty list
         if required:
-            print style.prefix() + "[" + config_file + "] " + \
+            print(style.prefix() + "[config_file] " + \
                   "The parameter '" + parameter + "' in section '" + section + \
-                  "' cannot be left empty."
+                  "' cannot be left empty.")
             sys.exit(style.error_exit_message())    
         else:
             return None
@@ -254,15 +255,15 @@ def parse_str_interval(string_interval, section = None, parameter = None, \
     # in the returned list because "1-" is returned by split() as ['1', '']
     if len(splitted_interval) != 2 or '' in splitted_interval:
 
-        print style.prefix() + "The interval '" + string_interval + "'",
+        print(style.prefix() + "The interval '" + string_interval + "'")
 
         if section is not None and parameter is not None:
-            print "in section '" + section + "',", \
-                  "parameter '" + parameter + ","
+            print("in section '" + section + "',", \
+                  "parameter '" + parameter + ",")
 
             # Does not append a new line or space (as print does if , is used)
             sys.stdout.write(style.prefix())  
-        print "does not define two integers separated by the '-' character."
+        print("does not define two integers separated by the '-' character.")
         sys.exit(style.error_exit_message())
 
     
@@ -272,12 +273,12 @@ def parse_str_interval(string_interval, section = None, parameter = None, \
         try:
             casted_values.append(int(value))
         except:
-            print style.prefix() + "The value '" + value + "' specified in" \
-                  " the interval '" + string_interval + "',",
+            print(style.prefix() + "The value '" + value + "' specified in" \
+                  " the interval '" + string_interval + "',")
             if section is not None and parameter is not None:
-                print "parameter '" + parameter + "',"
-                print style.prefix() + "section '" + section + "',",
-            print "is not an integer."
+                print("parameter '" + parameter + "',")
+                print(style.prefix() + "section '" + section + "',")
+            print("is not an integer.")
             sys.exit(style.error_exit_message())
 
     # Return both values as a tuple
@@ -345,7 +346,7 @@ def read_list_of_intervals(config_object, section, parameter, separator = "-"):
     return parse_list_of_intervals(intervals, section, parameter)
            
 
-class CommentlessFile(file):
+class CommentlessFile(io.TextIOBase):
     """ Implements a commentless file subclass.
 
     ConfigParser forces comments to start on their only line (that is, only
@@ -355,7 +356,6 @@ class CommentlessFile(file):
     first "#" character is discarded.
 
     """
-
     def readline(self):
         """ Read a single commentless line from the file. """
 
@@ -383,14 +383,14 @@ def read_config_file(config_file = default_config_file()):
 
     """
    
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
     config.optionxform = str # make ConfigParser case sensitive
 
     try:
-        config.readfp(CommentlessFile(config_file))
+        config.read_file(CommentlessFile(config_file))
     except IOError:
-        print style.prefix() + "The configuration file '" + config_file + \
-              "' could not be read."
+        print(style.prefix() + "The configuration file '" + config_file + \
+              "' could not be read.")
         sys.exit(style.error_exit_message())    
 
     options = {}     # empty dictionaryl
@@ -450,7 +450,8 @@ def read_config_file(config_file = default_config_file()):
 
         # At least one string must be specified, comma-separated
         if not general[filter_prefix + filter_letter]:
-            print style.prefix() + "In section 'general', the parameter '" + filter_prefix + filter_letter + "' must list at least one string."
+            print(style.prefix() + "In section 'general', the parameter '" +
+                  filter_prefix + filter_letter + "' must list at least one string.")
             sys.exit(style.error_exit_message())
 
     options["general"] = general
@@ -474,7 +475,7 @@ def read_config_file(config_file = default_config_file()):
     nonlinearity["suffix"] = read_parameter(config, "nonlinearity", "suffix", str, False, config_file)
     nonlinearity["apply"] = read_parameter(config, "nonlinearity", "apply", bool, False, config_file)
 
-    if nonlinearity["apply"]==True:
+    if nonlinearity["apply"]:
         nonlinearity["model_lir"] = read_file_parameter(config, "nonlinearity", "model_lir", config_file, True)
         nonlinearity["model_rrrmpia"] = read_file_parameter(config, "nonlinearity", "model_rrrmpia", config_file, True)
     else:
@@ -507,7 +508,7 @@ def read_config_file(config_file = default_config_file()):
 
     # At least one string must be specified, comma-separated
     if not dark["object_names"]:
-        print style.prefix() + "In section 'dark', the parameter 'object_names' must list at least one string."
+        print(style.prefix() + "In section 'dark', the parameter 'object_names' must list at least one string.")
         sys.exit(style.error_exit_message())
 
 
@@ -529,7 +530,8 @@ def read_config_file(config_file = default_config_file()):
 
     area_width = read_parameter(config, "dflats", "area_width", int, True, config_file)
     if not area_width > 1:
-        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'dflats' must be a positive integer."
+        print(style.prefix() + "[" + config_file +
+              "] The value of 'area_width' in section 'dflats' must be a positive integer.")
         sys.exit(style.error_exit_message())    
     else:
         dflats["area_width"] = area_width
@@ -547,7 +549,7 @@ def read_config_file(config_file = default_config_file()):
     
     area_width = read_parameter(config, "twflats", "area_width", int, True, config_file)
     if not area_width > 1:
-        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'twflats' must be a positive integer."
+        print(style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'twflats' must be a positive integer.")
         sys.exit(style.error_exit_message())    
     else:
         twflats["area_width"] = area_width
@@ -566,12 +568,12 @@ def read_config_file(config_file = default_config_file()):
     skysub["mask_minarea"] = read_parameter(config, "skysub", "mask_minarea", int, False, config_file)
     skysub["mask_maxarea"] = read_parameter(config, "skysub", "mask_maxarea", int, False, config_file)
     skysub["mask_thresh"] = read_parameter(config, "skysub", "mask_thresh", float, False, config_file)
-    skysub["satur_level"] = read_parameter(config, "skysub", "satur_level", long, False, config_file)
+    skysub["satur_level"] = read_parameter(config, "skysub", "satur_level", int, False, config_file)
     skysub["skymodel"] = read_parameter(config, "skysub", "skymodel", str, False, config_file)
     
     area_width = read_parameter(config, "skysub", "area_width", int, True, config_file)
     if not area_width > 1:
-        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'skysub' must be a positive integer."
+        print(style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'skysub' must be a positive integer.")
         sys.exit(style.error_exit_message())    
     else:
         skysub["area_width"] = area_width
@@ -585,7 +587,7 @@ def read_config_file(config_file = default_config_file()):
     offsets["mask_maxarea"] = read_parameter(config, "offsets", "mask_maxarea", int, False, config_file)
     offsets["mask_thresh"] = read_parameter(config, "offsets", "mask_thresh", float, False, config_file)
     offsets["min_corr_frac"] = read_parameter(config, "offsets", "min_corr_frac", float, False, config_file)
-    offsets["satur_level"] = read_parameter(config, "offsets", "satur_level", long, False, config_file)
+    offsets["satur_level"] = read_parameter(config, "offsets", "satur_level", int, False, config_file)
     offsets["single_point"] = read_parameter(config, "offsets", "single_point", bool, False, config_file)
     offsets["method"] = read_parameter(config, "offsets", "method", str, False, config_file)
     offsets["max_dither_offset"] = read_parameter(config, "offsets", "max_dither_offset", int, False, config_file)
@@ -605,7 +607,8 @@ def read_config_file(config_file = default_config_file()):
     
     area_width = read_parameter(config, "gainmap", "area_width", int, True, config_file)
     if not area_width > 1:
-        print style.prefix() + "[" + config_file + "] The value of 'area_width' in section 'gainmap' must be a positive integer."
+        print(style.prefix() + "[" + config_file +
+              "] The value of 'area_width' in section 'gainmap' must be a positive integer.")
         sys.exit(style.error_exit_message())    
     else:
         gainmap["area_width"] = area_width
@@ -618,7 +621,7 @@ def read_config_file(config_file = default_config_file()):
     astrometry["mask_minarea"] = read_parameter(config, "astrometry", "mask_minarea", int, False, config_file)
     astrometry["mask_maxarea"] = read_parameter(config, "astrometry", "mask_maxarea", int, False, config_file)
     astrometry["mask_thresh"] = read_parameter(config, "astrometry", "mask_thresh", float, False, config_file)
-    astrometry["satur_level"] = read_parameter(config, "astrometry", "satur_level", long, False, config_file)
+    astrometry["satur_level"] = read_parameter(config, "astrometry", "satur_level", int, False, config_file)
     astrometry["catalog"] = read_parameter(config, "astrometry", "catalog", str, True, config_file)
     astrometry["engine"] = read_parameter(config, "astrometry", "engine", str, True, config_file)
     
@@ -713,7 +716,7 @@ def read_options(options, section, config_file = default_config_file()):
     temp_config.optionxform = str # make ConfigParser case sensitive
 
     if not temp_config.read(config_file):
-        print style.prefix() + "The configuration file '%s' could not be read." % config_file
+        print(style.prefix() + "The configuration file '%s' could not be read." % config_file)
         sys.exit(style.error_exit_message())    
 
     # Update in the copy of the configuration file those parameters which are
@@ -741,8 +744,8 @@ def read_options(options, section, config_file = default_config_file()):
     # TODO: the above method has not still been thoroughly tested!!!!!!!
 
 if __name__ == "__main__":
-
-    print read_config_file()
+    f = "/home/jmiguel/DEVELOP/PAPI_v2/papi/config_files/papi.cfg"
+    print(read_config_file(f))
         
     
 

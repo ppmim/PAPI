@@ -77,7 +77,7 @@ def _clean_masked_pixels(data, mask, size=5, exclude_mask=None):
     #mask_idx = (maskall==0)
     data_nanmask = data.copy()
     data_nanmask[mask_idx] = np.nan
-    print "Number of BPs = %d" % np.isnan(data_nanmask).sum()
+    print("Number of BPs = %d" % np.isnan(data_nanmask).sum())
 
     nexpanded = 0
     for coord in mask_coords:
@@ -135,23 +135,23 @@ def test( im, mask ):
     #x = xarray(im.shape)
     #y = yarray(im.shape)
     cleaned = im.copy()
-    print "N=",n
+    print("N=", n)
     for d in (np.arange(n) + 1):
-        print "iter =",d
+        print("iter =", d)
         # find the current domain
         i = (domains == d)
 
-        print "step 1"
+        print("step 1")
         # extract the sub-image
         x0, x1 = x[i].min(), x[i].max() + 1
         y0, y1 = y[i].min(), y[i].max() + 1
         subim = im[y0:y1, x0:x1]
         submask = mask[y0:y1, x0:x1]
         subgood = (submask == False)
-        print "step 2"
+        print("step 2")
 
         cleaned[i * mask] = subim[subgood].mean()
-        print "X0= %f X1= %f , Y0= %f Y1= %f" % (x0, x1, y0, y1)
+        print("X0= %f X1= %f , Y0= %f Y1= %f" % (x0, x1, y0, y1))
 
     return cleaned
 
@@ -165,7 +165,7 @@ def cleanBadPixels( input_image, bpm, output_file=None, is_gainmap=False):
         input_mask = np.where(input_mask == 0, 1, 0)
     
     new_data = _clean_masked_pixels(input_data, input_mask)
-    #new_data = test(input_data, input_mask)
+    # new_data = test(input_data, input_mask)
     
     # Write cleaned data
     if output_file == None:
@@ -177,8 +177,7 @@ def cleanBadPixels( input_image, bpm, output_file=None, is_gainmap=False):
     return output_file
 
 if __name__ == "__main__":
-    
-    
+
     usage = "usage: %prog [options]"
     desc = """Clean masked (bad) pixels from an input image. Each masked pixel 
 is replaced by the median of unmasked pixels in a 2D window of ``size`` centered on
@@ -209,7 +208,8 @@ increased in size until unmasked pixels are found."""
        parser.print_help()
        sys.exit(0)
         
-    # args is the leftover positional arguments after all options have been processed 
+    # args is the leftover positional arguments after all options have
+    # been processed
     if not options.source_filename or len(args) != 0: 
         parser.print_help()
         parser.error("incorrect number of arguments ")
@@ -227,7 +227,7 @@ increased in size until unmasked pixels are found."""
                        mask, 
                        options.output_filename,
                        is_gainmap = (options.gainmap > 0))
-    except Exception,e:
+    except Exception as e:
         log.error("Error cleaning image. %s " % str(e))
         
     sys.exit(0)

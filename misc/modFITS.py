@@ -13,6 +13,7 @@
 #             Adapted to work with old version of PyFITS (i.e., arch.osn.iaa.es)
 #              17/09/2013    jmiguel@iaa.es
 #                            New name and now keywords can be added.
+#              09/10/2019    Moved to Python3
 # TODO
 #     - Give a map of keyword-value as input
 ################################################################################
@@ -20,13 +21,7 @@
 ################################################################################
 # Import necessary modules
 
-import getopt
-import sys
-import os
-import logging
 import fileinput
-import time
-from datetime import datetime
 from optparse import OptionParser
 
 # Interact with FITS files
@@ -58,7 +53,7 @@ def modFITS(files, keyword, value, ext=0):
         
     """
            
-    print "Starting modFITS..."
+    print("Starting modFITS...")
     n = 0
     old_version = False
 
@@ -69,17 +64,17 @@ def modFITS(files, keyword, value, ext=0):
             # Other option, is use fits.ImageHDU.scale_back
             hdulist = fits.open(file, "update", do_not_scale_image_data=True)
         except IOError:
-            print 'Error, can not open file %s' %(file)
+            print('Error, can not open file %s' % (file))
             continue
 
-        #Check if it is a MEF file 
-        if ext>(len(hdulist)-1):
-            print "[Error] Wrong Extension number for file: %s"%file
+        # Check if it is a MEF file
+        if ext > (len(hdulist)-1):
+            print("[Error] Wrong Extension number for file: %s" % file)
             continue
         
         try:
             if not keyword in hdulist[ext].header:
-                print "Warning, keyword does not exists; it will be added."
+                print("Warning, keyword does not exists; it will be added.")
                 
             if old_version:
                 # Store scaling information for later use, as this is 
@@ -98,11 +93,11 @@ def modFITS(files, keyword, value, ext=0):
 
             hdulist.writeto(file, clobber=True, output_verify='ignore')
             n+=1
-        except Exception,e:
-            print "[Error] Cannot modify keyword %s: \n %s"%(keyword, str(e))
+        except Exception as e:
+            print("[Error] Cannot modify keyword %s: \n %s"%(keyword, str(e)))
         hdulist.close()    
     
-    print "End of modFITS. %d files modified"%n
+    print("End of modFITS. %d files modified" % n)
     return n
     
                                   
@@ -142,14 +137,14 @@ if __name__ == "__main__":
         filelist = [line.replace( "\n", "") for line in fileinput.input(options.input_file_list)]
     else:
         parser.print_help()
-        parser.error("incorrect number of arguments " )
+        parser.error("incorrect number of arguments ")
     
     if not options.keyword or not options.value:
         parser.print_help()
-        parser.error("incorrect number of arguments " )
+        parser.error("incorrect number of arguments ")
         
     try:
         modFITS(filelist, options.keyword, options.value, options.extension_number)    
-    except Exception, e:
+    except Exception as e:
         raise e
-        
+

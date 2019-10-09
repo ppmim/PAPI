@@ -56,14 +56,14 @@ def initWCS(input_image, pixel_scale):
     
     try:
         f = datahandler.ClFits(input_image, check_integrity=False)
-    except Exception,e:
-        log.error("Error reading FITS %s : %s"%(f,str(e)))
+    except Exception as e:
+        log.error("Error reading FITS %s : %s"%(f, str(e)))
         raise e
     
     try:
         fits_file = fits.open(input_image, 'update', ignore_missing_end=True)
-    except Exception,e:
-        log.error("Error reading FITS %s : %s"%(f,str(e)))
+    except Exception as e:
+        log.error("Error reading FITS %s : %s"%(f, str(e)))
         raise e
 
     if f.isMEF(): # is a MEF
@@ -78,7 +78,7 @@ def initWCS(input_image, pixel_scale):
         try:
             checkWCS(header)
             log.debug("FITS looks having a right WCS header")
-        except Exception,e:
+        except Exception as e:
             log.warning("No WCS compliant header, trying to create one ...")
             try:
                 # Read some basic values
@@ -147,9 +147,11 @@ def initWCS(input_image, pixel_scale):
                 
                 log.debug("Successful WCS header created !")
                 
-            except Exception,e:
+            except Exception as e:
                 log.error("Some error while creating initial WCS header: %s"%str(e))
-                fits_file.close(output_verify='ignore') # This ignore any FITS standar violation and allow write/update the FITS file
+                fits_file.close(output_verify='ignore')
+                # This ignore any FITS standard violation and allow
+                # write/update the FITS file
                 raise e
         
         # Check whether CRPIXn need to be updated because of some kind of border
@@ -166,7 +168,7 @@ def initWCS(input_image, pixel_scale):
                 value = header['CRPIX2'] + (header['NAXIS2']-2048)/2            
                 header.set('CRPIX2', value )
                 log.debug("VALUE2=%s"%value)
-        except Exception,e:
+        except Exception as e:
             log.critial("[initWCS] Error updating header: %s"%str(e))
             raise e
 
@@ -174,7 +176,7 @@ def initWCS(input_image, pixel_scale):
     
     try:        
         fits_file.close(output_verify='ignore')
-    except Exception,e:
+    except Exception as e:
         log.critical("ERROR !")
         raise e
 
@@ -322,10 +324,9 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     
     try:
         initWCS(input_image, pixel_scale)
-    except Exception,e:
+    except Exception as e:
         raise e
-        
-    
+
     ## STEP 1: Create SExtractor catalog (.ldac)
     log.debug("*** Creating SExtractor catalog ....")
     sex = astromatic.SExtractor()
@@ -340,7 +341,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     try:
         dh = datahandler.ClFits(input_image, check_integrity=False)
         nc = dh.getNcoadds()
-    except Exception,e:
+    except Exception as e:
         log.warning("Cannot read NCOADDS. Default value (=1) taken")
         nc = 1
 
@@ -348,7 +349,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     
     try:
         sex.run(input_image, updateconfig=True, clean=False)
-    except Exception,e:
+    except Exception as e:
         log.error("Error running SExtractor: %s" % str(e)) 
         raise e
     
@@ -361,7 +362,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
         papi_home = os.environ['PAPI_HOME']
         if papi_home[-1]!='/':
             papi_home+='/'
-    except Exception,e:
+    except Exception as e:
         log.error("Error, variable PAPI_HOME not defined.")
         raise e
 
@@ -386,7 +387,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     #but, "ext_config" parameters will be used in any case
     try:
         scamp.run(cat_file, updateconfig=False, clean=False)
-    except Exception,e:
+    except Exception as e:
         log.error("Error running SCAMP: %s" % str(e))
         raise e
     
@@ -403,6 +404,7 @@ def doAstrometry(input_image, output_image=None, catalog='2MASS',
     swarp.ext_config['WEIGHTOUT_NAME'] = basename_o + ".weight" + extension_o
     basename, extension = os.path.splitext(input_image)
     swarp.ext_config['HEADER_SUFFIX'] = extension + ".head"
+
     if not os.path.isfile(input_image + ".head"):
         raise Exception ("Cannot find required .head file")
    
@@ -513,7 +515,7 @@ def filter_area(cat_filename, max_size=200):
         
         hdus[2].data = hdus[2].data[mask]
         hdus.writeto(cat_filename,output_verify='warn', clobber=True)
-    except Exception,e:
+    except Exception as e:
         raise Exception("Error while filtering Catalog %s  : %s"%(cat_filename,str(e)))
 
     log.debug("Catalog filtered by Area (isoarea_image). File  : %s",cat_filename)
@@ -553,18 +555,19 @@ class AstroWarp(object):
         ----------
         input_files  - the set of overlapping reduced frames, i.e., dark 
                        subtracted, flatted and sky subtracted. 
-        catalog      - the catalog to use for the astrometric calibration (by default, 2MASS).
+        catalog      - the catalog to use for the astrometric calibration
+                        (by default, 2MASS).
         coadded_file - the output final coadded image
         config_dict  - configuration dictionary
-        do_votable   - whether to generata a VO-table with the Sextractor catalog of coadded image
+        do_votable   - whether to generata a VO-table with the Sextractor
+                    catalog of coadded image
         resample     - Resample image when scamp is executed (RESAMPLE).
-        subtract_back - Subtract sky background when scamp is executed (SUBTRACT_BACK)
-        weight_maps   - List of input weight-map filenames; if the list has a single file,
-                        it will be used for all the input files. 
+        subtract_back - Subtract sky background when scamp is executed
+                        (SUBTRACT_BACK)
+        weight_maps   - List of input weight-map filenames; if the list has a
+                        single file, it will be used for all the input files.
                         0 = bad pixel, >1 = good pixels
-
         """
-        
 
         # PAPI_HOME
         try:
@@ -582,7 +585,7 @@ class AstroWarp(object):
             self.config_dict = config_dict # the config dictionary
             
         self.input_files = input_files
-        if catalog != None:
+        if catalog is not None:
             self.catalog = catalog
         else: 
             self.catalog = config_dict['astrometry']['catalog']
@@ -652,7 +655,7 @@ class AstroWarp(object):
                                             self.output_dir,
                                             self.temp_dir,
                                             self.config_dict['general']['pix_scale'])
-                except Exception,e:
+                except Exception as e:
                     raise Exception("[runWithAstrometryNet] Cannot solve Astrometry for file: %s"%(file,str(e)))
                 else:
                     solved_files.append(solved)
@@ -682,7 +685,7 @@ class AstroWarp(object):
             
             try:
                 sex.run(file, updateconfig=True, clean=False)
-            except Exception,e:
+            except Exception as e:
                 raise e
 
             
@@ -704,7 +707,7 @@ class AstroWarp(object):
         
         try:
             scamp.run(cat_files, updateconfig=False, clean=False)
-        except Exception,e:
+        except Exception as e:
             raise e
         
         
@@ -734,7 +737,7 @@ class AstroWarp(object):
         # "Projected" weight-maps are created only if weight-maps were given in input (SWarp manual).
         # Weight maps are very important to get a good coadd/mosaic, mostly due to BadPixels !!
         # Case 1: specific weight_maps are provided or single one common for all input files
-        if self.weight_maps != None and len(self.weight_maps) > 0:
+        if self.weight_maps is not None and len(self.weight_maps) > 0:
             # A weight map for each input file to coadd
             if len(self.weight_maps) == len(solved_files):
                 list_weight_maps = ''
@@ -777,7 +780,7 @@ class AstroWarp(object):
         """    
         try:
             swarp.run(solved_files, updateconfig=False, clean=False)
-        except Exception,e:    
+        except Exception as e:
             raise e
         
         ## STEP 4: Make again the final astrometric calibration (only 
@@ -791,8 +794,8 @@ class AstroWarp(object):
                             self.output_dir,
                             self.temp_dir,
                             self.config_dict['general']['pix_scale'])
-            except Exception,e:
-                    raise Exception("[runWithAstrometryNet] Error doing Astrometric calibration: %s"%str(e))
+            except Exception as e:
+                    raise Exception("[runWithAstrometryNet] Error doing Astrometric calibration: %s" % str(e))
             else:
                 shutil.move(solved, self.coadded_file)
                 shutil.move(output_path.replace(".fits", ".weight.fits"), 
@@ -862,7 +865,7 @@ class AstroWarp(object):
             
             try:
                 sex.run(file, updateconfig=True, clean=False)
-            except Exception,e:
+            except Exception as e:
                 raise e
 
             
@@ -879,7 +882,7 @@ class AstroWarp(object):
         
         try:
             scamp.run(cat_files, updateconfig=False, clean=False)
-        except Exception, e:
+        except Exception as e:
             raise e
         
         
@@ -951,7 +954,7 @@ class AstroWarp(object):
         """    
         try:
             swarp.run(self.input_files, updateconfig=False, clean=False)
-        except Exception, e:    
+        except Exception as e:
             raise e        
         
         ## STEP 4: Make again the final astrometric calibration (only 
@@ -1023,8 +1026,8 @@ in principle previously reduced, but not mandatory.
     if not options.config_file:
         try:
             config_file = os.environ['PAPI_CONFIG']
-        except KeyError, error:
-            print 'Environment variable PAPI_CONFIG not found!'
+        except KeyError as error:
+            print('Environment variable PAPI_CONFIG not found!')
             sys.exit()
     else:
         config_file = options.config_file
@@ -1033,7 +1036,8 @@ in principle previously reduced, but not mandatory.
         
     cfg_options = misc.config.read_config_file(config_file)
     
-    # args is the leftover positional arguments after all options have been processed
+    # args is the leftover positional arguments after all options have been
+    # processed
     if not options.source_file or not options.output_filename or len(args)!=0: 
         parser.print_help()
         parser.error("incorrect number of arguments " )
@@ -1056,7 +1060,7 @@ in principle previously reduced, but not mandatory.
                               catalog='2MASS', config_dict=cfg_options, 
                               do_votable=False, resample=options.resample,
                               subtract_back=options.subtract_back)
-                except Exception,e:
+                except Exception as e:
                     log.error("Some error while doing astrometric calibration")
             # AstrometryNet
             else: 
@@ -1067,8 +1071,8 @@ in principle previously reduced, but not mandatory.
                                         cfg_options['general']['output_dir'],
                                         cfg_options['general']['temp_dir'],
                                         cfg_options['general']['pix_scale'])
-                except Exception,e:
-                    raise Exception("Cannot solve Astrometry for file: %s"%(file,str(e)))
+                except Exception as e:
+                    raise Exception("Cannot solve Astrometry for file: %s" % (options.source_file, str(e)))
                 else:
                     shutil.move(solved, options.output_filename)     
         else: 
@@ -1080,7 +1084,7 @@ in principle previously reduced, but not mandatory.
         
             try:
                 astrowarp.run(options.engine)
-            except Exception,e:
+            except Exception as e:
                 log.error("Some error while running Astrowarp : %s",str(e))
     else:
         log.error("Source file %s does not exists",options.source_file)

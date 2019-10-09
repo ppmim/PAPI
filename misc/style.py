@@ -32,6 +32,7 @@ def prefix():
 
     return ">> "
 
+
 def error_exit_message():
     """ Return the error message to be printed if the execution is aborted. """
 
@@ -52,8 +53,8 @@ def red_string(string):
     # colors-using-python
 
     reset = "\033[0;0m"    
-    CSI="\x1B["
-    return CSI+"31;40m" + string + reset
+    CSI = "\x1B["
+    return CSI + "31;40m" + string + reset
 
 
 def bold_string(string):
@@ -67,4 +68,3 @@ def bold_string(string):
     bold = "\033[1m"
     reset = "\033[0;0m"   
     return bold + string + reset
-

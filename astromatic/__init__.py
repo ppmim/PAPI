@@ -2,8 +2,8 @@
 #import sexcatalog
 #import ldac 
 
-from sextractor import *
-from sexcatalog import *
-from scamp import *
-from swarp import *
-from ldac import *
+from astromatic.sextractor import *
+from astromatic.sexcatalog import *
+from astromatic.scamp import *
+from astromatic.swarp import *
+from astromatic.ldac import *

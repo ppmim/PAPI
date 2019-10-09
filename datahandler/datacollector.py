@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #encoding:UTF-8
 
-# Copyright (c) 2015 Jose M. Ibanez All rights reserved.
+# Copyright (c) 2008-2019 Jose M. Ibanez All rights reserved.
 # Institute of Astrophysics of Andalusia, IAA-CSIC
 #
 # This file is part of PAPI
@@ -29,33 +29,23 @@
 # 
 ################################################################################
 
-
-import sys
 import os
 import fnmatch
 import string
-#import utils
-import time
-#import fileUtils
 #import misc.dataset
-#from threading import Thread
 import copy
 import fileinput
 import glob
 import datetime as dt
-import logging
 
-#PAPI modules
+# PAPI modules
 import datahandler
-		
-#Logging        
-from misc.paLog import log       
+from misc.paLog import log
 
         
 class DataCollector (object):
-	
     """
-    Class that implement the data receiver FITS data files comming from GEIRS  
+    Class that implement the data receiver FITS data files comming from GEIRS
     """
     
     def __init__(self, mode, source, filename_filter, p_callback_func):
@@ -91,9 +81,9 @@ class DataCollector (object):
         
         self.dirlist = [] 
         
-        # Define the two lists containing the filenames of unprocessed and reduced
-        # files.
-        self.newfiles     = []
+        # Define the two lists containing the filenames of unprocessed and
+        # reduced files.
+        self.newfiles = []
         self.reducedfiles = []
         
         # Next variable includes the files that was not able to read, 
@@ -109,11 +99,8 @@ class DataCollector (object):
         self.stop = False
     
     def check(self):
-        
-        #print 'Start checking ...'
         self.autoCheckFiles()
-        #print '...END checking'
-    
+
     def Clear(self):
         self.dirlist = [] 
         self.newfiles = []
@@ -143,7 +130,7 @@ class DataCollector (object):
             # Check for new files in the input directory
             self.findNewFiles()
         else:
-            print "Source %s does NOT exists :"%self.source
+            print("Source %s does NOT exists :" % self.source)
                 
     def __listFiles(self, dirpath):
         """
@@ -178,7 +165,7 @@ class DataCollector (object):
             if file not in self.bad_files_found:
                 try:
                     fits = datahandler.ClFits(file, check_integrity=True)
-                except IOError,e:
+                except IOError as e:
                     if file in self.pend_to_read:
                         if  self.pend_to_read[file] < self._n_retries_:
                             self.pend_to_read[file] = self.pend_to_read[file] + 1
@@ -186,12 +173,12 @@ class DataCollector (object):
                             # definitely, file is discarted
                             self.bad_files_found.append(file)
                             del self.pend_to_read[file]
-                            print "[__sortFilesMJD] Definitely file %s , is discarted"%(file)
+                            print("[__sortFilesMJD] Definitely file %s , is discarted"%(file))
                     else:
                         self.pend_to_read[file] = 1
-                except Exception,e:
-                    print "[__sortFilesMJD] Error reading file %s , skipped..."%(file)
-                    print str(e)
+                except Exception as e:
+                    print("[__sortFilesMJD] Error reading file %s , skipped..." %(file))
+                    print(str(e))
                     self.bad_files_found.append(file)      
                 else:
                     dataset.append((file, fits.getMJD()))
@@ -231,7 +218,7 @@ class DataCollector (object):
         if end_datetime == None:
             l_end_datetime = dt.datetime.now()
         if l_end_datetime < l_start_datetime:
-            print "[DC] Error, end_datetime < start_datetime !"
+            print("[DC] Error, end_datetime < start_datetime !")
             return []
         
         #print "start_date = %s"%l_start_datetime
@@ -245,17 +232,17 @@ class DataCollector (object):
                     try:
                         line_date = dt.datetime.strptime(sline[0]+" "+sline[1],
                                                      "%Y-%m-%d %H:%M:%S")
-                    except ValueError,e:
-                        print "Error, cannot read datetime stamp in log file line :",line
-                        print str(e)
+                    except ValueError as e:
+                        print("Error, cannot read datetime stamp in log file line :", line)
+                        print(str(e))
                         continue
                     if line_date > l_start_datetime and line_date < l_end_datetime:
                         contents.append(sline[6])
-                        print "FILE = ", sline[6]
+                        print("FILE = ", sline[6])
                     else:
                         pass
-                        #print "File too old ...."
-                        #print "file datetime = %s"%line_date
+                        # print "File too old ...."
+                        # print "file datetime = %s"%line_date
         # To read ~/tmp/fitsGeirsWritten
         elif type == 2:
             # Read the file contents from a generated GEIRS file
@@ -268,9 +255,9 @@ class DataCollector (object):
                         # Due to datetime.strptime does not work with %z directive,
                         # the UTC offset is skipped. 
                         line_date = dt.datetime.strptime(sline[0].split("+")[0],"%Y-%m-%dT%H:%M:%S")
-                    except ValueError,e:
-                        print "Error, cannot read datetime stamp in log file line",line
-                        print sline[0]
+                    except ValueError as e:
+                        print("Error, cannot read datetime stamp in log file line", line)
+                        print(sline[0])
                         continue
                     if line_date > l_start_datetime and line_date < l_end_datetime:
                         contents.append(sline[1])
@@ -324,8 +311,8 @@ class DataCollector (object):
 	                    #print "FILE = ", sline[6]
 	            """    
          
-        except Exception, e:
-            print "Some error while reading source  %s "%self.source
+        except Exception as e:
+            print("Some error while reading source  %s " % self.source)
             return
 
         # Check the obtained list of files agains the existing directory list
@@ -338,7 +325,7 @@ class DataCollector (object):
             if file not in contents:
                 # Hmm... a strange situation. Apparently a file listed in self.dirlist
                 # DISappeared from the directory. Adjust the lists accordingly
-                print '[DC] File %s disappeared from directory - updating lists' % file
+                print('[DC] File %s disappeared from directory - updating lists' % file)
                 self.dirlist.remove(file)
                 self.callback_func(file + "__deleted__")
                 
@@ -389,15 +376,15 @@ class DataCollector (object):
                     if self.mode != "dir": # for dir, it was already done above in __sortFilesMJD()
                         fits = datahandler.ClFits(file, check_integrity=True)
                         del fits
-                except IOError,e:
+                except IOError as e:
                     # file is still being saved ! should not happen when reading GEIRS logs
-                    print "[findNewFiles-1] Error reading file %s , skipped..."%(file)
-                    print str(e)
+                    print("[findNewFiles-1] Error reading file %s , skipped..." %(file))
+                    print(str(e))
                     self.remove(file)
                     self.bad_files_found.append(file)    
-                except Exception,e:
-                    print "[findNewFiles-2] Error reading file %s , skipped..."%(file)
-                    print str(e)
+                except Exception as e:
+                    print("[findNewFiles-2] Error reading file %s , skipped..."%(file))
+                    print(str(e))
                     self.remove(file)
                     self.bad_files_found.append(file)
                 else:
@@ -407,7 +394,7 @@ class DataCollector (object):
                     #self.newfiles.append(file) # removed line--> jmiguel - 2010-11-12
                     #print '[DC] Found new file ....%s' %file
             else:
-                print "[DC] Warning, %s not a compliant file or does not exist !!" %file
+                print("[DC] Warning, %s not a compliant file or does not exist !!" %file)
 
         # if it is the last file of a full-directory list, then notify QL to
         # update the ListView.
@@ -418,13 +405,13 @@ class DataCollector (object):
             self.callback_func(contents[-1] + "__last__")
 
 
-    
 if __name__ == "__main__":
-    def imprime_fichero(un_fichero):
-        print un_fichero
-    print 'DataCollector sample started ...'	 
-    dr = DataCollector("geirs-file", "/home/panicmgr/GEIRS/log/save_CA2.2m.log", "*.fits", imprime_fichero)
+    def imprime_fichero(f):
+        print(f)
+    print('DataCollector sample started ...')
+    dr = DataCollector("geirs-file", "/home/panicmgr/GEIRS/log/save_CA2.2m.log",
+                       "*.fits", imprime_fichero)
     dr.check()
-    print 'Datacollector sample finished successful'
+    print('Datacollector sample finished successful')
     
 

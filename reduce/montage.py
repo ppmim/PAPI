@@ -24,7 +24,8 @@ import sys
 import os
 import shutil
 import tempfile
-
+from optparse import OptionParser
+import fileinput
 
 # Logging
 from misc.paLog import log
@@ -104,7 +105,7 @@ def mosaic(files_to_mosaic, raw_dir, output_dir, tmp_dir,
     
     # If out_mosaic path was provided, rename the mosaic
     # and remove the out directory.
-    if out_mosaic != None:
+    if out_mosaic is not None:
         shutil.move(os.path.join(m_out_dir, "mosaic.fits"),
                     out_mosaic)
         shutil.rmtree(m_out_dir)
@@ -149,9 +150,10 @@ if __name__ == "__main__":
        sys.exit(0)
        
     if not options.source_file_list or len(args) != 0: 
-    # args is the leftover positional arguments after all options have been processed
+    # args is the leftover positional arguments after all options have been
+    # processed
         parser.print_help()
-        parser.error("wrong number of arguments " )
+        parser.error("wrong number of arguments ")
     
     if not options.output_image:
         options.output_image = None
@@ -165,7 +167,7 @@ if __name__ == "__main__":
                background_match=True, 
                out_mosaic=options.output_image)
         
-    except Exception, e:
-        log.error("Fail of Montage-Mosaic procedure: %s"%str(e))
+    except Exception as e:
+        log.error("Fail of Montage-Mosaic procedure: %s" % str(e))
     else:
         log.info("Well done!")
