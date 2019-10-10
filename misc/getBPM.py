@@ -20,11 +20,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import math
 import sys
 import os
-import shutil
-import fileinput
 from optparse import OptionParser
 
 
@@ -34,8 +31,6 @@ import astropy.io.fits as fits
 from misc.paLog import log
 from misc.version import __version__
 import misc.mef 
-
-import datahandler
 
 
 def createBPM(input_nlc, output_dir=None, joined=False):
@@ -82,7 +77,7 @@ def createBPM(input_nlc, output_dir=None, joined=False):
     if len(f) != 9:
         msg = "Error, NLC file has wrong number of extensions"
         log.error(msg)
-        raise Exception(mgs)
+        raise Exception(msg)
     
     # Init the BPM FITS file
     hdulist = fits.HDUList()
@@ -101,7 +96,7 @@ def createBPM(input_nlc, output_dir=None, joined=False):
         try:
             extName = 'LINMAX%d'%iExt
             f[extName].header
-        except KeyError, e:
+        except KeyError as e:
             extName = 'SG%i_1' %iExt
         # create temporal array
         tmp = numpy.zeros([2048, 2048], dtype=numpy.int16)
@@ -168,7 +163,7 @@ The bad pixels will be saved as 1's"""
                       output_dir=options.output_dir,
                       joined=options.joined)
         log.info("BPM file created: %s"%r)
-    except Exception,e:
+    except Exception as e:
         log.error("Error, cannot create BPM: %s",str(e))
     
     

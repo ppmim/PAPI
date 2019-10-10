@@ -3,7 +3,6 @@
 
 import numpy as np
 import pyraf.iraf as iraf
-import argparse
 import sys
 
 def read_psfmeasure_log(logfile):
@@ -22,7 +21,7 @@ def read_psfmeasure_log(logfile):
             # and third the description of the columns.
             field_pattern = "/data1/PANIC"
             if line != "\n" and field_pattern in line.split()[0]:
-                print "Found new Image"
+                print("Found new Image")
                 if new_log: new_log.close()
                 new_log = open(logfile +".new.%0d"%n_images,"w")
                 n_images += 1
@@ -41,15 +40,16 @@ def read_psfmeasure_log(logfile):
                     pass
         
         
-	new_log.close()
+        new_log.close()
         
         n_points = len(xout)/n_images
-        print "N_Points",n_points
-        print "N_images",n_images
+        print("N_Points",n_points)
+        print("N_images",n_images)
         return
+
         for i in range(n_points):
             for im in range(n_images):
-                print "FWHM_%d_%d = %f"%(im, i, FWHM[im*n_points+i])
+                print("FWHM_%d_%d = %f"%(im, i, FWHM[im*n_points+i]))
 
 if __name__ == "__main__":
 

@@ -59,7 +59,7 @@ from misc.version import __version__
 
 class SkyGainMap(object):
     """ Compute the gain map from a list of sky frames """
-    def __init__(self, filelist,  output_filename="/tmp/gainmap.fits",
+    def __init__(self, filelist, output_filename="/tmp/gainmap.fits",
                  bpm=None, temp_dir="/tmp/"):
 
         self.framelist = filelist
@@ -79,7 +79,7 @@ class SkyGainMap(object):
                                                          self.bpm, norm=False,
                                                          temp_dir=self.temp_dir)
             superflat.create()
-        except Exception, ex:
+        except Exception as ex:
             log.error("Error while creating super sky flat: %s", str(ex))
             raise ex
 
@@ -87,7 +87,7 @@ class SkyGainMap(object):
         try:
             gainmap = GainMap(tmp_output_path, self.output)
             gainmap.create()
-        except Exception, ex:
+        except Exception as ex:
             log.error("Error while creating gain map: %s", str(ex))
             raise ex
 
@@ -120,7 +120,7 @@ class TwlightGainMap(object):
                                                          master_dark_list=self.master_dark_list,
                                                          output_filename=tmp_output_path)
             twflat.createMaster()
-        except Exception, ex:
+        except Exception as ex:
             log.error("Error while creating twlight flat: %s", str(ex))
             raise ex
 
@@ -128,7 +128,7 @@ class TwlightGainMap(object):
         try:
             gainmap = GainMap(tmp_output_path, self.output)
             gainmap.create()
-        except Exception, ex:
+        except Exception as ex:
             log.error("Error while creating gain map: %s", str(ex))
             raise ex
 
@@ -160,7 +160,7 @@ class DomeGainMap(object):
                                                          temp_dir="/tmp",
                                                          output_filename=tmp_output_path)
             domeflat.createMaster()
-        except Exception, e:
+        except Exception as e:
             log.error("Error while creating master dome flat: %s", str(e))
             raise e
 
@@ -168,7 +168,7 @@ class DomeGainMap(object):
         try:
             gainmap = GainMap(tmp_output_path, self.output)
             gainmap.create()
-        except Exception, ex:
+        except Exception as ex:
             log.error("Error while creating gain map: %s", str(ex))
             raise ex
             
@@ -186,7 +186,7 @@ class GainMap(object):
     JMIbanez, IAA-CSIC
 
     """
-    def __init__(self,  flatfield,  output_filename="/tmp/gainmap.fits",
+    def __init__(self, flatfield,  output_filename="/tmp/gainmap.fits",
                  bpm=None, do_normalization=True, mingain=0.5, maxgain=1.5,
                  nxblock=16, nyblock=16, nsigma=5):
         """
@@ -342,7 +342,7 @@ class GainMap(object):
             # To avoid zero-division
             __epsilon = 1.0e-20
             if np.fabs(median) > __epsilon:
-                flatM = flatM / median
+                flatM /= median
             else:
                 flatM = flatM
 
@@ -505,7 +505,7 @@ optionally normalized. The bad pixels are set to 0"""
                       nsigma=options.nsigma )
 
         gainmap.create()
-    except Exception, ex:
+    except Exception as ex:
         log.error("Some kind of problem happened %s" % str(ex))
 
 

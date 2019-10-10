@@ -61,7 +61,7 @@ def collapse(frame_list, out_dir="/tmp"):
                 log.info("Collapsing a MEF cube %s"%frame_i)
                 out = collapse_mef_cube(frame_i, t_filename)
                 new_frame_list.append(out)
-            except Exception,e:
+            except Exception as e:
                 log.error("Some error collapsing MEF cube: %s"%str(e))
                 raise e
         elif len(f)>1 and len(f[1].data.shape)==2:
@@ -117,13 +117,14 @@ def collapse_mef_cube(inputfile, out_filename=None):
  
     # Sum each extension
     for ext in range(1,len(f)):
-        hdu = fits.ImageHDU (data = numpy.float32(f[ext].data.sum(0)), header = f[ext].header)
+        hdu = fits.ImageHDU(data=numpy.float32(f[ext].data.sum(0)),
+                            header=f[ext].header)
         #hdu.scale('float32') --> bug con astropy 1.3 !!! 
         out_hdulist.append(hdu)    
     
     # Now, write the new collapsed file
-    if out_filename==None:
-        outfile = inputfile.replace(".fits", "_coadd_%s.fits"%str(f[1].data.shape[0]).zfill(3))
+    if out_filename is None:
+        outfile = inputfile.replace(".fits", "_coadd_%s.fits" % str(f[1].data.shape[0]).zfill(3))
     else:
         outfile = out_filename 
     out_hdulist.writeto (outfile, output_verify = 'ignore', 
@@ -147,7 +148,7 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
     log.debug("Starting collapse_distinguish() method ....")
     
     new_frame_list = [] 
-    if frame_list == None or len(frame_list) == 0 or frame_list[0] == None:
+    if frame_list is None or len(frame_list) == 0 or frame_list[0] is None:
         return []
 
     for frame_i in frame_list:
@@ -160,7 +161,7 @@ def collapse_distinguish(frame_list, out_filename="/tmp/collapsed.fits"):
             log.error("Not implemented yet.")
             raise Exception("MEF-2D files cannot be collapsed. Not implemented yet.")
             ## TO BE COMPLETED !!! ##
-            log.debug("Found a MEF with a 2D-image: %s:"%frame_i)
+            log.debug("Found a MEF with a 2D-image: %s:" % frame_i)
             new_frame_list.append(frame_i)
             if len(new_frame_list)==1:
                 sum = numpy.zeros(len(f)-1, [f[1].header['NAXIS1'], 
@@ -262,9 +263,9 @@ if __name__ == "__main__":
 
         try:
             frames = [options.input_image]
-            print collapse(frames, options.output_dir)
-        except Exception, e:
-            log.info("Some error while collapsing image to 2D: %s"%str(e))
+            print(collapse(frames, options.output_dir))
+        except Exception as e:
+            log.info("Some error while collapsing image to 2D: %s" % str(e))
             sys.exit(0)
     
     elif options.input_image_list:
@@ -273,24 +274,24 @@ if __name__ == "__main__":
             sys.exit(0)
         if not options.output_dir or not os.path.exists(options.output_dir):
             parser.print_help()
-            parser.error("Wrong number of arguments " )
+            parser.error("Wrong number of arguments ")
 
         try:
             frames = [line.replace("\n", "") for line in 
                       fileinput.input(options.input_image_list)]
-            print collapse(frames, options.output_dir)
-        except Exception, e:
-            log.info("Some error while collapsing images: %s"%str(e))
+            print(collapse(frames, options.output_dir))
+        except Exception as e:
+            log.info("Some error while collapsing images: %s" % str(e))
             sys.exit(0)
             
     elif options.input_single_image_list:
         try:
             frames = [line.replace("\n", "") for line in 
                       fileinput.input(options.input_single_image_list)]
-            print collapse_distinguish(frames, options.output_file)
-        except Exception, e:
-            log.info("Some error while collapsing set of images to single image: %s"%str(e))
+            print(collapse_distinguish(frames, options.output_file))
+        except Exception as e:
+            log.info("Some error while collapsing set of images to single image: %s" % str(e))
             sys.exit(0)
         
     log.info("End-of-collapse")
-    
+

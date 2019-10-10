@@ -55,9 +55,7 @@
 
 import sys
 import os
-import logging
 import fileinput
-import time
 import shutil
 from optparse import OptionParser
 
@@ -73,7 +71,6 @@ import misc.mef
 from pyraf import iraf
 from iraf import mscred
 
-import numpy
 
 # Interact with FITS files
 import astropy.io.fits as fits
@@ -225,7 +222,7 @@ class MasterTwilightFlat(object):
         try:
             mef = misc.mef.MEF(self.__master_dark_list)
             self.__master_dark_list = mef.convertGEIRSToMEF(out_dir=self.__temp_dir)[1]
-        except Exception,e:
+        except Exception as e:
             log.error("Error converting Darks to MEF file: %s", str(e))
             raise e
         
@@ -233,7 +230,7 @@ class MasterTwilightFlat(object):
         try:
             mef = misc.mef.MEF(framelist)
             framelist = mef.convertGEIRSToMEF(out_dir=self.__temp_dir)[1]
-        except Exception, e:
+        except Exception as e:
             log.error("Error converting Flats to MEF file: %s", str(e))
             raise e
             
@@ -257,13 +254,13 @@ class MasterTwilightFlat(object):
             # Compute the mean count value in chip to find out good frames (good enough ??)
             mean = 0
             myfits = fits.open(iframe, ignore_missing_end=True)
-            if f.mef == True:
+            if f.mef:
                 log.debug("Found a MEF file")
                 try:
                     for i in range(1,f.next + 1):
                         mean += robust.r_nanmean(myfits[i].data)
                     mean = float(mean / f.next)
-                except Exception, e:
+                except Exception as e:
                     log.error("Error computing MEAN of image")
                     raise e
                 
@@ -289,7 +286,7 @@ class MasterTwilightFlat(object):
                 # See 'PANIC sky flatfield procedure' doc. by BD.
                 #or f.getNcoadds() != f_ncoadds)):
                 log.error("Task 'createMasterTwFlat' Found a FLAT frame with different FILTER or TYPE")
-                raise Exception("Error, frame %s has different FILTER or TYPE" %(iframe))
+                raise Exception("Error, frame %s has different FILTER or TYPE" % (iframe))
                 #continue
             else: 
                 f_expt = f.expTime()
@@ -342,8 +339,8 @@ class MasterTwilightFlat(object):
                     raise Exception("Cannot find the MASTER_DARK_MODEL to apply.")
                 else:
                     use_dark_model = True
-            except Exception, e:
-                log.error("Error reading MASTER_DARK_MODEL: %s"%self.__master_dark_model)
+            except Exception as e:
+                log.error("Error reading MASTER_DARK_MODEL: %s" % self.__master_dark_model)
                 log.error(str(e))
                 raise e
         elif self.__master_dark_list:
@@ -355,7 +352,8 @@ class MasterTwilightFlat(object):
             
             t_darks = {}
             # Check if darks are cubes, then collapse them.
-            darks_frames = misc.collapse.collapse(self.__master_dark_list, out_dir=self.__temp_dir)
+            darks_frames = misc.collapse.collapse(self.__master_dark_list,
+                                                  out_dir=self.__temp_dir)
             for idark in darks_frames:
                 try:
                     cdark = datahandler.ClFits(idark)
@@ -365,7 +363,7 @@ class MasterTwilightFlat(object):
                     #t_darks[round(cdark.expTime(), 1)] = idark
                     t_darks[round(cdark.getItime(), 1), cdark.getNcoadds()] = idark
                     log.debug("DARK - expTime=%f"%cdark.expTime())
-                except Exception,e:
+                except Exception as e:
                     log.error("Error reading Master Dark: %s"%idark)
                     raise Exception("Error reading Master Dark: %s"%idark)
         else:
@@ -701,8 +699,6 @@ Note: Dome Flats series (not lamp ON/OFF) are also supported.
                                      "/tmp",
                                      median_smooth=options.median_smooth)
         mTwFlat.createMaster()
-    except Exception, ex:
+    except Exception as ex:
         log.error("Unexpected error: %s", str(ex))
         sys.exit(1)
-    
-        

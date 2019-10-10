@@ -3,14 +3,13 @@
 # This program extracts the FWHM measurements from the .mag files using IRAF
 #
 
-from os  import getcwd, chdir, remove, path, environ, getenv, makedirs, listdir, system, unlink
+from os import chdir
 import os.path
 from pyraf import iraf
 from pylab import *
 import pyraf.iraf as iraf
 
 import param as par
-import sort
 
 def fwhm(dummy):
   workdir = sort.get_workdir()
@@ -22,10 +21,10 @@ def fwhm(dummy):
 
   if not os.path.isfile('data/ds92.reg'):
     ds9 = open('data/ds92.reg', 'w+')
-    print >> ds9, par.pixel_location[0],par.pixel_location[1]
+    ds9.write(par.pixel_location[0], par.pixel_location[1])
     ds9.close()
 
-  filedir = workdir+"/object/"+filt
+  filedir = workdir+"/object/" + filt
   chdir(filedir)
 
   iraf.noao.obsutil.psfmeasure.coords = "mark1"
@@ -49,7 +48,7 @@ def fwhm(dummy):
   fwhm=array(fwhm)
   fwhm_mean=fwhm.mean()
 
-  print "\nMean FWHM value: "+str(fwhm_mean)+"\n"
+  print("\nMean FWHM value: "+str(fwhm_mean) + "\n")
 
   chdir(workdir)
 

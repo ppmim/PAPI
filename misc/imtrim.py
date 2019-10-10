@@ -30,11 +30,8 @@
 #
 ###############################################################################
 
-import sys
 import os
-import shutil
 from optparse import OptionParser
-import fileinput
 import astropy.io.fits as fits
 
 
@@ -90,7 +87,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
         if len(indata) > 1:
             raise Exception("MEF files currently not supported")
         indata[0].verify()
-    except Exception, e:
+    except Exception as e:
         log.error('Could not open frame - something wrong with input data')
         raise e
     
@@ -98,7 +95,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
         nx = indata[0].header['NAXIS1']
         ny = indata[0].header['NAXIS2']
         log.debug("NX=%d  NY=%d" % (nx, ny))
-    except Exception,e:
+    except Exception as e:
         raise e
     
     indata.close()
@@ -120,12 +117,12 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
             std = float(iraf.imstat (
                 images=file+"["+str(i)+",*]",
                 fields='stddev', format='no', Stdout=1)[0])
-        if (std!=0.0):
-            if (i==1):
+        if std != 0.0:
+            if i == 1:
                 xmin = 1
                 break
             else:
-                if (step==1):
+                if step == 1:
                     xmin = i
                     break
                 else:
@@ -137,7 +134,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
         i+=step
         #print "DEBUG_xmin (i,std,lasti):" , i, std, lasti
          
-    if (xmin==0):
+    if xmin == 0:
         log.error("No data in file %s"%file)
         raise Exception("No data in file %s"%file)
     
@@ -273,7 +270,7 @@ def imgTrim(inputfile, outputfile=None, p_step=128):
             iraf.imcopy(input=ima_objs + "[" + str(xmin) + ":" + str(xmax) + "," +
                 str(ymin) + ":" + str(ymax) + "]", output=ima_objs)
                 
-    except Exception,e:
+    except Exception as e:
         log.debug("Some error trimming image %s . Probaby input image is wrong." % ima_sec)
 
     log.debug("....End of imgTrim --> XMIN= %d YMIN=%d XMAX= %d YMAX=%d"
@@ -315,7 +312,7 @@ image.
             imgTrim(options.input_image, 
                     options.output_image,
                     options.step)
-        except Exception,e:
+        except Exception as e:
             log.error("Error while trimming image %s"%options.input_image)
             log.error("%s"%e)
             raise e

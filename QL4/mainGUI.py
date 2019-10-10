@@ -120,7 +120,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui, uic
 #from PyQt4.QtCore import QString, QSize
 from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMenu
 from PyQt5.QtWidgets import QTreeWidgetItem
 from PyQt5.QtWidgets import QTreeWidgetItemIterator
 from PyQt5.QtCore import Qt
@@ -129,14 +129,11 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QMessageBox
 
-
-import commissioning.runStarfocus as focus
 import commissioning.getImageOffsets as off
-
-
-
 from misc.version import __version__
-#-------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------
 #
 # Next functions are needed to allow the use of  multiprocessing.Pool() with 
 # class methods, that need to be picklable (at least 
@@ -150,16 +147,17 @@ from misc.version import __version__
         
 def _pickle_method(method):
     
-    #Pickle methods properly, including class methods.
+    # Pickle methods properly, including class methods.
     
     func_name = method.im_func.__name__
     obj = method.im_self
     cls = method.im_class
     return _unpickle_method, (func_name, obj, cls)
 
+
 def _unpickle_method(func_name, obj, cls):
     
-    #Unpickle methods properly, including class methods.
+    # Unpickle methods properly, including class methods.
     
     for cls in cls.mro():
         try:
@@ -171,10 +169,10 @@ def _unpickle_method(func_name, obj, cls):
             break
     return func.__get__(obj, cls)        
 
-import copy_reg 
+import copyreg
 import types 
 
-copy_reg.pickle(types.MethodType,  
+copyreg.pickle(types.MethodType,
     _pickle_method,  
     _unpickle_method)  
 
@@ -1714,9 +1712,9 @@ class MainGUI(QtGui.QMainWindow, form_class):
         self.autocheck_slot()
         
         self.listView_dataS.clear()
-        if self.dc != None: 
+        if self.dc is not None:
             self.dc.Clear()
-        if self.dc_outdir != None: 
+        if self.dc_outdir is not None:
             self.dc_outdir.Clear()
 
         self.inputsDB.clearDB()
@@ -1733,7 +1731,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
             sequences = []
             seq_types = []
             
-            #Look for sequences
+            # Look for sequences
             ra_dec_near_offset = self.lineEdit_ra_dec_near_offset.text().toInt()[0] #arcsec
             time_near_offset = self.lineEdit_time_near_offset.text().toInt()[0]/86400.0 #day units
             max_number_files = self.lineEdit_max_num_files.text().toInt()[0]
@@ -2125,7 +2123,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 
         else:
             #### Create the 'Files' Popup menu 
-            popUpMenu = QtGui.QMenu("QL popup menu", self)
+            popUpMenu = QMenu("QL popup menu", self)
             popUpMenu.addAction(self.dispAct)
             popUpMenu.addAction(self.infoAct)
             popUpMenu.addAction(self.copyAct)
@@ -2576,7 +2574,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
         """
         # Ask if you are sure
         res = QMessageBox.information(self, "Info", 
-                                      QString("Do you really want to quit ?"),
+                                      "Do you really want to quit ?",
                                       QMessageBox.Ok, QMessageBox.Cancel)
         if res == QMessageBox.Cancel:
             return
@@ -3645,7 +3643,8 @@ class MainGUI(QtGui.QMainWindow, form_class):
                 # text_file is removed by papi_ql_user.cl script
                 pass
         else:
-            QMessageBox.critical(self, "Error","Error, not enough number (> 3) of frames selected")
+            QMessageBox.critical(self, "Error",
+                                 "Error, not enough number (> 3) of frames selected")
 
     def focus_eval_sex(self):
         """
@@ -3697,7 +3696,7 @@ class MainGUI(QtGui.QMainWindow, form_class):
                     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
                     pix_scale = self.config_opts['general']['pix_scale']
                     satur_level =  self.config_opts['skysub']['satur_level']
-                    #detector = self.config_opts['general']['detector']
+                    # detector = self.config_opts['general']['detector']
                     self._task = reduce.eval_focus_serie.FocusSerie("/tmp/focus.list", 
                                                                str(outfileName),
                                                                pix_scale, 
@@ -3755,11 +3754,11 @@ class MainGUI(QtGui.QMainWindow, form_class):
             
             values = (iraf.mscstat(images=img,
             fields="image,mean,mode,stddev,min,max", format='yes', Stdout=1))
-            #file,mean,mode,stddev,min,max=values[0].split()
+            # file,mean,mode,stddev,min,max=values[0].split()
             self.logConsole.info("Background estimation :")
             for line in values:
                 self.logConsole.info(str(line))
-                #self.logConsole.info(QString("Background estimation MEAN= %1   MODE=%2    STDDEV=%3    MIN=%4         MAX=%5").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
+                # self.logConsole.info(QString("Background estimation MEAN= %1   MODE=%2    STDDEV=%3    MIN=%4         MAX=%5").arg(mean).arg(mode).arg(stddev).arg(min).arg(max))
             if self.getDisplayMode() >= 2:
                 display.showFrame(img)
         except Exception as e:

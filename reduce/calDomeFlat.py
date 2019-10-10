@@ -60,7 +60,6 @@
 import getopt
 import sys
 import os
-import logging
 import fileinput
 import time
 import shutil
@@ -145,8 +144,7 @@ class MasterDomeFlat(object):
         self.__median_smooth = median_smooth
         
         self.MIN_FLATS = 1
-        
-    
+
     def createMaster(self):
       
         """
@@ -177,7 +175,7 @@ class MasterDomeFlat(object):
         # Determine the number of Flats frames to combine
         try:
             nframes = len(framelist[0])
-        except IndExError:
+        except IndexError:
             log.error("No FLAT frames defined")
             raise 'No FLAT frames defined'
         
@@ -400,8 +398,10 @@ class MasterDomeFlat(object):
         flatframe = fits.open(self.__output_filename, 'update')
         if self.__normal: 
             flatframe[0].header.add_history('Computed normalized master dome flat (lamp_on-lamp_off)' )
-            if msg!="": flatframe[0].header.add_history(msg)
-        else: flatframe[0].header.add_history('Computed master dome flat (lamp_on-lamp_off)' )
+            if msg != "":
+                flatframe[0].header.add_history(msg)
+        else:
+            flatframe[0].header.add_history('Computed master dome flat (lamp_on-lamp_off)' )
         
         flatframe[0].header.add_history('lamp_on  files: %s' %domelist_lampon )
         flatframe[0].header.add_history('lamp_off files: %s' %domelist_lampoff )
@@ -481,10 +481,9 @@ then creates a Master Dome Flat-Field. It does **not** require any Master Dark.
         
     filelist = [line.replace( "\n", "") for line in fileinput.input(options.source_file_list)]
 
-    print "Files:",filelist
+    print("Files:",filelist)
     tmp_dir = os.path.abspath(os.path.join(options.output_filename, os.pardir))
     mDFlat = MasterDomeFlat(filelist, tmp_dir, options.output_filename, 
                             options.normalize, options.median_smooth)
     mDFlat.createMaster()
-    
-        
+

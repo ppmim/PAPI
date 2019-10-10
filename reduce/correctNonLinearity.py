@@ -114,7 +114,7 @@ class NonLinearityCorrection(object):
         if not os.access(self.out_dir, os.F_OK):
             try:
                 os.mkdir(self.out_dir)
-            except Exception,e:
+            except Exception as e:
                 raise e
         
         if len(self.input_files)<1:
@@ -172,7 +172,7 @@ class NonLinearityCorrection(object):
         keys = ['DETROT90', 'DETXYFLI']
         for key in keys:
             if not key in dataHeader:
-                print 'Warning: key \'%s\' not in data header' %key
+                print('Warning: key \'%s\' not in data header' % key)
             elif dataHeader[key] != modelHeader[key]:
                 raise ValueError('Mismatch in header data for keyword \'%s\'' %key)
         keys = ['B_EXT', 'B_DSUB', 'B_VREST', 'B_VBIAG']
@@ -230,9 +230,9 @@ class NonLinearityCorrection(object):
 
         # Check headers
         try:
-            if self.force == False:
+            if not self.force:
                 self.checkHeader(nlheader, dataheader)
-        except Exception,e:
+        except Exception as e:
             log.error("Mismatch in header data for input NLC model %s"%str(e))
             raise e
 
@@ -268,7 +268,7 @@ class NonLinearityCorrection(object):
             datadetid = hdulist[extname].header['DET_ID']
             nldetid = nlhdulist['LINMAX%i' %iSG].header['DET_ID']
             if datadetid != nldetid:
-                raise ValueError('Mismatch of detector IDs for extension' %extname)
+                raise ValueError('Mismatch of detector IDs for extension' % extname)
 
             # Work around to correct data when NCOADDS>1
             if hdulist[0].header['NCOADDS'] > 1:
@@ -354,7 +354,7 @@ class NonLinearityCorrection(object):
                 # the result is ready, we use pool.map_async()
                 results += [pool.map_async(unwrap_self_applyModel, 
                         zip([self]*len(red_parameters), red_parameters) )]
-            except Exception,e:
+            except Exception as e:
                 log.error("Error processing file: " + i_file)
                 log.error(str(e))
                 
@@ -364,7 +364,7 @@ class NonLinearityCorrection(object):
                 # the 0 index is *ONLY* required if map_async is used !!!
                 solved.append(result.get()[0])
                 log.info("New file created => %s"%solved[-1])
-            except Exception,e:
+            except Exception as e:
                 log.error("Cannot process file \n" + str(e))
                 
         
@@ -478,11 +478,11 @@ MEF-cubes, each plane is corrected individually.
 
     try:
         corr = NLC.runMultiNLC()
-    except Exception,e:
+    except Exception as e:
         log.error("Error running NLC: %s"%str(e))
         raise e
 
-    print "\nCorrected files: ",corr
+    print("\nCorrected files: ", corr)
     
     """
     # Non parallel processing

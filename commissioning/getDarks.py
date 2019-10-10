@@ -56,7 +56,7 @@ def getItimesNcoadds(path, output_file, recursive=False):
                 for subdir in subdirectories:
                     filelist += glob.glob(os.path.join(path, subdir)+"/*.fit*")
     else:
-        print "Error, file %s does not exits"%path
+        print("Error, file %s does not exits" % path)
         return 0
      
     file_types = []
@@ -74,7 +74,7 @@ def getItimesNcoadds(path, output_file, recursive=False):
                 
             # Ignore DARKs and DOME_LAMP_[ON|OFF] images
             if "DARK" in papitype  or "LAMP" in papitype:
-                print "Image is a DARK or DOME_LAMP_. Skipping file %s"%my_file
+                print("Image is a DARK or DOME_LAMP_. Skipping file %s" % my_file)
                 continue
             
             # Read-Mode
@@ -84,7 +84,7 @@ def getItimesNcoadds(path, output_file, recursive=False):
             elif read_mode == 'fast-reset-read.read':
                 read_mode = 'rrr-mpia'
             else:
-                print "Read mode not recognized. Skipping file %s"%myfile
+                print("Read mode not recognized. Skipping file %s" % my_file)
                 continue
             
             # ITIME
@@ -109,8 +109,8 @@ def getItimesNcoadds(path, output_file, recursive=False):
                 file_types.append([read_mode, itime, ncoadds, save_mode])
                 # Insert into output file
                 fd.write("%s\t%3.03f\t%d\t%s\n"%(read_mode, float(itime), int(ncoadds), save_mode))
-        except Exception,e:
-            print "Error while reading file: %s\n %s"%(my_file,str(e))
+        except Exception as e:
+            print("Error while reading file: %s\n %s"%(my_file,str(e)))
 
     fd.close()
     shutil.move(output_file + "_tmp_", output_file)
@@ -151,6 +151,6 @@ for the files of a given directory to know the DARKs required for them."""
         parser.error("incorrent number of arguments")
         
     n = getItimesNcoadds(options.source_file, options.output_file)
-    print "%d types found"%n
+    print("%d types found" % n)
     
     sys.exit()

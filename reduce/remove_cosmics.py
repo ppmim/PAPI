@@ -54,7 +54,6 @@ from optparse import OptionParser
 import sys
 
 import astropy.io.fits as fits
-import numpy
 
 # Logging
 from misc.paLog import log
@@ -106,7 +105,7 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
             log.error("MEF files currently not supported !")
             raise Exception("MEF files currently not supported !")
             
-    except Exception,e:
+    except Exception as e:
         log.error("Error opening FITS file : %s"%in_image)
         raise e
     
@@ -136,7 +135,7 @@ def remove_cr(in_image, out_image=None, overwrite=False, want_mask=False):
             cosmics.tofits("mask.fits", c.mask, header)
             # (c.mask is a boolean numpy array, that gets converted here to an integer array)
     
-    except Exception,e:
+    except Exception as e:
         log.error("Error removing cosmic rays in file : %s , Error %s:"%(in_image,str(e)))
         raise e
     
@@ -183,7 +182,7 @@ if __name__ == "__main__":
     try:    
         remove_cr(options.input_image, options.output_image, 
                          options.overwrite, options.want_mask)
-    except Exception, e:
+    except Exception as e:
         log.error("Fail of remove_cr procedure: %s"%str(e))
     else:
         log.info("Well done!")

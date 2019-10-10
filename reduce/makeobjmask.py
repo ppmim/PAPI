@@ -96,7 +96,7 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
     # or a text file having the list of files to be masked
     elif os.path.isfile(inputfile):
         files = [line.replace( "\n", "") for line in fileinput.input(inputfile)]
-        print "FILES=", file
+        print("FILES=", files)
     # or must be a regular expresion
     else:
         files = glob.glob(inputfile)
@@ -129,7 +129,7 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
         # Run SExtractor
         try:
             sex.run(fn, updateconfig=True, clean=False)
-        except Exception,e:
+        except Exception as e:
             log.debug("Some error while running SExtractor : %s", str(e))
             raise Exception("Some error while running SExtractor : %s"%str(e))          
         
@@ -146,7 +146,7 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
         # have as many non-zero pixels as objects are in the SExtractor catalog.
         # NOTE:This feature is used to compute the dither offsets, but not for 
         # while object masking in skysubtraction
-        if single_point==True:
+        if single_point:
             log.debug("Single point mask reduction")
             # NOTE we update/overwrite the image and don't create a new one
             myfits = fits.open(fn + ".objs", mode="update")
@@ -172,12 +172,13 @@ def makeObjMask (inputfile, minarea=5, maxarea=0,  threshold=2.0,
                     for star in cat:
                         if round(star['X_IMAGE'])<x_size and round(star['Y_IMAGE'])<y_size:
                             data[round(star['Y_IMAGE']),round(star['X_IMAGE'])] = 1 # Note: be careful with X,Y coordinates position
-                except Exception,e:
-                    print "Y_IMAGE=",star['Y_IMAGE']
-                    print "X_IMAGE=",star['X_IMAGE']
+                except Exception as e:
+                    print("Y_IMAGE=", star['Y_IMAGE'])
+                    print("X_IMAGE=", star['X_IMAGE'])
                     myfits.close(output_verify='ignore')
                     raise Exception("Error while creating single point object mask :%s"%str(e))
-                if next==1:
+
+                if next == 1:
                     myfits[0].scale('int16')
                 else:
                     myfits[ext+1].scale('int16')
@@ -257,7 +258,7 @@ with .weight.fits)."""
         makeObjMask( options.inputfile, options.minarea, options.maxarea,
                     options.threshold, options.saturlevel, options.outputfile, 
                      options.single_point)
-    except Exception, e:
+    except Exception as e:
         log.error("Error while running 'makeobjectmask' %s"%str(e))
     else:
         log.debug("Well done!")
