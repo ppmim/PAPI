@@ -101,7 +101,7 @@ def remove_crosstalk(in_image, out_image=None, overwrite=False):
         else:
             log.error("Instrument is not supported !")
             raise Exception("Instrument is not supported !")
-    except Exception, e:
+    except Exception as e:
         raise e
 
     
@@ -148,7 +148,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
         if f_in[0].header['INSTRUME'].lower()!='omega2000':
             log.error("Only O2k instrument is supported !")
             raise Exception("Only O2k instrument is supported !")
-    except Exception, e:
+    except Exception as e:
         log.error("Error opening FITS file : %s"%in_image)
         raise e
     
@@ -296,7 +296,7 @@ def de_crosstalk_o2k(in_image, out_image=None, overwrite=False):
     try:
         hdulist.writeto(out_file, output_verify='ignore', clobber=overwrite)
         hdulist.close(output_verify='ignore')
-    except Exception, e:
+    except Exception as e:
         raise e
   
     log.debug("End of remove_crosstalk (O2k)")
@@ -354,11 +354,11 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
             log.errro("MEF files currently not supported !")
             raise Exception("MEF files currently not supported !")
             
-        if f_in[0].header['INSTRUME'].lower()!='panic':
+        if f_in[0].header['INSTRUME'].lower() != 'panic':
             log.error("Instrument %s is not supported !"%f_in[0].header['INSTRUME'])
             raise Exception("Instrument is not supported !")
-    except Exception, e:
-        log.error("Error openning FITS file : %s"%in_image)
+    except Exception as e:
+        log.error("Error openning FITS file : %s" % in_image)
         raise e
     
     background = robust.r_nanmedian(data_in)
@@ -469,7 +469,7 @@ def de_crosstalk_PANIC_full_detector(in_image, out_image=None, overwrite=False):
     try:
         hdulist.writeto(out_file, output_verify='ignore', clobber=overwrite)
         hdulist.close(output_verify='ignore')
-    except Exception, e:
+    except Exception as  e:
         raise e
       
     log.debug("End of remove_crosstalk (PANIC)")
@@ -527,12 +527,12 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
         if f_in[0].header['INSTRUME'].lower()!='panic':
             log.error("Instrument %s is not supported !"%f_in[0].header['INSTRUME'])
             raise Exception("Instrument is not supported !")
-    except Exception, e:
+    except Exception as e:
         log.error("Error openning FITS file : %s"%in_image)
         raise e
     
     background = robust.r_nanmedian(data_in)
-    print "Image background estimation = ", background
+    print("Image background estimation = ", background)
 
     # All detectors have 32 vertical_stripes of 2048x64 (rows x columns) each one
     # NOTE: in python, x=rows and y=columns
@@ -572,7 +572,7 @@ def de_crosstalk_PANIC(in_image, out_image=None, overwrite=False):
     try:
         hdulist.writeto(out_file, output_verify='ignore', clobber=overwrite)
         hdulist.close(output_verify='ignore')
-    except Exception, e:
+    except Exception as e:
         raise e
       
     log.debug("End of remove_crosstalk (PANIC)")
@@ -621,8 +621,7 @@ if __name__ == "__main__":
     try:    
         remove_crosstalk(options.input_image, options.output_image, 
                          options.overwrite)
-    except Exception, e:
-        log.error("Fail of Crosstalk procedure: %s"%str(e))
+    except Exception as e:
+        log.error("Fail of Crosstalk procedure: %s" % str(e))
     else:
         log.info("Well done!")
-    

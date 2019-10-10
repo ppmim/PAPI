@@ -9,13 +9,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from mpl_toolkits.mplot3d import Axes3D
-import functools
-import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 import pylab
-import scipy.optimize
 import matplotlib
 
 

@@ -63,9 +63,6 @@ frequency properties of the dome flat.
 # Import necessary modules
 from optparse import OptionParser
 import sys
-import os
-
-import numpy
 import astropy.io.fits as fits
 
 import misc.fileUtils
@@ -175,7 +172,7 @@ def combineFF(domeFF, skyFF, combinedFF=None):
         misc.fileUtils.removefiles(skyFF.replace(".fits", "_smooth.fits"))
         misc.fileUtils.removefiles(domeFF.replace(".fits", "_div_smooth.fits"))
         
-    except Exception,e:
+    except Exception as e:
         raise e
     
     log.info("Combined Flat-Field created : %s",combinedFF)
@@ -214,18 +211,19 @@ if __name__ == "__main__":
        sys.exit(0)
     
     if not options.domeFF or not options.skyFF or len(args)!=0: 
-    # args is the leftover positional arguments after all options have been processed
+    # args is the leftover positional arguments after all options have been
+    # processed
         parser.print_help()
-        parser.error("wrong number of arguments " )
+        parser.error("wrong number of arguments ")
     
     if not options.output_image:
         options.output_image = None
 
     try:    
         combineFF(options.domeFF, options.skyFF, options.output_image)
-    except Exception, e:
+    except Exception as e:
         log.error("Fail of combineFF procedure")
         raise e
     
-    print "\nWell done !"
-    
+    print("\nWell done !")
+

@@ -90,27 +90,24 @@ Example of use:
 
 # ======================================================================
 
-import __builtin__
 
 import sys
 import os
 import subprocess
-import exceptions
 import re
 import copy
 
-from sexcatalog import *
+from astromatic.sexcatalog import *
 
 
 # PAPI packages
 import misc.utils
 
 # ======================================================================
-
 #__version__ = "0.1.5 (2005-02-14)"
 __version__ = "0.1.6 (2011-05-17)"
-
 # ======================================================================
+
 
 class SExtractorException(Exception):
     pass
@@ -149,6 +146,7 @@ nnw_config = \
 """
 
 # ======================================================================
+
 
 class SExtractor(object):
     """
@@ -346,8 +344,6 @@ class SExtractor(object):
 
     _SE_parameters = SExtractorfile._SE_keys
 
-
-
     def __init__(self):
         """
         SExtractor class constructor.
@@ -362,7 +358,6 @@ class SExtractor(object):
               
         self.program = None
         self.version = None
-
 
     def setup(self, path=None):
         """
@@ -388,31 +383,31 @@ class SExtractor(object):
                     stderr=subprocess.STDOUT, close_fds=True)
                 versionline = p.communicate()[0]
  
-                if (versionline.find("SExtractor") != -1):
-                    selected=candidate
+                if versionline.find("SExtractor") != -1:
+                    selected = candidate
                     break
-            except IOError, OSError:
+            except (IOError, OSError):
                 continue
                 
-        if not(selected):
-            raise SExtractorException, \
+        if not selected:
+            raise SExtractorException(
                   """
                   Cannot find SExtractor program. Check your PATH,
                   or provide the SExtractor program path in the constructor.
-                  """
+                  """)
 
         _program = selected
 
         # print versionline
         _version_match = re.search("[Vv]ersion ([0-9\.])+", versionline)
         if not _version_match:
-            raise SExtractorException, \
-                  "Cannot determine SExtractor version."
+            raise SExtractorException(
+                  "Cannot determine SExtractor version.")
 
         _version = _version_match.group()[8:]
         if not _version:
-            raise SExtractorException, \
-                  "Cannot determine SExtractor version."
+            raise SExtractorException(
+                  "Cannot determine SExtractor version.")
 
         # print "Use " + self.program + " [" + self.version + "]"
 
@@ -434,7 +429,7 @@ class SExtractor(object):
         rows = len(filter)
         cols = len(filter[0])   # May raise ValueError, OK
 
-        filter_f = __builtin__.open(self.config['FILTER_NAME'], 'w')
+        filter_f = open(self.config['FILTER_NAME'], 'w')
         filter_f.write("CONV NORM\n")
         filter_f.write("# %dx%d Generated from sextractor.py module.\n" %
                        (rows, cols))
@@ -446,37 +441,36 @@ class SExtractor(object):
 
         # -- Write parameter list file
 
-        parameters_f = __builtin__.open(self.config['PARAMETERS_NAME'], 'w')
+        parameters_f = open(self.config['PARAMETERS_NAME'], 'w')
         for parameter in self.config['PARAMETERS_LIST']:
-            print >>parameters_f, parameter
+            parameters_f.write(parameter)
 
         parameters_f.close()
 
         # -- Write NNW configuration file
 
-        nnw_f = __builtin__.open(self.config['STARNNW_NAME'], 'w')
+        nnw_f = open(self.config['STARNNW_NAME'], 'w')
         nnw_f.write(nnw_config)
         nnw_f.close()
 
 
         # -- Write main configuration file
 
-        main_f = __builtin__.open(self.config['CONFIG_FILE'], 'w')
+        main_f = open(self.config['CONFIG_FILE'], 'w')
 
         for key in self.config.keys():
-            if (key in SExtractor._SE_config_special_keys):
+            if key in SExtractor._SE_config_special_keys:
                 continue
 
-            if (key == "PHOT_AUTOPARAMS"): # tuple instead of a single value
+            if key == "PHOT_AUTOPARAMS": # tuple instead of a single value
                 value = " ".join(map(str, self.config[key]))
             else:
                 value = str(self.config[key])
             
-            print >>main_f, ("%-16s       %-16s # %s" %
+            main_f.write("%-16s       %-16s # %s" %
                              (key, value, SExtractor._SE_config[key]['comment']))
 
         main_f.close()
-
 
     def run(self, file, updateconfig=True, clean=False, path=None):
         """
@@ -499,24 +493,22 @@ class SExtractor(object):
         self.program, self.version = self.setup(path)
 
         # Compound extra config command line args
-        ext_args=""
+        ext_args = ""
         for key in self.ext_config.keys():
-            ext_args=ext_args + " -" + key+ " " + str(self.ext_config[key])
+            ext_args = ext_args + " -" + key+ " " + str(self.ext_config[key])
 
         commandline = (
             self.program + " -c " + self.config['CONFIG_FILE'] + " " + ext_args + " " + file)
         
-        #print commandline
+        # print commandline
         rcode = misc.utils.runCmd(commandline)
         
-        if (rcode==0):
-            raise SExtractorException, \
-                  "SExtractor command [%s] failed." % str(commandline)
+        if rcode == 0:
+            raise SExtractorException(
+                  "SExtractor command [%s] failed." % str(commandline))
             
         if clean:
             self.clean()
-            
-
 
     def catalog(self):
         """

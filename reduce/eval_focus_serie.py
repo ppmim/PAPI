@@ -26,23 +26,22 @@
 # ==============================================================================
 
 import string
-import math
-import optparse 
+import optparse
 import sys
 import os
 import os.path
-import dircache
 import fileinput
 
 import numpy as np
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 
+from reduce import checkQuality
 
-import checkQuality
 
-class TFOCUSNotFound(StandardError):
+class TFOCUSNotFound(Exception):
     pass
+
 
 class FocusSerie(object):
     """
@@ -83,9 +82,7 @@ class FocusSerie(object):
 
         """
         
-        super (FocusSerie, self).__init__ (*a,**k)
-        #import pdb
-        #pdb.set_trace()
+        super(FocusSerie, self).__init__ (*a, **k)
 
         if type(input_files)!=type(list()) and os.path.isfile(input_files):
             files = [line.replace("\n", "").replace('//','/')
@@ -98,11 +95,10 @@ class FocusSerie(object):
         self.output = output
         self.pix_size = pix_size
         self.sat_level = sat_level
-        self.show = show # whether or not to show the pdf plot file genetated
+        self.show = show  # whether or not to show the pdf plot file generated
         self.window = window
         self.min_isoarea = min_isoarea
              
-
     def eval_serie(self):
         """
         Performs the focus evaluation and write the results in a pdf plot and 
@@ -123,7 +119,7 @@ class FocusSerie(object):
         focus_values = []
         good_files = []
         
-        # Check wheter detector selection can be done
+        # Check whether detector selection can be done
         with fits.open(self.input_files[0]) as myfits:
             if len(myfits)!=5 and self.window!='all':
                 raise Exception("Detector selection only supported for MEF files.")
@@ -131,18 +127,18 @@ class FocusSerie(object):
         # Find out the FWHM of each image
         for file in self.input_files:
             try:
-                print "Evaluating %s\n"%file
-                print "Detector %s\n"%self.window
+                print("Evaluating %s\n" % file)
+                print("Detector %s\n" % self.window)
                 cq = checkQuality.CheckQuality(file, 
                                                pixsize=self.pix_size, 
                                                sat_level=self.sat_level,
                                                isomin=self.min_isoarea,
-                                               ellipmax=0.9, # basically, no limit !
+                                               ellipmax=0.9,  # basically, no limit !
                                                window=self.window)
                 try:
                     fwhm = cq.estimateFWHM()[0]
-                except Exception,e:
-                    sys.stderr.write("Error while computing FWHM for file %s"%file)
+                except Exception as e:
+                    sys.stderr.write("Error while computing FWHM for file %s" % file)
                     sys.stderr.write(str(e))
                     continue
                 else:
@@ -151,7 +147,7 @@ class FocusSerie(object):
                 # Try to read Telescope Focus (T-FOCUS)
                 try:
                     focus = self.get_t_focus(file)
-                except TFOCUSNotFound, e:
+                except TFOCUSNotFound as e:
                     # Because we could be interested in knowing the best FWHM
                     # of the files even if the do not have the TFOCUS, we use
                     # a special value (-1) for this purpose. Obviously, no
@@ -160,15 +156,15 @@ class FocusSerie(object):
                     focus = -1
                 focus_values.append(focus)
                 good_files.append(file)
-                print " >> FWHM =%f, T-FOCUS =%f <<\n"%(fwhm, focus)
-            except Exception,e:
+                print(" >> FWHM =%f, T-FOCUS =%f <<\n" % (fwhm, focus))
+            except Exception as e:
                 sys.stderr.write("Some error while processing file %s\n"
                     " >>Error: %s\n"%(file,str(e)))
                 raise Exception("Some error while processing file %s"%file)
                 #log.debug("Some error happened") 
     
         # First, check if we have good values (!=-1) for T-FOCUS
-        good_focus_values = [ v for v in focus_values if v!=-1 ]
+        good_focus_values = [v for v in focus_values if v != -1]
         
         # Secondly, we remove duplicated values of T-FOCUS
         # (not sure if it should be done...)
@@ -181,9 +177,9 @@ class FocusSerie(object):
             # Fit the the values to a 2-degree polynomial
             sys.stdout.write("Focus values : %s \n"%str(good_focus_values))
             sys.stdout.write("FWHM values : %s \n"%str(fwhm_values))
-            print "Lets do the fit...."
+            print("Lets do the fit....")
             z = np.polyfit(good_focus_values, fwhm_values, 2)
-            print "Fit = %s  \n"%str(z)
+            print("Fit = %s  \n" % str(z))
             pol = np.poly1d(z)
             xp = np.linspace(np.min(good_focus_values), 
                     np.max(good_focus_values), 20000) # nro. puntos a interpolar
@@ -306,16 +302,14 @@ def check_python_env():
         sys.exit(1)
 
 
-
-
 ################################################################################
 # main
 if __name__ == "__main__":
 
     check_python_env()
 
-    # The following class allows us to define a usage message epilogue which does
-    # not skip newline characters:
+    # The following class allows us to define a usage message epilogue which
+    # does not skip newline characters:
     class MyParser(optparse.OptionParser):
         def format_epilog(self, formatter):
             return self.epilog
@@ -371,10 +365,9 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
     
-
-    if len(sys.argv[1:])<1 or len(args)!=0:
-       parser.print_help()
-       sys.exit(0)
+    if len(sys.argv[1:]) < 1 or len(args) != 0:
+        parser.print_help()
+        sys.exit(0)
 
     # Read input files
     files = []    
@@ -382,7 +375,7 @@ if __name__ == "__main__":
         files = [line.replace("\n", "").replace('//','/')
                      for line in fileinput.input(options.input)]
     elif os.path.isdir(options.input):
-        for file in dircache.listdir(options.input):
+        for file in os.listdir(options.input):
             files.append(options.input+"/"+file)
     else:
         parser.print_help()
@@ -396,12 +389,11 @@ if __name__ == "__main__":
 
         best_focus = focus_serie.eval_serie()
         
-        print "\nBEST_FOCUS =",best_focus
-    except Exception,e:
+        print("\nBEST_FOCUS =", best_focus)
+    except Exception as e:
         sys.stderr.write("Could not process focus serie. --> '%s'\n" %str(e))
         sys.exit(1)
-    
-        
-    # and bye:
-    sys.exit(0)
+    else:
+        # and bye:
+        sys.exit(0)
 

@@ -15,16 +15,10 @@
 ################################################################################
 # Import necessary modules
 
-import sys
 import os
-import logging
 import fileinput
-import time
 from datetime import datetime
 from optparse import OptionParser
-
-import misc.fileUtils
-import misc.utils as utils
 
 
 # Interact with FITS files
@@ -117,29 +111,29 @@ class LogSheet (object):
                 
         keys = sorted_list.keys()
         keys.sort()
-        if self.rows!=None:
+        if self.rows != None:
             min = self.rows[0]
             max = self.rows[1]
         else:
             min = 0
             max = len(keys)
 
-        print "KEYS=",keys            
+        print("KEYS=", keys)
         for key in keys:
-            if self.rows == None:  # show all the data 
+            if self.rows is None:  # show all the data
                 f = sorted_list[key]
                 logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, f.pathname, f.getFilter(), f.getType(), f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
             elif id >= min and id <= max:
                 f = sorted_list[key]
                 logsheet.write('%s\n' % (f.pathname))
-                print '%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s'\
+                print('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s'\
                     % (id, os.path.basename(f.filename), f.getFilter(), f.getType(), 
                        f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), \
-                       f.getDateTimeObs())
+                       f.getDateTimeObs()))
                 #logsheet.write('%4d  %-32s  %-12s  %-20s  %-12f  %-12f  %-10f  %-10d  %-10f  %-20s\n' % (id, os.path.basename(f.filename), f.getFilter(), f.getType(), f.ra, f.dec, f.expTime(), f.getNcoadds(), f.getItime(), f.getDateTimeObs()) )
 
                 
-            id = id+1    
+            id +=1
                          
         logsheet.close()
         log.debug('Saved logsheet to %s' , self.__output_filename)
@@ -155,7 +149,7 @@ class LogSheet (object):
 # main
 ################################################################################
 if __name__ == "__main__":
-    print 'Start Log Sheet generator....'
+    print('Start Log Sheet generator....')
     # Get and check command-line options
     
     
@@ -195,12 +189,13 @@ if __name__ == "__main__":
         parser.print_help()
         parser.error("incorrect number of arguments " )
     if options.verbose:
-        print "reading %s ..." % options.source_file_list
+        print("reading %s ..." % options.source_file_list)
     
     
     logsheet = LogSheet(options.source_file_list, options.output_filename, 
                         options.rows, options.filenames_only)
     logsheet.create()
-    if options.show==True:
+
+    if options.show:
         logsheet.show()
-        
+

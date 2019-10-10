@@ -6,10 +6,7 @@
 # Email: jmiguel@iaa.es
 # License: GNU GPLv3
 
-import os
-import os.path
 import numpy as np
-import shutil
 import sys
 import collections
 
@@ -129,8 +126,8 @@ def get_stars_regions_centers(path):
         if regions[i][2]>0:
             x = regions[i][0]/regions[i][2]
             y = regions[i][1]/regions[i][2]
-            print "Center of region [%s] = (%f, %f)"%(r,x,y)
-            #print "Points of region :",p_regions[i]
+            print("Center of region [%s] = (%f, %f)" %(r,x,y))
+            # print "Points of region :",p_regions[i]
             # Write points into a file
             filename = "region_%s.reg"%r
             f = open(filename, "w")
@@ -138,9 +135,8 @@ def get_stars_regions_centers(path):
                 f.write("%s %s\n"%(p[0],p[1]))
             f.close()
         else:
-            print "Center of region [%s] = (%f, %f)"%(r, np.nan, np.nan)
-    
-        
+            print("Center of region [%s] = (%f, %f)"%(r, np.nan, np.nan))
+
     return
     
     """        
@@ -152,6 +148,8 @@ def get_stars_regions_centers(path):
         else:
             print "Center of region [%d] = (%f, %f)"%(r,np.nan,np.nan)
     """
+
+
 def split_region_file():
     """
     Split a ds9 region file into N(=16) region files.

@@ -48,7 +48,6 @@ import os
 import argparse
 import matplotlib
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as axes3d
 import datetime
 
 # parse command line arguments
@@ -73,18 +72,18 @@ M2scale = 5.35
 
 filters = ['Ks', 'H', 'J', 'Y', 'Z', 'H2', 'All']
 filter = filters[ifilter - 1]
-logfilename = 'Log_tiltcheck_%s.txt' %filter
+logfilename = 'Log_tiltcheck_%s.txt' % filter
 
 # create output if necessary
-if not os.access(outputpath,os.F_OK):
+if not os.access(outputpath, os.F_OK):
 	os.mkdir(outputpath)
-	
+
 def nowtime():
 	return datetime.datetime.now().isoformat()
 
 def pr(msg):
 	'''Print messages and write to log file'''
-	print msg
+	print(msg)
 	if writelog:
 		logfile = open(os.path.join(outputpath, logfilename), 'a')
 		logfile.write(msg + '\n')

@@ -15,7 +15,7 @@ from optparse import OptionParser
 import sys
 
 
-class IrafError(StandardError):
+class IrafError(Exception):
     """ Raised if some IRAF error happens """
     pass
   
@@ -57,8 +57,8 @@ def getAverageFWHMfromPsfmeasure(images, coord_file, log_file):
         
         return float (match.group(1))
     
-    except Exception,e:
-        print "Error running IRAF.psfmeasure: %s"%str(e)
+    except Exception as e:
+        print("Error running IRAF.psfmeasure: %s"%str(e))
         
 
 
@@ -94,5 +94,5 @@ if __name__ == "__main__":
         parser.error("incorrent number of arguments")
         
     fwhm = getAverageFWHMfromPsfmeasure("@"+options.source_file, options.coord_file, options.log_file)
-    print "Mean FWHM = ",fwhm
+    print("Mean FWHM = ", fwhm)
     sys.exit()

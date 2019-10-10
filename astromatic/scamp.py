@@ -41,12 +41,9 @@ Tested on SCAMP versions 1.4.6 and 1.7.0
 
 # ======================================================================
 
-import __builtin__
 
 import sys
 import os
-import subprocess
-import exceptions
 import re
 import copy
 import fileinput
@@ -427,31 +424,31 @@ class SCAMP:
                 
                 versionline = p.communicate()[0]
  
-                if (versionline.find("SCAMP") != -1):
+                if versionline.find("SCAMP" != -1):
                     selected=candidate
                     break
-            except IOError,OSError:
+            except (IOError,OSError):
                 continue
                 
         if not(selected):
-            raise SCAMP_Exception, \
+            raise SCAMP_Exception(
                   """
                   Cannot find SCAMP program. Check your PATH,
                   or provide the SCAMP program path in the constructor.
-                  """
+                  """)
 
         _program = selected
 
         #print versionline
         _version_match = re.search("[Vv]ersion ([0-9\.])+", versionline)
         if not _version_match:
-            raise SCAMP_Exception, \
-                  "Cannot determine SCAMP version."
+            raise SCAMP_Exception(
+                  "Cannot determine SCAMP version.")
 
         _version = _version_match.group()[8:]
         if not _version:
-            raise SCAMP_Exception, \
-                  "Cannot determine SCAMP version."
+            raise SCAMP_Exception(
+                  "Cannot determine SCAMP version.")
 
         # print "Use " + self.program + " [" + self.version + "]"
 
@@ -471,16 +468,16 @@ class SCAMP:
         main_f = __builtin__.open(self.config['CONFIG_FILE'], 'w')
 
         for key in self.config.keys():
-            if (key in SCAMP._SC_config_special_keys):
+            if key in SCAMP._SC_config_special_keys:
                 continue
 
-            if (key == "DISTORT_GROUPS" or key == "SN_THRESHOLDS" or key == "FWHM_THRESHOLDS"): # tuple instead of a single value
+            if key == "DISTORT_GROUPS" or key == "SN_THRESHOLDS" or key == "FWHM_THRESHOLDS": # tuple instead of a single value
                 value = " ".join(map(str, self.config[key]))
             else:
                 value = str(self.config[key])
             
-            print >>main_f, ("%-16s       %-16s # %s" %
-                             (key, value, SCAMP._SC_config[key]['comment']))
+            main_f.write( ("%-16s       %-16s # %s" %
+                             (key, value, SCAMP._SC_config[key]['comment'])))
 
         main_f.close()
 
@@ -542,13 +539,13 @@ class SCAMP:
 
         rcode = runCmd(commandline)
         
-        if (rcode==1):
+        if rcode == 1:
             #print "ERROR!!!"
-            raise SCAMP_Exception, \
-                  "SCAMP command [%s] failed." % str(commandline)
-        elif (rcode==2):
-            raise SCAMP_AccuracyException, \
-                  "SCAMP Warning/error: Significant inaccuracy likely to occur in projection.\n%s" %commandline
+            raise SCAMP_Exception(
+                  "SCAMP command [%s] failed." % str(commandline))
+        elif rcode == 2:
+            raise SCAMP_AccuracyException(
+                  "SCAMP Warning/error: Significant inaccuracy likely to occur in projection.\n%s" % commandline)
             
         if clean:
             self.clean()
@@ -606,7 +603,7 @@ def runCmd( str_cmd, p_shell=True ):
                              stdout = subprocess.PIPE, stderr = subprocess.PIPE, 
                              close_fds = True)
     except:
-        print "Some error while running command..."
+        print("Some error while running command...")
         raise
        
     #Warning
@@ -619,7 +616,7 @@ def runCmd( str_cmd, p_shell=True ):
 
     # IMPORTANT: Next checking (only available when shell=True) not always detect all kind of errors !!
     if err.count('WARNING: Significant inaccuracy'):
-        print "Canno't get accuracy astrometric calibration"
+        print("Canno't get accuracy astrometric calibration")
         return 2
     elif (err.count('ERROR ') or err.count('error ') or err.count("Error ")\
       or err.count('*Error*')\
@@ -628,7 +625,7 @@ def runCmd( str_cmd, p_shell=True ):
       or err.count("No such file or directory")
       or err.count('WARNING: Not enough matched detections') # SCAMP
       or err.count('WARNING: Significant inaccuracy likely to occur in projection')): #SCAMP
-        print "An error happened while running command --> %s \n"%err
+        print("An error happened while running command --> %s \n" % err)
         return 1 # ERROR
     else:
         return 0 # NO ERROR
@@ -636,10 +633,10 @@ def runCmd( str_cmd, p_shell=True ):
 # ======================================================================
 if __name__ == "__main__":
 
-    if len(sys.argv)<2:
-	print "Wrong number of arguments\n"
-	print "Usage: scamp.py file.fits\n"
-	sys.exit(0)
+    if len(sys.argv) < 2:
+        print("Wrong number of arguments\n")
+        print("Usage: scamp.py file.fits\n")
+        sys.exit(0)
 
     scamp = SCAMP()
     # Using a specific config file (updateconfig=False)

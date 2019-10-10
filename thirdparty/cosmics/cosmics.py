@@ -121,12 +121,12 @@ class cosmicsimage:
 		self.sigcliplow = sigclip * sigfrac
 		self.satlevel = satlevel
         	
-        	self.verbose = verbose
+		self.verbose = verbose
         	
-        	self.pssl = pssl
+		self.pssl = pssl
         	
-        	self.backgroundlevel = None # only calculated and used if required.
-        	self.satstars = None # a mask of the saturated stars, only calculated if required
+		self.backgroundlevel = None # only calculated and used if required.
+		self.satstars = None # a mask of the saturated stars, only calculated if required
 
 	def __str__(self):
 		"""
@@ -153,7 +153,7 @@ class cosmicsimage:
 		if verbose == None:
 			verbose = self.verbose
 		if verbose:
-			print "Labeling mask pixels ..."
+			print("Labeling mask pixels ...")
 		# We morphologicaly dilate the mask to generously connect "sparse" cosmics :
 		#dilstruct = np.ones((5,5))
 		dilmask = ndimage.morphology.binary_dilation(self.mask, structure=dilstruct, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
@@ -166,7 +166,7 @@ class cosmicsimage:
 		# For plotting purposes, we want to transform this into the center of each object.
 		if len(slicecouplelist) != n:
 			# This never happened, but you never know ...
-			raise RuntimeError, "Mega error in labelmask !"
+			raise RuntimeError("Mega error in labelmask !")
 		centers = [[(tup[0].start + tup[0].stop)/2.0, (tup[1].start + tup[1].stop)/2.0] for tup in slicecouplelist]
 		# We also want to know how many pixels where affected by each cosmic ray.
 		# Why ? Dunno... it's fun and available in scipy :-)

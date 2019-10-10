@@ -30,7 +30,6 @@ from optparse import OptionParser
 
 import numpy
 import astropy.io.fits as fits
-from astropy import wcs
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -56,7 +55,7 @@ def draw_offsets(offsets, pix_scale = 0.45, scale_factor=1.0):
     
     # To align offsets with sky-orientation
     offsets = offsets * (-1)
-    print "offsets =", offsets
+    print("offsets =", offsets)
     offsets_q1 = [1024 + 84, -(1024 + 84)]
     offsets_q2 = [1024 + 84, 1024 + 84]
     offsets_q3 = [-(1024 + 84), 1024 + 84]
@@ -70,7 +69,7 @@ def draw_offsets(offsets, pix_scale = 0.45, scale_factor=1.0):
     for o in q_offsets:
         # Draw offsets for quadrant/detector-i
         for x,y in (offsets + o):
-            print "X=%s , Y=%s" % (x, y)
+            print("X=%s , Y=%s" % (x, y))
             ax2.add_patch(
                 patches.Rectangle(
                     (x - q_width / 2.0, y - q_width / 2.0),
@@ -164,7 +163,7 @@ def getWCSPointingOffsets(images_in,
       for l_tuple in dataset:
         sorted_files.append(l_tuple[0])
       
-      print "SORTED",sorted_files
+      print("SORTED", sorted_files)
       
       # Reference image
       ref_image = sorted_files[0]
@@ -172,11 +171,11 @@ def getWCSPointingOffsets(images_in,
             ref = datahandler.ClFits(ref_image)
             # If present, pix_scale in header is prefered
             pix_scale = 0.233 # ref.pixScale
-            print "-->PIXSCALE = ",pix_scale
+            print("-->PIXSCALE = ", pix_scale)
             ra0 = ref.ra    
             dec0 = ref.dec
             log.debug("Ref. image: %s RA0= %s DEC0= %s PIXSCALE= %f" % (ref_image, ra0, dec0, pix_scale))
-      except Exception, e:
+      except Exception as e:
           log.error("Cannot get reference RA_0, Dec_0 coordinates: %s" % str(e))
           raise e
         
@@ -200,7 +199,7 @@ def getWCSPointingOffsets(images_in,
                 
                 offset_txt_file.write(my_image + "   " + "%.6f   %0.6f\n"%(offsets[i][0], offsets[i][1]))
                 i+=1
-            except Exception, e:
+            except Exception as e:
                 log.error("Error computing the offsets for image %s. \n %s"%(my_image, str(e)))
                 raise e
             
@@ -212,13 +211,13 @@ def getWCSPointingOffsets(images_in,
       log.debug(offsets)
       
       # Some stats
-      print "MEAN_X=", numpy.mean(offsets[:,0])
-      print "STD_X=", numpy.std(offsets[:,0])
-      print "RMS_X", numpy.sqrt(numpy.mean(numpy.absolute(offsets[:,0][2])**2))
+      print("MEAN_X=", numpy.mean(offsets[:,0]))
+      print("STD_X=", numpy.std(offsets[:,0]))
+      print("RMS_X", numpy.sqrt(numpy.mean(numpy.absolute(offsets[:,0][2])**2)))
 
-      print "MEAN_Y=", numpy.mean(offsets[:, 1])
-      print "STD_Y=", numpy.std(offsets[:, 1])
-      print "RMS_Y", numpy.sqrt(numpy.mean(numpy.absolute(offsets[:, 1])**2))
+      print("MEAN_Y=", numpy.mean(offsets[:, 1]))
+      print("STD_Y=", numpy.std(offsets[:, 1]))
+      print("RMS_Y", numpy.sqrt(numpy.mean(numpy.absolute(offsets[:, 1])**2)))
       
       return offsets
   
@@ -266,7 +265,7 @@ if __name__ == "__main__":
         files = [line.replace("\n", "").replace('//','/')
             for line in fileinput.input(options.source_file)]
     else:
-        print "Error, cannot read file : ", options.source_file
+        print("Error, cannot read file : ", options.source_file)
         sys.exit(0)
     
     # Try to get PIX_SCALE
@@ -278,7 +277,7 @@ if __name__ == "__main__":
             
     try:    
         offsets = getWCSPointingOffsets(files, options.output_filename)
-    except Exception,e:
+    except Exception as e:
         log.error("Error, cannot find out the image offsets. %s",str(e))
     
     # Draw plot with dither pathern
@@ -286,9 +285,8 @@ if __name__ == "__main__":
     
     # Print out the offset matrix
     numpy.set_printoptions(suppress=True)
-    print "\nOffsets Matrix (arcsecs): \n"
+    print("\nOffsets Matrix (arcsecs): \n")
     print(offsets)
     
     sys.exit(0)
-    
-    
+

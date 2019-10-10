@@ -42,12 +42,10 @@ Tested on SWARP versions 2.17.x
 
 # ======================================================================
 
-import __builtin__
 
 import sys
 import os
 import subprocess
-import exceptions
 import re
 import copy
 import fileinput
@@ -365,24 +363,24 @@ class SWARP(object):
                 continue
                 
         if not(selected):
-            raise SWARPException, \
+            raise SWARPException(
                   """
                   Cannot find SWARP program. Check your PATH,
                   or provide the SWARP program path in the constructor.
-                  """
+                  """)
 
         _program = selected
 
         #print versionline
         _version_match = re.search("[Vv]ersion ([0-9\.])+", versionline)
         if not _version_match:
-            raise SWARPException, \
-                  "Cannot determine SWARP version."
+            raise SWARPException(
+                  "Cannot determine SWARP version.")
 
         _version = _version_match.group()[8:]
         if not _version:
-            raise SWARPException, \
-                  "Cannot determine SWARP version."
+            raise SWARPException(
+                  "Cannot determine SWARP version.")
 
         # print "Use " + self.program + " [" + self.version + "]"
 
@@ -405,7 +403,7 @@ class SWARP(object):
             if (key in SWARP._SW_config_special_keys):
                 continue
 
-            if (key == "CENTER"): # tuple instead of a single value
+            if key == "CENTER": # tuple instead of a single value
                 value = " ".join(map(str, self.config[key]))
             else:
                 value = str(self.config[key])
@@ -471,14 +469,12 @@ class SWARP(object):
         #rcode = os.system(commandline)
         rcode = misc.utils.runCmd(commandline)
         
-        if (rcode==0):
-            raise SWARPException, \
-                  "SWARP command [%s] failed." % str(commandline)
+        if rcode == 0:
+            raise SWARPException(
+                  "SWARP command [%s] failed." % str(commandline))
             
         if clean:
             self.clean()
-
-
 
     def clean(self, config=True):
         """
@@ -494,15 +490,18 @@ class SWARP(object):
             pass
 
 
-
 # ======================================================================
+
 if __name__ == "__main__":
 
+    if len(sys.argv) < 2:
+        print("Not enough input parameters")
+        sys.exit()
 
     swarp = SWARP()
     # Using a specific config file (updateconfig=False)
     swarp.config['CONFIG_FILE']="/disk-a/caha/panic/DEVELOP/PIPELINE/PANIC/trunk/config_files/swarp.conf"
-    files = [line.replace( "\n", "") for line in fileinput.input(sys.argv[1])]
+    files = [line.replace("\n", "") for line in fileinput.input(sys.argv[1])]
     swarp.run(files, updateconfig=False, clean=False)
     
     # Using and creating internal default config file (updateconfig=True)

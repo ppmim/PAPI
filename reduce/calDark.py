@@ -48,9 +48,7 @@
 
 import sys
 import os
-import logging
 import fileinput
-import time
 import shutil
 from optparse import OptionParser
 import numpy 
@@ -71,11 +69,8 @@ from iraf import mscred
 
 # Interact with FITS files
 import astropy.io.fits as fits
-
-
 # Logging
 from misc.paLog import log
-
 
 
 class MasterDark(object):
@@ -123,7 +118,6 @@ class MasterDark(object):
         self.show_stats = show_stats
         self.no_type_checking = no_type_checking
         
-
     def createMaster(self):
       
         """
@@ -145,7 +139,7 @@ class MasterDark(object):
         # STEP 0: Determine the number of darks frames to combine
         try:    
             nframes = len(framelist)
-        except IndexError,e:
+        except IndexError as e:
             log.error("No DARK frames defined")
             raise e
         
@@ -155,7 +149,7 @@ class MasterDark(object):
             
             
         if not os.path.exists(os.path.abspath(os.path.join(self.__output_filename, os.pardir))):
-            raise NameError, 'Wrong output path'
+            raise NameError('Wrong output path')
         if not self.__output_filename:
             log.error("Combined DARK frame not defined")
             raise Exception("Wrong output filename")
@@ -292,36 +286,36 @@ class MasterDark(object):
                     #print "mean=",numpy.mean(pf[0].data[512:1536,512:1536])
                     medians.append(robust.r_nanmedian(pf[0].data[512 : 1536, 512 : 1536]))
                 else:
-                    print "MEF files now is supported !"
+                    print("MEF files now is supported !")
                     for i_ext in range(1, len(pf)):
                         medians.append(robust.r_nanmedian(pf[i_ext].data[512 : 1536, 512 : 1536]))
                 
                 # Get some stats from master dark (mean/median/rms)
-                print "I_FRAME=", i_frame
+                print("I_FRAME=", i_frame)
                 values = (iraf.mscstat(images=i_frame,
                                 fields="image,mean,mode,midpt,stddev,min,max",
                                 format='yes',Stdout=1))
                 for line in values:
-                    print line
-            print "-----------------------------------"
-            print "MEDIANS=", medians    
-            print "QC DARK MEAN =", numpy.mean(medians)
-            print "QC DARK MED =", numpy.median(medians)
-            print "QC DARK STDEV =", numpy.std(medians)
-            print "QC DARK MAD =", numpy.median(numpy.abs(medians - numpy.median(medians)))
+                    print(line)
+            print("-----------------------------------")
+            print("MEDIANS=", medians)
+            print("QC DARK MEAN =", numpy.mean(medians))
+            print("QC DARK MED =", numpy.median(medians))
+            print("QC DARK STDEV =", numpy.std(medians))
+            print("QC DARK MAD =", numpy.median(numpy.abs(medians - numpy.median(medians))))
             
             #print "QC RONi",
             #print "QC DARK NBADPIX =", 
             
                   
             # Get some stats from master dark (mean/median/rms)
-            print "Master dark Stats:"
-            print "------------------"
+            print("Master dark Stats:")
+            print("------------------")
             values = (iraf.mscstat (images=self.__output_filename,
                                     fields="image,mean,mode,stddev,min,max",
                                     format='yes',Stdout=1))
             for line in values:
-                print line
+                print(line)
             
         return self.__output_filename
         
@@ -376,8 +370,8 @@ creates the master dark and computes several statistics.
         parser.print_help()
         parser.error("incorrent number of arguments")
     
-    
-    if os.path.isdir(options.source_file_list) or os.path.isdir(options.output_filename):
+    if (os.path.isdir(options.source_file_list) or
+            os.path.isdir(options.output_filename)):
         parser.print_help()
         parser.error("Source and output must be a file, not a directory")
         
@@ -389,8 +383,6 @@ creates the master dark and computes several statistics.
                            options.texp_scale, None, options.normalize,
                            options.show_stats, options.no_type_checking)
         mDark.createMaster()
-    except Exception,e:
-        log.error("Task failed. Some error was found: %s"%str(e))
-    
-    
-        
+    except Exception as e:
+        log.error("Task failed. Some error was found: %s" % str(e))
+

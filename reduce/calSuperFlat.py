@@ -42,23 +42,18 @@
 ################################################################################
 # Import necessary modules
 
-import getopt
 import sys
 import os
-import logging
 import fileinput
 import shutil
 from optparse import OptionParser
-import time
 
 import misc.fileUtils
 import misc.utils as utils
 import misc.robust as robust
-import calGainMap 
 
 # Interact with FITS files
 import astropy.io.fits as fits
-import numpy
 import datahandler
 
 
@@ -252,7 +247,7 @@ class SuperSkyFlat(object):
                 msg = "Normalization of MEF master flat frame wrt chip 1. (value=%f)"%norm_value
 
                 # Do the normalization wrt chip 1
-                for i_ext in xrange(1, len(f)):
+                for i_ext in range(1, len(f)):
                     f[i_ext].data = robust.r_divisionN(f[i_ext].data, norm_value)
                     norm_mean = robust.r_nanmean(f[i_ext].data)
                     if norm_mean < 0.5 or norm_mean > 1.5:
@@ -413,6 +408,6 @@ creates the master super flat-field median combining images using sigma-clip alg
                              options.median_smooth, options.norm_estimator,
                              options.check)
         superflat.create()
-    except Exception,e:
+    except Exception as e:
         log.error("Error: %s"%str(e))
           

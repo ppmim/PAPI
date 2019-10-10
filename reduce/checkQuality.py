@@ -46,7 +46,6 @@ import sys
 from pyraf import iraf
 import re
 
-import misc.utils as utils
 import astromatic
 
 from misc.paLog import log
@@ -143,7 +142,7 @@ class CheckQuality(object):
         catalog_file = "test.cat"
         try:
             sex_cnf = os.environ['PAPI_HOME'] + "/config_files/sextractor.sex"
-        except Exception,e:
+        except Exception as e:
             log.error("Error, variable PAPI_HOME not defined.")
             raise e
         
@@ -162,7 +161,7 @@ class CheckQuality(object):
         # SExtractor execution
         try:
             sex.run(self.sex_input_file, updateconfig=False, clean=False)
-        except Exception,e:
+        except Exception as e:
             log.error("Error running SExtractor: %s"%str(e))  
             raise e
         
@@ -199,7 +198,7 @@ class CheckQuality(object):
         try:
             if self.write: fits_file = fits.open(self.input_file, 'update')
             else: fits_file = fits.open(self.input_file, 'readonly')
-        except Exception,e:
+        except Exception as e:
             log.error("Error while openning file %s",self.input_file)
             raise e
         
@@ -210,7 +209,7 @@ class CheckQuality(object):
             else:  # is a simple FITS      
                 naxis1 = fits_file[0].header['NAXIS1']
                 naxis2 = fits_file[0].header['NAXIS2']
-        except KeyError,e:
+        except KeyError as e:
             log.error("Error while reading FITS header NAXIS keywords :%s",str(e))
             raise Exception("Error while reading FITS header NAXIS keywords")
             
@@ -229,7 +228,7 @@ class CheckQuality(object):
         good_stars = []
         # Select 'best' stars for the estimation
         std = numpy.std(a[:,8])
-        print "Initial STD of FWHM=",std
+        print("Initial STD of FWHM=", std)
         for i in range(0, a.shape[0]):
             x = a[i,1]
             y = a[i,2]
@@ -270,20 +269,20 @@ class CheckQuality(object):
         
         m_good_stars = numpy.array(good_stars)
         
-        print "Found <%d> GOOD stars" % len(m_good_stars)
+        print("Found <%d> GOOD stars" % len(m_good_stars))
         
         if len(m_good_stars)>self.MIN_NUMBER_GOOD_STARS:
             std = numpy.std(m_good_stars[:,8])
-            print "STD2 = ",std
+            print("STD2 = ", std)
             efwhm = numpy.median(m_good_stars[:,8])
-            print "best-FWHM-median(pixels) = ", efwhm
-            print "Mean-FWHM(px) = ", numpy.mean(m_good_stars[:,8])
-            print "FLUX_RADIUS (as mentioned in Terapix T0004 explanatory table) =", numpy.median(m_good_stars[:,9])
-            print "Masked-mean = ", ma.masked_outside(m_good_stars[:,8], 0.01, 3*std).mean()
+            print("best-FWHM-median(pixels) = ", efwhm)
+            print("Mean-FWHM(px) = ", numpy.mean(m_good_stars[:,8]))
+            print("FLUX_RADIUS (as mentioned in Terapix T0004 explanatory table) =", numpy.median(m_good_stars[:,9]))
+            print("Masked-mean = ", ma.masked_outside(m_good_stars[:,8], 0.01, 3*std).mean())
             
             if self.write:
                 fits_file[0].header.update('hierarch PAPI.SEEING', efwhm*self.pixsize)
-                print "Fits keyword updated " 
+                print("Fits keyword updated ")
 
             # 2nd Estimation Method (psfmeasure)
             if psfmeasure:
@@ -294,12 +293,12 @@ class CheckQuality(object):
                         text_file.write("%s   %s\n"%(source[15], source[16]))
                 try:        
                     pfwhm = self.getAverageFWHMfromPsfmeasure(self.input_file, coord_text_file)
-                    log.debug("Average FWHM (psfmeasure-Moffat): %s"%pfwhm)
-                except Exception,e:
+                    log.debug("Average FWHM (psfmeasure-Moffat): %s" % pfwhm)
+                except Exception as e:
                     log.error("Cannot run properly iraf.psfmeasure")
-                    log.error("%s"%str(e))
+                    log.error("%s" % str(e))
         else:
-            print "Not enough good stars found !!"
+            print("Not enough good stars found !!")
             fits_file.close(output_verify='ignore')    
             return -1,-1,-1,-1
         
@@ -373,7 +372,7 @@ class CheckQuality(object):
         # Sextractor config
         try:
             sex_cnf = os.environ['PAPI_HOME'] + "/config_files/sextractor.sex"
-        except Exception,e:
+        except Exception as e:
             log.error("Error, variable PAPI_HOME not defined.")
             raise e
         sex = astromatic.SExtractor()
@@ -389,8 +388,8 @@ class CheckQuality(object):
         # SExtractor execution
         try:
             sex.run(self.input_file, updateconfig=False, clean=False)
-        except Exception,e:
-            log.error("Error running SExtractor: %s"%str(e))  
+        except Exception as e:
+            log.error("Error running SExtractor: %s" % str(e))
             raise e
         else:
             return output_file     
@@ -515,7 +514,7 @@ detector (Q1,Q2,Q3,Q4).
                                   options.write, options.snr, options.window)
                 efwhm, std, x, y = cq.estimateFWHM()
                 text_file.write("%s    %s    %s    %s    %s\n"%(m_file, efwhm, std, x, y))
-            except Exception,e:
+            except Exception as e:
                 log.error("There was some error with image %s : %s "%(m_file, str(e)))
                 text_file.write("%s    %s    %s\n"%(m_file, -1, -1, -1, -1))
         
@@ -533,7 +532,7 @@ detector (Q1,Q2,Q3,Q4).
                                 options.write, options.snr, options.window)
             efwhm, std, k, k = cq.estimateFWHM(options.psfmeasure)
             log.info("FWHM= %s  STD= %s"%(efwhm, std))
-        except Exception,e:
+        except Exception as e:
             log.error("There was some error with image %s : %s "%(options.input_image, str(e)))
     else:
         log.error("No input file given.")

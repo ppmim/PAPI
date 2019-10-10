@@ -18,7 +18,7 @@ try:
     if os.path.exists(os.path.expanduser("~") + "/iraf/focus_seq.txt"):
         os.unlink(os.path.expanduser("~") + "/iraf/focus_seq.txt")
         print("Deleted file ~/iraf/focus_seq.txt")
-except Exception,e:
+except Exception as e:
     print("Error, cannot delete ~/iraf/focus_seq.txt")
 
     
@@ -29,7 +29,7 @@ import matplotlib
 # Next is needed in order to avoid a crash/deadlock when running 
 # pyraf graphs and matplotlib.pyplot graphs
 # For 'TkAgg' backend (default) produces the crash.
-matplotlib.use('QT4Agg')
+matplotlib.use('QT5Agg')
 
 
 import matplotlib.pyplot as plt
@@ -40,10 +40,11 @@ import misc.display as display
 # Global variable !
 telescope = ""
 
-class IrafError(StandardError):
+class IrafError(Exception):
     """ Raised if some IRAF error happens """
     pass
-  
+
+
 def getBestFocusfromStarfocus(images, coord_file, log_file):
     """
     Calculate the average Full Width Half Max for the objects in image
@@ -100,10 +101,10 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
                 telescope = ""
     else:
         msg = "Error, cannot find file %s" %(images[1:])
-        print msg
+        print(msg)
         raise Exception(msg)
     
-    print "SATUR_LEVEL =", satur_level
+    print("SATUR_LEVEL =", satur_level)
     
     if coord_file == "" or coord_file == None: 
         idisplay = "yes"
@@ -113,29 +114,29 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
             msg = "ERROR, cannot open file %s" %coord_file
             raise Exception(msg)
     
-    print "IDISPLAY=",idisplay
-    print "COORD_FILE=",coord_file
-    print "IMAGES_FILE", images
+    print("IDISPLAY=", idisplay)
+    print("COORD_FILE=", coord_file)
+    print("IMAGES_FILE", images)
     import stsci.tools.capable
-    print "OF_GRAPHICS=", stsci.tools.capable.OF_GRAPHICS
-    print "LC_NUMERIC =", locale.getlocale(locale.LC_NUMERIC)
+    print("OF_GRAPHICS=", stsci.tools.capable.OF_GRAPHICS)
+    print("LC_NUMERIC =", locale.getlocale(locale.LC_NUMERIC))
     
     if 'IMTDEV' in os.environ:
-        print "IMTDEV=", os.environ['IMTDEV']
+        print("IMTDEV=", os.environ['IMTDEV'])
     
     if 'PYRAF_NO_DISPLAY' in os.environ:
-        print "QUE PASAAAAAAAAAAAAA -- PYRAF_NO_DISPLAY=",os.environ['PYRAF_NO_DISPLAY']
+        print("QUE PASAAAAAAAAAAAAA -- PYRAF_NO_DISPLAY=",os.environ['PYRAF_NO_DISPLAY'])
     if 'PYTOOLS_NO_DISPLAY' in os.environ:
-        print "QUE PASAAAAAAAAAAAAA -- PYTOOLS_NO_DISPLAY=", os.environ['PYTOOLS_NO_DISPLAY']
+        print("QUE PASAAAAAAAAAAAAA -- PYTOOLS_NO_DISPLAY=", os.environ['PYTOOLS_NO_DISPLAY'])
     
-    print "LOG_FILE=",log_file
+    print("LOG_FILE=", log_file)
         
     # Be sure the logfile is writtable
     try:
         with open(log_file, "w") as f:
             pass
-    except IOError,e:
-        print "Could not open log file: %s"%log_file
+    except IOError as e:
+        print("Could not open log file: %s" % log_file)
         raise e
                   
     # Config and launch the iraf.starfocus task
@@ -168,15 +169,14 @@ def getBestFocusfromStarfocus(images, coord_file, log_file):
         match = numMatch.search(res)
         
         best_focus = float (match.group(1))
-        print "\n\nBest Focus (IRAF)= ", best_focus
+        print("\n\nBest Focus (IRAF)= ", best_focus)
         return best_focus
     
-    except Exception, e:
-        print "Error running IRAF.starfocus: %s"%str(e)
+    except Exception as e:
+        print("Error running IRAF.starfocus: %s" % str(e))
         raise e
-    
-    
-    
+
+
 def writeDataFile_old(log_file, data_file, target):
     """
     Read iraf.starfocus log file and write a data file to be used
@@ -196,7 +196,7 @@ def writeDataFile_old(log_file, data_file, target):
         if target:
             obj = target
         else:
-            print 'WARNING: Object name not provided'
+            print('WARNING: Object name not provided')
             obj = 'Unknowm'
         fo.write('# Object: %s\n' %obj)
         while not lines[0].strip().startswith('Average'):
@@ -210,9 +210,9 @@ def writeDataFile_old(log_file, data_file, target):
             if lines[k -i -1].strip().startswith('Best'):
                 fo.write(lines[k - i - 1])
         fo.close()
-        print 'Data file written: %s' %data_file
+        print('Data file written: %s' %data_file)
     else:
-        print 'Error, no data file given'
+        print('Error, no data file given')
 
 def writeDataFile(best_focus, min_fwhm, avg_x, avg_y, 
                       data_file, target):
@@ -226,7 +226,7 @@ def writeDataFile(best_focus, min_fwhm, avg_x, avg_y,
         if target:
             obj = target
         else:
-            print 'WARNING: Object name not provided'
+            print('WARNING: Object name not provided')
             obj = 'Unknowm'
         fo.write('# Object: %s\n' %obj)
         line = " Average best focus of %f with FWHM of %f\n"%(best_focus, min_fwhm)
@@ -234,9 +234,9 @@ def writeDataFile(best_focus, min_fwhm, avg_x, avg_y,
         line = "  Best focus estimate @ (%f, %f): FWHM=%f, m=0.0, f=%f\n"%(avg_x, avg_y, min_fwhm, best_focus)
         fo.write(line)
         fo.close()
-        print 'Data file written: %s' %data_file
+        print('Data file written: %s' % data_file)
     else:
-        print 'Error, no data file given'
+        print('Error, no data file given')
 
         
 def readStarfocusLog(log_file):
@@ -308,13 +308,13 @@ def getBestFocus(data, output_file):
     if telescope == 'CA-2.2':
         foclimits = [-1, 27]
         pix_scale = 0.45
-        print "Assuming CA-2.2 TELESCOPE"
+        print("Assuming CA-2.2 TELESCOPE")
     elif telescope == 'CA-3.5':
         foclimits = [10, 60]
         pix_scale = 0.23
-        print "Assuming CA-3.5 TELESCOPE"
+        print("Assuming CA-3.5 TELESCOPE")
     else:
-        print "Asumming CA-2.2 TELESCOPE"
+        print("Asumming CA-2.2 TELESCOPE")
         foclimits = [-1, 27]
         pix_scale = 0.45
         
@@ -323,15 +323,15 @@ def getBestFocus(data, output_file):
     fwhm_values = d[:, 4] # PSF-value (MFWHM, GFWHM, FWHM, ...)
     
     
-    print "\n---------"
-    print "N_POINTS: ", len(fwhm_values)
-    print "----------\n"
+    print("\n---------")
+    print("N_POINTS: ", len(fwhm_values))
+    print("----------\n")
     
     
     m_foc = good_focus_values.mean()
     good_focus_values = good_focus_values - m_foc
     z = np.polyfit(good_focus_values, fwhm_values, 2)
-    print "Fit = %s  \n"%str(z)
+    print("Fit = %s  \n" % str(z))
     # Note that poly1d returns polynomials coefficients, in increasing powers !
     pol = np.poly1d(z)
     
@@ -341,14 +341,14 @@ def getBestFocus(data, output_file):
     # best focus is derivative of parabola = 0
     # but check if it is correctly curved
     if pol[2] < 0:
-        print "ERROR: Parabola fit unusable!"
+        print("ERROR: Parabola fit unusable!")
     best_focus = - pol[1] / (2. * pol[2])
     min_fwhm = pol([best_focus])
-    print "BEST_FOCUS (OWN) = ", best_focus + m_foc
-    print "MIN_FWHM (OWN) = ", min_fwhm
+    print("BEST_FOCUS (OWN) = ", best_focus + m_foc)
+    print("MIN_FWHM (OWN) = ", min_fwhm)
     
     if foclimits and (best_focus + m_foc < foclimits[0] or best_focus + m_foc > foclimits[1]):
-        print "ERROR: Best focus out of range!"
+        print("ERROR: Best focus out of range!")
         best_focus_out_of_range = True
     else:
         best_focus_out_of_range = False
@@ -376,7 +376,7 @@ def getBestFocus(data, output_file):
     
     plt.savefig(output_file)
     
-    print 'Image saved: ', output_file
+    print('Image saved: ', output_file)
     show = True
     if show:
         plt.show(block=True)
@@ -398,7 +398,7 @@ def runFocusEvaluation(source_file, coord_file, log_file):
         
     if not os.path.exists(source_file):
         msg = "ERROR, file source_file does not exists"
-        print msg
+        print(msg)
         raise Exception(msg)
     
     try:
@@ -406,11 +406,11 @@ def runFocusEvaluation(source_file, coord_file, log_file):
                                            coord_file, 
                                            log_file)
     
-    except Exception,e:
+    except Exception as e:
         raise e
     
     # Compute our own BEST_FOCUS value and plot the fittting
-    print "Now, our own fitting...\n"
+    print("Now, our own fitting...\n")
     data = readStarfocusLog("/home/panic/iraf/starfocus.log")
     my_best_focus, min_fwhm  = getBestFocus(data, "starfocus.pdf")
 
@@ -498,8 +498,8 @@ if __name__ == "__main__":
             bf = runFocusEvaluation(options.source_file, 
                             options.coord_file, 
                             options.log_file)
-        except Exception, e:
-            print "ERROR running focus evaluation"
+        except Exception as e:
+            print("ERROR running focus evaluation")
             raise e
     
     # Complete execution (used for Tilt Analysis)
@@ -512,7 +512,7 @@ if __name__ == "__main__":
         
         
         # Compute our own BEST_FOCUS value and plot the fittting
-        print "Now, our own fitting...\n"
+        print("Now, our own fitting...\n")
         data = readStarfocusLog(options.log_file)
         
         plot_filename = os.path.splitext(options.data_file)[0] + ".pdf"

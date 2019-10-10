@@ -83,12 +83,6 @@ Examples:
 
 """
 
-# ======================================================================
-
-import __builtin__
-
-import sys
-import exceptions
 
 # ======================================================================
 
@@ -614,32 +608,32 @@ class SExtractorfile:
         self._firstline = True
         
         if self.mode != 'r':
-            raise ValueError, \
-                  'only read-only access is now implemented.'
+            raise ValueError(
+                  'only read-only access is now implemented.')
         
-        self._file = __builtin__.open(self.name, self.mode)
+        self._file = open(self.name, self.mode)
         self.closed = False
         
         # Reading header
 
         self._line = self._file.readline()
-        if not(self._line):
-            raise WrongSExtractorfileException, \
-                  'not a SExtractor text catalog (empty file)'
+        if not self._line:
+            raise WrongSExtractorfileException(
+                  'not a SExtractor text catalog (empty file)')
 
-        while (self._line):
-            __ll = (self._line).replace('\n', '')
+        while self._line:
+            __ll = self._line.replace('\n', '')
             if __ll[0] == '#':   # Still in header
                 columns = __ll.split()
                 if len(columns) < 3:
-                    raise WrongSExtractorfileException, \
-                          'not a SExtractor text catalog (invalid header)'
-                name=columns[2]
+                    raise WrongSExtractorfileException(
+                          'not a SExtractor text catalog (invalid header)')
+                name = columns[2]
                 if not(name in SExtractorfile._SE_keys.keys()):
-                    raise WrongSExtractorfileException, \
+                    raise WrongSExtractorfileException(
                           'not a SExtractor text catalog (unknown keyword %s)'\
-                          % name
-                self._keys_positions[name]=int(columns[1])-1
+                          % name)
+                self._keys_positions[name] = int(columns[1])-1
                 self._keys.append(name)
             else:
                 break
@@ -647,20 +641,17 @@ class SExtractorfile:
 
 
         if not(self._keys):
-            raise WrongSExtractorfileException, \
-                  'not a SExtractor text catalog (empty header)'
+            raise WrongSExtractorfileException(
+                  'not a SExtractor text catalog (empty header)')
             
         self._outdict = dict([(k, None) for k in self._keys])
         self._firstline = True
 
-
     def __del__(self):
         self.close()
         
-
     def __iter__(self):
         return self
-
 
     def next(self):
         rr = self.readline()
@@ -668,34 +659,30 @@ class SExtractorfile:
             raise StopIteration
         return rr
 
-
     def __nonzero__(self):
         return self._file
-
 
     def keys(self):
         "Return the list of available parameters."
         return self._keys
 
-
     def getcolumns(self):
         "Return the list of available parameters."
         return self.keys()
-
 
     def readline(self):
         """
         Read and analyse the next line of the SExtractor catalog
         and return a dictionary {'param1': value, 'param2': value, ...}.
         """
-        if not(self._firstline):
+        if not self._firstline:
             self._line = self._file.readline()
 
         self._firstline = False
 
-        if not(self._line):
+        if not self._line:
             return None
-        __ll = (self._line).replace('\n', '')
+        __ll = self._line.replace('\n', '')
         __values = __ll.split()
         self._outdict.update(dict(zip(self._keys, __values)))
         for i in self._keys:
@@ -703,8 +690,6 @@ class SExtractorfile:
                 SExtractorfile._SE_keys[i]["infunc"](self._outdict[i]))
         
         return self._outdict.copy()
-
-
 
     def read(self):
         """
@@ -719,17 +704,15 @@ class SExtractorfile:
             
         return list(__result)
 
-
     def readlines(self):
         return self.read()
-
 
     def close(self):
         """
         Close the SExtractor file.
         """
         if self._file:
-            if not(self._file.closed):
+            if not self._file.closed:
                 self._file.close()
         self.closed = True
 
