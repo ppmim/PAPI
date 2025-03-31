@@ -15,8 +15,10 @@ PANIC_ is a general purpose Panoramic Near Infrared camera for Calar Alto.
 It is optimized for use at the 2.2m telescope, but can also be installed 
 at the 3.5m telescope. It works in the nIR bands Z, J, H and K. 
 
-NOTE: This repository has the PAPI version for the H2RG detector. For the
-new H4RG detector, please goto: 
+.. warning::
+
+	This repository has the PAPI version for the H2RG detector. For the
+	new H4RG detector, please goto: 
 
 	https://github.com/ppmim/PAPI4K
 
