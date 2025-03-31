@@ -17,8 +17,8 @@ at the 3.5m telescope. It works in the nIR bands Z, J, H and K.
 
 .. warning::
 
-	This repository has the PAPI version for the H2RG detector. For the
-	new H4RG detector, please goto: 
+This repository has the PAPI version for the H2RG detector. For the
+new H4RG detector, please goto: 
 
 	https://github.com/ppmim/PAPI4K
 
